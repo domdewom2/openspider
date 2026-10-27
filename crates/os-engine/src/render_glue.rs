@@ -356,6 +356,7 @@ pub(crate) fn options<F: Fetch>(
                 .find(|(k, _)| k.eq_ignore_ascii_case("content-type"))
                 .map_or("", |(_, v)| v.as_str()),
         ),
+        accessibility: cfg.extraction.accessibility,
         retry_document_context: true,
         disable_cookies: cfg.advanced.cookies == os_model::CookieMode::None,
         return_cookies: cfg.advanced.cookies != os_model::CookieMode::None,

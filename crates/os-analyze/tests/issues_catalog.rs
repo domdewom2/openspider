@@ -56,10 +56,38 @@ fn catalog_ids_are_in_registry_and_all_issue_filters_are_in_catalog() {
                 .map(move |f| (tab.clone(), f["id"].as_str().unwrap().to_string()))
         })
         .collect();
-    let m2: toml::Table = std::fs::read_to_string(repo_root().join("docs/plan/M2-filters.toml"))
+    let mut m2: toml::Table =
+        std::fs::read_to_string(repo_root().join("docs/plan/M2-filters.toml"))
+            .unwrap()
+            .parse()
+            .unwrap();
+    // spec: TECH-251 / UI-064: expected expansion of the dynamic axe registry entry.
+    let a11y = m2
+        .get_mut("tab")
         .unwrap()
-        .parse()
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|tab| tab["id"].as_str() == Some("Accessibility"))
         .unwrap();
+    a11y.get_mut("filters")
+        .unwrap()
+        .as_array_mut()
+        .unwrap()
+        .extend(
+            include_str!("../../../tests/fixtures/ui/fx-ui-a11y/rule-ids.txt")
+                .lines()
+                .map(|id| {
+                    toml::Value::Table(
+                        [
+                            ("id".into(), toml::Value::String(id.into())),
+                            ("issue".into(), toml::Value::Boolean(true)),
+                        ]
+                        .into_iter()
+                        .collect(),
+                    )
+                }),
+        );
     for tab in m2["tab"].as_array().unwrap() {
         for filter in tab["filters"].as_array().unwrap() {
             all.insert((

@@ -1,0 +1,4 @@
+﻿Issue,Rule ID,Guideline,Impact,Priority,URLs,% of Total,Sample URL
+Bild ohne Alternativtext,image-alt,WCAG 2.0 A,Critical,High,2,100.00,https://a.test/one
+Überschriftenebene springt um mehr als 1,heading-order,Best Practice,Moderate,Medium,1,50.00,https://a.test/one
+leere Überschrift,empty-heading,Best Practice,Minor,Low,1,50.00,https://a.test/one

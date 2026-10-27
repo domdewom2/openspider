@@ -17,3 +17,7 @@ Schrift: Ascender Corporation (Steve Matteson), basierend auf Arimo.
 
 Lizenz: SIL Open Font License, Version 1.1, Volltext in
 crates/os-parse/resources/fonts/LICENSE-LiberationSans.txt
+
+axe-core 4.11.0 — Deque Systems, Inc. (MPL-2.0)
+Unmodified bundle, full license and source attribution:
+crates/os-render/resources/axe/THIRD_PARTY_NOTICES

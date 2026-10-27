@@ -1,0 +1,1018 @@
+diff --git a/NOTICE b/NOTICE
+index 1ee644f3..2beeb7ee 100644
+--- a/NOTICE
++++ b/NOTICE
+@@ -17,3 +17,7 @@ Schrift: Ascender Corporation (Steve Matteson), basierend auf Arimo.
+ 
+ Lizenz: SIL Open Font License, Version 1.1, Volltext in
+ crates/os-parse/resources/fonts/LICENSE-LiberationSans.txt
++
++axe-core 4.11.0 — Deque Systems, Inc. (MPL-2.0)
++Unmodified bundle, full license and source attribution:
++crates/os-render/resources/axe/THIRD_PARTY_NOTICES
+diff --git a/apps/desktop/src-tauri/tauri.conf.json b/apps/desktop/src-tauri/tauri.conf.json
+index 55617bf6..adb1d4d4 100644
+--- a/apps/desktop/src-tauri/tauri.conf.json
++++ b/apps/desktop/src-tauri/tauri.conf.json
+@@ -36,6 +36,11 @@
+     }
+   },
+   "bundle": {
++    "resources": {
++      "../../../crates/os-render/resources/axe/axe.min.js": "axe/axe.min.js",
++      "../../../crates/os-render/resources/axe/LICENSE": "axe/LICENSE",
++      "../../../crates/os-render/resources/axe/THIRD_PARTY_NOTICES": "axe/THIRD_PARTY_NOTICES"
++    },
+     "active": true,
+     "targets": "all",
+     "icon": [
+diff --git a/apps/desktop/src/features/detail/a11y/i18n/de.ftl b/apps/desktop/src/features/detail/a11y/i18n/de.ftl
+index 189dcf98..19fab2ac 100644
+--- a/apps/desktop/src/features/detail/a11y/i18n/de.ftl
++++ b/apps/desktop/src/features/detail/a11y/i18n/de.ftl
+@@ -15,3 +15,191 @@ a11y-show-browser = Im Browser anzeigen
+ a11y-copy-selector = Selektor kopieren
+ a11y-no-address = Die Adresse lässt sich nicht im Browser öffnen.
+ a11y-rendered-not-stored = Das gerenderte HTML wird nicht gespeichert. Aktiviere „Gerendertes HTML speichern“ in den Einstellungen.
++
++# TECH-251 / TECH-259: own rule labels; IDs remain stable.
++filter-accesskeys = accesskey-Werte sind nicht eindeutig
++a11y-rule-accesskeys = accesskey-Werte sind nicht eindeutig
++filter-presentation-role-conflict = als präsentational markierte Elemente sind dennoch fokussierbar/mit globalen ARIA-Attributen
++a11y-rule-presentation-role-conflict = als präsentational markierte Elemente sind dennoch fokussierbar/mit globalen ARIA-Attributen
++filter-tabindex = tabindex größer 0
++a11y-rule-tabindex = tabindex größer 0
++filter-skip-link = Ziel eines Sprunglinks fehlt oder ist nicht fokussierbar
++a11y-rule-skip-link = Ziel eines Sprunglinks fehlt oder ist nicht fokussierbar
++filter-aria-text = role=text mit fokussierbaren Nachfahren
++a11y-rule-aria-text = role=text mit fokussierbaren Nachfahren
++filter-aria-dialog-name = dialog/alertdialog ohne zugänglichen Namen
++a11y-rule-aria-dialog-name = dialog/alertdialog ohne zugänglichen Namen
++filter-aria-allowed-role = ARIA-Rolle passt nicht zum Element
++a11y-rule-aria-allowed-role = ARIA-Rolle passt nicht zum Element
++filter-aria-treeitem-name = treeitem ohne zugänglichen Namen
++a11y-rule-aria-treeitem-name = treeitem ohne zugänglichen Namen
++filter-region = Seiteninhalt außerhalb von Landmarks
++a11y-rule-region = Seiteninhalt außerhalb von Landmarks
++filter-landmark-one-main = kein main-Landmark
++a11y-rule-landmark-one-main = kein main-Landmark
++filter-landmark-no-duplicate-banner = mehr als ein banner
++a11y-rule-landmark-no-duplicate-banner = mehr als ein banner
++filter-landmark-banner-is-top-level = banner in anderem Landmark verschachtelt
++a11y-rule-landmark-banner-is-top-level = banner in anderem Landmark verschachtelt
++filter-landmark-no-duplicate-contentinfo = mehr als ein contentinfo
++a11y-rule-landmark-no-duplicate-contentinfo = mehr als ein contentinfo
++filter-landmark-no-duplicate-main = mehr als ein main
++a11y-rule-landmark-no-duplicate-main = mehr als ein main
++filter-landmark-complementary-is-top-level = complementary/aside nicht auf oberster Ebene
++a11y-rule-landmark-complementary-is-top-level = complementary/aside nicht auf oberster Ebene
++filter-landmark-contentinfo-is-top-level = contentinfo verschachtelt
++a11y-rule-landmark-contentinfo-is-top-level = contentinfo verschachtelt
++filter-landmark-main-is-top-level = main verschachtelt
++a11y-rule-landmark-main-is-top-level = main verschachtelt
++filter-landmark-unique = gleichartige Landmarks ohne unterscheidenden Namen
++a11y-rule-landmark-unique = gleichartige Landmarks ohne unterscheidenden Namen
++filter-label-title-only = Formularfeld nur über title/aria-describedby beschriftet, kein sichtbares Label
++a11y-rule-label-title-only = Formularfeld nur über title/aria-describedby beschriftet, kein sichtbares Label
++filter-frame-tested = iframe-Inhalt konnte nicht mit axe geprüft werden
++a11y-rule-frame-tested = iframe-Inhalt konnte nicht mit axe geprüft werden
++filter-page-has-heading-one = keine h1
++a11y-rule-page-has-heading-one = keine h1
++filter-heading-order = Überschriftenebene springt um mehr als 1
++a11y-rule-heading-order = Überschriftenebene springt um mehr als 1
++filter-empty-heading = leere Überschrift
++a11y-rule-empty-heading = leere Überschrift
++filter-meta-viewport-large = Viewport verhindert Zoom bis 500 %
++a11y-rule-meta-viewport-large = Viewport verhindert Zoom bis 500 %
++filter-image-redundant-alt = Alt-Text wiederholt umgebenden Text
++a11y-rule-image-redundant-alt = Alt-Text wiederholt umgebenden Text
++filter-empty-table-header = Tabellenkopfzelle ohne erkennbaren Text
++a11y-rule-empty-table-header = Tabellenkopfzelle ohne erkennbaren Text
++filter-table-duplicate-name = Tabelle mit identischem summary und caption
++a11y-rule-table-duplicate-name = Tabelle mit identischem summary und caption
++filter-scope-attr-valid = scope-Attribut falsch verwendet
++a11y-rule-scope-attr-valid = scope-Attribut falsch verwendet
++filter-scrollable-region-focusable = scrollbarer Bereich nicht per Tastatur erreichbar
++a11y-rule-scrollable-region-focusable = scrollbarer Bereich nicht per Tastatur erreichbar
++filter-aria-required-attr = Pflicht-ARIA-Attribute der Rolle fehlen
++a11y-rule-aria-required-attr = Pflicht-ARIA-Attribute der Rolle fehlen
++filter-aria-conditional-attr = ARIA-Attribut entgegen den Regeln der Rolle verwendet
++a11y-rule-aria-conditional-attr = ARIA-Attribut entgegen den Regeln der Rolle verwendet
++filter-aria-valid-attr-value = ungültiger Wert eines ARIA-Attributs
++a11y-rule-aria-valid-attr-value = ungültiger Wert eines ARIA-Attributs
++filter-aria-valid-attr = ungültiger ARIA-Attributname
++a11y-rule-aria-valid-attr = ungültiger ARIA-Attributname
++filter-aria-command-name = button/link/menuitem-Rolle ohne Namen
++a11y-rule-aria-command-name = button/link/menuitem-Rolle ohne Namen
++filter-aria-input-field-name = ARIA-Eingabefeld ohne Namen
++a11y-rule-aria-input-field-name = ARIA-Eingabefeld ohne Namen
++filter-aria-meter-name = meter ohne Namen
++a11y-rule-aria-meter-name = meter ohne Namen
++filter-aria-progressbar-name = progressbar ohne Namen
++a11y-rule-aria-progressbar-name = progressbar ohne Namen
++filter-aria-required-parent = Rolle ohne erforderliches Elternelement
++a11y-rule-aria-required-parent = Rolle ohne erforderliches Elternelement
++filter-aria-roles = ungültiger role-Wert
++a11y-rule-aria-roles = ungültiger role-Wert
++filter-aria-toggle-field-name = Umschaltfeld ohne Namen
++a11y-rule-aria-toggle-field-name = Umschaltfeld ohne Namen
++filter-aria-tooltip-name = tooltip ohne Namen
++a11y-rule-aria-tooltip-name = tooltip ohne Namen
++filter-aria-required-children = Rolle ohne erforderliche Kindrollen
++a11y-rule-aria-required-children = Rolle ohne erforderliche Kindrollen
++filter-aria-deprecated-role = veraltete ARIA-Rolle
++a11y-rule-aria-deprecated-role = veraltete ARIA-Rolle
++filter-aria-braille-equivalent = Braille-Attribut ohne Nicht-Braille-Gegenstück
++a11y-rule-aria-braille-equivalent = Braille-Attribut ohne Nicht-Braille-Gegenstück
++filter-aria-hidden-focus = aria-hidden-Bereich enthält fokussierbare Elemente
++a11y-rule-aria-hidden-focus = aria-hidden-Bereich enthält fokussierbare Elemente
++filter-aria-hidden-body = aria-hidden="true" am body
++a11y-rule-aria-hidden-body = aria-hidden="true" am body
++filter-aria-prohibited-attr = für die Rolle verbotenes ARIA-Attribut
++a11y-rule-aria-prohibited-attr = für die Rolle verbotenes ARIA-Attribut
++filter-aria-allowed-attr = für die Rolle nicht erlaubtes ARIA-Attribut
++a11y-rule-aria-allowed-attr = für die Rolle nicht erlaubtes ARIA-Attribut
++filter-duplicate-id-aria = in ARIA/Labels referenzierte ID doppelt
++a11y-rule-duplicate-id-aria = in ARIA/Labels referenzierte ID doppelt
++filter-bypass = kein Mechanismus zum Überspringen wiederholter Blöcke
++a11y-rule-bypass = kein Mechanismus zum Überspringen wiederholter Blöcke
++filter-label = Formularfeld ohne Beschriftung
++a11y-rule-label = Formularfeld ohne Beschriftung
++filter-form-field-multiple-labels = Formularfeld mit mehreren label-Elementen
++a11y-rule-form-field-multiple-labels = Formularfeld mit mehreren label-Elementen
++filter-frame-title = iframe/frame ohne title
++a11y-rule-frame-title = iframe/frame ohne title
++filter-frame-title-unique = iframe-titles nicht eindeutig
++a11y-rule-frame-title-unique = iframe-titles nicht eindeutig
++filter-frame-focusable-content = Frame mit fokussierbarem Inhalt hat tabindex=-1
++a11y-rule-frame-focusable-content = Frame mit fokussierbarem Inhalt hat tabindex=-1
++filter-document-title = kein `<title>`
++a11y-rule-document-title = kein `<title>`
++filter-html-lang-valid = ungültiger lang-Wert am html-Element
++a11y-rule-html-lang-valid = ungültiger lang-Wert am html-Element
++filter-html-has-lang = html-Element ohne lang
++a11y-rule-html-has-lang = html-Element ohne lang
++filter-html-xml-lang-mismatch = lang und xml:lang widersprechen sich
++a11y-rule-html-xml-lang-mismatch = lang und xml:lang widersprechen sich
++filter-meta-refresh = zeitgesteuerter Meta Refresh (< 20 h)
++a11y-rule-meta-refresh = zeitgesteuerter Meta Refresh (< 20 h)
++filter-input-image-alt = Bild-Button ohne Alternativtext
++a11y-rule-input-image-alt = Bild-Button ohne Alternativtext
++filter-image-alt = Bild ohne Alternativtext
++a11y-rule-image-alt = Bild ohne Alternativtext
++filter-object-alt = object ohne Alternativtext
++a11y-rule-object-alt = object ohne Alternativtext
++filter-area-alt = area ohne Alternativtext
++a11y-rule-area-alt = area ohne Alternativtext
++filter-role-img-alt = role=img ohne Alternativtext
++a11y-rule-role-img-alt = role=img ohne Alternativtext
++filter-svg-img-alt = SVG mit Bildrolle ohne zugänglichen Text
++a11y-rule-svg-img-alt = SVG mit Bildrolle ohne zugänglichen Text
++filter-server-side-image-map = serverseitige Image-Map
++a11y-rule-server-side-image-map = serverseitige Image-Map
++filter-video-caption = video ohne Untertitel-Track
++a11y-rule-video-caption = video ohne Untertitel-Track
++filter-no-autoplay-audio = audio/video spielt automatisch mit Ton
++a11y-rule-no-autoplay-audio = audio/video spielt automatisch mit Ton
++filter-button-name = Button ohne erkennbaren Text
++a11y-rule-button-name = Button ohne erkennbaren Text
++filter-input-button-name = Eingabe-Button ohne erkennbaren Text
++a11y-rule-input-button-name = Eingabe-Button ohne erkennbaren Text
++filter-link-in-text-block = Link im Fließtext nur durch Farbe unterscheidbar
++a11y-rule-link-in-text-block = Link im Fließtext nur durch Farbe unterscheidbar
++filter-link-name = Link ohne erkennbaren Text
++a11y-rule-link-name = Link ohne erkennbaren Text
++filter-select-name = select ohne zugänglichen Namen
++a11y-rule-select-name = select ohne zugänglichen Namen
++filter-summary-name = summary ohne erkennbaren Text
++a11y-rule-summary-name = summary ohne erkennbaren Text
++filter-marquee = marquee-Element
++a11y-rule-marquee = marquee-Element
++filter-blink = blink-Element
++a11y-rule-blink = blink-Element
++filter-nested-interactive = verschachtelte interaktive Elemente
++a11y-rule-nested-interactive = verschachtelte interaktive Elemente
++filter-listitem = li außerhalb von ul/ol
++a11y-rule-listitem = li außerhalb von ul/ol
++filter-list = ul/ol mit unzulässigen direkten Kindern
++a11y-rule-list = ul/ol mit unzulässigen direkten Kindern
++filter-definition-list = dl mit unzulässigem Inhalt/Reihenfolge
++a11y-rule-definition-list = dl mit unzulässigem Inhalt/Reihenfolge
++filter-dlitem = dt/dd außerhalb von dl
++a11y-rule-dlitem = dt/dd außerhalb von dl
++filter-th-has-data-cells = Tabellenkopf ohne zugehörige Datenzellen
++a11y-rule-th-has-data-cells = Tabellenkopf ohne zugehörige Datenzellen
++filter-td-headers-attr = headers-Attribut verweist auf Zelle außerhalb der Tabelle
++a11y-rule-td-headers-attr = headers-Attribut verweist auf Zelle außerhalb der Tabelle
++filter-meta-viewport = Viewport deaktiviert Zoom/Skalierung (`user-scalable=no` oder `maximum-scale < 2`)
++a11y-rule-meta-viewport = Viewport deaktiviert Zoom/Skalierung (`user-scalable=no` oder `maximum-scale < 2`)
++filter-valid-lang = ungültiger lang-Wert an einem Element im Body
++a11y-rule-valid-lang = ungültiger lang-Wert an einem Element im Body
++filter-color-contrast = Textkontrast unter 4,5:1 (normal) bzw. 3:1 (groß ≥ 24 px oder ≥ 18,66 px fett)
++a11y-rule-color-contrast = Textkontrast unter 4,5:1 (normal) bzw. 3:1 (groß ≥ 24 px oder ≥ 18,66 px fett)
++filter-meta-refresh-no-exceptions = verzögerter Meta Refresh jeglicher Dauer
++a11y-rule-meta-refresh-no-exceptions = verzögerter Meta Refresh jeglicher Dauer
++filter-identical-links-same-purpose = Links mit gleichem zugänglichen Namen führen zu verschiedenen Zielen
++a11y-rule-identical-links-same-purpose = Links mit gleichem zugänglichen Namen führen zu verschiedenen Zielen
++filter-color-contrast-enhanced = Textkontrast unter 7:1 bzw. 4,5:1 für großen Text
++a11y-rule-color-contrast-enhanced = Textkontrast unter 7:1 bzw. 4,5:1 für großen Text
++filter-autocomplete-valid = autocomplete-Wert ungültig oder unpassend für das Feld
++a11y-rule-autocomplete-valid = autocomplete-Wert ungültig oder unpassend für das Feld
++filter-avoid-inline-spacing = Inline-Textabstände mit `!important` nicht anpassbar
++a11y-rule-avoid-inline-spacing = Inline-Textabstände mit `!important` nicht anpassbar
++filter-target-size = Touch-Ziele zu klein bzw. zu eng
++a11y-rule-target-size = Touch-Ziele zu klein bzw. zu eng
+diff --git a/apps/desktop/src/features/detail/a11y/i18n/en.ftl b/apps/desktop/src/features/detail/a11y/i18n/en.ftl
+index 850f0fc5..2b364b8d 100644
+--- a/apps/desktop/src/features/detail/a11y/i18n/en.ftl
++++ b/apps/desktop/src/features/detail/a11y/i18n/en.ftl
+@@ -15,3 +15,191 @@ a11y-show-browser = Show in browser
+ a11y-copy-selector = Copy selector
+ a11y-no-address = The address cannot be opened in a browser.
+ a11y-rendered-not-stored = The rendered HTML is not stored. Turn on "Store rendered HTML" in the settings.
++
++# TECH-251 / TECH-259: own rule labels; IDs remain stable.
++filter-accesskeys = Duplicate access keys
++a11y-rule-accesskeys = Duplicate access keys
++filter-presentation-role-conflict = Presentational element exposes interactive semantics
++a11y-rule-presentation-role-conflict = Presentational element exposes interactive semantics
++filter-tabindex = Positive tab order
++a11y-rule-tabindex = Positive tab order
++filter-skip-link = Skip link target is missing or cannot receive focus
++a11y-rule-skip-link = Skip link target is missing or cannot receive focus
++filter-aria-text = Text role contains focusable descendants
++a11y-rule-aria-text = Text role contains focusable descendants
++filter-aria-dialog-name = Dialog has no accessible name
++a11y-rule-aria-dialog-name = Dialog has no accessible name
++filter-aria-allowed-role = ARIA role does not fit the element
++a11y-rule-aria-allowed-role = ARIA role does not fit the element
++filter-aria-treeitem-name = Tree item has no accessible name
++a11y-rule-aria-treeitem-name = Tree item has no accessible name
++filter-region = Content is outside page landmarks
++a11y-rule-region = Content is outside page landmarks
++filter-landmark-one-main = Main landmark is missing
++a11y-rule-landmark-one-main = Main landmark is missing
++filter-landmark-no-duplicate-banner = Multiple banner landmarks
++a11y-rule-landmark-no-duplicate-banner = Multiple banner landmarks
++filter-landmark-banner-is-top-level = Banner is nested in another landmark
++a11y-rule-landmark-banner-is-top-level = Banner is nested in another landmark
++filter-landmark-no-duplicate-contentinfo = Multiple content information landmarks
++a11y-rule-landmark-no-duplicate-contentinfo = Multiple content information landmarks
++filter-landmark-no-duplicate-main = Multiple main landmarks
++a11y-rule-landmark-no-duplicate-main = Multiple main landmarks
++filter-landmark-complementary-is-top-level = Complementary landmark is nested
++a11y-rule-landmark-complementary-is-top-level = Complementary landmark is nested
++filter-landmark-contentinfo-is-top-level = Content information landmark is nested
++a11y-rule-landmark-contentinfo-is-top-level = Content information landmark is nested
++filter-landmark-main-is-top-level = Main landmark is nested
++a11y-rule-landmark-main-is-top-level = Main landmark is nested
++filter-landmark-unique = Similar landmarks lack distinct names
++a11y-rule-landmark-unique = Similar landmarks lack distinct names
++filter-label-title-only = Form control lacks a visible label
++a11y-rule-label-title-only = Form control lacks a visible label
++filter-frame-tested = Frame content could not be checked
++a11y-rule-frame-tested = Frame content could not be checked
++filter-page-has-heading-one = First-level heading is missing
++a11y-rule-page-has-heading-one = First-level heading is missing
++filter-heading-order = Heading levels skip a level
++a11y-rule-heading-order = Heading levels skip a level
++filter-empty-heading = Heading is empty
++a11y-rule-empty-heading = Heading is empty
++filter-meta-viewport-large = Viewport prevents fivefold zoom
++a11y-rule-meta-viewport-large = Viewport prevents fivefold zoom
++filter-image-redundant-alt = Image alternative repeats nearby text
++a11y-rule-image-redundant-alt = Image alternative repeats nearby text
++filter-empty-table-header = Table header has no text
++a11y-rule-empty-table-header = Table header has no text
++filter-table-duplicate-name = Table summary repeats its caption
++a11y-rule-table-duplicate-name = Table summary repeats its caption
++filter-scope-attr-valid = Table scope attribute is misplaced
++a11y-rule-scope-attr-valid = Table scope attribute is misplaced
++filter-scrollable-region-focusable = Scrollable region cannot be reached by keyboard
++a11y-rule-scrollable-region-focusable = Scrollable region cannot be reached by keyboard
++filter-aria-required-attr = Required ARIA attributes are missing
++a11y-rule-aria-required-attr = Required ARIA attributes are missing
++filter-aria-conditional-attr = ARIA attribute conflicts with role conditions
++a11y-rule-aria-conditional-attr = ARIA attribute conflicts with role conditions
++filter-aria-valid-attr-value = ARIA attribute value is invalid
++a11y-rule-aria-valid-attr-value = ARIA attribute value is invalid
++filter-aria-valid-attr = ARIA attribute name is invalid
++a11y-rule-aria-valid-attr = ARIA attribute name is invalid
++filter-aria-command-name = Interactive ARIA command has no name
++a11y-rule-aria-command-name = Interactive ARIA command has no name
++filter-aria-input-field-name = ARIA input has no name
++a11y-rule-aria-input-field-name = ARIA input has no name
++filter-aria-meter-name = Meter has no accessible name
++a11y-rule-aria-meter-name = Meter has no accessible name
++filter-aria-progressbar-name = Progress bar has no accessible name
++a11y-rule-aria-progressbar-name = Progress bar has no accessible name
++filter-aria-required-parent = Required parent role is missing
++a11y-rule-aria-required-parent = Required parent role is missing
++filter-aria-roles = ARIA role is invalid
++a11y-rule-aria-roles = ARIA role is invalid
++filter-aria-toggle-field-name = ARIA toggle has no name
++a11y-rule-aria-toggle-field-name = ARIA toggle has no name
++filter-aria-tooltip-name = Tooltip has no accessible name
++a11y-rule-aria-tooltip-name = Tooltip has no accessible name
++filter-aria-required-children = Required child roles are missing
++a11y-rule-aria-required-children = Required child roles are missing
++filter-aria-deprecated-role = Deprecated ARIA role
++a11y-rule-aria-deprecated-role = Deprecated ARIA role
++filter-aria-braille-equivalent = Braille attribute has no non-Braille equivalent
++a11y-rule-aria-braille-equivalent = Braille attribute has no non-Braille equivalent
++filter-aria-hidden-focus = Hidden region contains focusable elements
++a11y-rule-aria-hidden-focus = Hidden region contains focusable elements
++filter-aria-hidden-body = Page body is hidden from assistive technology
++a11y-rule-aria-hidden-body = Page body is hidden from assistive technology
++filter-aria-prohibited-attr = ARIA attribute is prohibited for this role
++a11y-rule-aria-prohibited-attr = ARIA attribute is prohibited for this role
++filter-aria-allowed-attr = ARIA attribute is not allowed for this role
++a11y-rule-aria-allowed-attr = ARIA attribute is not allowed for this role
++filter-duplicate-id-aria = An ID referenced by ARIA or a label is duplicated
++a11y-rule-duplicate-id-aria = An ID referenced by ARIA or a label is duplicated
++filter-bypass = Repeated content cannot be skipped
++a11y-rule-bypass = Repeated content cannot be skipped
++filter-label = Form control has no label
++a11y-rule-label = Form control has no label
++filter-form-field-multiple-labels = Form control has multiple labels
++a11y-rule-form-field-multiple-labels = Form control has multiple labels
++filter-frame-title = Frame has no title
++a11y-rule-frame-title = Frame has no title
++filter-frame-title-unique = Frame titles are not distinct
++a11y-rule-frame-title-unique = Frame titles are not distinct
++filter-frame-focusable-content = Frame with focusable content is removed from tab order
++a11y-rule-frame-focusable-content = Frame with focusable content is removed from tab order
++filter-document-title = Document title is missing
++a11y-rule-document-title = Document title is missing
++filter-html-lang-valid = Document language is invalid
++a11y-rule-html-lang-valid = Document language is invalid
++filter-html-has-lang = Document language is missing
++a11y-rule-html-has-lang = Document language is missing
++filter-html-xml-lang-mismatch = Document language declarations disagree
++a11y-rule-html-xml-lang-mismatch = Document language declarations disagree
++filter-meta-refresh = Page uses a timed refresh
++a11y-rule-meta-refresh = Page uses a timed refresh
++filter-input-image-alt = Image input has no alternative text
++a11y-rule-input-image-alt = Image input has no alternative text
++filter-image-alt = Image has no alternative text
++a11y-rule-image-alt = Image has no alternative text
++filter-object-alt = Embedded object has no alternative text
++a11y-rule-object-alt = Embedded object has no alternative text
++filter-area-alt = Image map area has no alternative text
++a11y-rule-area-alt = Image map area has no alternative text
++filter-role-img-alt = Image role has no alternative text
++a11y-rule-role-img-alt = Image role has no alternative text
++filter-svg-img-alt = SVG image has no accessible text
++a11y-rule-svg-img-alt = SVG image has no accessible text
++filter-server-side-image-map = Server-side image map
++a11y-rule-server-side-image-map = Server-side image map
++filter-video-caption = Video has no caption track
++a11y-rule-video-caption = Video has no caption track
++filter-no-autoplay-audio = Media starts automatically with sound
++a11y-rule-no-autoplay-audio = Media starts automatically with sound
++filter-button-name = Button has no accessible name
++a11y-rule-button-name = Button has no accessible name
++filter-input-button-name = Input button has no accessible name
++a11y-rule-input-button-name = Input button has no accessible name
++filter-link-in-text-block = Text link is distinguished only by color
++a11y-rule-link-in-text-block = Text link is distinguished only by color
++filter-link-name = Link has no accessible name
++a11y-rule-link-name = Link has no accessible name
++filter-select-name = Select control has no accessible name
++a11y-rule-select-name = Select control has no accessible name
++filter-summary-name = Disclosure summary has no accessible name
++a11y-rule-summary-name = Disclosure summary has no accessible name
++filter-marquee = Moving marquee element
++a11y-rule-marquee = Moving marquee element
++filter-blink = Blinking element
++a11y-rule-blink = Blinking element
++filter-nested-interactive = Interactive elements are nested
++a11y-rule-nested-interactive = Interactive elements are nested
++filter-listitem = List item has no list parent
++a11y-rule-listitem = List item has no list parent
++filter-list = List contains invalid children
++a11y-rule-list = List contains invalid children
++filter-definition-list = Description list has invalid structure
++a11y-rule-definition-list = Description list has invalid structure
++filter-dlitem = Description item has no description list parent
++a11y-rule-dlitem = Description item has no description list parent
++filter-th-has-data-cells = Table header has no associated data cells
++a11y-rule-th-has-data-cells = Table header has no associated data cells
++filter-td-headers-attr = Table headers reference a cell in another table
++a11y-rule-td-headers-attr = Table headers reference a cell in another table
++filter-meta-viewport = Viewport restricts zoom
++a11y-rule-meta-viewport = Viewport restricts zoom
++filter-valid-lang = Element language is invalid
++a11y-rule-valid-lang = Element language is invalid
++filter-color-contrast = Text contrast is below AA requirements
++a11y-rule-color-contrast = Text contrast is below AA requirements
++filter-meta-refresh-no-exceptions = Page uses a delayed refresh
++a11y-rule-meta-refresh-no-exceptions = Page uses a delayed refresh
++filter-identical-links-same-purpose = Identically named links have different destinations
++a11y-rule-identical-links-same-purpose = Identically named links have different destinations
++filter-color-contrast-enhanced = Text contrast is below AAA requirements
++a11y-rule-color-contrast-enhanced = Text contrast is below AAA requirements
++filter-autocomplete-valid = Autocomplete value is invalid or inappropriate
++a11y-rule-autocomplete-valid = Autocomplete value is invalid or inappropriate
++filter-avoid-inline-spacing = Inline text spacing prevents customization
++a11y-rule-avoid-inline-spacing = Inline text spacing prevents customization
++filter-target-size = Pointer targets are too small or too close
++a11y-rule-target-size = Pointer targets are too small or too close
+diff --git a/crates/os-analyze/src/details/mod.rs b/crates/os-analyze/src/details/mod.rs
+index eb2efc01..338987dc 100644
+--- a/crates/os-analyze/src/details/mod.rs
++++ b/crates/os-analyze/src/details/mod.rs
+@@ -101,6 +101,11 @@ pub fn detail_source(kind: DetailKind) -> (&'static str, DetailFn) {
+ 
+ /// App views and paged exports share the same canonical adapters (UI-042/OUT-021).
+ pub fn app_detail_source(kind: DetailKind) -> (&'static str, DetailFn) {
++    match kind {
++        DetailKind::A11yRules => return ("M2-D21", crate::tabs::accessibility::rule_details),
++        DetailKind::A11yNodes => return ("M2-D21", crate::tabs::accessibility::node_details),
++        _ => {}
++    }
+     let (owner, source) = detail_source(kind);
+     (
+         owner,
+diff --git a/crates/os-analyze/src/tabs/pagespeed.rs b/crates/os-analyze/src/tabs/pagespeed.rs
+index 639129d2..e78bec08 100644
+--- a/crates/os-analyze/src/tabs/pagespeed.rs
++++ b/crates/os-analyze/src/tabs/pagespeed.rs
+@@ -549,3 +549,11 @@ impl ColumnSource for PageSpeedColumns {
+ pub fn column_source() -> Option<Box<dyn ColumnSource>> {
+     Some(Box::new(PageSpeedColumns))
+ }
++
++/// Shared PSI status columns for the Accessibility tab (TECH-251).
++pub fn accessibility_status_columns() -> Vec<ColumnDef> {
++    vec![
++        ColumnDef::dynamic("PSI Status", &status_sql(), ColumnKind::Text, true),
++        ColumnDef::dynamic("PSI Error", &error_sql(), ColumnKind::Text, true),
++    ]
++}
+diff --git a/crates/os-analyze/tests/catalog_split.rs b/crates/os-analyze/tests/catalog_split.rs
+index f93dd4dd..5ba98586 100644
+--- a/crates/os-analyze/tests/catalog_split.rs
++++ b/crates/os-analyze/tests/catalog_split.rs
+@@ -224,7 +224,111 @@ fn catalog_and_register_agree_through_issue_true_in_the_filter_files() {
+         );
+     }
+     // … und der Filter ist in der Registerdatei als `issue = true` geführt.
+-    let flagged: BTreeSet<(String, String)> = m1.union(&m2).cloned().collect();
++    // spec: TECH-251 / UI-064: the registry's dynamic axe placeholder expands to these 93 keys.
++    let axe_expected = [
++        "accesskeys",
++        "presentation-role-conflict",
++        "tabindex",
++        "skip-link",
++        "aria-text",
++        "aria-dialog-name",
++        "aria-allowed-role",
++        "aria-treeitem-name",
++        "region",
++        "landmark-one-main",
++        "landmark-no-duplicate-banner",
++        "landmark-banner-is-top-level",
++        "landmark-no-duplicate-contentinfo",
++        "landmark-no-duplicate-main",
++        "landmark-complementary-is-top-level",
++        "landmark-contentinfo-is-top-level",
++        "landmark-main-is-top-level",
++        "landmark-unique",
++        "label-title-only",
++        "frame-tested",
++        "page-has-heading-one",
++        "heading-order",
++        "empty-heading",
++        "meta-viewport-large",
++        "image-redundant-alt",
++        "empty-table-header",
++        "table-duplicate-name",
++        "scope-attr-valid",
++        "scrollable-region-focusable",
++        "aria-required-attr",
++        "aria-conditional-attr",
++        "aria-valid-attr-value",
++        "aria-valid-attr",
++        "aria-command-name",
++        "aria-input-field-name",
++        "aria-meter-name",
++        "aria-progressbar-name",
++        "aria-required-parent",
++        "aria-roles",
++        "aria-toggle-field-name",
++        "aria-tooltip-name",
++        "aria-required-children",
++        "aria-deprecated-role",
++        "aria-braille-equivalent",
++        "aria-hidden-focus",
++        "aria-hidden-body",
++        "aria-prohibited-attr",
++        "aria-allowed-attr",
++        "duplicate-id-aria",
++        "bypass",
++        "label",
++        "form-field-multiple-labels",
++        "frame-title",
++        "frame-title-unique",
++        "frame-focusable-content",
++        "document-title",
++        "html-lang-valid",
++        "html-has-lang",
++        "html-xml-lang-mismatch",
++        "meta-refresh",
++        "input-image-alt",
++        "image-alt",
++        "object-alt",
++        "area-alt",
++        "role-img-alt",
++        "svg-img-alt",
++        "server-side-image-map",
++        "video-caption",
++        "no-autoplay-audio",
++        "button-name",
++        "input-button-name",
++        "link-in-text-block",
++        "link-name",
++        "select-name",
++        "summary-name",
++        "marquee",
++        "blink",
++        "nested-interactive",
++        "listitem",
++        "list",
++        "definition-list",
++        "dlitem",
++        "th-has-data-cells",
++        "td-headers-attr",
++        "meta-viewport",
++        "valid-lang",
++        "color-contrast",
++        "meta-refresh-no-exceptions",
++        "identical-links-same-purpose",
++        "color-contrast-enhanced",
++        "autocomplete-valid",
++        "avoid-inline-spacing",
++        "target-size",
++    ];
++    let flagged: BTreeSet<(String, String)> = m1
++        .union(&m2)
++        .cloned()
++        .chain(
++            axe_expected
++                .into_iter()
++                .map(|id| ("accessibility".into(), id.into())),
++        )
++        .collect();
+     for key in &in_catalog {
+         assert!(
+             flagged.contains(key),
+diff --git a/crates/os-analyze/tests/filters_registry.rs b/crates/os-analyze/tests/filters_registry.rs
+index 26e8678d..421a5015 100644
+--- a/crates/os-analyze/tests/filters_registry.rs
++++ b/crates/os-analyze/tests/filters_registry.rs
+@@ -101,6 +101,23 @@ fn expected_filters(tab_id: &str) -> Vec<(String, String, Vec<String>)> {
+             }
+         }
+     }
++    // spec: TECH-251 / TECH-252: expanded expectation for the dynamic axe placeholder.
++    if tab_id == "Accessibility" {
++        out.extend(
++            include_str!("../../../tests/fixtures/ui/fx-ui-a11y/rule-ids.txt")
++                .lines()
++                .map(|id| {
++                    (
++                        id.to_owned(),
++                        "live".into(),
++                        vec![
++                            "extraction.accessibility".into(),
++                            "rendering.mode=javascript".into(),
++                        ],
++                    )
++                }),
++        );
++    }
+     out
+ }
+ 
+@@ -288,7 +305,7 @@ fn every_tab_is_a_real_definition_or_a_marked_stub() {
+     // M2-D01 implements Meta Keywords; M2-D05 Pagination, M2-D14 Custom Search, M2-I03 Search Console, M2-I04 PageSpeed, M2-I02 Analytics.
+     // M2-I05 ersetzt den Link-Metrics-Stub (K2-60, INTEG-151).
+     assert_eq!(
+-        stubs, 5,
++        stubs, 4,
+         "Stub-Tabs (Structured Data: M2-D09, Validation: M2-D10, Custom Extraction: M2-D15)"
+     );
+ }
+diff --git a/crates/os-analyze/tests/framework_registry.rs b/crates/os-analyze/tests/framework_registry.rs
+index 9b530347..9ca1918d 100644
+--- a/crates/os-analyze/tests/framework_registry.rs
++++ b/crates/os-analyze/tests/framework_registry.rs
+@@ -134,7 +134,8 @@ fn overview_labels_use_the_current_thresholds_and_states_are_complete() {
+     let all_filters = counts.iter().filter(|c| c.filter == "All");
+     for c in all_filters {
+         // M2-D09 replaces the SD stub: All requires at least one enabled format (TECH-183).
+-        if c.tab == "Structured Data" {
++        // spec: TECH-250: Accessibility All also requires its extraction switch.
++        if ["Structured Data", "Accessibility"].contains(&c.tab.as_str()) {
+             assert!(matches!(c.state, FilterState::NeedsConfig(_)));
+             assert!(c.count.is_none() && c.pct.is_none());
+             continue;
+diff --git a/crates/os-analyze/tests/issues_catalog.rs b/crates/os-analyze/tests/issues_catalog.rs
+index bd5ab723..ed8d94e4 100644
+--- a/crates/os-analyze/tests/issues_catalog.rs
++++ b/crates/os-analyze/tests/issues_catalog.rs
+@@ -56,10 +56,38 @@ fn catalog_ids_are_in_registry_and_all_issue_filters_are_in_catalog() {
+                 .map(move |f| (tab.clone(), f["id"].as_str().unwrap().to_string()))
+         })
+         .collect();
+-    let m2: toml::Table = std::fs::read_to_string(repo_root().join("docs/plan/M2-filters.toml"))
++    let mut m2: toml::Table =
++        std::fs::read_to_string(repo_root().join("docs/plan/M2-filters.toml"))
++            .unwrap()
++            .parse()
++            .unwrap();
++    // spec: TECH-251 / UI-064: expected expansion of the dynamic axe registry entry.
++    let a11y = m2
++        .get_mut("tab")
+         .unwrap()
+-        .parse()
++        .as_array_mut()
++        .unwrap()
++        .iter_mut()
++        .find(|tab| tab["id"].as_str() == Some("Accessibility"))
+         .unwrap();
++    a11y.get_mut("filters")
++        .unwrap()
++        .as_array_mut()
++        .unwrap()
++        .extend(
++            include_str!("../../../tests/fixtures/ui/fx-ui-a11y/rule-ids.txt")
++                .lines()
++                .map(|id| {
++                    toml::Value::Table(
++                        [
++                            ("id".into(), toml::Value::String(id.into())),
++                            ("issue".into(), toml::Value::Boolean(true)),
++                        ]
++                        .into_iter()
++                        .collect(),
++                    )
++                }),
++        );
+     for tab in m2["tab"].as_array().unwrap() {
+         for filter in tab["filters"].as_array().unwrap() {
+             all.insert((
+diff --git a/crates/os-app/src/commands/export.rs b/crates/os-app/src/commands/export.rs
+index 5d62c308..9f0710bb 100644
+--- a/crates/os-app/src/commands/export.rs
++++ b/crates/os-app/src/commands/export.rs
+@@ -492,6 +492,27 @@ fn export_detail<'a>(
+                         .read_pool()
+                         .run_snapshot(s.key, move |file, _| {
+                             Ok((|| {
++                                if let Some((kind, selected, params, sort)) = view::detail_spec(&spec) {
++                                    if matches!(kind, os_analyze::details::DetailKind::A11yRules | os_analyze::details::DetailKind::A11yNodes) {
++                                        if let Some(gate) = view::detail_gate(kind, &s.config) {
++                                            return Err(CmdError::new(ErrorCode::Unsupported, "err-detail-unavailable").with_arg("state", serde_json::to_value(gate).unwrap_or_default()));
++                                        }
++                                        let stage = Stage::new(parent(&path))?;
++                                        let staged = stage.0.join(path.file_name().unwrap_or_default());
++                                        let tabs = os_analyze::tabs::configured_for_file(&s.config, file);
++                                        let job = TableJob {file, cfg: &s.config, tabs: &tabs, entry_name: "Accessibility Details"};
++                                        let report = |n| progress.report(n, None);
++                                        let mut context = ExportCtx {cancel: &worker_token, progress: &report, skip_empty: false, workbook: None, skipped: vec![]};
++                                        let files = os_export::catalog::bulk_a11y::export_details(&job, &os_analyze::details::DetailReq {url_ids: &selected, params: &params, sort: &sort, offset: 0, limit: 500}, &staged, fmt, &mut context).map_err(export_error)?;
++                                        let mut published = Vec::new();
++                                        for info in files {
++                                            let target = parent(&path).join(info.path.file_name().unwrap_or_default());
++                                            published.push(stage.publish(&info.path, &target, &worker_token)?);
++                                        }
++                                        let first = published.first().expect("detail files");
++                                        return Ok(serde_json::json!({"path": first.path, "bytes": published.iter().map(|f|f.bytes).sum::<u64>(), "files": published}));
++                                    }
++                                }
+                                 let stage = Stage::new(parent(&path))?;
+                                 let staged = stage.0.join("detail");
+                                 let mut out = detail_writer(
+diff --git a/crates/os-app/src/commands/view.rs b/crates/os-app/src/commands/view.rs
+index dbb8455e..73cc8453 100644
+--- a/crates/os-app/src/commands/view.rs
++++ b/crates/os-app/src/commands/view.rs
+@@ -696,6 +696,12 @@ async fn page_query(
+                                     .min(i64::MAX as u64) as i64
+                             })
+                             .collect();
++                        let keys = if kind == DetailKind::A11yNodes {
++                            os_analyze::tabs::accessibility::node_keys(file, &req)
++                                .map_err(view_error)?
++                        } else {
++                            keys
++                        };
+                         (names, kinds, p.rows, keys, p.total, None)
+                     } else {
+                         let (mut selection, req) = link_selection(&spec, &cfg, offset, limit)?;
+diff --git a/crates/os-app/tests/manifest_contract.rs b/crates/os-app/tests/manifest_contract.rs
+index e5bedfb0..a9840b68 100644
+--- a/crates/os-app/tests/manifest_contract.rs
++++ b/crates/os-app/tests/manifest_contract.rs
+@@ -376,7 +376,7 @@ async fn stubs_answer_unsupported_with_command_and_owner() {
+         owners.insert(err.args["owner"].as_str().unwrap().to_string());
+     }
+     // Besitzer laut Modulkarte 3.6
+-    for o in ["M2-K09", "M2-K17", "M2-D21", "M2-T02", "M2-U17"] {
++    for o in ["M2-K09", "M2-K17", "M2-T02", "M2-U17"] {
+         assert!(owners.contains(o), "kein Stub mit Besitzer {o}");
+     }
+ }
+diff --git a/crates/os-engine/src/render_glue.rs b/crates/os-engine/src/render_glue.rs
+index 9b028746..35640d6e 100644
+--- a/crates/os-engine/src/render_glue.rs
++++ b/crates/os-engine/src/render_glue.rs
+@@ -343,6 +343,7 @@ pub(crate) fn options<F: Fetch>(
+         .and_then(|f| os_fetch::auth::AuthMatcher::new(&f.basic_auth).ok())
+         .unwrap_or_default();
+     let mut opts = RenderOpts {
++        accessibility: cfg.extraction.accessibility,
+         retry_document_context: true,
+         disable_cookies: cfg.advanced.cookies == os_model::CookieMode::None,
+         return_cookies: cfg.advanced.cookies != os_model::CookieMode::None,
+diff --git a/crates/os-engine/src/worker.rs b/crates/os-engine/src/worker.rs
+index c53c7c32..8befa556 100644
+--- a/crates/os-engine/src/worker.rs
++++ b/crates/os-engine/src/worker.rs
+@@ -673,6 +673,12 @@ async fn render_page<F: Fetch>(
+     };
+     let page = match outcome {
+         Ok(mut rendered) => {
++            if let Some(payload) = &rendered.accessibility {
++                match os_render::axe::decode(payload, item.id) {
++                    Ok(result) => a.extra.a11y.push(result),
++                    Err(error) => tracing::warn!(%error, "Invalid accessibility result"),
++                }
++            }
+             if let Some(network) = rendered.body_network.take() {
+                 rendered.network = network;
+                 for (url, facts) in &mut rendered.images {
+diff --git a/crates/os-render/src/api.rs b/crates/os-render/src/api.rs
+index 74fcf984..2706ecea 100644
+--- a/crates/os-render/src/api.rs
++++ b/crates/os-render/src/api.rs
+@@ -168,6 +168,8 @@ pub struct Cookie {
+ /// deshalb bewusst kein PartialEq.
+ #[derive(Debug, Clone)]
+ pub struct RenderOpts {
++    /// Run the bundled accessibility audit in this render pass.
++    pub accessibility: bool,
+     /// Opt in to at most two retries after a navigation destroys the DOM context.
+     /// False preserves existing callers, including custom request identities.
+     pub retry_document_context: bool,
+@@ -204,6 +206,7 @@ pub struct RenderOpts {
+ impl Default for RenderOpts {
+     fn default() -> Self {
+         Self {
++            accessibility: false,
+             retry_document_context: false,
+             capture_cookie_assignments: false,
+             disable_cookies: false,
+@@ -276,6 +279,8 @@ impl RenderOpts {
+ }
+ #[derive(Debug, Clone, PartialEq, Eq, Default)]
+ pub struct RenderedPage {
++    /// Complete axe result; absent when accessibility extraction is disabled.
++    pub accessibility: Option<String>,
+     /// Body-only transfer sizes; excludes HTTP headers (CRAWL-022).
+     pub body_network: Option<Vec<NetworkEntry>>,
+     /// JavaScript cookie assignments, retained separately from HTTP Set-Cookie.
+diff --git a/crates/os-render/src/page.rs b/crates/os-render/src/page.rs
+index e51e4f81..a71c1443 100644
+--- a/crates/os-render/src/page.rs
++++ b/crates/os-render/src/page.rs
+@@ -485,6 +485,11 @@ async fn run(
+     } else {
+         None
+     };
++    let accessibility = if opts.accessibility {
++        Some(crate::axe::audit(page).await?)
++    } else {
++        None
++    };
+     drop(intercept);
+     let mut data = capture.data.lock().expect("capture");
+     data.console.sort_by_key(|e| e.timestamp_ms);
+@@ -497,6 +502,7 @@ async fn run(
+             .map(|r| r.bytes);
+     }
+     Ok(RenderedPage {
++        accessibility,
+         body_network: Some(data.body_network()),
+         cookie_assignments,
+         cookies,
+diff --git a/tests/golden/out-cli/help_export_tabs.txt b/tests/golden/out-cli/help_export_tabs.txt
+index afd116c2..735761fe 100644
+--- a/tests/golden/out-cli/help_export_tabs.txt
++++ b/tests/golden/out-cli/help_export_tabs.txt
+@@ -271,6 +271,99 @@ Mobile:Illegible Font Size
+ Mobile:Unsupported Plugins
+ Mobile:Mobile Alternate Link
+ Accessibility:All
++Accessibility:accesskeys
++Accessibility:presentation-role-conflict
++Accessibility:tabindex
++Accessibility:skip-link
++Accessibility:aria-text
++Accessibility:aria-dialog-name
++Accessibility:aria-allowed-role
++Accessibility:aria-treeitem-name
++Accessibility:region
++Accessibility:landmark-one-main
++Accessibility:landmark-no-duplicate-banner
++Accessibility:landmark-banner-is-top-level
++Accessibility:landmark-no-duplicate-contentinfo
++Accessibility:landmark-no-duplicate-main
++Accessibility:landmark-complementary-is-top-level
++Accessibility:landmark-contentinfo-is-top-level
++Accessibility:landmark-main-is-top-level
++Accessibility:landmark-unique
++Accessibility:label-title-only
++Accessibility:frame-tested
++Accessibility:page-has-heading-one
++Accessibility:heading-order
++Accessibility:empty-heading
++Accessibility:meta-viewport-large
++Accessibility:image-redundant-alt
++Accessibility:empty-table-header
++Accessibility:table-duplicate-name
++Accessibility:scope-attr-valid
++Accessibility:scrollable-region-focusable
++Accessibility:aria-required-attr
++Accessibility:aria-conditional-attr
++Accessibility:aria-valid-attr-value
++Accessibility:aria-valid-attr
++Accessibility:aria-command-name
++Accessibility:aria-input-field-name
++Accessibility:aria-meter-name
++Accessibility:aria-progressbar-name
++Accessibility:aria-required-parent
++Accessibility:aria-roles
++Accessibility:aria-toggle-field-name
++Accessibility:aria-tooltip-name
++Accessibility:aria-required-children
++Accessibility:aria-deprecated-role
++Accessibility:aria-braille-equivalent
++Accessibility:aria-hidden-focus
++Accessibility:aria-hidden-body
++Accessibility:aria-prohibited-attr
++Accessibility:aria-allowed-attr
++Accessibility:duplicate-id-aria
++Accessibility:bypass
++Accessibility:label
++Accessibility:form-field-multiple-labels
++Accessibility:frame-title
++Accessibility:frame-title-unique
++Accessibility:frame-focusable-content
++Accessibility:document-title
++Accessibility:html-lang-valid
++Accessibility:html-has-lang
++Accessibility:html-xml-lang-mismatch
++Accessibility:meta-refresh
++Accessibility:input-image-alt
++Accessibility:image-alt
++Accessibility:object-alt
++Accessibility:area-alt
++Accessibility:role-img-alt
++Accessibility:svg-img-alt
++Accessibility:server-side-image-map
++Accessibility:video-caption
++Accessibility:no-autoplay-audio
++Accessibility:button-name
++Accessibility:input-button-name
++Accessibility:link-in-text-block
++Accessibility:link-name
++Accessibility:select-name
++Accessibility:summary-name
++Accessibility:marquee
++Accessibility:blink
++Accessibility:nested-interactive
++Accessibility:listitem
++Accessibility:list
++Accessibility:definition-list
++Accessibility:dlitem
++Accessibility:th-has-data-cells
++Accessibility:td-headers-attr
++Accessibility:meta-viewport
++Accessibility:valid-lang
++Accessibility:color-contrast
++Accessibility:meta-refresh-no-exceptions
++Accessibility:identical-links-same-purpose
++Accessibility:color-contrast-enhanced
++Accessibility:autocomplete-valid
++Accessibility:avoid-inline-spacing
++Accessibility:target-size
+ Custom Search:All
+ Custom Extraction:All
+ Custom JavaScript:All
+diff --git a/tests/golden/out-cli/list_exports.txt b/tests/golden/out-cli/list_exports.txt
+index 987b86cc..3db3a773 100644
+--- a/tests/golden/out-cli/list_exports.txt
++++ b/tests/golden/out-cli/list_exports.txt
+@@ -271,6 +271,99 @@ Mobile:Illegible Font Size
+ Mobile:Unsupported Plugins
+ Mobile:Mobile Alternate Link
+ Accessibility:All
++Accessibility:accesskeys
++Accessibility:presentation-role-conflict
++Accessibility:tabindex
++Accessibility:skip-link
++Accessibility:aria-text
++Accessibility:aria-dialog-name
++Accessibility:aria-allowed-role
++Accessibility:aria-treeitem-name
++Accessibility:region
++Accessibility:landmark-one-main
++Accessibility:landmark-no-duplicate-banner
++Accessibility:landmark-banner-is-top-level
++Accessibility:landmark-no-duplicate-contentinfo
++Accessibility:landmark-no-duplicate-main
++Accessibility:landmark-complementary-is-top-level
++Accessibility:landmark-contentinfo-is-top-level
++Accessibility:landmark-main-is-top-level
++Accessibility:landmark-unique
++Accessibility:label-title-only
++Accessibility:frame-tested
++Accessibility:page-has-heading-one
++Accessibility:heading-order
++Accessibility:empty-heading
++Accessibility:meta-viewport-large
++Accessibility:image-redundant-alt
++Accessibility:empty-table-header
++Accessibility:table-duplicate-name
++Accessibility:scope-attr-valid
++Accessibility:scrollable-region-focusable
++Accessibility:aria-required-attr
++Accessibility:aria-conditional-attr
++Accessibility:aria-valid-attr-value
++Accessibility:aria-valid-attr
++Accessibility:aria-command-name
++Accessibility:aria-input-field-name
++Accessibility:aria-meter-name
++Accessibility:aria-progressbar-name
++Accessibility:aria-required-parent
++Accessibility:aria-roles
++Accessibility:aria-toggle-field-name
++Accessibility:aria-tooltip-name
++Accessibility:aria-required-children
++Accessibility:aria-deprecated-role
++Accessibility:aria-braille-equivalent
++Accessibility:aria-hidden-focus
++Accessibility:aria-hidden-body
++Accessibility:aria-prohibited-attr
++Accessibility:aria-allowed-attr
++Accessibility:duplicate-id-aria
++Accessibility:bypass
++Accessibility:label
++Accessibility:form-field-multiple-labels
++Accessibility:frame-title
++Accessibility:frame-title-unique
++Accessibility:frame-focusable-content
++Accessibility:document-title
++Accessibility:html-lang-valid
++Accessibility:html-has-lang
++Accessibility:html-xml-lang-mismatch
++Accessibility:meta-refresh
++Accessibility:input-image-alt
++Accessibility:image-alt
++Accessibility:object-alt
++Accessibility:area-alt
++Accessibility:role-img-alt
++Accessibility:svg-img-alt
++Accessibility:server-side-image-map
++Accessibility:video-caption
++Accessibility:no-autoplay-audio
++Accessibility:button-name
++Accessibility:input-button-name
++Accessibility:link-in-text-block
++Accessibility:link-name
++Accessibility:select-name
++Accessibility:summary-name
++Accessibility:marquee
++Accessibility:blink
++Accessibility:nested-interactive
++Accessibility:listitem
++Accessibility:list
++Accessibility:definition-list
++Accessibility:dlitem
++Accessibility:th-has-data-cells
++Accessibility:td-headers-attr
++Accessibility:meta-viewport
++Accessibility:valid-lang
++Accessibility:color-contrast
++Accessibility:meta-refresh-no-exceptions
++Accessibility:identical-links-same-purpose
++Accessibility:color-contrast-enhanced
++Accessibility:autocomplete-valid
++Accessibility:avoid-inline-spacing
++Accessibility:target-size
+ Custom Search:All
+ Custom Extraction:All
+ Custom JavaScript:All

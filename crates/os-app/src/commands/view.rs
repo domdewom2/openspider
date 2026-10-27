@@ -700,6 +700,12 @@ async fn page_query(
                             })
                             .collect();
                         let keys = context_keys.unwrap_or(keys);
+                        let keys = if kind == DetailKind::A11yNodes {
+                            os_analyze::tabs::accessibility::node_keys(file, &req)
+                                .map_err(view_error)?
+                        } else {
+                            keys
+                        };
                         (names, kinds, p.rows, keys, p.total, None)
                     } else {
                         let (mut selection, req) = link_selection(&spec, &cfg, offset, limit)?;

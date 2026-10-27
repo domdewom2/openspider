@@ -549,3 +549,11 @@ impl ColumnSource for PageSpeedColumns {
 pub fn column_source() -> Option<Box<dyn ColumnSource>> {
     Some(Box::new(PageSpeedColumns))
 }
+
+/// Shared PSI status columns for the Accessibility tab (TECH-251).
+pub fn accessibility_status_columns() -> Vec<ColumnDef> {
+    vec![
+        ColumnDef::dynamic("PSI Status", &status_sql(), ColumnKind::Text, true),
+        ColumnDef::dynamic("PSI Error", &error_sql(), ColumnKind::Text, true),
+    ]
+}

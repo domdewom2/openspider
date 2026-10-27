@@ -36,6 +36,11 @@
     }
   },
   "bundle": {
+    "resources": {
+      "../../../crates/os-render/resources/axe/axe.min.js": "axe/axe.min.js",
+      "../../../crates/os-render/resources/axe/LICENSE": "axe/LICENSE",
+      "../../../crates/os-render/resources/axe/THIRD_PARTY_NOTICES": "axe/THIRD_PARTY_NOTICES"
+    },
     "active": true,
     "targets": "all",
     "icon": [

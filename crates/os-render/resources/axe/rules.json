@@ -1,0 +1,560 @@
+[
+  {
+    "id": "accesskeys",
+    "issue": "accesskey-Werte sind nicht eindeutig",
+    "group": "Best Practice",
+    "priority": "High"
+  },
+  {
+    "id": "presentation-role-conflict",
+    "issue": "als präsentational markierte Elemente sind dennoch fokussierbar/mit globalen ARIA-Attributen",
+    "group": "Best Practice",
+    "priority": "Low"
+  },
+  {
+    "id": "tabindex",
+    "issue": "tabindex größer 0",
+    "group": "Best Practice",
+    "priority": "High"
+  },
+  {
+    "id": "skip-link",
+    "issue": "Ziel eines Sprunglinks fehlt oder ist nicht fokussierbar",
+    "group": "Best Practice",
+    "priority": "Medium"
+  },
+  {
+    "id": "aria-text",
+    "issue": "role=text mit fokussierbaren Nachfahren",
+    "group": "Best Practice",
+    "priority": "High"
+  },
+  {
+    "id": "aria-dialog-name",
+    "issue": "dialog/alertdialog ohne zugänglichen Namen",
+    "group": "Best Practice",
+    "priority": "High"
+  },
+  {
+    "id": "aria-allowed-role",
+    "issue": "ARIA-Rolle passt nicht zum Element",
+    "group": "Best Practice",
+    "priority": "Low"
+  },
+  {
+    "id": "aria-treeitem-name",
+    "issue": "treeitem ohne zugänglichen Namen",
+    "group": "Best Practice",
+    "priority": "High"
+  },
+  {
+    "id": "region",
+    "issue": "Seiteninhalt außerhalb von Landmarks",
+    "group": "Best Practice",
+    "priority": "Medium"
+  },
+  {
+    "id": "landmark-one-main",
+    "issue": "kein main-Landmark",
+    "group": "Best Practice",
+    "priority": "Medium"
+  },
+  {
+    "id": "landmark-no-duplicate-banner",
+    "issue": "mehr als ein banner",
+    "group": "Best Practice",
+    "priority": "Medium"
+  },
+  {
+    "id": "landmark-banner-is-top-level",
+    "issue": "banner in anderem Landmark verschachtelt",
+    "group": "Best Practice",
+    "priority": "Medium"
+  },
+  {
+    "id": "landmark-no-duplicate-contentinfo",
+    "issue": "mehr als ein contentinfo",
+    "group": "Best Practice",
+    "priority": "Medium"
+  },
+  {
+    "id": "landmark-no-duplicate-main",
+    "issue": "mehr als ein main",
+    "group": "Best Practice",
+    "priority": "Medium"
+  },
+  {
+    "id": "landmark-complementary-is-top-level",
+    "issue": "complementary/aside nicht auf oberster Ebene",
+    "group": "Best Practice",
+    "priority": "Medium"
+  },
+  {
+    "id": "landmark-contentinfo-is-top-level",
+    "issue": "contentinfo verschachtelt",
+    "group": "Best Practice",
+    "priority": "Medium"
+  },
+  {
+    "id": "landmark-main-is-top-level",
+    "issue": "main verschachtelt",
+    "group": "Best Practice",
+    "priority": "Medium"
+  },
+  {
+    "id": "landmark-unique",
+    "issue": "gleichartige Landmarks ohne unterscheidenden Namen",
+    "group": "Best Practice",
+    "priority": "Medium"
+  },
+  {
+    "id": "label-title-only",
+    "issue": "Formularfeld nur über title/aria-describedby beschriftet, kein sichtbares Label",
+    "group": "Best Practice",
+    "priority": "High"
+  },
+  {
+    "id": "frame-tested",
+    "issue": "iframe-Inhalt konnte nicht mit axe geprüft werden",
+    "group": "Best Practice",
+    "priority": "High"
+  },
+  {
+    "id": "page-has-heading-one",
+    "issue": "keine h1",
+    "group": "Best Practice",
+    "priority": "Medium"
+  },
+  {
+    "id": "heading-order",
+    "issue": "Überschriftenebene springt um mehr als 1",
+    "group": "Best Practice",
+    "priority": "Medium"
+  },
+  {
+    "id": "empty-heading",
+    "issue": "leere Überschrift",
+    "group": "Best Practice",
+    "priority": "Low"
+  },
+  {
+    "id": "meta-viewport-large",
+    "issue": "Viewport verhindert Zoom bis 500 %",
+    "group": "Best Practice",
+    "priority": "Low"
+  },
+  {
+    "id": "image-redundant-alt",
+    "issue": "Alt-Text wiederholt umgebenden Text",
+    "group": "Best Practice",
+    "priority": "Low"
+  },
+  {
+    "id": "empty-table-header",
+    "issue": "Tabellenkopfzelle ohne erkennbaren Text",
+    "group": "Best Practice",
+    "priority": "Low"
+  },
+  {
+    "id": "table-duplicate-name",
+    "issue": "Tabelle mit identischem summary und caption",
+    "group": "Best Practice",
+    "priority": "Low"
+  },
+  {
+    "id": "scope-attr-valid",
+    "issue": "scope-Attribut falsch verwendet",
+    "group": "Best Practice",
+    "priority": "High"
+  },
+  {
+    "id": "scrollable-region-focusable",
+    "issue": "scrollbarer Bereich nicht per Tastatur erreichbar",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-required-attr",
+    "issue": "Pflicht-ARIA-Attribute der Rolle fehlen",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-conditional-attr",
+    "issue": "ARIA-Attribut entgegen den Regeln der Rolle verwendet",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-valid-attr-value",
+    "issue": "ungültiger Wert eines ARIA-Attributs",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-valid-attr",
+    "issue": "ungültiger ARIA-Attributname",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-command-name",
+    "issue": "button/link/menuitem-Rolle ohne Namen",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-input-field-name",
+    "issue": "ARIA-Eingabefeld ohne Namen",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-meter-name",
+    "issue": "meter ohne Namen",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-progressbar-name",
+    "issue": "progressbar ohne Namen",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-required-parent",
+    "issue": "Rolle ohne erforderliches Elternelement",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-roles",
+    "issue": "ungültiger role-Wert",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-toggle-field-name",
+    "issue": "Umschaltfeld ohne Namen",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-tooltip-name",
+    "issue": "tooltip ohne Namen",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-required-children",
+    "issue": "Rolle ohne erforderliche Kindrollen",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-deprecated-role",
+    "issue": "veraltete ARIA-Rolle",
+    "group": "WCAG 2.0 A",
+    "priority": "Low"
+  },
+  {
+    "id": "aria-braille-equivalent",
+    "issue": "Braille-Attribut ohne Nicht-Braille-Gegenstück",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-hidden-focus",
+    "issue": "aria-hidden-Bereich enthält fokussierbare Elemente",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-hidden-body",
+    "issue": "aria-hidden=\"true\" am body",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-prohibited-attr",
+    "issue": "für die Rolle verbotenes ARIA-Attribut",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "aria-allowed-attr",
+    "issue": "für die Rolle nicht erlaubtes ARIA-Attribut",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "duplicate-id-aria",
+    "issue": "in ARIA/Labels referenzierte ID doppelt",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "bypass",
+    "issue": "kein Mechanismus zum Überspringen wiederholter Blöcke",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "label",
+    "issue": "Formularfeld ohne Beschriftung",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "form-field-multiple-labels",
+    "issue": "Formularfeld mit mehreren label-Elementen",
+    "group": "WCAG 2.0 A",
+    "priority": "Medium"
+  },
+  {
+    "id": "frame-title",
+    "issue": "iframe/frame ohne title",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "frame-title-unique",
+    "issue": "iframe-titles nicht eindeutig",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "frame-focusable-content",
+    "issue": "Frame mit fokussierbarem Inhalt hat tabindex=-1",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "document-title",
+    "issue": "kein `<title>`",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "html-lang-valid",
+    "issue": "ungültiger lang-Wert am html-Element",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "html-has-lang",
+    "issue": "html-Element ohne lang",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "html-xml-lang-mismatch",
+    "issue": "lang und xml:lang widersprechen sich",
+    "group": "WCAG 2.0 A",
+    "priority": "Medium"
+  },
+  {
+    "id": "meta-refresh",
+    "issue": "zeitgesteuerter Meta Refresh (< 20 h)",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "input-image-alt",
+    "issue": "Bild-Button ohne Alternativtext",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "image-alt",
+    "issue": "Bild ohne Alternativtext",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "object-alt",
+    "issue": "object ohne Alternativtext",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "area-alt",
+    "issue": "area ohne Alternativtext",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "role-img-alt",
+    "issue": "role=img ohne Alternativtext",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "svg-img-alt",
+    "issue": "SVG mit Bildrolle ohne zugänglichen Text",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "server-side-image-map",
+    "issue": "serverseitige Image-Map",
+    "group": "WCAG 2.0 A",
+    "priority": "Low"
+  },
+  {
+    "id": "video-caption",
+    "issue": "video ohne Untertitel-Track",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "no-autoplay-audio",
+    "issue": "audio/video spielt automatisch mit Ton",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "button-name",
+    "issue": "Button ohne erkennbaren Text",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "input-button-name",
+    "issue": "Eingabe-Button ohne erkennbaren Text",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "link-in-text-block",
+    "issue": "Link im Fließtext nur durch Farbe unterscheidbar",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "link-name",
+    "issue": "Link ohne erkennbaren Text",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "select-name",
+    "issue": "select ohne zugänglichen Namen",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "summary-name",
+    "issue": "summary ohne erkennbaren Text",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "marquee",
+    "issue": "marquee-Element",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "blink",
+    "issue": "blink-Element",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "nested-interactive",
+    "issue": "verschachtelte interaktive Elemente",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "listitem",
+    "issue": "li außerhalb von ul/ol",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "list",
+    "issue": "ul/ol mit unzulässigen direkten Kindern",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "definition-list",
+    "issue": "dl mit unzulässigem Inhalt/Reihenfolge",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "dlitem",
+    "issue": "dt/dd außerhalb von dl",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "th-has-data-cells",
+    "issue": "Tabellenkopf ohne zugehörige Datenzellen",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "td-headers-attr",
+    "issue": "headers-Attribut verweist auf Zelle außerhalb der Tabelle",
+    "group": "WCAG 2.0 A",
+    "priority": "High"
+  },
+  {
+    "id": "meta-viewport",
+    "issue": "Viewport deaktiviert Zoom/Skalierung (`user-scalable=no` oder `maximum-scale < 2`)",
+    "group": "WCAG 2.0 AA",
+    "priority": "High"
+  },
+  {
+    "id": "valid-lang",
+    "issue": "ungültiger lang-Wert an einem Element im Body",
+    "group": "WCAG 2.0 AA",
+    "priority": "High"
+  },
+  {
+    "id": "color-contrast",
+    "issue": "Textkontrast unter 4,5:1 (normal) bzw. 3:1 (groß ≥ 24 px oder ≥ 18,66 px fett)",
+    "group": "WCAG 2.0 AA",
+    "priority": "High"
+  },
+  {
+    "id": "meta-refresh-no-exceptions",
+    "issue": "verzögerter Meta Refresh jeglicher Dauer",
+    "group": "WCAG 2.0 AAA",
+    "priority": "Low"
+  },
+  {
+    "id": "identical-links-same-purpose",
+    "issue": "Links mit gleichem zugänglichen Namen führen zu verschiedenen Zielen",
+    "group": "WCAG 2.0 AAA",
+    "priority": "Low"
+  },
+  {
+    "id": "color-contrast-enhanced",
+    "issue": "Textkontrast unter 7:1 bzw. 4,5:1 für großen Text",
+    "group": "WCAG 2.0 AAA",
+    "priority": "High"
+  },
+  {
+    "id": "autocomplete-valid",
+    "issue": "autocomplete-Wert ungültig oder unpassend für das Feld",
+    "group": "WCAG 2.1 AA",
+    "priority": "High"
+  },
+  {
+    "id": "avoid-inline-spacing",
+    "issue": "Inline-Textabstände mit `!important` nicht anpassbar",
+    "group": "WCAG 2.1 AA",
+    "priority": "High"
+  },
+  {
+    "id": "target-size",
+    "issue": "Touch-Ziele zu klein bzw. zu eng",
+    "group": "WCAG 2.2 AA",
+    "priority": "High"
+  }
+]

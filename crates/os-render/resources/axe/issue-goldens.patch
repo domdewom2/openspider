@@ -1,0 +1,2325 @@
+diff --git a/docs/issues/accessibility-accesskeys.md b/docs/issues/accessibility-accesskeys.md
+new file mode 100644
+index 00000000..fb5a1cb7
+--- /dev/null
++++ b/docs/issues/accessibility-accesskeys.md
+@@ -0,0 +1,19 @@
++# Accessibility: accesskeys
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: accesskey-Werte sind nicht eindeutig.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Duplicate access keys.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-area-alt.md b/docs/issues/accessibility-area-alt.md
+new file mode 100644
+index 00000000..24471420
+--- /dev/null
++++ b/docs/issues/accessibility-area-alt.md
+@@ -0,0 +1,19 @@
++# Accessibility: area-alt
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: area ohne Alternativtext.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Image map area has no alternative text.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-allowed-attr.md b/docs/issues/accessibility-aria-allowed-attr.md
+new file mode 100644
+index 00000000..6e3c6e93
+--- /dev/null
++++ b/docs/issues/accessibility-aria-allowed-attr.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-allowed-attr
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: für die Rolle nicht erlaubtes ARIA-Attribut.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: ARIA attribute is not allowed for this role.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-allowed-role.md b/docs/issues/accessibility-aria-allowed-role.md
+new file mode 100644
+index 00000000..f1d7c557
+--- /dev/null
++++ b/docs/issues/accessibility-aria-allowed-role.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-allowed-role
++
++Typ: Warning (T-W2) · Priorität: Low (P-L2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: ARIA-Rolle passt nicht zum Element.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: ARIA role does not fit the element.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-braille-equivalent.md b/docs/issues/accessibility-aria-braille-equivalent.md
+new file mode 100644
+index 00000000..2829dbb6
+--- /dev/null
++++ b/docs/issues/accessibility-aria-braille-equivalent.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-braille-equivalent
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Braille-Attribut ohne Nicht-Braille-Gegenstück.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Braille attribute has no non-Braille equivalent.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-command-name.md b/docs/issues/accessibility-aria-command-name.md
+new file mode 100644
+index 00000000..529c0c7c
+--- /dev/null
++++ b/docs/issues/accessibility-aria-command-name.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-command-name
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: button/link/menuitem-Rolle ohne Namen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Interactive ARIA command has no name.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-conditional-attr.md b/docs/issues/accessibility-aria-conditional-attr.md
+new file mode 100644
+index 00000000..29d034df
+--- /dev/null
++++ b/docs/issues/accessibility-aria-conditional-attr.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-conditional-attr
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: ARIA-Attribut entgegen den Regeln der Rolle verwendet.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: ARIA attribute conflicts with role conditions.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-deprecated-role.md b/docs/issues/accessibility-aria-deprecated-role.md
+new file mode 100644
+index 00000000..a14f8661
+--- /dev/null
++++ b/docs/issues/accessibility-aria-deprecated-role.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-deprecated-role
++
++Typ: Warning (T-W2) · Priorität: Low (P-L2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: veraltete ARIA-Rolle.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Deprecated ARIA role.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-dialog-name.md b/docs/issues/accessibility-aria-dialog-name.md
+new file mode 100644
+index 00000000..dd5573b1
+--- /dev/null
++++ b/docs/issues/accessibility-aria-dialog-name.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-dialog-name
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: dialog/alertdialog ohne zugänglichen Namen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Dialog has no accessible name.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-hidden-body.md b/docs/issues/accessibility-aria-hidden-body.md
+new file mode 100644
+index 00000000..f4b33747
+--- /dev/null
++++ b/docs/issues/accessibility-aria-hidden-body.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-hidden-body
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: aria-hidden="true" am body.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Page body is hidden from assistive technology.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-hidden-focus.md b/docs/issues/accessibility-aria-hidden-focus.md
+new file mode 100644
+index 00000000..89aa5255
+--- /dev/null
++++ b/docs/issues/accessibility-aria-hidden-focus.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-hidden-focus
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: aria-hidden-Bereich enthält fokussierbare Elemente.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Hidden region contains focusable elements.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-input-field-name.md b/docs/issues/accessibility-aria-input-field-name.md
+new file mode 100644
+index 00000000..67cdbd68
+--- /dev/null
++++ b/docs/issues/accessibility-aria-input-field-name.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-input-field-name
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: ARIA-Eingabefeld ohne Namen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: ARIA input has no name.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-meter-name.md b/docs/issues/accessibility-aria-meter-name.md
+new file mode 100644
+index 00000000..3480d23a
+--- /dev/null
++++ b/docs/issues/accessibility-aria-meter-name.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-meter-name
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: meter ohne Namen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Meter has no accessible name.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-progressbar-name.md b/docs/issues/accessibility-aria-progressbar-name.md
+new file mode 100644
+index 00000000..2d5f61f8
+--- /dev/null
++++ b/docs/issues/accessibility-aria-progressbar-name.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-progressbar-name
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: progressbar ohne Namen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Progress bar has no accessible name.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-prohibited-attr.md b/docs/issues/accessibility-aria-prohibited-attr.md
+new file mode 100644
+index 00000000..3642a4e3
+--- /dev/null
++++ b/docs/issues/accessibility-aria-prohibited-attr.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-prohibited-attr
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: für die Rolle verbotenes ARIA-Attribut.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: ARIA attribute is prohibited for this role.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-required-attr.md b/docs/issues/accessibility-aria-required-attr.md
+new file mode 100644
+index 00000000..9c5d306d
+--- /dev/null
++++ b/docs/issues/accessibility-aria-required-attr.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-required-attr
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Pflicht-ARIA-Attribute der Rolle fehlen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Required ARIA attributes are missing.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-required-children.md b/docs/issues/accessibility-aria-required-children.md
+new file mode 100644
+index 00000000..8a0584e2
+--- /dev/null
++++ b/docs/issues/accessibility-aria-required-children.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-required-children
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Rolle ohne erforderliche Kindrollen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Required child roles are missing.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-required-parent.md b/docs/issues/accessibility-aria-required-parent.md
+new file mode 100644
+index 00000000..4e73ac44
+--- /dev/null
++++ b/docs/issues/accessibility-aria-required-parent.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-required-parent
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Rolle ohne erforderliches Elternelement.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Required parent role is missing.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-roles.md b/docs/issues/accessibility-aria-roles.md
+new file mode 100644
+index 00000000..ebde710f
+--- /dev/null
++++ b/docs/issues/accessibility-aria-roles.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-roles
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: ungültiger role-Wert.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: ARIA role is invalid.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-text.md b/docs/issues/accessibility-aria-text.md
+new file mode 100644
+index 00000000..8298fc89
+--- /dev/null
++++ b/docs/issues/accessibility-aria-text.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-text
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: role=text mit fokussierbaren Nachfahren.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Text role contains focusable descendants.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-toggle-field-name.md b/docs/issues/accessibility-aria-toggle-field-name.md
+new file mode 100644
+index 00000000..900965a0
+--- /dev/null
++++ b/docs/issues/accessibility-aria-toggle-field-name.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-toggle-field-name
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Umschaltfeld ohne Namen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: ARIA toggle has no name.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-tooltip-name.md b/docs/issues/accessibility-aria-tooltip-name.md
+new file mode 100644
+index 00000000..5ca5a2ba
+--- /dev/null
++++ b/docs/issues/accessibility-aria-tooltip-name.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-tooltip-name
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: tooltip ohne Namen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Tooltip has no accessible name.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-treeitem-name.md b/docs/issues/accessibility-aria-treeitem-name.md
+new file mode 100644
+index 00000000..f02ac13c
+--- /dev/null
++++ b/docs/issues/accessibility-aria-treeitem-name.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-treeitem-name
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: treeitem ohne zugänglichen Namen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Tree item has no accessible name.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-valid-attr-value.md b/docs/issues/accessibility-aria-valid-attr-value.md
+new file mode 100644
+index 00000000..d2e306ec
+--- /dev/null
++++ b/docs/issues/accessibility-aria-valid-attr-value.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-valid-attr-value
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: ungültiger Wert eines ARIA-Attributs.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: ARIA attribute value is invalid.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-aria-valid-attr.md b/docs/issues/accessibility-aria-valid-attr.md
+new file mode 100644
+index 00000000..1191f1f0
+--- /dev/null
++++ b/docs/issues/accessibility-aria-valid-attr.md
+@@ -0,0 +1,19 @@
++# Accessibility: aria-valid-attr
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: ungültiger ARIA-Attributname.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: ARIA attribute name is invalid.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-autocomplete-valid.md b/docs/issues/accessibility-autocomplete-valid.md
+new file mode 100644
+index 00000000..5795ffe4
+--- /dev/null
++++ b/docs/issues/accessibility-autocomplete-valid.md
+@@ -0,0 +1,19 @@
++# Accessibility: autocomplete-valid
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: autocomplete-Wert ungültig oder unpassend für das Feld.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Autocomplete value is invalid or inappropriate.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-avoid-inline-spacing.md b/docs/issues/accessibility-avoid-inline-spacing.md
+new file mode 100644
+index 00000000..d15f34a6
+--- /dev/null
++++ b/docs/issues/accessibility-avoid-inline-spacing.md
+@@ -0,0 +1,19 @@
++# Accessibility: avoid-inline-spacing
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Inline-Textabstände mit `!important` nicht anpassbar.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Inline text spacing prevents customization.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-blink.md b/docs/issues/accessibility-blink.md
+new file mode 100644
+index 00000000..afc896eb
+--- /dev/null
++++ b/docs/issues/accessibility-blink.md
+@@ -0,0 +1,19 @@
++# Accessibility: blink
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: blink-Element.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Blinking element.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-button-name.md b/docs/issues/accessibility-button-name.md
+new file mode 100644
+index 00000000..28b52959
+--- /dev/null
++++ b/docs/issues/accessibility-button-name.md
+@@ -0,0 +1,19 @@
++# Accessibility: button-name
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Button ohne erkennbaren Text.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Button has no accessible name.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-bypass.md b/docs/issues/accessibility-bypass.md
+new file mode 100644
+index 00000000..d9df72de
+--- /dev/null
++++ b/docs/issues/accessibility-bypass.md
+@@ -0,0 +1,19 @@
++# Accessibility: bypass
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: kein Mechanismus zum Überspringen wiederholter Blöcke.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Repeated content cannot be skipped.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-color-contrast-enhanced.md b/docs/issues/accessibility-color-contrast-enhanced.md
+new file mode 100644
+index 00000000..4ee65de6
+--- /dev/null
++++ b/docs/issues/accessibility-color-contrast-enhanced.md
+@@ -0,0 +1,19 @@
++# Accessibility: color-contrast-enhanced
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Textkontrast unter 7:1 bzw. 4,5:1 für großen Text.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Text contrast is below AAA requirements.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-color-contrast.md b/docs/issues/accessibility-color-contrast.md
+new file mode 100644
+index 00000000..0a8ff790
+--- /dev/null
++++ b/docs/issues/accessibility-color-contrast.md
+@@ -0,0 +1,19 @@
++# Accessibility: color-contrast
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Textkontrast unter 4,5:1 (normal) bzw. 3:1 (groß ≥ 24 px oder ≥ 18,66 px fett).
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Text contrast is below AA requirements.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-definition-list.md b/docs/issues/accessibility-definition-list.md
+new file mode 100644
+index 00000000..aa01fb76
+--- /dev/null
++++ b/docs/issues/accessibility-definition-list.md
+@@ -0,0 +1,19 @@
++# Accessibility: definition-list
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: dl mit unzulässigem Inhalt/Reihenfolge.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Description list has invalid structure.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-dlitem.md b/docs/issues/accessibility-dlitem.md
+new file mode 100644
+index 00000000..5f4e6a7b
+--- /dev/null
++++ b/docs/issues/accessibility-dlitem.md
+@@ -0,0 +1,19 @@
++# Accessibility: dlitem
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: dt/dd außerhalb von dl.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Description item has no description list parent.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-document-title.md b/docs/issues/accessibility-document-title.md
+new file mode 100644
+index 00000000..e1362ce6
+--- /dev/null
++++ b/docs/issues/accessibility-document-title.md
+@@ -0,0 +1,19 @@
++# Accessibility: document-title
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: kein `<title>`.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Document title is missing.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-duplicate-id-aria.md b/docs/issues/accessibility-duplicate-id-aria.md
+new file mode 100644
+index 00000000..a9bc3036
+--- /dev/null
++++ b/docs/issues/accessibility-duplicate-id-aria.md
+@@ -0,0 +1,19 @@
++# Accessibility: duplicate-id-aria
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: in ARIA/Labels referenzierte ID doppelt.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: An ID referenced by ARIA or a label is duplicated.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-empty-heading.md b/docs/issues/accessibility-empty-heading.md
+new file mode 100644
+index 00000000..234fb31c
+--- /dev/null
++++ b/docs/issues/accessibility-empty-heading.md
+@@ -0,0 +1,19 @@
++# Accessibility: empty-heading
++
++Typ: Warning (T-W2) · Priorität: Low (P-L2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: leere Überschrift.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Heading is empty.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-empty-table-header.md b/docs/issues/accessibility-empty-table-header.md
+new file mode 100644
+index 00000000..adc58cb0
+--- /dev/null
++++ b/docs/issues/accessibility-empty-table-header.md
+@@ -0,0 +1,19 @@
++# Accessibility: empty-table-header
++
++Typ: Warning (T-W2) · Priorität: Low (P-L2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Tabellenkopfzelle ohne erkennbaren Text.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Table header has no text.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-form-field-multiple-labels.md b/docs/issues/accessibility-form-field-multiple-labels.md
+new file mode 100644
+index 00000000..f5bdd228
+--- /dev/null
++++ b/docs/issues/accessibility-form-field-multiple-labels.md
+@@ -0,0 +1,19 @@
++# Accessibility: form-field-multiple-labels
++
++Typ: Warning (T-W2) · Priorität: Medium (P-M2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Formularfeld mit mehreren label-Elementen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Form control has multiple labels.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-frame-focusable-content.md b/docs/issues/accessibility-frame-focusable-content.md
+new file mode 100644
+index 00000000..a5de6c5f
+--- /dev/null
++++ b/docs/issues/accessibility-frame-focusable-content.md
+@@ -0,0 +1,19 @@
++# Accessibility: frame-focusable-content
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Frame mit fokussierbarem Inhalt hat tabindex=-1.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Frame with focusable content is removed from tab order.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-frame-tested.md b/docs/issues/accessibility-frame-tested.md
+new file mode 100644
+index 00000000..db836d4b
+--- /dev/null
++++ b/docs/issues/accessibility-frame-tested.md
+@@ -0,0 +1,19 @@
++# Accessibility: frame-tested
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: iframe-Inhalt konnte nicht mit axe geprüft werden.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Frame content could not be checked.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-frame-title-unique.md b/docs/issues/accessibility-frame-title-unique.md
+new file mode 100644
+index 00000000..a1aa221d
+--- /dev/null
++++ b/docs/issues/accessibility-frame-title-unique.md
+@@ -0,0 +1,19 @@
++# Accessibility: frame-title-unique
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: iframe-titles nicht eindeutig.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Frame titles are not distinct.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-frame-title.md b/docs/issues/accessibility-frame-title.md
+new file mode 100644
+index 00000000..9de55f07
+--- /dev/null
++++ b/docs/issues/accessibility-frame-title.md
+@@ -0,0 +1,19 @@
++# Accessibility: frame-title
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: iframe/frame ohne title.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Frame has no title.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-heading-order.md b/docs/issues/accessibility-heading-order.md
+new file mode 100644
+index 00000000..2c49cbc7
+--- /dev/null
++++ b/docs/issues/accessibility-heading-order.md
+@@ -0,0 +1,19 @@
++# Accessibility: heading-order
++
++Typ: Warning (T-W2) · Priorität: Medium (P-M2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Überschriftenebene springt um mehr als 1.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Heading levels skip a level.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-html-has-lang.md b/docs/issues/accessibility-html-has-lang.md
+new file mode 100644
+index 00000000..9bbca6b5
+--- /dev/null
++++ b/docs/issues/accessibility-html-has-lang.md
+@@ -0,0 +1,19 @@
++# Accessibility: html-has-lang
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: html-Element ohne lang.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Document language is missing.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-html-lang-valid.md b/docs/issues/accessibility-html-lang-valid.md
+new file mode 100644
+index 00000000..11959aea
+--- /dev/null
++++ b/docs/issues/accessibility-html-lang-valid.md
+@@ -0,0 +1,19 @@
++# Accessibility: html-lang-valid
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: ungültiger lang-Wert am html-Element.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Document language is invalid.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-html-xml-lang-mismatch.md b/docs/issues/accessibility-html-xml-lang-mismatch.md
+new file mode 100644
+index 00000000..4f5fd533
+--- /dev/null
++++ b/docs/issues/accessibility-html-xml-lang-mismatch.md
+@@ -0,0 +1,19 @@
++# Accessibility: html-xml-lang-mismatch
++
++Typ: Warning (T-W2) · Priorität: Medium (P-M2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: lang und xml:lang widersprechen sich.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Document language declarations disagree.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-identical-links-same-purpose.md b/docs/issues/accessibility-identical-links-same-purpose.md
+new file mode 100644
+index 00000000..447a2d13
+--- /dev/null
++++ b/docs/issues/accessibility-identical-links-same-purpose.md
+@@ -0,0 +1,19 @@
++# Accessibility: identical-links-same-purpose
++
++Typ: Warning (T-W2) · Priorität: Low (P-L2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Links mit gleichem zugänglichen Namen führen zu verschiedenen Zielen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Identically named links have different destinations.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-image-alt.md b/docs/issues/accessibility-image-alt.md
+new file mode 100644
+index 00000000..730b133e
+--- /dev/null
++++ b/docs/issues/accessibility-image-alt.md
+@@ -0,0 +1,19 @@
++# Accessibility: image-alt
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Bild ohne Alternativtext.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Image has no alternative text.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-image-redundant-alt.md b/docs/issues/accessibility-image-redundant-alt.md
+new file mode 100644
+index 00000000..0b0cf581
+--- /dev/null
++++ b/docs/issues/accessibility-image-redundant-alt.md
+@@ -0,0 +1,19 @@
++# Accessibility: image-redundant-alt
++
++Typ: Warning (T-W2) · Priorität: Low (P-L2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Alt-Text wiederholt umgebenden Text.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Image alternative repeats nearby text.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-input-button-name.md b/docs/issues/accessibility-input-button-name.md
+new file mode 100644
+index 00000000..30334c95
+--- /dev/null
++++ b/docs/issues/accessibility-input-button-name.md
+@@ -0,0 +1,19 @@
++# Accessibility: input-button-name
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Eingabe-Button ohne erkennbaren Text.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Input button has no accessible name.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-input-image-alt.md b/docs/issues/accessibility-input-image-alt.md
+new file mode 100644
+index 00000000..60d6e7dd
+--- /dev/null
++++ b/docs/issues/accessibility-input-image-alt.md
+@@ -0,0 +1,19 @@
++# Accessibility: input-image-alt
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Bild-Button ohne Alternativtext.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Image input has no alternative text.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-label-title-only.md b/docs/issues/accessibility-label-title-only.md
+new file mode 100644
+index 00000000..766d6566
+--- /dev/null
++++ b/docs/issues/accessibility-label-title-only.md
+@@ -0,0 +1,19 @@
++# Accessibility: label-title-only
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Formularfeld nur über title/aria-describedby beschriftet, kein sichtbares Label.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Form control lacks a visible label.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-label.md b/docs/issues/accessibility-label.md
+new file mode 100644
+index 00000000..7a1c4dd5
+--- /dev/null
++++ b/docs/issues/accessibility-label.md
+@@ -0,0 +1,19 @@
++# Accessibility: label
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Formularfeld ohne Beschriftung.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Form control has no label.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-landmark-banner-is-top-level.md b/docs/issues/accessibility-landmark-banner-is-top-level.md
+new file mode 100644
+index 00000000..fa27f0ed
+--- /dev/null
++++ b/docs/issues/accessibility-landmark-banner-is-top-level.md
+@@ -0,0 +1,19 @@
++# Accessibility: landmark-banner-is-top-level
++
++Typ: Warning (T-W2) · Priorität: Medium (P-M2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: banner in anderem Landmark verschachtelt.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Banner is nested in another landmark.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-landmark-complementary-is-top-level.md b/docs/issues/accessibility-landmark-complementary-is-top-level.md
+new file mode 100644
+index 00000000..08c66a62
+--- /dev/null
++++ b/docs/issues/accessibility-landmark-complementary-is-top-level.md
+@@ -0,0 +1,19 @@
++# Accessibility: landmark-complementary-is-top-level
++
++Typ: Warning (T-W2) · Priorität: Medium (P-M2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: complementary/aside nicht auf oberster Ebene.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Complementary landmark is nested.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-landmark-contentinfo-is-top-level.md b/docs/issues/accessibility-landmark-contentinfo-is-top-level.md
+new file mode 100644
+index 00000000..921e42b9
+--- /dev/null
++++ b/docs/issues/accessibility-landmark-contentinfo-is-top-level.md
+@@ -0,0 +1,19 @@
++# Accessibility: landmark-contentinfo-is-top-level
++
++Typ: Warning (T-W2) · Priorität: Medium (P-M2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: contentinfo verschachtelt.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Content information landmark is nested.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-landmark-main-is-top-level.md b/docs/issues/accessibility-landmark-main-is-top-level.md
+new file mode 100644
+index 00000000..ea52774d
+--- /dev/null
++++ b/docs/issues/accessibility-landmark-main-is-top-level.md
+@@ -0,0 +1,19 @@
++# Accessibility: landmark-main-is-top-level
++
++Typ: Warning (T-W2) · Priorität: Medium (P-M2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: main verschachtelt.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Main landmark is nested.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-landmark-no-duplicate-banner.md b/docs/issues/accessibility-landmark-no-duplicate-banner.md
+new file mode 100644
+index 00000000..37b7ee49
+--- /dev/null
++++ b/docs/issues/accessibility-landmark-no-duplicate-banner.md
+@@ -0,0 +1,19 @@
++# Accessibility: landmark-no-duplicate-banner
++
++Typ: Warning (T-W2) · Priorität: Medium (P-M2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: mehr als ein banner.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Multiple banner landmarks.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-landmark-no-duplicate-contentinfo.md b/docs/issues/accessibility-landmark-no-duplicate-contentinfo.md
+new file mode 100644
+index 00000000..36a646fb
+--- /dev/null
++++ b/docs/issues/accessibility-landmark-no-duplicate-contentinfo.md
+@@ -0,0 +1,19 @@
++# Accessibility: landmark-no-duplicate-contentinfo
++
++Typ: Warning (T-W2) · Priorität: Medium (P-M2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: mehr als ein contentinfo.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Multiple content information landmarks.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-landmark-no-duplicate-main.md b/docs/issues/accessibility-landmark-no-duplicate-main.md
+new file mode 100644
+index 00000000..1d4df8eb
+--- /dev/null
++++ b/docs/issues/accessibility-landmark-no-duplicate-main.md
+@@ -0,0 +1,19 @@
++# Accessibility: landmark-no-duplicate-main
++
++Typ: Warning (T-W2) · Priorität: Medium (P-M2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: mehr als ein main.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Multiple main landmarks.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-landmark-one-main.md b/docs/issues/accessibility-landmark-one-main.md
+new file mode 100644
+index 00000000..616f76af
+--- /dev/null
++++ b/docs/issues/accessibility-landmark-one-main.md
+@@ -0,0 +1,19 @@
++# Accessibility: landmark-one-main
++
++Typ: Warning (T-W2) · Priorität: Medium (P-M2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: kein main-Landmark.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Main landmark is missing.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-landmark-unique.md b/docs/issues/accessibility-landmark-unique.md
+new file mode 100644
+index 00000000..4f873ba0
+--- /dev/null
++++ b/docs/issues/accessibility-landmark-unique.md
+@@ -0,0 +1,19 @@
++# Accessibility: landmark-unique
++
++Typ: Warning (T-W2) · Priorität: Medium (P-M2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: gleichartige Landmarks ohne unterscheidenden Namen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Similar landmarks lack distinct names.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-link-in-text-block.md b/docs/issues/accessibility-link-in-text-block.md
+new file mode 100644
+index 00000000..4e29fe30
+--- /dev/null
++++ b/docs/issues/accessibility-link-in-text-block.md
+@@ -0,0 +1,19 @@
++# Accessibility: link-in-text-block
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Link im Fließtext nur durch Farbe unterscheidbar.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Text link is distinguished only by color.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-link-name.md b/docs/issues/accessibility-link-name.md
+new file mode 100644
+index 00000000..f1e4a454
+--- /dev/null
++++ b/docs/issues/accessibility-link-name.md
+@@ -0,0 +1,19 @@
++# Accessibility: link-name
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Link ohne erkennbaren Text.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Link has no accessible name.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-list.md b/docs/issues/accessibility-list.md
+new file mode 100644
+index 00000000..67709bf5
+--- /dev/null
++++ b/docs/issues/accessibility-list.md
+@@ -0,0 +1,19 @@
++# Accessibility: list
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: ul/ol mit unzulässigen direkten Kindern.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: List contains invalid children.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-listitem.md b/docs/issues/accessibility-listitem.md
+new file mode 100644
+index 00000000..36c8e6e0
+--- /dev/null
++++ b/docs/issues/accessibility-listitem.md
+@@ -0,0 +1,19 @@
++# Accessibility: listitem
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: li außerhalb von ul/ol.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: List item has no list parent.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-marquee.md b/docs/issues/accessibility-marquee.md
+new file mode 100644
+index 00000000..d5c9f42d
+--- /dev/null
++++ b/docs/issues/accessibility-marquee.md
+@@ -0,0 +1,19 @@
++# Accessibility: marquee
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: marquee-Element.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Moving marquee element.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-meta-refresh-no-exceptions.md b/docs/issues/accessibility-meta-refresh-no-exceptions.md
+new file mode 100644
+index 00000000..c5101fbc
+--- /dev/null
++++ b/docs/issues/accessibility-meta-refresh-no-exceptions.md
+@@ -0,0 +1,19 @@
++# Accessibility: meta-refresh-no-exceptions
++
++Typ: Warning (T-W2) · Priorität: Low (P-L2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: verzögerter Meta Refresh jeglicher Dauer.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Page uses a delayed refresh.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-meta-refresh.md b/docs/issues/accessibility-meta-refresh.md
+new file mode 100644
+index 00000000..55bb4d4d
+--- /dev/null
++++ b/docs/issues/accessibility-meta-refresh.md
+@@ -0,0 +1,19 @@
++# Accessibility: meta-refresh
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: zeitgesteuerter Meta Refresh (< 20 h).
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Page uses a timed refresh.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-meta-viewport-large.md b/docs/issues/accessibility-meta-viewport-large.md
+new file mode 100644
+index 00000000..dce954e3
+--- /dev/null
++++ b/docs/issues/accessibility-meta-viewport-large.md
+@@ -0,0 +1,19 @@
++# Accessibility: meta-viewport-large
++
++Typ: Warning (T-W2) · Priorität: Low (P-L2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Viewport verhindert Zoom bis 500 %.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Viewport prevents fivefold zoom.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-meta-viewport.md b/docs/issues/accessibility-meta-viewport.md
+new file mode 100644
+index 00000000..c3fe2ae2
+--- /dev/null
++++ b/docs/issues/accessibility-meta-viewport.md
+@@ -0,0 +1,19 @@
++# Accessibility: meta-viewport
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Viewport deaktiviert Zoom/Skalierung (`user-scalable=no` oder `maximum-scale < 2`).
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Viewport restricts zoom.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-nested-interactive.md b/docs/issues/accessibility-nested-interactive.md
+new file mode 100644
+index 00000000..f84026f3
+--- /dev/null
++++ b/docs/issues/accessibility-nested-interactive.md
+@@ -0,0 +1,19 @@
++# Accessibility: nested-interactive
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: verschachtelte interaktive Elemente.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Interactive elements are nested.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-no-autoplay-audio.md b/docs/issues/accessibility-no-autoplay-audio.md
+new file mode 100644
+index 00000000..9e48ee73
+--- /dev/null
++++ b/docs/issues/accessibility-no-autoplay-audio.md
+@@ -0,0 +1,19 @@
++# Accessibility: no-autoplay-audio
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: audio/video spielt automatisch mit Ton.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Media starts automatically with sound.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-object-alt.md b/docs/issues/accessibility-object-alt.md
+new file mode 100644
+index 00000000..bc89aec7
+--- /dev/null
++++ b/docs/issues/accessibility-object-alt.md
+@@ -0,0 +1,19 @@
++# Accessibility: object-alt
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: object ohne Alternativtext.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Embedded object has no alternative text.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-page-has-heading-one.md b/docs/issues/accessibility-page-has-heading-one.md
+new file mode 100644
+index 00000000..4351d06f
+--- /dev/null
++++ b/docs/issues/accessibility-page-has-heading-one.md
+@@ -0,0 +1,19 @@
++# Accessibility: page-has-heading-one
++
++Typ: Warning (T-W2) · Priorität: Medium (P-M2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: keine h1.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: First-level heading is missing.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-presentation-role-conflict.md b/docs/issues/accessibility-presentation-role-conflict.md
+new file mode 100644
+index 00000000..bf6945bb
+--- /dev/null
++++ b/docs/issues/accessibility-presentation-role-conflict.md
+@@ -0,0 +1,19 @@
++# Accessibility: presentation-role-conflict
++
++Typ: Warning (T-W2) · Priorität: Low (P-L2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: als präsentational markierte Elemente sind dennoch fokussierbar/mit globalen ARIA-Attributen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Presentational element exposes interactive semantics.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-region.md b/docs/issues/accessibility-region.md
+new file mode 100644
+index 00000000..64744ada
+--- /dev/null
++++ b/docs/issues/accessibility-region.md
+@@ -0,0 +1,19 @@
++# Accessibility: region
++
++Typ: Warning (T-W2) · Priorität: Medium (P-M2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Seiteninhalt außerhalb von Landmarks.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Content is outside page landmarks.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-role-img-alt.md b/docs/issues/accessibility-role-img-alt.md
+new file mode 100644
+index 00000000..4ae592b0
+--- /dev/null
++++ b/docs/issues/accessibility-role-img-alt.md
+@@ -0,0 +1,19 @@
++# Accessibility: role-img-alt
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: role=img ohne Alternativtext.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Image role has no alternative text.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-scope-attr-valid.md b/docs/issues/accessibility-scope-attr-valid.md
+new file mode 100644
+index 00000000..c14e65bd
+--- /dev/null
++++ b/docs/issues/accessibility-scope-attr-valid.md
+@@ -0,0 +1,19 @@
++# Accessibility: scope-attr-valid
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: scope-Attribut falsch verwendet.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Table scope attribute is misplaced.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-scrollable-region-focusable.md b/docs/issues/accessibility-scrollable-region-focusable.md
+new file mode 100644
+index 00000000..f7a96aa7
+--- /dev/null
++++ b/docs/issues/accessibility-scrollable-region-focusable.md
+@@ -0,0 +1,19 @@
++# Accessibility: scrollable-region-focusable
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: scrollbarer Bereich nicht per Tastatur erreichbar.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Scrollable region cannot be reached by keyboard.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-select-name.md b/docs/issues/accessibility-select-name.md
+new file mode 100644
+index 00000000..b7df7f42
+--- /dev/null
++++ b/docs/issues/accessibility-select-name.md
+@@ -0,0 +1,19 @@
++# Accessibility: select-name
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: select ohne zugänglichen Namen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Select control has no accessible name.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-server-side-image-map.md b/docs/issues/accessibility-server-side-image-map.md
+new file mode 100644
+index 00000000..b14bd857
+--- /dev/null
++++ b/docs/issues/accessibility-server-side-image-map.md
+@@ -0,0 +1,19 @@
++# Accessibility: server-side-image-map
++
++Typ: Warning (T-W2) · Priorität: Low (P-L2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: serverseitige Image-Map.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Server-side image map.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-skip-link.md b/docs/issues/accessibility-skip-link.md
+new file mode 100644
+index 00000000..f217d293
+--- /dev/null
++++ b/docs/issues/accessibility-skip-link.md
+@@ -0,0 +1,19 @@
++# Accessibility: skip-link
++
++Typ: Warning (T-W2) · Priorität: Medium (P-M2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Ziel eines Sprunglinks fehlt oder ist nicht fokussierbar.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Skip link target is missing or cannot receive focus.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-summary-name.md b/docs/issues/accessibility-summary-name.md
+new file mode 100644
+index 00000000..7bced5d8
+--- /dev/null
++++ b/docs/issues/accessibility-summary-name.md
+@@ -0,0 +1,19 @@
++# Accessibility: summary-name
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: summary ohne erkennbaren Text.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Disclosure summary has no accessible name.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-svg-img-alt.md b/docs/issues/accessibility-svg-img-alt.md
+new file mode 100644
+index 00000000..3198be55
+--- /dev/null
++++ b/docs/issues/accessibility-svg-img-alt.md
+@@ -0,0 +1,19 @@
++# Accessibility: svg-img-alt
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: SVG mit Bildrolle ohne zugänglichen Text.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: SVG image has no accessible text.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-tabindex.md b/docs/issues/accessibility-tabindex.md
+new file mode 100644
+index 00000000..4d009b44
+--- /dev/null
++++ b/docs/issues/accessibility-tabindex.md
+@@ -0,0 +1,19 @@
++# Accessibility: tabindex
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: tabindex größer 0.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Positive tab order.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-table-duplicate-name.md b/docs/issues/accessibility-table-duplicate-name.md
+new file mode 100644
+index 00000000..1732123c
+--- /dev/null
++++ b/docs/issues/accessibility-table-duplicate-name.md
+@@ -0,0 +1,19 @@
++# Accessibility: table-duplicate-name
++
++Typ: Warning (T-W2) · Priorität: Low (P-L2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Tabelle mit identischem summary und caption.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Table summary repeats its caption.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-target-size.md b/docs/issues/accessibility-target-size.md
+new file mode 100644
+index 00000000..110ed02d
+--- /dev/null
++++ b/docs/issues/accessibility-target-size.md
+@@ -0,0 +1,19 @@
++# Accessibility: target-size
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Touch-Ziele zu klein bzw. zu eng.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Pointer targets are too small or too close.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-td-headers-attr.md b/docs/issues/accessibility-td-headers-attr.md
+new file mode 100644
+index 00000000..f1c5ed76
+--- /dev/null
++++ b/docs/issues/accessibility-td-headers-attr.md
+@@ -0,0 +1,19 @@
++# Accessibility: td-headers-attr
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: headers-Attribut verweist auf Zelle außerhalb der Tabelle.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Table headers reference a cell in another table.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-th-has-data-cells.md b/docs/issues/accessibility-th-has-data-cells.md
+new file mode 100644
+index 00000000..5cc2c92b
+--- /dev/null
++++ b/docs/issues/accessibility-th-has-data-cells.md
+@@ -0,0 +1,19 @@
++# Accessibility: th-has-data-cells
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: Tabellenkopf ohne zugehörige Datenzellen.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Table header has no associated data cells.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-valid-lang.md b/docs/issues/accessibility-valid-lang.md
+new file mode 100644
+index 00000000..17bc8783
+--- /dev/null
++++ b/docs/issues/accessibility-valid-lang.md
+@@ -0,0 +1,19 @@
++# Accessibility: valid-lang
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: ungültiger lang-Wert an einem Element im Body.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Element language is invalid.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.
+diff --git a/docs/issues/accessibility-video-caption.md b/docs/issues/accessibility-video-caption.md
+new file mode 100644
+index 00000000..22b51bda
+--- /dev/null
++++ b/docs/issues/accessibility-video-caption.md
+@@ -0,0 +1,19 @@
++# Accessibility: video-caption
++
++Typ: Warning (T-W2) · Priorität: High (P-H2)
++
++## Deutsch
++
++**Was bedeutet das?** Die automatische Barrierefreiheitsprüfung meldet: video ohne Untertitel-Track.
++
++**Warum ist es relevant?** Die betroffenen Elemente können die Bedienung mit Hilfstechnologien erschweren. Automatische Prüfungen ersetzen keine manuelle Prüfung.
++
++**Wie beheben?** Prüfen Sie die markierten Elemente und die verlinkte Regelbeschreibung. Korrigieren Sie die Ursache und testen Sie erneut mit Tastatur und Hilfstechnologien.
++
++## English
++
++**What does it mean?** The automated accessibility check found this problem: Video has no caption track.
++
++**Why does it matter?** These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment.
++
++**How to fix** Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology.

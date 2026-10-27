@@ -101,6 +101,23 @@ fn expected_filters(tab_id: &str) -> Vec<(String, String, Vec<String>)> {
             }
         }
     }
+    // spec: TECH-251 / TECH-252: expanded expectation for the dynamic axe placeholder.
+    if tab_id == "Accessibility" {
+        out.extend(
+            include_str!("../../../tests/fixtures/ui/fx-ui-a11y/rule-ids.txt")
+                .lines()
+                .map(|id| {
+                    (
+                        id.to_owned(),
+                        "live".into(),
+                        vec![
+                            "extraction.accessibility".into(),
+                            "rendering.mode=javascript".into(),
+                        ],
+                    )
+                }),
+        );
+    }
     out
 }
 
@@ -288,7 +305,7 @@ fn every_tab_is_a_real_definition_or_a_marked_stub() {
     // M2-D01 implements Meta Keywords; M2-D05 Pagination, M2-D14 Custom Search, M2-I03 Search Console, M2-I04 PageSpeed, M2-I02 Analytics.
     // M2-I05 ersetzt den Link-Metrics-Stub (K2-60, INTEG-151).
     assert_eq!(
-        stubs, 2,
+        stubs, 1,
         "Stub-Tabs (Structured Data: M2-D09, Validation: M2-D10, Custom Extraction: M2-D15)"
     );
 }

@@ -487,6 +487,11 @@ async fn run(
     } else {
         None
     };
+    let accessibility = if opts.accessibility {
+        Some(crate::axe::audit(page).await?)
+    } else {
+        None
+    };
     drop(intercept);
     let mut data = capture.data.lock().expect("capture");
     data.console.sort_by_key(|e| e.timestamp_ms);
@@ -500,6 +505,7 @@ async fn run(
     }
     Ok(RenderedPage {
         snippets,
+        accessibility,
         body_network: Some(data.body_network()),
         cookie_assignments,
         cookies,

@@ -706,6 +706,12 @@ async fn render_page<F: Fetch>(
                     .ext
                     .extend(os_render::snippets::trace(item.id, &rendered.snippets));
             }
+            if let Some(payload) = &rendered.accessibility {
+                match os_render::axe::decode(payload, item.id) {
+                    Ok(result) => a.extra.a11y.push(result),
+                    Err(error) => tracing::warn!(%error, "Invalid accessibility result"),
+                }
+            }
             if let Some(network) = rendered.body_network.take() {
                 rendered.network = network;
                 for (url, facts) in &mut rendered.images {

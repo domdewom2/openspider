@@ -1,2 +1,465 @@
-# OpenSpider – Issue-Texte (English) ab M2, Tab „Accessibility“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.accessibility-accesskeys]
+what = "The automated accessibility check found this problem: Duplicate access keys."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-presentation-role-conflict]
+what = "The automated accessibility check found this problem: Presentational element exposes interactive semantics."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-tabindex]
+what = "The automated accessibility check found this problem: Positive tab order."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-skip-link]
+what = "The automated accessibility check found this problem: Skip link target is missing or cannot receive focus."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-text]
+what = "The automated accessibility check found this problem: Text role contains focusable descendants."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-dialog-name]
+what = "The automated accessibility check found this problem: Dialog has no accessible name."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-allowed-role]
+what = "The automated accessibility check found this problem: ARIA role does not fit the element."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-treeitem-name]
+what = "The automated accessibility check found this problem: Tree item has no accessible name."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-region]
+what = "The automated accessibility check found this problem: Content is outside page landmarks."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-landmark-one-main]
+what = "The automated accessibility check found this problem: Main landmark is missing."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-landmark-no-duplicate-banner]
+what = "The automated accessibility check found this problem: Multiple banner landmarks."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-landmark-banner-is-top-level]
+what = "The automated accessibility check found this problem: Banner is nested in another landmark."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-landmark-no-duplicate-contentinfo]
+what = "The automated accessibility check found this problem: Multiple content information landmarks."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-landmark-no-duplicate-main]
+what = "The automated accessibility check found this problem: Multiple main landmarks."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-landmark-complementary-is-top-level]
+what = "The automated accessibility check found this problem: Complementary landmark is nested."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-landmark-contentinfo-is-top-level]
+what = "The automated accessibility check found this problem: Content information landmark is nested."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-landmark-main-is-top-level]
+what = "The automated accessibility check found this problem: Main landmark is nested."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-landmark-unique]
+what = "The automated accessibility check found this problem: Similar landmarks lack distinct names."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-label-title-only]
+what = "The automated accessibility check found this problem: Form control lacks a visible label."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-frame-tested]
+what = "The automated accessibility check found this problem: Frame content could not be checked."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-page-has-heading-one]
+what = "The automated accessibility check found this problem: First-level heading is missing."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-heading-order]
+what = "The automated accessibility check found this problem: Heading levels skip a level."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-empty-heading]
+what = "The automated accessibility check found this problem: Heading is empty."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-meta-viewport-large]
+what = "The automated accessibility check found this problem: Viewport prevents fivefold zoom."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-image-redundant-alt]
+what = "The automated accessibility check found this problem: Image alternative repeats nearby text."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-empty-table-header]
+what = "The automated accessibility check found this problem: Table header has no text."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-table-duplicate-name]
+what = "The automated accessibility check found this problem: Table summary repeats its caption."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-scope-attr-valid]
+what = "The automated accessibility check found this problem: Table scope attribute is misplaced."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-scrollable-region-focusable]
+what = "The automated accessibility check found this problem: Scrollable region cannot be reached by keyboard."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-required-attr]
+what = "The automated accessibility check found this problem: Required ARIA attributes are missing."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-conditional-attr]
+what = "The automated accessibility check found this problem: ARIA attribute conflicts with role conditions."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-valid-attr-value]
+what = "The automated accessibility check found this problem: ARIA attribute value is invalid."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-valid-attr]
+what = "The automated accessibility check found this problem: ARIA attribute name is invalid."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-command-name]
+what = "The automated accessibility check found this problem: Interactive ARIA command has no name."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-input-field-name]
+what = "The automated accessibility check found this problem: ARIA input has no name."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-meter-name]
+what = "The automated accessibility check found this problem: Meter has no accessible name."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-progressbar-name]
+what = "The automated accessibility check found this problem: Progress bar has no accessible name."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-required-parent]
+what = "The automated accessibility check found this problem: Required parent role is missing."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-roles]
+what = "The automated accessibility check found this problem: ARIA role is invalid."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-toggle-field-name]
+what = "The automated accessibility check found this problem: ARIA toggle has no name."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-tooltip-name]
+what = "The automated accessibility check found this problem: Tooltip has no accessible name."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-required-children]
+what = "The automated accessibility check found this problem: Required child roles are missing."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-deprecated-role]
+what = "The automated accessibility check found this problem: Deprecated ARIA role."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-braille-equivalent]
+what = "The automated accessibility check found this problem: Braille attribute has no non-Braille equivalent."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-hidden-focus]
+what = "The automated accessibility check found this problem: Hidden region contains focusable elements."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-hidden-body]
+what = "The automated accessibility check found this problem: Page body is hidden from assistive technology."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-prohibited-attr]
+what = "The automated accessibility check found this problem: ARIA attribute is prohibited for this role."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-aria-allowed-attr]
+what = "The automated accessibility check found this problem: ARIA attribute is not allowed for this role."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-duplicate-id-aria]
+what = "The automated accessibility check found this problem: An ID referenced by ARIA or a label is duplicated."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-bypass]
+what = "The automated accessibility check found this problem: Repeated content cannot be skipped."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-label]
+what = "The automated accessibility check found this problem: Form control has no label."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-form-field-multiple-labels]
+what = "The automated accessibility check found this problem: Form control has multiple labels."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-frame-title]
+what = "The automated accessibility check found this problem: Frame has no title."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-frame-title-unique]
+what = "The automated accessibility check found this problem: Frame titles are not distinct."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-frame-focusable-content]
+what = "The automated accessibility check found this problem: Frame with focusable content is removed from tab order."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-document-title]
+what = "The automated accessibility check found this problem: Document title is missing."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-html-lang-valid]
+what = "The automated accessibility check found this problem: Document language is invalid."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-html-has-lang]
+what = "The automated accessibility check found this problem: Document language is missing."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-html-xml-lang-mismatch]
+what = "The automated accessibility check found this problem: Document language declarations disagree."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-meta-refresh]
+what = "The automated accessibility check found this problem: Page uses a timed refresh."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-input-image-alt]
+what = "The automated accessibility check found this problem: Image input has no alternative text."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-image-alt]
+what = "The automated accessibility check found this problem: Image has no alternative text."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-object-alt]
+what = "The automated accessibility check found this problem: Embedded object has no alternative text."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-area-alt]
+what = "The automated accessibility check found this problem: Image map area has no alternative text."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-role-img-alt]
+what = "The automated accessibility check found this problem: Image role has no alternative text."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-svg-img-alt]
+what = "The automated accessibility check found this problem: SVG image has no accessible text."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-server-side-image-map]
+what = "The automated accessibility check found this problem: Server-side image map."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-video-caption]
+what = "The automated accessibility check found this problem: Video has no caption track."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-no-autoplay-audio]
+what = "The automated accessibility check found this problem: Media starts automatically with sound."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-button-name]
+what = "The automated accessibility check found this problem: Button has no accessible name."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-input-button-name]
+what = "The automated accessibility check found this problem: Input button has no accessible name."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-link-in-text-block]
+what = "The automated accessibility check found this problem: Text link is distinguished only by color."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-link-name]
+what = "The automated accessibility check found this problem: Link has no accessible name."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-select-name]
+what = "The automated accessibility check found this problem: Select control has no accessible name."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-summary-name]
+what = "The automated accessibility check found this problem: Disclosure summary has no accessible name."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-marquee]
+what = "The automated accessibility check found this problem: Moving marquee element."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-blink]
+what = "The automated accessibility check found this problem: Blinking element."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-nested-interactive]
+what = "The automated accessibility check found this problem: Interactive elements are nested."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-listitem]
+what = "The automated accessibility check found this problem: List item has no list parent."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-list]
+what = "The automated accessibility check found this problem: List contains invalid children."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-definition-list]
+what = "The automated accessibility check found this problem: Description list has invalid structure."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-dlitem]
+what = "The automated accessibility check found this problem: Description item has no description list parent."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-th-has-data-cells]
+what = "The automated accessibility check found this problem: Table header has no associated data cells."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-td-headers-attr]
+what = "The automated accessibility check found this problem: Table headers reference a cell in another table."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-meta-viewport]
+what = "The automated accessibility check found this problem: Viewport restricts zoom."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-valid-lang]
+what = "The automated accessibility check found this problem: Element language is invalid."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-color-contrast]
+what = "The automated accessibility check found this problem: Text contrast is below AA requirements."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-meta-refresh-no-exceptions]
+what = "The automated accessibility check found this problem: Page uses a delayed refresh."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-identical-links-same-purpose]
+what = "The automated accessibility check found this problem: Identically named links have different destinations."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-color-contrast-enhanced]
+what = "The automated accessibility check found this problem: Text contrast is below AAA requirements."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-autocomplete-valid]
+what = "The automated accessibility check found this problem: Autocomplete value is invalid or inappropriate."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-avoid-inline-spacing]
+what = "The automated accessibility check found this problem: Inline text spacing prevents customization."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
+
+[issues.accessibility-target-size]
+what = "The automated accessibility check found this problem: Pointer targets are too small or too close."
+why = "These elements may make the page harder to use with assistive technology. Automated checks do not replace manual assessment."
+fix = "Inspect the highlighted elements and the linked rule documentation. Correct the cause and retest with keyboard navigation and assistive technology."
