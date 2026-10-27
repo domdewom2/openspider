@@ -1187,8 +1187,8 @@ fn divergent_diff_rejects_deterministically_instead_of_approximating() {
 #[tokio::test]
 async fn a11y_detail_keys_are_node_ids_across_sorting_and_pages() {
     let fx = fixture();
-    fx.write("INSERT INTO a11y_nodes(id,url_id,rule_id,target,snippet,summary) VALUES(19,1,'z-rule','#z','<img>','z'),(42,1,'a-rule','#a','<img>','a')");
-    let handle = fx.open(json!({"kind":"detail","detail":"a11yNodes","urlIds":[1],"params":{},"sort":[{"column":"rule_id","dir":"asc"}]}), json!([])).await;
+    fx.write("INSERT INTO a11y_rules(url_id,rule_id,status,impact) VALUES(1,'accesskeys','violation','serious'); INSERT INTO a11y_nodes(id,url_id,rule_id,target,snippet,summary) VALUES(19,1,'accesskeys','#z','<img>','z'),(42,1,'accesskeys','#a','<img>','a')");
+    let handle = fx.open(json!({"kind":"detail","detail":"a11yNodes","urlIds":[1],"params":{},"sort":[{"column":"Location on Page","dir":"asc"}]}), json!([])).await;
     let first = fx.rows(&handle, 0, 1, json!([])).await;
     let second = fx.rows(&handle, 1, 1, json!([])).await;
     assert_eq!(first["rowKeys"], json!([42]));
