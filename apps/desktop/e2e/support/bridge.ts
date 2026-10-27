@@ -7,6 +7,7 @@ import { join, resolve } from "node:path";
 export interface Bridge {
   /** `ws://127.0.0.1:<port>/?token=<hex>` */
   url: string;
+  stderr?(): string;
   stop(): Promise<void>;
 }
 
@@ -26,7 +27,9 @@ export async function startBridge(opts: { fixture?: string; timeoutMs?: number }
   if (!bridgeAvailable()) return null;
   const home = mkdtempSync(join(tmpdir(), "os-bridge-"));
   const args = ["--home", home, ...(opts.fixture ? ["--fixture", opts.fixture] : [])];
-  const child: ChildProcess = spawn(bridgeBinary(), args, { stdio: ["ignore", "pipe", "inherit"] });
+  const child: ChildProcess = spawn(bridgeBinary(), args, { stdio: ["ignore", "pipe", "pipe"] });
+  let stderr = "";
+  child.stderr?.on("data", (d: Buffer) => { stderr = (stderr + d.toString()).slice(-100_000); process.stderr.write(d); });
   // Windows hält Dateien des beendeten Prozesses kurz gesperrt (EBUSY): erneut versuchen, Aufräumen ist nur Best Effort.
   const cleanup = () => {
     try {
@@ -66,6 +69,7 @@ export async function startBridge(opts: { fixture?: string; timeoutMs?: number }
   }
   return {
     url: `ws://127.0.0.1:${info.port}/?token=${info.token}`,
+    stderr: () => stderr,
     async stop() {
       child.kill();
       await new Promise((r) => setTimeout(r, 50));

@@ -5,6 +5,12 @@ import { startBridge } from "../support/bridge";
 // `search.validateRegex` in the fancy-regex dialect; the UI only renders the returned rule tree.
 // spec: UI-011 [P1]
 test("real bridge: the core parses the text syntax into the rule tree and validates regexes with back references", async ({ page }) => {
+  const frames: string[] = [];
+  page.on("websocket", socket => {
+    socket.on("framesent", event => frames.push(`send ${event.payload}`));
+    socket.on("framereceived", event => frames.push(`receive ${event.payload}`));
+    socket.on("socketerror", error => frames.push(`error ${error}`));
+  });
   const bridge = await startBridge();
   expect(bridge).not.toBeNull();
   try {
@@ -31,5 +37,7 @@ test("real bridge: the core parses the text syntax into the rule tree and valida
     await panel.getByRole("button", { name: "Search", exact: true }).click();
     await expect(panel.getByLabel("Query", { exact: true })).toHaveValue('Address REGEX "/([^/]+)/\\\\1/" AND "Word Count" < "200"', { timeout: 15_000 });
     await expect(panel.getByRole("alert")).toHaveCount(0);
-  } finally { await bridge?.stop(); }
+  } finally {
+    await test.info().attach("bridge-diagnostics", { body: `stderr:\n${bridge?.stderr?.() ?? ""}\nwebsocket:\n${frames.join("\n")}`, contentType: "text/plain" });
+    await bridge?.stop(); }
 });

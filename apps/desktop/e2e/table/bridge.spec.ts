@@ -6,6 +6,12 @@ import { startBridge } from "../support/bridge";
 // spec: UI-114
 test("real bridge: crawl, recrawl a changed page, then remove the URL and update the counts", async ({ page }) => {
   // Integration also requires K01 views and K04 crawl control. N01 resolves this C9 placeholder.
+  const frames: string[] = [];
+  page.on("websocket", socket => {
+    socket.on("framesent", event => frames.push(`send ${event.payload}`));
+    socket.on("framereceived", event => frames.push(`receive ${event.payload}`));
+    socket.on("socketerror", error => frames.push(`error ${error}`));
+  });
   const bridge = await startBridge();
   expect(bridge).not.toBeNull();
   let title = "Initial title";
@@ -40,5 +46,7 @@ test("real bridge: crawl, recrawl a changed page, then remove the URL and update
     await page.getByRole("menuitem", { name: "Remove", exact: true }).click();
     await page.getByRole("button", { name: "Remove", exact: true }).click();
     await expect(page.getByText("Showing: 0 of 0", { exact: true })).toBeVisible();
-  } finally { await bridge?.stop(); await new Promise<void>(resolve => site.close(() => resolve())); }
+  } finally {
+    await test.info().attach("bridge-diagnostics", { body: `stderr:\n${bridge?.stderr?.() ?? ""}\nwebsocket:\n${frames.join("\n")}`, contentType: "text/plain" });
+    await bridge?.stop(); await new Promise<void>(resolve => site.close(() => resolve())); }
 });
