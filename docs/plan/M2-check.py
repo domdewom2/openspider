@@ -17,6 +17,8 @@ Prüft:
   P10 C14 M1-Sperrbereich: Pakete der Wellen in SPERR_WELLEN besitzen nichts unter crates/{os-store,os-engine,os-analyze};
       jedes andere Paket mit Besitz dort hängt (transitiv) an M1_SPERRE_BIS.
   P11 C1: N-Pakete (C9) hängen an allen Paketen ihrer Quellwelle.
+  P12 K2-75: Nutzer-Abnahmen ("human": true) laufen lokal (runner local-mac), tragen keine spec_ids und
+      M2-Q04 hängt (transitiv) an jeder von ihnen.
 
 Das Skript ist Teil der Planpflege: Wer M2-packages.json ändert, führt es vor dem Commit aus.
 """
@@ -38,7 +40,7 @@ M1_SPERRE = ("crates/os-store", "crates/os-engine", "crates/os-analyze")
 M1_SPERRE_BIS = "M1-N27"
 SPERR_WELLEN = ["0a"]
 SPERR_PROBEN = ("Cargo.toml", "src/lib.rs", "src/q.rs", "src/q/z.rs", "tests/q.rs", "migrations/q.sql", "benches/q.rs")
-WELLEN = ["0a", "0b", "0c", "0d", "0e", "1", "2", "2b", "3", "4", "4b", "5"]  # 2b: M2-N01b (K2-68)
+WELLEN = ["0a", "0b", "0c", "0d", "0e", "1", "2", "2b", "3", "3h", "4a", "4", "4h", "4n", "4b", "5"]  # 2b: M2-N01b (K2-68); 4a: M2-E07 vor Q03 (K2-74), M2-U34 vor U32/U33 (K2-75); 3h/4h: Nutzer-Abnahmen A02/A03, 4n: N-Paket aus A03 vor Q04 (K2-75)
 ID_RE = r"\b(?:CRAWL|ONPAGE|TECH|OUT|AGENT|UI|INTEG|PERF)-\d{3}\b"
 
 # M2.md Abschnitt 9: bewusst nicht in M2 (Grund in Klammern). Wird von P5/P6 als Ausnahme gelesen.
@@ -270,6 +272,16 @@ def main():
         fehlt = [p["id"] for p in pk if p["wave"] == c["quelle"] and p["id"] != nid and p["id"] not in byid[nid]["depends_on"]]
         if fehlt:
             errs.append(f"P11 {nid} hängt nicht an allen Paketen der Welle {c['quelle']}: {', '.join(fehlt)}")
+    q04 = alle_deps("M2-Q04") if "M2-Q04" in byid else set()
+    for p in pk:
+        if not p.get("human"):
+            continue
+        if p.get("runner") != "local-mac":
+            errs.append(f"P12 {p['id']}: Nutzer-Abnahme ohne runner local-mac")
+        if p["spec_ids"]:
+            errs.append(f"P12 {p['id']}: Nutzer-Abnahme mit spec_ids")
+        if p["id"] not in q04:
+            errs.append(f"P12 M2-Q04 hängt nicht an der Nutzer-Abnahme {p['id']}")
     m2md = (PLAN / "M2.md").read_text(encoding="utf-8")
     sec = m2md[m2md.index("### 5.1 "): m2md.index("### 5.2 ")]
     for line in sec.splitlines():

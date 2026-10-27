@@ -2922,7 +2922,8 @@
    "crates/os-app/src/commands/detail_ext.rs",
    "crates/os-app/src/source/**",
    "crates/os-app/src/assets.rs",
-   "crates/os-app/tests/cmd_detail_ext_*.rs"
+   "crates/os-app/tests/cmd_detail_ext_*.rs",
+   "crates/os-store/src/queries/detail_ext.rs (Nachtrag K2-74, Auflage W3a-6)"
   ],
   "depends_on": [
    "M2-D01",
@@ -3293,16 +3294,30 @@
   "id": "M2-N02",
   "kind": "package",
   "model": "sonnet",
-  "title": "Nacharbeit Welle 2 (E8): Platzhalter-Ignores der Welle 2 auflösen (E2E-Ordner der Welle-2-UI-Pakete), Befunde der Alpha-Suite (M2-A01), Schnittstellenbedarf und Manifeste der Runde",
-  "wave": 3,
+  "title": "Nacharbeit Welle 2/3 (E8, K2-74): Platzhalter-Ignores der Welle 2 auflösen (E2E-Ordner der Welle-2-UI-Pakete), Auflagen der Gates Welle 3a/3b an gemergte Pakete (Rust/Kern), INTEG-072 saveText/saveUrls, Quota-Ledger, K2-64-Rest, Schnittstellenbedarf und Manifeste der Runde",
+  "wave": 4,
   "spec_ids": [],
   "owns": [
    "apps/desktop/e2e/{config,settings-sections,crawls,table-advanced,detail-fach,sidebar-fach,viz,mcp,integrations,tasks}/** (nur Platzhalter-Ignores entfernen; rote Tests → Befund)",
    "Cargo.toml, Cargo.lock, crates/*/Cargo.toml, package.json, package-lock.json (nur gebündelter Schnittstellenbedarf, C7)",
    ".github/workflows/ci.yml (nur gebündelter Bedarf)",
    "apps/desktop/src-tauri/src/** und apps/desktop/src/ipc/{commands.json,gen/**,<domäne>.ts} (nur Neuerzeugung bei neuen Commands)",
-   "Zusatzdateien aus der Alpha-Befundliste: Planer-Nachtrag vor dem Start (ggf. Teilung N02a/N02b), geprüft mit docs/plan/M2-check.py",
-   "crates/os-analyze/tests/tab_internal.rs (nur alter ONPAGE-012-Test, M2.md 5.1)"
+   "crates/os-analyze/tests/tab_internal.rs (nur alter ONPAGE-012-Test, M2.md 5.1)",
+   "crates/os-render/src/snippets/**",
+   "tests/fixtures/integ-custom-js/** (nur traversal.js, tauri-probe.js und Ausgabeverzeichnis-Fälle ergänzen)",
+   "crates/os-integrations/src/crawl_glue/**",
+   "crates/os-integrations/src/core.rs (nur Ledger-Pfad im ApiCtx, additiv)",
+   "crates/os-integrations/tests/crawl_glue_quota_*.rs",
+   "crates/os-export/src/reports/orphan_pages.rs",
+   "crates/os-export/tests/list_m2_e06.rs",
+   "tests/fixtures/crawl-m2-list/export_tests.rs (nur entfernen)",
+   "crates/os-engine/src/serp_input.rs",
+   "crates/os-engine/tests/serp_seed_*.rs",
+   "crates/os-app/src/mcp/clients.rs",
+   "crates/os-app/tests/cmd_mcp_service.rs",
+   "crates/os-fetch/src/net/mail_proxy_platform.rs, crates/os-analyze/src/mail_completion.rs (Besitz für Folgewellen; Änderung nur bei Befund aus Auflage W3a-7)",
+   "crates/os-render/tests/render_chromium.rs, crates/os-engine/tests/{render_chromium,core_robots}.rs, crates/os-store/tests/registry_performance.rs, crates/os-integrations/tests/gsc_inspection.rs, crates/os-analyze/tests/tab_indexability.rs, crates/os-export/tests/links_detail.rs (nur Laufzeit, Assertions unverändert, K2-64)",
+   "docs/plan/M2-reports/n02.md"
   ],
   "depends_on": [
    "M2-Z01",
@@ -3335,11 +3350,39 @@
    "M2-U26",
    "M2-U27",
    "M2-N01b",
-   "M2-N02a"
+   "M2-N02a",
+   "M2-T02",
+   "M2-U13B",
+   "M2-D22",
+   "M2-D23",
+   "M2-E06",
+   "M2-I06",
+   "M2-L01",
+   "M2-K17",
+   "M2-U23"
   ],
-  "size": "M",
+  "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Der Planer schneidet nach der Welle-2-Sichtung ggf. mehrere N-Pakete (N02a, N02b …) ohne Besitzüberschneidung; dieses Paket ist der Platzhalter dafür. C9: löst alle Platzhalter `wartet auf M2-xx` der Welle 2 auf (nur Ignore/test.fixme entfernen, Testinhalt unverändert). Die Grundbesitzliste oben ist fest; Dateien aus der Alpha-Befundliste trägt der Planer vor dem Start nach (Besitzprüfung mit docs/plan/M2-check.py, keine Überschneidung mit Welle 3). Start erst, wenn alle Pakete der Welle 2 gemergt sind (C1, depends_on vollständig, Prüfskript P11)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Arbeitsliste: docs/plan/M2-reports/n02-auflagen.md (K2-74), nur Zeilen mit Zielpaket M2-N02. Start erst nach dem Merge der Runden 10 und 11 (depends_on, C1). Fremdänderungen nur nach K2-72-Grundsatz (minimal, Bericht „Fremdänderung (K2-74)“ mit Datei, Diff, Spec-ID); NICHT anfassen: Dateien der laufenden Pakete C02, D21, R02, U17 und deren K2-72/K2-73-Freigaben (os-engine/src/{worker,frontier,crawl,lifecycle,render_glue,session_guard}.rs, os-render/src/{api,intercept,page,login}.rs, os-model/src/{enums,write_m2}.rs, os-app/src/commands/{export,compare,auth_login}.rs, os-export/src/reports/overview.rs) – braucht eine Auflage eine dieser Dateien, abbrechen und melden. (1) C9: alle Platzhalter `wartet auf M2-xx` der Welle 2 in den E2E-Ordnern auflösen (Stand int-10: e2e/crawls/compare.pending.spec.ts (C01; entfällt, falls U23 sie entfernt hat), e2e/detail-fach/core-integration.spec.ts (K09), e2e/mcp/bridge.spec.ts fünf fixme (K17), e2e/tasks/bridge.spec.ts (T01, X03)); nur fixme entfernen, Testinhalt unverändert, rote Tests → Befund an den Planer. Danach `grep -rn 'wartet auf M2' apps/desktop/e2e` ohne Treffer der Welle 2. (2) W3a-4 INTEG-072: `saveText`/`saveUrls` in crates/os-render/src/snippets/runtime.js umsetzen (bisher „File access is not enabled“): Aufrufe im Render-Kontext sammeln und nach der Ausführung Rust-seitig in das freigegebene Ausgabeverzeichnis schreiben; Pfad normalisieren, absolute Pfade, `..`-Segmente und Symlinks aus dem Verzeichnis hinaus ablehnen; `window.__TAURI__` bleibt undefined. Ohne Änderung an os-render/src/{api,intercept,page}.rs und os-engine/src/render_glue.rs (R02/U17); fehlt das Ausgabeverzeichnis in der Snippet-Konfiguration, additives Feld mit Default (Schnittstellenbedarf dieses N-Pakets) – geht es nicht ohne die gesperrten Dateien, abbrechen und melden (dann M3). Tests: `// spec: INTEG-072` traversal.js (`saveText(x,'../../x')` abgelehnt, keine Datei außerhalb), Erfolgsfall mit Datei im Ausgabeverzeichnis, tauri-probe.js; vorhandener Test snippets/tests.rs:191 nur nach K2-63 umstellen. Im Bericht die D22-Abweichung als behoben ausweisen. (3) W3b-I06-1 INTEG-006: Quota-Ledger nicht mehr als Sidecar `<crawl>.api-quotas.json` (os-engine/src/crawl.rs:1101, os-integrations/src/crawl_glue/mod.rs:29), sondern `api-quotas.json` im Settings-Verzeichnis (dieselbe Pfadauflösung wie die App, `OPENSPIDER_HOME`/`dirs`, kein Pfadtrenner im Code); bevorzugt Auflösung in os-integrations (ApiRun::new ignoriert den Sidecar-Pfad bzw. ApiCtx-Feld mit Default), damit crawl.rs unverändert bleibt. Test crawl_glue_quota_ledger.rs: zwei Crawls teilen ein Tageskontingent, kein Sidecar neben der Crawl-Datei, Reset um Mitternacht US-Pazifik über injizierte Uhr. (4) W3b-I06-3 OUT-099: Orphan-Report (os-export/src/reports/orphan_pages.rs) ohne GA4/GSC-Quelle – Hinweis bzw. Verhalten an OUT-099 abgleichen (Quellen GA/GSC/Sitemap); nur was die Spec deckt, Test `// spec: OUT-099`; `EnvironmentSecrets` (Umgebung vor Schlüsselbund) im Moduldoc von crawl_glue dokumentieren. (5) W3b-E06-1: tests/fixtures/crawl-m2-list/export_tests.rs (per `#[path]` eingebunden) nach crates/os-export/tests/list_m2_e06.rs verschieben, Tests unverändert. (6) W3b-E06-2 CRAWL-031/OUT-098: os-engine/src/serp_input.rs:108–125 schreibt SERP-Zeilen per Roh-SQL am Writer vorbei → url_counters/Overview leer. Seeding über WriteBatch/Writer-Thread (url_counters-Zeile, change_seq, Zähler), Verhalten der Zeilen sonst gleich; Aufrufstelle in lifecycle.rs nur, wenn unvermeidbar (eine Zeile, K2-72, Integrator). Test serp_seed_overview.rs `// spec: CRAWL-031`: Overview zählt die SERP-Zeilen, url_counters vorhanden. (7) W3b-K17-2 (CLAUDE.md plattformneutral): os-app/src/mcp/clients.rs:14 `.join(\".codex/config.toml\")` → `.join(\".codex\").join(\"config.toml\")`, ebenso Erwartungen in tests/cmd_mcp_service.rs (um Zeile 103–111) mit join statt Literal; Spec-ID des vorhandenen Tests. (8) W3a-7 Stichprobe nach K2-62 (6): auf main nach Runde 11 `cargo test -p os-app --test cmd_mail_lifecycle --test cmd_detail_ext_service` und `cargo test -p os-analyze --test tab_mobile --test tab_custom_js`; Ergebnis in den Bericht, Befund → Planer. W3a-3: `compare.contentAvailable` steht in crates/os-app/tests/manifest_contract.rs (CATALOG/Zeile 114) und in M2.md 3.6a – Konsistenz nach Runde 11 bestätigen (ggf. neue Commands aus U23/K17 ebenso). (9) K2-64-Rest (aus N01b): Laufzeit der genannten Testprogramme senken (render_chromium os-render 54/51/90 s, registry_performance 112 s Windows, core_robots ~33 s, gsc_inspection 88 s x64, tab_indexability, links_detail), Assertions unverändert; Ziel CI-Schritt „Rust tests“ ≤ 15 min auf arm64/Windows; gelingt es, Limit in ci.yml in Absprache mit dem Orchestrator senken, sonst Messwerte berichten (keine Abnahmebedingung). (10) Schnittstellenbedarf gebündelt (C7): `sys-locale` (MIT/Apache-2.0) in crates/os-cli/Cargo.toml und Cargo.lock für L02 (Auflage W3b-L01-2), weiterer gemeldeter Bedarf aus Runde 10/11. Je Auflage Ursache, Korrektur, Test mit `// spec: <ID>` gegen eine Fixture; Bericht docs/plan/M2-reports/n02.md mit Tabelle je Auflage (Status erledigt/Befund)."
+ },
+ {
+  "id": "M2-N02b",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Nacharbeit Welle 3, UI (K2-74): Vergleichsansicht auf DataGrid und Spaltenkonfiguration umstellen (Auflage Gate W3b an U23)",
+  "wave": 4,
+  "spec_ids": [],
+  "extra_spec_ids": [],
+  "owns": [
+   "apps/desktop/src/features/compare/**",
+   "docs/plan/M2-reports/n02b.md"
+  ],
+  "depends_on": [
+   "M2-U23"
+  ],
+  "runner": "cloud",
+  "size": "S",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Arbeitsliste: docs/plan/M2-reports/n02-auflagen.md, Zeilen mit Zielpaket M2-N02b. W3b-U23-3 (CRAWL-144, OUT-140/TECH-301): ComparisonTable.tsx und ComparisonLinks.tsx sind schlichte HTML-Tabellen; auf das gemeinsame DataGrid (apps/desktop/src/grid/**, nur über DataGridProps, Grid selbst nicht ändern) mit Spaltenkonfiguration, Sortierung und Auswahl wie in der Haupttabelle umstellen; Zahlen und Inhalte unverändert (comparison.test.tsx bleibt grün, Erwartungen nur nach K2-63). Neue Texte in features/compare/i18n/{de,en}.ftl (U33 nimmt diesen Ordner aus). Tests: vitest `// spec: CRAWL-144` (Spaltenkonfiguration, Sortierung, Auswahl → Detail), E2E-A in apps/desktop/e2e/compare/** gehört U23 – nur bei Bedarf als Befund melden. C4-Frontend-Prüfungen grün; Bericht docs/plan/M2-reports/n02b.md."
  },
  {
   "id": "M2-R02",
@@ -3488,7 +3531,8 @@
    "core/issues/catalog.d/mobile.toml",
    "core/issues/texts/{de,en}.d/mobile.toml",
    "tests/fixtures/tech-m2-mobile/**",
-   "crates/os-analyze/tests/issue_catalog_mobile.rs"
+   "crates/os-analyze/tests/issue_catalog_mobile.rs",
+   "crates/os-parse/src/mobile.rs (Nachtrag K2-74, Auflage W3a-6)"
   ],
   "depends_on": [
    "M2-I04",
@@ -3534,7 +3578,7 @@
   ],
   "size": "L",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Content-Ähnlichkeit über MinHash aus M2-D02."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Content-Ähnlichkeit über MinHash aus M2-D02. Nachtrag K2-74 (Gates W3a/W3b, Liste docs/plan/M2-reports/n02-auflagen.md): (a) W3a-2 TECH-300/301: Zählersemantik der Links-Elemente klären – `Reader::new` liest url_counters roh (inkl. Selbstlinks), T02 zieht Selbstlinks ab (Mail 1 vs C02 3 bei Inlinks/Unique Inlinks/Internal Outlinks/Unique Internal Outlinks); Entscheidung nach TECH-301 mit Test `// spec: TECH-301` und Beleg im Bericht (die Umstellung von cmd_mail_lifecycle.rs macht L02). (b) W3b-C02-2: Register-Tab crates/os-analyze/src/tabs/change_detection.rs:6–23 liefert keine Daten → echte Daten über `change::calculate/ids/counts`. (c) W3b-C02-4: Cross-Crate-`#[path]` in os-cli/src/exec.rs:437–439 und run_task.rs:45–46 nach os-cli verlagern; exec.rs:181 unterdrückt bei einem Vergleichsfehler alle Exporte → nur den Vergleichsexport auslassen und Fehler melden (OUT-202); fehlender i18n-Schlüssel `tasks-issue-auto-compare-project-required` in den .ftl ergänzen (K2-71-Freigabe für diese Stellen). Der IPC-Vertrag `elements: []` (Fixrunde) bleibt vorrangig."
  },
  {
   "id": "M2-E06",
@@ -3808,6 +3852,36 @@
   "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Übernimmt den Besitz der genannten Feature-Ordner für Welle 3. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
+  "id": "M2-A02",
+  "kind": "package",
+  "model": "human",
+  "title": "Beta-Abnahme durch den Nutzer (K2-75): App aus main (Stand nach Runde 12, UI-Umfang Welle 3) zum Durchklicken auf macOS, optional Windows; Befundliste docs/plan/M2-acceptance/beta/befunde.md",
+  "wave": "3h",
+  "spec_ids": [],
+  "extra_spec_ids": [],
+  "owns": [
+   "docs/plan/M2-acceptance/beta/{befunde.md,durchklickplan.md,build.md}",
+   "docs/plan/M2-acceptance/beta/screens/**"
+  ],
+  "depends_on": [
+   "M2-C02",
+   "M2-K17",
+   "M2-E06",
+   "M2-I06",
+   "M2-L01",
+   "M2-U23",
+   "M2-U13B",
+   "M2-D21",
+   "M2-D22",
+   "M2-D23",
+   "M2-T02"
+  ],
+  "human": true,
+  "runner": "local-mac",
+  "size": "S",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Menschliche Abnahme (Nutzerentscheidung 27.10.2026, K2-75); kein Agent setzt Code um. Voraussetzung: Runde 12 (C02 + K17-Nachtrag) in main, CI grün; R02/U17 sind dabei, wenn bis dahin gemergt, sonst prüft A03 ihre Oberfläche. ORCHESTRATOR (C11): (1) baut die App aus main (Tauri-Bundle macOS arm64 als DMG, unsigniert mit Hinweis zum ersten Öffnen per Rechtsklick → Öffnen; optional Windows-Installer als Artefakt eines `workflow_dispatch`-Laufs der CI), notiert Commit, Build-Weg und Prüfsummen in beta/build.md; (2) legt beta/durchklickplan.md an (≤ 1 Seite, 30–45 min: Crawl von fx-ui-basic bzw. einer eigenen Site starten/pausieren, alle drei Tab-Leisten inkl. Überlauf und „Tabs konfigurieren/zurücksetzen“, Filter/Suche/Sortierung, Detail- und Seitenleisten-Tabs, Export der Ansicht und Bulk-Export, Konfigurationsdialog, Crawl-Verwaltung, Vergleichsmodus/Change Detection, Visualisierung, MCP-Dialog, Einstellungen Sprache de/en und Theme hell/dunkel, Fenster 1 024 × 640 und Vollbild); (3) überträgt die Rückmeldungen des Nutzers in beta/befunde.md. FORMAT wie docs/plan/M2-acceptance/alpha/befunde.md: Kopf (Stand, Commit, Plattform/Fenstergröße/Sprache/Theme, Schwere-Definition Blocker/Hoch/Mittel/Niedrig wie alpha), Übersichtstabelle | ID | Titel | Schwere | Ort | Screenshot | Spec |, je Befund ein Abschnitt `### A02-nn Titel (Schwere)` mit Ort (Bereich der Oberfläche, z. B. „Detail-Tab-Leiste“, bei Kenntnis Datei), Reproduktion (Schritte, Fenstergröße, Sprache), Erwartung, Screenshot-Hinweis (Dateiname unter beta/screens/ oder Beschreibung; nur Bilder der eigenen App, PNG ≤ 500 KB), Spec-ID (UI-…; ohne passende ID „keine Spec-ID – Rückfrage an den Planer“). Die sechs Punkte aus codex-logs/ui-befunde-nutzer.md (27.10.) übernimmt der Orchestrator als A02-01 … A02-06, sofern der Nutzer sie im neuen Build noch sieht (sonst „erledigt durch <Commit>“). Keine Fixes. Ergebnis → Planer schneidet die Arbeitsliste von M2-U34 (Nachtrag K2-75a: endgültige owns und Größe)."
+ },
+ {
   "id": "M2-L02",
   "kind": "package",
   "model": "sonnet",
@@ -3819,7 +3893,13 @@
    "OUT-202"
   ],
   "owns": [
-   "crates/os-cli/** (ohne Cargo.toml)"
+   "crates/os-cli/** (ohne Cargo.toml)",
+   "crates/os-mcp/src/tools/compare_crawls.rs",
+   "crates/os-mcp/tests/k17_tools.rs",
+   "crates/os-app/src/commands/compare/{ui,ui_change}.rs",
+   "crates/os-store/src/queries/app_support.rs (nur comparison_signature entfernen)",
+   "crates/os-app/tests/cmd_mail_lifecycle.rs",
+   "tests/fixtures/out-m2-mail/compare-counts.json (nur ablösen)"
   ],
   "depends_on": [
    "M2-L01",
@@ -3827,9 +3907,9 @@
    "M2-I06",
    "M2-X03"
   ],
-  "size": "S",
+  "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). OUT-190 (M1 7.3): Ausgabe nach Google Drive (gegen Drive-Mock). Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). OUT-190 (M1 7.3): Ausgabe nach Google Drive (gegen Drive-Mock). Geheimnisse (C13): nur über os_fetch::secrets::SecretStoreMut (M2.md 3.6b); Tests ausschließlich mit MemorySecretStore bzw. OPENSPIDER_SECRET_STORE=memory, nie KeyringSecretStore; ein optionaler Echt-Schlüsselbund-Test trägt #[ignore = \"M3: OUT-225 manuelle Schlüsselbund-Prüfung\"]. Kein Secret-Service/gnome-keyring in der Cloud nötig. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Nachtrag K2-74 (Auflagen Gates W3a/W3b nach dem C02-Merge, Liste docs/plan/M2-reports/n02-auflagen.md, Zielpaket M2-L02): (1) W3b-C02-3 OUT-202: `--project-crawl-comparison` ohne Wert bzw. „TRUE“ liefert Usage-Fehler (os-cli/src/plan.rs:351–359) → ohne Wert = true, Groß-/Kleinschreibung egal; Test `// spec: OUT-202`. (2) W3b-K17-1 AGENT-015: os-mcp/src/tools/compare_crawls.rs:63–118 liest Change Detection über das Register → auf `os_analyze::compare::change::counts`/`ids` mit der geöffneten Comparison umstellen, Ignore „Klärung K2-72: wartet auf M2-C02“ in os-mcp/tests/k17_tools.rs:112–114 entfernen, Test grün (Kriterium 3). (3) W3b-U23-1 TECH-301: Doppelimplementierung entfernen – os-app/src/commands/compare/ui.rs auf die C02-Funktionen umstellen, ui_change.rs und os-store/src/queries/app_support.rs:349 comparison_signature entfernen; UI, Export, CLI und MCP zeigen dieselben Zahlen (Test `// spec: TECH-301` vergleicht UI-Command und CLI-Export auf einer Fixture). (4) W3a-2 OUT-281/TECH-301: crates/os-app/tests/cmd_mail_lifecycle.rs auf die öffentliche Change-Detection-Schnittstelle umstellen und das Golden tests/fixtures/out-m2-mail/compare-counts.json ablösen (Vorlage check-c02-parity.py), Zählersemantik wie von C02 entschieden. (5) W3b-L01-1 OUT-223/CRAWL-121: Flake os-cli/tests/auth_profiles.rs:270 (cookie_expiry_boundaries…, Ursache src/auth.rs:174, cookie_store prüft gegen die Systemzeit) → Jar-Assertion nur mit Cookies ≥ 60 s Restlaufzeit, den 1-ms-Grenzfall nur über die Importentscheidung prüfen. (6) W3b-L01-2 OUT-198: `--column-headers ui` (os-cli/src/column_headers.rs) – Systemsprache über `sys-locale` (Manifest trägt N02 nach) statt nur LC_*/LANG (Windows), Spaltenlabels aus den UI-Übersetzungen generieren statt 33 hartkodierter Paare; Test mit injizierter Sprache. (7) W3b-L01-4: `Internal:Fonts/Media/XML` stehen in M2_FILTERS (Erweiterungsfilter, `ui.parity_filters=false`), aber nicht im CLI-Exportkatalog (os-cli/src/registry.rs) – nach ONPAGE-023/OUT-Exportkatalog entscheiden und angleichen oder im Bericht begründen. Fremdänderungen außerhalb owns nach K2-72-Grundsatz.",
   "extra_spec_ids": [
    "OUT-190"
   ]
@@ -3856,11 +3936,12 @@
    "M2-U24",
    "M2-U25",
    "M2-U26",
-   "M2-U27"
+   "M2-U27",
+   "M2-U34"
   ],
   "size": "M",
   "runner": "cloud+ci+local-mac",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Fehler in Feature-Code als Befund (N-Paket Welle 5), Fixes nur in owns. Lokaler Teil (C11, Orchestrator): manueller Prüfplan VoiceOver (macOS, Referenz A) nach docs/plan/M2-acceptance/a11y/screenreader-plan.md (legt dieses Paket an: Hauptfenster, Tabelle mit aria-rowcount, Filter, Detailbereich, Seitenleiste, Konfigurations- und Exportdialog, Einstellungen; je Schritt erwartete Ansage); Ergebnis als docs/plan/M2-acceptance/a11y/voiceover-<datum>.md. NVDA: auf einem Windows-Rechner des Nutzers (K2-01), sonst Indiz aus der CI (windows-latest, axe + UIA-Baum per WebDriver) mit Vermerk in docs/plan/M2-acceptance/a11y/nvda-<datum>.md."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Fehler in Feature-Code als Befund (N-Paket Welle 5), Fixes nur in owns. Lokaler Teil (C11, Orchestrator): manueller Prüfplan VoiceOver (macOS, Referenz A) nach docs/plan/M2-acceptance/a11y/screenreader-plan.md (legt dieses Paket an: Hauptfenster, Tabelle mit aria-rowcount, Filter, Detailbereich, Seitenleiste, Konfigurations- und Exportdialog, Einstellungen; je Schritt erwartete Ansage); Ergebnis als docs/plan/M2-acceptance/a11y/voiceover-<datum>.md. NVDA: auf einem Windows-Rechner des Nutzers (K2-01), sonst Indiz aus der CI (windows-latest, axe + UIA-Baum per WebDriver) mit Vermerk in docs/plan/M2-acceptance/a11y/nvda-<datum>.md. Nachtrag K2-75: hängt an M2-U34; ui/primitives/{TabBar,Tabs}.tsx sind nach dem U34-Merge Teil von owns (Tab-Leisten-Semantik `tablist`, Roving Tabindex und Überlaufmenü auf allen drei Leisten prüfen)."
  },
  {
   "id": "M2-U31",
@@ -3927,11 +4008,12 @@
    "M2-U24",
    "M2-U25",
    "M2-U26",
-   "M2-U27"
+   "M2-U27",
+   "M2-U34"
   ],
   "size": "L",
   "runner": "cloud+ci+local-mac",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Nachtrag K2-75: hängt an M2-U34 – Screenshot-Baselines erst auf dem Stand nach dem U34-Merge erzeugen. Die Layout-Kollisionsprüfung (UI-001, 1 024 × 640 bei vier Skalierungen) wird um „abgeschnittener Text“ erweitert, weil Bounding-Box-Schnitte das Kappen innerhalb eines Elements nicht erkennen (Nutzerbefund 27.10.: Tab-Beschriftungen oben/unten gekappt, ohne dass sich Boxen schneiden): für jedes sichtbare Tab-Element aller drei Leisten und jede Beschriftung interaktiver Elemente (Knöpfe, Menüeinträge, Dialogtitel) gilt `scrollHeight ≤ clientHeight` und entweder `scrollWidth ≤ clientWidth` oder `text-overflow: ellipsis` mit Tooltip/zugänglichem Namen = voller Text; Lauf bei 1 024 × 640, 1 440 × 900 und 1 920 × 1 080, Sprache de und en, Theme hell/dunkel, macOS (WebKit) und Windows (Chromium, vier Skalierungen); Befunde als Testfehler mit Element, Sprache, Größe. Die U34-Tests in apps/desktop/e2e/polish/** bleiben bei U34; U32 übernimmt die Prüfung als dauerhaften Bestandteil der Visual-Suite (visual/**)."
  },
  {
   "id": "M2-U33",
@@ -3946,7 +4028,7 @@
    "OUT-271"
   ],
   "owns": [
-   "apps/desktop/src/features/*/i18n/**",
+   "apps/desktop/src/features/*/i18n/** (ohne apps/desktop/src/features/compare/i18n/**)",
    "apps/desktop/src/i18n/**",
    "apps/desktop/e2e/i18n/**"
   ],
@@ -3957,11 +4039,84 @@
    "M2-U24",
    "M2-U25",
    "M2-U26",
-   "M2-U27"
+   "M2-U27",
+   "M2-U34"
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Nachtrag K2-74: apps/desktop/src/features/compare/i18n/** gehört in Welle 4 M2-N02b; deren neue Schlüssel nur prüfen, nicht ändern. Nachtrag K2-75: hängt an M2-U34; die in docs/plan/M2-acceptance/beta/begriffe.md festgehaltene Begriffsliste (deutsche Anzeige der Tab- und Filternamen, Ausnahmeliste englischer Eigennamen/Kürzel) ist verbindlich; U33 ergänzt eine CI-Prüfung, die in de.ftl Werte meldet, die mit dem en-Wert identisch sind und nicht auf der Ausnahmeliste stehen, und deckt die übrigen Features (Dialoge, Einstellungen, Konfiguration, Viz, MCP, Integrationen, Aufgaben) ab, die U34 nicht durchgeht."
+ },
+ {
+  "id": "M2-E07",
+  "kind": "package",
+  "model": "opus",
+  "title": "Großcrawl-Skalierung der Engine (K2-74): Diagnose des überproportionalen Wachstums der Crawl-Datei und des Durchsatzabfalls bei Standardkonfiguration, Korrektur der Ursachen, Regressionsmessung (vor Q03)",
+  "wave": "4a",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "PERF-001",
+   "PERF-002",
+   "PERF-003",
+   "CRAWL-124",
+   "CRAWL-129"
+  ],
+  "owns": [
+   "crates/os-loadtest/src/scale.rs, crates/os-loadtest/src/bin/os-scale.rs, crates/os-loadtest/tests/scale_*.rs (neuer Messaufbau)",
+   "crates/os-store/src/{writer,writer_m2,checkpointer,counters,url_index,link_index,profile}.rs (nur Korrekturen aus Schritt 1)",
+   "crates/os-store/src/schema.rs (nur Registrierung einer neuen Migration)",
+   "crates/os-store/migrations/0005_*.sql (neu; nur Indizes und Speicherform, `q_`-Sichten und READ_API_VERSION unverändert)",
+   "crates/os-store/tests/scale_*.rs",
+   "crates/os-engine/src/writer_thread.rs",
+   ".github/workflows/scale-nightly.yml (neu)",
+   "docs/plan/M2-acceptance/scale/**",
+   "docs/plan/M2-reports/e07.md"
+  ],
+  "depends_on": [
+   "M2-E06",
+   "M2-I06",
+   "M2-K09",
+   "M2-D22",
+   "M2-D23",
+   "M2-L01"
+  ],
+  "runner": "local-mac",
+  "size": "L",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Anlass (Messung 20.10., Apple M2, CLI-Standardkonfiguration, main 4b67143): 5-Mio.-CLI-Crawl durch den Ressourcenschutz (CRAWL-129, Platte voll) bei 3,42 Mio. gecrawlten URLs (1,58 Mio. in der Warteschlange) pausiert; Crawl-Datei 63 GB ≈ 18,5 KB je gecrawlter URL gegenüber 5,7 KB/URL bei 100k; Durchsatz von ~1.650 auf 300–500 URLs/s (Mittel 387) gegenüber ~3.600 URLs/s im M1-Lasttest (os-loadtest, 1 Mio.); RSS konstant ~0,7 GB. Die Maschine war beim Start nicht ruhig (Load-Average ~48). Ursache unbekannt. PRÜFLISTE (aus der Planer-Sichtung am Code, je Punkt bestätigen oder verwerfen, mit Messwert): (a) Baseline: os-loadtest (os-loadtest/src/child.rs:111–124) und CLI (os-cli/src/exec.rs:245–259) fahren denselben Engine-Pfad (CrawlConfig::default, StorageProfile::Balanced, renderer None); der Unterschied 3.600 ↔ 387 URLs/s ist also vor allem M1- gegen M2-Codestand (Welle-1/2-Fakten in os-parse/worker/writer_m2), Site-Generator und Maschinenlast – zuerst os-loadtest perf-001 und den CLI-Lauf auf demselben main und derselben Site vergleichen. (b) Zufällige Indexpflege jenseits des Caches (256 MiB, profile.rs „Ausgewogen“): url_counters wird je Batch für alle Linkziele über den ganzen Kennungsraum aktualisiert (counters.rs flush, inkl. change_seq) samt Index url_counters_change_seq (migrations/0002_url_counters.sql:24); `UPDATE urls SET change_seq` je Zusatzfakt/Discovery (writer_m2.rs:115, :603) verschiebt Einträge in urls_change_seq; url_index.rs (Zeile 1–25, DROP_FROM_URLS = 250 000) entfernt nur die fünf Textindizes, nicht links_target (0001_init.sql:61), canonicals_target/pagination_target (0004_w1.sql:79–80), hreflang_target, sitemap_entries_url, url_ext_key. Erwartung: WAL-Seiten je Batch wachsen mit der Dateigröße → Durchsatzabfall. (c) Zusatzfakten als EAV-Tabelle url_ext (0003_m2.sql:17–24): Schlüsseltext steht in PK und zwei Sekundärindizes (url_ext_key, url_ext_change_seq), ~20 und mehr Schlüssel je Seite (worker.rs:489–635, os-parse); writer_m2.rs:63 löscht je Seite per substr() über alle Schlüssel, writer_m2.rs:145 Upsert setzt change_seq neu → Bytes/URL und Indexpflege. (d) WAL/Checkpoint: Hintergrund-Checkpoint PASSIVE (checkpointer.rs) setzt das WAL nur zurück, wenn kein Leser einen älteren Snapshot hält (Leseverbindungen von queue_maint/queue_disk.rs, Fortschritt, Ressourcenschutz); Auslöser wächst mit der Datei (profile.rs:62 wal_checkpoint_pages_between) → mehr zufällige Seiten je Durchlauf; WAL-Spitze, Durchläufe, Frames je Durchlauf und Dauer messen. (e) Warteschlangenanteil: bei großen Sites stehen noch nicht gecrawlte URLs bereits in urls/queue (+ queue_order, frontier.rs:620–640 Tiefen-/InTables-Updates) – Bytes je URL sowohl je gecrawlter URL als auch je urls-Zeile ausweisen. (f) Freiseiten/Fragmentierung durch DELETE+INSERT je Seite (writer_m2.rs:63–82): freelist_count und dbstat-unused je Tabelle. (g) MinHash-Signatur je URL (Standard an: os-model config.rs:1062, os-parse readability.rs:99) und weitere M2-Tabellen je URL (sd_*, forms, cookies, discovery_edges) – Anteil messen. (h) Arbeit je Batch mit wachsender Laufzeit (Zählerabfragen, crawl_events/url_flags-Wachstum, Analyse-/Aggregatpfade während des Crawls) – Zeitanteile je Stufe. SCHRITT 1 Diagnose (reproduzierbar, Skript im Repo): generierte Site os-testsite `synthetic:n=<N>,links=30` (PERF-001-Fixture), Stufen 100k/250k/500k/1M, CLI mit Standardkonfiguration und Ausgabeordner auf dem Mac mini (Referenz A nach K2-01), ruhige Maschine (C11: wait_quiet, caffeinate), zum Vergleich os-loadtest perf-001 auf demselben Stand. Ausgabe je Stufe (docs/plan/M2-acceptance/scale/<datum>/): Bytes/URL je Tabelle und Index aus `dbstat` (pgsize, unused) nach abschließendem TRUNCATE-Checkpoint, freelist_count, Zeilen je Tabelle; Durchsatz je 100k-Fenster; WAL-Größe (Abtastung 5 s) und Checkpoint-Durchläufe; Zeitanteile Fetch/Parse/Analyse/Write (vorhandene Diagnosezähler os-engine diag.rs, os-store sink::diag; fehlende Zähler nur additiv nach K2-61); RSS. SCHRITT 2 Korrekturen der bestätigten Ursachen, bevorzugt im Store (z. B. Indizes mit zufälligen Schlüsseln während großer Crawls wie url_index.rs behandeln oder sortiert nachbauen, Zählerpflege bündeln/sortieren, Speicherform von url_ext kompakter über neue Migration, Checkpoint-Strategie), ohne Ergebnisänderung; Änderungen außerhalb owns (os-parse, os-engine worker/frontier, os-analyze) nur nach K2-72-Grundsatz, minimal, Bericht „Fremdänderung (K2-74)“; R02/U17 können dort noch laufen → Integrator. SCHRITT 3 Regression: `crates/os-store/tests/scale_*.rs` (klein, CI: Bytes/URL-Verhältnis 10k ↔ 50k und Fensterkonstanz mit Toleranz), Nachtmessung .github/workflows/scale-nightly.yml (100k/250k) mit Bericht. ABNAHME (Mac mini, CLI-Standardkonfiguration, Site wie PERF-001): (1) Bytes/URL (Hauptdatei + WAL nach Abschluss) bei 1 Mio. ≤ 1,3 × Wert bei 100k; (2) Durchsatz im letzten 100k-Fenster ≥ 70 % des ersten, alle zehn Abschnitte nach PERF-002 im Band 70–130 % des Mittelwerts, Mittel ≥ 500 URLs/s (PERF-002); (3) kein Stillstand > 30 s (PERF-003), WAL-Spitze ≤ 2 × obere Checkpoint-Schwelle; (4) Spitzen-RSS < 1,5 GB und Verhältnis 1 Mio./100k < 2 (PERF-001), < 2 GB mit „Ausgewogen“ (CRAWL-124); (5) kein Ergebnisverlust: Paritäts- und Golden-Tests unverändert grün, `cargo test --workspace` grün, Determinismus (CRAWL-124: byte-identische Dateien mit fixierter Uhr), Export Internal:All und All Inlinks der 100k-Stufe vor/nach der Korrektur nach Normalisierung identisch, `q_`-Sichten/READ_API_VERSION unverändert (OUT-234); (6) Hochrechnung Dateigröße und Dauer für 5 Mio. im Bericht. Messläufe nur auf dem Mac mini (≤ 1 Mio.), Build-Ordner (target/) und Crawl-Dateien danach löschen; der 5-Mio.-Lauf bleibt Q03 auf dem Haupt-Mac. Keine Inhalte privater Benchmarkberichte ins Repo kopieren. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen (die Abnahmemessung selbst bleibt Q03). Fehlt eine Spec-ID für „Skalierung Bytes/URL“, Kriterium (1) im Bericht als OS-Festlegung (K2-74) ausweisen; Spec-Nachtrag schlägt der Planer vor."
+ },
+ {
+  "id": "M2-U34",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "UI-Feinschliff nach der Beta-Abnahme (K2-75): Befunde A02-nn und Nutzerpunkte 27.10. – Tab-Beschriftungen ohne Abschneiden, Überlaufmenü für alle drei Tab-Leisten, einheitliche Tab-Bedienelemente, Export-Platzierung, deutsche Oberfläche ohne englische Resttexte (vor U32-Baselines und U33)",
+  "wave": "4a",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-001",
+   "UI-004",
+   "UI-015",
+   "UI-030",
+   "UI-060",
+   "UI-112",
+   "UI-121"
+  ],
+  "owns": [
+   "apps/desktop/src/ui/primitives/{TabBar,Tabs}.tsx",
+   "apps/desktop/src/ui/primitives/primitives.test.tsx (nur Tab-Tests)",
+   "apps/desktop/src/features/{toptabs,shell,table,table-advanced,export}/**",
+   "apps/desktop/src/features/detail/frame/**",
+   "apps/desktop/src/features/sidebar/frame/**",
+   "apps/desktop/src/features/*/i18n/** (ohne apps/desktop/src/features/compare/i18n/**)",
+   "apps/desktop/src/i18n/**",
+   "apps/desktop/e2e/polish/**",
+   "docs/plan/M2-acceptance/beta/begriffe.md",
+   "docs/plan/M2-reports/u34.md"
+  ],
+  "depends_on": [
+   "M2-A02"
+  ],
+  "runner": "cloud+ci",
+  "size": "M",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). ARBEITSLISTE: alle Befunde in docs/plan/M2-acceptance/beta/befunde.md (A02-nn) mit Schwere Blocker/Hoch/Mittel und die Niedrig-Befunde, die eine der Dateien aus owns betreffen; dazu die sechs Nutzerpunkte vom 27.10. (A02-01 … A02-06, falls nicht als erledigt markiert): (1) Haupt-Tab-Leiste: zweizeilige Beschriftungen unten abgeschnitten; (2) Detail-Tab-Leiste: „Chrome Console Log“ oben abgeschnitten, weitere zweizeilige Labels; (3) Seitenleisten-Tabs ohne Überlauf-Steuerung, „Href“ vor dem »-Knopf gekappt; (4) Sprachmischung (z. B. „No Crawl“, „All (–)“, Tab-Namen teils englisch); (5) leere linke Spalte mit einzelnem „Exportieren“ zusätzlich zu dem in der Werkzeugleiste; (6) uneinheitliche Bedienelemente „Tabs anpassen“ (Aufklapptext) gegenüber „Detail-Tabs konfigurieren“/„Tabs zurücksetzen“ (Knöpfe). Befunde außerhalb owns: nicht beheben, im Bericht als „außerhalb owns“ an den Planer (Nachtrag K2-75a schneidet sie vor dem Start zu, ggf. als Fremdänderung). SPEC-GRUNDLAGE: UI-004 (überzählige Tabs über Dropdown-Pfeil rechts; Tabs konfigurieren/zurücksetzen über Dropdown und Menü Ansicht), UI-112 (Kontextmenü auf allen drei Tab-Leisten, geschlossene Tabs über den Dropdown-Pfeil wieder einblendbar – gilt damit für oben, unten und rechts), UI-030/UI-060 (Detail- und Seitenleisten-Tabs mit Reihenfolge/Sichtbarkeit), UI-007 (lange Texte mit „…“ und Tooltip), UI-015 (Platzierung „Exportieren“: über der oberen Tabelle und je tabellarischem Detail-Tab; Seitenleistentabellen exportierbar nach UI-060), UI-001 (Layout 1 024 × 640 ohne Überlappung, vier Skalierungen), UI-121 + Konvention 05-ui „Spalten- und Filterschlüssel“ (Spec-Schlüssel englisch, Anzeige über i18n übersetzt; nur Exporte, Dateinamen und CLI bleiben englisch). SPRACHE (Ergebnis Planer K2-75): Die Spec legt keine Liste bewusst englischer Fachbegriffe fest; Tab-Namen, Filternamen, Spaltenköpfe, Issue-Texte und Bedienelemente erscheinen in der deutschen Oberfläche deutsch. Englisch bleiben nur (a) Eigennamen von Produkten, Diensten und Standards (z. B. Chrome, Lighthouse, PageSpeed, Search Console, Google Analytics/GA4, Majestic, Ahrefs, Moz, JavaScript, AMP, Hreflang, SERP, MCP), (b) etablierte Kürzel und Protokollbegriffe (URL, HTTP, HTTPS, HTML, CSS, H1, H2, CSV, XLSX), (c) Werte aus den Daten (Statuszeilen, Header-Namen, Ankertexte). Das Paket legt docs/plan/M2-acceptance/beta/begriffe.md an: Tabelle Schlüssel (Spec-Name) → deutsche Anzeige für alle Top-, Detail- und Seitenleisten-Tabs, alle Filter der Haupt-Tabs und die Ausnahmeliste (a)–(c) mit Begründung; Übersetzungen in den zugehörigen i18n-Dateien (Fallback auf den Schlüsselnamen in TopTabs.tsx `label()` darf in de nicht mehr greifen). Die Liste ist Vorschlag für einen Spec-Nachtrag zu UI-121 (Planer). LÖSUNGSRAHMEN: eine gemeinsame Tab-Leisten-Komponente (ui/primitives/TabBar.tsx) für alle drei Leisten mit (i) einzeiliger Beschriftung (white-space: nowrap), Höhe aus Schriftgröße/Zoom/Dichte abgeleitet, keine feste Höhe, die Text vertikal kappt; (ii) maximaler Tab-Breite mit „…“ und Tooltip/zugänglichem Namen mit dem vollen Text; (iii) Überlauf-Dropdown (» bzw. Pfeil) rechts mit allen Tabs (sichtbare und ausgeblendete, ausgeblendete per Checkbox einblendbar), darin „Tabs konfigurieren…“ und „Tabs zurücksetzen“ – gleiche Bedienung auf allen drei Leisten, keine Aufklapptexte oder zusätzliche Knöpfe am Rand; (iv) Kontextmenü UI-112 unverändert über TabContextMenuHost; (v) Platz für Überlaufknopf und Konfigurationszugang wird vor dem Verteilen der Tabs reserviert (kein Tab unter dem Knopf, A01-08). „Exportieren“: genau ein Knopf über der oberen Tabelle (UI-015), linke Leerspalte entfällt; Detail-Tabs behalten ihren Knopf. FREMDÄNDERUNG (K2-72-Grundsatz, Bericht „Fremdänderung (K2-75)“): Aufrufer von TabBar/Tabs außerhalb owns (z. B. features/settings/frame/SettingsFrame.tsx, viz) nur soweit die geänderte Komponenten-API es zwingend verlangt, minimal; features/compare/** erst nach dem Merge von M2-N02b, sonst als Befund; features/{header,statusbar}/** nicht anfassen (Freigabe K2-73 an U17), Befunde dort an den Planer; ui/primitives/** außer TabBar/Tabs gehört M2-U30 (hängt an U34). Bestehende Tests bleiben grün, Erwartungsänderungen nur nach K2-63 (Begründung je Test im Bericht). ABNAHME (messbar, E2E-A in apps/desktop/e2e/polish/** auf Linux Chromium+WebKit, CI macos-14 WebKit und windows-latest Chromium; Sprache de und en, Theme hell und dunkel): (1) Fenster 1 024 × 640, 1 440 × 900 und 1 920 × 1 080, Zoom 100 % sowie (Windows/Chromium) deviceScaleFactor 1,25/1,5/2: für jeden sichtbaren Tab aller drei Leisten gilt `scrollHeight ≤ clientHeight` (kein vertikales Kappen) und entweder `scrollWidth ≤ clientWidth` oder Ellipse mit Tooltip und zugänglichem Namen = voller Text; keine Bounding-Box eines Tabs schneidet Überlaufknopf oder Konfigurationszugang; (2) bei jeder Größe sind alle Tabs jeder Leiste über sichtbare Tabs oder das Überlaufmenü erreichbar (Test: Menüeinträge ∪ sichtbare Tabs = alle Tabs der Leiste), auch bei eingeklappter Mindestbreite der Seitenleiste (200 px); (3) „Tabs konfigurieren…“ und „Tabs zurücksetzen“ sind auf allen drei Leisten über dasselbe Bedienelement (Überlaufmenü) und das Kontextmenü erreichbar, die Seitenleiste zeigt keinen Aufklapptext „Tabs anpassen“ mehr; (4) im Hauptfenster genau ein Element mit Namen „Exportieren“ außerhalb des Detailbereichs, keine leere linke Spalte (Breite der Tabellenfläche = Fensterbreite − Seitenleiste ± 1 px nach UI-001); (5) deutsche Oberfläche: Test durchläuft Hauptfenster (alle Top-Tabs, Filter-Dropdown jedes Top-Tabs, alle Detail- und Seitenleisten-Tabs, Überlauf- und Kontextmenüs) und meldet jeden sichtbaren Text, der identisch mit dem englischen Wert ist oder ein Schlüsselname ist, außer Einträgen der Ausnahmeliste aus begriffe.md und Datenwerten (Tabelleninhalte) – Ergebnis 0 Treffer; (6) A02-Befunde der Arbeitsliste je mit Test oder begründetem Vermerk im Bericht (behoben/außerhalb owns/Rückfrage); (7) C4-Frontend-Prüfungen grün (`npm run -w apps/desktop typecheck && npm run -w apps/desktop test`), E2E-A grün auf allen Plattformen. GRÖSSE: M; hat die Arbeitsliste nach A02 mehr als 15 Befunde Hoch/Mittel, setzt der Planer L und teilt ggf. (U34a Tab-Leisten/Layout, U34b Sprache). Bericht docs/plan/M2-reports/u34.md (Befund → Commit/Test, Fremdänderungen, Vorher/Nachher-Screenshots der drei Tab-Leisten bei 1 024 × 640 de dunkel). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-Q02",
@@ -4019,11 +4174,36 @@
    "M2-D21",
    "M2-E06",
    "M2-K05",
-   "M2-L01"
+   "M2-L01",
+   "M2-E07"
   ],
   "size": "M",
   "runner": "local-mac",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Keine Codeänderung; Messblöcke nach M1-N21 (wait_quiet, caffeinate, Berichte je Block). CRAWL-124 (M1 7.3): 1-Mio.-Profilbenchmarks (A4-Profile) auf dem M2-Stand mitlaufen lassen und im Bericht ausweisen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Keine Codeänderung; Messblöcke nach M1-N21 (wait_quiet, caffeinate, Berichte je Block). CRAWL-124 (M1 7.3): 1-Mio.-Profilbenchmarks (A4-Profile) auf dem M2-Stand mitlaufen lassen und im Bericht ausweisen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Nachtrag K2-74: hängt an M2-E07; der 5-Mio.-CLI-Großlauf mit Standardkonfiguration (Haupt-Mac, Ausgabeordner mit ausreichend Platz) ist eigener Messblock und weist Bytes/URL je 1-Mio.-Abschnitt und Durchsatz je 100k-Fenster aus (Vergleich mit dem E07-Bericht)."
+ },
+ {
+  "id": "M2-A03",
+  "kind": "package",
+  "model": "human",
+  "title": "Zweite Nutzer-Runde vor dem Fable-Gate M2 (K2-75): kurzer Durchklick der App aus main nach U30–U34 und N02b; Befundliste docs/plan/M2-acceptance/beta-2/befunde.md",
+  "wave": "4h",
+  "spec_ids": [],
+  "extra_spec_ids": [],
+  "owns": [
+   "docs/plan/M2-acceptance/beta-2/**"
+  ],
+  "depends_on": [
+   "M2-U30",
+   "M2-U31",
+   "M2-U32",
+   "M2-U33",
+   "M2-U34",
+   "M2-N02b"
+  ],
+  "human": true,
+  "runner": "local-mac",
+  "size": "S",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Menschliche Abnahme (Nutzerentscheidung 27.10.2026, K2-75), kurz (≤ 30 min). Orchestrator baut die App aus main (DMG, optional Windows-Installer aus CI; Commit und Prüfsummen in beta-2/build.md), legt beta-2/durchklickplan.md an: Gegenprobe aller A02-Befunde (Status je ID: behoben/offen/neu bewertet) und Durchgang der in A02 nicht geprüften oder seitdem geänderten Bereiche (R02/U17-Oberfläche, falls in A02 noch nicht gemergt; Vergleichsansicht nach N02b; Sprache de/en; Barrierefreiheit grob mit Tastatur). Befunde in beta-2/befunde.md im Format von beta/befunde.md mit IDs A03-nn. Auswertung durch den Planer: Blocker (und Hoch, wenn ein Abnahmekriterium B1–B12 betroffen ist) → ein N-Paket der Welle 4n (z. B. M2-N03) vor Q04, Q04 hängt dann zusätzlich daran; alles Übrige → docs/plan/M2-backlog.md (M3) mit Verweis auf A03-nn. Keine Fixes."
  },
  {
   "id": "M2-Q04",
@@ -4043,10 +4223,15 @@
    "M2-U31",
    "M2-U32",
    "M2-U33",
-   "M2-L02"
+   "M2-L02",
+   "M2-N02",
+   "M2-N02b",
+   "M2-E07",
+   "M2-U34",
+   "M2-A03"
   ],
   "size": "M",
   "runner": "cloud",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). "
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nachtrag K2-75: hängt zusätzlich an M2-U34 und M2-A03; Beleg für B9 enthält die Nutzer-Abnahmen docs/plan/M2-acceptance/beta/befunde.md und beta-2/befunde.md (offene A03-Befunde nur mit Verweis auf N-Paket oder M2-backlog.md). Entsteht aus A03 ein N-Paket (Welle 4n), hängt Q04 auch daran."
  }
 ]
