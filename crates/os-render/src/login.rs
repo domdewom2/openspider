@@ -6,13 +6,22 @@ use chromiumoxide::{
             emulation::SetDeviceMetricsOverrideParams,
             page::{NavigateParams, RemoveScriptToEvaluateOnNewDocumentParams},
         },
-        js_protocol::runtime::{AddBindingParams, EventBindingCalled},
+        js_protocol::{
+            debugger::{DisableParams, EnableParams, EventPaused, ResumeParams},
+            runtime::{AddBindingParams, EventBindingCalled},
+        },
     },
     Page,
 };
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::{
+    collections::BTreeMap,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
+};
 
 pub const SESSION_GUARD_DEFAULTS: [&str; 4] = [
     "(?i).*(log-?out|sign-?out|abmelden|ausloggen).*",
@@ -91,12 +100,20 @@ pub struct LoginSession {
     storage: BTreeMap<String, OriginStorage>,
     _proxy: Option<Box<dyn Send + Sync>>,
     restore_task: Option<tokio::task::JoinHandle<()>>,
+    restore_failed: Arc<AtomicBool>,
 }
 fn error(_: impl std::fmt::Display) -> RenderError {
     RenderError::Protocol("Anmeldefenster nicht erreichbar".into())
 }
 impl LoginSession {
-    pub async fn open(url: &str, mut opts: LoginOpts) -> Result<Self, RenderError> {
+    pub async fn open(url: &str, opts: LoginOpts) -> Result<Self, RenderError> {
+        Self::open_with_restore_delay(url, opts, std::time::Duration::ZERO).await
+    }
+    async fn open_with_restore_delay(
+        url: &str,
+        mut opts: LoginOpts,
+        restore_delay: std::time::Duration,
+    ) -> Result<Self, RenderError> {
         let authority = url
             .strip_prefix("http://")
             .or_else(|| url.strip_prefix("https://"))
@@ -140,6 +157,7 @@ impl LoginSession {
         };
         // Each origin gets a separate initializer, removed as soon as it has run.
         // No marker is stored in website storage, so clear/remove operations stay intact.
+        let restore_failed = Arc::new(AtomicBool::new(false));
         let restore_task = if let Some(initial) = &opts.initial {
             let binding = "__openspiderStorageRestored";
             page.execute(AddBindingParams::new(binding))
@@ -149,31 +167,73 @@ impl LoginSession {
                 .event_listener::<EventBindingCalled>()
                 .await
                 .map_err(error)?;
+            page.execute(EnableParams::default()).await.map_err(error)?;
+            let mut pauses = page.event_listener::<EventPaused>().await.map_err(error)?;
             let mut scripts = BTreeMap::new();
             for storage in &initial.storage {
                 let origin = serde_json::to_string(&storage.origin).map_err(error)?;
                 let script = storage_script(std::slice::from_ref(storage))?;
                 let id = page
                     .evaluate_on_new_document(format!(
-                    "if(location.origin==={origin}) {{ {script}; window.{binding}({origin}); }}"
+                    "if(location.origin==={origin}) {{ {script}; window.{binding}({origin}); debugger; }}"
                 ))
                     .await
                     .map_err(error)?;
                 scripts.insert(storage.origin.clone(), id);
             }
             let restore_page = page.clone();
+            let failed = restore_failed.clone();
             let task = tokio::spawn(async move {
-                while let Some(event) = events.next().await {
-                    if event.name == binding {
-                        if let Some(id) = scripts.remove(&event.payload) {
-                            let _ = restore_page
-                                .execute(RemoveScriptToEvaluateOnNewDocumentParams::new(id))
-                                .await;
+                let mut pending = None;
+                while !scripts.is_empty() || pending.is_some() {
+                    tokio::select! {
+                        biased;
+                        event = events.next() => {
+                            let Some(event) = event else { break; };
+                            if event.name == binding {
+                                if let Some(id) = scripts.remove(&event.payload) {
+                                    pending = Some(id);
+                                }
+                            }
                         }
-                        if scripts.is_empty() {
-                            break;
+                        pause = pauses.next() => {
+                            if pause.is_none() { break; }
+                            if let Some(id) = pending.take() {
+                                tokio::time::sleep(restore_delay).await;
+                                if restore_page.execute(RemoveScriptToEvaluateOnNewDocumentParams::new(id)).await.is_err() {
+                                    failed.store(true, Ordering::SeqCst);
+                                    let _ = restore_page.close().await;
+                                    return;
+                                }
+                            }
+                            if restore_page.execute(ResumeParams::default()).await.is_err() {
+                                failed.store(true, Ordering::SeqCst);
+                                let _ = restore_page.close().await;
+                                return;
+                            }
                         }
                     }
+                    if scripts.is_empty() && pending.is_none() {
+                        if restore_page
+                            .execute(DisableParams::default())
+                            .await
+                            .is_err()
+                        {
+                            failed.store(true, Ordering::SeqCst);
+                            let _ = restore_page.close().await;
+                        }
+                        return;
+                    }
+                }
+                if !scripts.is_empty()
+                    || pending.is_some()
+                    || restore_page
+                        .execute(DisableParams::default())
+                        .await
+                        .is_err()
+                {
+                    failed.store(true, Ordering::SeqCst);
+                    let _ = restore_page.close().await;
                 }
             });
             let cookies = initial
@@ -214,6 +274,7 @@ impl LoginSession {
             storage: BTreeMap::new(),
             _proxy: proxy,
             restore_task,
+            restore_failed,
         })
     }
     /// CDP access for automated fixture interaction; application commands never expose this handle.
@@ -221,6 +282,9 @@ impl LoginSession {
         &self.page
     }
     pub async fn capture(&mut self) -> Result<CapturedSession, RenderError> {
+        if self.restore_failed.load(Ordering::SeqCst) {
+            return Err(error("storage restore failed"));
+        }
         let value: serde_json::Value = self.page.evaluate("({origin:location.origin, finalUrl:location.href, localStorage:Object.fromEntries(Object.entries(localStorage)), sessionStorage:Object.fromEntries(Object.entries(sessionStorage))})").await.map_err(error)?.into_value().map_err(error)?;
         let storage: OriginStorage = serde_json::from_value(value.clone()).map_err(error)?;
         if storage.origin != "null" {
@@ -264,4 +328,69 @@ pub fn storage_script(storage: &[OriginStorage]) -> Result<String, RenderError> 
     let data = serde_json::to_string(storage).map_err(error)?;
     let data = serde_json::to_string(&data).map_err(error)?;
     Ok(format!("(() => {{ const entries=JSON.parse({data}); const s=entries.find(s=>s.origin===location.origin); if(s) {{ for(const [k,v] of Object.entries(s.localStorage)) localStorage.setItem(k,v); for(const [k,v] of Object.entries(s.sessionStorage)) sessionStorage.setItem(k,v); }} }})()"))
+}
+
+#[cfg(test)]
+mod restore_tests {
+    use super::*;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    // spec: CRAWL-120
+    #[tokio::test]
+    async fn delayed_cdp_removal_blocks_immediate_rotation_and_navigation() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let origin = format!("http://{}", listener.local_addr().unwrap());
+        let server = tokio::spawn(async move {
+            loop {
+                let (mut stream, _) = listener.accept().await.unwrap();
+                tokio::spawn(async move {
+                    let mut request = [0; 2048];
+                    let n = stream.read(&mut request).await.unwrap();
+                    let body = if String::from_utf8_lossy(&request[..n]).starts_with("GET /start ")
+                    {
+                        "<script>localStorage.token='NEW';sessionStorage.token='NEW';location.replace('/done')</script>"
+                    } else {
+                        "done"
+                    };
+                    let response = format!("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}", body.len(), body);
+                    let _ = stream.write_all(response.as_bytes()).await;
+                });
+            }
+        });
+        let initial = CapturedSession {
+            storage: vec![OriginStorage {
+                origin: origin.clone(),
+                local_storage: [("token".into(), "OLD".into())].into(),
+                session_storage: [("token".into(), "OLD".into())].into(),
+            }],
+            ..Default::default()
+        };
+        let mut login = LoginSession::open_with_restore_delay(
+            &format!("{origin}/start"),
+            LoginOpts {
+                headless: true,
+                initial: Some(initial),
+                ..Default::default()
+            },
+            std::time::Duration::from_millis(500),
+        )
+        .await
+        .unwrap();
+        let captured = tokio::time::timeout(std::time::Duration::from_secs(10), async {
+            loop {
+                if let Ok(capture) = login.capture().await {
+                    if capture.final_url == format!("{origin}/done") {
+                        break capture;
+                    }
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(20)).await;
+            }
+        })
+        .await
+        .unwrap();
+        assert_eq!(captured.storage[0].local_storage["token"], "NEW");
+        assert_eq!(captured.storage[0].session_storage["token"], "NEW");
+        login.close().await;
+        server.abort();
+    }
 }

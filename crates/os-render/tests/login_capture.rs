@@ -250,3 +250,51 @@ async fn wait_for_token(
     .await
     .unwrap()
 }
+
+// spec: CRAWL-120
+#[tokio::test]
+async fn immediate_token_rotation_and_navigation_preserve_new_values() {
+    use os_render::login::{CapturedSession, OriginStorage};
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let origin = format!("http://{}", listener.local_addr().unwrap());
+    let server = tokio::spawn(async move {
+        loop {
+            let (mut stream, _) = listener.accept().await.unwrap();
+            tokio::spawn(async move {
+                let mut request = [0; 2048];
+                let n = stream.read(&mut request).await.unwrap();
+                let request = String::from_utf8_lossy(&request[..n]);
+                let body = if request.starts_with("GET /start ") {
+                    "<script>localStorage.token='NEW';sessionStorage.token='NEW';location.replace('/done')</script>"
+                } else {
+                    "<html>done</html>"
+                };
+                let response = format!("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}", body.len(), body);
+                let _ = stream.write_all(response.as_bytes()).await;
+            });
+        }
+    });
+    let initial = CapturedSession {
+        storage: vec![OriginStorage {
+            origin: origin.clone(),
+            local_storage: [("token".into(), "OLD".into())].into(),
+            session_storage: [("token".into(), "OLD".into())].into(),
+        }],
+        ..Default::default()
+    };
+    let mut login = LoginSession::open(
+        &format!("{origin}/start"),
+        LoginOpts {
+            headless: true,
+            initial: Some(initial),
+            ..Default::default()
+        },
+    )
+    .await
+    .unwrap();
+    let captured = wait_for_token(&mut login, "NEW", &format!("{origin}/done")).await;
+    assert_eq!(captured.storage[0].session_storage["token"], "NEW");
+    login.close().await;
+    server.abort();
+}

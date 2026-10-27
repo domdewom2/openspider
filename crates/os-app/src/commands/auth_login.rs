@@ -254,8 +254,12 @@ fn status<'a>(app: &'a App, ctx: CallCtx, _: Value) -> BoxFuture<'a, CmdResult> 
                 json!({"profile":f.profile,"loginUrl":f.login_url,"state":state,"cookies":f.cookie_count,"capturedAt":f.captured_at})
             }).collect();
             // Include unactivated metadata for the owning window's configuration draft.
-            for draft in drafts {
-                if !rows.iter().any(|row| row["profile"] == draft["profile"]) { rows.push(draft); }
+            for mut draft in drafts {
+                if !rows.iter().any(|row| row["profile"] == draft["profile"]) {
+                    let session = draft["profile"].as_str().and_then(|name| os_engine::session_guard::read_profile(&dir, name, &*secrets));
+                    draft["state"] = json!(if session.as_ref().is_some_and(|s| s.expired(now)) { "expired" } else if session.is_some() { "active" } else { "missing" });
+                    rows.push(draft);
+                }
             }
             Ok(Value::Array(rows))
         }).await.map_err(|_|error())?

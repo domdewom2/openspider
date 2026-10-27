@@ -383,6 +383,46 @@ async fn status_derives_expiry_from_encrypted_cookie_metadata_without_exposing_v
 }
 
 // spec: CRAWL-120
+#[tokio::test]
+async fn draft_status_tracks_expiry_before_configuration_is_applied() {
+    let _lock = CHROMIUM.lock().await;
+    let site = FormLoginSite::start().await.unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let clock = Arc::new(os_model::ManualClock::new(os_model::Timestamp::UNIX_EPOCH));
+    let app = App::new(
+        AppConfig::new(home.path())
+            .with_clock(clock.clone())
+            .with_secrets(Arc::new(MemorySecretStore::new())),
+    )
+    .unwrap();
+    let info = login(&app, &site).await;
+    let name = info["name"].as_str().unwrap();
+    let mut session = os_engine::session_guard::read_profile(
+        &home.path().join("auth"),
+        name,
+        &*app.config().secrets,
+    )
+    .unwrap();
+    session.cookies[0].expires = Some(100);
+    call(&app, "auth.saveProfile", json!({"profile":{"name":name,"kind":"form","host":"127.0.0.1","username":null,"secret":serde_json::to_string(&session).unwrap()}})).await;
+    assert_eq!(
+        call(&app, "auth.loginStatus", Value::Null).await[0]["state"],
+        "active"
+    );
+    clock.advance(Duration::from_secs(100));
+    assert_eq!(
+        call(&app, "auth.loginStatus", Value::Null).await[0]["state"],
+        "expired"
+    );
+    assert!(
+        call(&app, "config.get", Value::Null).await["config"]["auth"]["form"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
+}
+
+// spec: CRAWL-120
 // spec: OUT-223
 #[tokio::test]
 async fn capturing_then_discarding_configuration_preserves_config_and_active_profile() {
