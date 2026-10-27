@@ -7,6 +7,99 @@ Accessibility:WCAG 2.0 AA
 Accessibility:WCAG 2.0 AAA
 Accessibility:WCAG 2.1 AA
 Accessibility:WCAG 2.2 AA
+Accessibility:accesskeys
+Accessibility:area-alt
+Accessibility:aria-allowed-attr
+Accessibility:aria-allowed-role
+Accessibility:aria-braille-equivalent
+Accessibility:aria-command-name
+Accessibility:aria-conditional-attr
+Accessibility:aria-deprecated-role
+Accessibility:aria-dialog-name
+Accessibility:aria-hidden-body
+Accessibility:aria-hidden-focus
+Accessibility:aria-input-field-name
+Accessibility:aria-meter-name
+Accessibility:aria-progressbar-name
+Accessibility:aria-prohibited-attr
+Accessibility:aria-required-attr
+Accessibility:aria-required-children
+Accessibility:aria-required-parent
+Accessibility:aria-roles
+Accessibility:aria-text
+Accessibility:aria-toggle-field-name
+Accessibility:aria-tooltip-name
+Accessibility:aria-treeitem-name
+Accessibility:aria-valid-attr
+Accessibility:aria-valid-attr-value
+Accessibility:autocomplete-valid
+Accessibility:avoid-inline-spacing
+Accessibility:blink
+Accessibility:button-name
+Accessibility:bypass
+Accessibility:color-contrast
+Accessibility:color-contrast-enhanced
+Accessibility:definition-list
+Accessibility:dlitem
+Accessibility:document-title
+Accessibility:duplicate-id-aria
+Accessibility:empty-heading
+Accessibility:empty-table-header
+Accessibility:form-field-multiple-labels
+Accessibility:frame-focusable-content
+Accessibility:frame-tested
+Accessibility:frame-title
+Accessibility:frame-title-unique
+Accessibility:heading-order
+Accessibility:html-has-lang
+Accessibility:html-lang-valid
+Accessibility:html-xml-lang-mismatch
+Accessibility:identical-links-same-purpose
+Accessibility:image-alt
+Accessibility:image-redundant-alt
+Accessibility:input-button-name
+Accessibility:input-image-alt
+Accessibility:label
+Accessibility:label-title-only
+Accessibility:landmark-banner-is-top-level
+Accessibility:landmark-complementary-is-top-level
+Accessibility:landmark-contentinfo-is-top-level
+Accessibility:landmark-main-is-top-level
+Accessibility:landmark-no-duplicate-banner
+Accessibility:landmark-no-duplicate-contentinfo
+Accessibility:landmark-no-duplicate-main
+Accessibility:landmark-one-main
+Accessibility:landmark-unique
+Accessibility:link-in-text-block
+Accessibility:link-name
+Accessibility:list
+Accessibility:listitem
+Accessibility:marquee
+Accessibility:meta-refresh
+Accessibility:meta-refresh-no-exceptions
+Accessibility:meta-viewport
+Accessibility:meta-viewport-large
+Accessibility:nested-interactive
+Accessibility:no-autoplay-audio
+Accessibility:object-alt
+Accessibility:page-has-heading-one
+Accessibility:presentation-role-conflict
+Accessibility:region
+Accessibility:role-img-alt
+Accessibility:scope-attr-valid
+Accessibility:scrollable-region-focusable
+Accessibility:select-name
+Accessibility:server-side-image-map
+Accessibility:skip-link
+Accessibility:summary-name
+Accessibility:svg-img-alt
+Accessibility:tabindex
+Accessibility:table-duplicate-name
+Accessibility:target-size
+Accessibility:td-headers-attr
+Accessibility:th-has-data-cells
+Accessibility:valid-lang
+Accessibility:video-caption
 Analytics:All
 Analytics:All Inlinks
 Analytics:Bounce Rate Above 70%
@@ -211,6 +304,7 @@ Issues:All Issues
 JavaScript:All
 JavaScript:All Console Messages
 JavaScript:Blocked Resource Inlinks
+JavaScript:Blocked Resources
 JavaScript:Canonical Mismatch
 JavaScript:Canonical Mismatch Inlinks
 JavaScript:Canonical Only In Rendered HTML
@@ -233,6 +327,7 @@ JavaScript:Page Title Updated By JavaScript
 JavaScript:Pages With Blocked Resources
 JavaScript:Pages With JavaScript Errors
 JavaScript:Pages With JavaScript Errors Inlinks
+JavaScript:Pages With JavaScript Issues
 Link Metrics:All
 Link Metrics:All Inlinks
 Links:All
