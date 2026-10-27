@@ -316,6 +316,36 @@ impl Renderer {
             targets: std::sync::Mutex::new(None),
         })
     }
+    /// Dedicated login tab in this renderer's temporary browser profile (CRAWL-120).
+    pub async fn open_login_page(&self) -> Result<(chromiumoxide::Page, String), RenderError> {
+        self.ensure_session().await?;
+        let guard = self.session.read().await;
+        let session = guard
+            .as_ref()
+            .ok_or_else(|| protocol("Browser geschlossen"))?;
+        let context = session
+            .browser
+            .create_browser_context(
+                chromiumoxide::cdp::browser_protocol::target::CreateBrowserContextParams::builder()
+                    .dispose_on_detach(true)
+                    .build(),
+            )
+            .await
+            .map_err(protocol)?;
+        let page = session
+            .browser
+            .new_page(
+                chromiumoxide::cdp::browser_protocol::target::CreateTargetParams::builder()
+                    .url("about:blank")
+                    .browser_context_id(context)
+                    .build()
+                    .map_err(protocol)?,
+            )
+            .await
+            .map_err(protocol)?;
+        Ok((page, session.browser.websocket_address().clone()))
+    }
+
     /// Sichtbare Generation für Diagnose und Neustarttests.
     pub fn generation(&self) -> u64 {
         self.generations.load(Ordering::Acquire)
