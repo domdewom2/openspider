@@ -244,6 +244,8 @@ pub enum Pop {
 
 /// Gemeinsamer Zustand aller Worker (hinter einer Sperre).
 pub struct Core {
+    /// Active form login, absent for all other crawls (CRAWL-120).
+    pub session_guard: Option<Arc<crate::session_guard::SessionGuard>>,
     /// JS hash routes require independent browser passes (CRAWL-004).
     pub render_fragments: bool,
     pub respect_hidden: std::collections::HashSet<UrlId>,
@@ -334,6 +336,7 @@ impl Core {
     /// Leerer Zustand.
     pub fn new(max_urls: u64, max_depth: Option<u32>) -> Self {
         Core {
+            session_guard: None,
             render_fragments: false,
             respect_hidden: std::collections::HashSet::new(),
             folder_policy: None,
@@ -495,6 +498,18 @@ impl Core {
                 enqueue: false,
                 in_tables: false,
                 reason: Some(reason),
+                rule_flag,
+            };
+        }
+        if self
+            .session_guard
+            .as_ref()
+            .is_some_and(|g| g.blocks(&c.norm.encoded))
+        {
+            return Admission {
+                enqueue: false,
+                in_tables: false,
+                reason: Some(NotCrawledReason::SessionGuard),
                 rule_flag,
             };
         }
@@ -718,6 +733,9 @@ impl Core {
             flags |= F_IN_TABLES;
         }
         match adm.reason {
+            Some(NotCrawledReason::SessionGuard) => {
+                batch.counters.push(("session_guard_skipped".into(), 1));
+            }
             Some(NotCrawledReason::Excluded) => {
                 batch.counters.push((COUNTER_EXCLUDED.to_string(), 1));
             }

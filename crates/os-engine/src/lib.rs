@@ -73,3 +73,6 @@ pub mod host_pace;
 pub mod retry;
 
 mod sitemap_ingest;
+
+/// Form-session protection (CRAWL-120).
+pub mod session_guard;

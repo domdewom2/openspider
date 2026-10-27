@@ -395,6 +395,9 @@ pub(crate) fn options<F: Fetch>(
         )),
         ..Default::default()
     };
+    if let Some(guard) = &sh.lock_core().session_guard {
+        opts.login_storage = guard.storage.clone();
+    }
     // The browser receives every scoped session cookie before any scripts execute.
     if let Some(jar) = cookie_jar(sh, item.session) {
         opts.cookies = jar

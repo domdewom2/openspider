@@ -272,6 +272,7 @@ fn prepare(
     purge_queue(&file, &cfg, start_enc.as_deref(), deps)?;
 
     let mut restored = resume::restore(&file, &cfg, meta.mode, true)?;
+    crate::session_guard::initialize(&mut restored.core, &cfg, deps)?;
     let (scope, start_encoded, start_url) = match meta.mode {
         CrawlMode::Spider => {
             let enc = start_enc.ok_or_else(|| {

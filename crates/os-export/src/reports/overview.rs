@@ -280,6 +280,14 @@ fn summary(file: &CrawlFile, rows: &mut Vec<OverviewRow>) -> Result<(), ExportEr
             None,
         ));
     }
+    if file.config()?.auth.form.iter().any(|f| f.profile.is_some()) {
+        rows.push(OverviewRow::new(
+            S,
+            "Durch Sitzungsschutz übersprungen",
+            Cell::Int(counter(file, "session_guard_skipped")?),
+            None,
+        ));
+    }
     Ok(())
 }
 

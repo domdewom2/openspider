@@ -561,6 +561,12 @@ async fn analyze<F: Fetch>(
                 }));
         }
         a.redirect = redirect::http_target(url, &resp.headers);
+        crate::session_guard::observe_redirect(
+            &sh.lock_core(),
+            a.redirect.as_ref(),
+            sh.clock.now(),
+            &mut a.extra,
+        );
         if resp.synthetic == Some(os_fetch::SyntheticResponse::Hsts) {
             if let Some(target) = &mut a.redirect {
                 target.kind = os_model::RedirectType::HstsPolicy;

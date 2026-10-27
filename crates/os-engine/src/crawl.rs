@@ -311,6 +311,7 @@ async fn start_spider<F: Fetch>(
     if cfg.advanced.cookies == os_model::CookieMode::SessionOnly {
         core.sessions[0] = Some(Arc::new(CookieJar::new()));
     }
+    crate::session_guard::initialize(&mut core, &cfg, &deps)?;
     let scope = CrawlScope::new(Scope::new(&start, &cfg.scope).with_cdns(&cfg.cdns));
 
     // Start-URL und Metadaten. Ist die Start-URL eine Sitemap-Datei, holt sie ausschließlich der Sitemap-Ingest
@@ -422,6 +423,7 @@ async fn start_list<F: Fetch>(
     if cfg.advanced.cookies == os_model::CookieMode::SessionOnly {
         core.sessions[0] = Some(Arc::new(CookieJar::new()));
     }
+    crate::session_guard::initialize(&mut core, &cfg, &deps)?;
     let mut scope = CrawlScope::new(Scope::new(&anchor, &cfg.scope).with_cdns(&cfg.cdns));
     for e in &plan.entries {
         if let Some(u) = &e.url {
@@ -442,7 +444,11 @@ async fn start_list<F: Fetch>(
                 let session = if e.outcome == ListOutcome::Ok
                     && cfg.advanced.cookies == os_model::CookieMode::SessionOnly
                 {
-                    core.new_session(Some(Arc::new(CookieJar::new())))
+                    core.new_session(if core.session_guard.is_some() {
+                        core.session_jar(0)
+                    } else {
+                        Some(Arc::new(CookieJar::new()))
+                    })
                 } else {
                     0
                 };
