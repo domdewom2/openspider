@@ -1743,6 +1743,8 @@ async fn issues_that_need_the_crawl_analysis_are_named_instead_of_counted() {
             (Some("Structured Data"), Some("Missing Structured Data" | "Parse Errors")) => {
                 "needs_config"
             }
+            // K2-63, TECH-102–111/114: JavaScript issues require rendered pages.
+            (Some("JavaScript"), _) => "needs_rendering",
             // K2-63, ONPAGE-144: Near Duplicates benötigt zuerst seinen Opt-in-Schalter.
             (Some("Content"), Some("Near Duplicates")) => "needs_config",
             // spec: ONPAGE-007, ONPAGE-178, ONPAGE-179, ONPAGE-180

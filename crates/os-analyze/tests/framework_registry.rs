@@ -141,13 +141,22 @@ fn overview_labels_use_the_current_thresholds_and_states_are_complete() {
         }
         assert_eq!(
             c.state,
-            FilterState::Ready,
-            "{}:All ist immer bereit",
+            // TECH-101 / K2-63: the implemented JavaScript population requires rendering.
+            if c.tab == "JavaScript" {
+                FilterState::NeedsRendering
+            } else {
+                FilterState::Ready
+            },
+            "{}:All Zustand",
             c.tab
         );
         assert_eq!(
             c.pct.map(|p| p == 100.0 || p == 0.0),
-            Some(true),
+            if c.tab == "JavaScript" {
+                None
+            } else {
+                Some(true)
+            },
             "{}",
             c.tab
         );

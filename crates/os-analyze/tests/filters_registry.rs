@@ -174,9 +174,16 @@ fn filters_match_the_registry_files_in_id_order_kind_and_requirements() {
                 .collect();
             let actual_rendering = f.requires.contains(&Requirement::Rendering);
             assert_eq!(
-                actual_config, config,
+                actual_config,
+                // TECH-114 / K2-63: disabled collection must expose NeedsConfig.
+                if tab.id == "JavaScript" && f.id == "Pages With JavaScript Errors" {
+                    vec!["rendering.js_error_reporting".to_string()]
+                } else {
+                    config
+                },
                 "Konfigurationsschlüssel von {}:{}",
-                tab.id, f.id
+                tab.id,
+                f.id
             );
             assert_eq!(
                 actual_rendering, rendering,
@@ -288,7 +295,7 @@ fn every_tab_is_a_real_definition_or_a_marked_stub() {
     // M2-D01 implements Meta Keywords; M2-D05 Pagination, M2-D14 Custom Search, M2-I03 Search Console, M2-I04 PageSpeed, M2-I02 Analytics.
     // M2-I05 ersetzt den Link-Metrics-Stub (K2-60, INTEG-151).
     assert_eq!(
-        stubs, 5,
+        stubs, 4,
         "Stub-Tabs (Structured Data: M2-D09, Validation: M2-D10, Custom Extraction: M2-D15)"
     );
 }

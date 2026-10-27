@@ -1,2 +1,70 @@
-# OpenSpider – Issue-Texte (English) ab M2, Tab „JavaScript“: Schlüssel issues.<id> mit what, why, fix (eigene Formulierungen).
-# Platzhalter wie in core/issues/texts/en.toml. M2-F02 legt nur die Datei an; die Texte liefert das Paket des Tabs.
+
+[issues.javascript-pages-with-blocked-resources]
+what = "Rendering was prevented from loading resources by robots.txt."
+why = "Blocked resources may hide content or alter the rendered page."
+fix = "Review robots.txt rules for the listed resources and allow those needed for rendering."
+
+[issues.javascript-contains-javascript-links]
+what = "Some hyperlinks appear only in the rendered document."
+why = "Discovering their destinations requires JavaScript execution."
+fix = "Provide important navigation as ordinary links in the delivered HTML."
+
+[issues.javascript-contains-javascript-content]
+what = "The rendered document contains more words than the original HTML."
+why = "Access to this additional content depends on rendering."
+fix = "Deliver important text in the original HTML and verify the rendered result."
+
+[issues.javascript-noindex-only-in-original-html]
+what = "The original HTML contains noindex, but the rendered document removes it."
+why = "The original restriction remains effective despite the script change."
+fix = "Set the intended robots directives in the delivered HTML."
+
+[issues.javascript-nofollow-only-in-original-html]
+what = "The original HTML contains nofollow, but the rendered document removes it."
+why = "The original restriction remains effective despite the script change."
+fix = "Set the intended robots directives in the delivered HTML."
+
+[issues.javascript-canonical-only-in-rendered-html]
+what = "An HTML canonical is added during rendering."
+why = "Canonical discovery depends on JavaScript execution."
+fix = "Include the canonical link in the delivered HTML head."
+
+[issues.javascript-canonical-mismatch]
+what = "Original and rendered HTML specify different canonical URLs."
+why = "Conflicting hints can lead to an unintended canonical selection."
+fix = "Use the same intended canonical URL in both versions."
+
+[issues.javascript-page-title-only-in-rendered-html]
+what = "The Page Title is added or changed by JavaScript."
+why = "Search engines must render the page to see the final value."
+fix = "Deliver the intended value in the original HTML and keep it consistent."
+
+[issues.javascript-page-title-updated-by-javascript]
+what = "The Page Title is added or changed by JavaScript."
+why = "Search engines must render the page to see the final value."
+fix = "Deliver the intended value in the original HTML and keep it consistent."
+
+[issues.javascript-meta-description-only-in-rendered-html]
+what = "The Meta Description is added or changed by JavaScript."
+why = "Search engines must render the page to see the final value."
+fix = "Deliver the intended value in the original HTML and keep it consistent."
+
+[issues.javascript-meta-description-updated-by-javascript]
+what = "The Meta Description is added or changed by JavaScript."
+why = "Search engines must render the page to see the final value."
+fix = "Deliver the intended value in the original HTML and keep it consistent."
+
+[issues.javascript-h1-only-in-rendered-html]
+what = "The H1 is added or changed by JavaScript."
+why = "Search engines must render the page to see the final value."
+fix = "Deliver the intended value in the original HTML and keep it consistent."
+
+[issues.javascript-h1-updated-by-javascript]
+what = "The H1 is added or changed by JavaScript."
+why = "Search engines must render the page to see the final value."
+fix = "Deliver the intended value in the original HTML and keep it consistent."
+
+[issues.javascript-pages-with-javascript-errors]
+what = "Rendering recorded a console error or uncaught exception."
+why = "A failing script may prevent page features from working."
+fix = "Inspect the full console context and fix the failing script."

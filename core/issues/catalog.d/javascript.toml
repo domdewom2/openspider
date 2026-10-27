@@ -1,8 +1,155 @@
-# OpenSpider – Issue-Katalog ab M2, Tab „JavaScript“ (UI-063/UI-064).
-#
-# Einträge wie in core/issues/catalog.toml (`[[issue]]` mit id, tab, filter, type, priority, type_rule, priority_rule,
-# doc_key, optional override_reason/needs_crawl_analysis/text_params); `tab` ist hier immer "JavaScript". Der Loader liest die
-# M1-Datei und alle Dateien dieses Ordners. Texte: core/issues/texts/{de,en}.d/javascript.toml (Schlüssel issues.<id>).
-# M2-F02 legt nur die Datei an; die Einträge liefert das Paket des Tabs.
-
 schema = 1
+
+[[issue]]
+id = "javascript-pages-with-blocked-resources"
+tab = "JavaScript"
+filter = "Pages With Blocked Resources"
+type = "Warning"
+priority = "High"
+type_rule = "T-W2"
+priority_rule = "P-H2"
+doc_key = "javascript-pages-with-blocked-resources"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "javascript-contains-javascript-links"
+tab = "JavaScript"
+filter = "Contains JavaScript Links"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W1"
+priority_rule = "P-M2"
+doc_key = "javascript-contains-javascript-links"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "javascript-contains-javascript-content"
+tab = "JavaScript"
+filter = "Contains JavaScript Content"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W1"
+priority_rule = "P-M2"
+doc_key = "javascript-contains-javascript-content"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "javascript-noindex-only-in-original-html"
+tab = "JavaScript"
+filter = "Noindex Only In Original HTML"
+type = "Issue"
+priority = "High"
+type_rule = "T-I1"
+priority_rule = "P-H1"
+doc_key = "javascript-noindex-only-in-original-html"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "javascript-nofollow-only-in-original-html"
+tab = "JavaScript"
+filter = "Nofollow Only In Original HTML"
+type = "Issue"
+priority = "High"
+type_rule = "T-I1"
+priority_rule = "P-H1"
+doc_key = "javascript-nofollow-only-in-original-html"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "javascript-canonical-only-in-rendered-html"
+tab = "JavaScript"
+filter = "Canonical Only In Rendered HTML"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W1"
+priority_rule = "P-L1"
+doc_key = "javascript-canonical-only-in-rendered-html"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "javascript-canonical-mismatch"
+tab = "JavaScript"
+filter = "Canonical Mismatch"
+type = "Issue"
+priority = "High"
+type_rule = "T-I1"
+priority_rule = "P-H1"
+doc_key = "javascript-canonical-mismatch"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "javascript-page-title-only-in-rendered-html"
+tab = "JavaScript"
+filter = "Page Title Only In Rendered HTML"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W1"
+priority_rule = "P-M2"
+doc_key = "javascript-page-title-only-in-rendered-html"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "javascript-page-title-updated-by-javascript"
+tab = "JavaScript"
+filter = "Page Title Updated By JavaScript"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W1"
+priority_rule = "P-M2"
+doc_key = "javascript-page-title-updated-by-javascript"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "javascript-meta-description-only-in-rendered-html"
+tab = "JavaScript"
+filter = "Meta Description Only In Rendered HTML"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W1"
+priority_rule = "P-M2"
+doc_key = "javascript-meta-description-only-in-rendered-html"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "javascript-meta-description-updated-by-javascript"
+tab = "JavaScript"
+filter = "Meta Description Updated By JavaScript"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W1"
+priority_rule = "P-M2"
+doc_key = "javascript-meta-description-updated-by-javascript"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "javascript-h1-only-in-rendered-html"
+tab = "JavaScript"
+filter = "H1 Only In Rendered HTML"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W1"
+priority_rule = "P-M2"
+doc_key = "javascript-h1-only-in-rendered-html"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "javascript-h1-updated-by-javascript"
+tab = "JavaScript"
+filter = "H1 Updated By JavaScript"
+type = "Warning"
+priority = "Medium"
+type_rule = "T-W1"
+priority_rule = "P-M2"
+doc_key = "javascript-h1-updated-by-javascript"
+needs_crawl_analysis = false
+
+[[issue]]
+id = "javascript-pages-with-javascript-errors"
+tab = "JavaScript"
+filter = "Pages With JavaScript Errors"
+type = "Warning"
+priority = "Low"
+type_rule = "T-W1"
+priority_rule = "P-L1"
+doc_key = "javascript-pages-with-javascript-errors"
+needs_crawl_analysis = false

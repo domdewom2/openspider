@@ -349,9 +349,94 @@ async fn check_images_off_leaves_the_tab_empty_and_store_only_lists_without_down
 }
 
 // spec: ONPAGE-170 [M2]
-#[test]
-#[ignore = "M2: ONPAGE-170 Lazy-Load-Bilder (data-src) brauchen Rendering (M2-R02)"]
-fn lazy_load_images_are_found_with_rendering() {}
+// spec: ONPAGE-172
+// spec: ONPAGE-178
+// spec: ONPAGE-180
+#[tokio::test]
+async fn lazy_load_images_are_found_with_rendering() {
+    use os_analyze::{
+        analysis,
+        details::DetailReq,
+        tabs::images::{self, ImageFilter},
+    };
+    use os_model::{AnalysisStep, StepState};
+    let fx = javascript_rendering::rendered_fixture().await;
+    let cfg = fx.file.config().unwrap();
+    assert!(images_in(&fx, &cfg, "All").contains(&"/image.png".into()));
+    assert_eq!(
+        analysis::steps::images::run(&fx.file, &cfg, &analysis::CancelToken::new()).unwrap(),
+        StepState::Done
+    );
+    analysis::persist::write_step(
+        &fx.file,
+        AnalysisStep::Images,
+        StepState::Done,
+        None,
+        Some(&os_analyze::state::step_config_hash(
+            AnalysisStep::Images,
+            &cfg,
+        )),
+    )
+    .unwrap();
+    let rows = images::instance_rows(
+        &fx.file,
+        &cfg,
+        &DetailReq {
+            url_ids: &[],
+            params: &serde_json::json!({}),
+            sort: &[],
+            offset: 0,
+            limit: 500,
+        },
+        ImageFilter::All,
+    )
+    .unwrap();
+    let cell = |row: &[Value], column: &str| {
+        row[rows.columns.iter().position(|(c, _)| c == column).unwrap()].clone()
+    };
+    let lazy = rows
+        .rows
+        .iter()
+        .find(|row| cell(row, "To") == text(&fx.site.url("/image.png")))
+        .unwrap();
+    assert_eq!(
+        cell(lazy, "Real Dimensions (WxH)"),
+        text("800x600"),
+        "{:?}",
+        rows.rows
+    );
+    assert_eq!(
+        cell(lazy, "Dimensions in Attributes (WxH)"),
+        text("400x300")
+    );
+    assert_eq!(cell(lazy, "Display Dimensions (WxH)"), text("400x300"));
+    assert_eq!(cell(lazy, "Link Origin"), text("Rendered HTML"));
+    let offscreen = rows
+        .rows
+        .iter()
+        .find(|row| cell(row, "To") == text(&fx.site.url("/offscreen.png")))
+        .unwrap();
+    assert_eq!(cell(offscreen, "Real Dimensions (WxH)"), Value::Null);
+    assert_eq!(cell(offscreen, "Display Dimensions (WxH)"), Value::Null);
+    let background = rows
+        .rows
+        .iter()
+        .find(|row| cell(row, "To") == text(&fx.site.url("/bg.png")))
+        .unwrap();
+    assert_eq!(
+        cell(background, "Link Origin"),
+        text("HTML & Rendered HTML")
+    );
+    let backgrounds = images_in(&fx, &cfg, "Background Images");
+    for path in ["/bg.png", "/hero.png", "/dynamic.png"] {
+        assert!(backgrounds.contains(&path.into()), "{backgrounds:?}");
+    }
+    assert!(!backgrounds.contains(&"/image.png".into()));
+    assert!(images_in(&fx, &cfg, "Incorrectly Sized Images").contains(&"/image.png".into()));
+    assert_eq!(cell(lazy, "Potential Savings"), Value::Int(15000));
+}
+#[path = "tab_javascript_support.rs"]
+mod javascript_rendering;
 
 // spec: ONPAGE-171
 #[tokio::test]
