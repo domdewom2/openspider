@@ -379,6 +379,9 @@ fn build_impl(
     secrets: Option<&dyn os_fetch::SecretStore>,
     clock: &dyn os_model::Clock,
 ) -> Result<Plan, CliError> {
+    if args.use_google_analytics.is_some() {
+        return Err(CliError::usage("--use-google-analytics (Universal Analytics) wird nicht mehr unterstützt; --use-google-analytics-4 verwenden"));
+    }
     let unsupported = args.unsupported();
     if !unsupported.is_empty() {
         return Err(CliError::usage(format!(
@@ -705,6 +708,26 @@ fn build_impl(
 }
 
 fn apply_api_options(cfg: &mut CrawlConfig, args: &RunArgs) -> Result<(), CliError> {
+    for (flag, values, count) in [
+        (
+            "--use-google-analytics-4",
+            args.use_google_analytics_4.as_deref(),
+            4,
+        ),
+        (
+            "--use-google-search-console",
+            args.use_google_search_console.as_deref(),
+            2,
+        ),
+    ] {
+        if let Some(values) = values {
+            if values.len() != count || values.iter().any(|s| s.trim().is_empty()) {
+                return Err(CliError::usage(format!(
+                    "{flag}: {count} nicht leere Werte für Konto und Property erforderlich"
+                )));
+            }
+        }
+    }
     os_integrations::crawl_glue::configure_google(
         cfg,
         args.use_google_analytics_4.as_deref(),

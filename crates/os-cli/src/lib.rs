@@ -320,7 +320,7 @@ pub fn run(cli: Cli) -> i32 {
         };
     }
 
-    let rep = Reporter::configured(
+    let rep = Reporter::task_configured(
         args.json_progress || args.progress.as_deref() == Some("json"),
         args.quiet,
     );

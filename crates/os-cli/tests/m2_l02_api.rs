@@ -1,0 +1,159 @@
+mod common;
+use clap::Parser;
+use common::{resolve, site, Env};
+use os_cli::{exec, plan, reporter::Reporter, signals::Signals, Cli};
+use os_model::{ApiKind, CancelToken, CrawlConfig};
+use std::sync::Arc;
+
+// spec: OUT-201
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn missing_credentials_warn_or_fail_before_crawling_and_are_logged() {
+    let server = site("out-basic-site").await;
+    for (flags, code) in [
+        (vec![], 0),
+        (vec!["--strict"], 4),
+        (vec!["--require-apis"], 2),
+    ] {
+        let env = Env::new();
+        let mut args = vec![
+            "--crawl".into(),
+            "http://site.test/".into(),
+            "--resolve".into(),
+            resolve(&server),
+            "--use-google-search-console".into(),
+            "missing@example.test".into(),
+            "sc-domain:integ.test".into(),
+        ];
+        args.extend(flags.iter().map(|s| s.to_string()));
+        let before = server.total_requests();
+        let run = env.run_async(args).await;
+        assert_eq!(run.code, code, "{}", run.dump());
+        assert!(run.stderr.contains("missing@example.test"));
+        if code == 2 {
+            assert_eq!(before, server.total_requests());
+        } else {
+            let logs = std::fs::read_dir(env.home.path().join("logs"))
+                .unwrap()
+                .map(|p| std::fs::read_to_string(p.unwrap().path()).unwrap())
+                .collect::<String>();
+            assert!(logs.contains("missing@example.test"));
+        }
+    }
+    for flags in [
+        vec!["--use-google-analytics"],
+        vec!["--use-google-search-console", "", "property"],
+        vec!["--use-google-analytics-4", "a", "b"],
+    ] {
+        let env = Env::new();
+        let mut args = vec!["--crawl", "http://site.test/"];
+        args.extend(flags);
+        let before = server.total_requests();
+        let run = env.run_async(args).await;
+        assert_eq!(run.code, 2, "{}", run.dump());
+        assert_eq!(before, server.total_requests());
+        if run.stderr.contains("Universal Analytics") {
+            assert!(run.stderr.contains("nicht mehr unterstützt"));
+        }
+    }
+}
+
+// spec: OUT-201
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn cli_selection_reaches_the_mock_and_exports_after_apis_finish() {
+    use os_integrations::credentials::{Credential, Credentials};
+    use os_testsite::mocks::{ga4::Ga4Mock, gsc::GscMock, MockServer};
+    let ga = Ga4Mock::default();
+    let gs = GscMock::default();
+    let mocks = MockServer::start(vec![Arc::new(ga.clone()), Arc::new(gs.clone())])
+        .await
+        .unwrap();
+    let server = site("out-basic-site").await;
+    let home = tempfile::tempdir().unwrap();
+    let paths = os_store::paths::app_paths_with_home(Some(home.path().as_os_str()));
+    let output = home.path().join("exports");
+    let config = home.path().join("api.osconfig");
+    let mut cfg = CrawlConfig::default();
+    cfg.api.ga4.base_url = Some(mocks.base_url("ga4"));
+    cfg.api.gsc.base_url = Some(mocks.base_url("gsc"));
+    cfg.save_file(&config).unwrap();
+    let cli = Cli::try_parse_from([
+        "openspider",
+        "--crawl",
+        "http://site.test/",
+        "--resolve",
+        &resolve(&server),
+        "--config",
+        config.to_str().unwrap(),
+        "--output-folder",
+        output.to_str().unwrap(),
+        "--use-google-analytics-4",
+        "fixture",
+        "1001",
+        "2001",
+        "3001",
+        "--use-google-search-console",
+        "fixture",
+        "sc-domain:integ.test",
+        "--require-apis",
+        "--export-tabs",
+        "Analytics:All,Search Console:All",
+    ])
+    .unwrap();
+    let rep = Reporter::new(false);
+    let mut plan = plan::build(&cli.run, paths, &rep).unwrap();
+    assert_eq!(
+        plan.config.api.ga4.analytics_account.as_deref(),
+        Some("1001")
+    );
+    assert_eq!(
+        plan.config.api.ga4.property.as_deref(),
+        Some("properties/2001/dataStreams/3001")
+    );
+    let store = Arc::new(os_fetch::MemorySecretStore::new());
+    let credentials = Credentials::new(store.clone());
+    for kind in [ApiKind::Ga4, ApiKind::Gsc] {
+        credentials
+            .put(
+                kind,
+                Credential {
+                    account_id: "fixture".into(),
+                    label: "Fixture".into(),
+                    access_token: Some("secret-fixture-token".into()),
+                    api_key: None,
+                    refresh_token: None,
+                    expires_at: None,
+                    client_secret: None,
+                    scopes: vec![],
+                },
+                true,
+            )
+            .unwrap();
+    }
+    plan.api_secrets = Some(os_integrations::crawl_glue::SecretSnapshot(store));
+    let outcome = exec::execute(plan, rep.clone(), Signals::manual(CancelToken::new())).await;
+    assert_eq!(
+        outcome.exit,
+        os_cli::Exit::Ok,
+        "{} {:?}",
+        outcome.summary,
+        rep.warning_messages()
+    );
+    assert!(ga
+        .requests()
+        .iter()
+        .any(|r| r.path.contains("properties/2001:runReport")));
+    assert!(ga
+        .requests()
+        .iter()
+        .any(|r| r.body.to_string().contains("integ.test")));
+    assert!(gs
+        .requests()
+        .iter()
+        .any(|r| r.property.as_deref() == Some("sc-domain:integ.test")));
+    assert_eq!(rep.exported_files().len(), 2);
+    assert!(rep.exported_files().iter().all(|p| p.is_file()));
+    assert!(rep
+        .warning_messages()
+        .iter()
+        .all(|w| !w.contains("secret-fixture-token")));
+}

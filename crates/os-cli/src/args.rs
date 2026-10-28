@@ -139,12 +139,26 @@ pub struct RunArgs {
 
     // ---- APIs ---------------------------------------------------------------------------------
     /// Google Analytics 4.
-    #[arg(long, num_args = 0.., value_name = "KONTO ACCOUNT PROPERTY STROM", help_heading = "APIs")]
+    #[arg(
+        long,
+        num_args = 4,
+        value_name = "KONTO ACCOUNT PROPERTY STROM",
+        help_heading = "APIs"
+    )]
     pub use_google_analytics_4: Option<Vec<String>>,
 
     /// Google Search Console.
-    #[arg(long, num_args = 0.., value_name = "KONTO WEBSITE", help_heading = "APIs")]
+    #[arg(
+        long,
+        num_args = 2,
+        value_name = "KONTO WEBSITE",
+        help_heading = "APIs"
+    )]
     pub use_google_search_console: Option<Vec<String>>,
+
+    /// Universal Analytics wird nicht mehr unterstützt.
+    #[arg(long, num_args = 0.., help_heading = "APIs")]
+    pub use_google_analytics: Option<Vec<String>>,
 
     /// PageSpeed Insights.
     #[arg(long, help_heading = "APIs")]
