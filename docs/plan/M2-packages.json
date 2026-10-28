@@ -3937,7 +3937,8 @@
    "M2-U25",
    "M2-U26",
    "M2-U27",
-   "M2-U34"
+   "M2-U34",
+   "M2-U35"
   ],
   "size": "M",
   "runner": "cloud+ci+local-mac",
@@ -4009,7 +4010,8 @@
    "M2-U25",
    "M2-U26",
    "M2-U27",
-   "M2-U34"
+   "M2-U34",
+   "M2-U35"
   ],
   "size": "L",
   "runner": "cloud+ci+local-mac",
@@ -4040,7 +4042,8 @@
    "M2-U25",
    "M2-U26",
    "M2-U27",
-   "M2-U34"
+   "M2-U34",
+   "M2-U35"
   ],
   "size": "M",
   "runner": "cloud",
@@ -4143,7 +4146,7 @@
   "id": "M2-U34",
   "kind": "package",
   "model": "sonnet",
-  "title": "UI-Feinschliff und visueller Polish nach der Beta-Abnahme (K2-75, erweitert K2-75a): Befunde A02-nn und Nutzerpunkte 27.10., Design-System-Durchgang nach M2-ui-concept 5 (Dichte, Abstände, kompakte einzeilige Tab-Leisten, einheitliche Dialoge und Leerzustände), Mehrfach-Export nach OUT-075, Logo in der Kopfleiste (vor U32-Baselines und U33)",
+  "title": "UI-Feinschliff nach der Beta-Abnahme (K2-75, Nachtrag K2-75a): Befunde A02-nn und Nutzerpunkte 27.10. – Tab-Beschriftungen ohne Abschneiden, Überlaufmenü für alle drei Tab-Leisten, einheitliche Tab-Bedienelemente, Export-Platzierung, Mehrfach-Export nach OUT-075, deutsche Oberfläche ohne englische Resttexte (vor U35, U32-Baselines und U33)",
   "wave": "4a",
   "spec_ids": [],
   "extra_spec_ids": [
@@ -4156,8 +4159,6 @@
    "UI-121",
    "UI-016",
    "UI-068",
-   "UI-120",
-   "UI-129",
    "OUT-075",
    "OUT-210"
   ],
@@ -4168,22 +4169,50 @@
    "apps/desktop/src/features/detail/frame/**",
    "apps/desktop/src/features/sidebar/frame/**",
    "apps/desktop/src/features/*/i18n/** (ohne apps/desktop/src/features/compare/i18n/**)",
-   "apps/desktop/src/i18n/**",
+   "apps/desktop/src/i18n/** (ohne core.ts, index.ts)",
    "apps/desktop/e2e/polish/**",
    "docs/plan/M2-acceptance/beta/begriffe.md",
    "docs/plan/M2-reports/u34.md",
-   "apps/desktop/src/ui/{tokens,emptyState,icons}/** und apps/desktop/src/ui/ui.css, apps/desktop/src/app/app.css",
-   "apps/desktop/src/features/**/*.css (ohne apps/desktop/src/features/compare/**)",
-   "apps/desktop/src/features/{header,statusbar,settings,mcp,crawls,segments-dialog,config/frame,config/pages/segments,sidebar,detail}/** (nur Darstellung: Markup-Struktur, Klassen, Layout; keine Daten- oder Ablauflogik)",
-   "apps/desktop/src/assets/brand/** (Logo, neu)"
+   "apps/desktop/src/features/config/pages/{segments,rendering}/** (nur A02-19, A02-21)"
   ],
   "depends_on": [
-   "M2-A02",
+   "M2-A02"
+  ],
+  "runner": "cloud+ci",
+  "size": "L",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). ARBEITSLISTE: alle Befunde in docs/plan/M2-acceptance/beta/befunde.md (A02-nn) mit Schwere Blocker/Hoch/Mittel und die Niedrig-Befunde, die eine der Dateien aus owns betreffen; dazu die sechs Nutzerpunkte vom 27.10. (A02-01 … A02-06, falls nicht als erledigt markiert): (1) Haupt-Tab-Leiste: zweizeilige Beschriftungen unten abgeschnitten; (2) Detail-Tab-Leiste: „Chrome Console Log“ oben abgeschnitten, weitere zweizeilige Labels; (3) Seitenleisten-Tabs ohne Überlauf-Steuerung, „Href“ vor dem »-Knopf gekappt; (4) Sprachmischung (z. B. „No Crawl“, „All (–)“, Tab-Namen teils englisch); (5) leere linke Spalte mit einzelnem „Exportieren“ zusätzlich zu dem in der Werkzeugleiste; (6) uneinheitliche Bedienelemente „Tabs anpassen“ (Aufklapptext) gegenüber „Detail-Tabs konfigurieren“/„Tabs zurücksetzen“ (Knöpfe). Befunde außerhalb owns: nicht beheben, im Bericht als „außerhalb owns“ an den Planer (Nachtrag K2-75a schneidet sie vor dem Start zu, ggf. als Fremdänderung). SPEC-GRUNDLAGE: UI-004 (überzählige Tabs über Dropdown-Pfeil rechts; Tabs konfigurieren/zurücksetzen über Dropdown und Menü Ansicht), UI-112 (Kontextmenü auf allen drei Tab-Leisten, geschlossene Tabs über den Dropdown-Pfeil wieder einblendbar – gilt damit für oben, unten und rechts), UI-030/UI-060 (Detail- und Seitenleisten-Tabs mit Reihenfolge/Sichtbarkeit), UI-007 (lange Texte mit „…“ und Tooltip), UI-015 (Platzierung „Exportieren“: über der oberen Tabelle und je tabellarischem Detail-Tab; Seitenleistentabellen exportierbar nach UI-060), UI-001 (Layout 1 024 × 640 ohne Überlappung, vier Skalierungen), UI-121 + Konvention 05-ui „Spalten- und Filterschlüssel“ (Spec-Schlüssel englisch, Anzeige über i18n übersetzt; nur Exporte, Dateinamen und CLI bleiben englisch). SPRACHE (Ergebnis Planer K2-75): Die Spec legt keine Liste bewusst englischer Fachbegriffe fest; Tab-Namen, Filternamen, Spaltenköpfe, Issue-Texte und Bedienelemente erscheinen in der deutschen Oberfläche deutsch. Englisch bleiben nur (a) Eigennamen von Produkten, Diensten und Standards (z. B. Chrome, Lighthouse, PageSpeed, Search Console, Google Analytics/GA4, Majestic, Ahrefs, Moz, JavaScript, AMP, Hreflang, SERP, MCP), (b) etablierte Kürzel und Protokollbegriffe (URL, HTTP, HTTPS, HTML, CSS, H1, H2, CSV, XLSX), (c) Werte aus den Daten (Statuszeilen, Header-Namen, Ankertexte). Das Paket legt docs/plan/M2-acceptance/beta/begriffe.md an: Tabelle Schlüssel (Spec-Name) → deutsche Anzeige für alle Top-, Detail- und Seitenleisten-Tabs, alle Filter der Haupt-Tabs und die Ausnahmeliste (a)–(c) mit Begründung; Übersetzungen in den zugehörigen i18n-Dateien (Fallback auf den Schlüsselnamen in TopTabs.tsx `label()` darf in de nicht mehr greifen). Die Liste ist Vorschlag für einen Spec-Nachtrag zu UI-121 (Planer). LÖSUNGSRAHMEN: eine gemeinsame Tab-Leisten-Komponente (ui/primitives/TabBar.tsx) für alle drei Leisten mit (i) einzeiliger Beschriftung (white-space: nowrap), Höhe aus Schriftgröße/Zoom/Dichte abgeleitet, keine feste Höhe, die Text vertikal kappt; (ii) maximaler Tab-Breite mit „…“ und Tooltip/zugänglichem Namen mit dem vollen Text; (iii) Überlauf-Dropdown (» bzw. Pfeil) rechts mit allen Tabs (sichtbare und ausgeblendete, ausgeblendete per Checkbox einblendbar), darin „Tabs konfigurieren…“ und „Tabs zurücksetzen“ – gleiche Bedienung auf allen drei Leisten, keine Aufklapptexte oder zusätzliche Knöpfe am Rand; (iv) Kontextmenü UI-112 unverändert über TabContextMenuHost; (v) Platz für Überlaufknopf und Konfigurationszugang wird vor dem Verteilen der Tabs reserviert (kein Tab unter dem Knopf, A01-08). „Exportieren“: genau ein Knopf über der oberen Tabelle (UI-015), linke Leerspalte entfällt; Detail-Tabs behalten ihren Knopf. FREMDÄNDERUNG (K2-72-Grundsatz, Bericht „Fremdänderung (K2-75)“): Aufrufer von TabBar/Tabs außerhalb owns (z. B. features/settings/frame/SettingsFrame.tsx, viz) nur soweit die geänderte Komponenten-API es zwingend verlangt, minimal; features/compare/** erst nach dem Merge von M2-N02b, sonst als Befund; features/{header,statusbar}/** nicht anfassen (Freigabe K2-73 an U17), Befunde dort an den Planer; ui/primitives/** außer TabBar/Tabs gehört M2-U30 (hängt an U34). Bestehende Tests bleiben grün, Erwartungsänderungen nur nach K2-63 (Begründung je Test im Bericht). ABNAHME (messbar, E2E-A in apps/desktop/e2e/polish/** auf Linux Chromium+WebKit, CI macos-14 WebKit und windows-latest Chromium; Sprache de und en, Theme hell und dunkel): (1) Fenster 1 024 × 640, 1 440 × 900 und 1 920 × 1 080, Zoom 100 % sowie (Windows/Chromium) deviceScaleFactor 1,25/1,5/2: für jeden sichtbaren Tab aller drei Leisten gilt `scrollHeight ≤ clientHeight` (kein vertikales Kappen) und entweder `scrollWidth ≤ clientWidth` oder Ellipse mit Tooltip und zugänglichem Namen = voller Text; keine Bounding-Box eines Tabs schneidet Überlaufknopf oder Konfigurationszugang; (2) bei jeder Größe sind alle Tabs jeder Leiste über sichtbare Tabs oder das Überlaufmenü erreichbar (Test: Menüeinträge ∪ sichtbare Tabs = alle Tabs der Leiste), auch bei eingeklappter Mindestbreite der Seitenleiste (200 px); (3) „Tabs konfigurieren…“ und „Tabs zurücksetzen“ sind auf allen drei Leisten über dasselbe Bedienelement (Überlaufmenü) und das Kontextmenü erreichbar, die Seitenleiste zeigt keinen Aufklapptext „Tabs anpassen“ mehr; (4) im Hauptfenster genau ein Element mit Namen „Exportieren“ außerhalb des Detailbereichs, keine leere linke Spalte (Breite der Tabellenfläche = Fensterbreite − Seitenleiste ± 1 px nach UI-001); (5) deutsche Oberfläche: Test durchläuft Hauptfenster (alle Top-Tabs, Filter-Dropdown jedes Top-Tabs, alle Detail- und Seitenleisten-Tabs, Überlauf- und Kontextmenüs) und meldet jeden sichtbaren Text, der identisch mit dem englischen Wert ist oder ein Schlüsselname ist, außer Einträgen der Ausnahmeliste aus begriffe.md und Datenwerten (Tabelleninhalte) – Ergebnis 0 Treffer; (6) A02-Befunde der Arbeitsliste je mit Test oder begründetem Vermerk im Bericht (behoben/außerhalb owns/Rückfrage); (7) C4-Frontend-Prüfungen grün (`npm run -w apps/desktop typecheck && npm run -w apps/desktop test`), E2E-A grün auf allen Plattformen. GRÖSSE: M; hat die Arbeitsliste nach A02 mehr als 15 Befunde Hoch/Mittel, setzt der Planer L und teilt ggf. (U34a Tab-Leisten/Layout, U34b Sprache). Bericht docs/plan/M2-reports/u34.md (Befund → Commit/Test, Fremdänderungen, Vorher/Nachher-Screenshots der drei Tab-Leisten bei 1 024 × 640 de dunkel). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. NACHTRAG K2-75a (Nutzerentscheidung 28.10.2026): ARBEITSLISTE zusätzlich A02-17 Mehrfach-Export (Auswahl war für den Nutzer nicht auffindbar: Ursache in features/export/MultiOptions.tsx klären; Dialog nach OUT-075 gliedern: Ausgabe – Auswahl (durchsuchbarer Baum Tabs/Filter, Bulk-Exporte, Reports oder Liste verfügbar → ausgewählt, gut sichtbar mit eigener Höhe) – lokale Dateien (OUT-165) – Looker-Studio-Zeitreihe (OUT-210, ohne Drive-Konto deaktiviert mit Hinweis) – Vorlagen; fehlende Pflichtangaben am Feld und als Zähler im Dialogfuß, Export-Knopf bis dahin gesperrt; nach dem Export Liste der erzeugten und übersprungenen Dateien), A02-19 Segmente-Seite (JSON-Feld volle Breite unter der Beschriftung, lokalisierte Dateiauswahl), A02-21 Hinweis, warum JavaScript-Rendering gesperrt ist (Chromium-Pfad fehlt; Bündelung M3). Die Funktionsbefunde A02-07 … A02-15, A02-18 behebt M2-N03 parallel (Welle 3f) – deren Dateien nicht anfassen; den Design-System-Durchgang, das Logo und die Darstellung der N03-Bereiche macht M2-U35 danach. apps/desktop/src/i18n/{core,index}.ts gehört für das Umschalten zur Laufzeit N03; hier nur Texte/Kataloge. Neue Dateien `features/<feature>/i18n/n03.ftl` von N03 nicht anfassen. CLEAN-ROOM: Gestaltung ausschließlich nach Spec und M2-ui-concept; keine Bilder, Texte oder Layouts eines Referenzprodukts."
+ },
+ {
+  "id": "M2-U35",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Visueller Polish nach der Beta-Abnahme (K2-75a): Design-System-Durchgang nach M2-ui-concept 5 über alle Ansichten und Dialoge (Raster, Dichte, Tokens, einheitliche Dialoge und Leerzustände), Logo in der Kopfleiste, Darstellung der N03-Bereiche (vor U32-Baselines und U33)",
+  "wave": "4p",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-001",
+   "UI-016",
+   "UI-120",
+   "UI-129",
+   "UI-003",
+   "UI-013"
+  ],
+  "owns": [
+   "apps/desktop/src/ui/{tokens,emptyState,icons}/** und apps/desktop/src/ui/ui.css, apps/desktop/src/app/app.css",
+   "apps/desktop/src/features/**/*.css (ohne apps/desktop/src/features/compare/**)",
+   "apps/desktop/src/features/{header,statusbar,settings,mcp,crawls,segments-dialog,config/frame,sidebar,detail,toptabs,shell,table,export}/** (nur Darstellung: Markup-Struktur, Klassen, Layout; keine Daten- oder Ablauflogik)",
+   "apps/desktop/src/assets/brand/** (Logo, neu)",
+   "apps/desktop/e2e/polish/** (nur neue Dateien visual-*.spec.ts)",
+   "scripts/lint-css.mjs (neu)",
+   "docs/plan/M2-reports/u35.md"
+  ],
+  "depends_on": [
+   "M2-U34",
    "M2-N03"
   ],
   "runner": "cloud+ci",
   "size": "L",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). ARBEITSLISTE: alle Befunde in docs/plan/M2-acceptance/beta/befunde.md (A02-nn) mit Schwere Blocker/Hoch/Mittel und die Niedrig-Befunde, die eine der Dateien aus owns betreffen; dazu die sechs Nutzerpunkte vom 27.10. (A02-01 … A02-06, falls nicht als erledigt markiert): (1) Haupt-Tab-Leiste: zweizeilige Beschriftungen unten abgeschnitten; (2) Detail-Tab-Leiste: „Chrome Console Log“ oben abgeschnitten, weitere zweizeilige Labels; (3) Seitenleisten-Tabs ohne Überlauf-Steuerung, „Href“ vor dem »-Knopf gekappt; (4) Sprachmischung (z. B. „No Crawl“, „All (–)“, Tab-Namen teils englisch); (5) leere linke Spalte mit einzelnem „Exportieren“ zusätzlich zu dem in der Werkzeugleiste; (6) uneinheitliche Bedienelemente „Tabs anpassen“ (Aufklapptext) gegenüber „Detail-Tabs konfigurieren“/„Tabs zurücksetzen“ (Knöpfe). Befunde außerhalb owns: nicht beheben, im Bericht als „außerhalb owns“ an den Planer (Nachtrag K2-75a schneidet sie vor dem Start zu, ggf. als Fremdänderung). SPEC-GRUNDLAGE: UI-004 (überzählige Tabs über Dropdown-Pfeil rechts; Tabs konfigurieren/zurücksetzen über Dropdown und Menü Ansicht), UI-112 (Kontextmenü auf allen drei Tab-Leisten, geschlossene Tabs über den Dropdown-Pfeil wieder einblendbar – gilt damit für oben, unten und rechts), UI-030/UI-060 (Detail- und Seitenleisten-Tabs mit Reihenfolge/Sichtbarkeit), UI-007 (lange Texte mit „…“ und Tooltip), UI-015 (Platzierung „Exportieren“: über der oberen Tabelle und je tabellarischem Detail-Tab; Seitenleistentabellen exportierbar nach UI-060), UI-001 (Layout 1 024 × 640 ohne Überlappung, vier Skalierungen), UI-121 + Konvention 05-ui „Spalten- und Filterschlüssel“ (Spec-Schlüssel englisch, Anzeige über i18n übersetzt; nur Exporte, Dateinamen und CLI bleiben englisch). SPRACHE (Ergebnis Planer K2-75): Die Spec legt keine Liste bewusst englischer Fachbegriffe fest; Tab-Namen, Filternamen, Spaltenköpfe, Issue-Texte und Bedienelemente erscheinen in der deutschen Oberfläche deutsch. Englisch bleiben nur (a) Eigennamen von Produkten, Diensten und Standards (z. B. Chrome, Lighthouse, PageSpeed, Search Console, Google Analytics/GA4, Majestic, Ahrefs, Moz, JavaScript, AMP, Hreflang, SERP, MCP), (b) etablierte Kürzel und Protokollbegriffe (URL, HTTP, HTTPS, HTML, CSS, H1, H2, CSV, XLSX), (c) Werte aus den Daten (Statuszeilen, Header-Namen, Ankertexte). Das Paket legt docs/plan/M2-acceptance/beta/begriffe.md an: Tabelle Schlüssel (Spec-Name) → deutsche Anzeige für alle Top-, Detail- und Seitenleisten-Tabs, alle Filter der Haupt-Tabs und die Ausnahmeliste (a)–(c) mit Begründung; Übersetzungen in den zugehörigen i18n-Dateien (Fallback auf den Schlüsselnamen in TopTabs.tsx `label()` darf in de nicht mehr greifen). Die Liste ist Vorschlag für einen Spec-Nachtrag zu UI-121 (Planer). LÖSUNGSRAHMEN: eine gemeinsame Tab-Leisten-Komponente (ui/primitives/TabBar.tsx) für alle drei Leisten mit (i) einzeiliger Beschriftung (white-space: nowrap), Höhe aus Schriftgröße/Zoom/Dichte abgeleitet, keine feste Höhe, die Text vertikal kappt; (ii) maximaler Tab-Breite mit „…“ und Tooltip/zugänglichem Namen mit dem vollen Text; (iii) Überlauf-Dropdown (» bzw. Pfeil) rechts mit allen Tabs (sichtbare und ausgeblendete, ausgeblendete per Checkbox einblendbar), darin „Tabs konfigurieren…“ und „Tabs zurücksetzen“ – gleiche Bedienung auf allen drei Leisten, keine Aufklapptexte oder zusätzliche Knöpfe am Rand; (iv) Kontextmenü UI-112 unverändert über TabContextMenuHost; (v) Platz für Überlaufknopf und Konfigurationszugang wird vor dem Verteilen der Tabs reserviert (kein Tab unter dem Knopf, A01-08). „Exportieren“: genau ein Knopf über der oberen Tabelle (UI-015), linke Leerspalte entfällt; Detail-Tabs behalten ihren Knopf. FREMDÄNDERUNG (K2-72-Grundsatz, Bericht „Fremdänderung (K2-75)“): Aufrufer von TabBar/Tabs außerhalb owns (z. B. features/settings/frame/SettingsFrame.tsx, viz) nur soweit die geänderte Komponenten-API es zwingend verlangt, minimal; features/compare/** erst nach dem Merge von M2-N02b, sonst als Befund; features/{header,statusbar}/** nicht anfassen (Freigabe K2-73 an U17), Befunde dort an den Planer; ui/primitives/** außer TabBar/Tabs gehört M2-U30 (hängt an U34). Bestehende Tests bleiben grün, Erwartungsänderungen nur nach K2-63 (Begründung je Test im Bericht). ABNAHME (messbar, E2E-A in apps/desktop/e2e/polish/** auf Linux Chromium+WebKit, CI macos-14 WebKit und windows-latest Chromium; Sprache de und en, Theme hell und dunkel): (1) Fenster 1 024 × 640, 1 440 × 900 und 1 920 × 1 080, Zoom 100 % sowie (Windows/Chromium) deviceScaleFactor 1,25/1,5/2: für jeden sichtbaren Tab aller drei Leisten gilt `scrollHeight ≤ clientHeight` (kein vertikales Kappen) und entweder `scrollWidth ≤ clientWidth` oder Ellipse mit Tooltip und zugänglichem Namen = voller Text; keine Bounding-Box eines Tabs schneidet Überlaufknopf oder Konfigurationszugang; (2) bei jeder Größe sind alle Tabs jeder Leiste über sichtbare Tabs oder das Überlaufmenü erreichbar (Test: Menüeinträge ∪ sichtbare Tabs = alle Tabs der Leiste), auch bei eingeklappter Mindestbreite der Seitenleiste (200 px); (3) „Tabs konfigurieren…“ und „Tabs zurücksetzen“ sind auf allen drei Leisten über dasselbe Bedienelement (Überlaufmenü) und das Kontextmenü erreichbar, die Seitenleiste zeigt keinen Aufklapptext „Tabs anpassen“ mehr; (4) im Hauptfenster genau ein Element mit Namen „Exportieren“ außerhalb des Detailbereichs, keine leere linke Spalte (Breite der Tabellenfläche = Fensterbreite − Seitenleiste ± 1 px nach UI-001); (5) deutsche Oberfläche: Test durchläuft Hauptfenster (alle Top-Tabs, Filter-Dropdown jedes Top-Tabs, alle Detail- und Seitenleisten-Tabs, Überlauf- und Kontextmenüs) und meldet jeden sichtbaren Text, der identisch mit dem englischen Wert ist oder ein Schlüsselname ist, außer Einträgen der Ausnahmeliste aus begriffe.md und Datenwerten (Tabelleninhalte) – Ergebnis 0 Treffer; (6) A02-Befunde der Arbeitsliste je mit Test oder begründetem Vermerk im Bericht (behoben/außerhalb owns/Rückfrage); (7) C4-Frontend-Prüfungen grün (`npm run -w apps/desktop typecheck && npm run -w apps/desktop test`), E2E-A grün auf allen Plattformen. GRÖSSE: M; hat die Arbeitsliste nach A02 mehr als 15 Befunde Hoch/Mittel, setzt der Planer L und teilt ggf. (U34a Tab-Leisten/Layout, U34b Sprache). Bericht docs/plan/M2-reports/u34.md (Befund → Commit/Test, Fremdänderungen, Vorher/Nachher-Screenshots der drei Tab-Leisten bei 1 024 × 640 de dunkel). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. NACHTRAG K2-75a (Nutzerentscheidung 28.10.2026, nach der Beta-Abnahme): (A) ARBEITSLISTE zusätzlich: A02-17 Mehrfach-Export (Auswahl war für den Nutzer nicht auffindbar: Ursache in features/export/MultiOptions.tsx klären; Dialog nach OUT-075 gliedern: Ausgabe – Auswahl (durchsuchbarer Baum Tabs/Filter, Bulk-Exporte, Reports oder Liste verfügbar → ausgewählt, gut sichtbar mit eigener Höhe) – lokale Dateien (OUT-165) – Looker-Studio-Zeitreihe (OUT-210, ohne Drive-Konto deaktiviert mit Hinweis) – Vorlagen; fehlende Pflichtangaben am Feld und als Zähler im Dialogfuß, Export-Knopf bis dahin gesperrt; nach dem Export Liste der erzeugten und übersprungenen Dateien), A02-16 Darstellung der MCP-Werkzeugtabelle (lesbare Spaltenbreiten, kein buchstabenweiser Umbruch), A02-19 Segmente-Seite (JSON-Feld volle Breite unter der Beschriftung, lokalisierte Dateiauswahl), A02-20 Innenabstand der Leerzustände, A02-21 Hinweis, warum JavaScript-Rendering gesperrt ist (Chromium-Pfad fehlt; Bündelung M3). Die Funktionsbefunde A02-07 … A02-15, A02-18 hat M2-N03 vorher behoben – nicht erneut anfassen, nur ihre Darstellung. (B) VISUELLER POLISH (Design-System-Durchgang): alle Ansichten und Dialoge nach docs/plan/M2-ui-concept.md Abschnitt 5 (5.1 Typografie, 5.2 Farben/Tokens, 5.3 Dichte: 4-px-Raster, Tabellenzeile 22 px kompakt, Spaltenkopf 26 px, Werkzeugzeilen 32 px mit 24-px-Steuerelementen, Tabs 28 px einzeilig, Statusleiste 24 px, Radien 4/8/0 px; 5.4 Komponentenbestand, 5.6 Plattform-Konventionen): einheitliche Abstände und Ausrichtung in Kopfleiste, Werkzeugzeilen, Detailfenster, Seitenleiste, Statusleiste und allen Dialogen (Konfiguration, Einstellungen, MCP, Export, Crawl-Verwaltung, Segmente); keine Ad-hoc-Werte in Feature-CSS, sondern Tokens aus ui/tokens; Leerzustände (UI-016) mit Innenabstand und einheitlichem Muster; Seitenleiste ruhig (keine Layoutsprünge beim Aktualisieren). Messbar: (7) keine CSS-Längenangabe außerhalb des 4-px-Rasters und keine Farbangabe außerhalb der Tokens in features/**/*.css (Lint-Skript im Paket, Ausnahmen begründet in u34.md); (8) Höhen von Tabs, Tabellenzeile, Spaltenkopf, Werkzeugzeile und Statusleiste per E2E-A gemessen = Konzeptwerte (± 1 px) bei Zoom 100 %. (C) LOGO: Platz für das Produktlogo links in der Kopfleiste (Wortmarke „OpenSpider“ mit Bildmarke, Höhe passend zur 32-px-Werkzeugzeile, hell/dunkel); bis das Logo des Nutzers vorliegt, neutraler Platzhalter in apps/desktop/src/assets/brand/ (SVG), Austausch ohne Codeänderung. Die Kopfleiste darf dafür neu angeordnet werden (URL-Eingabe, Modus, Bereich, Start/Pause/Leeren nach UI-003, Fortschritt) – Bedienlogik von U17/N03 bleibt unverändert. CLEAN-ROOM: Gestaltung ausschließlich nach Spec und M2-ui-concept; keine Bilder, Texte oder Layouts eines Referenzprodukts verwenden. GRÖSSE L; Abarbeitung in nummerierten Schritten: Tab-Leisten → Export-Dialog → Design-System-Durchgang je Bereich → Logo → Sprache/Begriffsliste → Abnahme (1)–(8)."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). AUFTRAG (Nutzerentscheidung 28.10.2026, K2-75a): echter visueller Polish nach der Beta-Abnahme. (A) DESIGN-SYSTEM-DURCHGANG: alle Ansichten und Dialoge nach docs/plan/M2-ui-concept.md Abschnitt 5 (5.1 Typografie, 5.2 Farben/Tokens, 5.3 Dichte: 4-px-Raster, Tabellenzeile 22 px kompakt, Spaltenkopf 26 px, Werkzeugzeilen 32 px mit 24-px-Steuerelementen, Tabs 28 px einzeilig, Statusleiste 24 px, Radien 4/8/0 px; 5.4 Komponentenbestand; 5.6 Plattform-Konventionen): einheitliche Abstände und Ausrichtung in Kopfleiste, Werkzeugzeilen, Detailfenster, Seitenleiste, Statusleiste und allen Dialogen (Konfiguration, Einstellungen, MCP, Export, Crawl-Verwaltung, Segmente); keine Ad-hoc-Werte in Feature-CSS, sondern Tokens aus ui/tokens; Leerzustände (UI-016) mit Innenabstand und einheitlichem Muster (A02-20); MCP-Werkzeugtabelle mit lesbaren Spaltenbreiten (A02-16, Darstellung); Seitenleiste ohne Layoutsprünge beim Aktualisieren. (B) LOGO: Platz für das Produktlogo links in der Kopfleiste (Bildmarke + Wortmarke „OpenSpider“, Höhe passend zur 32-px-Werkzeugzeile, Varianten hell/dunkel); bis das Logo des Nutzers vorliegt, neutraler SVG-Platzhalter in apps/desktop/src/assets/brand/, Austausch ohne Codeänderung. Die Kopfleiste darf dafür neu angeordnet werden (URL-Eingabe, Modus, Bereich, Start/Pause/Leeren nach UI-003, Fortschritt) – Bedienlogik von U17/N03 bleibt unverändert. ABNAHME (messbar): (1) scripts/lint-css.mjs: keine Längenangabe außerhalb des 4-px-Rasters und keine Farbangabe außerhalb der Tokens in features/**/*.css (Ausnahmen begründet in u35.md), läuft in npm test; (2) E2E-A misst Höhen von Tabs, Tabellenzeile, Spaltenkopf, Werkzeugzeile und Statusleiste = Konzeptwerte (± 1 px) bei Zoom 100 %, de/en, hell/dunkel; (3) 1 024 × 640 ohne Überlappung (UI-001); (4) alle bestehenden Tests grün (Erwartungen nur nach K2-63). CLEAN-ROOM: Gestaltung ausschließlich nach Spec und M2-ui-concept; keine Bilder, Texte oder Layouts eines Referenzprodukts. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-Q02",
@@ -4266,7 +4295,8 @@
    "M2-U33",
    "M2-U34",
    "M2-N02b",
-   "M2-N03"
+   "M2-N03",
+   "M2-U35"
   ],
   "human": true,
   "runner": "local-mac",
@@ -4297,7 +4327,8 @@
    "M2-E07",
    "M2-U34",
    "M2-A03",
-   "M2-N03"
+   "M2-N03",
+   "M2-U35"
   ],
   "size": "M",
   "runner": "cloud",
