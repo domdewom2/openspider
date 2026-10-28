@@ -1171,21 +1171,38 @@ fn comparison_export(
         return None;
     }
     Some((|| {
+        let scopes = os_export::segment::selections(file, segment).map_err(|e| e.to_string())?;
+        if let Resolved::Report(name) = item {
+            let mut files = Vec::new();
+            for scope in scopes {
+                // A fresh comparison keeps filter caches local to this segment.
+                let (mut c, _) = load_comparison(
+                    file,
+                    explicit_previous,
+                    plan.explicit_compare_config.as_ref(),
+                    cancel,
+                )?;
+                let report = if let Some(scope) = scope {
+                    os_export::compare::save_report_in_segment(
+                        &mut c, name, &scope, out, format, cancel,
+                    )
+                } else {
+                    os_export::compare::save_report(&mut c, name, out, format, cancel)
+                }
+                .map_err(|e| e.to_string())?;
+                files.extend(report.files);
+            }
+            return Ok(files);
+        }
         let (mut c, config) = load_comparison(
             file,
             explicit_previous,
             plan.explicit_compare_config.as_ref(),
             cancel,
         )?;
-        if let Resolved::Report(name) = item {
-            return os_export::compare::save_report(&mut c, name, out, format, cancel)
-                .map(|r| r.files)
-                .map_err(|e| e.to_string());
-        }
         let Resolved::Tab { tab, filter } = item else {
             unreachable!()
         };
-        let scopes = os_export::segment::selections(file, segment).map_err(|e| e.to_string())?;
         let mut files = Vec::new();
         for scope in scopes {
             let mut q = ViewQuery::new(tab, filter);

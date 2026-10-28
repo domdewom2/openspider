@@ -158,3 +158,63 @@ fn explicit_comparison_uses_invocation_mapping_and_elements() {
         }
     }
 }
+
+// spec: OUT-011
+// spec: OUT-113
+#[test]
+fn comparison_reports_keep_named_and_all_segments() {
+    let env = Env::new();
+    std::fs::create_dir_all(env.crawls_dir()).unwrap();
+    let cfg = CrawlConfig::load_str(
+        r##"
+[[segments.list]]
+name = "Blog"
+color = "#336699"
+[[segments.list.groups]]
+[[segments.list.groups.conditions]]
+field = "Address"
+op = "contains"
+value = "/a"
+"##,
+    )
+    .unwrap()
+    .config;
+    let old = fixture::fixture(&env.crawls_dir(), 1, 1, cfg.clone());
+    let new = fixture::fixture(&env.crawls_dir(), 2, 2, cfg.clone());
+    for file in [&old, &new] {
+        file.conn()
+            .execute_batch("UPDATE urls SET status_code=301,redirect_target_id=3 WHERE id IN (1,2)")
+            .unwrap();
+        os_analyze::segments::reassign(file, &cfg, &os_model::CancelToken::new()).unwrap();
+    }
+    for segment in ["Blog", "all"] {
+        let result = env.run(&[
+            "--crawl-comparison",
+            old.path().to_str().unwrap(),
+            new.path().to_str().unwrap(),
+            "--segment",
+            segment,
+            "--save-report",
+            "Redirects:All Redirects,Crawl Overview",
+            "--output-folder",
+            env.out().to_str().unwrap(),
+            "--overwrite",
+        ]);
+        assert_eq!(result.code, 0, "{}", result.dump());
+        let rows = common::read_csv(&env.out().join("all_redirects_segment_blog.csv"));
+        assert_eq!(common::column(&rows, "Address"), ["https://site.test/a"]);
+        let overview = common::read_csv(&env.out().join("crawl_overview_segment_blog.csv"));
+        assert!(overview[0].iter().any(|s| s == "Previous"));
+        let html = overview
+            .iter()
+            .find(|r| r[0] == "Internal" && r[1] == "HTML")
+            .unwrap();
+        assert_eq!(&html[2..4], ["1", "1"]);
+        if segment == "all" {
+            let all = common::read_csv(&env.out().join("all_redirects.csv"));
+            assert_eq!(common::column(&all, "Address").len(), 2);
+        } else {
+            assert!(!env.out().join("all_redirects.csv").exists());
+        }
+    }
+}
