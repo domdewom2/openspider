@@ -24,7 +24,11 @@ export function useStatusSnapshot(): SessionState {
 export function Statusbar() {
   const t = useT();
   const f = useFormat();
-  const { crawl: c, analysis, mcp, throttled, crawlDelays } = useStatusSnapshot();
+  const { crawl: c, mcp, throttled, crawlDelays } = useStatusSnapshot();
+  const storedAnalysis = useSession(s => s.analysis);
+  const analysisStarting = useSession(s => s.analysisStarting);
+  const analysis = analysisStarting ? { steps: [], running: true, current: null, percent: 0 } : storedAnalysis;
+  const analysisResult = useSession(s => s.analysisResult);
   const [sessionLost, setSessionLost] = useState(false);
   useEffect(() => {
     let live = true; setSessionLost(false);
@@ -64,6 +68,7 @@ export function Statusbar() {
       <span>{t("status-response", { value: c?.avgResponseTime == null ? unknown : f.decimal(c.avgResponseTime, 3) })}</span>
       <span>{t("status-end-reason", { value: c?.endReason ?? unknown })}</span>
     </div></details>
+    {(analysis?.running || analysisResult) && <span role="status" data-testid="analysis-feedback">{t(analysis?.running ? "status-analysis" : `n03-analysis-${analysisResult}`)}</span>}
     {analysis?.running && <div className="os-analysis-progress"><span>{t(`status-step-${analysis.current}`, {}, { fallback: analysis.current ?? t("status-analysis") })}{index && ` ${index}/${analysis.steps.length}`} · {analysis.percent ?? unknown} %</span><ProgressBar label={t("status-analysis")} value={analysis.percent} /></div>}
   </div>;
 }

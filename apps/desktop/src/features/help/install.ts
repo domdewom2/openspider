@@ -10,7 +10,7 @@ import { crawls } from "../../ipc/crawls";
 import { diag } from "../../ipc/diag";
 import { mcp } from "../../ipc/mcp";
 import { config } from "../../ipc/config";
-import { analysis } from "../../ipc/analysis";
+import { startAnalysis } from "../sidebar/analysis/start";
 import { useMainMode } from "./state";
 import { toCmdError } from "../../ipc/errors";
 import { showHelp, useHelp } from "./state";
@@ -91,7 +91,7 @@ export function installMainMenus(): () => void {
     state.mode = mode;
     rebuild();
   });
-  on("analysis.start", async () => { const operation = await analysis.start({}); if (live) useHelp.setState({ operation }); });
+  on("analysis.start", async () => { const operation = await startAnalysis({}); if (live) useHelp.setState({ operation }); });
   on("mcp.start", async () => { const status = await mcp.start({}); if (live) useSession.setState({ mcp: status }); });
   on("mcp.stop", async () => { const status = await mcp.stop(); if (live) useSession.setState({ mcp: status }); });
   on("mcp.autostart", async () => { await mcp.setAutostart({ value: !state.mcpAutostart }); await usePrefs.getState().load(); });
