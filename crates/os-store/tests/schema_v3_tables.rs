@@ -215,7 +215,8 @@ fn a_reopened_v3_file_has_all_tables_and_views_and_the_integrity_check_passes() 
             "q_links",
             "q_manifest",
             "q_sitemap_urls",
-            "q_urls"
+            "q_urls",
+            "url_ext"
         ]
     );
 }

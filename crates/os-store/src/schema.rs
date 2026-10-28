@@ -43,10 +43,15 @@ pub const MIGRATIONS: &[Migration] = &[
         name: "w1",
         sql: include_str!("../migrations/0004_w1.sql"),
     },
+    Migration {
+        version: 5,
+        name: "compact_ext",
+        sql: include_str!("../migrations/0005_compact_ext.sql"),
+    },
 ];
 
 /// Aktuelle Schemaversion dieses Programmstands.
-pub const SCHEMA_VERSION: u32 = 4;
+pub const SCHEMA_VERSION: u32 = 5;
 
 /// Hauptversion der öffentlichen Leseschnittstelle (`q_`-Sichten, OUT-233/OUT-234); Wert von
 /// `q_manifest.read_api_version`. Inkompatible Änderungen der Sichten erhöhen sie.
