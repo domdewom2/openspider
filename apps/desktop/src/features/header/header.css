@@ -18,3 +18,5 @@
 .os-header-hint { flex-basis:100%; font-size:var(--os-font-small); color:var(--os-text-muted); }
 .os-app-header:has(.os-crawl-header) { min-height:var(--os-space-48); padding-block:var(--os-space-8); }
 .os-app-header:has(.os-crawl-header) > .os-app-title { display:none; }
+.os-crawl-header .os-header-settings { padding: 0; flex: none; }
+.os-crawl-header .os-btn svg { flex: none; }

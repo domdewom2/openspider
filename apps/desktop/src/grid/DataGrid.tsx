@@ -225,14 +225,15 @@ export function DataGrid(props: DataGridProps) {
           ctx.fillStyle = badge.background;
           ctx.beginPath(); ctx.roundRect(badgeX, y + (h - 20) / 2, badgeWidth, 20, 8); ctx.fill();
         }
-        if (!header && c.key === "Row") {
+        if (!header && (c.key === "Row" || c.key === "Address")) {
           ctx.strokeStyle = key !== undefined && selection.has(key) ? t.accent : t["border.strong"];
           ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(c.x + 8, y + h / 2 - 6, 12, 12, 4); ctx.stroke();
           if (key !== undefined && selection.has(key)) { ctx.fillStyle = t.accent; ctx.fillRect(c.x + 11, y + h / 2 - 3, 6, 6); }
         }
         ctx.fillStyle = badge?.text ?? value.color; ctx.textAlign = value.align;
-        const x = c.x + (value.align === "right" ? c.width - 8 : value.align === "center" ? c.width / 2 : 8);
-        ctx.fillText(ellipsis(measure, value.text, c.width - (header ? 30 : 16)), x, y + h / 2);
+        const x = c.x + (value.align === "right" ? c.width - 8 : value.align === "center" ? c.width / 2 : c.key === "Address" ? 28 : 8);
+        ctx.fillText(ellipsis(measure, value.text, c.width - (c.key === "Address" ? 52 : header ? 30 : 16)), x, y + h / 2);
+        if (!header && c.key === "Address") { ctx.textAlign = "right"; ctx.fillStyle = t["text.muted"]; ctx.fillText("⋮", c.x + c.width - 8, y + h / 2); }
         if (header) { ctx.textAlign = "right"; ctx.fillText("⋮", c.x + c.width - 8, y + h / 2); }
         ctx.strokeStyle = t.border; ctx.lineWidth = 1; ctx.strokeRect(c.x - 0.5, y - 0.5, c.width, h);
         if (focus.col === c.index && focus.row === (header ? -1 : row)) { ctx.strokeStyle = t.accent; ctx.lineWidth = 2; ctx.strokeRect(c.x + 1, y + 1, c.width - 2, h - 2); }
@@ -336,7 +337,8 @@ export function DataGrid(props: DataGridProps) {
         if (h.row === -1) {
           gesture.current = { col: h.column.index, start: event.clientX, width: h.column.width, resize: h.column.x + h.column.width - h.x < 6, moved: false };
           event.currentTarget.setPointerCapture(event.pointerId);
-        } else void selectRow(h.row, h.column.index, event.shiftKey, event.ctrlKey || event.metaKey).catch(props.onError);
+        } else if (h.column.key === "Address" && h.column.x + h.column.width - h.x < 24) contextMenu(h.column.index, h.row, event.clientX, event.clientY);
+        else void selectRow(h.row, h.column.index, event.shiftKey, event.ctrlKey || event.metaKey).catch(props.onError);
       }}
       onPointerMove={event => {
         const g = gesture.current;

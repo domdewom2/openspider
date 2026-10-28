@@ -36,3 +36,7 @@
 .u10-toolbar .os-field { gap: 0; }
 .u10-toolbar .os-btn { padding-inline: var(--os-space-8); }
 .u10-toolbar .os-search { min-width: 0; }
+.u10-toolbar { flex-wrap: nowrap; height: var(--os-toolbar-height); flex: none; overflow: auto hidden; }
+.u10-toolbar > * { flex: none; }
+.u10-toolbar .u34-chips { flex-wrap: nowrap; }
+.u10-toolbar .u20-search { width: var(--os-size-220); }

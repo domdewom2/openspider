@@ -22,3 +22,7 @@
 .os-status-card-progress .os-progress-track { height:var(--os-space-8); border-radius:var(--os-radius-card); }
 .os-shell > .os-app-status { height:var(--os-statusbar-height); min-height:var(--os-statusbar-height); overflow:auto hidden; white-space:nowrap; }
 .os-crawl-status { flex-wrap:nowrap; padding-block:0; }
+/* The footer scrolls as one strip so its siblings never paint over one another. */
+.os-crawl-status { flex: none; min-width: max-content; }
+.os-status-details { position: fixed; bottom: var(--os-statusbar-height); }
+.os-app-status .os-menu-availability ul { position: fixed; bottom: var(--os-statusbar-height); inset-inline-start: var(--os-space-12); }
