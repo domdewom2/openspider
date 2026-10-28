@@ -27,6 +27,7 @@ pub const ALL_TABLES: &[&str] = &[
     "directives",
     "discovery_edges",
     "ext_keys",
+    "ext_texts",
     "forms",
     "hreflang",
     "http_headers",

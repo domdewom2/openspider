@@ -64,9 +64,12 @@ def main():
                 raise RuntimeError(f'CLI exit {proc.returncode}: {lines[-20:]}')
             progress = []
             diag = {}
+            phases = []
             for line in lines:
                 if line.startswith('OS_SCALE_DIAG '):
                     parts = line.split(); diag[parts[1]] = {k:int(v) for k,v in (p.split('=',1) for p in parts[2:])}
+                    if 'duration_ms' in diag[parts[1]]:
+                        phases.append({'phase': parts[1], **diag[parts[1]]})
                 elif line.startswith('{'):
                     try: p=json.loads(line)
                     except ValueError: continue
@@ -91,7 +94,7 @@ def main():
             for begin in range(0,n,100000):
                 end=min(begin+100000,n); a=at(begin); b=at(end)
                 windows.append({'from':begin,'to':end,'seconds':b-a if a is not None and b is not None else None,'urls_per_s':(end-begin)/(b-a) if a is not None and b is not None and b>a else None})
-            result={'n':n,'commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'uptime':uptime,'cli_elapsed_s_sampled':elapsed,'progress':progress,'windows':windows,'samples':samples,'diag':diag,'storage':storage,'measurement_notes':['Progress elapsed_s is integer seconds; window boundaries are linearly interpolated.','Sampling every 5 s can miss short peaks; process completion time can be overestimated by up to 5 s.','Parse is included in engine analyze_ns; worker sums overlap and are not wall-clock shares.']}
+            result={'n':n,'commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'uptime':uptime,'cli_elapsed_s_sampled':elapsed,'progress':progress,'windows':windows,'samples':samples,'diag':diag,'phases':phases,'storage':storage,'measurement_notes':['Progress elapsed_s is integer seconds; window boundaries are linearly interpolated.','Sampling every 5 s can miss short peaks; process completion time can be overestimated by up to 5 s.','Parse is included in engine analyze_ns; worker sums overlap and are not wall-clock shares.']}
             (dest/f'stage-{n}.json').write_text(json.dumps(result,indent=2,ensure_ascii=False)+'\n')
             top=sorted(storage['objects'],key=lambda o:o['bytes'],reverse=True)[:10]
             md=[f'# Stufe {n}', '',f'- Load: {uptime}',f'- URLs: {final}; Datenbank: {storage["file_bytes"]} Bytes ({storage["file_bytes"]/final:.1f} Bytes/URL)',f'- WAL-Spitze (5-s-Abtastung): {max(s["wal_bytes"] for s in samples)} Bytes; RSS-Spitze: {max(s["rss_bytes"] for s in samples)} Bytes',f'- Freiliste: {storage["freelist_count"]} Seiten', '', '## Durchsatzfenster', '', '| URLs | URLs/s |','|---|---:|']

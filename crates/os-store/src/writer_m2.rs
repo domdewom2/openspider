@@ -160,6 +160,10 @@ fn write_ext(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreE
          ON CONFLICT(url_id, key_id) DO UPDATE SET v_int = excluded.v_int, v_real = excluded.v_real, \
            v_text = excluded.v_text, change_seq = excluded.change_seq",
     )?;
+    let mut text = tx.prepare_cached("INSERT INTO ext_texts(url_id,key_id,value) VALUES (?1,(SELECT id FROM ext_keys WHERE key=?2),?3) ON CONFLICT(url_id,key_id) DO UPDATE SET value=excluded.value")?;
+    let mut clear_text = tx.prepare_cached(
+        "DELETE FROM ext_texts WHERE url_id=?1 AND key_id=(SELECT id FROM ext_keys WHERE key=?2)",
+    )?;
     let mut known: std::collections::HashSet<i64> = std::collections::HashSet::new();
     for e in &batch.ext {
         ExtKey::parse(e.key.as_str())
@@ -179,7 +183,20 @@ fn write_ext(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreE
             ModelValue::Text(t) => (None, None, Some(t.as_str())),
         };
         insert_key.execute([e.key.as_str()])?;
-        upsert.execute(params![id, e.key.as_str(), v_int, v_real, v_text, seq])?;
+        let long_text = v_text.filter(|value| value.len() > 768);
+        upsert.execute(params![
+            id,
+            e.key.as_str(),
+            v_int,
+            v_real,
+            if long_text.is_some() { None } else { v_text },
+            seq
+        ])?;
+        if let Some(value) = long_text {
+            text.execute(params![id, e.key.as_str(), value])?;
+        } else {
+            clear_text.execute(params![id, e.key.as_str()])?;
+        }
     }
     Ok(())
 }

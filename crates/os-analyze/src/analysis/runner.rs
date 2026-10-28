@@ -196,9 +196,25 @@ pub fn run_with(
                         let i = next.fetch_add(1, Ordering::SeqCst);
                         let Some(&step) = runnable.get(i) else { break };
                         let _ = tx.send(Event::Started(step));
+                        let diag_start = std::time::Instant::now();
+                        let wal_path = format!("{}-wal", path.display());
+                        let wal_before = std::fs::metadata(&wal_path).map_or(0, |m| m.len());
                         let outcome = match &conn {
                             Ok(f) => (opts.registry)(step)(f, cfg, cancel),
                             Err(msg) => Err(open_error(msg)),
+                        };
+                        if std::env::var_os("OS_SCALE_DIAG").is_some() {
+                            let wal_after = std::fs::metadata(&wal_path).map_or(0, |m| m.len());
+                            eprintln!("OS_SCALE_DIAG analysis_{step:?} duration_ms={} wal_before={} wal_after={}", diag_start.elapsed().as_millis(), wal_before, wal_after);
+                        }
+                        // Jeder Teilschritt hat seine Statements/Transaktionen freigegeben.
+                        // Große Veröffentlichungen vor dem nächsten Schritt zurückführen.
+                        let outcome = match &conn {
+                            Ok(f) => outcome.and_then(|state| {
+                                checkpoint_phase(f, &format!("analysis_checkpoint_{step:?}"), false)?;
+                                Ok(state)
+                            }),
+                            Err(_) => outcome,
                         };
                         let _ = tx.send(Event::Finished(step, outcome));
                     }
@@ -245,6 +261,8 @@ pub fn run_with(
     let final_state = overall_state(file)?;
     persist::write_run_state(file, final_state, Some(&opts.clock.now()))?;
 
+    checkpoint_phase(file, "analysis_checkpoint_final", true)?;
+
     if let Some(e) = first_error {
         return Err(e);
     }
@@ -252,6 +270,30 @@ pub fn run_with(
         steps: results,
         complete,
     })
+}
+
+// Keine Lesetransaktion über Phasengrenzen: SQLite darf das WAL hier zurücksetzen.
+fn checkpoint_phase(file: &CrawlFile, name: &str, always: bool) -> Result<(), AnalyzeError> {
+    let mut wal = file.path().as_os_str().to_os_string();
+    wal.push("-wal");
+    let before = std::fs::metadata(&wal).map_or(0, |m| m.len());
+    if !always && before < 64 * 1024 * 1024 {
+        return Ok(());
+    }
+    let start = std::time::Instant::now();
+    let busy: i64 = file
+        .conn()
+        .query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| r.get(0))?;
+    if std::env::var_os("OS_SCALE_DIAG").is_some() {
+        let after = std::fs::metadata(&wal).map_or(0, |m| m.len());
+        eprintln!(
+            "OS_SCALE_DIAG {name} duration_ms={} wal_before={} wal_after={} busy={busy}",
+            start.elapsed().as_millis(),
+            before,
+            after
+        );
+    }
+    Ok(())
 }
 
 /// Fehler, wenn ein Arbeiter die Crawl-Datei nicht öffnen konnte.
@@ -309,4 +351,67 @@ fn overall_state(file: &CrawlFile) -> Result<RunState, AnalyzeError> {
     } else {
         RunState::Incomplete
     })
+}
+
+#[cfg(test)]
+mod scale_tests {
+    use super::*;
+    use os_model::time::{IdSource, SeededIds};
+    use os_model::{CrawlMode, Timestamp};
+    use os_store::{CrawlInit, StorageProfile};
+
+    fn publish(
+        file: &CrawlFile,
+        _: &CrawlConfig,
+        _: &CancelToken,
+    ) -> Result<StepState, AnalyzeError> {
+        let tx = file.conn().unchecked_transaction()?;
+        for id in 1..=1000 {
+            tx.execute(
+                "INSERT INTO url_ext(url_id,key,v_text) VALUES(?1,'content.text',?2)",
+                rusqlite::params![id, "x".repeat(1100)],
+            )?;
+        }
+        tx.commit()?;
+        Ok(StepState::Done)
+    }
+
+    // spec: PERF-003
+    #[test]
+    fn analysis_completion_truncates_the_wal_with_worker_connections_closed() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("phases.ospider");
+        let cfg = CrawlConfig::default();
+        let file = CrawlFile::create(
+            &path,
+            &CrawlInit {
+                crawl_id: SeededIds::new(7).new_crawl_id(Timestamp::UNIX_EPOCH),
+                mode: CrawlMode::Spider,
+                start_url: None,
+                list_source: None,
+                project: String::new(),
+                name: String::new(),
+                config: cfg.clone(),
+                created_at: Timestamp::UNIX_EPOCH,
+            },
+            StorageProfile::Balanced,
+        )
+        .unwrap();
+        run_with(
+            &file,
+            &cfg,
+            &CancelToken::new(),
+            &|_, _| {},
+            &RunOptions {
+                only: Some(&[AnalysisStep::LinkScore]),
+                registry: |_| publish,
+                max_parallel: 1,
+                ..RunOptions::default()
+            },
+        )
+        .unwrap();
+        let mut wal = path.as_os_str().to_os_string();
+        wal.push("-wal");
+        assert_eq!(std::fs::metadata(wal).map_or(0, |m| m.len()), 0);
+    }
 }
