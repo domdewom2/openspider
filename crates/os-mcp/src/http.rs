@@ -1,12 +1,13 @@
 //! Streamable HTTP on both loopbacks with mandatory Bearer, Host and Origin checks (AGENT-002).
 use crate::{server::McpServer, McpError};
-use axum::extract::{Request, State};
+use axum::extract::{ConnectInfo, Request, State};
 use axum::http::{HeaderMap, StatusCode, Uri};
 use axum::middleware::{self, Next};
 use axum::response::Response;
 use os_fetch::secrets::SecretStoreMut;
 use rmcp::transport::streamable_http_server::{
-    session::local::LocalSessionManager, StreamableHttpServerConfig, StreamableHttpService,
+    session::{local::LocalSessionManager, SessionId, SessionManager},
+    StreamableHttpServerConfig, StreamableHttpService,
 };
 use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::sync::{Arc, Mutex};
@@ -139,7 +140,128 @@ async fn check(
     next: Next,
 ) -> Result<Response, StatusCode> {
     authorize(request.headers(), &guard)?;
-    Ok(next.run(request).await)
+    let standalone = (request.method() == axum::http::Method::GET)
+        .then(|| single(request.headers(), "mcp-session-id").map(Arc::<str>::from))
+        .flatten();
+    let connection = request
+        .extensions()
+        .get::<ConnectInfo<SessionConnection>>()
+        .cloned();
+    let response = next.run(request).await;
+    if response.status().is_success() {
+        if let (Some(id), Some(ConnectInfo(connection))) = (standalone, connection) {
+            connection.register(id);
+        }
+    }
+    Ok(response)
+}
+
+// HTTP/1 GET/SSE owns a persistent connection. Finite POST responses do not end a session.
+// Track the socket lifetime rather than rmcp's reusable standalone channel, which survives EOF.
+#[derive(Clone)]
+struct SessionConnection {
+    manager: Arc<LocalSessionManager>,
+    state: Arc<Mutex<ConnectionState>>,
+}
+#[derive(Default)]
+struct ConnectionState {
+    disconnected: bool,
+    sessions: Vec<SessionId>,
+}
+impl SessionConnection {
+    fn register(&self, id: SessionId) {
+        let mut state = self.state.lock().unwrap_or_else(|p| p.into_inner());
+        if state.disconnected {
+            self.close(vec![id]);
+        } else if !state.sessions.contains(&id) {
+            state.sessions.push(id);
+        }
+    }
+    fn close(&self, sessions: Vec<SessionId>) {
+        if sessions.is_empty() {
+            return;
+        }
+        let manager = self.manager.clone();
+        tokio::spawn(async move {
+            for id in sessions {
+                if let Err(error) = manager.close_session(&id).await {
+                    tracing::warn!(%error, "MCP disconnected session cleanup failed");
+                }
+            }
+        });
+    }
+    fn disconnect(&self) {
+        let mut state = self.state.lock().unwrap_or_else(|p| p.into_inner());
+        state.disconnected = true;
+        let sessions = std::mem::take(&mut state.sessions);
+        drop(state);
+        self.close(sessions);
+    }
+}
+struct SessionSocket {
+    inner: tokio::net::TcpStream,
+    connection: SessionConnection,
+}
+impl Drop for SessionSocket {
+    fn drop(&mut self) {
+        self.connection.disconnect();
+    }
+}
+impl tokio::io::AsyncRead for SessionSocket {
+    fn poll_read(
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+        buf: &mut tokio::io::ReadBuf<'_>,
+    ) -> std::task::Poll<std::io::Result<()>> {
+        std::pin::Pin::new(&mut self.get_mut().inner).poll_read(cx, buf)
+    }
+}
+impl tokio::io::AsyncWrite for SessionSocket {
+    fn poll_write(
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+        buf: &[u8],
+    ) -> std::task::Poll<std::io::Result<usize>> {
+        std::pin::Pin::new(&mut self.get_mut().inner).poll_write(cx, buf)
+    }
+    fn poll_flush(
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<std::io::Result<()>> {
+        std::pin::Pin::new(&mut self.get_mut().inner).poll_flush(cx)
+    }
+    fn poll_shutdown(
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<std::io::Result<()>> {
+        std::pin::Pin::new(&mut self.get_mut().inner).poll_shutdown(cx)
+    }
+}
+struct SessionListener {
+    inner: TcpListener,
+    manager: Arc<LocalSessionManager>,
+}
+impl axum::serve::Listener for SessionListener {
+    type Io = SessionSocket;
+    type Addr = SocketAddr;
+    async fn accept(&mut self) -> (Self::Io, Self::Addr) {
+        let (inner, addr) = axum::serve::Listener::accept(&mut self.inner).await;
+        let connection = SessionConnection {
+            manager: self.manager.clone(),
+            state: Default::default(),
+        };
+        (SessionSocket { inner, connection }, addr)
+    }
+    fn local_addr(&self) -> std::io::Result<Self::Addr> {
+        self.inner.local_addr()
+    }
+}
+impl axum::extract::connect_info::Connected<axum::serve::IncomingStream<'_, SessionListener>>
+    for SessionConnection
+{
+    fn connect_info(stream: axum::serve::IncomingStream<'_, SessionListener>) -> Self {
+        stream.io().connection.clone()
+    }
 }
 
 /// Running HTTP listeners. Dropping aborts both listeners; use stop for graceful shutdown.
@@ -186,13 +308,20 @@ impl HttpServer {
                 let router = router.clone();
                 let mut rx = rx.clone();
                 let cancellation = cancellation.clone();
+                let listener = SessionListener {
+                    inner: listener,
+                    manager: manager.clone(),
+                };
                 tokio::spawn(async move {
-                    let result = axum::serve(listener, router)
-                        .with_graceful_shutdown(async move {
-                            let _ = rx.changed().await;
-                            cancellation.cancel();
-                        })
-                        .await;
+                    let result = axum::serve(
+                        listener,
+                        router.into_make_service_with_connect_info::<SessionConnection>(),
+                    )
+                    .with_graceful_shutdown(async move {
+                        let _ = rx.changed().await;
+                        cancellation.cancel();
+                    })
+                    .await;
                     if let Err(e) = result {
                         tracing::error!(error=%e,"MCP HTTP listener failed");
                     }
