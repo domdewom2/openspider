@@ -62,19 +62,18 @@ async fn missing_credentials_warn_or_fail_before_crawling_and_are_logged() {
 async fn cli_selection_reaches_the_mock_and_exports_after_apis_finish() {
     use os_integrations::credentials::{Credential, Credentials};
     use os_testsite::mocks::{
-        ga4::{Ga4Mock, MockRow},
+        ga4::{Ga4Mock, MockRow, ReportGate},
         gsc::GscMock,
         MockServer,
     };
     let ga = Ga4Mock::default();
-    let delay = std::time::Duration::from_millis(700);
+    let gate = Arc::new(ReportGate::default());
     ga.configure(|cfg| {
-        cfg.delay = delay;
+        cfg.report_gate = Some(gate.clone());
         cfg.rows = vec![MockRow::sessions("http://integ.test/", 137.0)];
     });
     let gs = GscMock::default();
     gs.set_rows(&[("http://integ.test/", 17.0, 68.0, 0.25, 3.75)]);
-    gs.set_scenario(Some("delay-1s"));
     let mocks = MockServer::start(vec![Arc::new(ga.clone()), Arc::new(gs.clone())])
         .await
         .unwrap();
@@ -143,34 +142,16 @@ async fn cli_selection_reaches_the_mock_and_exports_after_apis_finish() {
     plan.api_secrets = Some(os_integrations::crawl_glue::SecretSnapshot(store));
     let execution = exec::execute(plan, rep.clone(), Signals::manual(CancelToken::new()));
     tokio::pin!(execution);
-    let request_started = tokio::time::timeout(std::time::Duration::from_secs(15), async {
-        loop {
-            if let Some(request) = ga.requests().iter().find(|r| r.path.contains(":runReport")) {
-                break request.at;
-            }
-            tokio::time::sleep(std::time::Duration::from_millis(5)).await;
-        }
-    });
     tokio::select! {
-        outcome = &mut execution => panic!("execution finished before the delayed API response: {outcome:?}"),
-        started = request_started => {
-            let started = started.expect("GA4 request starts");
-            assert!(started.elapsed() < delay, "observe the request during its response delay");
+        outcome = &mut execution => panic!("execution finished before the API response was released: {outcome:?}"),
+        () = gate.wait_for_request() => {
             assert!(rep.exported_files().is_empty());
             assert!(!output.join("analytics_all.csv").exists());
             assert!(!output.join("search_console_all.csv").exists());
         }
     }
+    gate.release();
     let outcome = execution.await;
-    assert!(ga
-        .requests()
-        .iter()
-        .filter(|r| r.path.contains(":runReport"))
-        .all(|r| r.at.elapsed() >= delay));
-    assert!(gs
-        .requests_to("query")
-        .iter()
-        .all(|r| r.at.elapsed() >= std::time::Duration::from_secs(1)));
     assert_eq!(
         outcome.exit,
         os_cli::Exit::Ok,
