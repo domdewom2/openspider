@@ -8,20 +8,26 @@ test.beforeEach(async ({ page }) => {
 // spec: UI-004 [P1]
 test("reorders tabs, persists hidden tabs through restart, and resets", async ({ page }) => {
   await expect(page.getByRole("tab", { name: "Internal", exact: true })).toBeVisible();
-  await page.getByRole("tab", { name: "Images", exact: true }).dragTo(page.getByRole("tab", { name: "Internal", exact: true }));
+  // M2-U34 (K2-77): the pills show one group; reorder within URLs, hide AMP in its own group (Technical).
+  await page.locator('.u34-nav [data-group="technical"] .u34-nav-button').click();
   await page.getByRole("button", { name: "Configure tabs", exact: true }).focus();
   await page.getByRole("button", { name: "Configure tabs", exact: true }).press("Enter");
   await page.getByRole("menuitemcheckbox", { name: "AMP", exact: true }).click();
-  await expect(page.getByRole("menuitemcheckbox", { name: "AMP", exact: true })).toHaveAttribute("aria-checked", "false");
+  // AMP was the group's only tab: the view returns to Internal (URLs), the open menu now lists that group.
+  await expect(page.getByRole("menuitemcheckbox", { name: "AMP", exact: true })).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("tab", { name: "AMP", exact: true })).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("u10.fixture.uiState") ?? "{}").state?.topTabs?.hidden)).toEqual(["AMP"]);
+  await page.getByRole("tab", { name: "External", exact: true }).dragTo(page.getByRole("tab", { name: "Internal", exact: true }));
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("u10.fixture.uiState") ?? "{}").state?.topTabs?.order?.[0])).toBe("External");
   await page.reload();
-  await expect(page.getByRole("tab").first()).toHaveText("Images");
+  await expect(page.getByRole("tab").first()).toHaveText("External");
   await expect(page.getByRole("tab", { name: "AMP", exact: true })).toHaveCount(0);
   await page.getByLabel("Configure tabs", { exact: true }).first().click();
   await page.getByRole("menuitem", { name: "Reset tabs", exact: true }).click();
   await expect(page.getByRole("tab").first()).toHaveText("Internal");
+  // Reset in the URLs group leaves Technical alone; opening the emptied group shows its first tab again.
+  await page.locator('.u34-nav [data-group="technical"] .u34-nav-button').click();
   await expect(page.getByRole("tab", { name: "AMP", exact: true })).toBeVisible();
 });
 

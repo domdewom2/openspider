@@ -59,10 +59,10 @@ test("filters issues and shows the shared export integration placeholder", async
   await page.getByLabel("Issue Priority", { exact: true }).selectOption("medium");
   await page.getByLabel("Search issues", { exact: true }).fill("duplicate");
   await expect(page.getByRole("table").getByRole("row")).toHaveCount(2);
-  await page.getByRole("complementary", { name: "Sidebar" }).getByRole("button", { name: "Export", exact: true }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Export is not available in this build yet." })).toBeVisible();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  expect(bridge.core.calls.some(c => c.cmd.startsWith("export.") && c.cmd !== "export.catalog")).toBe(false);
+  // M2-U34 (UI-060): the panel export opens the shared export dialog instead of the former placeholder; nothing is written yet.
+  await page.getByRole("complementary", { name: "Sidebar" }).getByRole("button", { name: "Export table", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Export options" })).toBeVisible();
+  expect(bridge.core.calls.some(c => c.cmd === "export.issues" || c.cmd === "export.sidebar")).toBe(false);
 });
 
 // spec: UI-080, UI-082 [M2], ONPAGE-140 [M2]

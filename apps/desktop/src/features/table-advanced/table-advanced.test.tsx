@@ -315,19 +315,20 @@ describe("tab bar", () => {
   // spec: UI-112
   // spec: UI-004 [P1]
   it("opens the context menu on a top tab, closes all but Internal, and shows a closed tab again from the dropdown", async () => {
+    // K2-77: the pills show the tabs of the active group (URLs: Internal, External); close/configure work within the group.
     render(<TopTabs />);
-    const images = await screen.findByRole("tab", { name: "Images" });
-    fireEvent.contextMenu(images);
+    const external = await screen.findByRole("tab", { name: "External" });
+    fireEvent.contextMenu(external);
     fireEvent.click(await screen.findByRole("menuitem", { name: "Close all tabs" }));
     await waitFor(() => expect(screen.getAllByRole("tab").map(x => x.textContent)).toEqual(["Internal"]));
-    expect(useTabs.getState().hidden).toEqual(["External", "Images", "AMP", "Page Titles"]);
+    expect(useTabs.getState().hidden).toEqual(["External"]);
     fireEvent.keyDown(screen.getByRole("tab", { name: "Internal" }), { key: "F10", shiftKey: true });
     expect(await screen.findByRole("menuitem", { name: "Close tab" })).toHaveAttribute("aria-disabled", "true");
     fireEvent.keyDown(document.activeElement!, { key: "Escape" });
     fireEvent.click(screen.getByRole("button", { name: "Configure tabs" }));
-    fireEvent.click(await screen.findByRole("menuitemcheckbox", { name: "AMP" }));
-    await waitFor(() => expect(screen.getByRole("tab", { name: "AMP", hidden: true })).toBeInTheDocument());
-    expect(useTabs.getState().hidden).not.toContain("AMP");
+    fireEvent.click(await screen.findByRole("menuitemcheckbox", { name: "External" }));
+    await waitFor(() => expect(screen.getByRole("tab", { name: "External", hidden: true })).toBeInTheDocument());
+    expect(useTabs.getState().hidden).not.toContain("External");
   });
 
   // spec: UI-004 [P1]
@@ -336,13 +337,15 @@ describe("tab bar", () => {
     fireEvent.contextMenu(await screen.findByRole("tab", { name: "External" }));
     fireEvent.click(await screen.findByRole("menuitem", { name: "Configure tabs…" }));
     const dialog = await screen.findByRole("dialog", { name: "Configure tabs" });
+    expect(within(dialog).getAllByRole("checkbox").map(c => c.closest("label")?.textContent)).toEqual(["Internal", "External"]);
     expect(within(dialog).getByRole("checkbox", { name: "Internal" })).toBeDisabled();
-    fireEvent.click(within(dialog).getByRole("checkbox", { name: "AMP" }));
-    fireEvent.click(within(dialog).getByRole("button", { name: "Move Images up" }));
+    fireEvent.click(within(dialog).getByRole("checkbox", { name: "External" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Move External up" }));
     fireEvent.click(within(dialog).getByRole("button", { name: "OK" }));
-    await waitFor(() => expect(screen.getAllByRole("tab").map(x => x.textContent)).toEqual(["Internal", "Images", "External", "Page Titles"]));
+    await waitFor(() => expect(screen.getAllByRole("tab").map(x => x.textContent)).toEqual(["Internal"]));
     await flushUiState();
-    expect((await uistate.load()).state).toMatchObject({ topTabs: { order: ["Internal", "Images", "External", "AMP", "Page Titles"], hidden: ["AMP"] } });
+    // Only the group's slots change; the other groups keep their order.
+    expect((await uistate.load()).state).toMatchObject({ topTabs: { order: ["External", "Internal", "Images", "AMP", "Page Titles"], hidden: ["External"] } });
   });
 });
 

@@ -1,6 +1,7 @@
 .u10-table { display: flex; flex-direction: column; width: 100%; height: 100%; min-width: 0; min-height: 0; }
 .u10-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(--os-border); }
-.u10-toolbar > div:nth-child(2) { margin-left: auto; }
+/* Chips and filter on the left, segment controls, search and actions on the right (K2-77). */
+.u10-toolbar > div:nth-child(3) { margin-left: auto; }
 .u10-toolbar label { display: flex; gap: 6px; align-items: center; }
 .u10-grid-host { flex: 1; min-height: 0; overflow: hidden; }
 .u10-counter { padding: 4px 8px; border-top: 1px solid var(--os-border); font-size: 11px; color: var(--os-text-muted); }
@@ -12,3 +13,20 @@
 .u10-column-actions { display: flex; gap: 6px; }
 
 .u10-toolbar .os-combobox { width: min(340px, 40vw); }
+
+/* K2-77 toolbar: filter chips with counts, list/tree switch, split button „Exportieren ▾“. Colours only from ui/tokens. */
+.u34-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.u34-chip { border-radius: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.u34-chip[aria-pressed="true"] { background: var(--os-bg-selection); border-color: var(--os-accent); font-weight: 600; }
+.u34-segmented { display: inline-flex; }
+.u34-segment { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; }
+.u34-segmented > .u34-segment:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.u34-segmented > .u34-segment:last-child { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left-width: 0; }
+.u34-segment[aria-pressed="true"] { background: var(--os-bg-selection); border-color: var(--os-accent); }
+.u34-split { display: inline-flex; align-items: center; }
+.u34-split > .os-btn:first-child { display: inline-flex; gap: 6px; align-items: center; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.u34-split .os-icon-btn { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left-width: 0; }
+.u34-overview { align-items: center; justify-content: center; }
+.u34-overview-text { max-width: 56ch; color: var(--os-text-muted); text-align: center; padding: 16px; }
+/* K2-77: the filter dropdown sits in the chip row; its label stays the accessible name but is not shown. */
+.u10-toolbar .os-combobox > .os-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

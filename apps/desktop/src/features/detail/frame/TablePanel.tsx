@@ -10,6 +10,7 @@ import { SelectionModel } from "../../../state/selection";
 import { useSession } from "../../../state/session";
 import { usePrefs } from "../../../state/prefs";
 import { useLanguageStore, useT } from "../../../i18n";
+import { columnLabel } from "../../../i18n/canon";
 import { FONT_STACKS, resolveTokens, SIZES } from "../../../ui/tokens/tokens";
 import { resolveTheme, systemPrefersDark } from "../../../ui/tokens/theme";
 import { currentPlatform } from "../../../ui/platform";
@@ -102,8 +103,11 @@ export function TablePanel(props: TablePanelProps) {
     const value = source.getCell(source.columns.findIndex(c => c.key === column), row);
     return value === LOADING ? "" : displayValue(value);
   };
+  // A02-04: canonical column keys are shown translated unless the detail tab names them itself.
+  const columnTitle = (key: string) => props.columnTitles?.[key] ?? columnLabel(t, key);
+  const titles = Object.fromEntries(columns.map(c => [c.key, columnTitle(c.key)]));
   const copy = (text: string) => { void navigator.clipboard.writeText(text).catch(actions.reportError); };
-  const entries: MenuEntry[] = target ? columns.map(c => ({ id: `column-${c.key}`, label: `${c.visible ? "✓ " : ""}${c.key}`,
+  const entries: MenuEntry[] = target ? columns.map(c => ({ id: `column-${c.key}`, label: `${c.visible ? "✓ " : ""}${columnTitle(c.key)}`,
     onAction: () => setColumns(columns.map(item => item.key === c.key ? { ...item, visible: !item.visible } : item)),
   })) : [];
   if (target?.row !== undefined) {
@@ -138,7 +142,7 @@ export function TablePanel(props: TablePanelProps) {
   };
   return <>
     <div className="os-detail-table-tools">
-      <details><summary>{t("detail-columns")}</summary>{columns.map(c => <label key={c.key} title={props.columnHints?.[c.key]}><input type="checkbox" checked={c.visible} onChange={event => setColumns(columns.map(item => item.key === c.key ? { ...item, visible: event.target.checked } : item))} />{c.key}</label>)}</details>
+      <details><summary>{t("detail-columns")}</summary>{columns.map(c => <label key={c.key} title={props.columnHints?.[c.key]}><input type="checkbox" checked={c.visible} onChange={event => setColumns(columns.map(item => item.key === c.key ? { ...item, visible: event.target.checked } : item))} />{columnTitle(c.key)}</label>)}</details>
       <Button onPress={() => { void copySelection(source, selection, columns.filter(c => c.visible).map(c => c.key), {
         confirmLarge: rows => new Promise(resolve => { copyPending.current = resolve; setLargeCopy({ rows, resolve }); }), offerExport: exporting,
       }).catch(actions.reportError); }}>{t("detail-copy-selection")}</Button>
@@ -162,7 +166,7 @@ export function TablePanel(props: TablePanelProps) {
         onColumnsChange={setColumns} onSortChange={sort => { setColumns(columns.map(c => ({ ...c, sort: sort.find(s => s.column === c.key)?.dir }))); onSort(sort); }}
         onContextMenu={setTarget} onActivate={id => { void activate(id).catch(actions.reportError); }} onError={setError}
         confirmLargeCopy={rows => new Promise(resolve => { copyPending.current = resolve; setLargeCopy({ rows, resolve }); })} onExportSelection={exporting}
-        columnHints={props.columnHints} columnTitles={props.columnTitles}
+        columnHints={props.columnHints} columnTitles={titles}
         rowHeight={SIZES.rowHeight[appearance.density]} locale={locale} ariaLabel={title}
         theme={{ tokens: resolveTokens(resolveTheme(appearance.theme, systemPrefersDark()), appearance.accent), fontFamily: FONT_STACKS[currentPlatform()].ui, fontSize: SIZES.fontTable[appearance.density], zebra: appearance.zebra }} />
     </div>}

@@ -171,7 +171,20 @@ export const test = base.extend<{ alpha: Alpha }, { site: Site }>({
         await expect.poll(async () => !/^(Showing|Angezeigt): 0 (of|von) /.test(await alpha.counter().catch(() => "Showing: 0 of –")), { timeout: 15_000 }).toBe(true);
       },
       async selectTab(name) {
-        await page.getByRole("tab", { name, exact: true }).click();
+        // M2-U34 (K2-77, K2-72): die Pillen-Leiste zeigt nur die Tabs der aktiven Gruppe; sonst erst die Gruppe wählen.
+        const tab = page.getByRole("tablist", { name: /^(Data tabs|Daten-Tabs)$/ }).getByRole("tab", { name, exact: true });
+        if (!(await tab.count())) {
+          const group = await page.evaluate(async (name) => {
+            const path = "/src/state/tabs.ts";
+            const { groupOf } = await import(/* @vite-ignore */ path);
+            return groupOf(name) as string;
+          }, name);
+          await page.locator(`.u34-nav [data-group="${group}"] .u34-nav-button`).click();
+        }
+        if (!(await tab.count())) {
+          await page.getByRole("button", { name: /^(Configure tabs|Tabs konfigurieren)$/ }).click();
+          await page.getByRole("menuitem", { name, exact: true }).click();
+        } else await tab.click();
       },
       async chooseExportPath(resolve) {
         await page.evaluate(async (base) => {

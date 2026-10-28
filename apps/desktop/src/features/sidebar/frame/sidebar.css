@@ -1,8 +1,7 @@
 .os-sidebar { height: 100%; min-width: 0; overflow: auto; color: var(--os-text); background: var(--os-bg-surface); font-size: var(--os-font-table); }
-.os-sidebar .os-tablist { overflow: auto; flex-wrap: nowrap; scrollbar-width: none; }
-/* A01-17: WebKit's overlay scrollbar of the tab strip covered the outer tabs and took their mouse clicks; the strip scrolls by wheel and keys. */
-.os-sidebar .os-tablist::-webkit-scrollbar { display: none; }
-.os-sidebar .os-tab { white-space: nowrap; }
+/* A02-03: the strip no longer scrolls (A01-17: WebKit's overlay scrollbar covered the outer tabs); tabs that do not fit go to the overflow menu. */
+.os-sidebar-tabs { display: flex; min-width: 0; position: sticky; top: 0; z-index: 1; background: var(--os-bg-surface); border-bottom: 1px solid var(--os-border); }
+.os-sidebar-tabs > .os-tabbar { flex: 1; min-width: 0; }
 .os-sidebar-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 .os-sidebar-table caption { text-align: start; font-weight: 600; padding: 6px; }
 .os-sidebar-table th, .os-sidebar-table td { border-bottom: 1px solid var(--os-border); padding: 4px 6px; text-align: start; vertical-align: top; }

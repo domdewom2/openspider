@@ -7,3 +7,24 @@ u10-tabs-error = Tabs konnten nicht geladen oder gespeichert werden
 u10-tabs-open = Tab anzeigen
 u10-tabs-up = { $tab } nach oben
 u10-tabs-down = { $tab } nach unten
+
+## Gruppierte Navigation, Filter-Chips, Werkzeugleiste (M2-U34, K2-77)
+u34-nav = Bereiche
+u34-nav-overview = Übersicht
+u34-nav-urls = URLs
+u34-nav-content = Inhalte
+u34-nav-technical = Technik
+u34-nav-links = Links
+u34-nav-performance = Performance
+u34-nav-custom = Benutzerdefiniert
+u34-nav-config = Konfiguration
+u34-nav-group-tabs = Tabs von { $group }
+u34-overview-pending = Die Übersicht mit Kennzahlen, Statusverteilung und wichtigsten Befunden folgt. Bis dahin führen die Bereiche oben zu den Tabellen; die Seitenleiste zeigt die Zusammenfassung.
+u34-quick-filters = Schnellfilter
+u34-view-mode = Ansicht
+u34-view-list = Liste
+u34-view-tree = Baum
+u34-view-tree-pending = Baumansicht folgt (UI-017)
+u34-export-more = Weitere Exporte
+u34-export-view = Diese Ansicht exportieren…
+u34-export-multi = Mehrfachexport…

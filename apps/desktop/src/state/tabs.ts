@@ -28,22 +28,74 @@ export function object(value: JsonValue | undefined): Record<string, JsonValue> 
 export function saveTableState(patch: Record<string, JsonValue>): Promise<void> {
   return saveUiState(state => ({ ...state, ...patch }));
 }
+/**
+ * Grouped navigation (UI-004, OS-Festlegung K2-77): the bar above the pill tabs. Default assignment from the spec; tabs of later
+ * milestones get their group there, until then an unknown tab joins „Benutzerdefiniert“ so that it stays reachable.
+ */
+export type TabGroupId = "urls" | "content" | "technical" | "links" | "performance" | "custom";
+export const TAB_GROUPS: readonly { id: TabGroupId; tabs: readonly string[] }[] = [
+  { id: "urls", tabs: ["Internal", "External", "Security", "Response Codes", "URL"] },
+  { id: "content", tabs: ["Page Titles", "Meta Description", "Meta Keywords", "H1", "H2", "Content", "Images", "Structured Data"] },
+  { id: "technical", tabs: ["Canonicals", "Pagination", "Directives", "Hreflang", "JavaScript", "AMP", "Sitemaps", "Mobile", "Accessibility", "Validation"] },
+  { id: "links", tabs: ["Links", "Link Metrics"] },
+  { id: "performance", tabs: ["PageSpeed", "Analytics", "Search Console"] },
+  { id: "custom", tabs: ["Custom Search", "Custom Extraction", "Custom JavaScript"] },
+];
+export function groupOf(tab: string): TabGroupId {
+  return TAB_GROUPS.find(g => g.tabs.includes(tab))?.id ?? "custom";
+}
+/** Tabs of a group in the current order. */
+export function groupTabs(order: readonly string[], group: TabGroupId): string[] {
+  return order.filter(id => groupOf(id) === group);
+}
+/**
+ * The tab that cannot be closed (UI-004/UI-112): Internal, in the URLs group. Other groups may be emptied; their ▾ in the navigation
+ * still lists all their tabs, and opening one shows it again.
+ */
+export function groupMandatory(group: TabGroupId, catalog: readonly TabInfo[]): string | undefined {
+  return group === "urls" && catalog.some(t => t.id === MANDATORY_TAB) ? MANDATORY_TAB : undefined;
+}
+const isMandatory = (id: string, _catalog: readonly TabInfo[]) => id === MANDATORY_TAB;
+const GROUP_IDS = TAB_GROUPS.map(g => g.id) as string[];
+
 interface TabsState {
   catalog: TabInfo[]; order: string[]; hidden: string[]; active: string; queries: Record<string, TabQuery>;
   loaded: boolean; error: unknown; focusId?: number; focusRequest: number;
+  /** „Übersicht“ (dashboard placeholder until U35) or the pill tabs of the active tab's group. */
+  view: "tabs" | "overview";
+  /** Last tab per group, so that a group opens where it was left. */
+  groupActive: Partial<Record<TabGroupId, string>>;
   load(): Promise<void>; select(id: string, filter?: string): void;
+  selectGroup(group: TabGroupId): void; showOverview(): void;
   query(patch: Partial<TabQuery>): void; reorder(ids: string[]): Promise<void>;
-  show(id: string, visible: boolean): Promise<void>; reset(): Promise<void>;
-  /** Bulk hide (UI-112 „Andere/Alle schließen“); the mandatory tab stays visible. */
+  show(id: string, visible: boolean): Promise<void>;
+  /** „Tabs zurücksetzen“ im Menü Ansicht: alle Gruppen. */
+  reset(): Promise<void>;
+  /** „Tabs zurücksetzen“ in Überlauf- und Kontextmenü (UI-004, K2-77): nur Reihenfolge und Sichtbarkeit dieser Gruppe. */
+  resetGroup(group: TabGroupId): Promise<void>;
+  /** Bulk hide (UI-112 „Andere/Alle schließen“); mandatory tabs stay visible. */
   hide(ids: string[]): Promise<void>;
-  /** Apply a complete order and visibility at once („Tabs konfigurieren“). */
-  layout(order: string[], hidden: string[]): Promise<void>;
+  /** Apply a complete order and visibility at once („Tabs konfigurieren“); with `group`, only that group's tabs change. */
+  layout(order: string[], hidden: string[], group?: TabGroupId): Promise<void>;
   focus(id: string, urlId: number): void;
 }
 /** Counts local layout edits (reorder, show, hide, layout, reset): a `load()` that overlaps an edit must not undo it (A01-19). */
 let layoutEdits = 0;
-export const useTabs = create<TabsState>((set, get) => ({
-  catalog: [], order: [], hidden: [], active: "Internal", queries: {}, loaded: false, error: null, focusRequest: 0,
+/** The whole `topTabs` section: layout plus navigation state (K2-77: group and tab survive a restart). */
+function persisted(s: Pick<TabsState, "order" | "hidden" | "active" | "view" | "groupActive">): Record<string, JsonValue> {
+  return { topTabs: { order: s.order, hidden: s.hidden, active: s.active, view: s.view, groupActive: s.groupActive as Record<string, string> } };
+}
+export const useTabs = create<TabsState>((set, get) => {
+  const save = () => saveTableState(persisted(get()));
+  /** A hidden active tab falls back to its group's first visible tab, else to Internal. */
+  const fallback = (hidden: readonly string[]) => {
+    const { active, order } = get();
+    if (!hidden.includes(active)) return {};
+    const next = groupTabs(order, groupOf(active)).find(id => !hidden.includes(id)) ?? MANDATORY_TAB;
+    return { active: next, groupActive: { ...get().groupActive, [groupOf(next)]: next } };
+  };
+  return {
+  catalog: [], order: [], hidden: [], active: "Internal", queries: {}, loaded: false, error: null, focusRequest: 0, view: "tabs", groupActive: {},
   async load() {
     try {
       const edits = layoutEdits;
@@ -54,49 +106,90 @@ export const useTabs = create<TabsState>((set, get) => ({
       if (edits !== layoutEdits) { set({ catalog: tabs, order: [...new Set([...get().order, ...defaults])], loaded: true, error: null }); return; }
       const saved = object(object(dto.state).topTabs);
       const order = Array.isArray(saved.order) ? saved.order.filter((v): v is string => typeof v === "string" && defaults.includes(v)) : [];
-      const hidden = Array.isArray(saved.hidden) ? saved.hidden.filter((v): v is string => typeof v === "string" && v !== "Internal" && defaults.includes(v)) : [];
-      set({ catalog: tabs, order: [...new Set([...order, ...defaults])], hidden, loaded: true, error: null });
+      const hidden = Array.isArray(saved.hidden) ? saved.hidden.filter((v): v is string => typeof v === "string" && !isMandatory(v, tabs) && defaults.includes(v)) : [];
+      const groupActive = Object.fromEntries(Object.entries(object(saved.groupActive))
+        .filter(([group, id]) => GROUP_IDS.includes(group) && typeof id === "string" && defaults.includes(id) && !hidden.includes(id))) as Partial<Record<TabGroupId, string>>;
+      const active = typeof saved.active === "string" && defaults.includes(saved.active) && !hidden.includes(saved.active) ? saved.active : get().active;
+      set({ catalog: tabs, order: [...new Set([...order, ...defaults])], hidden, loaded: true, error: null, active, groupActive: { ...groupActive, [groupOf(active)]: active },
+        view: saved.view === "overview" ? "overview" : "tabs" });
     } catch (error) { set({ error }); }
   },
   select(id, filter) {
     if (!get().catalog.some(t => t.id === id)) return;
     const query = get().queries[id] ?? defaultQuery();
-    set({ active: id, queries: { ...get().queries, [id]: { ...query, ...(filter ? { filter } : {}) } } });
+    const changed = get().active !== id || get().view !== "tabs";
+    set({ active: id, view: "tabs", groupActive: { ...get().groupActive, [groupOf(id)]: id }, queries: { ...get().queries, [id]: { ...query, ...(filter ? { filter } : {}) } } });
+    if (changed && get().loaded) void save().catch(() => undefined);
+  },
+  selectGroup(group) {
+    const { order, hidden, groupActive } = get();
+    const visible = groupTabs(order, group).filter(id => !hidden.includes(id));
+    const target = groupActive[group] && visible.includes(groupActive[group]!) ? groupActive[group]! : visible[0];
+    if (target) { get().select(target); return; }
+    // Every tab of the group is closed: opening the group shows its first tab again.
+    const first = groupTabs(order, group)[0];
+    if (first) { void get().show(first, true).catch(() => undefined); get().select(first); }
+  },
+  showOverview() {
+    set({ view: "overview" });
+    if (get().loaded) void save().catch(() => undefined);
   },
   query(patch) { const s = get(); set({ queries: { ...s.queries, [s.active]: { ...(s.queries[s.active] ?? defaultQuery()), ...patch } } }); },
   async reorder(ids) {
     layoutEdits++;
     const order = [...new Set([...ids, ...get().order])].filter(id => get().catalog.some(t => t.id === id));
-    set({ order }); await saveTableState({ topTabs: { order, hidden: get().hidden } });
+    set({ order }); await save();
   },
   async show(id, visible) {
     layoutEdits++;
-    if (id === "Internal" || !get().catalog.some(t => t.id === id)) return;
+    if (isMandatory(id, get().catalog) || !get().catalog.some(t => t.id === id)) return;
     const hidden = visible ? get().hidden.filter(v => v !== id) : [...new Set([...get().hidden, id])];
-    set({ hidden, ...(id === get().active && !visible ? { active: "Internal" } : {}) });
-    await saveTableState({ topTabs: { order: get().order, hidden } });
+    set({ hidden, ...fallback(hidden) });
+    await save();
   },
   async hide(ids) {
     layoutEdits++;
-    const known = ids.filter(id => id !== MANDATORY_TAB && get().catalog.some(t => t.id === id));
+    const known = ids.filter(id => !isMandatory(id, get().catalog) && get().catalog.some(t => t.id === id));
     const hidden = [...new Set([...get().hidden, ...known])];
-    set({ hidden, ...(hidden.includes(get().active) ? { active: MANDATORY_TAB } : {}) });
-    await saveTableState({ topTabs: { order: get().order, hidden } });
+    set({ hidden, ...fallback(hidden) });
+    await save();
   },
-  async layout(ids, hiddenIds) {
+  async layout(ids, hiddenIds, group) {
     layoutEdits++;
-    const order = [...new Set([...ids, ...get().order])].filter(id => get().catalog.some(t => t.id === id));
-    const hidden = [...new Set(hiddenIds)].filter(id => id !== MANDATORY_TAB && order.includes(id));
-    set({ order, hidden, ...(hidden.includes(get().active) ? { active: MANDATORY_TAB } : {}) });
-    await saveTableState({ topTabs: { order, hidden } });
+    const known = (list: readonly string[]) => list.filter(id => get().catalog.some(t => t.id === id));
+    let order: string[]; let hidden: string[];
+    if (group) {
+      // Only the group's slots change: its tabs take the new order in the positions they held, other groups stay put.
+      const queue = known(ids).filter(id => groupOf(id) === group);
+      const rest = groupTabs(get().order, group).filter(id => !queue.includes(id));
+      const mine = [...queue, ...rest];
+      order = get().order.map(id => groupOf(id) === group ? mine.shift()! : id);
+      hidden = [...get().hidden.filter(id => groupOf(id) !== group), ...hiddenIds.filter(id => groupOf(id) === group)];
+    } else {
+      order = [...new Set([...known(ids), ...get().order])].filter(id => get().catalog.some(t => t.id === id));
+      hidden = [...hiddenIds];
+    }
+    hidden = [...new Set(hidden)].filter(id => !isMandatory(id, get().catalog) && order.includes(id));
+    set({ order, hidden, ...fallback(hidden) });
+    await save();
   },
   async reset() {
     layoutEdits++;
     const order = [...get().catalog].sort((a, b) => a.defaultOrder - b.defaultOrder).map(t => t.id);
-    set({ order, hidden: [] }); await saveTableState({ topTabs: { order, hidden: [] } });
+    set({ order, hidden: [], groupActive: { [groupOf(get().active)]: get().active } }); await save();
+  },
+  async resetGroup(group) {
+    layoutEdits++;
+    const defaults = [...get().catalog].sort((a, b) => a.defaultOrder - b.defaultOrder).map(t => t.id).filter(id => groupOf(id) === group);
+    const queue = [...defaults];
+    // The group's tabs return to their default order in the slots the group holds; other groups keep order and visibility.
+    const order = get().order.map(id => groupOf(id) === group ? queue.shift() ?? id : id);
+    const hidden = get().hidden.filter(id => groupOf(id) !== group);
+    set({ order, hidden, ...fallback(hidden) }); await save();
   },
   focus(id, urlId) {
     get().select(id, "All"); get().query({ search: "", rules: null });
     set({ hidden: get().hidden.filter(t => t !== id), focusId: urlId, focusRequest: get().focusRequest + 1 });
   },
-}));
+  };
+});

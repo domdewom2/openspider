@@ -7,3 +7,24 @@ u10-tabs-error = Could not load or save tabs
 u10-tabs-open = Show tab
 u10-tabs-up = Move { $tab } up
 u10-tabs-down = Move { $tab } down
+
+## Grouped navigation, filter chips, toolbar (M2-U34, K2-77)
+u34-nav = Areas
+u34-nav-overview = Overview
+u34-nav-urls = URLs
+u34-nav-content = Content
+u34-nav-technical = Technical
+u34-nav-links = Links
+u34-nav-performance = Performance
+u34-nav-custom = Custom
+u34-nav-config = Configuration
+u34-nav-group-tabs = Tabs of { $group }
+u34-overview-pending = The overview with key figures, status distribution and top issues is coming. Until then the areas above lead to the tables; the sidebar shows the summary.
+u34-quick-filters = Quick filters
+u34-view-mode = View
+u34-view-list = List
+u34-view-tree = Tree
+u34-view-tree-pending = Tree view is coming (UI-017)
+u34-export-more = More exports
+u34-export-view = Export this view…
+u34-export-multi = Multi export…
