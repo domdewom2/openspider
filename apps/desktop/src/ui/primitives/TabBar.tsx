@@ -119,15 +119,16 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
       m = { widths: [], available: 0, overflowWidth: 0 };
     } else {
       const trigger = el.querySelector<HTMLElement>(":scope > [data-tabbar-overflow]");
-      const triggerWidth = trigger?.offsetWidth || 32;
+      const triggerWidth = trigger?.getBoundingClientRect().width || 32;
       // An always present trigger takes its room before the tabs are distributed; otherwise it only appears on overflow.
       m = {
         // Margins count as part of a tab (pill tabs are spaced by a margin, not a flex gap that the sum would miss).
         widths: [...el.querySelectorAll<HTMLElement>("[data-tab-measure]")].map((t) => {
           const style = getComputedStyle(t);
-          return t.offsetWidth + (parseFloat(style.marginLeft) || 0) + (parseFloat(style.marginRight) || 0);
+          // Fractional widths, rounded up: rounded `offsetWidth`s could sum to less than the real row (a tab 1 px under the trigger).
+          return Math.ceil(t.getBoundingClientRect().width + (parseFloat(style.marginLeft) || 0) + (parseFloat(style.marginRight) || 0));
         }),
-        available: el.clientWidth - (alwaysMenu ? triggerWidth : 0),
+        available: Math.floor(el.getBoundingClientRect().width - (alwaysMenu ? triggerWidth : 0)),
         overflowWidth: alwaysMenu ? 0 : triggerWidth,
       };
     }

@@ -9,7 +9,6 @@ test.beforeEach(async ({ page }) => {
 test("reorders tabs, persists hidden tabs through restart, and resets", async ({ page }) => {
   await expect(page.getByRole("tab", { name: "Internal", exact: true })).toBeVisible();
   // M2-U34 (K2-77): the pills show one group; reorder within URLs, hide AMP in its own group (Technical).
-  await page.getByRole("tab", { name: "External", exact: true }).dragTo(page.getByRole("tab", { name: "Internal", exact: true }));
   await page.locator('.u34-nav [data-group="technical"] .u34-nav-button').click();
   await page.getByRole("button", { name: "Configure tabs", exact: true }).focus();
   await page.getByRole("button", { name: "Configure tabs", exact: true }).press("Enter");
@@ -19,6 +18,8 @@ test("reorders tabs, persists hidden tabs through restart, and resets", async ({
   await page.keyboard.press("Escape");
   await expect(page.getByRole("tab", { name: "AMP", exact: true })).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("u10.fixture.uiState") ?? "{}").state?.topTabs?.hidden)).toEqual(["AMP"]);
+  await page.getByRole("tab", { name: "External", exact: true }).dragTo(page.getByRole("tab", { name: "Internal", exact: true }));
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("u10.fixture.uiState") ?? "{}").state?.topTabs?.order?.[0])).toBe("External");
   await page.reload();
   await expect(page.getByRole("tab").first()).toHaveText("External");
   await expect(page.getByRole("tab", { name: "AMP", exact: true })).toHaveCount(0);
