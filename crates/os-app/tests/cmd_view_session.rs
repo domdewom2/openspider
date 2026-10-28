@@ -633,8 +633,15 @@ async fn inlink_views_page_a_materialized_id_list() {
         .await,
         1234
     );
-    // Link views stay bound to their data state.
+    // K2-75a / A02-09 (K2-63): unrelated commits no longer invalidate a
+    // detail generation. An explicit view refresh still rejects its old handle.
     fx.write("UPDATE crawl_meta SET value='43' WHERE key='change_seq'");
+    assert_eq!(fx.rows(&h, 0, 1, json!([])).await["version"], h["version"]);
+    fx.call(
+        "view.update",
+        json!({"viewId":h["viewId"],"spec":links(true)}),
+    )
+    .await;
     let e = try_call(&fx, "view.rows", rows_args(&h, &h["version"], 0, 1))
         .await
         .unwrap_err();

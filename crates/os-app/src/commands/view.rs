@@ -618,9 +618,14 @@ async fn page_query(
         .run_snapshot(s.key.clone(), move |file, _| {
             let version = os_store::queries::change_seq(file.conn())?;
             Ok((|| {
-                if expected.is_some_and(|v| v != version) {
+                // Tab projections pin database versions. Detail handles instead identify
+                // a selection/query generation: unrelated crawl writes must not make
+                // their first row request permanently stale. Every page still uses a
+                // single read snapshot; explicit outdated handles are rejected by rows().
+                if matches!(spec, ViewSpec::Tab { .. }) && expected.is_some_and(|v| v != version) {
                     return Err(stale());
                 }
+                let version = expected.unwrap_or(version);
                 if let ViewSpec::Tab {
                     tab,
                     filter,
@@ -932,7 +937,7 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
 }
 async fn link_ids(app: &App, v: &OpenView, links: &LinkView) -> Result<Arc<Vec<i64>>, CmdError> {
     let (selection, page) = link_selection(&v.spec, &v.session.config, 0, 1)?;
-    links.ids(app, v.version, selection, page).await
+    links.ids(app, selection, page).await
 }
 fn insert(app: &App, id: String, view: OpenView) {
     registry(app)
