@@ -11,6 +11,17 @@ import { ComparisonLinks } from "./ComparisonLinks";
 import { ComparisonTable, ComparisonTabs } from "./ComparisonTable";
 import { closeComparison, comparisonRows, navigateComparison, openComparison, selectComparisonUrl, useComparison } from "./model";
 import { comparisonFixture, current, previous, session, snapshot, pagedLinks } from "./fixtures/out-compare/core";
+// Contract harness: preserve the existing population/number assertions independently
+// of canvas geometry. Real DataGrid gestures are covered in comparison-grid.test.tsx.
+vi.mock("../../grid/DataGrid", async importOriginal => {
+  const actual = await importOriginal<typeof import("../../grid/DataGrid")>();
+  return { ...actual, DataGrid: (props: import("../../grid/DataGrid").DataGridProps) =>
+    <table aria-label={props.ariaLabel}><thead><tr>{props.columns.filter(c=>c.visible).map(c=><th key={c.key} aria-sort={c.sort === "asc" ? "ascending" : c.sort === "desc" ? "descending" : undefined}>
+      <button type="button" onClick={()=>props.onSortChange([{column:c.key,dir:c.sort === "asc" ? "desc" : "asc"}])}>{c.key}</button>
+    </th>)}</tr></thead><tbody>{Array.from({length:props.source.total},(_,row)=><tr key={row}>{props.columns.filter(c=>c.visible).map((c,index)=><td key={c.key}>{index===0 ?
+      <button type="button" onClick={()=>{const key=props.source.rowKey(row);if(key!==undefined)props.onSelectionChange(props.selection.select(key));}}>{String(props.source.getCell(props.source.columns.findIndex(m=>m.key===c.key),row) ?? "")}</button> :
+      String(props.source.getCell(props.source.columns.findIndex(m=>m.key===c.key),row) ?? "")}</td>)}</tr>)}</tbody></table> };
+});
 let fixture:ReturnType<typeof comparisonFixture>;
 const calls=(cmd:string)=>fixture.core.calls.filter(c=>c.cmd===cmd);
 beforeEach(async()=>{

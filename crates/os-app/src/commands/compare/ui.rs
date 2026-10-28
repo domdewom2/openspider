@@ -97,11 +97,23 @@ pub(crate) async fn rows(app: &App, ctx: CallCtx, raw: Json) -> Result<Json, Cmd
                 _ => return Err(CmdError::invalid_input("err-compare-input","source")) };
             let change = ChangeFilter::parse(q.change.as_deref().unwrap_or("All")).ok_or_else(|| CmdError::invalid_input("err-compare-input","change"))?;
             let all = links.view(source,upper,change);
-            let total = all.len();
-            let values: Vec<_> = all.into_iter().skip(args.offset as usize).take(args.limit as usize).map(|r| r.export_values()).collect();
             let columns: Vec<_> = os_analyze::compare::links::LINK_COLUMNS.iter().chain(os_analyze::compare::links::CHANGE_COLUMNS.iter()).copied().collect();
+            // Keys identify the original row, independently of filtering, sorting and paging.
+            let mut rows: Vec<_> = all.into_iter().map(|row| {
+                let key = links.current.iter().position(|r| std::ptr::eq(r, row)).map(|i| i as i64 + 1)
+                    .or_else(|| links.previous.iter().position(|r| std::ptr::eq(r, row)).map(|i| -(i as i64) - 1)).expect("link belongs to comparison");
+                (key, row.export_values())
+            }).collect();
+            if let Some(sort) = &q.sort {
+                let index = columns.iter().position(|column| *column == sort.column).ok_or_else(|| CmdError::invalid_input("err-compare-input", "sort"))?;
+                sort_link_rows(&mut rows, index, sort.dir);
+            }
+            let total = rows.len();
+            let page: Vec<_> = rows.into_iter().skip(args.offset as usize).take(args.limit as usize).collect();
+            let row_keys: Vec<_> = page.iter().map(|(key, _)| *key).collect();
+            let values: Vec<_> = page.into_iter().map(|(_, values)| values).collect();
             return Ok(json!({"viewId":args.view_id,"version":args.version,"offset":args.offset,"columns":columns,"cells":values,
-                "rowKeys":[],"total":total,"side":q.side,"filtersEnabled":links.filters_enabled()}));
+                "rowKeys":row_keys,"total":total,"side":q.side,"filtersEnabled":links.filters_enabled()}));
         }
         let class = q.class.as_deref().map(|s| CompareClass::parse(s).ok_or_else(|| CmdError::invalid_input("err-compare-input","class"))).transpose()?;
         let selected_side = class.map_or(upper, |cl| if cl == CompareClass::Removed { Side::Current } else { cl.side() });
@@ -120,6 +132,7 @@ pub(crate) async fn rows(app: &App, ctx: CallCtx, raw: Json) -> Result<Json, Cmd
         let mut query = ViewQuery::new(&q.tab,&q.filter);
         query.columns = if args.columns.is_empty() { ColumnSelection::Default } else { ColumnSelection::Named(args.columns) };
         query.start = PageStart::Offset(args.offset); query.limit = args.limit;
+        if let Some(sort) = &q.sort { query.sort = super::super::view::sorts(std::slice::from_ref(sort)); }
         if !q.search.is_empty() { query.search = Some(views::SearchSpec::Simple(q.search)); }
         let keys: Vec<_> = ids.iter().map(|id| UrlId(i64::from(id))).collect();
         let p = views::query_url_ids_in(&registry,&s.file,&s.config,&query,&keys,true).map_err(super::super::catalog::view_error)?;
@@ -144,4 +157,35 @@ pub(crate) async fn rows(app: &App, ctx: CallCtx, raw: Json) -> Result<Json, Cmd
         Ok(json!({"viewId":args.view_id,"version":args.version,"offset":args.offset,"columns":columns,"cells":cells,
             "rowKeys":p.row_keys.iter().map(|id|id.0).collect::<Vec<_>>(),"partnerKeys":p.row_keys.iter().map(|id|c.partner(selected_side,id.0)).collect::<Vec<_>>(),"total":p.total,"side":selected_side.as_str(),"filtersEnabled":true}))
     }).await
+}
+
+fn sort_link_rows(rows: &mut [(i64, Vec<Value>)], index: usize, dir: SortDir) {
+    rows.sort_by(|a, b| {
+        let cmp = match (&a.1[index], &b.1[index]) {
+            (Value::Null, Value::Null) => std::cmp::Ordering::Equal,
+            (Value::Null, _) => std::cmp::Ordering::Less,
+            (_, Value::Null) => std::cmp::Ordering::Greater,
+            (Value::Int(x), Value::Int(y)) => x.cmp(y),
+            (Value::Float(x), Value::Float(y)) => x.total_cmp(y),
+            (Value::Bool(x), Value::Bool(y)) => x.cmp(y),
+            (Value::Text(x), Value::Text(y)) => x.cmp(y),
+            (x, y) => format!("{x:?}").cmp(&format!("{y:?}")),
+        };
+        (if dir == SortDir::Desc { cmp.reverse() } else { cmp }).then_with(|| a.0.cmp(&b.0))
+    });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    // spec: TECH-301
+    #[test]
+    fn link_sort_precedes_paging_and_preserves_keys() {
+        let mut rows: Vec<_> = (0..205).map(|i| (i + 1, vec![Value::Int(204 - i)])).collect();
+        sort_link_rows(&mut rows, 0, SortDir::Asc);
+        assert_eq!(rows[99], (106, vec![Value::Int(99)]));
+        assert_eq!(rows[100], (105, vec![Value::Int(100)]));
+        sort_link_rows(&mut rows, 0, SortDir::Desc);
+        assert_eq!(rows[105], (106, vec![Value::Int(99)]));
+    }
 }
