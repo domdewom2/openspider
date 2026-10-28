@@ -443,7 +443,10 @@ impl App {
 
     /// Abonniert die Ereignisse eines Fensters (ein Kanal je Fenster; ein früheres Abonnement wird ersetzt).
     pub fn subscribe(&self, window: WindowId, sink: Arc<dyn EventSink>) -> SubscriptionId {
-        self.0.windows.subscribe(window, sink)
+        let id = self.0.windows.subscribe(window.clone(), sink);
+        // Subscription is the first opportunity to deliver queued startup notices and ticks.
+        self.flush_tick_to(vec![window]);
+        id
     }
 
     /// Beendet ein Abonnement.
@@ -580,6 +583,10 @@ impl App {
         let due = policy
             .map(|p| p.due_windows(self))
             .unwrap_or_else(|| self.subscribed_windows());
+        self.flush_tick_to(due)
+    }
+
+    fn flush_tick_to(&self, due: Vec<WindowId>) -> usize {
         if due.is_empty() {
             return 0;
         }
@@ -790,5 +797,62 @@ impl WeakApp {
 impl App {
     pub fn downgrade(&self) -> WeakApp {
         WeakApp(Arc::downgrade(&self.0))
+    }
+}
+
+#[cfg(test)]
+mod subscription_notice_tests {
+    use super::*;
+    use crate::{dto::NoticeLevel, events::CollectingSink};
+
+    // spec: OUT-285 [P1]
+    #[tokio::test]
+    async fn failed_autostart_notice_is_delivered_once_on_late_subscription() {
+        let home = tempfile::tempdir().unwrap();
+        let occupied = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let mut settings = os_mcp::McpSettings::default();
+        settings.http.autostart = true;
+        settings.http.port = Some(occupied.local_addr().unwrap().port());
+        os_mcp::settings::save(&home.path().join("mcp.toml"), &settings).unwrap();
+        let app = App::new(AppConfig::new(home.path())).unwrap();
+        app.set_tick_policy(Arc::new(crate::events::coalescer::Coalescer::default()));
+        tokio::time::timeout(Duration::from_secs(1), async {
+            loop {
+                if app
+                    .0
+                    .notices
+                    .lock()
+                    .unwrap()
+                    .iter()
+                    .any(|n| n.code == "mcp-start-failed")
+                {
+                    break;
+                }
+                tokio::task::yield_now().await;
+            }
+        })
+        .await
+        .unwrap();
+        assert_eq!(app.flush_tick(), 0);
+        let sink = Arc::new(CollectingSink::new());
+        app.subscribe(WindowId("main".into()), sink.clone());
+        let notices: Vec<_> = sink
+            .take()
+            .into_iter()
+            .filter_map(|event| match event {
+                UiEvent::Tick { tick } => Some(tick.notices),
+                _ => None,
+            })
+            .flatten()
+            .filter(|n| n.code == "mcp-start-failed")
+            .collect();
+        assert_eq!(notices.len(), 1);
+        assert_eq!(notices[0].level, NoticeLevel::Error);
+        let second = Arc::new(CollectingSink::new());
+        app.subscribe(WindowId("main".into()), second.clone());
+        assert!(second.take().into_iter().all(|event| match event {
+            UiEvent::Tick { tick } => tick.notices.iter().all(|n| n.code != "mcp-start-failed"),
+            _ => true,
+        }));
     }
 }
