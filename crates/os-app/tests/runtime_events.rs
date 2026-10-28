@@ -247,7 +247,13 @@ async fn notices_wait_for_a_window_instead_of_getting_lost() {
     assert_eq!(app.flush_tick(), 0);
     let sink = Arc::new(CollectingSink::new());
     app.subscribe(win("main"), sink.clone());
-    assert_eq!(app.flush_tick(), 1);
-    let t = tick_of(sink.take().remove(0));
+    // K2-63 / fix-int15: Ausstehende Notices werden schon beim Abonnieren nachgeliefert
+    // (fix-n02, MCP-3); die Meldung darf weiterhin weder verloren gehen noch doppelt erscheinen.
+    let mut events = sink.take();
+    assert_eq!(events.len(), 1);
+    let t = tick_of(events.remove(0));
+    assert_eq!(t.notices.len(), 1);
     assert_eq!(t.notices[0].code, "open-file");
+    assert_eq!(app.flush_tick(), 0);
+    assert!(sink.is_empty());
 }
