@@ -18,7 +18,14 @@ fn git(args: &[&str]) -> Option<String> {
 fn column_labels() {
     use std::{collections::BTreeMap, path::PathBuf};
     let root = PathBuf::from(std::env::var_os("CARGO_MANIFEST_DIR").unwrap())
-        .join("../../apps/desktop/src/i18n/canon/i18n");
+        .join("..")
+        .join("..")
+        .join("apps")
+        .join("desktop")
+        .join("src")
+        .join("i18n")
+        .join("canon")
+        .join("i18n");
     let read = |locale: &str| {
         let path = root.join(format!("{locale}.ftl"));
         println!("cargo:rerun-if-changed={}", path.display());

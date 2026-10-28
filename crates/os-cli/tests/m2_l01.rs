@@ -29,6 +29,30 @@ fn crawl(env: &Env, site: &os_testsite::TestSite, extra: &[&str]) -> Vec<String>
     args
 }
 
+// spec: OUT-198
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn disconnected_google_account_fails_before_crawling() {
+    let server = site("out-basic-site").await;
+    let env = Env::new();
+    let run = env
+        .run_async(crawl(
+            &env,
+            &server,
+            &[
+                "--export-tabs",
+                "Internal:All",
+                "--export-format",
+                "gsheet",
+                "--google-drive-account",
+                "missing@example.test",
+            ],
+        ))
+        .await;
+    assert_eq!(run.code, 2, "{}", run.dump());
+    assert!(run.stderr.contains("missing@example.test") && run.stderr.contains("verbinden"));
+    assert_eq!(server.total_requests(), 0);
+}
+
 // spec: OUT-133
 // spec: OUT-197
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

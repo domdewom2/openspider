@@ -46,8 +46,13 @@ pub struct Env {
 
 impl Env {
     pub fn new() -> Env {
+        let home = tempfile::tempdir().unwrap();
+        // UI-header tests must not inherit the host's preferred language (OUT-196).
+        let mut settings = os_model::settings::AppSettings::default();
+        settings.general.language = os_model::UiLanguage::En;
+        settings.save(home.path()).unwrap();
         Env {
-            home: tempfile::tempdir().unwrap(),
+            home,
             work: tempfile::tempdir().unwrap(),
         }
     }

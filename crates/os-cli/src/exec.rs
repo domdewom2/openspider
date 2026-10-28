@@ -765,16 +765,7 @@ async fn export_phase(
         }
         if plan.compare_with_previous || plan.explicit_previous.is_some() {
             if let Some(result) = os_export::csv::with_header_labels(&plan.header_labels, || {
-                comparison_export(
-                    &file,
-                    &cfg,
-                    item,
-                    out,
-                    plan.format,
-                    plan.segment.as_deref(),
-                    &signals.cancel_token(),
-                    plan.explicit_previous.as_deref(),
-                )
+                comparison_export(&file, &cfg, item, out, plan, &signals.cancel_token())
             }) {
                 match result {
                     Ok(infos) => {
@@ -1167,11 +1158,12 @@ fn comparison_export(
     cfg: &CrawlConfig,
     item: &Resolved,
     out: &Path,
-    format: Format,
-    segment: Option<&str>,
+    plan: &Plan,
     cancel: &os_model::CancelToken,
-    explicit_previous: Option<&Path>,
 ) -> Option<Result<Vec<ExportFileInfo>, String>> {
+    let format = plan.format;
+    let segment = plan.segment.as_deref();
+    let explicit_previous = plan.explicit_previous.as_deref();
     if !matches!(item, Resolved::Tab { .. } | Resolved::Report(_)) {
         return None;
     }
