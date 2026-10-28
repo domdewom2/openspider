@@ -5,3 +5,5 @@
 Die Fixture schreibt 60k URLs insgesamt über den echten Writer, je 30 Links, 24 skalare Fakten und zwei 1100-Byte-Texte. 30 % Wachstumstoleranz lassen Varint-Breiten und weitere B-Tree-Ebenen zu; 15 % ungenutzter Raum erlauben normale Blattfüllung, schließen aber die vorherigen fast leeren Overflow-Seiten aus. Kein VACUUM oder manuelles Verdichten vor der Messung.
 
 `.github/workflows/scale-nightly.yml`: täglich 02:30 UTC und workflow_dispatch, macos-15, Release-Build --locked, ruhige Starts, 100k/250k, JSON/Markdown und Vergleich als Artefakt (14 Tage). Job continue-on-error; keine blockierende Abnahme. YAML lokal geparst; tatsächlicher GitHub-Lauf nicht ausgelöst (kein Push/PR gemäß Auftrag).
+
+Die Messhilfe prüft inzwischen zusätzlich den vollständigen Analysezustand (`completed`, keine `pending`-Schritte). Ein CLI-Erfolgscode allein reicht nicht. RSS-Spitzen werden zusätzlich über den Betriebssystemwert der beendeten Kinder erfasst; das CLI dominiert die kleinen Hilfsprozesse. Die Nacht-Auswertung verwendet den gesamten dbstat-ungenutzten Raum inklusive SQLite-Autoindizes und Freiliste sowie beide WAL-Phasengrenzen.

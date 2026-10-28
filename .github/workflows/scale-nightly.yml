@@ -48,8 +48,8 @@ jobs:
           values = []
           for x in stages:
               s = x['storage']; value = s['file_bytes']/x['n']; values.append(value)
-              unused = sum(o['unused'] for o in s['objects'])/s['file_bytes']*100
-              wal = max([p['wal_bytes'] for p in x['samples']] + [p.get('wal_after',0) for p in x['phases']] + [x['diag']['store']['wal_bytes_max']])
+              unused = (s['unused_bytes'] + s['freelist_count']*s['page_size'])/s['file_bytes']*100
+              wal = max([p['wal_bytes'] for p in x['samples']] + [max(p.get('wal_before',0),p.get('wal_after',0)) for p in x['phases']] + [x['diag']['store']['wal_bytes_max']])
               lines.append(f"| {x['n']} | {value:.1f} | {unused:.2f} | {x['windows'][0]['urls_per_s']:.1f} / {x['windows'][-1]['urls_per_s']:.1f} | {wal} |")
           ratio = values[1]/values[0]
           lines += ['', f'Bytes/URL ratio 250k/100k: {ratio:.4f} (limit 1.3).']
