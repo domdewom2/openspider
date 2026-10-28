@@ -99,3 +99,62 @@ fn optional_boolean_is_case_insensitive_and_does_not_consume_the_next_flag() {
         );
     }
 }
+
+// spec: OUT-152
+// spec: OUT-202
+#[test]
+fn explicit_comparison_uses_invocation_mapping_and_elements() {
+    use os_model::{ChangeElement, MappingRule};
+    let env = Env::new();
+    std::fs::create_dir_all(env.crawls_dir()).unwrap();
+    let mut stored = CrawlConfig::default();
+    stored.compare.change_detection.elements = vec![ChangeElement::PageTitles];
+    let old = fixture::fixture(&env.crawls_dir(), 1, 1, stored.clone());
+    let new = fixture::fixture(&env.crawls_dir(), 2, 2, stored);
+    old.conn().execute_batch("UPDATE urls SET url=replace(url,'site.test','old.test'), address=replace(address,'site.test','old.test')").unwrap();
+    let mut cfg = CrawlConfig::default();
+    cfg.compare.mapping = vec![MappingRule {
+        pattern: r"old\.test".into(),
+        replacement: "site.test".into(),
+    }];
+    cfg.compare.change_detection.elements = vec![ChangeElement::H1];
+    let config = env.home.path().join("compare.osconfig");
+    cfg.save_file(&config).unwrap();
+    let output = env.out();
+    for configured in [false, true] {
+        let mut args = vec![
+            "--crawl-comparison",
+            old.path().to_str().unwrap(),
+            new.path().to_str().unwrap(),
+            "--export-tabs",
+            if configured {
+                "Change Detection:H1"
+            } else {
+                "Change Detection:Page Titles"
+            },
+            "--output-folder",
+            output.to_str().unwrap(),
+            "--overwrite",
+        ];
+        if configured {
+            args.extend(["--config", config.to_str().unwrap()]);
+        }
+        let result = env.run(&args);
+        assert_eq!(result.code, 0, "{}", result.dump());
+        let csv = std::fs::read_to_string(env.out().join(if configured {
+            "change_detection_h1.csv"
+        } else {
+            "change_detection_page_titles.csv"
+        }))
+        .unwrap();
+        let mut reader = csv::Reader::from_reader(csv.as_bytes());
+        let rows = reader.records().collect::<Result<Vec<_>, _>>().unwrap();
+        assert_eq!(rows.len(), usize::from(configured), "{csv}");
+        if configured {
+            assert!(csv.contains("H1-1 (Current)"));
+            assert!(!csv.contains("Title 1 (Current)"));
+            assert!(rows[0].iter().any(|v| v == "https://site.test/c"), "{csv}");
+            assert!(!result.stderr.contains("gespeicherte Konfiguration"));
+        }
+    }
+}

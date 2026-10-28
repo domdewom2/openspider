@@ -1171,7 +1171,12 @@ fn comparison_export(
         return None;
     }
     Some((|| {
-        let (mut c, config) = load_comparison(file, explicit_previous, cancel)?;
+        let (mut c, config) = load_comparison(
+            file,
+            explicit_previous,
+            plan.explicit_compare_config.as_ref(),
+            cancel,
+        )?;
         if let Resolved::Report(name) = item {
             return os_export::compare::save_report(&mut c, name, out, format, cancel)
                 .map(|r| r.files)
@@ -1255,6 +1260,7 @@ fn comparison_export(
 fn load_comparison(
     file: &CrawlFile,
     previous: Option<&Path>,
+    override_config: Option<&os_model::CompareConfig>,
     cancel: &os_model::CancelToken,
 ) -> Result<(os_analyze::compare::Comparison, os_model::CompareConfig), String> {
     if let Some(previous) = previous {
@@ -1262,7 +1268,7 @@ fn load_comparison(
         let work = file.path().parent().ok_or("Crawl directory missing")?;
         let a = CrawlSide::open(file.path(), work).map_err(|e| e.to_string())?;
         let b = CrawlSide::open(previous, work).map_err(|e| e.to_string())?;
-        let config = a.config.compare.clone();
+        let config = override_config.unwrap_or(&a.config.compare).clone();
         let c = Comparison::open(a, b, &config.mapping, cancel).map_err(|e| e.to_string())?;
         change::calculate(&c, &config.change_detection, cancel).map_err(|e| e.to_string())?;
         Ok((c, config))
@@ -1288,8 +1294,12 @@ fn comparison_batch(
     use os_export::types::TableWriter;
     let run = || -> Result<usize, String> {
         let token = signals.cancel_token();
-        let (mut comparison, config) =
-            load_comparison(file, plan.explicit_previous.as_deref(), &token)?;
+        let (mut comparison, config) = load_comparison(
+            file,
+            plan.explicit_previous.as_deref(),
+            plan.explicit_compare_config.as_ref(),
+            &token,
+        )?;
         let name = file.meta().map_err(|e| e.to_string())?.name;
         let destination = out.join(os_export::naming::file_name(
             &format!("{name} export"),

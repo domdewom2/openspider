@@ -65,6 +65,8 @@ pub struct Plan {
     pub compare_with_previous: bool,
     /// Explicit comparison partner, resolved before any execution.
     pub explicit_previous: Option<PathBuf>,
+    /// Invocation-specific mapping and element selection for an explicit comparison.
+    pub explicit_compare_config: Option<os_model::CompareConfig>,
     /// Stapelmodus der Exporte (geplante Aufgaben); `None` = einzeln wie auf der Kommandozeile.
     pub batch: Option<BatchSettings>,
     /// Decrypted credentials, held only for this process.
@@ -438,11 +440,21 @@ fn build_impl(
             ));
         }
         sides.sort_by_key(|(at, id, _)| (*at, id.to_string()));
+        let comparison_config = args
+            .config
+            .as_ref()
+            .map(|path| {
+                let loaded = load_config_file(path)?;
+                build_config(loaded, args, false, rep).map(|cfg| cfg.compare)
+            })
+            .transpose()?;
         let mut effective = args.clone();
+        effective.config = None;
         effective.crawl_comparison = None;
         effective.load_crawl = Some(sides[1].2.to_string_lossy().into_owned());
         let mut plan = build_impl(&effective, paths, rep, batch, secrets, clock)?;
         plan.explicit_previous = Some(sides[0].2.clone());
+        plan.explicit_compare_config = comparison_config;
         return Ok(plan);
     }
     let format = parse_format(args)?;
@@ -724,6 +736,7 @@ fn build_impl(
         google,
         compare_with_previous,
         explicit_previous: None,
+        explicit_compare_config: None,
         batch,
         segment: args.segment.clone(),
         source,
