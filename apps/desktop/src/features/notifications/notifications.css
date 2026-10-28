@@ -1,4 +1,4 @@
-.os-memory-banner { position: fixed; inset-inline: 12px; top: 85px; z-index: 20; }
-.os-dialog form { display: grid; gap: 8px; }
-.os-dialog form label { display: flex; gap: 8px; align-items: center; }
-.os-dialog pre { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; }
+.os-memory-banner { position:fixed; inset-inline:var(--os-size-12); top:var(--os-size-88); z-index:20; }
+.os-dialog form { display:grid; gap:var(--os-size-8); }
+.os-dialog form label { display:flex; gap:var(--os-size-8); align-items:center; }
+.os-dialog pre { max-width:100%; white-space:pre-wrap; overflow-wrap:anywhere; }

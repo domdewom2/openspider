@@ -1,4 +1,4 @@
 /* A02-19 (UI-068): JSON import/export of the segment list across the full page width, label above the field. */
-.os-segments-json, .os-segments-file { width: 100%; }
-.os-segments-json textarea { width: 100%; box-sizing: border-box; min-height: 160px; }
-.os-segments-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.os-segments-json, .os-segments-file { width:100%; }
+.os-segments-json textarea { width:100%; box-sizing:border-box; min-height:var(--os-size-160); }
+.os-segments-actions { display:flex; flex-wrap:wrap; gap:var(--os-size-8); align-items:center; }

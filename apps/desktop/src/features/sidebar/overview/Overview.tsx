@@ -31,7 +31,7 @@ export function Overview({ data, collapsed, toggle, startAnalysis, staleSteps = 
     {data.tabs.map(tab => <section key={tab.tab}>
       <button type="button" className="os-sidebar-group" aria-expanded={!collapsed.includes(tab.tab)} onClick={() => toggle(tab.tab)}>{collapsed.includes(tab.tab) ? "▸" : "▾"} {tabLabel(t, tab.tab)}</button>
       {!collapsed.includes(tab.tab) && <table className="os-sidebar-table" aria-label={tabLabel(t, tab.tab)}><thead><tr><th>{t("sidebar-name")}</th><th>{t("sidebar-urls")}</th><th>{t("sidebar-percent-total")}</th></tr></thead><tbody>{tab.filters.map(filter => <tr key={filter.id} className={(filter.state.kind === "stale" || staleSteps.includes(filter.analysisStep ?? "")) ? "os-sidebar-stale" : undefined}>
-        <th scope="row"><button type="button" onClick={() => navigate(tab.tab, filter.id)}>{filterLabel(t, filter.id)}</button>{filter.issue && <IssueBadge badge={filter.issue} />}<FilterStatus state={filter.state} startAnalysis={startAnalysis} />{filter.state.kind !== "stale" && staleSteps.includes(filter.analysisStep ?? "") && <FilterStatus state={{ kind: "stale" }} />}</th>
+        <th scope="row"><button type="button" onClick={() => navigate(tab.tab, filter.id)}>{filterLabel(t, filter)}</button>{filter.issue && <IssueBadge badge={filter.issue} />}<FilterStatus state={filter.state} startAnalysis={startAnalysis} />{filter.state.kind !== "stale" && staleSteps.includes(filter.analysisStep ?? "") && <FilterStatus state={{ kind: "stale" }} />}</th>
         <td>{hasCount(filter.state) && filter.count != null ? f.integer(filter.count) : "–"}</td><td>{hasCount(filter.state) ? pct(filter.pct) : "–"}</td>
       </tr>)}</tbody></table>}
     </section>)}

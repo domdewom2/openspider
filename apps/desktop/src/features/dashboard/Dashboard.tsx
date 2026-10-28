@@ -40,12 +40,12 @@ export function Dashboard() {
       })}</div>
       <div className="os-dashboard-sections">
         <section className="os-dashboard-card"><h2>{t("u35-distribution")}</h2>
-          {distribution.map(row => <button className="os-dashboard-row" key={row.id} onClick={() => navigate("Response Codes", row.id)}><span>{filterLabel(t, row.id)}</span><strong>{hasCount(row.state) ? f.integer(row.count ?? 0) : "–"}</strong><progress max={100} value={hasCount(row.state) ? row.pct ?? 0 : 0} /></button>)}
+          {distribution.map(row => <button className="os-dashboard-row" key={row.id} onClick={() => navigate("Response Codes", row.id)}><span>{filterLabel(t, row)}</span><strong>{hasCount(row.state) ? f.integer(row.count ?? 0) : "–"}</strong><progress max={100} value={hasCount(row.state) ? row.pct ?? 0 : 0} /></button>)}
           {!distribution.length && <EmptyState state={{ code: "NO_DATA_YET" }} />}
         </section>
         <section className="os-dashboard-card"><h2>{t("u35-top-issues")}</h2>
           <QueryFeedback error={issues.error} loading={issues.isPending} retry={() => void issues.refetch()} />
-          {top.map(row => <button className="os-dashboard-row" key={row.id} onClick={() => navigate(row.tab, row.filter)}><span>{tabLabel(t, row.tab)}: {filterLabel(t, row.filter)}</span><strong>{f.integer(row.count)}</strong><IssueBadge badge={{ issueType: row.type, priority: row.priority }} /></button>)}
+          {top.map(row => <button className="os-dashboard-row" key={row.id} onClick={() => navigate(row.tab, row.filter)}><span>{tabLabel(t, row.tab)}: {filterLabel(t, { id: row.filter })}</span><strong>{f.integer(row.count)}</strong><IssueBadge badge={{ issueType: row.type, priority: row.priority }} /></button>)}
           {issues.data && !top.length && <p>{t("sidebar-no-issues")}</p>}
         </section>
       </div>

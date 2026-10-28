@@ -1,11 +1,11 @@
-.os-data-grid { position: relative; width: 100%; height: 100%; min-width: 0; min-height: 0; overflow: hidden; outline-offset: -2px; }
-.os-grid-scroll { position: absolute; inset: 0; overflow: auto; overscroll-behavior: contain; overflow-anchor: none; }
-.os-grid-canvas { position: absolute; top: 0; left: 0; touch-action: none; }
-.os-grid-a11y { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; pointer-events: none; }
-.os-grid-tooltip { position: fixed; z-index: 100; max-width: min(600px, 80vw); padding: 6px 8px; background: var(--os-bg-overlay, white); color: var(--os-text, black); border: 1px solid var(--os-border, gray); white-space: pre-wrap; overflow-wrap: anywhere; pointer-events: none; }
-.os-grid-measure { position: absolute; visibility: hidden; white-space: pre; width: max-content; contain: layout style paint; pointer-events: none; }
+.os-data-grid { position:relative; width:100%; height:100%; min-width:0; min-height:0; overflow:hidden; outline-offset:calc(var(--os-focus-width) * -1); }
+.os-grid-scroll { position:absolute; inset:0; overflow:auto; overscroll-behavior:contain; overflow-anchor:none; }
+.os-grid-canvas { position:absolute; top:0; left:0; touch-action:none; }
+.os-grid-a11y { position:absolute; width:var(--os-line); height:var(--os-line); overflow:hidden; clip-path:inset(50%); white-space:nowrap; pointer-events:none; }
+.os-grid-tooltip { position:fixed; z-index:100; max-width:min(var(--os-size-600), 80vw); padding:var(--os-size-8) var(--os-size-8); background:var(--os-bg-overlay); color:var(--os-text); border:var(--os-line) solid var(--os-border); white-space:pre-wrap; overflow-wrap:anywhere; pointer-events:none; }
+.os-grid-measure { position:absolute; visibility:hidden; white-space:pre; width:max-content; contain:layout style paint; pointer-events:none; }
 /* Reserve native rails even on macOS with overlay scrollbars: the canvas must
    never intercept dragging the full-range thumb. */
-.os-grid-scroll::-webkit-scrollbar { width: 14px; height: 14px; }
-.os-grid-scroll::-webkit-scrollbar-track { background: var(--os-bg-app, #f3f4f6); }
-.os-grid-scroll::-webkit-scrollbar-thumb { background: var(--os-border, #a0a0a0); border: 3px solid var(--os-bg-app, #f3f4f6); border-radius: 8px; }
+.os-grid-scroll::-webkit-scrollbar { width:var(--os-size-16); height:var(--os-size-16); }
+.os-grid-scroll::-webkit-scrollbar-track { background:var(--os-bg-app); }
+.os-grid-scroll::-webkit-scrollbar-thumb { background:var(--os-border); border:var(--os-size-4) solid var(--os-bg-app); border-radius:var(--os-size-8); }

@@ -9,7 +9,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "node ../../scripts/lint-css.mjs && vitest run",
     "gen:ipc": "node scripts/gen-ipc.mjs",
     "check:static": "node scripts/check-static.mjs",
     "check:licenses": "node scripts/check-licenses.mjs",

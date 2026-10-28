@@ -1,8 +1,8 @@
-.os-sd-node { display: inline-flex; gap: 6px; align-items: center; min-width: 0; }
-.os-sd-name { font-weight: 600; }
-.os-sd-value { color: var(--os-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 28ch; }
-.os-sd-symbol { display: inline-flex; flex: none; }
-.os-sd-error { color: var(--os-issue-type-issue); }
-.os-sd-warning { color: var(--os-issue-type-warning); }
-.os-sd-parse { padding: 4px 8px; border-bottom: 1px solid var(--os-border); }
-.os-sd [data-severity] { cursor: pointer; }
+.os-sd-node { display:inline-flex; gap:var(--os-size-8); align-items:center; min-width:0; }
+.os-sd-name { font-weight:600; }
+.os-sd-value { color:var(--os-text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:28ch; }
+.os-sd-symbol { display:inline-flex; flex:none; }
+.os-sd-error { color:var(--os-issue-type-issue); }
+.os-sd-warning { color:var(--os-issue-type-warning); }
+.os-sd-parse { padding:var(--os-size-4) var(--os-size-8); border-bottom:var(--os-line) solid var(--os-border); }
+.os-sd [data-severity] { cursor:pointer; }
