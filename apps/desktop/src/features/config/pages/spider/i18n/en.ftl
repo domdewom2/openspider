@@ -21,7 +21,7 @@ config-hint-cdns = One entry per line, for example cdn.other.test or other.test/
 config-hint-needs-js = Only works with JavaScript rendering.
 config-hint-cert = Only for test environments with self-signed certificates.
 config-hint-resolve = One entry per line: host=ip or host=ip:port. *.domain is allowed.
-config-hint-chromium-path = Leave empty to use the Chromium that was found or shipped with the app.
+config-hint-chromium-path = Leave empty to use a Chromium found on this computer.
 config-hint-viewport-preset = googlebot_mobile, googlebot_desktop, a device name or custom.
 
 config-unit-kb = KB
@@ -147,6 +147,8 @@ config-f-rendering-viewport-mobile = Mobile device
 config-f-rendering-viewport-touch = Touch input
 
 config-rendering-locked = The rendering mode can only be changed in a new crawl.
+config-rendering-locked-how = To switch, close the open crawl with “Clear” in the header and start a new crawl; the mode then applies from the start.
+config-rendering-chromium-note = JavaScript rendering needs Chromium: OpenSpider uses a Chromium found on this computer or the Chromium path below. This version does not ship its own Chromium yet.
 config-rendering-js-note = JavaScript rendering needs Chromium. If it is missing, the crawl does not start and you are asked for a path.
 config-chromium-problem = Chromium is not available: { $reason }
 config-chromium-set-path = Set path
