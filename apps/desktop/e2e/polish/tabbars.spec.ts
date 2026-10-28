@@ -2,17 +2,19 @@
 // (Befunde A02-01, A02-02, A02-03, A02-06). Fenstergrößen nach UI-001, Sprache de/en, Theme hell/dunkel.
 import type { Page } from "@playwright/test";
 import { expect, test } from "../alpha/fixture";
-import { CONFIGURE, RESET, SIZES, contextMenu, crawledWithSelection, measureBar, overflowMenu, showPanes, type Bar } from "./support";
+import { CONFIGURE, RESET, SIZES, catalogTabs, contextMenu, crawledWithSelection, measureBar, navBar, overflowMenu, showPanes, type Bar } from "./support";
 
 const BARS: Bar[] = ["top", "detail", "sidebar"];
 /** Anzahl der Tabs je Leiste: Katalog (oben, ohne Vergleichsmodus), DETAIL_TABS (unten), Seitenleiste ohne Embeddings (rechts). */
 async function expectedCounts(page: Page): Promise<Record<Bar, number>> {
-  const top = await page.evaluate(async () => {
-    const path = "/src/ipc/catalog.ts";
-    const { catalog } = await import(/* @vite-ignore */ path);
-    return (await catalog.tabs()).length as number;
+  // K2-77: die Pillen-Leiste zeigt die Tabs der aktiven Gruppe (nach dem Crawl: URLs).
+  const tabs = await catalogTabs(page);
+  const active = await page.evaluate(async () => {
+    const path = "/src/state/tabs.ts";
+    const { useTabs, groupOf } = await import(/* @vite-ignore */ path);
+    return groupOf(useTabs.getState().active) as string;
   });
-  return { top, detail: 17, sidebar: 7 };
+  return { top: tabs.filter((t) => t.group === active).length, detail: 17, sidebar: 7 };
 }
 
 async function checkAllBars(page: Page, label: string, counts: Record<Bar, number>): Promise<void> {
@@ -147,5 +149,62 @@ test.describe("ellipsis (A02-03)", () => {
     expect(measured.verticalCut).toBe(false);
     expect(measured.outsideList).toBe(false);
     expect(measured.overlapsTrigger).toBe(false);
+  });
+});
+
+test.describe("grouped navigation (K2-77)", () => {
+  test.use({ locale: "de-DE" });
+  // spec: UI-004
+  test("every top tab is reachable in at most two clicks from any group, at every window size", async ({ alpha }) => {
+    test.setTimeout(180_000);
+    const { page } = alpha;
+    await crawledWithSelection(alpha);
+    const tabs = await catalogTabs(page);
+    const nav = navBar(page);
+    for (const size of SIZES) {
+      await page.setViewportSize(size);
+      await showPanes(page, "default");
+      for (const tab of tabs) {
+        await nav.getByRole("button", { name: "Übersicht", exact: true }).click();
+        const item = nav.locator(`[data-group="${tab.group}"]`);
+        // Klick 1: Gruppe (URLs) bzw. Gruppen-Pfeil; Klick 2: Tab in der Leiste bzw. im Menü
+        if (tab.group === "urls") {
+          await item.getByRole("button").first().click();
+          await page.getByRole("tablist", { name: "Daten-Tabs" }).getByRole("tab", { name: tab.label, exact: true }).click();
+        } else {
+          await item.getByRole("button", { name: /^Tabs von / }).click();
+          await page.getByRole("menuitem", { name: tab.label, exact: true }).click();
+        }
+        await expect(page.getByRole("tablist", { name: "Daten-Tabs" }).getByRole("tab", { name: tab.label, exact: true }), `${size.width}: ${tab.id}`).toHaveAttribute("aria-selected", "true");
+      }
+    }
+  });
+
+  // spec: UI-004 [P1]
+  test("group, tab and the per-group layout survive a restart; „Konfiguration ▾“ opens a configuration page", async ({ alpha }) => {
+    const { page } = alpha;
+    await crawledWithSelection(alpha);
+    const nav = navBar(page);
+    await nav.locator('[data-group="technical"]').getByRole("button", { name: "Tabs von Technik" }).click();
+    await page.getByRole("menuitem", { name: "Hreflang", exact: true }).click();
+    const bar = page.getByRole("tablist", { name: "Daten-Tabs" });
+    await expect(bar.getByRole("tab", { name: "Hreflang" })).toHaveAttribute("aria-selected", "true");
+    await bar.getByRole("tab", { name: "Canonicals" }).click({ button: "right" });
+    await page.getByRole("menuitem", { name: "Tab schließen" }).click();
+    await expect(bar.getByRole("tab", { name: "Canonicals" })).toHaveCount(0);
+    await expect.poll(() => alpha.invoke<{ state: { topTabs?: { active?: string; hidden?: string[] } } }>("uistate.load").then((d) => d.state.topTabs)).toMatchObject({ active: "Hreflang", hidden: ["Canonicals"] });
+    await page.reload();
+    await expect(page.locator("[data-shell-ready]")).toHaveAttribute("data-shell-ready", "true");
+    await expect(nav.locator('[data-group="technical"]')).toHaveClass(/u34-nav-current/);
+    await expect(page.getByRole("tablist", { name: "Daten-Tabs" }).getByRole("tab", { name: "Hreflang" })).toHaveAttribute("aria-selected", "true");
+    await expect(page.getByRole("tablist", { name: "Daten-Tabs" }).getByRole("tab", { name: "Canonicals" })).toHaveCount(0);
+    await nav.getByRole("button", { name: "Übersicht", exact: true }).click();
+    await expect(page.locator("[data-overview-placeholder]")).toBeVisible();
+    await expect.poll(() => alpha.invoke<{ state: { topTabs?: { view?: string } } }>("uistate.load").then((d) => d.state.topTabs?.view)).toBe("overview");
+    await page.reload();
+    await expect(page.locator("[data-overview-placeholder]")).toBeVisible();
+    await nav.getByRole("button", { name: "Konfiguration" }).click();
+    await page.getByRole("menuitem", { name: "Segmente" }).click();
+    await expect(page.getByRole("dialog", { name: "Crawl-Konfiguration" }).getByRole("textbox", { name: "Segmentliste als JSON" })).toBeVisible();
   });
 });

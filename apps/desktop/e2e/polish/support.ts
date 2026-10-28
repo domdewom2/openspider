@@ -143,3 +143,25 @@ export function exceptionTerms(): string[] {
   const section = text.split(/^## /m).find((s) => s.startsWith("Ausnahmen")) ?? "";
   return [...section.matchAll(/^\|\s*`([^`]+)`/gm)].map((m) => m[1]!);
 }
+
+/** Gruppe eines Top-Tabs nach UI-004 (K2-77), aus derselben Zuordnung wie die Oberfläche. */
+export async function groupOfTab(page: Page, tab: string): Promise<string> {
+  return page.evaluate(async (tab) => {
+    const path = "/src/state/tabs.ts";
+    const { groupOf } = await import(/* @vite-ignore */ path);
+    return groupOf(tab) as string;
+  }, tab);
+}
+
+/** Alle Top-Tabs des Katalogs (kanonische Namen) und ihre Anzeige in der Oberflächensprache. */
+export async function catalogTabs(page: Page): Promise<{ id: string; label: string; group: string }[]> {
+  return page.evaluate(async () => {
+    const [{ catalog }, { groupOf }, { getT }, { tabLabel }] = await Promise.all(["/src/ipc/catalog.ts", "/src/state/tabs.ts", "/src/i18n/index.ts", "/src/i18n/canon.ts"].map((p) => import(/* @vite-ignore */ p)));
+    const t = getT();
+    return ((await catalog.tabs()) as { id: string; defaultOrder: number }[]).sort((a, b) => a.defaultOrder - b.defaultOrder)
+      .map((tab) => ({ id: tab.id, label: tabLabel(t, tab.id) as string, group: groupOf(tab.id) as string }));
+  });
+}
+
+/** Navigationsleiste der Gruppen (K2-77). */
+export const navBar = (page: Page) => page.getByRole("group", { name: /^(Bereiche|Areas)$/ });

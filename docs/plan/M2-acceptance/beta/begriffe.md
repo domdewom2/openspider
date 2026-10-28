@@ -659,6 +659,8 @@ URLs – nicht einzeln gelistet). **(d)** Wörter, die im Deutschen gleich laute
 
 | Begriff | Regel | Begründung |
 |---|---|---|
+| `Crawl` | (d) | im Deutschen gleichlautend und gebräuchlich (Seite „Spider: Crawl“ der Konfiguration) |
+| `Profile` | (d) | im Deutschen gleichlautend (Plural von „Profil“, Konfigurationsseite) |
 | `Chrome` | (a) | Eigenname eines Produkts, Dienstes oder Standards |
 | `Lighthouse` | (a) | Eigenname eines Produkts, Dienstes oder Standards |
 | `PageSpeed` | (a) | Eigenname eines Produkts, Dienstes oder Standards |

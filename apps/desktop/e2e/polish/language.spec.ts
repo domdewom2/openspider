@@ -1,11 +1,11 @@
 // Abnahme M2-U34 (5), Befund A02-04: Die deutsche Oberfläche zeigt keine englischen Resttexte. Der Durchlauf besucht alle Top-Tabs
-// (Tab, Filter-Dropdown, Spaltenköpfe), alle Detail- und Seitenleisten-Tabs sowie die Überlauf- und Kontextmenüs der drei Leisten
+// (Navigationsleiste und Gruppen-Menüs, Tab, Filter-Dropdown, Filter-Chips, Spaltenköpfe), alle Detail- und Seitenleisten-Tabs sowie die Überlauf- und Kontextmenüs der drei Leisten
 // und meldet jeden sichtbaren Text, der einem englischen Katalogwert gleicht oder wie ein Schlüssel aussieht – außer der
 // Ausnahmeliste aus docs/plan/M2-acceptance/beta/begriffe.md und Datenwerten (Tabellenzellen, URLs, Zahlen).
 import { writeFileSync } from "node:fs";
 import type { Page } from "@playwright/test";
 import { expect, test } from "../alpha/fixture";
-import { BAR_LISTS, OVERFLOW, crawledWithSelection, exceptionTerms, showPanes, type Bar } from "./support";
+import { BAR_LISTS, OVERFLOW, catalogTabs, crawledWithSelection, exceptionTerms, navBar, showPanes, type Bar } from "./support";
 
 test.use({ locale: "de-DE" });
 
@@ -23,7 +23,7 @@ async function sweep(page: Page, where: string, exceptions: string[]): Promise<H
     const key = /^[a-z][a-z0-9]*(?:-[a-z][a-zA-Z0-9]*|-[0-9]+)+$/;
     const isData = (el: Element) => !!el.closest("[role=gridcell], td, pre, code, input, textarea, .os-mono, [data-value]");
     const zone = (el: Element): string => {
-      if (el.closest("[role=menu], [role=listbox], [role=tablist], .u10-toolbar, .os-grid-a11y [aria-rowindex='1'], .os-detail-table-tools, .os-detail-heading, .os-tabbar")) return "strict";
+      if (el.closest("[role=menu], [role=listbox], [role=tablist], .u34-nav, .u34-overview, .u10-toolbar, .os-grid-a11y [aria-rowindex='1'], .os-detail-table-tools, .os-detail-heading, .os-tabbar")) return "strict";
       if (el.closest("header")) return "header";
       if (el.closest("footer")) return "statusbar";
       if (el.closest("#shell-detail")) return "detail-panel";
@@ -122,8 +122,18 @@ test("the German UI shows no English leftovers in tabs, filters, columns and the
   await loadCatalog(page);
   const hits: Hit[] = [];
   for (const bar of ["top", "detail", "sidebar"] as const) await openMenuAndSweep(page, bar, exceptions, hits);
-  for (const name of await tabNames(page, "top")) {
-    await selectTab(page, "top", name);
+  // K2-77: Navigationsleiste, Gruppen-Menüs und „Konfiguration ▾“; danach jeder Top-Tab über seine Gruppe.
+  hits.push(...await sweep(page, "Navigationsleiste", exceptions));
+  for (const trigger of await navBar(page).getByRole("button", { name: /^Tabs von |^Konfiguration$/ }).all()) {
+    await trigger.click();
+    await expect(page.getByRole("menu").last()).toBeVisible();
+    hits.push(...await sweep(page, `Menü ${await trigger.getAttribute("aria-label") ?? "Konfiguration"}`, exceptions));
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("menu")).toHaveCount(0);
+  }
+  for (const { label: name, group } of await catalogTabs(page)) {
+    if (group !== "urls") { await navBar(page).locator(`[data-group="${group}"]`).getByRole("button", { name: /^Tabs von / }).click(); await page.getByRole("menuitem", { name, exact: true }).click(); }
+    else await selectTab(page, "top", name);
     await expect(page.getByRole("tab", { name, exact: true, selected: true })).toBeVisible();
     await page.waitForTimeout(150);
     hits.push(...await sweep(page, `Top-Tab ${name}`, exceptions));
