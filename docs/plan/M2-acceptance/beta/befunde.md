@@ -38,7 +38,7 @@ unten beschrieben und beim Orchestrator lokal abgelegt.
 | A02-19 | Segmente: JSON-Feld klein und unglücklich neben der Beschriftung | Niedrig | Konfiguration → Segmente | Konfiguration | UI-068 |
 | A02-20 | Leerzustände der Seitenleiste ohne Innenabstand („Crawl öffnen“ klebt am Rand) | Niedrig | Seitenleiste | – | UI-016, UI-060 |
 | A02-21 | JavaScript-Rendering nicht wählbar, ohne Erklärung | Niedrig | Konfiguration → Spider → Rendering | – | UI-016 (keine eigene Spec-ID – Rückfrage an den Planer) |
-| A02-22 | Wunsch: Update-Prüfung beim Start und Update-Download | – (Wunsch) | App | – | OUT-250, OUT-251 (Plan: M3) |
+| A02-22 | Wunsch: Update-Prüfung beim Start und Update-Download | – (Wunsch, bleibt M3) | App | – | OUT-250, OUT-251 (Plan: M3) |
 
 ## Befunde
 
@@ -201,9 +201,8 @@ unten beschrieben und beim Orchestrator lokal abgelegt.
 ### A02-22 Wunsch: Update-Prüfung beim Start (Wunsch)
 - **Ort:** App.
 - **Beobachtung/Wunsch:** Beim Start prüfen, ob eine neuere Version vorliegt, und das Update herunterladen bzw. installieren.
-- **Einordnung:** Spezifiziert als OUT-250 (Update-Prüfung) und OUT-251 (Herunterladen und Installieren), geplant für M3. Ob die Prüfung
-  vorgezogen wird, entscheidet der Nutzer (Rückfrage an den Planer); Voraussetzung ist ein signiertes Update-Manifest auf einem
-  öffentlichen Kanal.
+- **Einordnung:** Spezifiziert als OUT-250 (Update-Prüfung) und OUT-251 (Herunterladen und Installieren), geplant für M3.
+  **Nutzerentscheidung 28.10.2026:** bleibt in M3, kein Vorziehen.
 
 ## Geprüft ohne Befund
 - Export der Ansicht als Excel: Datei vollständig und gut lesbar.
