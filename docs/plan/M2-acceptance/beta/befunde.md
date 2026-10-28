@@ -167,8 +167,11 @@ unten beschrieben und beim Orchestrator lokal abgelegt.
 ### A02-17 Mehrfach-Export erfüllt OUT-075 nicht (Hoch)
 - **Ort:** Menü Bulk-Export → Mehrfach-Export.
 - **Beobachtung:** Der Nutzer weiß nicht, was einzutragen ist („Vorlage?“); nach Speichern entsteht kein Export. Einzelexport (Excel)
-  der Ansicht funktioniert und sieht gut aus. Nachfrage des Nutzers: Wo wählt man aus, was exportiert wird, und wo ist der
-  Looker-Studio-Teil?
+  der Ansicht funktioniert und sieht gut aus. Der Nutzer hat die Auswahl der zu exportierenden Tabellen nicht gefunden („mir fehlt,
+  was ich überhaupt exportieren will“). Code-Stand: `apps/desktop/src/features/export/MultiOptions.tsx` enthält einen Auswahlbaum
+  (aufklappbare Gruppen je Tab, Bulk-Export, Report mit Kontrollkästchen), Suche und Vorlagen – er war für den Nutzer entweder nicht
+  sichtbar (leer geladen, ohne Höhe, unterhalb des sichtbaren Bereichs) oder nicht als Auswahl erkennbar. Ursache im Fixpaket klären
+  (Reproduktion mit geladenem Crawl, während und nach dem Crawl). Looker-Studio-Teil (OUT-210) und lokale Dateien fehlen im Dialog.
 - **Erwartung (nach Spec, nicht nach Vorbild):** Ein Dialog nach OUT-075 mit (1) Ausgabe: Zielordner und/oder Drive-Konto,
   Überschreiben/Zeitstempel-Ordner, Format, Konsolidierung, leere Berichte überspringen, Segment; (2) Auswahl: durchsuchbarer Baum aller
   Tabs/Filter, Bulk-Exporte und Reports mit Kontrollkästchen (oder Liste „verfügbar → ausgewählt“); (3) optional lokale Dateien
