@@ -51,5 +51,7 @@
   --os-font-body: 13px;
   --os-font-title: 17px;
   --os-font-metric: 24px;
+  --os-url-min: 160px;
+  --os-upload-width: 152px;
   color-scheme: light;
 }
