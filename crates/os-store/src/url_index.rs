@@ -20,6 +20,12 @@
 //! des Writers), `urls_change_seq` (Änderungsfeed) und die Indizes über Spalten mit wenigen Werten oder einem NULL-Anteil
 //! (`status_code`, `state`, `content_class`, `crawl_depth`, `indexability`, `redirect_target_id`,
 //! `canonical_target_id`): deren Änderungen liegen nahe beieinander.
+//!
+//! Davon getrennt ist die Gruppe [`DEFERRED_INDEXES`]: Ihre Indizes werden ab derselben Schwelle
+//! während des Schreibens ausgesetzt, aber im Abschlussbatch über [`ensure_deferred`] sortiert
+//! wiederhergestellt. Nach Abbruch oder Absturz baut [`crate::link_index::ensure_if_idle`] sie für
+//! ruhende Dateien wieder auf; laufende Crawls mit Heartbeat bleiben unberührt. Die Gruppe ist derzeit
+//! leer: `sitemap_entries_url` bleibt für Live-Leser und Rescans auch im großen Crawl erhalten.
 
 use rusqlite::Connection;
 
@@ -57,6 +63,22 @@ pub const WRITE_PHASE_DROPPED: &[UrlIndex] = &[
         create_sql: "CREATE INDEX IF NOT EXISTS urls_hash ON urls(hash_md5)",
     },
 ];
+
+/// Nur Indizes ohne Writer-Leser aussetzen. canonicals_target, pagination_target und
+/// hreflang_target bleiben: write_page/stamp_dependants lesen sie bei Statusänderungen.
+/// url_counters_change_seq bleibt für den laufenden Änderungsfeed erhalten.
+/// sitemap_entries_url bleibt für Live-Leser und Rescans erhalten.
+pub const DEFERRED_INDEXES: &[UrlIndex] = &[];
+
+/// Stellt die für Zielabfragen genutzten Indizes sortiert wieder her.
+pub fn ensure_deferred(conn: &Connection) -> Result<(), StoreError> {
+    crate::link_index::with_build_settings(conn, || {
+        for index in DEFERRED_INDEXES {
+            conn.execute_batch(index.create_sql)?;
+        }
+        Ok(())
+    })
+}
 
 /// Leser-Threads des Vorwärmens ([`Prefetch`]).
 const PREFETCH_THREADS: usize = 4;
@@ -112,7 +134,7 @@ pub fn present(conn: &Connection) -> Result<bool, StoreError> {
 
 /// Entfernt die Indizes (`DROP INDEX IF EXISTS`); fehlende bleiben unberührt.
 pub fn drop_indexes(conn: &Connection) -> Result<(), StoreError> {
-    for index in WRITE_PHASE_DROPPED {
+    for index in WRITE_PHASE_DROPPED.iter().chain(DEFERRED_INDEXES) {
         conn.execute_batch(&format!("DROP INDEX IF EXISTS {}", index.name))?;
     }
     Ok(())

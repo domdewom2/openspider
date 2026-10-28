@@ -232,11 +232,12 @@ fn calculate(
         return Ok(StepState::Done);
     }
     let seq = os_store::queries::change_seq(conn)? + 1;
-    tx.execute("UPDATE urls SET change_seq = ?1 WHERE id IN (SELECT url_id FROM url_ext WHERE key IN ('linkscore.raw', 'linkscore.score'))", [seq])?;
+    // Vorhandene/neu veröffentlichte Scores melden sich über url_ext.change_seq.
+    // Nur entfernte Knoten brauchen einen zusätzlichen Stempel auf urls.
+    tx.execute("UPDATE urls SET change_seq = ?1 WHERE id IN (SELECT url_id FROM url_ext WHERE key IN ('linkscore.raw', 'linkscore.score')) AND id NOT IN (SELECT id FROM d08_routes WHERE node IS NOT NULL)", [seq])?;
     tx.execute_batch("DELETE FROM url_ext WHERE key IN ('linkscore.raw', 'linkscore.score')")?;
     {
         let mut insert = tx.prepare("INSERT INTO url_ext (url_id, key, v_int, v_real, change_seq) VALUES (?1, ?2, ?3, ?4, ?5)")?;
-        let mut stamp = tx.prepare("UPDATE urls SET change_seq = ?1 WHERE id = ?2")?;
         for (id, raw) in nodes.iter().zip(rank) {
             if cancel.is_cancelled() {
                 return Ok(StepState::Pending);
@@ -256,7 +257,6 @@ fn calculate(
                 Option::<f64>::None,
                 seq
             ])?;
-            stamp.execute(rusqlite::params![seq, id])?;
         }
     }
     tx.execute(

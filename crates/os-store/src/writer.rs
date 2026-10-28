@@ -451,6 +451,7 @@ impl Drop for SqliteSink {
 }
 
 fn wal_checkpoint(conn: &Connection) -> Result<(), StoreError> {
+    let phase = scale_phase_start(conn);
     let t = std::time::Instant::now();
     // Antwort: (busy, Frames im WAL, davon zurückgeführt)
     let result = conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| {
@@ -458,7 +459,29 @@ fn wal_checkpoint(conn: &Connection) -> Result<(), StoreError> {
     });
     crate::sink::diag::record_checkpoint(t, result.as_ref().map_or(0, |n| (*n).max(0) as u64));
     result?;
+    scale_phase_end(conn, "checkpoint", phase);
     Ok(())
+}
+
+fn scale_phase_start(conn: &Connection) -> Option<(std::time::Instant, u64)> {
+    std::env::var_os("OS_SCALE_DIAG").map(|_| (std::time::Instant::now(), scale_wal_bytes(conn)))
+}
+
+fn scale_wal_bytes(conn: &Connection) -> u64 {
+    conn.path()
+        .and_then(|p| std::fs::metadata(format!("{p}-wal")).ok())
+        .map_or(0, |m| m.len())
+}
+
+fn scale_phase_end(conn: &Connection, name: &str, start: Option<(std::time::Instant, u64)>) {
+    if let Some((start, before)) = start {
+        eprintln!(
+            "OS_SCALE_DIAG {name} duration_ms={} wal_before={} wal_after={}",
+            start.elapsed().as_millis(),
+            before,
+            scale_wal_bytes(conn)
+        );
+    }
 }
 
 impl CrawlSink for SqliteSink {
@@ -485,6 +508,13 @@ impl CrawlSink for SqliteSink {
         let prefetch = (build_url_indexes && !crate::url_index::present(self.file.conn())?)
             .then(|| crate::url_index::Prefetch::start(self.file.path()))
             .flatten();
+        let end_diag = completes_crawl(&batch) && std::env::var_os("OS_SCALE_DIAG").is_some();
+        let diag = end_diag.then(|| {
+            let mut wal_path = self.file.path().as_os_str().to_os_string();
+            wal_path.push("-wal");
+            let before = std::fs::metadata(&wal_path).map_or(0, |m| m.len());
+            (std::time::Instant::now(), wal_path, before)
+        });
         let written = write_batch(
             self.file.conn(),
             &batch,
@@ -493,6 +523,15 @@ impl CrawlSink for SqliteSink {
             build_url_indexes,
         );
         drop(prefetch);
+        if let Some((diag_start, wal_path, wal_before)) = diag {
+            let wal_after = std::fs::metadata(&wal_path).map_or(0, |m| m.len());
+            eprintln!(
+                "OS_SCALE_DIAG end_batch duration_ms={} wal_before={} wal_after={}",
+                diag_start.elapsed().as_millis(),
+                wal_before,
+                wal_after
+            );
+        }
         let written = written?;
         if let Some(written) = written {
             self.after_commit(&written);
@@ -600,10 +639,16 @@ fn write_batch(
     let data = built.elapsed();
     // K-74: Der Index entsteht mit dem regulären Ende, im letzten Batch und derselben Transaktion – ein
     // Fehlschlag lässt den Crawl dann nicht als beendet erscheinen.
+    let index_phase = completes_crawl(batch)
+        .then(|| scale_phase_start(conn))
+        .flatten();
     if build_url_indexes {
         // Sekundärindizes über `urls` (N22): nur eine Datei, die sie behalten hat, prüft sie (K-83: der Writer
         // baut entfernte Indizes nicht mehr auf, `url_index::ensure` bleibt für Leser, die sie brauchen).
         crate::url_index::ensure(&tx)?;
+    }
+    if completes_crawl(batch) {
+        crate::url_index::ensure_deferred(&tx)?;
     }
     if completes_crawl(batch) && link_index::ensure(&tx)? {
         // Das Ereignis (ohne Dauer, deterministisch) macht den Aufbau in der Ereignisliste sichtbar; die Dauer steht in
@@ -617,6 +662,7 @@ fn write_batch(
         ])?;
     }
 
+    scale_phase_end(conn, "indexes", index_phase);
     let committing = std::time::Instant::now();
     tx.commit()?;
     diag::record_commit(committing, bucket);

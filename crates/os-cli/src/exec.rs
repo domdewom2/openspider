@@ -189,7 +189,20 @@ async fn run(plan: &Plan, rep: &Arc<Reporter>, signals: &Signals) -> Result<Outc
     }
     let mut files = 0usize;
     if plan.output.is_some() && !comparison_failed {
-        match export_phase(plan, rep, signals, &crawled).await {
+        let start = std::time::Instant::now();
+        let wal = format!("{}-wal", crawled.path.display());
+        let before = std::fs::metadata(&wal).map_or(0, |m| m.len());
+        let result = export_phase(plan, rep, signals, &crawled).await;
+        if std::env::var_os("OS_SCALE_DIAG").is_some() {
+            let after = std::fs::metadata(&wal).map_or(0, |m| m.len());
+            eprintln!(
+                "OS_SCALE_DIAG export duration_ms={} wal_before={} wal_after={}",
+                start.elapsed().as_millis(),
+                before,
+                after
+            );
+        }
+        match result {
             ExportEnd::Done {
                 failures: f,
                 files: n,
@@ -344,7 +357,20 @@ fn analysis_hook(rep: &Arc<Reporter>, signals: &Signals) -> FinishedHook {
     let cancel = signals.cancel_token();
     Arc::new(move |summary: &CrawlSummary| {
         rep.phase("analysis");
-        match trigger::run_after_crawl(&summary.file, &cancel) {
+        let start = std::time::Instant::now();
+        let wal = format!("{}-wal", summary.file.display());
+        let before = std::fs::metadata(&wal).map_or(0, |m| m.len());
+        let result = trigger::run_after_crawl(&summary.file, &cancel);
+        if std::env::var_os("OS_SCALE_DIAG").is_some() {
+            let after = std::fs::metadata(&wal).map_or(0, |m| m.len());
+            eprintln!(
+                "OS_SCALE_DIAG analysis duration_ms={} wal_before={} wal_after={}",
+                start.elapsed().as_millis(),
+                before,
+                after
+            );
+        }
+        match result {
             Ok(Some(outcome)) if !outcome.complete && !cancel.is_cancelled() => {
                 rep.warn("Crawl-Analyse unvollständig – analyseabhängige Filter können leer sein");
             }
