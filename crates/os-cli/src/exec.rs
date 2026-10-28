@@ -328,6 +328,7 @@ fn preflight_apis(plan: &Plan, rep: &Reporter) -> Result<(), CliError> {
         secrets: os_integrations::crawl_glue::environment_view_for(api_secrets(plan), &plan.config),
         network: Default::default(),
         allow_api_override: false,
+        quota_ledger: None,
     };
     for warning in os_integrations::crawl_glue::preflight(&ctx, plan.require_apis)
         .map_err(|e| CliError::usage(e.to_string()))?

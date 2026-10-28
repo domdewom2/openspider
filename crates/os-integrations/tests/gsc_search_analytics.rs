@@ -145,6 +145,7 @@ async fn connecting_sends_exactly_one_site_list_request() {
         secrets: Arc::new(MemorySecretStore::new()),
         network: Default::default(),
         allow_api_override: true,
+        quota_ledger: None,
     };
     let dir = tempfile::tempdir().unwrap();
     let source = GscSource::new(
@@ -719,6 +720,7 @@ async fn source_fetch_loads_the_report_once_and_assigns_values_per_url() {
         secrets: store,
         network: Default::default(),
         allow_api_override: true,
+        quota_ledger: None,
     };
     let dir = tempfile::tempdir().unwrap();
     let source = GscSource::new(

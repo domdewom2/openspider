@@ -480,7 +480,8 @@ async fn start_apis(
     id: os_model::CrawlId,
     items: Vec<String>,
 ) -> Result<CrawlRef, CmdError> {
-    let api_ctx = crate::commands::api::crawl_context(app, cfg.clone());
+    let mut api_ctx = crate::commands::api::crawl_context(app, cfg.clone());
+    api_ctx.quota_ledger = Some(app.config().paths.settings.join("api-quotas.json"));
     os_integrations::crawl_glue::validate_apis(&api_ctx).map_err(|e| {
         CmdError::invalid_input("err-api-disconnected", "source").with_detail(e.to_string())
     })?;

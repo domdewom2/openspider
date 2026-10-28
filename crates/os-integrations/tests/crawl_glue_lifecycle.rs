@@ -89,6 +89,7 @@ fn context(cfg: CrawlConfig) -> ApiCtx {
         secrets,
         network: Default::default(),
         allow_api_override: true,
+        quota_ledger: None,
     }
 }
 
@@ -203,6 +204,72 @@ async fn apis_mode_assigns_bulk_and_per_url_results_without_crawling() {
         0,
         "APIs mode never requests target pages or robots.txt"
     );
+    server.stop().await;
+}
+
+// spec: INTEG-006
+#[tokio::test]
+async fn configured_ledger_overrides_home_and_crawl_sidecars() {
+    if isolated_quota_home("configured_ledger_overrides_home_and_crawl_sidecars") {
+        return;
+    }
+    let home = std::path::PathBuf::from(std::env::var_os("OPENSPIDER_HOME").unwrap());
+    let dir = tempfile::tempdir().unwrap();
+    // Use the legacy sidecar suffix deliberately: an explicit context path must win
+    // even when its filename resembles a crawl sidecar.
+    let ledger = dir.path().join("settings").join("custom.api-quotas.json");
+    let gsc = GscMock::new();
+    let server = MockServer::start(vec![Arc::new(gsc.clone())])
+        .await
+        .unwrap();
+    let mut cfg = CrawlConfig::default();
+    cfg.api.gsc.enabled = true;
+    cfg.api.gsc.site = Some("sc-domain:integ.test".into());
+    cfg.api.gsc.base_url = Some(server.base_url("gsc"));
+    cfg.api.gsc.url_inspection = true;
+    let before_midnight = Timestamp::from_db("2026-03-09T06:59:59Z").unwrap();
+    let manual = Arc::new(ManualClock::new(before_midnight));
+    let mut ctx = context(cfg.clone());
+    ctx.quota_ledger = Some(ledger.clone());
+    let crawl = file(&dir, &cfg);
+    crawl_glue::start_apis_mode_with(&crawl, ctx.clone(), manual.clone())
+        .await
+        .unwrap();
+    assert_eq!(gsc.requests_to("inspect").len(), 4);
+    let quota = os_integrations::quota::QuotaLedger::new(&ledger);
+    // This is the same ledger as used by the settings/API tab: exhaust today's
+    // property quota, then start a fresh crawl runtime against the same path.
+    quota
+        .exhaust(
+            "gsc.inspection",
+            "sc-domain:integ.test",
+            before_midnight,
+            2000,
+        )
+        .unwrap();
+    let sidecar = dir.path().join("crawl.api-quotas.json");
+    ApiRun::new(ctx.clone(), manual.clone(), sidecar.clone())
+        .collect(&crawl)
+        .await
+        .unwrap();
+    assert_eq!(
+        gsc.requests_to("inspect").len(),
+        4,
+        "quota survives runtime restart"
+    );
+    manual.advance(std::time::Duration::from_secs(1));
+    ApiRun::new(ctx, manual, sidecar.clone())
+        .collect(&crawl)
+        .await
+        .unwrap();
+    assert_eq!(
+        gsc.requests_to("inspect").len(),
+        8,
+        "Pacific midnight resets quota"
+    );
+    assert!(ledger.is_file());
+    assert!(!home.join("api-quotas.json").exists());
+    assert!(!sidecar.exists());
     server.stop().await;
 }
 

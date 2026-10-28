@@ -8,6 +8,7 @@
 //! M2-I01 (`queue`), die Quellen die Pakete I02 – I05.
 
 use std::future::Future;
+use std::path::PathBuf;
 use std::pin::Pin;
 use std::sync::Arc;
 
@@ -128,6 +129,8 @@ pub struct ApiCtx {
     pub network: os_model::settings::NetworkSettings,
     /// Explizite Laufzeitfreigabe für Basis-URLs im Release.
     pub allow_api_override: bool,
+    /// App-wide quota ledger; None uses the default application settings location.
+    pub quota_ledger: Option<PathBuf>,
 }
 
 /// Vom Anbieter gemeldete Kontingentdimension, etwa GA4 tokensPerDay/tokensPerHour.

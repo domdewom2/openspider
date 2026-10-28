@@ -67,6 +67,7 @@ impl Harness {
             secrets: self.store.clone(),
             network: Default::default(),
             allow_api_override: false,
+            quota_ledger: None,
         }
     }
 

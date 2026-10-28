@@ -774,6 +774,7 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         secrets: os_integrations::crawl_glue::environment_view_for(deps.secrets.clone(), &cfg),
         network: fetcher.network_settings().unwrap_or_default(),
         allow_api_override: false,
+        quota_ledger: None,
     };
     let (sh, control) = make_shared(SharedInit {
         fetcher,

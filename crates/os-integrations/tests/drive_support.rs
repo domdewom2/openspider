@@ -38,6 +38,7 @@ pub async fn fixture() -> (MockServer, DriveMock, DriveClient, ApiCtx, Arc<Crede
         secrets: credentials.clone(),
         network,
         allow_api_override: true,
+        quota_ledger: None,
     };
     let client = DriveClient::new(&ctx, "fixture", Timestamp::UNIX_EPOCH).unwrap();
     (server, mock, client, ctx, credentials)

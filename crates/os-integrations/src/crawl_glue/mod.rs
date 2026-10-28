@@ -15,6 +15,7 @@ pub async fn start_apis_mode(file: &CrawlFile, cfg: &CrawlConfig) -> Result<(), 
         secrets: environment_view_for(os_fetch::secret_store_from_env(), cfg),
         network: Default::default(),
         allow_api_override: false,
+        quota_ledger: None,
     };
     start_apis_mode_with(file, ctx, Arc::new(SystemClock)).await
 }
@@ -26,7 +27,8 @@ pub async fn start_apis_mode_with(
     clock: Arc<dyn os_model::Clock>,
 ) -> Result<(), ApiError> {
     validate_apis(&ctx)?;
-    let mut run = ApiRun::new(ctx, clock, quota_ledger_path());
+    let ledger = ctx.quota_ledger.clone().unwrap_or_else(quota_ledger_path);
+    let mut run = ApiRun::new(ctx, clock, ledger);
     run.validate(false)?;
     file.set_meta("source_mode", "apis").map_err(db)?;
     run.collect(file).await

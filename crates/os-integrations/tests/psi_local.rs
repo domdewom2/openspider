@@ -118,6 +118,7 @@ fn local_ctx() -> ApiCtx {
         secrets: Arc::new(MemorySecretStore::new()),
         network: Default::default(),
         allow_api_override: false,
+        quota_ledger: None,
     }
 }
 
