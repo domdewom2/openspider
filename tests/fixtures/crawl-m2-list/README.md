@@ -9,8 +9,8 @@ Der Pflichtbericht mit Entscheidungen, Besitznachweisen und Prüfstatus steht in
 - `dupes.txt`: zehn Uploadzeilen mit Duplikaten und ausgeschlossener Eingabe.
 - `serp.csv`, `serp.xls`, `serp.xlsx`: fünf identische SERP-Entwürfe.
 - `serp-de.txt`: deutsche Kopfzeilen; `serp-missing-header.csv`: Fehlerfall.
-- `export_tests.rs`: produktive CSV-/XLSX-Exporte und zweifache SERP-Rundreise,
-  eingebunden durch `crates/os-export/tests/list_m2_e06.rs`.
+- `crates/os-export/tests/list_m2_e06.rs`: produktive CSV-/XLSX-Exporte und
+  zweifache SERP-Rundreise mit diesen Fixtures.
 
 Reproduzieren:
 

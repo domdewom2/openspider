@@ -457,6 +457,7 @@ async fn connected_sheets_streams_to_the_offline_mock_with_a_shared_workbook() {
         secrets,
         network: Default::default(),
         allow_api_override: true,
+        quota_ledger: None,
     };
     let client = DriveClient::new(&ctx, "fixture", os_model::Timestamp::UNIX_EPOCH).unwrap();
     let rep = os_cli::reporter::Reporter::new(false);

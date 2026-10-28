@@ -267,6 +267,7 @@ mod tests {
             secrets,
             network: Default::default(),
             allow_api_override: false,
+            quota_ledger: None,
         };
         let source = PsiSource::new();
         let out = source
@@ -351,6 +352,7 @@ mod tests {
             secrets: Arc::new(os_fetch::MemorySecretStore::new()),
             network: Default::default(),
             allow_api_override: false,
+            quota_ledger: None,
         };
         let source = PsiSource::new().with_local(runner);
         let out = source

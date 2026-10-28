@@ -98,6 +98,7 @@ impl Tool for FetchLinkMetrics {
             secrets: environment.secrets,
             network: environment.network,
             allow_api_override: environment.allow_api_override,
+            quota_ledger: None,
         };
         let values = tokio::runtime::Handle::current()
             .block_on(LinkMetrics::new(kind).fetch(&urls, &api))

@@ -44,6 +44,7 @@ async fn setup() -> (MockServer, PsiMock, ApiCtx) {
         secrets: store,
         network: Default::default(),
         allow_api_override: false,
+        quota_ledger: None,
     };
     (server, mock, ctx)
 }

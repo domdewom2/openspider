@@ -103,7 +103,10 @@ pub struct ApiRun {
 }
 impl ApiRun {
     pub fn new(ctx: ApiCtx, clock: Arc<dyn Clock>, ledger: PathBuf) -> Self {
-        let ledger = ledger_path(ledger, &os_store::paths::app_paths().settings);
+        let ledger = ctx
+            .quota_ledger
+            .clone()
+            .unwrap_or_else(|| ledger_path(ledger, &os_store::paths::app_paths().settings));
         let ga4 = Arc::new(crate::ga4::Ga4Source::new(clock.clone()));
         let gsc = Arc::new(crate::gsc::GscSource::new(
             clock.clone(),

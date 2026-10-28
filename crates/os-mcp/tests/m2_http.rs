@@ -272,3 +272,82 @@ async fn active_sessions_count_only_initialized_clients_and_delete_removes_them(
     assert_eq!(http.clients().await, 0);
     http.stop().await;
 }
+
+// spec: AGENT-002
+// spec: OUT-285 [P1]
+#[tokio::test]
+async fn aborted_standalone_sse_ends_only_its_session_within_one_second() {
+    let home = tempfile::tempdir().unwrap();
+    let tokens = TokenStore::open(Arc::new(MemorySecretStore::new())).unwrap();
+    let token = tokens.copy_token().unwrap();
+    let http = HttpServer::bind(server(home.path()), 0, tokens)
+        .await
+        .unwrap();
+    let address = ([127, 0, 0, 1], http.port()).into();
+    let mut sessions = Vec::new();
+    for _ in 0..2 {
+        let response = request(address, Some(&token), None, None, "POST", None, init()).await;
+        sessions.push(
+            response
+                .lines()
+                .find_map(|line| {
+                    line.split_once(':')
+                        .filter(|(key, _)| key.eq_ignore_ascii_case("mcp-session-id"))
+                        .map(|(_, value)| value.trim().to_owned())
+                })
+                .unwrap(),
+        );
+    }
+    assert_eq!(
+        http.clients().await,
+        2,
+        "finite POST disconnects preserve sessions"
+    );
+    let mut stream = tokio::net::TcpStream::connect(address).await.unwrap();
+    stream.write_all(format!(
+        "GET /mcp HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer {token}\r\nAccept: text/event-stream\r\nMcp-Session-Id: {}\r\nMCP-Protocol-Version: 2025-06-18\r\n\r\n",
+        http.port(), sessions[0]
+    ).as_bytes()).await.unwrap();
+    let mut headers = Vec::new();
+    tokio::time::timeout(std::time::Duration::from_secs(1), async {
+        while !headers.ends_with(b"\r\n\r\n") {
+            headers.push(stream.read_u8().await.unwrap());
+        }
+    })
+    .await
+    .unwrap();
+    assert_eq!(status(std::str::from_utf8(&headers).unwrap()), 200);
+    assert_eq!(http.clients().await, 2);
+    drop(stream);
+    tokio::time::timeout(std::time::Duration::from_secs(1), async {
+        while http.clients().await != 1 {
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .expect("aborted GET must end its session within one second");
+    let expired = request(
+        address,
+        Some(&token),
+        None,
+        None,
+        "POST",
+        Some(&sessions[0]),
+        json!({"jsonrpc":"2.0", "id":3, "method":"tools/list", "params":{}}),
+    )
+    .await;
+    assert_eq!(status(&expired), 404, "closed session cannot be reused");
+    let remaining = request(
+        address,
+        Some(&token),
+        None,
+        None,
+        "DELETE",
+        Some(&sessions[1]),
+        json!({}),
+    )
+    .await;
+    assert_eq!(status(&remaining), 202);
+    assert_eq!(http.clients().await, 0);
+    http.stop().await;
+}

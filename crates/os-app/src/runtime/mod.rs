@@ -443,7 +443,10 @@ impl App {
 
     /// Abonniert die Ereignisse eines Fensters (ein Kanal je Fenster; ein früheres Abonnement wird ersetzt).
     pub fn subscribe(&self, window: WindowId, sink: Arc<dyn EventSink>) -> SubscriptionId {
-        self.0.windows.subscribe(window, sink)
+        let id = self.0.windows.subscribe(window.clone(), sink);
+        // Subscription is the first opportunity to deliver queued startup notices and ticks.
+        self.flush_tick_to(vec![window]);
+        id
     }
 
     /// Beendet ein Abonnement.
@@ -580,6 +583,10 @@ impl App {
         let due = policy
             .map(|p| p.due_windows(self))
             .unwrap_or_else(|| self.subscribed_windows());
+        self.flush_tick_to(due)
+    }
+
+    fn flush_tick_to(&self, due: Vec<WindowId>) -> usize {
         if due.is_empty() {
             return 0;
         }
@@ -790,5 +797,123 @@ impl WeakApp {
 impl App {
     pub fn downgrade(&self) -> WeakApp {
         WeakApp(Arc::downgrade(&self.0))
+    }
+}
+
+#[cfg(test)]
+mod subscription_notice_tests {
+    use super::*;
+    use crate::{dto::NoticeLevel, events::CollectingSink};
+    use os_model::{ManualClock, Timestamp};
+
+    fn take_notices(sink: &CollectingSink) -> Vec<Notice> {
+        sink.take()
+            .into_iter()
+            .filter_map(|event| match event {
+                UiEvent::Tick { tick } => Some(tick.notices),
+                _ => None,
+            })
+            .flatten()
+            .collect()
+    }
+
+    async fn advance(clock: &ManualClock, millis: u64) {
+        let duration = Duration::from_millis(millis);
+        clock.advance(duration);
+        tokio::time::advance(duration).await;
+        // Let the MCP interval task retry delivery at the controlled app time.
+        tokio::task::yield_now().await;
+    }
+
+    // spec: OUT-285 [P1]
+    #[tokio::test(start_paused = true)]
+    async fn failed_autostart_notice_is_delivered_once_on_late_subscription() {
+        let home = tempfile::tempdir().unwrap();
+        let clock = Arc::new(ManualClock::new(Timestamp::UNIX_EPOCH));
+        let occupied = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let mut settings = os_mcp::McpSettings::default();
+        settings.http.autostart = true;
+        settings.http.port = Some(occupied.local_addr().unwrap().port());
+        os_mcp::settings::save(&home.path().join("mcp.toml"), &settings).unwrap();
+        let app = App::new(AppConfig::new(home.path()).with_clock(clock.clone())).unwrap();
+        app.set_tick_policy(Arc::new(crate::events::coalescer::Coalescer::default()));
+        // Binding the occupied literal loopback address fails without waiting for I/O.
+        tokio::task::yield_now().await;
+        assert_eq!(app.0.notices.lock().unwrap().len(), 1);
+        assert_eq!(app.flush_tick(), 0);
+        let sink = Arc::new(CollectingSink::new());
+        app.subscribe(WindowId("main".into()), sink.clone());
+        let notices = take_notices(&sink);
+        assert_eq!(notices.len(), 1);
+        assert_eq!(notices[0].code, "mcp-start-failed");
+        assert_eq!(notices[0].level, NoticeLevel::Error);
+
+        assert_eq!(app.flush_tick(), 0, "initial coalescer deadline is not due");
+        advance(&clock, 499).await;
+        assert!(take_notices(&sink).is_empty());
+        advance(&clock, 1).await;
+        assert!(take_notices(&sink).is_empty(), "no replay at the deadline");
+        advance(&clock, 1000).await;
+        assert!(take_notices(&sink).is_empty(), "no replay on later ticks");
+        let second = Arc::new(CollectingSink::new());
+        app.subscribe(WindowId("main".into()), second.clone());
+        assert!(
+            take_notices(&second).is_empty(),
+            "no replay on resubscription"
+        );
+    }
+
+    // spec: OUT-285 [P1]
+    #[tokio::test(start_paused = true)]
+    async fn notice_queued_after_subscription_survives_the_coalescer_deadline() {
+        let home = tempfile::tempdir().unwrap();
+        let clock = Arc::new(ManualClock::new(Timestamp::UNIX_EPOCH));
+        let app = App::new(AppConfig::new(home.path()).with_clock(clock.clone())).unwrap();
+        app.set_live_interval_ms(500).unwrap();
+        app.set_tick_policy(Arc::new(crate::events::coalescer::Coalescer::default()));
+        let sink = Arc::new(CollectingSink::new());
+        app.subscribe(WindowId("main".into()), sink.clone());
+        // Start the MCP interval at virtual time zero, with its status remaining Off.
+        tokio::task::yield_now().await;
+        assert!(take_notices(&sink).is_empty());
+        app.push_notice(Notice {
+            level: NoticeLevel::Error,
+            code: "mcp-start-failed".into(),
+            args: Default::default(),
+        });
+        assert_eq!(app.flush_tick(), 0, "initial coalescer deadline is not due");
+        advance(&clock, 400).await;
+        assert!(take_notices(&sink).is_empty());
+        advance(&clock, 99).await;
+        assert_eq!(
+            app.flush_tick(),
+            0,
+            "deadline is still one millisecond away"
+        );
+        assert!(take_notices(&sink).is_empty());
+        assert_eq!(app.0.notices.lock().unwrap().len(), 1);
+
+        // Only the background MCP retry may deliver here; do not flush manually.
+        advance(&clock, 1).await;
+        let notices = take_notices(&sink);
+        assert_eq!(
+            notices.len(),
+            1,
+            "pending notice must arrive while MCP stays Off"
+        );
+        assert_eq!(notices[0].code, "mcp-start-failed");
+        assert_eq!(notices[0].level, NoticeLevel::Error);
+        assert!(app.0.notices.lock().unwrap().is_empty());
+        advance(&clock, 500).await;
+        assert!(
+            take_notices(&sink).is_empty(),
+            "notice must be delivered only once"
+        );
+        let second = Arc::new(CollectingSink::new());
+        app.subscribe(WindowId("main".into()), second.clone());
+        assert!(
+            take_notices(&second).is_empty(),
+            "no replay on resubscription"
+        );
     }
 }

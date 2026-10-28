@@ -160,8 +160,10 @@ pub fn init(app: &App) {
             if previous.as_ref() != Some(&current) {
                 *service.status.lock().unwrap_or_else(|p| p.into_inner()) = Some(current.clone());
                 previous = Some(current);
-                app.flush_tick();
             }
+            // Retry queued startup notices/status after the coalescer's delivery deadline,
+            // including an unchanged Off status after a failed start.
+            app.flush_tick();
         }
     });
 }
