@@ -9,6 +9,7 @@ import importlib.util
 import json
 import os
 import re
+import resource
 from pathlib import Path
 import signal
 import subprocess
@@ -68,6 +69,9 @@ def main():
                     samples.append({'elapsed_s': time.monotonic()-start, 'db_bytes': size(db) if db else 0, 'wal_bytes': size(Path(str(db)+'-wal')) if db else 0, 'rss_bytes': rss})
                     time.sleep(5)
                 elapsed = time.monotonic()-start
+            # poll() has reaped the CLI; the other reaped children (ps/cargo metadata) are smaller.
+            peak_rss = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss
+            if sys.platform != 'darwin': peak_rss *= 1024
             lines = (tmp/'stderr').read_text().splitlines()
             if proc.returncode:
                 raise RuntimeError(f'CLI exit {proc.returncode}: {lines[-20:]}')
@@ -103,10 +107,10 @@ def main():
             for begin in range(0,n,100000):
                 end=min(begin+100000,n); a=at(begin); b=at(end)
                 windows.append({'from':begin,'to':end,'seconds':b-a if a is not None and b is not None else None,'urls_per_s':(end-begin)/(b-a) if a is not None and b is not None and b>a else None})
-            result={'quiet':{'max_load':max_load,'min_idle_pct':min_idle,'idle_pct':idle},'n':n,'commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'uptime':uptime,'cli_elapsed_s_sampled':elapsed,'progress':progress,'windows':windows,'samples':samples,'diag':diag,'phases':phases,'storage':storage,'measurement_notes':['Progress elapsed_s is integer seconds; window boundaries are linearly interpolated.','Sampling every 5 s can miss short peaks; process completion time can be overestimated by up to 5 s.','Parse is included in engine analyze_ns; worker sums overlap and are not wall-clock shares.']}
+            result={'rss_peak_rusage_bytes':int(peak_rss),'quiet':{'max_load':max_load,'min_idle_pct':min_idle,'idle_pct':idle},'n':n,'commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'uptime':uptime,'cli_elapsed_s_sampled':elapsed,'progress':progress,'windows':windows,'samples':samples,'diag':diag,'phases':phases,'storage':storage,'measurement_notes':['Progress elapsed_s is integer seconds; window boundaries are linearly interpolated.','Sampling every 5 s can miss short peaks; process completion time can be overestimated by up to 5 s.','Parse is included in engine analyze_ns; worker sums overlap and are not wall-clock shares.']}
             (dest/f'stage-{n}.json').write_text(json.dumps(result,indent=2,ensure_ascii=False)+'\n')
             top=sorted(storage['objects'],key=lambda o:o['bytes'],reverse=True)[:10]
-            md=[f'# Stufe {n}', '',f'- Load: {uptime}',f'- URLs: {final}; Datenbank: {storage["file_bytes"]} Bytes ({storage["file_bytes"]/final:.1f} Bytes/URL)',f'- WAL-Spitze (5-s-Abtastung): {max(s["wal_bytes"] for s in samples)} Bytes; RSS-Spitze: {max(s["rss_bytes"] for s in samples)} Bytes',f'- Freiliste: {storage["freelist_count"]} Seiten', '', '## Durchsatzfenster', '', '| URLs | URLs/s |','|---|---:|']
+            md=[f'# Stufe {n}', '',f'- Load: {uptime}',f'- URLs: {final}; Datenbank: {storage["file_bytes"]} Bytes ({storage["file_bytes"]/final:.1f} Bytes/URL)',f'- WAL-Spitze (5-s-Abtastung): {max(s["wal_bytes"] for s in samples)} Bytes; RSS-Spitze: {max(int(peak_rss),max(s["rss_bytes"] for s in samples))} Bytes',f'- Freiliste: {storage["freelist_count"]} Seiten', '', '## Durchsatzfenster', '', '| URLs | URLs/s |','|---|---:|']
             md += [f'| {w["from"]}–{w["to"]} | {w["urls_per_s"] if w["urls_per_s"] is not None else "unbekannt"} |' for w in windows]
             md += ['', '## Größte Objekte', '', '| Objekt | Bytes | Bytes/URL | ungenutzte Bytes |','|---|---:|---:|---:|']
             md += [f'| {o["name"]} | {o["bytes"]} | {o["bytes"]/final:.1f} | {o["unused"]} |' for o in top]
