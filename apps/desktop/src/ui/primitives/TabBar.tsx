@@ -129,16 +129,18 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
       const next = fitTabs(m.widths, m.available, m.overflowWidth, selectedIndex).hidden;
       setHidden((old) => (old.length === next.length && old.every((v, i) => v === next[i]) ? old : next));
       const cut = [...el.querySelectorAll<HTMLElement>("[data-tab-id]")]
-        .filter((t) => !t.hidden && t.style.visibility !== "hidden")
+        .filter((t) => t.style.visibility !== "hidden")
         .filter((t) => { const text = t.querySelector<HTMLElement>(".os-tab-label") ?? t; return text.scrollWidth > text.clientWidth + 0.5; })
         .map((t) => t.dataset.tabId as string);
       setTruncated((old) => (old.length === cut.length && old.every((v, i) => v === cut[i]) ? old : cut));
     };
     run();
     if (typeof ResizeObserver === "undefined") return;
-    const ro = new ResizeObserver(run);
+    // Re-measure in the next frame: a distribution change inside the observer callback would raise "ResizeObserver loop" errors.
+    let frame = 0;
+    const ro = new ResizeObserver(() => { cancelAnimationFrame(frame); frame = requestAnimationFrame(run); });
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => { cancelAnimationFrame(frame); ro.disconnect(); };
   }, [tabs, selectedIndex, measure, alwaysMenu, hidden]);
 
   const move = (from: number, to: number) => onReorder?.(moveItem(tabs, from, to).map((t) => t.id));
@@ -178,7 +180,7 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
     <div ref={root} className={cx("os-tabbar", className)} onKeyDown={onKeyDown}>
       <div role="tablist" aria-label={label} className="os-tablist os-tabbar-list">
         {tabs.map((t, i) => {
-          const isHidden = hidden.includes(i);
+          const isHidden = hidden.includes(i) && t.id !== selected;
           const isSelected = t.id === selected;
           const isTruncated = truncated.includes(t.id);
           return (
@@ -191,11 +193,12 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
               title={isTruncated ? t.label : undefined}
               aria-selected={isSelected}
               tabIndex={isSelected ? 0 : -1}
-              hidden={isHidden && !isSelected}
               draggable={!!onReorder}
               className={cx("os-tab", isSelected && "os-tab-selected")}
               data-selected={isSelected || undefined}
-              style={isHidden ? { position: "absolute", visibility: "hidden", pointerEvents: "none" } : undefined}
+              // Clipped tabs stay measurable (no `hidden`: a zero width would flip the distribution back and forth) but are
+              // invisible, out of the tab order and out of the accessibility tree; the overflow menu lists them.
+              style={isHidden && !isSelected ? { position: "absolute", visibility: "hidden", pointerEvents: "none" } : undefined}
               onClick={() => onSelect(t.id)}
               onDragStart={(e: DragEvent) => {
                 setDragFrom(i);

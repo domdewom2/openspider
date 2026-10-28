@@ -106,7 +106,9 @@ export function ExportHost({ desktop = nativeExportDesktop }: { desktop?: Export
         const items = group.items.map(item => {
           const action = `export.${kind}.${item.name}`;
           offs.push(registerAction(action, () => { if (item.enabled && !running) openExport({ kind, name: item.name }); }));
-          return { id: action, action, ...menuLabel(item.labelKey, `${group.key}:`), enabled: () => item.enabled && !running, disabledReasonKey: item.disabledReason ?? undefined };
+          return { id: action, action, ...menuLabel(item.labelKey, `${group.key}:`), enabled: () => item.enabled && !running,
+            // The catalog's reason is a key or, for many reports, plain English text: untranslated reasons get the generic text.
+            disabledReasonKey: item.disabledReason ? (i18n.has(currentLanguage(), item.disabledReason) ? item.disabledReason : "export-unavailable") : undefined };
         });
         menu.push({ menu: key === "bulk" ? "bulkExport" : "reports", group: `export-${group.key}`, order: 10, items: [{ id: `export-group-${key}-${group.key}`, ...menuLabel(group.labelKey), items }] });
       }

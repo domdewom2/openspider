@@ -6,7 +6,7 @@
 .os-tabbar .os-tabbar-list { display: flex; flex: 1; min-width: 0; gap: 0; overflow: hidden; flex-wrap: nowrap; position: relative; }
 .os-tabbar .os-tab {
   flex: 0 0 auto; height: auto; min-height: 28px; max-width: min(100%, 20rem); min-width: 0;
-  padding: 4px 12px; line-height: 18px; white-space: nowrap; box-sizing: border-box; cursor: default;
+  padding: 4px 8px; line-height: 18px; white-space: nowrap; box-sizing: border-box; cursor: default;
 }
 .os-tabbar .os-tab-label { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .os-tabbar .os-tab:focus-visible { outline: 2px solid var(--os-focus); outline-offset: -2px; }

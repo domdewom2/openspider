@@ -36,7 +36,7 @@ export function MultiOptions({ value, onChange, onReady, onError, showPresets = 
       if (!live) return;
       setGroups({
         tabs: tabs.status === "fulfilled" ? tabs.value.map(tab => ({ id: `tab:${tab.id}`, label: tabLabel(t, tab.id), items: tab.filters.map(f => ({ kind: "tab", name: `${tab.id}:${f.id}`, label: filterLabel(t, f), enabled: f.state.kind === "ready", reason: f.state.kind === "ready" ? null : t("export-unavailable") })) })) : [],
-        exports: exports.status === "fulfilled" ? (["bulk", "reports"] as const).flatMap(key => exports.value[key].map(group => ({ id: `${key}:${group.key}`, label: label(group.labelKey, group.key), items: group.items.map(item => ({ kind: key === "reports" ? "report" : "bulk", name: item.name, label: label(item.labelKey, item.name), enabled: item.enabled, reason: item.disabledReason ? t(item.disabledReason) : null })) }))) : [],
+        exports: exports.status === "fulfilled" ? (["bulk", "reports"] as const).flatMap(key => exports.value[key].map(group => ({ id: `${key}:${group.key}`, label: label(group.labelKey, group.key), items: group.items.map(item => ({ kind: key === "reports" ? "report" : "bulk", name: item.name, label: label(item.labelKey, item.name), enabled: item.enabled, reason: item.disabledReason ? label(item.disabledReason, t("export-unavailable")) : null })) }))) : [],
       });
       setFailed({ tabs: tabs.status === "rejected" ? tabs.reason : undefined, exports: exports.status === "rejected" ? exports.reason : undefined });
       setLoading(false);
