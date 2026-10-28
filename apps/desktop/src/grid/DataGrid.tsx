@@ -1,3 +1,4 @@
+import { gridHeaderHeight } from "./theme";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { LOADING, type ViewDataSource } from "../data/ViewDataSource";
 import type { ColumnMeta } from "../ipc/gen/ColumnMeta";
@@ -73,7 +74,7 @@ export function DataGrid(props: DataGridProps) {
   const metadata = useMemo(() => new Map(source.columns.map((c, index) => [c.key, { column: c, index }])), [source]);
   const { capacity, maxFirst } = rowWindow(source.total, size.height, rowHeight);
   const first = clamp(position.row, maxFirst);
-  const headerHeight = rowHeight + 4;
+  const headerHeight = gridHeaderHeight(rowHeight);
   const count = Math.min(source.total - first, Math.max(0, Math.ceil((size.height - headerHeight) / rowHeight)));
   const totalWidth = visible.reduce((n, c) => n + c.width, 0);
   const extent = scrollExtent(source.total, size.height, rowHeight);

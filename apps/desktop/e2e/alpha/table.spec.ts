@@ -191,7 +191,7 @@ async function selectWhileSortedRowsArrive(alpha: Alpha): Promise<{ origin: Snap
     await alpha.settledGrid();
   }
   expect(target, "page-2.html ist im Bild").toBeGreaterThanOrEqual(0);
-  await page.locator(".os-data-grid").click({ position: { x: 160, y: 26 + 22 * target + 11 } });
+  await page.locator(".os-data-grid").click({ position: { x: 160, y: 32 + 28 * target + 14 } });
   await expect(alpha.table()).toContainText("1 selected");
 
   const read = async (): Promise<Snapshot | null> => {

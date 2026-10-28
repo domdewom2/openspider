@@ -68,7 +68,7 @@ test("selecting a row in the main table loads its URL Details", async ({ alpha }
   await crawled(alpha);
   await alpha.openTable("Response Codes");
   await alpha.settledGrid();
-  await page.locator(".os-data-grid").click({ position: { x: 160, y: 26 + 11 } });
+  await page.locator(".os-data-grid").click({ position: { x: 160, y: 32 + 14 } });
   await expect(await openDetailTab(page, "URL Details")).toContainText(alpha.startUrl);
 });
 

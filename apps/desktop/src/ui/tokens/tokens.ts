@@ -238,8 +238,8 @@ export type Density = "compact" | "normal";
 
 export const SIZES = {
   space: [2, 4, 6, 8, 12, 16, 24, 32] as const,
-  rowHeight: { compact: 22, normal: 26 } as const,
-  headerHeight: { compact: 26, normal: 30 } as const,
+  rowHeight: { compact: 28, normal: 44 } as const,
+  headerHeight: { compact: 32, normal: 44 } as const,
   cellPaddingX: 6,
   toolbarHeight: 32,
   toolbarControl: 24,
@@ -252,7 +252,7 @@ export const SIZES = {
   radiusDialog: 8,
   fontUi: 13,
   lineUi: 18,
-  fontTable: { compact: 12, normal: 13 } as const,
+  fontTable: { compact: 13, normal: 14 } as const,
   fontSmall: 11,
   lineSmall: 14,
   fontMono: 12,
