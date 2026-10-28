@@ -4,15 +4,15 @@ import type { JsonValue } from "./serde_json/JsonValue";
 /**
  * Versionierter UI-Zustand (`ui-state.json`, UI-125); der Kern speichert den Inhalt unverändert.
  */
-export type UiStateJson = { 
+export type UiStateJson = {
 /**
  * Schreibrevision aus load; save lehnt veraltete Revisionen ab.
  */
-revision?: number | null, 
+revision?: number | null,
 /**
  * Schemaversion des Zustands.
  */
-version: number, 
+version: number,
 /**
  * Inhalt (Fenster, Trenner, Tabs, Spalten, Verlauf).
  */

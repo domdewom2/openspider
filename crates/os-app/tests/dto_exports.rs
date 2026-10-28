@@ -192,3 +192,12 @@ fn quit_decision_is_tagged_and_preserve_upload_order_is_optional() {
     );
     assert!(files["ExportViewArgs.ts"].contains("preserveUploadOrder?: boolean"));
 }
+
+// spec: UI-140
+#[test]
+fn ui_state_contract_has_no_trailing_whitespace() {
+    let generated = fresh();
+    for line in generated["UiStateJson.ts"].lines() {
+        assert_eq!(line, line.trim_end());
+    }
+}
