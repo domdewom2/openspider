@@ -90,7 +90,7 @@ retries = 2
 retry_delay_s = 5
 show_blocked_internal = true
 show_blocked_external = false
-respect_crawl_delay = true
+respect_crawl_delay = false
 
 [robots.custom_files]
 

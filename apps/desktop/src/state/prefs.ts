@@ -87,6 +87,13 @@ function mergeDeep(target: unknown, patch: unknown): unknown {
   return base;
 }
 
+// Reads may overlap a local edit or a settingsChanged event. Only the newest
+// read from the same mutation generation may replace the visible preferences.
+let readGeneration = 0;
+let mutationGeneration = 0;
+let pendingPatches = 0;
+let patchTail: Promise<unknown> = Promise.resolve();
+
 export const usePrefs = create<PrefsState>((set, get) => ({
   loaded: false,
   error: null,
@@ -99,15 +106,21 @@ export const usePrefs = create<PrefsState>((set, get) => ({
   restartRequired: [],
 
   async load() {
+    const read = ++readGeneration;
+    const mutation = mutationGeneration;
     try {
       const dto = await settingsApi.get();
+      if (read !== readGeneration || mutation !== mutationGeneration || pendingPatches > 0) return;
       set({ loaded: true, error: null, dto, restartRequired: dto.restartRequired ?? [], ...fromNormalized(normalizeSettings(dto)) });
     } catch (e) {
-      set({ error: toCmdError(e) });
+      if (read === readGeneration && mutation === mutationGeneration && pendingPatches === 0) set({ error: toCmdError(e) });
     }
   },
 
   async patch(patch) {
+    const mutation = ++mutationGeneration;
+    ++readGeneration;
+    ++pendingPatches;
     const before = get().dto;
     if (before) {
       // sofort wirken lassen (UI-120: ≤ 200 ms), bei Fehler zurücksetzen
@@ -115,11 +128,13 @@ export const usePrefs = create<PrefsState>((set, get) => ({
       set({ dto: optimistic, ...fromNormalized(normalizeSettings(optimistic)) });
     }
     try {
-      const dto = await settingsApi.set({ patch: patch as never });
-      set({ error: null, dto, restartRequired: dto.restartRequired ?? [], ...fromNormalized(normalizeSettings(dto)) });
+      const saving = patchTail.then(() => settingsApi.set({ patch: patch as never }));
+      patchTail = saving.catch(() => undefined);
+      const dto = await saving;
+      if (mutation === mutationGeneration) set({ error: null, dto, restartRequired: dto.restartRequired ?? [], ...fromNormalized(normalizeSettings(dto)) });
     } catch (e) {
-      set({ error: toCmdError(e), ...(before ? { dto: before, ...fromNormalized(normalizeSettings(before)) } : {}) });
-    }
+      if (mutation === mutationGeneration) set({ error: toCmdError(e), ...(before ? { dto: before, ...fromNormalized(normalizeSettings(before)) } : {}) });
+    } finally { --pendingPatches; }
   },
 
   async resetAppearance() {

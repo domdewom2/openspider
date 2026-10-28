@@ -15,7 +15,15 @@ export function loadFtlFiles(): FtlFile[] {
   const files: FtlFile[] = [];
   for (const [path, source] of Object.entries(raw)) {
     const parsed = parseFtlPath(path);
-    if (parsed) files.push({ path, lang: parsed.lang, feature: parsed.feature, source });
+    if (!parsed) continue;
+    if (parsed.lang === "n03") {
+      // N03 owns one bilingual sidecar per feature, isolated from the catalog work.
+      for (const section of source.split(/^# @language /m).slice(1)) {
+        const newline = section.indexOf("\n");
+        const lang = section.slice(0, newline).trim();
+        if (lang === "de" || lang === "en") files.push({ path, lang, feature: parsed.feature, source: section.slice(newline + 1) });
+      }
+    } else files.push({ path, lang: parsed.lang, feature: parsed.feature, source });
   }
   return files;
 }

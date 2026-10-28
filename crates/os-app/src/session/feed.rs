@@ -16,6 +16,7 @@ pub(crate) struct Cursor {
     rows_at: Option<Duration>,
     pending: Option<ChangeSet>,
     pub(super) status: Option<CrawlStatus>,
+    delays: std::collections::HashMap<String, (f64, bool)>,
 }
 #[derive(Clone, Debug)]
 pub struct ChangeSet {
@@ -302,6 +303,31 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
     super::state(app, &s.key, state);
     let changed = old.last.is_none() || old.seq != seq || old.reset != reset;
     if changed {
+        let token = os_fetch::user_agents::resolve(&s.config.user_agent).robots_token;
+        let bodies = app
+            .read_pool()
+            .run(s.key.clone(), |f, _| {
+                os_analyze::aggregates::status::robots_bodies(f)
+            })
+            .await?;
+        for (origin, body) in bodies {
+            let Some(seconds) = os_fetch::robots::parse(&body).crawl_delay(&token) else {
+                continue;
+            };
+            let applied = s.config.robots.respect_crawl_delay;
+            if old.delays.insert(origin.clone(), (seconds, applied)) != Some((seconds, applied)) {
+                app.push_notice(Notice {
+                    level: NoticeLevel::Info,
+                    code: "crawl-delay".into(),
+                    args: [
+                        ("origin".into(), serde_json::json!(origin)),
+                        ("seconds".into(), serde_json::json!(seconds)),
+                        ("applied".into(), serde_json::json!(applied)),
+                    ]
+                    .into(),
+                });
+            }
+        }
         let rebuild = old.last.is_none()
             || old.reset != reset
             || seq < old.seq

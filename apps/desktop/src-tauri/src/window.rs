@@ -65,9 +65,14 @@ fn report_visibility<R: Runtime>(app: &App, window: &Window<R>) {
 /// Fragt den Kern, ob beendet werden darf, und beendet bei `Quit`.
 pub fn request_quit<R: Runtime>(app: App, handle: AppHandle<R>, quitting: Quitting) {
     tauri::async_runtime::spawn(async move {
-        if matches!(app.request_quit().await, QuitDecision::Quit) {
-            quitting.set();
-            handle.exit(0);
+        match app.request_quit().await {
+            QuitDecision::Quit => {
+                quitting.set();
+                handle.exit(0);
+            }
+            // The App menu is also available while Settings is in front. Its
+            // confirmation lives in main and must be made visible there.
+            QuitDecision::Confirm { .. } => focus_main(&handle),
         }
     });
 }

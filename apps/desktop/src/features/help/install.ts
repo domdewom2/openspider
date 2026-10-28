@@ -10,7 +10,7 @@ import { crawls } from "../../ipc/crawls";
 import { diag } from "../../ipc/diag";
 import { mcp } from "../../ipc/mcp";
 import { config } from "../../ipc/config";
-import { analysis } from "../../ipc/analysis";
+import { startAnalysis } from "../sidebar/analysis/start";
 import { useMainMode } from "./state";
 import { toCmdError } from "../../ipc/errors";
 import { showHelp, useHelp } from "./state";
@@ -24,6 +24,7 @@ export function installMainMenus(): () => void {
   let live = true;
   let modeRevision = 0;
   let recentReady = Promise.resolve();
+  let recentRevision = 0;
   const state: MainMenuState = { recent: [], mode: "spider", mcpRunning: false, mcpAutostart: false, available: hasAction };
   let removeMenu = () => {};
   let recentOffs: (() => void)[] = [];
@@ -90,7 +91,7 @@ export function installMainMenus(): () => void {
     state.mode = mode;
     rebuild();
   });
-  on("analysis.start", async () => { const operation = await analysis.start({}); if (live) useHelp.setState({ operation }); });
+  on("analysis.start", async () => { const operation = await startAnalysis({}); if (live) useHelp.setState({ operation }); });
   on("mcp.start", async () => { const status = await mcp.start({}); if (live) useSession.setState({ mcp: status }); });
   on("mcp.stop", async () => { const status = await mcp.stop(); if (live) useSession.setState({ mcp: status }); });
   on("mcp.autostart", async () => { await mcp.setAutostart({ value: !state.mcpAutostart }); await usePrefs.getState().load(); });
@@ -109,7 +110,13 @@ export function installMainMenus(): () => void {
       if (live && version === catalogVersion) { state.catalog = undefined; rebuild(); }
     }
   };
+  const reloadRecent = async () => {
+    const version = ++recentRevision;
+    const entries = await loadRecent();
+    if (live && version === recentRevision) setRecent(entries);
+  };
   offs.push(useSession.subscribe((next, prev) => {
+    if (next.crawl?.crawlId !== prev.crawl?.crawlId || next.crawl?.phase !== prev.crawl?.phase) void reloadRecent().catch(error);
     if (next.crawl?.mode && next.crawl?.mode !== prev.crawl?.mode) state.mode = next.crawl.mode;
     if (next.crawl?.mode && next.crawl?.mode !== prev.crawl?.mode) useMainMode.setState({ mode: next.crawl.mode });
     if (next.crawl?.phase !== prev.crawl?.phase || next.crawl?.crawlId !== prev.crawl?.crawlId || next.mcp !== prev.mcp || next.analysis?.running !== prev.analysis?.running) rebuild();
@@ -120,7 +127,7 @@ export function installMainMenus(): () => void {
   offs.push(useMainMode.subscribe((next) => { modeRevision++; state.mode = next.mode; rebuild(); }));
   offs.push(installMenuContexts(rebuild));
   rebuild();
-  recentReady = loadRecent().then((entries) => { if (live) setRecent(entries); }).catch(error);
+  recentReady = reloadRecent().catch(error);
   void refreshCatalog();
   const initialModeRevision = modeRevision;
   void config.get().then((dto) => {

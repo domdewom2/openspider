@@ -82,6 +82,26 @@ export function TablePanel(props: TablePanelProps) {
     ...defaults.filter(c => !columnLayout.some(saved => saved.key === c.key)),
   ];
   const changed = useSession(s => source ? s.views[source.viewId] : undefined);
+  const revision = useSession(s => `${s.countsVersion}:${s.sidebarVersion}`);
+  const latestRevision = useRef(revision);
+  latestRevision.current = revision;
+  useEffect(() => {
+    if (!source) return;
+    let live = true;
+    let requested = latestRevision.current;
+    let pending = false;
+    const timer = setInterval(() => {
+      if (pending || requested === latestRevision.current) return;
+      requested = latestRevision.current;
+      pending = true;
+      void view.update({ viewId: source.viewId, spec }).then(handle => {
+        if (live) return source.onViewChanged(handle.version, handle.total ?? 0);
+      }).catch(error => { if (live) setError(error); }).finally(() => { pending = false; });
+    }, 500);
+    return () => { live = false; clearInterval(timer); };
+    // The source belongs to key (including spec); ticks only queue another refresh.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source]);
   useEffect(() => {
     if (!source) return;
     setSelection(SelectionModel.empty()); setTarget(undefined); setError(undefined);
