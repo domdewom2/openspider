@@ -12,6 +12,7 @@ authors.workspace = true
 time.workspace = true
 zip.workspace = true
 sysinfo.workspace = true
+sys-locale = "0.3.2"
 
 os-model.workspace = true
 os-url.workspace = true
