@@ -78,6 +78,12 @@ jobs:
           node-version: 22
           cache: npm
 
+      # Ubuntu 24.04 sperrt unprivilegierte User-Namespaces per AppArmor; ohne sie startet die Chromium-Sandbox des
+      # Login-Fensters (os-render, ohne --no-sandbox) nicht und der Start hängt bis zum Launch-Timeout.
+      - name: Chromium-Sandbox erlauben (Linux)
+        if: runner.os == 'Linux'
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
       - name: npm ci
         run: npm ci
 
