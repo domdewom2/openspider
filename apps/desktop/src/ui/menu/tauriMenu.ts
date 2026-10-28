@@ -45,14 +45,17 @@ async function toNative(item: ResolvedItem): Promise<MenuItem | CheckMenuItem | 
         ...(item.accelerator ? { accelerator: item.accelerator } : {}),
         action: () => void runAction(item.action ?? item.id, { source: "menu" }),
       });
-    default:
+    default: {
+      const quit = item.action === "app.quit";
       return MenuItem.new({
         id: item.id,
         text: nativeItemText(item),
         enabled: item.enabled,
-        ...(item.accelerator ? { accelerator: item.accelerator } : {}),
-        action: () => void runAction(item.action ?? item.id, { source: "menu" }),
+        ...((item.accelerator || quit) ? { accelerator: item.accelerator ?? "CmdOrCtrl+Q" } : {}),
+        // Quit is handled by the shell, also when a WebView is busy.
+        ...(!quit ? { action: () => void runAction(item.action ?? item.id, { source: "menu" }) } : {}),
       });
+    }
   }
 }
 
