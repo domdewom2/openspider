@@ -16,6 +16,7 @@ import { registerMenuContributions } from "../../ui/menu/registry";
 import type { MenuContribution } from "../../ui/menu/types";
 import { Banner, Button, ProgressBar, ToastRegion } from "../../ui/primitives";
 import { ExportDialog } from "./ExportDialog";
+import type { StartInfo } from "./MultiExportDialog";
 import { openExport, useExportContext, useExportDialog, type ExportRequest } from "./model";
 import { nativeExportDesktop, type ExportDesktop } from "./native";
 import "./export.css";
@@ -40,15 +41,21 @@ function resultInfo(value: JsonValue | null | undefined): { files: FileResult[];
   return { files: batch.files ?? [], warnings: batch.warnings ?? [], skipped: batch.skipped ?? [] };
 }
 
-/** One export run can start several operations (multi export with local files and Looker Studio, A02-17). */
-function combine(statuses: readonly (OpStatus | undefined)[]): { state: OpStatus["state"] | "running"; done: number; total: number | null; errors: NonNullable<OpStatus["error"]>[]; files: FileResult[]; warnings: string[]; skipped: string[] } {
-  const known = statuses.filter((s): s is OpStatus => !!s);
-  const infos = known.map(s => resultInfo(s.result));
+/**
+ * One export run can start several operations (multi export with local files and Looker Studio, A02-17). `known` names files
+ * that an operation writes but does not report itself (`crawls.export` answers with a count): shown once it is done.
+ */
+export function combine(statuses: readonly (OpStatus | undefined)[], known: Readonly<Record<string, readonly string[]>> = {}): { state: OpStatus["state"] | "running"; done: number; total: number | null; errors: NonNullable<OpStatus["error"]>[]; files: FileResult[]; warnings: string[]; skipped: string[] } {
+  const finished = statuses.filter((s): s is OpStatus => !!s);
+  const infos = finished.map(s => {
+    const info = resultInfo(s.result);
+    return info.files.length || s.state !== "done" ? info : { ...info, files: (known[s.opId] ?? []).map(path => ({ path, bytes: 0 })) };
+  });
   const state = statuses.some(s => !s || s.state === "running") ? "running"
-    : known.some(s => s.state === "failed") ? "failed" : known.every(s => s.state === "cancelled") ? "cancelled" : "done";
-  const totals = known.map(s => s.total ?? null);
-  return { state, done: known.reduce((n, s) => n + s.done, 0), total: totals.every(v => v !== null) && totals.length === statuses.length ? totals.reduce<number>((n, v) => n + (v ?? 0), 0) : null,
-    errors: known.flatMap(s => s.error ? [s.error] : []), files: infos.flatMap(i => i.files), warnings: infos.flatMap(i => i.warnings), skipped: infos.flatMap(i => i.skipped) };
+    : finished.some(s => s.state === "failed") ? "failed" : finished.every(s => s.state === "cancelled") ? "cancelled" : "done";
+  const totals = finished.map(s => s.total ?? null);
+  return { state, done: finished.reduce((n, s) => n + s.done, 0), total: totals.every(v => v !== null) && totals.length === statuses.length ? totals.reduce<number>((n, v) => n + (v ?? 0), 0) : null,
+    errors: finished.flatMap(s => s.error ? [s.error] : []), files: infos.flatMap(i => i.files), warnings: infos.flatMap(i => i.warnings), skipped: infos.flatMap(i => i.skipped) };
 }
 
 /**
@@ -65,9 +72,9 @@ export function menuLabel(key: string, groupPrefix = ""): { labelKey: string } |
 export function ExportHost({ desktop = nativeExportDesktop }: { desktop?: ExportDesktop }) {
   const t = useT();
   const request = useExportDialog(s => s.request);
-  const [active, setActive] = useState<{ handles: OpHandle[]; path: string } | null>(null);
+  const [active, setActive] = useState<{ handles: OpHandle[]; path: string; info?: StartInfo } | null>(null);
   const ops = useSession(s => s.ops);
-  const status = active ? combine(active.handles.map(h => ops[h.opId])) : undefined;
+  const status = active ? combine(active.handles.map(h => ops[h.opId]), active.info?.files) : undefined;
   const crawlId = useSession(s => s.crawl?.crawlId);
   const countsVersion = useSession(s => s.countsVersion);
   const [exports, setExports] = useState<ExportCatalog | null>(null);
@@ -130,7 +137,7 @@ export function ExportHost({ desktop = nativeExportDesktop }: { desktop?: Export
   }, [exports, running, t]);
   const close = () => useExportDialog.setState({ request: null });
   return <>
-    {request && !running && <ExportDialog key={JSON.stringify(request)} request={request} desktop={desktop} onClose={close} onStarted={(handles, path) => { setActive({ handles, path }); setCancelling(false); setError(null); close(); }} />}
+    {request && !running && <ExportDialog key={JSON.stringify(request)} request={request} desktop={desktop} onClose={close} onStarted={(handles, path, info) => { setActive({ handles, path, info }); setCancelling(false); setError(info?.errors.length ? info.errors.join(" ") : null); close(); }} />}
     <div className="os-export-notifications"><ToastRegion label={t("export-notifications")}>
       {active && status && running && <Banner action={active.handles.some(h => h.cancellable) ? <Button isDisabled={cancelling} onPress={() => {
         setCancelling(true);

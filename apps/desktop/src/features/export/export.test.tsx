@@ -9,7 +9,8 @@ import { runAction } from "../../ui/actions";
 import type { ExportRequest } from "./model";
 import { openExport, registerExportContext, useExportContext, useExportDialog } from "./model";
 import { ExportDialog } from "./ExportDialog";
-import { ExportButton, ExportHost, ExportViewButton, menuLabel } from "./ExportHost";
+import { ExportButton, ExportHost, ExportViewButton, combine, menuLabel } from "./ExportHost";
+import { joinPath, timestampFolder } from "./MultiExportDialog";
 import { executeExport, type ExportChoices } from "./execute";
 import { defaultSitemapOptions, sitemapSchema } from "./sitemap";
 import { nativeExportDesktop, type ExportDesktop } from "./native";
@@ -336,26 +337,85 @@ describe("multi export dialog after OUT-075 (A02-17)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Internal:HTML" }));
     await save("Export…");
     await waitFor(() => expect(call("export.customSummary")[0]?.args).toEqual({ account: "me@example.test", target: "site_summary", metrics: ["Response Codes:Client Error (4xx)", "Internal:HTML"] }));
-    expect(onStarted).toHaveBeenCalledWith([handle], "");
+    expect(onStarted).toHaveBeenCalledWith([handle], "", { files: {}, errors: [] });
   });
 
   // spec: OUT-165 [P1]
   it("writes the chosen tables, sitemaps and the crawl copy into one timestamped folder", async () => {
-    useSession.setState({ crawl: { crawlId: "crawl-7" } as never });
-    core.handlers.set("crawls.export", () => ({ ...handle, opId: "copy" }));
+    // Fixed local clock: the folder name is exact, the crawl copy is a named file inside it (a new folder would otherwise be
+    // taken as the file name by crawls.export, review M2-U34 #1).
+    vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(new Date(2026, 9, 28, 14, 5, 9));
+    try {
+      useSession.setState({ crawl: { crawlId: "crawl-7" } as never });
+      core.handlers.set("crawls.export", () => ({ ...handle, opId: "copy" }));
+      desktop.choose = vi.fn(async () => "/fixture/out");
+      const { onStarted } = mount({ kind: "multi" });
+      fireEvent.click(await screen.findByRole("checkbox", { name: "All" }));
+      fireEvent.click(screen.getByRole("checkbox", { name: "XML sitemap" }));
+      fireEvent.click(screen.getByRole("checkbox", { name: /crawl file/ }));
+      fireEvent.click(screen.getByRole("checkbox", { name: /subfolder named after date/ }));
+      await save("Export…");
+      await waitFor(() => expect(onStarted).toHaveBeenCalled());
+      expect(call("export.multi")[0]?.args).toMatchObject({ dir: "/fixture/out/2026-10-28_14-05-09" });
+      expect(call("export.sitemap")[0]?.args).toMatchObject({ sitemapKind: "pages", dir: "/fixture/out/2026-10-28_14-05-09" });
+      expect(call("crawls.export")[0]?.args).toEqual({ ids: ["crawl-7"], dest: "/fixture/out/2026-10-28_14-05-09/crawl-7.ospider" });
+      expect(onStarted.mock.calls[0]?.[0]).toHaveLength(3);
+      expect(onStarted.mock.calls[0]?.[2]).toEqual({ files: { copy: ["/fixture/out/2026-10-28_14-05-09/crawl-7.ospider"] }, errors: [] });
+    } finally { vi.useRealTimers(); }
+  });
+
+  // spec: OUT-165 [P1]
+  it("builds exact folder and file paths for Windows and POSIX destinations", () => {
+    const at = new Date(2026, 0, 2, 3, 4, 5);
+    expect(timestampFolder("/Users/me/exports/", at)).toBe("/Users/me/exports/2026-01-02_03-04-05");
+    expect(timestampFolder("C:\\Exports", at)).toBe("C:\\Exports\\2026-01-02_03-04-05");
+    expect(joinPath("C:\\Exports\\2026-01-02_03-04-05", "c1.ospider")).toBe("C:\\Exports\\2026-01-02_03-04-05\\c1.ospider");
+    expect(joinPath("/tmp/out", "c1.ospider")).toBe("/tmp/out/c1.ospider");
+  });
+
+  // spec: OUT-075 [P1]
+  it("keeps exports that started when a later start or saving the folder fails, and names the failures", async () => {
+    core.handlers.set("api.list", () => [{ kind: "drive", labelKey: "drive", auth: "oauth", connected: true, autoConnect: false, state: "connected", accounts: [{ kind: "drive", account: "me@example.test", scopes: [], accountId: "a1" }] }]);
+    core.handlers.set("export.sheets", () => { throw new Error("quota exceeded"); });
+    vi.spyOn(usePrefs.getState(), "patch").mockRejectedValue(new Error("settings locked"));
     desktop.choose = vi.fn(async () => "/fixture/out");
-    const { onStarted } = mount({ kind: "multi" });
+    const { onStarted, onClose } = mount({ kind: "multi" });
     fireEvent.click(await screen.findByRole("checkbox", { name: "All" }));
-    fireEvent.click(screen.getByRole("checkbox", { name: "XML sitemap" }));
-    fireEvent.click(screen.getByRole("checkbox", { name: /crawl file/ }));
-    fireEvent.click(screen.getByRole("checkbox", { name: /subfolder named after date/ }));
+    fireEvent.click(await screen.findByRole("checkbox", { name: /Google Sheets in Google Drive/ }));
     await save("Export…");
-    await waitFor(() => expect(onStarted).toHaveBeenCalled());
-    const dir = call("export.multi")[0]?.args as { dir: string };
-    expect(dir.dir).toMatch(/^\/fixture\/out\/\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}$/);
-    expect(call("export.sitemap")[0]?.args).toMatchObject({ sitemapKind: "pages", dir: dir.dir });
-    expect(call("crawls.export")[0]?.args).toEqual({ ids: ["crawl-7"], dest: dir.dir });
-    expect(onStarted.mock.calls[0]?.[0]).toHaveLength(3);
+    await waitFor(() => expect(onStarted).toHaveBeenCalledTimes(1));
+    const [handles, , info] = onStarted.mock.calls[0]!;
+    expect(handles).toEqual([handle]);
+    expect(info.errors).toHaveLength(2);
+    // one message for the failed Drive start, one for the folder preference that could not be saved
+    expect(onClose).toHaveBeenCalled();
+    expect(call("export.multi")).toHaveLength(1);
+  });
+
+  // spec: OUT-075 [P1]
+  it("shows a failed start next to the progress of the exports that did start", async () => {
+    core.handlers.set("api.list", () => [{ kind: "drive", labelKey: "drive", auth: "oauth", connected: true, autoConnect: false, state: "connected", accounts: [{ kind: "drive", account: "me@example.test", scopes: [], accountId: "a1" }] }]);
+    core.handlers.set("export.sheets", () => { throw new Error("quota exceeded"); });
+    desktop.choose = vi.fn(async () => "/fixture/out");
+    render(<ExportHost desktop={desktop} />);
+    act(() => openExport({ kind: "multi" }));
+    fireEvent.click(await screen.findByRole("checkbox", { name: "All" }));
+    fireEvent.click(await screen.findByRole("checkbox", { name: /Google Sheets in Google Drive/ }));
+    await save("Export…");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(screen.getByRole("progressbar", { name: "Export in progress" })).toBeInTheDocument();
+    expect(screen.getAllByText(/unexpected error/i).length).toBeGreaterThan(0);
+  });
+
+  // spec: OUT-165 [P1]
+  it("lists the crawl copy after the export although crawls.export only reports a count", () => {
+    const done = (opId: string, result: unknown) => ({ opId, labelKey: "x", done: 1, total: 1, state: "done" as const, result: result as never });
+    const status = combine([done("multi", { files: [{ path: "/out/internal_all.csv", bytes: 9 }], warnings: [], skipped: [] }), done("copy", { count: 1 })],
+      { copy: ["/out/c1.ospider"] });
+    expect(status.state).toBe("done");
+    expect(status.files.map(f => f.path)).toEqual(["/out/internal_all.csv", "/out/c1.ospider"]);
+    const failed = combine([{ ...done("copy", null), state: "failed" }], { copy: ["/out/c1.ospider"] });
+    expect(failed.files).toEqual([]);
   });
 
   // spec: OUT-075 [P1]

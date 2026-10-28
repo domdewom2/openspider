@@ -11,10 +11,10 @@ import { nameTarget, type ExportRequest, type LocalFormat } from "./model";
 import { nativeExportDesktop, type ExportDesktop } from "./native";
 import { defaultSitemapOptions, sitemapSchema } from "./sitemap";
 import { SitemapOptions } from "./SitemapOptions";
-import { MultiExportDialog } from "./MultiExportDialog";
+import { MultiExportDialog, type StartInfo } from "./MultiExportDialog";
 
 export function ExportDialog(props: {
-  request: ExportRequest; onClose(): void; onStarted(handles: OpHandle[], path: string): void; desktop?: ExportDesktop;
+  request: ExportRequest; onClose(): void; onStarted(handles: OpHandle[], path: string, info?: StartInfo): void; desktop?: ExportDesktop;
 }) {
   // OUT-075 (A02-17): the multi export has a dialog of its own with output, selection, local files, Looker Studio and presets.
   return props.request.kind === "multi" ? <MultiExportDialog onClose={props.onClose} onStarted={props.onStarted} desktop={props.desktop} /> : <SingleExportDialog {...props} />;

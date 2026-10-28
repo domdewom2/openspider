@@ -1,4 +1,7 @@
 // Abnahme M2-U34 (4) und Befunde A02-05, A02-17, A02-19, A02-21 im Hauptfenster gegen die echte Bridge.
+import { existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { expect, test } from "../alpha/fixture";
 import { SIZES, crawledWithSelection, showPanes } from "./support";
 
@@ -91,4 +94,41 @@ test("rendering page explains why JavaScript rendering is locked and what it nee
   const dialog = page.getByRole("dialog", { name: "Crawl-Konfiguration" });
   await expect(dialog.getByTestId("rendering-locked-how")).toContainText("einen neuen Crawl beginnen");
   await expect(dialog.getByTestId("rendering-chromium-note")).toContainText("JavaScript-Rendering braucht Chromium");
+});
+
+// spec: OUT-165 [P1]
+// spec: OUT-075 [P1]
+test("the multi export copies only the crawl file into a new timestamped folder and lists it (review M2-U34 #1, #3)", async ({ alpha }) => {
+  const { page } = alpha;
+  const dir = mkdtempSync(join(tmpdir(), "os-u34-copy-"));
+  try {
+    await crawledWithSelection(alpha);
+    await alpha.chooseExportPath(dir);
+    const crawlId = await page.evaluate(async () => {
+      const path = "/src/state/session.ts";
+      const { useSession } = await import(/* @vite-ignore */ path);
+      return useSession.getState().crawl?.crawlId as string;
+    });
+    await page.evaluate(async () => {
+      const path = "/src/ui/actions.ts";
+      const { runAction } = await import(/* @vite-ignore */ path);
+      runAction("export.multi", { source: "menu" });
+    });
+    const dialog = page.getByRole("dialog", { name: "Exportoptionen" });
+    await dialog.getByText("Crawl-Datei (.ospider) in den Zielordner kopieren").click();
+    await dialog.getByText("In einen Unterordner mit Datum und Uhrzeit schreiben").click();
+    await dialog.getByRole("button", { name: "Exportieren…" }).click();
+    const status = page.getByRole("region", { name: "Exportstatus" });
+    await expect(status).toContainText("Export abgeschlossen.", { timeout: 30_000 });
+    // chooseExportPath answers `<dir>/folder`; the copy lands in a new `<stamp>` folder below it, under the crawl's id.
+    const stamps = readdirSync(join(dir, "folder"));
+    expect(stamps).toHaveLength(1);
+    expect(stamps[0]).toMatch(/^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}$/);
+    const copy = join(dir, "folder", stamps[0]!, `${crawlId}.ospider`);
+    expect(existsSync(copy), copy).toBe(true);
+    expect(readdirSync(join(dir, "folder", stamps[0]!))).toEqual([`${crawlId}.ospider`]);
+    await expect(status).toContainText(`${crawlId}.ospider`);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

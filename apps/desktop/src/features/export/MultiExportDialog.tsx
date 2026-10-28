@@ -43,20 +43,27 @@ export function missingInputs(items: number, extras: MultiExtras): Missing[] {
   return missing;
 }
 
-/** OUT-013: a timestamped subfolder keeps earlier exports; the separator follows the chosen path. */
+/** Joins a name to a folder chosen by the user; the separator follows that path (Windows `C:\…` or POSIX). */
+export function joinPath(dir: string, name: string): string {
+  const sep = dir.includes("\\") && !dir.includes("/") ? "\\" : "/";
+  return `${dir.replace(/[\\/]+$/, "")}${sep}${name}`;
+}
+
+/** OUT-013: a timestamped subfolder keeps earlier exports (local time of the computer). */
 export function timestampFolder(dir: string, now: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
-  const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
-  const sep = dir.includes("\\") && !dir.includes("/") ? "\\" : "/";
-  return `${dir.replace(/[\\/]+$/, "")}${sep}${stamp}`;
+  return joinPath(dir, `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`);
 }
+
+/** What the export status needs besides the operations: files known before the result (crawl copy) and start errors. */
+export interface StartInfo { files: Record<string, string[]>; errors: string[] }
 
 /**
  * Multi export after OUT-075 (A02-17): output – selection – local files (OUT-165) – Looker Studio time series (OUT-210) – presets.
  * One click starts every chosen export; the export status lists the files written and the entries skipped.
  */
 export function MultiExportDialog({ onClose, onStarted, desktop = nativeExportDesktop }: {
-  onClose(): void; onStarted(handles: OpHandle[], path: string): void; desktop?: ExportDesktop;
+  onClose(): void; onStarted(handles: OpHandle[], path: string, info?: StartInfo): void; desktop?: ExportDesktop;
 }) {
   const t = useT();
   const prefs = usePrefs(s => s.dto?.export);
@@ -105,11 +112,23 @@ export function MultiExportDialog({ onClose, onStarted, desktop = nativeExportDe
         if (!base || !mounted.current) return;
       }
       const dir = local && extras.timestamp ? timestampFolder(base, new Date()) : base;
+      // Every started operation is handed to the export status, even if a later start fails (A02-17 review): a failed step is
+      // reported next to the running exports instead of hiding them; nothing that already runs is started twice.
       const handles: OpHandle[] = [];
+      const info: StartInfo = { files: {}, errors: [] };
+      const run = async (job: () => Promise<OpHandle | OpHandle[] | undefined>, files?: string[]) => {
+        try {
+          const started = await job();
+          for (const handle of started === undefined ? [] : Array.isArray(started) ? started : [started]) {
+            handles.push(handle);
+            if (files) info.files[handle.opId] = files;
+          }
+        } catch (e) { info.errors.push(describeError(t, toCmdError(e), key => i18n.has(currentLanguage(), key)).text); }
+      };
       const singleWorkbook = choices.format === "xlsx" && choices.singleWorkbook;
-      if (choices.items.length) handles.push(await exportApi.multi({ items: choices.items, format: choices.format, dir, singleWorkbook, skipEmpty: choices.skipEmpty }));
-      if (extras.drive && choices.items.length) handles.push(await exportApi.sheets({ account: extras.account, selections: choices.items, name: extras.sheetName.trim() }));
-      if (extras.files.some(f => f !== "crawl")) {
+      if (choices.items.length) await run(() => exportApi.multi({ items: choices.items, format: choices.format, dir, singleWorkbook, skipEmpty: choices.skipEmpty }));
+      if (extras.drive && choices.items.length) await run(() => exportApi.sheets({ account: extras.account, selections: choices.items, name: extras.sheetName.trim() }));
+      if (extras.files.some(f => f !== "crawl")) await run(async () => {
         const dto = await config.get();
         const root = dto.config as { sitemap_gen?: unknown; spider?: { hreflang?: { store?: boolean } } };
         for (const kind of ["sitemap", "imageSitemap"] as const) {
@@ -117,13 +136,21 @@ export function MultiExportDialog({ onClose, onStarted, desktop = nativeExportDe
           const options = sitemapSchema.parse(root.sitemap_gen ?? {});
           if (kind === "imageSitemap") options.images.enabled = true;
           if (root.spider?.hreflang?.store !== true) options.hreflang.enabled = false;
-          handles.push(await exportApi.sitemap({ sitemapKind: kind === "sitemap" ? "pages" : "images", options, dir }));
+          await run(() => exportApi.sitemap({ sitemapKind: kind === "sitemap" ? "pages" : "images", options, dir }));
         }
+        return undefined;
+      });
+      if (extras.files.includes("crawl") && crawlId) {
+        // A single id with a path that does not exist yet is taken as the file name by `crawls.export`: name the file itself
+        // (the core creates missing folders), so a new timestamped folder gets `<id>.ospider` inside.
+        const target = joinPath(dir, `${crawlId}.ospider`);
+        await run(() => crawls.export({ ids: [crawlId], dest: target }), [target]);
       }
-      if (extras.files.includes("crawl") && crawlId) handles.push(await crawls.export({ ids: [crawlId], dest: dir }));
-      if (extras.looker) handles.push(await exportApi.customSummary({ account: extras.account, target: extras.lookerTarget.trim(), metrics: extras.metrics }));
-      if (local) await usePrefs.getState().patch({ export: { directory: base, format: choices.format } });
-      onStarted(handles, dir);
+      if (extras.looker) await run(() => exportApi.customSummary({ account: extras.account, target: extras.lookerTarget.trim(), metrics: extras.metrics }));
+      if (!handles.length) { if (mounted.current) setError(info.errors.join(" ")); return; }
+      if (local) await usePrefs.getState().patch({ export: { directory: base, format: choices.format } })
+        .catch(e => { info.errors.push(describeError(t, toCmdError(e), key => i18n.has(currentLanguage(), key)).text); });
+      onStarted(handles, dir, info);
       onClose();
     } catch (e) { showError(e); }
     finally { lock.current = false; if (mounted.current) setBusy(false); }
