@@ -15,3 +15,8 @@
 /* Menu entries keep one line: a wrapping entry changed the popover height while it was positioned at the window edge
    (WebKit reported "ResizeObserver loop"). */
 .os-tabbar-menu .os-menu-item { white-space: nowrap; }
+/* K2-77 pill tabs (top bar): rounded, outlined, the selected tab filled with the accent-derived selection colour. The spacing is a
+   margin (measured by the TabBar together with the tab width), not a flex gap. */
+.os-tabbar-pills .os-tab { margin-inline-end: 6px; border: 1px solid var(--os-border); border-radius: 8px; padding: 4px 12px; background: var(--os-bg-surface); }
+.os-tabbar-pills .os-tab.os-tab-selected, .os-tabbar-pills .os-tab[data-selected] { background: var(--os-bg-selection); border-color: var(--os-accent); box-shadow: none; color: var(--os-text); }
+.os-tabbar-pills .os-tabbar-overflow .os-icon-btn { border: 1px solid var(--os-border); border-radius: 8px; }

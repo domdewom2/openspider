@@ -122,7 +122,11 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
       const triggerWidth = trigger?.offsetWidth || 32;
       // An always present trigger takes its room before the tabs are distributed; otherwise it only appears on overflow.
       m = {
-        widths: [...el.querySelectorAll<HTMLElement>("[data-tab-measure]")].map((t) => t.offsetWidth),
+        // Margins count as part of a tab (pill tabs are spaced by a margin, not a flex gap that the sum would miss).
+        widths: [...el.querySelectorAll<HTMLElement>("[data-tab-measure]")].map((t) => {
+          const style = getComputedStyle(t);
+          return t.offsetWidth + (parseFloat(style.marginLeft) || 0) + (parseFloat(style.marginRight) || 0);
+        }),
         available: el.clientWidth - (alwaysMenu ? triggerWidth : 0),
         overflowWidth: alwaysMenu ? 0 : triggerWidth,
       };
