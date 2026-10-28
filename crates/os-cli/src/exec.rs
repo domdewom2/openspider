@@ -763,7 +763,7 @@ async fn export_phase(
         if signals.is_interrupted() {
             return ExportEnd::Interrupted;
         }
-        if plan.compare_with_previous {
+        if plan.compare_with_previous || plan.explicit_previous.is_some() {
             if let Some(result) = os_export::csv::with_header_labels(&plan.header_labels, || {
                 comparison_export(
                     &file,
@@ -773,6 +773,7 @@ async fn export_phase(
                     plan.format,
                     plan.segment.as_deref(),
                     &signals.cancel_token(),
+                    plan.explicit_previous.as_deref(),
                 )
             }) {
                 match result {
@@ -1023,7 +1024,9 @@ fn run_batch(
     signals: &Signals,
     rep: &Reporter,
 ) -> Result<usize, BatchEnd> {
-    if plan.compare_with_previous && file.get_meta("compare.latest").ok().flatten().is_some() {
+    if plan.explicit_previous.is_some()
+        || (plan.compare_with_previous && file.get_meta("compare.latest").ok().flatten().is_some())
+    {
         return comparison_batch(file, cfg, plan, batch, out, signals, rep);
     }
     let selections: Vec<os_export::types::ExportSelection> = plan
@@ -1167,18 +1170,24 @@ fn comparison_export(
     format: Format,
     segment: Option<&str>,
     cancel: &os_model::CancelToken,
+    explicit_previous: Option<&Path>,
 ) -> Option<Result<Vec<ExportFileInfo>, String>> {
-    let Resolved::Tab { tab, filter } = item else {
+    if !matches!(item, Resolved::Tab { .. } | Resolved::Report(_)) {
         return None;
-    };
-    let path = match file.get_meta("compare.latest") {
-        Ok(Some(path)) => path,
-        Ok(None) => return None,
-        Err(e) => return Some(Err(e.to_string())),
-    };
+    }
+    if explicit_previous.is_none() && file.get_meta("compare.latest").ok().flatten().is_none() {
+        return None;
+    }
     Some((|| {
-        let (mut c, config) = os_analyze::compare::change::auto::load(Path::new(&path), cancel)
-            .map_err(|e| e.to_string())?;
+        let (mut c, config) = load_comparison(file, explicit_previous, cancel)?;
+        if let Resolved::Report(name) = item {
+            return os_export::compare::save_report(&mut c, name, out, format, cancel)
+                .map(|r| r.files)
+                .map_err(|e| e.to_string());
+        }
+        let Resolved::Tab { tab, filter } = item else {
+            unreachable!()
+        };
         let scopes = os_export::segment::selections(file, segment).map_err(|e| e.to_string())?;
         let mut files = Vec::new();
         for scope in scopes {
@@ -1251,6 +1260,29 @@ fn comparison_export(
     })())
 }
 
+fn load_comparison(
+    file: &CrawlFile,
+    previous: Option<&Path>,
+    cancel: &os_model::CancelToken,
+) -> Result<(os_analyze::compare::Comparison, os_model::CompareConfig), String> {
+    if let Some(previous) = previous {
+        use os_analyze::compare::{change, Comparison, CrawlSide};
+        let work = file.path().parent().ok_or("Crawl directory missing")?;
+        let a = CrawlSide::open(file.path(), work).map_err(|e| e.to_string())?;
+        let b = CrawlSide::open(previous, work).map_err(|e| e.to_string())?;
+        let config = a.config.compare.clone();
+        let c = Comparison::open(a, b, &config.mapping, cancel).map_err(|e| e.to_string())?;
+        change::calculate(&c, &config.change_detection, cancel).map_err(|e| e.to_string())?;
+        Ok((c, config))
+    } else {
+        let path = file
+            .get_meta("compare.latest")
+            .map_err(|e| e.to_string())?
+            .ok_or("comparison missing")?;
+        os_analyze::compare::change::auto::load(Path::new(&path), cancel).map_err(|e| e.to_string())
+    }
+}
+
 /// Scheduling verwendet dieselben Vergleichs-Tabellen auch in Arbeitsmappen (OUT-152).
 fn comparison_batch(
     file: &CrawlFile,
@@ -1264,13 +1296,8 @@ fn comparison_batch(
     use os_export::types::TableWriter;
     let run = || -> Result<usize, String> {
         let token = signals.cancel_token();
-        let path = file
-            .get_meta("compare.latest")
-            .map_err(|e| e.to_string())?
-            .ok_or("comparison missing")?;
         let (mut comparison, config) =
-            os_analyze::compare::change::auto::load(Path::new(&path), &token)
-                .map_err(|e| e.to_string())?;
+            load_comparison(file, plan.explicit_previous.as_deref(), &token)?;
         let name = file.meta().map_err(|e| e.to_string())?.name;
         let destination = out.join(os_export::naming::file_name(
             &format!("{name} export"),
