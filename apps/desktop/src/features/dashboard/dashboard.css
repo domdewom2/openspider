@@ -1,0 +1,10 @@
+.os-dashboard { width: 100%; height: 100%; overflow: auto; padding: var(--os-space-16); background: var(--os-bg-app); }
+.os-dashboard-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--os-space-12); margin-bottom: var(--os-space-16); }
+.os-dashboard-card { display: flex; flex-direction: column; gap: var(--os-space-8); min-width: 0; padding: var(--os-space-16); border: var(--os-line) solid var(--os-border); border-radius: var(--os-radius-card); background: var(--os-bg-surface); }
+.os-dashboard-card > span { color: var(--os-text-muted); }
+.os-dashboard-metrics strong { font-size: var(--os-font-metric); line-height: 1.2; color: var(--os-accent); }
+.os-dashboard-card h2 { font-size: var(--os-font-body); margin: 0 0 var(--os-space-8); }
+.os-dashboard-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--os-space-16); }
+.os-dashboard-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--os-space-8); padding: var(--os-space-8) 0; color: var(--os-text); background: transparent; border: 0; border-bottom: var(--os-line) solid var(--os-border); font: inherit; text-align: start; cursor: pointer; }
+.os-dashboard-row > span:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.os-dashboard-row progress { width: 100%; height: var(--os-space-8); accent-color: var(--os-accent); }

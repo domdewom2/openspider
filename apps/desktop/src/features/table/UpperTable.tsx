@@ -1,3 +1,4 @@
+import { Dashboard } from "../dashboard/Dashboard";
 import { ComparisonTable } from "../compare/ComparisonTable";
 import { useComparison } from "../compare/model";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -52,14 +53,7 @@ import "./table.css";
 export function UpperTable() {
   const active = useComparison(s => !!s.session);
   const overview = useTabs(s => s.view === "overview");
-  return active ? <ComparisonTable /> : overview ? <OverviewPlaceholder /> : <RegularUpperTable />;
-}
-/** „Übersicht“ of the grouped navigation (UI-004, K2-77): the dashboard comes with M2-U35; until then an explained empty area. */
-function OverviewPlaceholder() {
-  const t = useT();
-  return <section className="u10-table u34-overview" aria-label={t("u34-nav-overview")} data-overview-placeholder="">
-    <p className="u34-overview-text">{t("u34-overview-pending")}</p>
-  </section>;
+  return active ? <ComparisonTable /> : overview ? <Dashboard /> : <RegularUpperTable />;
 }
 function RegularUpperTable() {
   const t = useT(); const locale = currentLanguage(); const tabs = useTabs();
