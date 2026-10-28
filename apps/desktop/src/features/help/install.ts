@@ -17,7 +17,7 @@ import { showHelp, useHelp } from "./state";
 import { client } from "../../ipc/client";
 import { chooseFile } from "./files";
 import { installMenuContexts } from "./menuContexts";
-import { loadRecent, normalizeRecent, saveRecent } from "./recent";
+import { loadRecent, normalizeRecent, updateRecent } from "./recent";
 
 /** Registrierung und Abmeldung sind fenstergebunden; verspätete Antworten ändern kein geschlossenes Fenster. */
 export function installMainMenus(): () => void {
@@ -54,9 +54,8 @@ export function installMainMenus(): () => void {
     rebuild();
   };
   let writes = Promise.resolve();
-  const persist = () => {
-    const entries = [...state.recent];
-    writes = writes.then(() => saveRecent(entries)).catch(error);
+  const persist = (change: Parameters<typeof updateRecent>[0]) => {
+    writes = writes.then(() => updateRecent(change)).catch(error);
     return writes;
   };
   const openPath = async (path: string, recent = false) => {
@@ -66,7 +65,7 @@ export function installMainMenus(): () => void {
     } catch (e) {
       if (recent && toCmdError(e).code === "NotFound") {
         setRecent(state.recent.filter((entry) => entry.path !== path));
-        await persist();
+        await persist(entries => entries.filter(entry => entry.path !== path));
         useHelp.setState({ message: getT()("u04-recent-missing", { path }) });
         return;
       }
@@ -74,7 +73,7 @@ export function installMainMenus(): () => void {
     }
     if (!live) return;
     setRecent([{ path }, ...state.recent.filter((e) => e.path !== path)]);
-    await persist();
+    await persist(entries => [{ path }, ...entries.filter(entry => entry.path !== path)]);
   };
   const file = (request: Parameters<typeof chooseFile>[0]) => chooseFile(request, () => live);
   on("crawl.open", () => file({ kind: "open", extensions: ["ospider"], title: "shortcut-crawl-open", submit: (path) => openPath(path) }));

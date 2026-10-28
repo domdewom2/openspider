@@ -1,4 +1,4 @@
-import { loadRecent, saveRecent } from "../help/recent";
+import { loadRecent, updateRecent } from "../help/recent";
 import { openComparison, useComparison } from "../compare/model";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useT, i18n, currentLanguage } from "../../i18n";
@@ -152,7 +152,7 @@ export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDe
       if (missing && path) {
         const remaining = writeRecent(readRecent().filter(p => p !== path));
         setRecent(remaining);
-        await saveRecent(remaining.map(path => ({ path })));
+        await updateRecent(entries => entries.filter(entry => entry.path !== path));
       }
       setError({ text: `${path ?? ""}: ${missing ? t("crawls-error-missing") : textError(e)}`, path: err.messageKey === "err-crawl-corrupt" ? path : undefined });
     }

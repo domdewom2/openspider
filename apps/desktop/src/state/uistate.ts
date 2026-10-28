@@ -24,18 +24,22 @@ export function flushUiState(): Promise<void> {
   const batch = pending; pending = [];
   if (!batch.length) return queue;
   const job = queue.catch(() => undefined).then(async () => {
-    for (let attempt = 0; ; attempt++) {
-      const dto = schema.parse(await uistate.load());
-      const state = batch.reduce((state, item) => item.update(state), dto.state as State);
-      try {
-        await uistate.save(schema.parse({ ...dto, state }));
-        return;
-      } catch (error) {
-        if (toCmdError(error).code !== "Stale" || attempt >= 2) throw error;
-      }
-    }
+    await updateUiState(state => batch.reduce((state, item) => item.update(state), state));
   });
   queue = job.catch(() => undefined);
   void job.then(() => batch.forEach(item => item.resolve()), error => batch.forEach(item => item.reject(error)));
   return queue;
+}
+
+/** Apply a partial change to the latest revision; callbacks must be safe to replay. */
+export async function updateUiState(update: Update) {
+  for (let attempt = 0; ; attempt++) {
+    const dto = schema.parse(await uistate.load());
+    const state = update(dto.state as State);
+    try {
+      return await uistate.save(schema.parse({ ...dto, state }));
+    } catch (error) {
+      if (toCmdError(error).code !== "Stale" || attempt >= 2) throw error;
+    }
+  }
 }

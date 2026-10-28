@@ -5,7 +5,7 @@ import { config } from "../../ipc/config";
 import { crawl } from "../../ipc/crawl";
 import type { CrawlModeDto } from "../../ipc/gen/CrawlModeDto";
 import type { StartRequest } from "../../ipc/gen/StartRequest";
-import type { UiStateJson } from "../../ipc/gen/UiStateJson";
+import { updateUiState } from "../../state/uistate";
 import { uistate } from "../../ipc/uistate";
 import { useSession } from "../../state/session";
 import { useAction } from "../../ui/actions";
@@ -86,10 +86,11 @@ export function Header() {
     const next = rememberUrl(history, value);
     setHistory(next);
     try {
-      // Read immediately before saving: preserve other features' UI state.
-      const dto = await uistate.load();
-      const state = object(dto.state);
-      await uistate.save({ ...dto, state: { ...state, header: { ...object(state.header), history: next } } } as UiStateJson);
+      await updateUiState(state => {
+        const header = object(state.header);
+        const saved = Array.isArray(header.history) ? header.history.filter((url): url is string => typeof url === "string") : [];
+        return { ...state, header: { ...header, history: rememberUrl([...new Set(saved)], value) } } as typeof state;
+      });
     } catch (e) { reportError(e); }
   }
 

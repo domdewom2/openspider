@@ -1,17 +1,13 @@
-import { uistate } from "../../../ipc/uistate";
+import { updateUiState } from "../../../state/uistate";
 import type { UiStateJson } from "../../../ipc/gen/UiStateJson";
 import type { JsonValue } from "../../../ipc/gen/serde_json/JsonValue";
 type State = { [key: string]: JsonValue };
 let tail: Promise<unknown> = Promise.resolve();
 const pending = new Map<string, ReturnType<typeof setTimeout>>();
 
-/** Serializes this feature's writes only. N01 must provide a shared, zod-validated uistate updater for all regions. */
+/** Persist a detail patch through the shared revision-aware boundary. */
 export function updateDetailState(update: (state: State) => State): Promise<UiStateJson> {
-  const task = tail.catch(() => undefined).then(async () => {
-    const dto = await uistate.load();
-    const state = dto.state && typeof dto.state === "object" && !Array.isArray(dto.state) ? dto.state : {};
-    return uistate.save({ ...dto, state: update(state) });
-  });
+  const task = tail.catch(() => undefined).then(() => updateUiState(update));
   tail = task.catch(() => undefined);
   return task;
 }
