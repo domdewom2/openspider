@@ -129,8 +129,10 @@ fn populate_comparison(path: &std::path::Path, side: &str, fixture: &Value) {
 }
 
 // spec: OUT-282
+// spec: OUT-281
+// spec: TECH-301
 #[test]
-fn overview_and_all_comparison_rows_match_manual_queries_and_fixture_golden() {
+fn overview_and_all_comparison_rows_match_public_change_detection() {
     let dir = tempfile::tempdir().unwrap();
     let previous = common::make_crawl(dir.path(), "previous.ospider");
     let current = common::make_crawl(dir.path(), "current.ospider");
@@ -169,13 +171,14 @@ fn overview_and_all_comparison_rows_match_manual_queries_and_fixture_golden() {
         changes[manual.len() + 1]["previous"],
         (&p.previous - &p.paired_previous).len()
     );
-    // C02's manual Change Detection interface is still a stub on this branch.
-    // Independently specified golden covers every element until that interface is available.
-    let golden: Vec<Value> = serde_json::from_str(include_str!(
-        "../../../tests/fixtures/out-m2-mail/compare-counts.json"
-    ))
-    .unwrap();
-    assert_eq!(&changes[manual.len()..], golden);
+    let config = cmp.current().config.compare.change_detection.clone();
+    os_analyze::compare::change::calculate(&cmp, &config, &cancel).unwrap();
+    let expected: Vec<Value> = os_analyze::compare::change::counts(&cmp, &config, false)
+        .unwrap()
+        .into_iter()
+        .map(|row| json!({"name":row.element,"previous":0,"current":row.change}))
+        .collect();
+    assert_eq!(&changes[manual.len() + 2..], expected);
     let text = completion.render().0;
     let golden_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../../tests/fixtures/out-m2-mail/compare.txt");
@@ -190,13 +193,29 @@ fn overview_and_all_comparison_rows_match_manual_queries_and_fixture_golden() {
         std::fs::write(&golden_path, &golden_text).unwrap();
     }
     assert_eq!(golden_text, std::fs::read_to_string(golden_path).unwrap());
-    for row in golden.iter().skip(2) {
+    for row in &expected {
         assert!(
-            text.contains(&format!("{} | 0 | 1 | +1", row["name"].as_str().unwrap())),
+            text.contains(&format!(
+                "{} | 0 | {} | +{}",
+                row["name"].as_str().unwrap(),
+                row["current"],
+                row["current"]
+            )),
             "{row}"
         );
     }
-    // Check actual displayed counters on both self-link-only changes in both crawls.
+    // C02 counts include self-links; the separate UI counters below exclude them.
+    for label in [
+        "Inlinks",
+        "Unique Inlinks",
+        "Internal Outlinks",
+        "Unique Internal Outlinks",
+    ] {
+        assert_eq!(
+            expected.iter().find(|r| r["name"] == label).unwrap()["current"],
+            3
+        );
+    }
     for side in [cmp.current(), cmp.previous()] {
         for id in [4, 5] {
             let counters: (i64,i64,i64,i64) = side.file.conn().query_row(
