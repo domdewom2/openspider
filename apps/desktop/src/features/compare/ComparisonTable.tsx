@@ -1,5 +1,7 @@
+import type { ColumnState } from "../../grid/DataGrid";
+import { ComparisonGrid } from "./ComparisonGrid";
 import { downloadComparison } from "./export";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useT } from "../../i18n";
 import { describeError, toCmdError } from "../../ipc/errors";
 import { Button } from "../../ui/primitives/Button";
@@ -11,6 +13,7 @@ export function ComparisonTabs() {
 }
 export function ComparisonTable() {
   const t=useT(); const state=useComparison(); const [page,setPage]=useState<ComparisonPage>(); const [error,setError]=useState<unknown>();const [offset,setOffset]=useState(0);const [exporting,setExporting]=useState(false);
+  const configuration=useRef(new Map<string, ColumnState[]>());
   const queryKey=JSON.stringify(state.query);
   useEffect(()=>{setOffset(0);},[queryKey,state.revision]);
   useEffect(()=>{
@@ -31,7 +34,10 @@ export function ComparisonTable() {
     {error != null && <p role="alert">{describeError(t, toCmdError(error)).text}</p>}
     {!page && error == null && <p role="status">{t("compare-loading")}</p>}
     {page?.contentAvailable===false && <p role="status">{t("compare-content-unavailable")}</p>}
-    {page && <><p role="status">{t("compare-total",{count:page.total})}</p><div className="os-compare-scroll"><table aria-label={t("compare-table")}><thead><tr>{page.columns.map(c=><th key={c} aria-sort={changed ? state.query.sort?.column===c ? state.query.sort.dir==="asc" ? "ascending" : "descending" : "none" : undefined}>{changed ? <button type="button" onClick={()=>useComparison.setState({query:{...state.query,sort:{column:c,dir:state.query.sort?.column===c && state.query.sort.dir==="asc" ? "desc" : "asc"}},selected:null,selectedPartner:null})}>{c}</button> : c}</th>)}</tr></thead><tbody>{page.cells.map((row,i)=><tr key={page.rowKeys[i] ?? i} aria-selected={state.selected===page.rowKeys[i]}>{row.map((value,n)=><td key={n}>{n===0 ? <button type="button" onClick={()=>selectComparisonUrl(page.rowKeys[i]!,page.side,page.partnerKeys?.[i] ?? null)}>{String(value ?? "")}</button> : String(value ?? "")}</td>)}</tr>)}</tbody></table></div>
+    {page && <><p role="status">{t("compare-total",{count:page.total})}</p><ComparisonGrid key={`${state.query.tab}:${page.columns.join("|")}`} page={page} configuration={configuration.current} label={t("compare-table")} sort={state.query.sort}
+      onSort={sort=>useComparison.setState({query:{...state.query,sort},selected:null,selectedPartner:null})}
+      onSelect={key=>{const i=page.rowKeys.indexOf(key);selectComparisonUrl(key,page.side,page.partnerKeys?.[i] ?? null);}}
+      onError={setError} onExport={()=>{void downloadComparison(state.query,"comparison.csv").catch(setError);}} />
       <Button isDisabled={offset===0} onPress={()=>setOffset(n=>Math.max(0,n-100))}>{t("compare-page-previous")}</Button><Button isDisabled={offset+page.cells.length>=page.total} onPress={()=>setOffset(n=>n+100)}>{t("compare-page-next")}</Button>
       {page.total===0 && <p>{t("compare-empty")}</p>}
     </>}
