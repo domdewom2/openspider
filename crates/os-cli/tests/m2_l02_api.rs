@@ -61,9 +61,20 @@ async fn missing_credentials_warn_or_fail_before_crawling_and_are_logged() {
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn cli_selection_reaches_the_mock_and_exports_after_apis_finish() {
     use os_integrations::credentials::{Credential, Credentials};
-    use os_testsite::mocks::{ga4::Ga4Mock, gsc::GscMock, MockServer};
+    use os_testsite::mocks::{
+        ga4::{Ga4Mock, MockRow},
+        gsc::GscMock,
+        MockServer,
+    };
     let ga = Ga4Mock::default();
+    let delay = std::time::Duration::from_millis(700);
+    ga.configure(|cfg| {
+        cfg.delay = delay;
+        cfg.rows = vec![MockRow::sessions("http://integ.test/", 137.0)];
+    });
     let gs = GscMock::default();
+    gs.set_rows(&[("http://integ.test/", 17.0, 68.0, 0.25, 3.75)]);
+    gs.set_scenario(Some("delay-1s"));
     let mocks = MockServer::start(vec![Arc::new(ga.clone()), Arc::new(gs.clone())])
         .await
         .unwrap();
@@ -79,7 +90,7 @@ async fn cli_selection_reaches_the_mock_and_exports_after_apis_finish() {
     let cli = Cli::try_parse_from([
         "openspider",
         "--crawl",
-        "http://site.test/",
+        "http://integ.test/",
         "--resolve",
         &resolve(&server),
         "--config",
@@ -130,7 +141,36 @@ async fn cli_selection_reaches_the_mock_and_exports_after_apis_finish() {
             .unwrap();
     }
     plan.api_secrets = Some(os_integrations::crawl_glue::SecretSnapshot(store));
-    let outcome = exec::execute(plan, rep.clone(), Signals::manual(CancelToken::new())).await;
+    let execution = exec::execute(plan, rep.clone(), Signals::manual(CancelToken::new()));
+    tokio::pin!(execution);
+    let request_started = tokio::time::timeout(std::time::Duration::from_secs(15), async {
+        loop {
+            if let Some(request) = ga.requests().iter().find(|r| r.path.contains(":runReport")) {
+                break request.at;
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(5)).await;
+        }
+    });
+    tokio::select! {
+        outcome = &mut execution => panic!("execution finished before the delayed API response: {outcome:?}"),
+        started = request_started => {
+            let started = started.expect("GA4 request starts");
+            assert!(started.elapsed() < delay, "observe the request during its response delay");
+            assert!(rep.exported_files().is_empty());
+            assert!(!output.join("analytics_all.csv").exists());
+            assert!(!output.join("search_console_all.csv").exists());
+        }
+    }
+    let outcome = execution.await;
+    assert!(ga
+        .requests()
+        .iter()
+        .filter(|r| r.path.contains(":runReport"))
+        .all(|r| r.at.elapsed() >= delay));
+    assert!(gs
+        .requests_to("query")
+        .iter()
+        .all(|r| r.at.elapsed() >= std::time::Duration::from_secs(1)));
     assert_eq!(
         outcome.exit,
         os_cli::Exit::Ok,
@@ -152,6 +192,37 @@ async fn cli_selection_reaches_the_mock_and_exports_after_apis_finish() {
         .any(|r| r.property.as_deref() == Some("sc-domain:integ.test")));
     assert_eq!(rep.exported_files().len(), 2);
     assert!(rep.exported_files().iter().all(|p| p.is_file()));
+    for (file, expected) in [
+        ("analytics_all.csv", vec![("GA4 Sessions", 137.0)]),
+        (
+            "search_console_all.csv",
+            vec![
+                ("Clicks", 17.0),
+                ("Impressions", 68.0),
+                ("CTR", 0.25),
+                ("Position", 3.75),
+            ],
+        ),
+    ] {
+        let rows = common::read_csv(&output.join(file));
+        let address = rows[0].iter().position(|h| h == "Address").unwrap();
+        let row = rows
+            .iter()
+            .skip(1)
+            .find(|r| r[address] == "http://integ.test/")
+            .expect("crawled fixture root in API export");
+        for (column, expected) in expected {
+            let index = rows[0]
+                .iter()
+                .position(|h| h == column)
+                .unwrap_or_else(|| panic!("missing {column} in {}", rows[0].join(",")));
+            assert_eq!(
+                row[index].parse::<f64>().unwrap(),
+                expected,
+                "{file}: {column}"
+            );
+        }
+    }
     assert!(rep
         .warning_messages()
         .iter()
