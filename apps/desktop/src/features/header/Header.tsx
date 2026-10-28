@@ -5,7 +5,7 @@ import { config } from "../../ipc/config";
 import { crawl } from "../../ipc/crawl";
 import type { CrawlModeDto } from "../../ipc/gen/CrawlModeDto";
 import type { StartRequest } from "../../ipc/gen/StartRequest";
-import type { UiStateJson } from "../../ipc/gen/UiStateJson";
+import { updateUiState } from "../../state/uistate";
 import { uistate } from "../../ipc/uistate";
 import { useSession } from "../../state/session";
 import { useAction } from "../../ui/actions";
@@ -13,18 +13,18 @@ import { Button } from "../../ui/primitives/Button";
 import { Dialog, DialogFooter } from "../../ui/primitives/Dialog";
 import { ProgressBar } from "../../ui/primitives/Feedback";
 import { eventBus } from "../../ipc/events";
-import { useStatusSnapshot } from "../statusbar/Statusbar";
 import { reportError } from "../notifications/controller";
 import { missingFolderSlash, normalizeInput, rememberUrl, useHeader } from "./model";
 import "./header.css";
 
 export function Header() {
   const t = useT();
-  const status = useStatusSnapshot().crawl;
+  const status = useSession(s => s.crawl);
   const { mode, url, scope } = useHeader();
   const [history, setHistory] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
+  const [pending, setPending] = useState<"pause" | "stop" | null>(null);
   const [list, setList] = useState("");
   const [listKind, setListKind] = useState("text");
   const [sitemap, setSitemap] = useState("");
@@ -41,7 +41,7 @@ export function Header() {
   const resumable = status?.phase === "paused" || status?.phase === "incomplete";
   const foreign = !!status && !status.owner.controllable;
   const hasResults = !!status && status.phase !== "idle";
-  const allowed = !busy && !foreign;
+  const allowed = !busy && !pending && !foreign;
   const canStart = ["spider", "list", "apis"].includes(mode) && allowed && !running && !resumable && (mode === "spider" ? !!normalized : sitemapMode ? !!validSitemap : !!list.trim());
 
   useEffect(() => {
@@ -67,11 +67,18 @@ export function Header() {
     if (status) useHeader.setState({ mode: status.mode });
   }, [status?.crawlId, status?.mode]);
 
+  useEffect(() => {
+    if (!pending || !status) return;
+    // Natural completion can win the race with a control request. A paused
+    // status is only an acknowledgement for Pause, never for Stop from pause.
+    if (pending === "pause" && status.phase !== "running" || pending === "stop" && ["completed", "failed", "idle"].includes(status.phase)) setPending(null);
+  }, [pending, status?.phase, status?.endReason]);
+
   async function perform(action: () => Promise<unknown>) {
     if (busyRef.current) return;
     busyRef.current = true;
     setBusy(true);
-    try { await action(); } catch (e) { reportError(e); }
+    try { await action(); } catch (e) { setPending(null); reportError(e); }
     finally { busyRef.current = false; setBusy(false); }
   }
 
@@ -79,10 +86,11 @@ export function Header() {
     const next = rememberUrl(history, value);
     setHistory(next);
     try {
-      // Read immediately before saving: preserve other features' UI state.
-      const dto = await uistate.load();
-      const state = object(dto.state);
-      await uistate.save({ ...dto, state: { ...state, header: { ...object(state.header), history: next } } } as UiStateJson);
+      await updateUiState(state => {
+        const header = object(state.header);
+        const saved = Array.isArray(header.history) ? header.history.filter((url): url is string => typeof url === "string") : [];
+        return { ...state, header: { ...header, history: rememberUrl([...new Set(saved)], value) } } as typeof state;
+      });
     } catch (e) { reportError(e); }
   }
 
@@ -133,7 +141,13 @@ export function Header() {
 
   const pauseResume = () => {
     if (!allowed || (!running && !resumable)) return false;
+    if (running) setPending("pause");
     void perform(() => running ? crawl.pause() : crawl.resume());
+  };
+  const stop = () => {
+    if (!allowed || (!running && !resumable)) return false;
+    setPending("stop");
+    void perform(() => crawl.stop());
   };
   const clear = () => {
     if (!allowed || running || !hasResults) return false;
@@ -177,7 +191,8 @@ export function Header() {
         </>}
       </>}
       <Button type="submit" isDisabled={!canStart}>{t("header-start")}</Button>
-      <Button isDisabled={!allowed || (!running && !resumable)} onPress={pauseResume}>{t(resumable ? "header-resume" : "header-pause")}</Button>
+      <Button isDisabled={!allowed || (!running && !resumable)} onPress={pauseResume}>{t(pending === "pause" ? "n03-header-pausing" : resumable ? "header-resume" : "header-pause")}</Button>
+      <Button isDisabled={!allowed || (!running && !resumable)} onPress={stop}>{t(pending === "stop" ? "n03-header-stopping" : "n03-header-stop")}</Button>
       <Button isDisabled={!allowed || running || !hasResults} onPress={clear}>{t("header-clear")}</Button>
       <div className="os-header-progress"><ProgressBar label={t("header-progress")} value={status?.percent ?? 0} /><span>{status?.percent ?? 0} %</span></div>
     </form>

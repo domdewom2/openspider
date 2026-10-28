@@ -83,6 +83,8 @@ pub fn run() {
         builder = builder.plugin(plugin);
     }
 
+    let menu_app = app.clone();
+    let menu_quitting = quitting.clone();
     let events_app = app.clone();
     let events_quitting = quitting.clone();
     let scheme_app = app.clone();
@@ -93,6 +95,11 @@ pub fn run() {
 
     builder
         .manage(app)
+        .on_menu_event(move |handle, event| {
+            if matches!(event.id().as_ref(), "app.quit" | "file.quit") {
+                window::request_quit(menu_app.clone(), handle.clone(), menu_quitting.clone());
+            }
+        })
         .on_window_event(move |window, event| {
             window::on_window_event(&events_app, &events_quitting, window, event);
         })

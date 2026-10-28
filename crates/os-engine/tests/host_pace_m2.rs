@@ -44,6 +44,8 @@ fn result(status: u16, ms: u32, after: Option<&str>) -> FetchResult {
 async fn crawl_delay_is_per_host_capped_and_can_be_disabled() {
     let clock = TestClock(tokio::time::Instant::now());
     let mut cfg = CrawlConfig::default();
+    // K2-63/K2-76: this test explicitly exercises the opt-in delay policy.
+    cfg.robots.respect_crawl_delay = true;
     let p = HostPacer::new(Some(3));
     let u = "http://site.test/".parse().unwrap();
     p.before_fetch(&u, Some(0.5), &cfg, &clock).await;
@@ -114,7 +116,9 @@ async fn aimd_rises_halves_and_is_disabled_by_explicit_rate() {
 #[tokio::test(start_paused = true)]
 async fn pause_cancels_host_wait_without_advancing_the_clock() {
     let clock = TestClock(tokio::time::Instant::now());
-    let cfg = CrawlConfig::default();
+    // K2-63/K2-76: a robots delay wait now requires explicit opt-in.
+    let mut cfg = CrawlConfig::default();
+    cfg.robots.respect_crawl_delay = true;
     let p = HostPacer::new(Some(1));
     let u = "http://site.test/".parse().unwrap();
     let first = p.acquire(&u).await;
