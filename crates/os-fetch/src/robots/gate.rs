@@ -335,6 +335,9 @@ impl RobotsGate {
 
     fn delay_note(&self, txt: &RobotsTxt) -> Option<String> {
         txt.crawl_delay(&self.cfg.token).map(|delay| {
+            if self.cfg.respect_crawl_delay && delay > 60.0 {
+                return format!("Crawl-delay: {delay} s (auf 60 s gekappt, angewandt)");
+            }
             let applied = if self.cfg.respect_crawl_delay {
                 "angewandt"
             } else {
@@ -1247,6 +1250,23 @@ mod tests {
         assert_eq!(
             checked.robots_fetch.unwrap().1.note.as_deref(),
             Some("Crawl-delay: 2 s (angewandt)")
+        );
+    }
+
+    // spec: CRAWL-145
+    #[tokio::test(start_paused = true)]
+    async fn robots_note_distinguishes_original_delay_from_the_engine_cap() {
+        let mut config = cfg(RobotsMode::Respect, RobotsUnreachablePolicy::BlockHost);
+        config.respect_crawl_delay = true;
+        let gate = RobotsGate::new(config);
+        let mock = Mock::with(&[(
+            ROBOTS,
+            vec![ok("User-agent: *\nCrawl-delay: 120\nDisallow: /x\n")],
+        )]);
+        let checked = gate.check(&mock, &u("http://h.test/y")).await;
+        assert_eq!(
+            checked.robots_fetch.unwrap().1.note.as_deref(),
+            Some("Crawl-delay: 120 s (auf 60 s gekappt, angewandt)")
         );
     }
 

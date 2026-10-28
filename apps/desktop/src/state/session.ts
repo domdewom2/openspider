@@ -15,7 +15,7 @@ export interface SessionState {
   seq: number;
   /** Active per-host pacing notices, retained when a dialog is dismissed. */
   throttled: Record<string, boolean>;
-  crawlDelays: Record<string, { seconds: number; applied: boolean }>;
+  crawlDelays: Record<string, { seconds: number; effectiveSeconds: number; applied: boolean }>;
   crawl: CrawlStatus | null;
   analysis: AnalysisStatus | null;
   analysisStarting: boolean;
@@ -106,7 +106,10 @@ function reduceThrottle(before: Record<string, boolean>, notices: Notice[]): Rec
 function reduceDelays(before: SessionState["crawlDelays"], notices: Notice[]): SessionState["crawlDelays"] {
   const next = { ...before };
   for (const n of notices) if (n.code === "crawl-delay" && typeof n.args.seconds === "number" && Number.isFinite(n.args.seconds)) {
-    next[String(n.args.origin ?? "")] = { seconds: n.args.seconds, applied: n.args.applied === true };
+    const applied = n.args.applied === true;
+    const effectiveSeconds = typeof n.args.effectiveSeconds === "number" && Number.isFinite(n.args.effectiveSeconds)
+      ? n.args.effectiveSeconds : applied ? Math.min(60, Math.max(0, n.args.seconds)) : 0;
+    next[String(n.args.origin ?? "")] = { seconds: n.args.seconds, effectiveSeconds, applied };
   }
   return next;
 }

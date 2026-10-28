@@ -323,6 +323,18 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
                         ("origin".into(), serde_json::json!(origin)),
                         ("seconds".into(), serde_json::json!(seconds)),
                         ("applied".into(), serde_json::json!(applied)),
+                        (
+                            "effectiveSeconds".into(),
+                            serde_json::json!(if applied {
+                                seconds.clamp(0.0, 60.0)
+                            } else {
+                                0.0
+                            }),
+                        ),
+                        (
+                            "capped".into(),
+                            serde_json::json!(applied && seconds > 60.0),
+                        ),
                     ]
                     .into(),
                 });

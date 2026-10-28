@@ -30,3 +30,16 @@ it.each([
   render(<Statusbar />);
   expect(screen.getByTestId("analysis-feedback")).toHaveTextContent(text);
 });
+
+// spec: CRAWL-145
+// spec: UI-013
+it.each(["en", "de"])("shows the original and capped effective delay in %s", async language => {
+  setupHeader(); await setLanguage(language);
+  useSession.setState({ crawlDelays: {} });
+  useSession.getState().applyTick({ ...tick, notices: [{ level: "info", code: "crawl-delay", args: {
+    origin: "https://site.test", seconds: 120, effectiveSeconds: 60, applied: true, capped: true,
+  } }] });
+  useSession.getState().clearNotices();
+  render(<Statusbar />);
+  expect(screen.getByText(language === "en" ? /Crawl-delay 120.0 s.*capped to 60.0 s.*applied/ : /Crawl-delay 120,0 s.*auf 60,0 s gekappt.*angewandt/)).toBeVisible();
+});

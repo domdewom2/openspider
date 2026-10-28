@@ -1,5 +1,6 @@
 # @language de
 n03-status-stopped = Gestoppt
+n03-status-delay-capped = Begrenzung: Crawl-delay { $seconds } s in robots.txt – auf { $effectiveSeconds } s gekappt (angewandt)
 n03-status-delay-applied = Begrenzung: Crawl-delay { $seconds } s in robots.txt – angewandt
 n03-status-delay-ignored = Crawl-delay { $seconds } s in robots.txt – nicht angewandt (Option: robots.respect_crawl_delay)
 n03-analysis-done = Analyse abgeschlossen
@@ -8,6 +9,7 @@ n03-analysis-failed = Analyse fehlgeschlagen
 notice-analysis-failed = Die Analyse ist fehlgeschlagen. Fehlerdetails prüfen und erneut versuchen.
 # @language en
 n03-status-stopped = Stopped
+n03-status-delay-capped = Rate limit: Crawl-delay { $seconds } s in robots.txt – capped to { $effectiveSeconds } s (applied)
 n03-status-delay-applied = Rate limit: Crawl-delay { $seconds } s in robots.txt – applied
 n03-status-delay-ignored = Crawl-delay { $seconds } s in robots.txt – not applied (option: robots.respect_crawl_delay)
 n03-analysis-done = Analysis completed
