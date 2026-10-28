@@ -1,6 +1,6 @@
 import { CrawlsHost } from "./features/crawls";
 import { ConfigHost } from "./features/config/frame";
-import { ExportHost, ExportViewButton } from "./features/export";
+import { ExportHost } from "./features/export";
 import { McpHost } from "./features/mcp";
 import { Shell } from "./features/shell/Shell";
 import { Header } from "./features/header/Header";
@@ -68,7 +68,6 @@ export function App() {
         </header>
         <nav className="os-app-tabs" aria-label={t("app-region-tabs")}>{TabsRegion && <TabsRegion />}</nav>
         <main className="os-app-main" data-region="table" aria-label={t("app-region-table")}>
-          <ExportViewButton />
           <RegionBoundary name="table">
             {TableRegion ? <TableRegion /> : <EmptyState state={{ code: "NO_DATA_YET" }} />}
           </RegionBoundary>
