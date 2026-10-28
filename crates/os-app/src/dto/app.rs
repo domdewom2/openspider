@@ -217,6 +217,10 @@ pub struct SettingsPatch {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct UiStateJson {
+    /// Schreibrevision aus load; save lehnt veraltete Revisionen ab.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional = nullable)]
+    pub revision: Option<u64>,
     /// Schemaversion des Zustands.
     pub version: u32,
     /// Inhalt (Fenster, Trenner, Tabs, Spalten, Verlauf).

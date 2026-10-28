@@ -1,8 +1,9 @@
 import { z } from "zod";
+import { toCmdError } from "../ipc/errors";
 import { uistate } from "../ipc/uistate";
 import type { JsonValue } from "../ipc/gen/serde_json/JsonValue";
 
-const schema = z.object({ version: z.number().int().positive(), state: z.record(z.string(), z.json()) });
+const schema = z.object({ version: z.number().int().positive(), revision: z.number().int().nonnegative().nullish(), state: z.record(z.string(), z.json()) });
 type State = Record<string, JsonValue>;
 type Update = (state: State) => State;
 let queue: Promise<void> = Promise.resolve();
@@ -23,9 +24,16 @@ export function flushUiState(): Promise<void> {
   const batch = pending; pending = [];
   if (!batch.length) return queue;
   const job = queue.catch(() => undefined).then(async () => {
-    const dto = schema.parse(await uistate.load());
-    const state = batch.reduce((state, item) => item.update(state), dto.state as State);
-    await uistate.save(schema.parse({ ...dto, state }));
+    for (let attempt = 0; ; attempt++) {
+      const dto = schema.parse(await uistate.load());
+      const state = batch.reduce((state, item) => item.update(state), dto.state as State);
+      try {
+        await uistate.save(schema.parse({ ...dto, state }));
+        return;
+      } catch (error) {
+        if (toCmdError(error).code !== "Stale" || attempt >= 2) throw error;
+      }
+    }
   });
   queue = job.catch(() => undefined);
   void job.then(() => batch.forEach(item => item.resolve()), error => batch.forEach(item => item.reject(error)));

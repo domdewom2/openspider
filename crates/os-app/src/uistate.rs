@@ -47,6 +47,7 @@ fn io_error(path: &Path, e: &std::io::Error) -> CmdError {
 
 fn empty_state() -> UiStateJson {
     UiStateJson {
+        revision: Some(0),
         version: 1,
         state: serde_json::json!({}),
     }
@@ -54,7 +55,9 @@ fn empty_state() -> UiStateJson {
 
 fn read_state(path: &Path) -> Option<UiStateJson> {
     let bytes = std::fs::read(path).ok()?;
-    serde_json::from_slice::<UiStateJson>(&bytes).ok()
+    let mut state = serde_json::from_slice::<UiStateJson>(&bytes).ok()?;
+    state.revision = Some(state.revision.unwrap_or(0));
+    Some(state)
 }
 
 impl UiStateStore {
@@ -84,9 +87,18 @@ impl UiStateStore {
             .unwrap_or_else(empty_state)
     }
 
-    /// Speichert den Zustand unverändert und liefert ihn zurück.
+    /// Speichert den Inhalt mit neuer Revision; veraltete load→save-Schreibvorgänge werden abgelehnt.
     pub fn save(&self, state: &UiStateJson) -> Result<UiStateJson, CmdError> {
         let _g = self.lock.lock().unwrap_or_else(|p| p.into_inner());
+        let current = read_state(&self.path())
+            .or_else(|| read_state(&self.backup_path()))
+            .unwrap_or_else(empty_state);
+        if state
+            .revision
+            .is_some_and(|revision| Some(revision) != current.revision)
+        {
+            return Err(CmdError::new(ErrorCode::Stale, "err-uistate-conflict"));
+        }
         self.save_locked(state)
     }
 
@@ -107,7 +119,12 @@ impl UiStateStore {
         if !state.state.is_object() {
             return Err(CmdError::invalid_input("err-invalid-uistate", "state"));
         }
-        let bytes = serde_json::to_vec_pretty(state).map_err(|e| {
+        let mut state = state.clone();
+        let current = read_state(&self.path())
+            .or_else(|| read_state(&self.backup_path()))
+            .unwrap_or_else(empty_state);
+        state.revision = Some(current.revision.unwrap_or(0).saturating_add(1));
+        let bytes = serde_json::to_vec_pretty(&state).map_err(|e| {
             CmdError::new(ErrorCode::Internal, "err-internal").with_detail(e.to_string())
         })?;
         if bytes.len() > MAX_UI_STATE_BYTES {
@@ -138,7 +155,7 @@ impl UiStateStore {
             let _ = std::fs::remove_file(&tmp);
             io_error(&path, &e)
         })?;
-        Ok(state.clone())
+        Ok(state)
     }
 }
 

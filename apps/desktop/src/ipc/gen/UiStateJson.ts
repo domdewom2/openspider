@@ -6,6 +6,10 @@ import type { JsonValue } from "./serde_json/JsonValue";
  */
 export type UiStateJson = { 
 /**
+ * Schreibrevision aus load; save lehnt veraltete Revisionen ab.
+ */
+revision?: number | null, 
+/**
  * Schemaversion des Zustands.
  */
 version: number, 
