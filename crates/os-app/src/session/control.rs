@@ -336,7 +336,14 @@ pub async fn resume(app: &App, ctx: CallCtx) -> Result<(), CmdError> {
     }
     let cfg = app
         .read_pool()
-        .run(s.key.clone(), |f, _| f.config())
+        .run(s.key.clone(), |f, _| {
+            if f.meta()?.end_reason == Some(os_model::EndReason::Stopped) {
+                return Err(os_store::StoreError::InvalidInput(
+                    "stopped crawl cannot resume".into(),
+                ));
+            }
+            f.config()
+        })
         .await?;
     let runtime = app.handle();
     let saved = app
@@ -410,6 +417,9 @@ pub async fn settle(app: &App, s: &SessionInfo, action: Option<bool>) -> Result<
         .as_ref()
         .and_then(|e| e.handle.lock().unwrap_or_else(|p| p.into_inner()).take());
     let Some(h) = h else {
+        if action == Some(true) {
+            return stop_checkpoint(app, s).await;
+        }
         return if action.is_some() {
             Err(CmdError::new(
                 ErrorCode::InvalidInput,
@@ -607,4 +617,41 @@ async fn start_apis(
         crawl_id: key.0,
         file: path.to_string_lossy().into_owned(),
     })
+}
+
+/// A restored pause has no engine handle. Finalize its durable checkpoint directly.
+async fn stop_checkpoint(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
+    let now = app.config().clock.now().to_db();
+    app.write_queue()
+        .submit_file(&s.key, move |f| {
+            let state = f
+                .meta()
+                .map_err(|e| crate::runtime::error::store_error(&e))?
+                .state;
+            if !matches!(state, CrawlState::Paused | CrawlState::Incomplete) {
+                return Err(CmdError::new(
+                    ErrorCode::InvalidInput,
+                    "err-crawl-not-running",
+                ));
+            }
+            for (key, value) in [
+                ("state", "Completed"),
+                ("end_reason", "stopped"),
+                ("ended_at", &now),
+                ("heartbeat_at", &now),
+                ("owner_pid", ""),
+            ] {
+                f.set_meta(key, value)
+                    .map_err(|e| crate::runtime::error::store_error(&e))?;
+            }
+            Ok(())
+        })
+        .await?;
+    super::state(app, &s.key, CrawlState::Completed);
+    app.crawl_events()
+        .emit(app, CrawlEvent::Stopped(s.key.clone()));
+    if s.config.analysis.auto_at_end {
+        super::analysis::start_operation(app, s.clone(), None, true)?;
+    }
+    Ok(())
 }

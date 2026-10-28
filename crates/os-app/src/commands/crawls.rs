@@ -153,7 +153,8 @@ async fn listing(app: &App, args: serde_json::Value) -> CmdResult {
         let own = sessions
             .iter()
             .any(|s| s.key.0 == l.meta.crawl_id.to_string() && s.engine.is_some());
-        let can_resume = l.can_resume(now);
+        let can_resume =
+            l.meta.end_reason != Some(os_model::EndReason::Stopped) && l.can_resume(now);
         let duration_ms = l.duration_ms.or_else(|| {
             l.meta.started_at.map(|start| {
                 let end = l.meta.ended_at.or(l.meta.heartbeat_at).unwrap_or(now);

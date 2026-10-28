@@ -34,7 +34,7 @@ export function Statusbar() {
     return () => { live = false; clearInterval(timer); };
   }, [c?.crawlId]);
   const chosenMode = useHeader((s) => s.mode);
-  const phase = analysis?.running ? t("status-analysis") : t(`status-${c?.phase ?? "idle"}`);
+  const phase = analysis?.running ? t("status-analysis") : c?.endReason === "stopped" ? t("n03-status-stopped") : t(`status-${c?.phase ?? "idle"}`);
   const unknown = "–";
   const current = analysis?.steps.find((s) => s.step === analysis.current);
   const index = current ? analysis!.steps.indexOf(current) + 1 : null;
