@@ -43,6 +43,10 @@ pub const BATCH_PAGES: usize = 200;
 /// 316 kumulierte Worker-Sekunden Kanalwartezeit und fast nur volle 2k-Batches.
 /// 4k bündelt die zufälligen Zähler-/Indexänderungen stärker; Kanal (256 Nachrichten)
 /// und Sammelzeit (500 ms) bleiben begrenzt. Der Batch-Speicher verdoppelt sich höchstens.
+/// K-49: Die Schranke ungeschriebener Seiten bei hartem Abbruch wächst um den Batchanteil
+/// von 2 000 auf 4 000 Seiten; dazu kommen Kanal und Abrufe in Bearbeitung.
+/// Im vollständigen 1M-Vergleich sank die Writer-Zeit von 396 auf 295 s bei 803 MB RSS;
+/// die Messung umfasst auch die Speicher-/Indexkorrekturen (kein isolierter Batchvergleich).
 pub const BATCH_PAGES_BACKLOG: usize = 4_000;
 /// Längste Wartezeit, bis ein nicht voller Batch im Normalbetrieb geschrieben wird.
 pub const BATCH_MAX_WAIT: Duration = Duration::from_millis(100);
