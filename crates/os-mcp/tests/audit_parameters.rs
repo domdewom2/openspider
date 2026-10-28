@@ -8,7 +8,12 @@ fn audit_exposes_only_allowlisted_scalars_and_never_nested_secrets() {
         "../../../tests/fixtures/agent-m2-http/requests.json"
     ))
     .unwrap();
-    assert!(!fixture.is_empty());
+    for headers in fixture {
+        assert_eq!(
+            redacted(&json!({"headers":headers})),
+            json!({"headers":"[redacted]"})
+        );
+    }
     let safe = json!({"crawl_id":"fixture-crawl", "id":12, "tab":"internal",
         "filter":"all", "limit":50, "offset":0, "format":"csv", "page":2});
     assert_eq!(redacted(&safe), safe);

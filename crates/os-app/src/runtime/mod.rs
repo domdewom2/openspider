@@ -855,4 +855,36 @@ mod subscription_notice_tests {
             _ => true,
         }));
     }
+
+    // spec: OUT-285 [P1]
+    #[tokio::test]
+    async fn notice_queued_after_subscription_survives_the_coalescer_deadline() {
+        let home = tempfile::tempdir().unwrap();
+        let app = App::new(AppConfig::new(home.path())).unwrap();
+        app.set_tick_policy(Arc::new(crate::events::coalescer::Coalescer::default()));
+        let sink = Arc::new(CollectingSink::new());
+        app.subscribe(WindowId("main".into()), sink.clone());
+        sink.take();
+        app.push_notice(Notice {
+            level: NoticeLevel::Error,
+            code: "mcp-start-failed".into(),
+            args: Default::default(),
+        });
+        assert_eq!(app.flush_tick(), 0, "initial coalescer deadline is not due");
+        tokio::time::timeout(Duration::from_secs(1), async {
+            loop {
+                if sink.take().iter().any(|event| match event {
+                    UiEvent::Tick { tick } => {
+                        tick.notices.iter().any(|n| n.code == "mcp-start-failed")
+                    }
+                    _ => false,
+                }) {
+                    break;
+                }
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .expect("pending notice must arrive even while MCP stays Off");
+    }
 }
