@@ -33,7 +33,7 @@ unten beschrieben und beim Orchestrator lokal abgelegt.
 | A02-14 | Menü „OpenSpider beenden“ ohne Wirkung | Hoch | App-Menü | – | UI-001, UI-002 |
 | A02-15 | Pausierter Crawl nach Neustart nicht wieder auffindbar | Hoch | Datei → Zuletzt geöffnet, Startzustand | – | CRAWL-126, UI-124 |
 | A02-16 | MCP-Dialog, Werkzeuge: Spaltenköpfe brechen buchstabenweise um, Liste leer | Mittel | MCP-Dialog → Werkzeuge | MCP-Dialog | UI-129 |
-| A02-17 | Mehrfach-Export (Bulk) unverständlich, Export scheint nicht zu entstehen | Mittel | Menü Bulk-Export / Mehrfach-Export | – | OUT-066, UI-002 |
+| A02-17 | Mehrfach-Export erfüllt OUT-075 nicht (kein Auswahlbaum, keine Vorlagen, kein Export) | Hoch | Menü Bulk-Export → Mehrfach-Export | – | OUT-075, OUT-210, UI-002 |
 | A02-18 | „Crawl-Analyse starten“ ohne sichtbare Rückmeldung | Mittel | Menü Crawl-Analyse | – | UI-080, UI-082 |
 | A02-19 | Segmente: JSON-Feld klein und unglücklich neben der Beschriftung | Niedrig | Konfiguration → Segmente | Konfiguration | UI-068 |
 | A02-20 | Leerzustände der Seitenleiste ohne Innenabstand („Crawl öffnen“ klebt am Rand) | Niedrig | Seitenleiste | – | UI-016, UI-060 |
@@ -164,13 +164,19 @@ unten beschrieben und beim Orchestrator lokal abgelegt.
 - **Screenshot:** MCP-Dialog, Reiter Werkzeuge.
 - **Spec:** UI-129.
 
-### A02-17 Mehrfach-Export (Bulk) unverständlich (Mittel)
-- **Ort:** Menü Bulk-Export / Mehrfach-Export, Exportoptionen.
-- **Beobachtung:** Der Nutzer weiß nicht, was einzutragen ist („Vorlage?“); nach Speichern entsteht scheinbar kein Export. Einzelexport
-  (Excel) der Ansicht funktioniert und sieht gut aus.
-- **Erwartung:** Geführter Ablauf (Auswahl → Zielordner → Export), klare Rückmeldung über erzeugte Dateien. Genaue Reproduktion beim
-  nächsten Durchgang erfragen (Rückfrage an den Nutzer).
-- **Spec:** OUT-066, UI-002.
+### A02-17 Mehrfach-Export erfüllt OUT-075 nicht (Hoch)
+- **Ort:** Menü Bulk-Export → Mehrfach-Export.
+- **Beobachtung:** Der Nutzer weiß nicht, was einzutragen ist („Vorlage?“); nach Speichern entsteht kein Export. Einzelexport (Excel)
+  der Ansicht funktioniert und sieht gut aus. Nachfrage des Nutzers: Wo wählt man aus, was exportiert wird, und wo ist der
+  Looker-Studio-Teil?
+- **Erwartung (nach Spec, nicht nach Vorbild):** Ein Dialog nach OUT-075 mit (1) Ausgabe: Zielordner und/oder Drive-Konto,
+  Überschreiben/Zeitstempel-Ordner, Format, Konsolidierung, leere Berichte überspringen, Segment; (2) Auswahl: durchsuchbarer Baum aller
+  Tabs/Filter, Bulk-Exporte und Reports mit Kontrollkästchen (oder Liste „verfügbar → ausgewählt“); (3) optional lokale Dateien
+  (Crawl-Kopie, XML-Sitemap, Bild-Sitemap) wie in OUT-165; (4) optional Looker-Studio-Zeitreihen-Export (OUT-210/OUT-211, braucht ein
+  Drive-Konto, sonst deaktiviert mit Hinweis); (5) Vorlagen speichern/anwenden/löschen (`.ospreset`); ein Klick „Exportieren“ erzeugt
+  alle Dateien, danach Rückmeldung mit Liste der erzeugten Dateien und übersprungener Positionen. Fehlende Pflichtangaben werden am Feld
+  und als Zähler im Dialogfuß angezeigt, der Export-Knopf bleibt bis dahin gesperrt.
+- **Spec:** OUT-075 (führend), OUT-165 (gleiche Bausteine im Aufgabendialog), OUT-210, OUT-211, UI-002.
 
 ### A02-18 „Crawl-Analyse starten“ ohne sichtbare Rückmeldung (Mittel)
 - **Ort:** Menü Crawl-Analyse.
