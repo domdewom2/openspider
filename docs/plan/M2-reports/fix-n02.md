@@ -101,3 +101,7 @@ Die folgenden freigegebenen Paketänderungen werden gemäß Arbeitsauftrag als *
 | `tests/fixtures/crawl-m2-list/README.md` | Veralteter Dateihinweis (E06/Integrator) |
 
 `crates/os-integrations/tests/crawl_glue_lifecycle.rs` enthält die Teilkorrektur der A1-Testisolation. Keine anderen Produktpfade, Manifeste oder Lockfiles wurden geändert. Tokio bleibt **1.53.3**; kein `cargo update`. Alle Commits verwenden explizite Dateipfade und den verlangten Co-Author-Trailer. Der Arbeitsbaum wurde abschließend bereinigt; das paketbezogene `CARGO_TARGET_DIR=/Users/dominikwojcik/Projects/build.noindex/target-fix-n02` wurde nach den Prüfungen gelöscht.
+
+## Erneuter Paketlauf ab `4b741111` (28.10.2026)
+
+Schritt 1 abgeschlossen: Arbeitsbaum anfangs sauber; `CLAUDE.md`, die vollständige Fable-Vorlage, Ursachen und vorhandene Korrekturen gelesen. `node_modules` vorhanden, daher kein erneutes `npm ci`. Vorgefundener Branch `m2/fix-n02` enthält bereits die MCP-Korrekturen und A1-Testisolation; diese werden erhalten.
