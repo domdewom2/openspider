@@ -18,6 +18,8 @@ pub struct Destination {
     pub crawl: String,
     pub name: String,
     pub cell_limit: u64,
+    /// Optional timestamp directory below the crawl folder (OUT-190).
+    pub subfolder: Option<String>,
 }
 impl Destination {
     pub fn new(project: &str, crawl: &str, name: &str) -> Self {
@@ -27,6 +29,7 @@ impl Destination {
             crawl: crawl.into(),
             name: name.into(),
             cell_limit: DEFAULT_CELL_LIMIT,
+            subfolder: None,
         }
     }
 }
@@ -129,6 +132,14 @@ where
         )
         .await
         .map_err(failure)?;
+    let parent = if let Some(name) = &destination.subfolder {
+        client
+            .find_or_create(&parent, name, drive::FOLDER)
+            .await
+            .map_err(failure)?
+    } else {
+        parent
+    };
     // A file can disappear between lookup and its first read. Resolve once again on 404.
     let (id, existing) = resolve(client, &parent, &destination.name).await?;
     let mut next_id = existing.iter().map(|s| s.id).max().unwrap_or(0) + 1;

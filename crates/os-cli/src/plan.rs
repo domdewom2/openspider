@@ -412,7 +412,7 @@ fn build_impl(
         .export_format
         .as_deref()
         .is_some_and(|s| s.eq_ignore_ascii_case("xls"));
-    let google = crate::google::validate(args, &paths)?;
+    let mut google = crate::google::validate(args, &paths)?;
 
     // Quelle
     let list_sources: Vec<String> = args
@@ -653,6 +653,15 @@ fn build_impl(
     } else {
         None
     };
+
+    if args.timestamped_output {
+        if let Some(target) = &mut google {
+            target.timestamp = output
+                .as_ref()
+                .and_then(|p| p.file_name())
+                .map(|s| s.to_string_lossy().into_owned());
+        }
+    }
 
     let project = args
         .project_name

@@ -92,8 +92,9 @@ pub async fn export(
                 .file_stem()
                 .unwrap_or_default()
                 .to_string_lossy();
-            let destination =
+            let mut destination =
                 os_export::target_gsheet::Destination::new(&plan.project, crawl, &name);
+            destination.subfolder = plan.google.as_ref().and_then(|t| t.timestamp.clone());
             let result = os_export::target_gsheet::export(client, &destination, tables, &token)
                 .await
                 .map_err(|e| e.to_string())?;

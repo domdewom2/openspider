@@ -868,12 +868,13 @@ async fn export_phase(
         if let Some(target) = &plan.google {
             let upload = match target.client(&plan.config, &plan.paths) {
                 Ok(client) => {
-                    crate::google::upload(
+                    crate::google::upload_at(
                         &client,
                         &plan.project,
                         &plan.name,
                         &csv,
                         plan.batch.is_some_and(|b| b.single_workbook),
+                        target.timestamp.as_deref(),
                         &signals.cancel_token(),
                         rep,
                     )
