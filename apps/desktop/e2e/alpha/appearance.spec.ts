@@ -8,6 +8,8 @@ const DARK_BG = "rgb(19, 20, 22)";
 // spec: UI-013
 // spec: UI-007
 test("switching the language between English and German changes the open main window without a restart", async ({ alpha }) => {
+  // Crawl bis zum Abschluss plus zwei Sprachwechsel überschreiten auf windows-latest die Standardfrist von 30 s.
+  test.setTimeout(90_000);
   const { page } = alpha;
   await alpha.open();
   await alpha.startFromHeader();

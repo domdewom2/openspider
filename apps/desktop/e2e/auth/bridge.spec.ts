@@ -16,7 +16,7 @@ async function loginBrowser(origin: string, endpointFile: string): Promise<Brows
       const targets = await (await fetch(`http://127.0.0.1:${url.port}/json/list`)).json() as { url: string }[];
       return targets.some((target) => target.url.startsWith(origin));
     } catch { return false; }
-  }, { timeout: 20_000 }).toBe(true);
+  }, { timeout: 60_000 }).toBe(true);
   return chromium.connectOverCDP(endpoint);
 }
 const configOf = (page: Page) => page.evaluate(() => window.cfgFixture.invoke("config.get"));
@@ -24,7 +24,8 @@ const configOf = (page: Page) => page.evaluate(() => window.cfgFixture.invoke("c
 // spec: CRAWL-120
 // spec: OUT-223
 test("real bridge: capture, cancel configuration, reopen and activate only with OK", async ({ page }) => {
-  test.setTimeout(90_000);
+  // Zwei Login-Durchläufe mit Chromium-Start; ein kalter Start auf CI-Runnern braucht bis zu 60 s.
+  test.setTimeout(180_000);
   const server = createServer((req, res) => {
     res.setHeader("Content-Type", "text/html");
     if (req.url === "/login") {

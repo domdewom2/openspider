@@ -99,6 +99,8 @@ test("rendering page explains why JavaScript rendering is locked and what it nee
 // spec: OUT-165 [P1]
 // spec: OUT-075 [P1]
 test("the multi export copies only the crawl file into a new timestamped folder and lists it (review M2-U34 #1, #3)", async ({ alpha }) => {
+  // Crawl plus Export dauern auf windows-latest länger als die Standardfrist von 30 s.
+  test.setTimeout(90_000);
   const { page } = alpha;
   const dir = mkdtempSync(join(tmpdir(), "os-u34-copy-"));
   try {
