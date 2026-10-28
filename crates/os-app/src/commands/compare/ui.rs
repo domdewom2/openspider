@@ -1,6 +1,7 @@
 //! Additive U23 read adapters for the existing sidebar/view commands. No new IPC command names.
 use os_analyze::compare::{
-    ChangeFilter, CompareClass, FilterComparison, LinkDirection, LinkSource, Side,
+    ChangeFilter, CompareClass, FilterComparison, LinkComparison, LinkDirection, LinkRow,
+    LinkSource, Side,
 };
 use os_analyze::views::{self, ColumnSelection, PageStart, ViewQuery};
 use os_model::{UrlId, Value};
@@ -96,14 +97,8 @@ pub(crate) async fn rows(app: &App, ctx: CallCtx, raw: Json) -> Result<Json, Cmd
             let source = match q.source.as_deref().unwrap_or("Auto") { "Auto" => LinkSource::Auto, "Current" => LinkSource::Current, "Previous" => LinkSource::Previous,
                 _ => return Err(CmdError::invalid_input("err-compare-input","source")) };
             let change = ChangeFilter::parse(q.change.as_deref().unwrap_or("All")).ok_or_else(|| CmdError::invalid_input("err-compare-input","change"))?;
-            let all = links.view(source,upper,change);
             let columns: Vec<_> = os_analyze::compare::links::LINK_COLUMNS.iter().chain(os_analyze::compare::links::CHANGE_COLUMNS.iter()).copied().collect();
-            // Keys identify the original row, independently of filtering, sorting and paging.
-            let mut rows: Vec<_> = all.into_iter().map(|row| {
-                let key = links.current.iter().position(|r| std::ptr::eq(r, row)).map(|i| i as i64 + 1)
-                    .or_else(|| links.previous.iter().position(|r| std::ptr::eq(r, row)).map(|i| -(i as i64) - 1)).expect("link belongs to comparison");
-                (key, row.export_values())
-            }).collect();
+            let mut rows = keyed_link_rows(&links, source, upper, change)?;
             if let Some(sort) = &q.sort {
                 let index = columns.iter().position(|column| *column == sort.column).ok_or_else(|| CmdError::invalid_input("err-compare-input", "sort"))?;
                 sort_link_rows(&mut rows, index, sort.dir);
@@ -159,6 +154,41 @@ pub(crate) async fn rows(app: &App, ctx: CallCtx, raw: Json) -> Result<Json, Cmd
     }).await
 }
 
+/// Assign keys before filtering: a single index build replaces one linear search per row.
+fn keyed_link_rows(
+    links: &LinkComparison,
+    source: LinkSource,
+    upper: Side,
+    change: ChangeFilter,
+) -> Result<Vec<(i64, Vec<Value>)>, CmdError> {
+    let keys: std::collections::HashMap<*const LinkRow, i64> = links
+        .current
+        .iter()
+        .enumerate()
+        .map(|(i, row)| (std::ptr::from_ref(row), i as i64 + 1))
+        .chain(
+            links
+                .previous
+                .iter()
+                .enumerate()
+                .map(|(i, row)| (std::ptr::from_ref(row), -(i as i64) - 1)),
+        )
+        .collect();
+    links
+        .view(source, upper, change)
+        .into_iter()
+        .map(|row| {
+            let key = keys.get(&std::ptr::from_ref(row)).copied().ok_or_else(|| {
+                crate::runtime::error::internal(
+                    "compare.rows",
+                    "link does not belong to comparison",
+                )
+            })?;
+            Ok((key, row.export_values()))
+        })
+        .collect()
+}
+
 fn sort_link_rows(rows: &mut [(i64, Vec<Value>)], index: usize, dir: SortDir) {
     rows.sort_by(|a, b| {
         let cmp = match (&a.1[index], &b.1[index]) {
@@ -171,7 +201,12 @@ fn sort_link_rows(rows: &mut [(i64, Vec<Value>)], index: usize, dir: SortDir) {
             (Value::Text(x), Value::Text(y)) => x.cmp(y),
             (x, y) => format!("{x:?}").cmp(&format!("{y:?}")),
         };
-        (if dir == SortDir::Desc { cmp.reverse() } else { cmp }).then_with(|| a.0.cmp(&b.0))
+        (if dir == SortDir::Desc {
+            cmp.reverse()
+        } else {
+            cmp
+        })
+        .then_with(|| a.0.cmp(&b.0))
     });
 }
 
@@ -181,11 +216,157 @@ mod tests {
     // spec: TECH-301
     #[test]
     fn link_sort_precedes_paging_and_preserves_keys() {
-        let mut rows: Vec<_> = (0..205).map(|i| (i + 1, vec![Value::Int(204 - i)])).collect();
+        let mut rows: Vec<_> = (0..205)
+            .map(|i| (i + 1, vec![Value::Int(204 - i)]))
+            .collect();
         sort_link_rows(&mut rows, 0, SortDir::Asc);
         assert_eq!(rows[99], (106, vec![Value::Int(99)]));
         assert_eq!(rows[100], (105, vec![Value::Int(100)]));
+        let page: Vec<_> = rows.iter().skip(100).take(100).cloned().collect();
+        assert_eq!(page.len(), 100);
+        assert_eq!(page.first(), Some(&(105, vec![Value::Int(100)])));
+        assert_eq!(page.last(), Some(&(6, vec![Value::Int(199)])));
         sort_link_rows(&mut rows, 0, SortDir::Desc);
+        let page: Vec<_> = rows.iter().skip(100).take(100).cloned().collect();
+        assert_eq!(page.len(), 100);
+        assert_eq!(page.first(), Some(&(101, vec![Value::Int(104)])));
+        assert_eq!(page.last(), Some(&(200, vec![Value::Int(5)])));
         assert_eq!(rows[105], (106, vec![Value::Int(99)]));
+    }
+
+    // spec: TECH-301
+    #[test]
+    fn ten_thousand_links_keep_original_keys_across_sources_and_filters() {
+        use os_analyze::compare::{LinkChange, Presence};
+        let changes = [
+            LinkChange::Added,
+            LinkChange::Removed,
+            LinkChange::AnchorChanged,
+            LinkChange::Unchanged,
+        ];
+        let make_rows = |crawl| {
+            (0..10_000)
+                .map(|i| LinkRow {
+                    values: vec![Value::Int(i)],
+                    change: Some(changes[i as usize % changes.len()]),
+                    crawl,
+                    previous_anchor: None,
+                })
+                .collect()
+        };
+        let mut links = LinkComparison {
+            presence: Presence::Both,
+            current: make_rows(Side::Current),
+            previous: make_rows(Side::Previous),
+        };
+        for presence in [
+            Presence::Both,
+            Presence::CurrentOnly,
+            Presence::PreviousOnly,
+        ] {
+            links.presence = presence;
+            for source in [LinkSource::Auto, LinkSource::Current, LinkSource::Previous] {
+                for upper in [Side::Current, Side::Previous] {
+                    for change in
+                        std::iter::once(ChangeFilter::All).chain(changes.map(ChangeFilter::Only))
+                    {
+                        let expected: Vec<_> = links
+                            .view(source, upper, change)
+                            .iter()
+                            .map(|row| {
+                                let Value::Int(index) = row.values[0] else {
+                                    panic!("fixture index")
+                                };
+                                let key = if row.crawl == Side::Current {
+                                    index + 1
+                                } else {
+                                    -index - 1
+                                };
+                                (key, row.export_values())
+                            })
+                            .collect();
+                        assert_eq!(
+                            keyed_link_rows(&links, source, upper, change).unwrap(),
+                            expected
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    // spec: OUT-140
+    // spec: TECH-301
+    #[tokio::test]
+    async fn url_query_sort_orders_rows_and_keys_before_paging() {
+        let home = tempfile::tempdir().unwrap();
+        let old = super::super::change_fixture::fixture(
+            home.path(),
+            1,
+            1,
+            os_model::CrawlConfig::default(),
+        );
+        let new = super::super::change_fixture::fixture(
+            home.path(),
+            2,
+            2,
+            os_model::CrawlConfig::default(),
+        );
+        let app = App::new(crate::AppConfig::new(home.path())).unwrap();
+        let opened = app
+            .dispatch(
+                CallCtx::for_window("main"),
+                "compare.open",
+                json!({"current":new.path(),"previous":old.path(),"mapping":[],"elements":[]}),
+            )
+            .await
+            .unwrap();
+        let mut request = json!({
+            "viewId":"comparison-sort-test","version":opened["version"],"offset":0,"limit":100,"columns":["Address"],
+            "comparison":{"current":opened["current"]["crawlId"],"previous":opened["previous"]["crawlId"],
+                "tab":"Internal","filter":"All","sort":{"column":"Address","dir":"asc"}}
+        });
+        for (dir, ids) in [
+            ("asc", (1..=12).collect::<Vec<i64>>()),
+            ("desc", (1..=12).rev().collect()),
+        ] {
+            request["comparison"]["sort"]["dir"] = json!(dir);
+            request["offset"] = json!(0);
+            request["limit"] = json!(100);
+            let full = rows(&app, CallCtx::for_window("main"), request.clone())
+                .await
+                .unwrap();
+            assert_eq!(full["total"], 12);
+            assert_eq!(full["rowKeys"], json!(ids));
+            let addresses: Vec<_> = ids
+                .iter()
+                .map(|id| {
+                    json!([
+                        format!("https://site.test/{}", char::from(b'a' + (*id as u8) - 1)),
+                        "Unchanged"
+                    ])
+                })
+                .collect();
+            assert_eq!(full["cells"], json!(addresses));
+            request["offset"] = json!(2);
+            request["limit"] = json!(3);
+            let page = rows(&app, CallCtx::for_window("main"), request.clone())
+                .await
+                .unwrap();
+            assert_eq!(page["total"], 12);
+            assert_eq!(page["rowKeys"], json!(&ids[2..5]));
+            assert_eq!(page["cells"], json!(&addresses[2..5]));
+        }
+        request["comparison"]["sort"]["column"] = json!("unknown");
+        assert_eq!(
+            rows(&app, CallCtx::for_window("main"), request)
+                .await
+                .unwrap_err()
+                .code,
+            ErrorCode::InvalidInput
+        );
+        app.dispatch(CallCtx::for_window("main"), "compare.close", json!(null))
+            .await
+            .unwrap();
     }
 }
