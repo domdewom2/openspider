@@ -218,7 +218,20 @@ jobs:
             echo "Notarisierung des DMG nicht angenommen." >&2
             exit 1
           fi
-          xcrun stapler staple "$dmg"
+          # Apples Ticket-Auslieferung (api.apple-cloudkit.com) bricht auf den Runnern gelegentlich mit
+          # NSURLErrorDomain -1005 ab (Läufe 19.10. und 28.10.); das Ticket ist dann längst ausgestellt. Deshalb
+          # bis zu fünf Versuche im Abstand von 60 s.
+          for versuch in 1 2 3 4 5; do
+            if xcrun stapler staple "$dmg"; then
+              break
+            fi
+            if [[ $versuch -eq 5 ]]; then
+              echo "Anheften des Tickets nach 5 Versuchen fehlgeschlagen." >&2
+              exit 1
+            fi
+            echo "Anheften fehlgeschlagen (Versuch $versuch), neuer Versuch in 60 s."
+            sleep 60
+          done
 
       - name: Prüfen (verify-macos.sh)
         if: steps.check.outputs.ready == 'true'
