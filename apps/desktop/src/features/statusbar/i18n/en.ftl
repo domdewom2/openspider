@@ -29,3 +29,8 @@ status-end-reason = Completion reason: { $value }
 status-step-link_score = Link Score
 status-step-canonicals = Canonicals
 status-mcp-settings = MCP settings
+
+u35-card-count = { $done } / { $total } URLs
+u35-card-rate = { $value } URLs/s
+u35-card-elapsed = Elapsed: { $value }
+u35-card-eta = Remaining: { $value }

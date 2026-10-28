@@ -1,3 +1,4 @@
+import { ACCENT_PALETTE } from "../../../ui/tokens/tokens";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { startAppearanceSync, type AppearanceHandle } from "../../../app/appearance";
@@ -165,4 +166,16 @@ describe("Einstellungen: Sprache (UI-121)", () => {
     await usePrefs.getState().patch({ general: { language: "de" } });
     expect(seen).toEqual([["general.language"]]);
   });
+});
+
+// spec: UI-120
+it("K2-77 displays the legacy default as Blue and still allows the Green preset without migrating settings", async () => {
+  render(<SettingsFrame anchor="appearance" />);
+  const blue = await screen.findByRole("button", { name: "Blue" });
+  expect(blue).toHaveAttribute("aria-pressed", "true");
+  expect(core.settings.appearance.accent.toLowerCase()).toBe("#2f855a");
+  const green = ACCENT_PALETTE.find(c => c.id === "green")!;
+  fireEvent.click(screen.getByRole("button", { name: "Green" }));
+  await waitFor(() => expect(core.settings.appearance.accent).toBe(green.hex.toLowerCase()));
+  await waitFor(() => expect(document.documentElement.style.getPropertyValue("--os-accent")).toBe(green.hex.toUpperCase()));
 });

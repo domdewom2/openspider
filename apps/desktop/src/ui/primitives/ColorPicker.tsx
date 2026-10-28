@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useT } from "../../i18n";
 import { isHexColor } from "../tokens/color";
-import { accentInfo, ACCENT_PALETTE, type ThemeName } from "../tokens/tokens";
+import { accentInfo, ACCENT_PALETTE, DEFAULT_ACCENT_DISPLAY, displayAccent, type ThemeName } from "../tokens/tokens";
 import { cx } from "./cx";
 import { TextField } from "./fields";
 
@@ -9,7 +9,8 @@ import { TextField } from "./fields";
  * Akzentfarbe wählen: acht vorgeprüfte Farben plus freie Eingabe (`#rrggbb`). Unter 3:1 gegen den Hintergrund des
  * aktiven Themes erscheint eine Warnung mit dem Kontrastwert; Speichern bleibt möglich (UI-120).
  */
-export function ColorPicker({ value, onChange, theme, label, anchor }: { value: string; onChange: (hex: string) => void; theme: ThemeName; label: string; anchor?: string }) {
+export function ColorPicker({ value: storedValue, onChange, theme, label, anchor }: { value: string; onChange: (hex: string) => void; theme: ThemeName; label: string; anchor?: string }) {
+  const value = displayAccent(storedValue);
   const t = useT();
   const [draft, setDraft] = useState(value);
   const [synced, setSynced] = useState(value);
@@ -18,7 +19,7 @@ export function ColorPicker({ value, onChange, theme, label, anchor }: { value: 
     setDraft(value);
   }
   const valid = isHexColor(draft);
-  const info = accentInfo(isHexColor(value) ? value : "#2F855A", theme);
+  const info = accentInfo(isHexColor(value) ? value : DEFAULT_ACCENT_DISPLAY, theme);
   return (
     <div className="os-colorpicker" data-setting-anchor={anchor} role="group" aria-label={label}>
       <div className="os-swatches">

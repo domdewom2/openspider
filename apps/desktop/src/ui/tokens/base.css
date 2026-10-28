@@ -114,4 +114,19 @@
   --os-size-520: 520px;
   --os-size-600: 600px;
   --os-size-760: 760px;
+  --os-status-2xx: #1B1F24;
+  --os-status-none: #7B848E;
+  --os-issue-prio-high: #C42B2B;
+  --os-issue-prio-medium: #B8530F;
+  --os-issue-prio-low: #666E78;
+  --os-badge-success: #14652F;
+  --os-badge-success-bg: #DCF5E3;
+  --os-badge-warning: #744900;
+  --os-badge-warning-bg: #FFF0CC;
+  --os-badge-danger: #A82027;
+  --os-badge-danger-bg: #FFE4E5;
+  --os-badge-neutral: #45515F;
+  --os-badge-neutral-bg: #E9EDF2;
+  --os-diff-add: #1C7C3A;
+  --os-diff-del: #C42B2B;
 }

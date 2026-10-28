@@ -59,12 +59,12 @@ body {
   font:inherit;
   cursor:default;
 }
-.os-btn[data-hovered] { background:var(--os-bg-hover); }
+.os-btn[data-hovered], .os-btn:hover { background:var(--os-bg-hover); }
 .os-btn[data-pressed] { background:var(--os-bg-selection); }
-.os-btn[data-disabled] { color:var(--os-text-disabled); border-color:var(--os-border); }
+.os-btn[data-disabled], .os-btn:disabled { color:var(--os-text-disabled); border-color:var(--os-border); }
 .os-btn-primary { background:var(--os-accent); border-color:var(--os-accent); color:var(--os-text-on-accent); }
-.os-btn-primary[data-hovered] { background:var(--os-accent-hover); }
-.os-btn-primary[data-disabled] { background:var(--os-bg-hover); border-color:var(--os-border); color:var(--os-text-disabled); }
+.os-btn-primary[data-hovered], .os-btn-primary:hover { background:var(--os-accent-hover); }
+.os-btn-primary[data-disabled], .os-btn-primary:disabled { background:var(--os-bg-hover); border-color:var(--os-border); color:var(--os-text-disabled); }
 .os-btn-danger { border-color:var(--os-status-4xx); color:var(--os-status-4xx); }
 .os-btn-tool { height:var(--os-size-24); padding:0 var(--os-size-8); border-color:transparent; background:transparent; }
 .os-icon-btn { width:var(--os-size-24); padding:0; }
@@ -98,7 +98,7 @@ html[data-accent-warn="on"] .os-btn-primary { outline:var(--os-line) solid var(-
 .os-switch-track { width:var(--os-size-32); height:var(--os-size-16); border-radius:var(--os-size-8); background:var(--os-border-strong); display:inline-flex; align-items:center; padding:var(--os-size-4); }
 .os-switch-thumb { width:var(--os-size-12); height:var(--os-size-12); border-radius:50%; background:var(--os-bg-surface); transition:transform 0.12s; }
 .os-switch[data-selected] .os-switch-track { background:var(--os-accent); }
-.os-switch[data-selected] .os-switch-thumb { transform:translateX(var(--os-size-16)); }
+.os-switch[data-selected] .os-switch-thumb { transform:translateX(var(--os-space-12)); }
 .os-switch[data-focus-visible] .os-switch-track, .os-radio[data-focus-visible] .os-radio-dot, .os-checkbox[data-focus-visible] .os-checkbox-box { outline:var(--os-focus-width) solid var(--os-focus); outline-offset:var(--os-line); }
 .os-checkbox-box, .os-radio-dot { width:var(--os-size-16); height:var(--os-size-16); border:var(--os-line) solid var(--os-border-strong); background:var(--os-bg-surface); display:inline-flex; align-items:center; justify-content:center; }
 .os-checkbox-box { border-radius:var(--os-size-4); color:transparent; }
@@ -123,7 +123,7 @@ html[data-accent-warn="on"] .os-btn-primary { outline:var(--os-line) solid var(-
 /* --- Tabs ------------------------------------------------------------------------------------------------------ */
 .os-tabs { display:flex; flex-direction:column; min-height:0; }
 .os-tabs-vertical { flex-direction:row; }
-.os-tablist { display:flex; gap:var(--os-focus-width); }
+.os-tablist { display:flex; gap:var(--os-space-4); }
 .os-tabs-vertical .os-tablist { flex-direction:column; min-width:var(--os-size-180); padding:var(--os-size-8); }
 .os-tab { height:var(--os-size-28); display:flex; align-items:center; padding:0 var(--os-size-12); border-radius:var(--os-radius); outline:none; color:var(--os-text); }
 .os-tab[data-hovered] { background:var(--os-bg-hover); }
@@ -131,7 +131,7 @@ html[data-accent-warn="on"] .os-btn-primary { outline:var(--os-line) solid var(-
 .os-tab[data-focus-visible] { outline:var(--os-focus-width) solid var(--os-focus); outline-offset:calc(var(--os-focus-width) * -1); }
 .os-tabpanel { flex:1; min-width:0; min-height:0; outline:none; }
 
-.os-combobox-group { display:flex; gap:var(--os-focus-width); }
+.os-combobox-group { display:flex; gap:var(--os-space-4); }
 .os-combobox-group .os-input { flex:1; }
 .os-combobox-button { border:var(--os-line) solid var(--os-border-strong); border-radius:var(--os-radius); background:var(--os-bg-surface); color:var(--os-text); width:var(--os-size-28); display:inline-flex; align-items:center; justify-content:center; }
 .os-combobox-item { display:inline-flex; align-items:center; gap:var(--os-size-8); }
@@ -233,3 +233,8 @@ html[data-accent-warn="on"] .os-btn-primary { outline:var(--os-line) solid var(-
 .os-empty { min-height:var(--os-empty-min); padding:var(--os-space-24); gap:var(--os-space-12); }
 .os-empty-text { line-height:1.4; }
 .os-dialog-body > section > p:only-child { padding:var(--os-space-24); color:var(--os-text-muted); text-align:center; }
+
+/* Data-view density also applies to single-line property/configuration/tool tables.
+   Multiline descriptions can grow rather than clipping content. */
+.os-proptable tbody tr, .os-cfg-table tbody tr, .os-mcp-table tbody tr, .os-help-table tbody tr { height: var(--os-row-height); }
+.os-proptable thead tr, .os-cfg-table thead tr, .os-mcp-table thead tr, .os-help-table thead tr { height: var(--os-header-height); }

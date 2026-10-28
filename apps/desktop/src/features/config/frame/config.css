@@ -52,7 +52,7 @@
 .os-cfg-path { display:block; color:var(--os-text-muted); font-weight:normal; }
 .os-cfg-mark { background:var(--os-bg-selection); padding:0 var(--os-size-4); margin-left:var(--os-size-4); font-family:var(--os-font-mono); }
 .os-cfg-link { border:0; background:transparent; color:var(--os-link); font:inherit; cursor:pointer; padding:0; text-align:left; text-decoration:underline; }
-.os-cfg-hosts { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:var(--os-focus-width); min-width:var(--os-size-160); }
+.os-cfg-hosts { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:var(--os-space-4); min-width:var(--os-size-160); }
 .os-cfg-hosts [aria-pressed="true"] { font-weight:600; text-decoration:none; }
 .os-cfg-robots-editor { display:flex; gap:var(--os-size-12); align-items:flex-start; }
 .os-cfg-robots-file { flex:1; display:flex; flex-direction:column; gap:var(--os-size-8); min-width:0; }

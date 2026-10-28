@@ -22,12 +22,14 @@ test("start, running, pause, resume and completion drive the header buttons and 
 
   // leer → Start gesperrt, nichts zu pausieren oder zu leeren
   await expect(page.getByTestId("crawl-phase")).toHaveText("Ready");
-  for (const name of ["Start", "Pause", "Clear"]) await expect(button(page, name)).toBeDisabled();
+  // K2-63/K2-77: only the current primary action is rendered.
+  await expect(button(page, "Pause")).toHaveCount(0);
+  for (const name of ["Start", "Clear"]) await expect(button(page, name)).toBeDisabled();
 
   // Enter im URL-Feld = Start; läuft → Pause aktiv, Start und Löschen gesperrt
   await alpha.startFromHeader();
   await expect(page.getByTestId("crawl-phase")).toHaveText("Running");
-  await expect(button(page, "Start")).toBeDisabled();
+  await expect(button(page, "Start")).toHaveCount(0);
   await expect(button(page, "Pause")).toBeEnabled();
   await expect(button(page, "Clear")).toBeDisabled();
 
@@ -50,7 +52,7 @@ test("start, running, pause, resume and completion drive the header buttons and 
   await expect(page.getByTestId("crawl-phase")).toHaveText("Paused");
   await expect(button(page, "Resume")).toBeEnabled();
   await expect(button(page, "Clear")).toBeEnabled();
-  await expect(button(page, "Start")).toBeDisabled();
+  await expect(button(page, "Start")).toHaveCount(0);
   await page.waitForTimeout(1500);
   const paused = await done(page);
   await page.waitForTimeout(1500);
@@ -65,7 +67,7 @@ test("start, running, pause, resume and completion drive the header buttons and 
   await expect(status(page)).toContainText("Remaining: 0");
   await expect(button(page, "Start")).toBeEnabled();
   await expect(button(page, "Clear")).toBeEnabled();
-  await expect(button(page, "Pause")).toBeDisabled();
+  await expect(button(page, "Pause")).toHaveCount(0);
 
   // Löschen leert die Ansicht ohne Rückfrage
   await button(page, "Clear").click();
@@ -86,7 +88,7 @@ test("Stop ends a running crawl: no further progress and no running state", asyn
   // Klärung K2-69: A01-05 entschieden, Stopp über crawl.stop (kein Bedienelement; UI-003 sieht Start/Pause/Löschen vor, CRAWL-126).
   await alpha.invoke("crawl.stop");
   await expect(page.getByTestId("crawl-phase")).not.toHaveText("Running");
-  await expect(button(page, "Pause")).toBeDisabled();
+  await expect(button(page, "Pause")).toHaveCount(0);
   const stopped = await done(page);
   await page.waitForTimeout(2000);
   expect(await done(page)).toEqual(stopped);

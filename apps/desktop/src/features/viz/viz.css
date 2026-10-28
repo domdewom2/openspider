@@ -78,7 +78,7 @@ body,
 .os-viz-field {
   display:flex;
   flex-direction:column;
-  gap:var(--os-focus-width);
+  gap:var(--os-space-4);
   font-size:var(--os-size-12);
 }
 
@@ -248,7 +248,7 @@ body,
 .os-viz-scale {
   display:flex;
   flex-direction:column;
-  gap:var(--os-focus-width);
+  gap:var(--os-space-4);
 }
 
 .os-viz-gradient {

@@ -50,13 +50,14 @@ it("keeps the newest 20 unique suggestions across remounts, preserving other UI 
 it("requires pause before starting another crawl and mirrors state only from ticks", async () => {
   useSession.getState().applyTick(tick);
   render(<Header />); enterUrl("next.test");
-  expect(start()).toBeDisabled();
+  // K2-63/K2-77: one primary control changes from Start to Pause.
+  expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Pause" }));
   await waitFor(() => expect(calls("crawl.pause")).toHaveLength(1));
   expect(useSession.getState().crawl?.phase).toBe("running");
   act(() => useSession.getState().applyTick({ ...tick, seq: 2, crawl: { ...tick.crawl!, phase: "paused" } }));
   expect(await screen.findByRole("button", { name: "Resume" })).toBeEnabled();
-  expect(start()).toBeDisabled();
+  expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Clear" }));
   await waitFor(() => expect(calls("crawl.clear")).toHaveLength(1));
   expect(screen.queryByRole("dialog")).toBeNull();
@@ -66,7 +67,8 @@ it("requires pause before starting another crawl and mirrors state only from tic
 it("resumes an interrupted or restored paused crawl without requiring a URL", async () => {
   useSession.getState().applyTick({ ...tick, crawl: { ...tick.crawl!, phase: "incomplete" } });
   render(<Header />);
-  expect(start()).toBeDisabled();
+  // K2-63/K2-77: interrupted crawl offers Resume as its primary action.
+  expect(screen.queryByRole("button", { name: "Start" })).toBeNull();
   act(() => { runAction("crawl.pause"); });
   await waitFor(() => expect(calls("crawl.resume")).toHaveLength(1));
 });
@@ -131,7 +133,7 @@ it("imports a complete URL list without truncating to the core preview sample", 
 it("disables control commands for a foreign live crawl", () => {
   useSession.getState().applyTick({ ...tick, crawl: { ...tick.crawl!, owner: { ...tick.crawl!.owner, controllable: false } } });
   render(<Header />); enterUrl("next.test");
-  expect(start()).toBeDisabled(); expect(screen.getByRole("button", { name: "Pause" })).toBeDisabled();
+  expect(screen.queryByRole("button", { name: "Start" })).toBeNull(); expect(screen.getByRole("button", { name: "Pause" })).toBeDisabled();
   expect(screen.getByRole("button", { name: "Clear" })).toBeDisabled();
   act(() => { runAction("crawl.pause"); runAction("crawl.new"); });
   expect(calls("crawl.pause")).toHaveLength(0); expect(calls("crawl.clear")).toHaveLength(0);

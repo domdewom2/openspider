@@ -253,12 +253,12 @@ function RegularUpperTable() {
     activeFilter?.state.kind === "needsConfig" ? { code: "FEATURE_DISABLED" as const, arg: activeFilter.state.key } :
     activeFilter?.state.kind === "needsRendering" ? { code: "NEEDS_JS_RENDERING" as const } : null;
   return <section className="u10-table" data-shortcut-scope="table" aria-label={t("u10-table")}>
-    <div className="u10-toolbar">
+    <div className="u10-toolbar" key={tabs.active}>
       {/* K2-77: the first filters of the tab (and the active one) as chips with counts; all filters stay in the dropdown. */}
       <div className="u34-chips" role="group" aria-label={t("u34-quick-filters")}>
         {[...filters.slice(0, 3), ...(activeFilter && !filters.slice(0, 3).includes(activeFilter) ? [activeFilter] : [])].map(f => {
           const count = f.state.kind === "needsCrawlAnalysis" || f.count == null ? "" : ` (${new Intl.NumberFormat(locale).format(f.count)})`;
-          return <button key={f.id} type="button" className="os-btn u34-chip" aria-pressed={query.filter === f.id} onClick={() => tabs.query({ filter: f.id })}>{filterLabel(t, f)}{count}</button>;
+          return <button key={f.id} type="button" className="os-btn u34-chip" title={`${filterLabel(t, f)}${count}`} aria-pressed={query.filter === f.id} onClick={() => tabs.query({ filter: f.id })}>{filterLabel(t, f)}{count}</button>;
         })}
       </div>
       <div ref={filterRef}><ComboBox label={t("u10-filter")} selected={query.filter} onSelect={filter => tabs.query({ filter })}

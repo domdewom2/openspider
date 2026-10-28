@@ -15,7 +15,7 @@ test("switching the language between English and German changes the open main wi
   await alpha.openTable("Response Codes");
   await expect(alpha.table()).toContainText("Showing: 27 of 27");
   // Zahlenformat nach UI-Sprache (UI-007): Anteil der HTML-Seiten in der Overview der Seitenleiste
-  const share = async () => page.getByRole("tabpanel", { name: /^(Overview|Übersicht)$/ }).getByRole("table", { name: "Internal", exact: true }).getByRole("row", { name: /^HTML/ }).getByRole("cell").last().innerText();
+  const share = async () => page.getByRole("tabpanel", { name: /^(Overview|Übersicht)$/ }).getByRole("table", { name: /^(Internal|Intern)$/, exact: true }).getByRole("row", { name: /^HTML/ }).getByRole("cell").last().innerText();
   expect(await share()).toBe("92.0 %"); // en: Dezimalpunkt
 
   const settings = await alpha.openSettings();
@@ -29,7 +29,7 @@ test("switching the language between English and German changes the open main wi
   await expect(page.getByTestId("crawl-status")).toContainText("Modus: Spider");
   await expect(page.getByTestId("crawl-status")).toContainText("Erledigt 27 von 27 (100 %)");
   await expect(page.getByLabel("Start-URL")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Leeren", exact: true })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Löschen", exact: true })).toBeEnabled();
   await expect(alpha.table()).toContainText("Angezeigt: 27 von 27");
   expect(await share()).toBe("92,0 %"); // de: Dezimalkomma
   await expect.poll(() => page.evaluate(() => (window as unknown as { __osMenu?: { model: { menus: { label: string }[] } } }).__osMenu?.model.menus.map((m) => m.label))).toEqual(expect.arrayContaining(["Datei", "Ansicht", "Hilfe"]));

@@ -125,7 +125,8 @@ test("sorting cycles ascending, descending and off, and ties keep the F-3 order 
 // Alpha 2, einfache Suche und Zähler „N von M“ (UI-011, UI-006): fremde IDs, kein Spec-Tag.
 test("simple search matches the Address on Enter, shows N of M and clears with Escape", async ({ alpha }) => {
   const { page } = alpha;
-  await crawled(alpha, "Response Codes");
+  // K2-63/K2-77: all eleven search hits must fit at the new 28px density.
+  await crawled(alpha, "Response Codes", TALL);
   await expect(alpha.table()).toContainText("Showing: 27 of 27");
   const search = page.getByRole("searchbox", { name: "Search Address", exact: true });
   await search.fill("PAGE-1");

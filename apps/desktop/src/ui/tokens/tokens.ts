@@ -7,6 +7,8 @@ export type ThemeName = "light" | "dark";
 
 /** Voreingestellte Akzentfarbe in `settings.toml` (os-model: `appearance.accent`); bleibt als gespeicherter Default kompatibel; visuell Akzentblau (K2-77). */
 export const DEFAULT_ACCENT_SETTING = "#2f855a";
+/** Visible preset for the legacy stored default; no settings migration/write is needed. */
+export const DEFAULT_ACCENT_DISPLAY = "#3C79CE";
 
 export const TOKEN_NAMES = [
   "bg.app",
@@ -143,8 +145,8 @@ export const THEME_TOKENS: Record<ThemeName, Readonly<TokenMap>> = { light: LIGH
 
 /** Acht vorgeprüfte Akzentfarben (≥ 3:1 gegen `bg.app` und `bg.surface` in beiden Themes); die erste ist der Standard. */
 export const ACCENT_PALETTE: readonly { id: string; hex: string }[] = [
-  { id: "green", hex: "#2F855A" },
-  { id: "blue", hex: "#3C79CE" },
+  { id: "blue", hex: DEFAULT_ACCENT_DISPLAY },
+  { id: "green", hex: "#2C8557" },
   { id: "teal", hex: "#218683" },
   { id: "violet", hex: "#915FD7" },
   { id: "pink", hex: "#D04289" },
@@ -188,7 +190,12 @@ export function accentInfo(accent: string, theme: ThemeName): AccentInfo {
 }
 
 function isDefaultAccent(accent: string | undefined): boolean {
-  return accent === undefined || accent === "" || accent.toLowerCase() === DEFAULT_ACCENT_SETTING;
+  return accent === undefined || accent === "" || (accent.toLowerCase() === DEFAULT_ACCENT_SETTING || accent.toLowerCase() === DEFAULT_ACCENT_DISPLAY.toLowerCase());
+}
+
+/** UI-120/K2-77: show the effective blue preset, retaining the stored legacy alias. */
+export function displayAccent(accent: string): string {
+  return isDefaultAccent(accent) ? DEFAULT_ACCENT_DISPLAY : accent;
 }
 
 /** Selektionsfarbe aus der Akzentfarbe: Anteil so wählen, dass `text` ≥ 4,5:1 bleibt. */
@@ -370,3 +377,11 @@ export function forcedColorsCanvasTheme(
     },
   };
 }
+
+/** K2-77 Canvas decorations share the design-system spacing/radii. */
+export const GRID_DECORATION = {
+  badgeHeight: 20, badgeRadius: 8, badgePadding: 8, badgeInset: 4,
+  checkboxSize: 12, checkboxInset: 8, checkboxRadius: 4,
+  addressPadding: 28, addressAction: 24, addressReserved: 52,
+  labelInset: 8,
+} as const;

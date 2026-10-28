@@ -52,7 +52,8 @@ test("starts, pauses, resumes and clears a saved crawl through the bridge contra
     await page.getByLabel("Start URL").fill(`http://127.0.0.1:${address.port}/`);
     await page.getByLabel("Start URL").press("Enter");
     await expect(page.getByTestId("crawl-phase")).toHaveText("Running");
-    await expect(page.getByRole("button", { name: "Start", exact: true })).toBeDisabled();
+    // K2-63/K2-77: primary control is Pause for a running crawl.
+    await expect(page.getByRole("button", { name: "Start", exact: true })).toHaveCount(0);
     await page.getByRole("button", { name: "Pause", exact: true }).click();
     await expect(page.getByTestId("crawl-phase")).toHaveText("Paused", slow);
     await page.getByRole("button", { name: "Resume", exact: true }).click();

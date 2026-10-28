@@ -199,10 +199,10 @@ test.describe("grouped navigation (K2-77)", () => {
     await expect(page.getByRole("tablist", { name: "Daten-Tabs" }).getByRole("tab", { name: "Hreflang" })).toHaveAttribute("aria-selected", "true");
     await expect(page.getByRole("tablist", { name: "Daten-Tabs" }).getByRole("tab", { name: "Canonicals" })).toHaveCount(0);
     await nav.getByRole("button", { name: "Übersicht", exact: true }).click();
-    await expect(page.locator("[data-overview-placeholder]")).toBeVisible();
+    await expect(page.locator("[data-dashboard]")).toBeVisible();
     await expect.poll(() => alpha.invoke<{ state: { topTabs?: { view?: string } } }>("uistate.load").then((d) => d.state.topTabs?.view)).toBe("overview");
     await page.reload();
-    await expect(page.locator("[data-overview-placeholder]")).toBeVisible();
+    await expect(page.locator("[data-dashboard]")).toBeVisible();
     await nav.getByRole("button", { name: "Konfiguration" }).click();
     await page.getByRole("menuitem", { name: "Segmente" }).click();
     await expect(page.getByRole("dialog", { name: "Crawl-Konfiguration" }).getByRole("textbox", { name: "Segmentliste als JSON" })).toBeVisible();

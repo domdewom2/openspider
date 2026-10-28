@@ -16,3 +16,6 @@
 .os-shell-divider:focus-visible { outline:var(--os-focus-width) solid var(--os-accent); outline-offset:calc(var(--os-focus-width) * -1); }
 .os-shell-divider:hover, .os-shell-divider[data-dragging] { background:var(--os-accent); }
 .os-shell-error { position:fixed; bottom:var(--os-size-28); left:var(--os-size-12); max-width:calc(100vw - var(--os-size-24)); background:var(--os-bg-app); border:var(--os-line) solid var(--os-border); padding:var(--os-size-8); z-index:3; }
+/* The overview uses the full data area; returning to a table restores the existing split without changing its saved state. */
+.os-app.os-shell:has([data-dashboard]) { grid-template-rows: auto minmax(var(--os-tab-height), auto) minmax(0, 1fr) 0 0 auto; }
+.os-shell:has([data-dashboard]) .os-shell-detail, .os-shell:has([data-dashboard]) .os-shell-divider-detail { display: none; }

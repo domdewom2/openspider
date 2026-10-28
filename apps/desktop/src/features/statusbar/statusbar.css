@@ -26,3 +26,11 @@
 .os-crawl-status { flex: none; min-width: max-content; }
 .os-status-details { position: fixed; bottom: var(--os-statusbar-height); }
 .os-app-status .os-menu-availability ul { position: fixed; bottom: var(--os-statusbar-height); inset-inline-start: var(--os-space-12); }
+
+/* Keep MCP and the footer actions visible while long telemetry scrolls independently. */
+.os-crawl-status { flex: 1; min-width: 0; height: 100%; gap: var(--os-space-8); }
+.os-status-scroll { display: flex; flex: 1; min-width: 0; height: 100%; align-items: center; gap: var(--os-space-16); overflow: auto hidden; scrollbar-width: thin; }
+.os-status-scroll > span { white-space: nowrap; }
+.os-status-scroll::-webkit-scrollbar { height: var(--os-space-4); }
+.os-status-scroll::-webkit-scrollbar-thumb { background: var(--os-border-strong); border-radius: var(--os-radius); }
+.os-crawl-status > .os-mcp-status, .os-crawl-status > details { flex: none; white-space: nowrap; }

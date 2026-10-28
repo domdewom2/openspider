@@ -173,7 +173,9 @@ async fn a_file_that_starts_the_app_is_not_lost_before_the_window_subscribes() {
     // das Fenster abonniert erst später: die Meldung wartet auf den ersten Tick
     let sink = Arc::new(CollectingSink::new());
     app.subscribe(WindowId("main".into()), sink.clone());
-    assert_eq!(app.flush_tick(), 1);
+    // K2-63: N03 (395a4284) already delivers the queued startup notice in subscribe().
+    // A subsequent flush must not replay it; the original delivery/content assertion stays below.
+    assert_eq!(app.flush_tick(), 0);
     let UiEvent::Tick { tick } = sink.take().remove(0) else {
         panic!()
     };

@@ -40,3 +40,12 @@
 .u10-toolbar > * { flex: none; }
 .u10-toolbar .u34-chips { flex-wrap: nowrap; }
 .u10-toolbar .u20-search { width: var(--os-size-220); }
+
+/* Long accessibility rule names keep the filter trigger inside the first tool row. */
+.u34-chip { display: block; max-width: var(--os-size-180); overflow: hidden; text-overflow: ellipsis; }
+.u10-toolbar .os-combobox { width: var(--os-size-160); }
+
+/* Classic native scrollbars must not subtract height from the 32/24px tool row.
+   Trackpads, Shift+wheel and keyboard focus continue to scroll to every action. */
+.u10-toolbar { scrollbar-width: none; }
+.u10-toolbar::-webkit-scrollbar { display: none; }

@@ -8,7 +8,7 @@
 .os-mcp-table th, .os-mcp-table td { padding:var(--os-size-8); border-bottom:var(--os-line) solid var(--os-border); vertical-align:top; overflow-wrap:anywhere; }
 .os-mcp-table code { white-space:pre-wrap; }
 .os-mcp-table pre { max-width:var(--os-size-300); white-space:pre-wrap; }
-.os-mcp-token, .os-mcp-preview { font-family:ui-monospace, Menlo, monospace; padding:var(--os-size-12); background:var(--os-bg-zebra); border:var(--os-line) solid var(--os-border); overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; }
+.os-mcp-token, .os-mcp-preview { font-family:var(--os-font-mono); padding:var(--os-size-12); background:var(--os-bg-zebra); border:var(--os-line) solid var(--os-border); overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; }
 .os-mcp-preview { max-height:var(--os-size-240); margin:0; }
 .os-mcp-path { overflow-wrap:anywhere; color:var(--os-text-muted); }
 .os-mcp-status { margin-inline-start:auto; }

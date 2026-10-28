@@ -168,7 +168,7 @@ export function Header() {
   }
 
   return <div className="os-crawl-header" data-testid="crawl-header">
-    <a className="os-brand" href="#" aria-label="OpenSpider" onClick={e => e.preventDefault()}><img className="os-brand-light" src={brandLight} alt="" /><img className="os-brand-dark" src={brandDark} alt="" /><span>Open<span>Spider</span></span></a>
+    <h1 className="os-brand" aria-label="OpenSpider"><img className="os-brand-light" src={brandLight} alt="" /><img className="os-brand-dark" src={brandDark} alt="" /><span>Open<span>Spider</span></span></h1>
     <form onSubmit={(e) => { e.preventDefault(); requestStart(); }}>
       <label className="os-header-mode"><span className="os-visually-hidden">{t("header-mode")}</span><select value={mode} disabled={!allowed || running} onChange={(e) => chooseMode(e.target.value as CrawlModeDto)}>
         <option value="spider">{t("header-spider")}</option><option value="list">{t("header-list")}</option><option value="apis">APIs</option>
@@ -194,8 +194,9 @@ export function Header() {
         <label className="os-start-url">{t("header-paste")}<textarea value={list} onChange={(e) => { setList(e.target.value); setListLabel(""); }} /></label>
         </>}
       </>}
-      <Button className={running || resumable || pending ? "os-header-secondary-start" : undefined} variant={running || resumable || pending ? "secondary" : "primary"} type="submit" isDisabled={!canStart}><Play size={16} aria-hidden="true" />{t("header-start")}</Button>
-      <Button variant={running || resumable || pending ? "primary" : "secondary"} isDisabled={!allowed || (!running && !resumable)} onPress={pauseResume}>{resumable ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}{t(pending === "pause" ? "n03-header-pausing" : resumable ? "header-resume" : "header-pause")}</Button>
+      {running || resumable || pending ?
+        <Button variant="primary" isDisabled={!allowed || (!running && !resumable)} onPress={pauseResume}>{resumable ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}{t(pending === "pause" ? "n03-header-pausing" : resumable ? "header-resume" : "header-pause")}</Button> :
+        <Button variant="primary" type="submit" isDisabled={!canStart}><Play size={16} aria-hidden="true" />{t("header-start")}</Button>}
       <Button isDisabled={!allowed || (!running && !resumable)} onPress={stop}><Square size={16} aria-hidden="true" />{t(pending === "stop" ? "n03-header-stopping" : "n03-header-stop")}</Button>
       <Button isDisabled={!allowed || running || !hasResults} onPress={clear}><Trash2 size={16} aria-hidden="true" />{t("header-clear")}</Button>
       <Button className="os-header-settings" aria-label={t("u35-header-settings")} onPress={() => { runAction("app.settings"); }}><Settings size={16} aria-hidden="true" /></Button>
