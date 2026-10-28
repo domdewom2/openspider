@@ -202,6 +202,19 @@ impl WriterThread {
         if let Some(t) = thread {
             let _ = t.join();
         }
+        if std::env::var_os("OS_SCALE_DIAG").as_deref() == Some(std::ffi::OsStr::new("1")) {
+            for (group, values) in [
+                ("engine", crate::diag::snapshot()),
+                ("store", os_store::sink::diag::snapshot()),
+            ] {
+                let fields = values
+                    .iter()
+                    .map(|(k, v)| format!("{k}={v}"))
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                eprintln!("OS_SCALE_DIAG {group} {fields}");
+            }
+        }
         let snapshot = WriterStatsSnapshot::of(&shared.stats);
         let error = shared
             .error
