@@ -93,3 +93,21 @@ ein vollständig leeres `git status --short` ist wegen dieser Pfade nicht
 erreicht. Die Bereinigung liegt außerhalb der drei freigegebenen Dateien
 und wurde gemäß Besitzregel nicht vorgenommen. Damit bleibt in Schritt 5
 ausschließlich diese geforderte vollständige Statusbereinigung offen.
+
+## Erneute Prüfung bei Wiederaufnahme am 28.10.2026
+
+Die fünf vorhandenen Schritt-Commits wurden samt Trailer und Pfadumfang
+gegen `a9ffb763` geprüft. Die Implementierung erfüllt die Selektorliste und
+A1/A2 bereits; zusätzliche Quelltextänderungen waren nicht erforderlich.
+Bridge-Build, beide Compare-E2E-Läufe (Chromium und WebKit, ein Worker),
+zehn Rust-Compare-Tests, Formatprüfung, Clippy mit `-D warnings`, Typecheck
+und alle 777 Tests in 77 Frontend-Testdateien wurden erneut ausgeführt.
+Alle Befehle endeten mit Exit 0; die langen Befehle liefen wiederum im
+Vordergrund mit `timeout=3600`.
+
+Der abschließende Status bleibt ausschließlich wegen der bereits bei Beginn
+vorhandenen unversionierten Pfade `node_modules` und
+`apps/desktop/test-results/.last-run.json` offen. Diese liegen außerhalb der
+expliziten Dateifreigabe und werden weder gelöscht noch durch zusätzliche
+Ignore-Regeln verborgen. Nächster offener Teil von Schritt 5 ist deshalb
+weiterhin die Bereinigung dieser fremden Pfade durch deren Eigentümer.
