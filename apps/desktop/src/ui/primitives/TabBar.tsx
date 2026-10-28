@@ -158,7 +158,10 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
     if (!root.current?.contains(target) || target.closest?.("[data-tabbar-overflow]")) return;
     // Pfeiltasten gehen durch alle Tabs; ein versteckter Tab wird mit der Auswahl sichtbar
     const visible = tabs.map((_, i) => i);
-    const pos = selectedIndex;
+    // Arrows move from the focused tab (it may differ from the selected one after a click elsewhere or programmatic focus).
+    const focusedId = target.closest?.<HTMLElement>("[role=tab]")?.dataset.tabId;
+    const focusedIndex = focusedId ? tabs.findIndex((t) => t.id === focusedId) : -1;
+    const pos = focusedIndex >= 0 ? focusedIndex : selectedIndex;
     if (e.altKey && e.shiftKey && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
       e.preventDefault();
       move(selectedIndex, selectedIndex + (e.key === "ArrowLeft" ? -1 : 1));

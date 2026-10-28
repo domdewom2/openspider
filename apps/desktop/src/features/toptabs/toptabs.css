@@ -2,12 +2,13 @@
 .u10-top-tabs { display: flex; flex-direction: column; min-width: 0; }
 .u10-top-tabs > .u20-tab-host { flex: none; min-width: 0; padding: 4px 8px 6px; }
 .u10-top-tabs .os-tabbar-list { gap: 0; overflow: hidden; }
-.u34-nav { display: flex; align-items: stretch; gap: 4px; min-width: 0; padding: 0 8px; overflow: hidden; border-bottom: 1px solid var(--os-border); }
+.u34-nav { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0 4px; min-width: 0; padding: 0 8px; border-bottom: 1px solid var(--os-border); }
 .u34-nav-item { display: flex; align-items: center; flex: none; border-bottom: 2px solid transparent; }
 .u34-nav-current { border-bottom-color: var(--os-accent); }
 .u34-nav-button, .u34-nav-chevron { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 8px; border: 0; border-radius: var(--os-radius);
   background: transparent; color: var(--os-text); font: inherit; white-space: nowrap; cursor: default; outline: none; }
-.u34-nav-chevron { padding: 0 4px; margin-left: -6px; color: var(--os-text-muted); }
+.u34-nav-chevron { padding: 0 4px; color: var(--os-text-muted); }
+.u34-nav-item:has(.u34-nav-chevron) .u34-nav-button { padding-right: 2px; }
 .u34-nav-current .u34-nav-button { color: var(--os-accent); font-weight: 600; }
 .u34-nav-button[data-hovered], .u34-nav-chevron[data-hovered] { background: var(--os-bg-hover); }
 .u34-nav-button[data-focus-visible], .u34-nav-chevron[data-focus-visible] { outline: 2px solid var(--os-focus); outline-offset: -2px; }

@@ -21,11 +21,11 @@
 .u34-segmented { display: inline-flex; }
 .u34-segment { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; }
 .u34-segmented > .u34-segment:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
-.u34-segmented > .u34-segment:last-child { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: -1px; }
+.u34-segmented > .u34-segment:last-child { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left-width: 0; }
 .u34-segment[aria-pressed="true"] { background: var(--os-bg-selection); border-color: var(--os-accent); }
 .u34-split { display: inline-flex; align-items: center; }
 .u34-split > .os-btn:first-child { display: inline-flex; gap: 6px; align-items: center; border-top-right-radius: 0; border-bottom-right-radius: 0; }
-.u34-split .os-icon-btn { border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: -1px; }
+.u34-split .os-icon-btn { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left-width: 0; }
 .u34-overview { align-items: center; justify-content: center; }
 .u34-overview-text { max-width: 56ch; color: var(--os-text-muted); text-align: center; padding: 16px; }
 /* K2-77: the filter dropdown sits in the chip row; its label stays the accessible name but is not shown. */
