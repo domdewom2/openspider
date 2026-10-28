@@ -68,7 +68,11 @@ interface TabsState {
   load(): Promise<void>; select(id: string, filter?: string): void;
   selectGroup(group: TabGroupId): void; showOverview(): void;
   query(patch: Partial<TabQuery>): void; reorder(ids: string[]): Promise<void>;
-  show(id: string, visible: boolean): Promise<void>; reset(): Promise<void>;
+  show(id: string, visible: boolean): Promise<void>;
+  /** „Tabs zurücksetzen“ im Menü Ansicht: alle Gruppen. */
+  reset(): Promise<void>;
+  /** „Tabs zurücksetzen“ in Überlauf- und Kontextmenü (UI-004, K2-77): nur Reihenfolge und Sichtbarkeit dieser Gruppe. */
+  resetGroup(group: TabGroupId): Promise<void>;
   /** Bulk hide (UI-112 „Andere/Alle schließen“); mandatory tabs stay visible. */
   hide(ids: string[]): Promise<void>;
   /** Apply a complete order and visibility at once („Tabs konfigurieren“); with `group`, only that group's tabs change. */
@@ -173,6 +177,15 @@ export const useTabs = create<TabsState>((set, get) => {
     layoutEdits++;
     const order = [...get().catalog].sort((a, b) => a.defaultOrder - b.defaultOrder).map(t => t.id);
     set({ order, hidden: [], groupActive: { [groupOf(get().active)]: get().active } }); await save();
+  },
+  async resetGroup(group) {
+    layoutEdits++;
+    const defaults = [...get().catalog].sort((a, b) => a.defaultOrder - b.defaultOrder).map(t => t.id).filter(id => groupOf(id) === group);
+    const queue = [...defaults];
+    // The group's tabs return to their default order in the slots the group holds; other groups keep order and visibility.
+    const order = get().order.map(id => groupOf(id) === group ? queue.shift() ?? id : id);
+    const hidden = get().hidden.filter(id => groupOf(id) !== group);
+    set({ order, hidden, ...fallback(hidden) }); await save();
   },
   focus(id, urlId) {
     get().select(id, "All"); get().query({ search: "", rules: null });

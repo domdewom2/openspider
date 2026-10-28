@@ -11,6 +11,7 @@ import { setLanguage } from "../../i18n";
 import type { CrawlStatus } from "../../ipc/gen/CrawlStatus";
 import { fixtureTabs, tableFixture } from "../table/fixtures/core";
 import { TopTabs } from "./TopTabs";
+import { runAction } from "../../ui/actions";
 
 let fx: ReturnType<typeof tableFixture>;
 beforeEach(async () => {
@@ -58,6 +59,32 @@ it("offers checkboxes for every tab of the group, protects Internal, and reopens
   expect(screen.getByRole("menuitem", { name: "Configure tabs…" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("menuitem", { name: "Reset tabs" }));
   await waitFor(() => expect(useTabs.getState().order).toEqual(fixtureTabs.map(t => t.id)));
+});
+
+// spec: UI-004 [P1]
+it("resets order and visibility only of the active group from its menus; the View menu resets all groups (K2-77)", async () => {
+  // Fixture groups: URLs = Internal, External; Content = Images; Technical = AMP.
+  await useTabs.getState().load();
+  await useTabs.getState().reorder(["External", "Internal", "Images", "AMP"]);
+  await useTabs.getState().show("AMP", false);
+  render(<TopTabs />); await screen.findByRole("tab", { name: "Internal" });
+  expect(screen.getAllByRole("tab").map(t => t.textContent)).toEqual(["External", "Internal"]);
+  fireEvent.click(screen.getByRole("button", { name: "Configure tabs" }));
+  fireEvent.click(await screen.findByRole("menuitem", { name: "Reset tabs" }));
+  await waitFor(() => expect(useTabs.getState().order.slice(0, 2)).toEqual(["Internal", "External"]));
+  // the other group keeps its hidden tab
+  expect(useTabs.getState().hidden).toEqual(["AMP"]);
+  await flushUiState();
+  expect(fx.core.uiState.state).toMatchObject({ topTabs: { order: ["Internal", "External", "Images", "AMP"], hidden: ["AMP"] } });
+  // context menu of a tab: same per-group reset
+  await act(async () => { await useTabs.getState().reorder(["External", "Internal", "Images", "AMP"]); });
+  fireEvent.contextMenu(screen.getByRole("tab", { name: "Internal" }));
+  fireEvent.click(await screen.findByRole("menuitem", { name: "Reset tabs" }));
+  await waitFor(() => expect(useTabs.getState().order.slice(0, 2)).toEqual(["Internal", "External"]));
+  expect(useTabs.getState().hidden).toEqual(["AMP"]);
+  // View › Reset tabs: every group
+  await act(async () => { runAction("view.resetTabs"); });
+  await waitFor(() => expect(useTabs.getState().hidden).toEqual([]));
 });
 
 // spec: UI-004

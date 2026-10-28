@@ -26,6 +26,7 @@ test("reorders tabs, persists hidden tabs through restart, and resets", async ({
   await page.getByLabel("Configure tabs", { exact: true }).first().click();
   await page.getByRole("menuitem", { name: "Reset tabs", exact: true }).click();
   await expect(page.getByRole("tab").first()).toHaveText("Internal");
+  // Reset in the URLs group leaves Technical alone; opening the emptied group shows its first tab again.
   await page.locator('.u34-nav [data-group="technical"] .u34-nav-button').click();
   await expect(page.getByRole("tab", { name: "AMP", exact: true })).toBeVisible();
 });

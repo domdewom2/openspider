@@ -59,13 +59,13 @@ function RegularTopTabs() {
   // UI-004/UI-112, A02-06: the same overflow menu as the detail and sidebar bars – visibility, clipped tabs, configure, reset.
   const config: TabBarConfig = {
     all: mine.map(id => ({ id, label: label(id) })), hidden: layout.hidden, mandatory, mandatoryReason: t("u10-tabs-internal"),
-    onToggle: (id, visible) => void s.show(id, visible).catch(fail), onConfigure: () => setConfigure(true), onReset: () => void s.reset().catch(fail),
+    onToggle: (id, visible) => void s.show(id, visible).catch(fail), onConfigure: () => setConfigure(true), onReset: () => void s.resetGroup(group).catch(fail),
     configureLabel: t("u20-tabs-configure"), resetLabel: t("u20-tabs-reset"),
   };
   return <div className="u10-top-tabs">
     <GroupNav />
     {s.view === "tabs" && <TabContextMenuHost className="u20-tab-host" label={t("u20-tab-menu")} entriesFor={tab => tabContextEntries(t, tab, layout, {
-      hide: ids => void s.hide(ids).catch(fail), configure: () => setConfigure(true), reset: () => void s.reset().catch(fail) })}>
+      hide: ids => void s.hide(ids).catch(fail), configure: () => setConfigure(true), reset: () => void s.resetGroup(group).catch(fail) })}>
       <TabBar tabs={visible.map(id => ({ id, label: label(id) }))} className="os-tabbar-pills"
         selected={s.active} onSelect={s.select} onReorder={ids => void s.layout(ids, layout.hidden, group).catch(fail)}
         label={t("u10-tabs")} overflowLabel={t("u10-tabs-configure")} config={config} />
