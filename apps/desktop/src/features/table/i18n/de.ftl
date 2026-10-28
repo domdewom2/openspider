@@ -1,6 +1,6 @@
 u10-table = Crawl-Tabelle
 u10-filter = Filter
-u10-search = Address durchsuchen
+u10-search = URLs durchsuchen
 u10-search-active = Suche aktiv
 u10-count = Angezeigt: { $shown } von { $total }
 u10-selected = { $count } markiert

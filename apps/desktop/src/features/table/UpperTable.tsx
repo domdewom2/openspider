@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { DataGrid, type GridController } from "../../grid/DataGrid";
 import { copySelection } from "../../grid/copy";
 import { currentLanguage, useT } from "../../i18n";
+import { ChevronDown, FolderTree, List, Upload } from "lucide-react";
 import { columnLabel, filterLabel, tabLabel } from "../../i18n/canon";
 import { crawl } from "../../ipc/crawl";
 import { eventBus } from "../../ipc/events";
@@ -16,13 +17,13 @@ import { useSession } from "../../state/session";
 import { cycleSort, defaultQuery, useTabs } from "../../state/tabs";
 import { useAction } from "../../ui/actions";
 import { currentPlatform } from "../../ui/platform";
-import { Button } from "../../ui/primitives/Button";
+import { Button, IconButton } from "../../ui/primitives/Button";
 import { Dialog, DialogFooter } from "../../ui/primitives/Dialog";
 import { ComboBox } from "../../ui/primitives/ComboBox";
 import { Badge } from "../../ui/primitives/Feedback";
 import { Checkbox, SearchField } from "../../ui/primitives/fields";
 import { EmptyState } from "../../ui/primitives/EmptyState";
-import { MenuBody, type MenuEntry } from "../../ui/primitives/Menu";
+import { Menu, MenuBody, type MenuEntry } from "../../ui/primitives/Menu";
 import { Popover } from "react-aria-components";
 import { FONT_STACKS, SIZES, resolveTokens } from "../../ui/tokens/tokens";
 import { resolveTheme, systemPrefersDark } from "../../ui/tokens/theme";
@@ -50,7 +51,15 @@ import "./table.css";
 
 export function UpperTable() {
   const active = useComparison(s => !!s.session);
-  return active ? <ComparisonTable /> : <RegularUpperTable />;
+  const overview = useTabs(s => s.view === "overview");
+  return active ? <ComparisonTable /> : overview ? <OverviewPlaceholder /> : <RegularUpperTable />;
+}
+/** „Übersicht“ of the grouped navigation (UI-004, K2-77): the dashboard comes with M2-U35; until then an explained empty area. */
+function OverviewPlaceholder() {
+  const t = useT();
+  return <section className="u10-table u34-overview" aria-label={t("u34-nav-overview")} data-overview-placeholder="">
+    <p className="u34-overview-text">{t("u34-overview-pending")}</p>
+  </section>;
 }
 function RegularUpperTable() {
   const t = useT(); const locale = currentLanguage(); const tabs = useTabs();
@@ -251,6 +260,13 @@ function RegularUpperTable() {
     activeFilter?.state.kind === "needsRendering" ? { code: "NEEDS_JS_RENDERING" as const } : null;
   return <section className="u10-table" data-shortcut-scope="table" aria-label={t("u10-table")}>
     <div className="u10-toolbar">
+      {/* K2-77: the first filters of the tab (and the active one) as chips with counts; all filters stay in the dropdown. */}
+      <div className="u34-chips" role="group" aria-label={t("u34-quick-filters")}>
+        {[...filters.slice(0, 3), ...(activeFilter && !filters.slice(0, 3).includes(activeFilter) ? [activeFilter] : [])].map(f => {
+          const count = f.state.kind === "needsCrawlAnalysis" || f.count == null ? "" : ` (${new Intl.NumberFormat(locale).format(f.count)})`;
+          return <button key={f.id} type="button" className="os-btn u34-chip" aria-pressed={query.filter === f.id} onClick={() => tabs.query({ filter: f.id })}>{filterLabel(t, f)}{count}</button>;
+        })}
+      </div>
       <div ref={filterRef}><ComboBox label={t("u10-filter")} selected={query.filter} onSelect={filter => tabs.query({ filter })}
         formatCount={n => new Intl.NumberFormat(locale).format(n)} options={filters.map(f => ({ id: f.id,
           label: filterLabel(t, f),
@@ -261,12 +277,23 @@ function RegularUpperTable() {
         }))} /></div>
       <SegmentControls crawlId={crawlId} />
       <div ref={search} className="u20-search" data-invalid={searchError ? "true" : undefined}>
-        <SearchField label={t(advanced ? "u20-search-syntax-field" : "u10-search")} value={text} onChange={value => { setText(value); setSearchError(undefined); }}
+        <SearchField label={t(advanced ? "u20-search-syntax-field" : "u10-search")} placeholder={advanced ? undefined : `${t("u10-search")} …`} value={text} onChange={value => { setText(value); setSearchError(undefined); }}
           isLoading={controller.pending && Boolean(query.search || query.rules)}
           onSubmit={submitSearch} onClear={() => { setText(""); setSearchError(undefined); tabs.query({ search: "", rules: null }); }} clearLabel={t("u10-clear-search")} />
         <Button aria-label={t("u20-search-advanced")} aria-expanded={advanced} onPress={() => setAdvanced(!advanced)}>{advanced ? "▴" : "▾"}</Button>
       </div>
-      <Button onPress={() => openExport()} isDisabled={!source}>{t("u10-export")}</Button>
+      <div className="u34-segmented" role="group" aria-label={t("u34-view-mode")}>
+        <button type="button" className="os-btn u34-segment" aria-pressed="true" aria-label={t("u34-view-list")} title={t("u34-view-list")}><List size={16} aria-hidden /></button>
+        <button type="button" className="os-btn u34-segment" aria-pressed="false" disabled aria-label={t("u34-view-tree")} title={t("u34-view-tree-pending")}><FolderTree size={16} aria-hidden /></button>
+      </div>
+      {/* UI-015: one export entry above the table – the view export, ▾ for the multi export (K2-77 design: „Exportieren ▾“). */}
+      <div className="u34-split">
+        <Button onPress={() => openExport()} isDisabled={!source}><Upload size={16} aria-hidden />{t("u10-export")}</Button>
+        <Menu label={t("u34-export-more")} entries={[
+          { id: "export-view", label: t("u34-export-view"), isDisabled: !source, onAction: () => openExport() },
+          { id: "export-multi", label: t("u34-export-multi"), onAction: () => { runAction("export.multi"); } },
+        ]} trigger={<IconButton label={t("u34-export-more")} icon={<ChevronDown size={14} />} />} />
+      </div>
       <Button onPress={() => setConfigurator(true)} isDisabled={!columns.length}>{t("u20-columns-open")}</Button>
       <ColumnsMenu columns={columns} onChange={next => void columnState.change(tabs.active, next).catch(fail)} onReset={() => void columnState.reset(tabs.active).catch(fail)} />
     </div>
