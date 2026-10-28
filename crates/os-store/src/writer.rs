@@ -598,6 +598,9 @@ fn write_batch(
         // baut entfernte Indizes nicht mehr auf, `url_index::ensure` bleibt für Leser, die sie brauchen).
         crate::url_index::ensure(&tx)?;
     }
+    if completes_crawl(batch) {
+        crate::url_index::ensure_deferred(&tx)?;
+    }
     if completes_crawl(batch) && link_index::ensure(&tx)? {
         // Das Ereignis (ohne Dauer, deterministisch) macht den Aufbau in der Ereignisliste sichtbar; die Dauer steht in
         // den Messzählern (`link_index_build_ns`).

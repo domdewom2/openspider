@@ -112,7 +112,16 @@ pub fn ensure_if_idle(file: &CrawlFile) -> Result<bool, StoreError> {
         return Ok(false);
     }
     let want_url_indexes = !crate::url_index::is_large(conn)?;
-    if present(conn)? && (!want_url_indexes || crate::url_index::present(conn)?) {
+    let deferred_present = crate::url_index::DEFERRED_INDEXES.iter().all(|index| {
+        conn.query_row(
+            "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'index' AND name = ?1)",
+            [index.name],
+            |r| r.get::<_, bool>(0),
+        )
+        .unwrap_or(false)
+    });
+    if present(conn)? && deferred_present && (!want_url_indexes || crate::url_index::present(conn)?)
+    {
         return Ok(false);
     }
     if file.effective_state(&SystemClock)? == CrawlState::Running {
@@ -125,7 +134,8 @@ pub fn ensure_if_idle(file: &CrawlFile) -> Result<bool, StoreError> {
         } else {
             false
         };
-        Ok(ensure(conn)? || urls)
+        crate::url_index::ensure_deferred(conn)?;
+        Ok(ensure(conn)? || urls || !deferred_present)
     })();
     match built {
         Err(StoreError::Sqlite(rusqlite::Error::SqliteFailure(f, _)))

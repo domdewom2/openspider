@@ -58,6 +58,36 @@ pub const WRITE_PHASE_DROPPED: &[UrlIndex] = &[
     },
 ];
 
+/// Weitere zufällig gepflegte Indizes; sie werden am regulären Ende wiederhergestellt.
+pub const DEFERRED_INDEXES: &[UrlIndex] = &[
+    UrlIndex {
+        name: "canonicals_target",
+        create_sql: "CREATE INDEX IF NOT EXISTS canonicals_target ON canonicals(target_id)",
+    },
+    UrlIndex {
+        name: "pagination_target",
+        create_sql: "CREATE INDEX IF NOT EXISTS pagination_target ON pagination(target_id)",
+    },
+    UrlIndex {
+        name: "hreflang_target",
+        create_sql: "CREATE INDEX IF NOT EXISTS hreflang_target ON hreflang(target_id)",
+    },
+    UrlIndex {
+        name: "sitemap_entries_url",
+        create_sql: "CREATE INDEX IF NOT EXISTS sitemap_entries_url ON sitemap_entries(url_id)",
+    },
+];
+
+/// Stellt die für Zielabfragen genutzten Indizes sortiert wieder her.
+pub fn ensure_deferred(conn: &Connection) -> Result<(), StoreError> {
+    crate::link_index::with_build_settings(conn, || {
+        for index in DEFERRED_INDEXES {
+            conn.execute_batch(index.create_sql)?;
+        }
+        Ok(())
+    })
+}
+
 /// Leser-Threads des Vorwärmens ([`Prefetch`]).
 const PREFETCH_THREADS: usize = 4;
 /// Erst ab dieser größten Kennung lohnt das Vorwärmen (kleine Dateien liegen ohnehin im Cache des Betriebssystems).
@@ -112,7 +142,7 @@ pub fn present(conn: &Connection) -> Result<bool, StoreError> {
 
 /// Entfernt die Indizes (`DROP INDEX IF EXISTS`); fehlende bleiben unberührt.
 pub fn drop_indexes(conn: &Connection) -> Result<(), StoreError> {
-    for index in WRITE_PHASE_DROPPED {
+    for index in WRITE_PHASE_DROPPED.iter().chain(DEFERRED_INDEXES) {
         conn.execute_batch(&format!("DROP INDEX IF EXISTS {}", index.name))?;
     }
     Ok(())
