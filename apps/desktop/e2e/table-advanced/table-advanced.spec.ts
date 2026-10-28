@@ -90,7 +90,8 @@ test("configures 60+ columns with two lists and applies template „Basis“ to 
 // spec: UI-112
 // spec: UI-004 [P1]
 test("tab context menu closes all but Internal; the dropdown shows closed tabs again; the dialog survives a restart", async ({ page }) => {
-  await page.getByRole("tab", { name: "Images", exact: true }).click({ button: "right" });
+  // M2-U34 (K2-77): the pills and their menus work per group (URLs: Internal, External).
+  await page.getByRole("tab", { name: "External", exact: true }).click({ button: "right" });
   await page.getByRole("menuitem", { name: "Close all tabs", exact: true }).click();
   await expect(topTabs(page)).toHaveText(["Internal"]);
   await page.getByRole("tab", { name: "Internal", exact: true }).focus();
@@ -100,21 +101,20 @@ test("tab context menu closes all but Internal; the dropdown shows closed tabs a
   await page.keyboard.press("Escape");
   await expect(page.getByRole("menu", { name: "Tab actions" })).toHaveCount(0);
   await page.getByRole("button", { name: "Configure tabs", exact: true }).click();
-  await page.getByRole("menuitemcheckbox", { name: "AMP", exact: true }).click();
+  await page.getByRole("menuitemcheckbox", { name: "External", exact: true }).click();
   await page.mouse.click(640, 790);
-  await expect(topTabs(page)).toHaveText(["Internal", "AMP"]);
-  await page.getByRole("tab", { name: "AMP", exact: true }).click({ button: "right" });
+  await expect(topTabs(page)).toHaveText(["Internal", "External"]);
+  await page.getByRole("tab", { name: "External", exact: true }).click({ button: "right" });
   await page.getByRole("menuitem", { name: "Configure tabs…", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Configure tabs" });
   await expect(dialog.getByRole("checkbox", { name: "Internal" })).toBeDisabled();
-  await dialog.getByRole("checkbox", { name: "External" }).check();
-  await dialog.getByRole("button", { name: "Move AMP up", exact: true }).click();
-  await dialog.getByRole("button", { name: "Move AMP up", exact: true }).click();
+  await expect(dialog.getByRole("checkbox", { name: "External" })).toBeChecked();
+  await dialog.getByRole("button", { name: "Move External up", exact: true }).click();
   await dialog.getByRole("button", { name: "OK", exact: true }).click();
-  await expect(topTabs(page)).toHaveText(["Internal", "AMP", "External"]);
-  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("u20.fixture.uiState") ?? "{}").state?.topTabs?.order?.slice(0, 3))).toEqual(["Internal", "AMP", "External"]);
+  await expect(topTabs(page)).toHaveText(["External", "Internal"]);
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("u20.fixture.uiState") ?? "{}").state?.topTabs?.order?.slice(0, 2))).toEqual(["External", "Internal"]);
   await page.reload();
-  await expect(topTabs(page)).toHaveText(["Internal", "AMP", "External"]);
+  await expect(topTabs(page)).toHaveText(["External", "Internal"]);
 });
 
 // spec: UI-021
@@ -126,7 +126,7 @@ test("resets the columns of all tables after confirmation and keeps the template
   await dialog.getByLabel("Template name", { exact: true }).fill("Basis");
   await dialog.getByRole("button", { name: "Save as template", exact: true }).click();
   await dialog.getByRole("button", { name: "OK", exact: true }).click();
-  await page.getByRole("tab", { name: "Images", exact: true }).dragTo(page.getByRole("tab", { name: "Internal", exact: true }));
+  await page.getByRole("tab", { name: "External", exact: true }).dragTo(page.getByRole("tab", { name: "Internal", exact: true }));
   await expect.poll(() => page.evaluate(() => localStorage.getItem("u20.fixture.uiState") ?? "")).toContain("Basis");
   // Header context menu of the grid (canvas header row), as a user reaches the action.
   await page.locator(".os-data-grid").click({ position: { x: 225, y: 12 }, button: "right" });
@@ -139,7 +139,7 @@ test("resets the columns of all tables after confirmation and keeps the template
   await expect(confirm).toBeHidden();
   await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("u20.fixture.uiState") ?? "{}").state?.tableColumns)).toBeUndefined();
   await page.reload();
-  await expect(topTabs(page).first()).toHaveText("Images");
+  await expect(topTabs(page).first()).toHaveText("External");
   await page.getByRole("button", { name: "Configure columns…", exact: true }).click();
   await expect(page.getByRole("dialog", { name: "Configure columns" }).getByRole("listbox", { name: "Displayed columns" }).getByRole("option", { name: "Word Count" })).toBeVisible();
   await expect(page.getByLabel("Template", { exact: true }).getByRole("option", { name: "Basis" })).toHaveCount(1);
