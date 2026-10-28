@@ -15,7 +15,6 @@
 //! Besitzern (Schnittstellenbedarf im Bericht `docs/plan/M2-reports/c01.md`).
 
 pub(crate) mod ui;
-mod ui_change;
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

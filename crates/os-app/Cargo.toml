@@ -53,6 +53,8 @@ argon2.workspace = true
 tokio-tungstenite = { workspace = true, optional = true }
 
 [dev-dependencies]
+# L02: compare the public UI command with the real CLI export on one fixture.
+os-cli = { path = "../os-cli" }
 os-engine = { workspace = true, features = ["testing"] }
 os-testsite.workspace = true
 criterion.workspace = true
