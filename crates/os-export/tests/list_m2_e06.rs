@@ -57,7 +57,7 @@ fn table(path: &Path) -> Vec<Vec<String>> {
 async fn upload_export_csv_and_xlsx_preserve_all_ten_rows() {
     let site = os_testsite::TestSite::start("crawl-m2-list").await.unwrap();
     let dir = tempfile::tempdir().unwrap();
-    let inputs: Vec<String> = include_str!("dupes.txt")
+    let inputs: Vec<String> = include_str!("../../../tests/fixtures/crawl-m2-list/dupes.txt")
         .lines()
         .map(str::to_string)
         .collect();
@@ -140,7 +140,7 @@ async fn upload_export_csv_and_xlsx_preserve_all_ten_rows() {
 async fn serp_summary_roundtrips_twice_through_csv_and_xlsx_and_matches_tabs() {
     let site = os_testsite::TestSite::start("crawl-m2-list").await.unwrap();
     let dir = tempfile::tempdir().unwrap();
-    let source = serp_input::parse(include_str!("serp.csv")).unwrap();
+    let source = serp_input::parse(include_str!("../../../tests/fixtures/crawl-m2-list/serp.csv")).unwrap();
     for (kind, format) in [("csv", Format::Csv), ("xlsx", Format::Xlsx)] {
         let cfg = CrawlConfig::default();
         let mut file = import(
