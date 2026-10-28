@@ -232,6 +232,26 @@ pub fn split_list(list: &str) -> Vec<String> {
 mod tests {
     use super::*;
 
+    // spec: ONPAGE-023
+    #[test]
+    fn extension_resource_filters_follow_the_saved_parity_setting() {
+        let mut cfg = os_model::CrawlConfig::default();
+        for filter in ["Fonts", "Media", "XML"] {
+            let name = format!("Internal:{filter}");
+            assert!(!names(Kind::Tab).contains(&name));
+            assert!(resolve_with(Kind::Tab, &name, &cfg).is_err());
+            cfg.ui.parity_filters = false;
+            assert_eq!(
+                resolve_with(Kind::Tab, &name, &cfg),
+                Ok(Resolved::Tab {
+                    tab: "Internal".into(),
+                    filter: filter.into()
+                })
+            );
+            cfg.ui.parity_filters = true;
+        }
+    }
+
     // spec: OUT-192
     #[test]
     fn lists_split_at_unescaped_commas_and_tolerate_spaces() {

@@ -15,7 +15,43 @@ fn git(args: &[&str]) -> Option<String> {
     (!text.is_empty()).then(|| text.to_string())
 }
 
+fn column_labels() {
+    use std::{collections::BTreeMap, path::PathBuf};
+    let root = PathBuf::from(std::env::var_os("CARGO_MANIFEST_DIR").unwrap())
+        .join("../../apps/desktop/src/i18n/canon/i18n");
+    let read = |locale: &str| {
+        let path = root.join(format!("{locale}.ftl"));
+        println!("cargo:rerun-if-changed={}", path.display());
+        std::fs::read_to_string(path)
+            .expect("UI column translations")
+            .lines()
+            .filter_map(|line| line.strip_prefix("column-")?.split_once(" = "))
+            .map(|(key, value)| {
+                assert!(
+                    !value.contains('{'),
+                    "column translation must be a literal: {key}"
+                );
+                (key.to_string(), value.to_string())
+            })
+            .collect::<BTreeMap<_, _>>()
+    };
+    let en = read("en");
+    let de = read("de");
+    let mut generated = String::from("const GERMAN: &[(&str, &str)] = &[\n");
+    for (key, label) in en {
+        let translated = de.get(&key).expect("German UI column translation missing");
+        generated.push_str(&format!("({label:?}, {translated:?}),\n"));
+    }
+    generated.push_str("];\n");
+    std::fs::write(
+        PathBuf::from(std::env::var_os("OUT_DIR").unwrap()).join("column_labels.rs"),
+        generated,
+    )
+    .unwrap();
+}
+
 fn main() {
+    column_labels();
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-env-changed=OPENSPIDER_GIT_HASH");
 
