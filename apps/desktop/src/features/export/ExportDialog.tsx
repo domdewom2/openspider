@@ -11,10 +11,17 @@ import { nameTarget, type ExportRequest, type LocalFormat } from "./model";
 import { nativeExportDesktop, type ExportDesktop } from "./native";
 import { defaultSitemapOptions, sitemapSchema } from "./sitemap";
 import { SitemapOptions } from "./SitemapOptions";
-import { MultiOptions } from "./MultiOptions";
+import { MultiExportDialog } from "./MultiExportDialog";
 
-export function ExportDialog({ request, onClose, onStarted, desktop = nativeExportDesktop }: {
-  request: ExportRequest; onClose(): void; onStarted(handle: OpHandle, path: string): void; desktop?: ExportDesktop;
+export function ExportDialog(props: {
+  request: ExportRequest; onClose(): void; onStarted(handles: OpHandle[], path: string): void; desktop?: ExportDesktop;
+}) {
+  // OUT-075 (A02-17): the multi export has a dialog of its own with output, selection, local files, Looker Studio and presets.
+  return props.request.kind === "multi" ? <MultiExportDialog onClose={props.onClose} onStarted={props.onStarted} desktop={props.desktop} /> : <SingleExportDialog {...props} />;
+}
+
+function SingleExportDialog({ request, onClose, onStarted, desktop = nativeExportDesktop }: {
+  request: ExportRequest; onClose(): void; onStarted(handles: OpHandle[], path: string): void; desktop?: ExportDesktop;
 }) {
   const t = useT();
   const prefs = usePrefs(s => s.dto?.export);
@@ -68,7 +75,7 @@ export function ExportDialog({ request, onClose, onStarted, desktop = nativeExpo
       const directory = await desktop.directory(path, folder);
       const handle = await executeExport(request, path, choices);
       await usePrefs.getState().patch({ export: { directory, ...(request.kind === "sitemap" ? {} : { format: choices.format }) } });
-      onStarted(handle, path);
+      onStarted([handle], path);
       onClose();
     } catch (e) { showError(e); }
     finally { lock.current = false; if (mounted.current) setBusy(false); }
@@ -83,7 +90,6 @@ export function ExportDialog({ request, onClose, onStarted, desktop = nativeExpo
         <Checkbox isSelected={choices.preserveUploadOrder} onChange={preserveUploadOrder => setChoices(v => ({ ...v, preserveUploadOrder }))}>{t("export-upload-order")}</Checkbox>
       </>}
       {(request.kind === "multi" || request.kind === "bulk" || request.kind === "report") && <Checkbox isDisabled={choices.format !== "xlsx"} isSelected={choices.format === "xlsx" && choices.singleWorkbook} onChange={singleWorkbook => setChoices(v => ({ ...v, singleWorkbook }))}>{t("export-workbook")}</Checkbox>}
-      {request.kind === "multi" && <MultiOptions key={attempt} value={choices} onChange={setChoices} onReady={setReady} onError={showError} />}
       {request.kind === "sitemap" && <SitemapOptions value={choices.sitemap} onChange={sitemap => setChoices(v => ({ ...v, sitemap }))} listMode={request.listMode} hreflangAvailable={request.hreflangAvailable} />}
       {!valid && <p role="alert">{t("export-sitemap-invalid")}</p>}
       {disabled && <p role="note">{t(request.disabledReason!)}</p>}

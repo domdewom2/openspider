@@ -8,6 +8,7 @@ import type { ExportCatalog } from "../../ipc/gen/ExportCatalog";
 import type { ExportBatchResult } from "../../ipc/gen/ExportBatchResult";
 import type { FileResult } from "../../ipc/gen/FileResult";
 import type { OpHandle } from "../../ipc/gen/OpHandle";
+import type { OpStatus } from "../../ipc/gen/OpStatus";
 import type { JsonValue } from "../../ipc/gen/serde_json/JsonValue";
 import { useSession } from "../../state/session";
 import { registerAction, useAction } from "../../ui/actions";
@@ -39,6 +40,17 @@ function resultInfo(value: JsonValue | null | undefined): { files: FileResult[];
   return { files: batch.files ?? [], warnings: batch.warnings ?? [], skipped: batch.skipped ?? [] };
 }
 
+/** One export run can start several operations (multi export with local files and Looker Studio, A02-17). */
+function combine(statuses: readonly (OpStatus | undefined)[]): { state: OpStatus["state"] | "running"; done: number; total: number | null; errors: NonNullable<OpStatus["error"]>[]; files: FileResult[]; warnings: string[]; skipped: string[] } {
+  const known = statuses.filter((s): s is OpStatus => !!s);
+  const infos = known.map(s => resultInfo(s.result));
+  const state = statuses.some(s => !s || s.state === "running") ? "running"
+    : known.some(s => s.state === "failed") ? "failed" : known.every(s => s.state === "cancelled") ? "cancelled" : "done";
+  const totals = known.map(s => s.total ?? null);
+  return { state, done: known.reduce((n, s) => n + s.done, 0), total: totals.every(v => v !== null) && totals.length === statuses.length ? totals.reduce<number>((n, v) => n + (v ?? 0), 0) : null,
+    errors: known.flatMap(s => s.error ? [s.error] : []), files: infos.flatMap(i => i.files), warnings: infos.flatMap(i => i.warnings), skipped: infos.flatMap(i => i.skipped) };
+}
+
 /**
  * The export catalog names its entries with `labelKey`, but for many of them the key is the catalog name itself
  * (`Accessibility:WCAG 2.0 A`): it has no translation, and Fluent would read the dot as an attribute separator (A01-22).
@@ -53,14 +65,15 @@ export function menuLabel(key: string, groupPrefix = ""): { labelKey: string } |
 export function ExportHost({ desktop = nativeExportDesktop }: { desktop?: ExportDesktop }) {
   const t = useT();
   const request = useExportDialog(s => s.request);
-  const [active, setActive] = useState<{ handle: OpHandle; path: string } | null>(null);
-  const status = useSession(s => active ? s.ops[active.handle.opId] : undefined);
+  const [active, setActive] = useState<{ handles: OpHandle[]; path: string } | null>(null);
+  const ops = useSession(s => s.ops);
+  const status = active ? combine(active.handles.map(h => ops[h.opId])) : undefined;
   const crawlId = useSession(s => s.crawl?.crawlId);
   const countsVersion = useSession(s => s.countsVersion);
   const [exports, setExports] = useState<ExportCatalog | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
-  const running = !!active && (!status || status.state === "running");
+  const running = !!active && status?.state === "running";
   const errorText = (e: unknown) => describeError(t, toCmdError(e), key => i18n.has(currentLanguage(), key)).text;
   useAction("export.view", () => {
     const view = useExportContext.getState().view;
@@ -113,23 +126,23 @@ export function ExportHost({ desktop = nativeExportDesktop }: { desktop?: Export
     offs.push(registerMenuContributions("features/export", menu));
     return () => { for (const off of offs.reverse()) off(); };
   }, [exports, running, t]);
-  const info = resultInfo(status?.result);
   const close = () => useExportDialog.setState({ request: null });
   return <>
-    {request && !running && <ExportDialog key={JSON.stringify(request)} request={request} desktop={desktop} onClose={close} onStarted={(handle, path) => { setActive({ handle, path }); setCancelling(false); setError(null); close(); }} />}
+    {request && !running && <ExportDialog key={JSON.stringify(request)} request={request} desktop={desktop} onClose={close} onStarted={(handles, path) => { setActive({ handles, path }); setCancelling(false); setError(null); close(); }} />}
     <div className="os-export-notifications"><ToastRegion label={t("export-notifications")}>
-      {active && running && <Banner action={active.handle.cancellable ? <Button isDisabled={cancelling} onPress={() => {
+      {active && status && running && <Banner action={active.handles.some(h => h.cancellable) ? <Button isDisabled={cancelling} onPress={() => {
         setCancelling(true);
-        void op.cancel({ opId: active.handle.opId }).catch(e => { setCancelling(false); setError(errorText(e)); });
+        for (const handle of active.handles.filter(h => h.cancellable && ops[h.opId]?.state !== "done")) void op.cancel({ opId: handle.opId }).catch(e => { setCancelling(false); setError(errorText(e)); });
       }}>{t(cancelling ? "export-cancelling" : "ui-dialog-cancel")}</Button> : undefined}>
-        <ProgressBar label={t("export-progress")} value={status?.total ? status.done : null} max={status?.total || 100} />
+        <ProgressBar label={t("export-progress")} value={status.total ? status.done : null} max={status.total || 100} />
       </Banner>}
       {active && status && !running && <Banner kind={status.state === "failed" ? "error" : "info"} onDismiss={() => setActive(null)} dismissLabel={t("ui-dialog-close")}
-        action={status.state === "done" && info.files.length > 0 ? <Button onPress={() => void desktop.reveal(info.files[0]!.path).catch(e => setError(errorText(e)))}>{t("export-open-folder")}</Button> : undefined}>
-        {status.state === "failed" ? status.error ? errorText(status.error) : t("export-failed") : t(status.state === "cancelled" ? "export-cancelled" : "export-complete")}
-        {info.files.map(file => <p key={file.path}>{file.path}</p>)}
-        {info.warnings.map((warning, i) => <p key={`warning-${i}`}>{warning}</p>)}
-        {info.skipped.length > 0 && <p>{t("export-skipped-warning")} {info.skipped.join(", ")}</p>}
+        action={status.files.length > 0 ? <Button onPress={() => void desktop.reveal(status.files[0]!.path).catch(e => setError(errorText(e)))}>{t("export-open-folder")}</Button> : undefined}>
+        {status.state === "failed" ? status.errors.length ? status.errors.map(errorText).join(" ") : t("export-failed") : t(status.state === "cancelled" ? "export-cancelled" : "export-complete")}
+        {active.handles.length > 1 && status.files.length > 0 && <p className="os-export-result-head">{t("export-files-written", { count: status.files.length })}</p>}
+        {status.files.map(file => <p key={file.path}>{file.path}</p>)}
+        {status.warnings.map((warning, i) => <p key={`warning-${i}`}>{warning}</p>)}
+        {status.skipped.length > 0 && <p>{t("export-skipped-warning")} {status.skipped.join(", ")}</p>}
       </Banner>}
       {error && <Banner kind="error" onDismiss={() => setError(null)} dismissLabel={t("ui-dialog-close")}>{error}</Banner>}
     </ToastRegion></div>

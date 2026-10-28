@@ -28,8 +28,8 @@ function mount(request: ExportRequest) {
   render(<ExportDialog request={request} onClose={onClose} onStarted={onStarted} desktop={desktop} />);
   return { onStarted, onClose };
 }
-async function save() {
-  const button = await screen.findByRole("button", { name: "Save…" });
+async function save(name = "Save…") {
+  const button = await screen.findByRole("button", { name });
   await waitFor(() => expect(button).toBeEnabled());
   fireEvent.click(button);
 }
@@ -172,10 +172,10 @@ it("searches the export tree, loads and saves named presets and keeps unknown en
   expect(screen.queryByRole("checkbox", { name: "All" })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: /Preset/ }));
   fireEvent.click(await screen.findByRole("option", { name: "Daily" }));
-  expect(await screen.findByText(/New:Unknown/)).toBeInTheDocument();
+  expect(await screen.findByText(/will be skipped: New:Unknown/)).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Save preset" }));
   await waitFor(() => expect(call("export.presetSave")[0]?.args).toMatchObject({ name: "Daily", preset: unknown }));
-  await save();
+  await save("Export…");
   await waitFor(() => expect(call("export.multi")[0]?.args).toMatchObject({ items: unknown.items, skipEmpty: true, singleWorkbook: false }));
 });
 
@@ -295,4 +295,87 @@ it("labels catalog entries without a translation by their name and keeps transla
   expect(menuLabel("Accessibility:WCAG 2.0 A", "Accessibility:")).toEqual({ label: "WCAG 2.0 A" });
   expect(menuLabel("Links:All Inlinks")).toEqual({ label: "Links:All Inlinks" });
   expect(menuLabel("export-multi")).toEqual({ labelKey: "export-multi" });
+});
+
+describe("multi export dialog after OUT-075 (A02-17)", () => {
+  // spec: OUT-075 [P1]
+  it("shows output, selection, local files, Looker Studio and presets, and counts missing required entries", async () => {
+    mount({ kind: "multi" });
+    for (const name of ["Output", "Selection", "Local files", "Looker Studio", "Presets"]) expect(await screen.findByRole("heading", { name })).toBeInTheDocument();
+    // The selection is visible as two lists: available (tree) and selected (in export order).
+    expect(await screen.findByRole("group", { name: "Available exports" })).toBeInTheDocument();
+    expect(screen.getByText("Selected (0)")).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "" })).toHaveTextContent("1 required entry missing");
+    expect(screen.getByRole("button", { name: "Export…" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("checkbox", { name: "All" }));
+    expect(screen.getByText("Selected (1)")).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Selected (1)" })).toHaveTextContent("Internal › All");
+    await waitFor(() => expect(screen.getByRole("button", { name: "Export…" })).toBeEnabled());
+    expect(screen.queryByText(/required entr/)).not.toBeInTheDocument();
+  });
+
+  // spec: OUT-210 [P1]
+  it("keeps Drive and the Looker Studio time series disabled with a hint while no Drive account is connected", async () => {
+    core.handlers.set("api.list", () => []);
+    mount({ kind: "multi" });
+    expect(await screen.findByRole("checkbox", { name: /Looker Studio time series/ })).toBeDisabled();
+    expect(screen.getByRole("checkbox", { name: /Google Sheets in Google Drive/ })).toBeDisabled();
+    expect(screen.getByText(/No Google Drive account connected/)).toBeInTheDocument();
+  });
+
+  // spec: OUT-210 [P1]
+  it("appends the time series with account, sheet and metrics in selection order when Drive is connected", async () => {
+    core.handlers.set("api.list", () => [{ kind: "drive", labelKey: "drive", auth: "oauth", connected: true, autoConnect: false, state: "connected", accounts: [{ kind: "drive", account: "me@example.test", scopes: [], accountId: "a1" }] }]);
+    core.handlers.set("export.customSummaryMetrics", () => [{ id: "Internal:HTML", labelKey: "x-none" }, { id: "Response Codes:Client Error (4xx)", labelKey: "x-none" }]);
+    core.handlers.set("export.customSummary", () => handle);
+    const { onStarted } = mount({ kind: "multi" });
+    fireEvent.click(await screen.findByRole("checkbox", { name: /Looker Studio time series/ }));
+    expect(screen.getByRole("status", { name: "" })).toHaveTextContent("2 required entries missing");
+    fireEvent.change(screen.getByRole("textbox", { name: "Time series sheet name" }), { target: { value: "site_summary" } });
+    fireEvent.click(await screen.findByRole("button", { name: "Response Codes:Client Error (4xx)" }));
+    fireEvent.click(screen.getByRole("button", { name: "Internal:HTML" }));
+    await save("Export…");
+    await waitFor(() => expect(call("export.customSummary")[0]?.args).toEqual({ account: "me@example.test", target: "site_summary", metrics: ["Response Codes:Client Error (4xx)", "Internal:HTML"] }));
+    expect(onStarted).toHaveBeenCalledWith([handle], "");
+  });
+
+  // spec: OUT-165 [P1]
+  it("writes the chosen tables, sitemaps and the crawl copy into one timestamped folder", async () => {
+    useSession.setState({ crawl: { crawlId: "crawl-7" } as never });
+    core.handlers.set("crawls.export", () => ({ ...handle, opId: "copy" }));
+    desktop.choose = vi.fn(async () => "/fixture/out");
+    const { onStarted } = mount({ kind: "multi" });
+    fireEvent.click(await screen.findByRole("checkbox", { name: "All" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "XML sitemap" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /crawl file/ }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /subfolder named after date/ }));
+    await save("Export…");
+    await waitFor(() => expect(onStarted).toHaveBeenCalled());
+    const dir = call("export.multi")[0]?.args as { dir: string };
+    expect(dir.dir).toMatch(/^\/fixture\/out\/\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}$/);
+    expect(call("export.sitemap")[0]?.args).toMatchObject({ sitemapKind: "pages", dir: dir.dir });
+    expect(call("crawls.export")[0]?.args).toEqual({ ids: ["crawl-7"], dest: dir.dir });
+    expect(onStarted.mock.calls[0]?.[0]).toHaveLength(3);
+  });
+
+  // spec: OUT-075 [P1]
+  it("lists every written file and the skipped entries of all operations after the export", async () => {
+    render(<ExportHost desktop={desktop} />);
+    act(() => openExport({ kind: "multi" }));
+    fireEvent.click(await screen.findByRole("checkbox", { name: "All" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "XML sitemap" }));
+    core.handlers.set("export.sitemap", () => ({ ...handle, opId: "sitemap-1" }));
+    await save("Export…");
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    act(() => useSession.setState({ ops: {
+      "export-1": { ...handle, state: "done", done: 2, total: 2, result: { files: [{ path: "/fixture/internal_all.csv", bytes: 9 }], warnings: [], skipped: ["Screenshots"] } },
+      "sitemap-1": { ...handle, opId: "sitemap-1", state: "done", done: 1, total: 1, result: { path: "/fixture/sitemap.xml", bytes: 5 } },
+    } }));
+    const status = await screen.findByText("Export complete.");
+    const banner = status.closest("[role=status],[role=alert],.os-banner") ?? status.parentElement!;
+    expect(banner).toHaveTextContent("2 files written:");
+    expect(banner).toHaveTextContent("/fixture/internal_all.csv");
+    expect(banner).toHaveTextContent("/fixture/sitemap.xml");
+    expect(banner).toHaveTextContent("Screenshots");
+  });
 });
