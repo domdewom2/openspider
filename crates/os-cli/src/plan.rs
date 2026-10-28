@@ -63,6 +63,10 @@ pub struct Plan {
     pub header_labels: std::collections::BTreeMap<String, String>,
     /// Auto-Vergleich nach erfolgreichem Abschluss (OUT-152).
     pub compare_with_previous: bool,
+    /// Explicit comparison partner, resolved before any execution.
+    pub explicit_previous: Option<PathBuf>,
+    /// Invocation-specific mapping and element selection for an explicit comparison.
+    pub explicit_compare_config: Option<os_model::CompareConfig>,
     /// Stapelmodus der Exporte (geplante Aufgaben); `None` = einzeln wie auf der Kommandozeile.
     pub batch: Option<BatchSettings>,
     /// Decrypted credentials, held only for this process.
@@ -379,6 +383,9 @@ fn build_impl(
     secrets: Option<&dyn os_fetch::SecretStore>,
     clock: &dyn os_model::Clock,
 ) -> Result<Plan, CliError> {
+    if args.use_google_analytics.is_some() {
+        return Err(CliError::usage("--use-google-analytics (Universal Analytics) wird nicht mehr unterstützt; --use-google-analytics-4 verwenden"));
+    }
     let unsupported = args.unsupported();
     if !unsupported.is_empty() {
         return Err(CliError::usage(format!(
@@ -387,32 +394,75 @@ fn build_impl(
         )));
     }
 
-    let compare_with_previous =
-        match args.project_crawl_comparison.as_ref() {
-            None => args.compare_with_previous,
-            Some(Some(value)) if value == "true" => true,
-            Some(Some(value)) if value == "false" && !args.compare_with_previous => false,
-            _ => return Err(CliError::usage(
-                "--project-crawl-comparison requires true or false; conflicting comparison options",
-            )),
-        };
+    let compare_with_previous = match args.project_crawl_comparison.as_ref() {
+        None => args.compare_with_previous,
+        Some(None) => true,
+        Some(Some(value)) if value.eq_ignore_ascii_case("true") => true,
+        Some(Some(value)) if value.eq_ignore_ascii_case("false") && !args.compare_with_previous => false,
+        _ => return Err(CliError::usage("--project-crawl-comparison: gültige Werte true oder false; widersprüchliche Angaben. Syntax: --project-name \"MeinProjekt\" --project-crawl-comparison true")),
+    };
     if compare_with_previous
-        && (args
+        && args
             .project_name
             .as_ref()
             .is_none_or(|p| p.trim().is_empty())
-            || args.no_store)
     {
         return Err(CliError::usage(
-            "Auto comparison requires --project-name and a stored crawl",
+            "Projektname fehlt: --project-name <Name> --project-crawl-comparison true",
         ));
+    }
+    if compare_with_previous && args.no_store {
+        return Err(CliError::usage("Auto comparison requires a stored crawl"));
+    }
+    if let Some(ids) = &args.crawl_comparison {
+        if ids.len() != 2
+            || args.crawl.is_some()
+            || !args.crawl_list.is_empty()
+            || !args.crawl_sitemap.is_empty()
+            || args.load_crawl.is_some()
+            || args.resume
+            || args.no_store
+            || compare_with_previous
+        {
+            return Err(CliError::usage("--crawl-comparison erwartet zwei Crawls und schließt andere Quellen und Auto-Vergleich aus"));
+        }
+        let mut sides = Vec::new();
+        for id in ids {
+            let (path, _) = open_loaded(id, &paths)?;
+            let file = CrawlFile::open(&path, OpenMode::ReadOnly)
+                .map_err(|e| CliError::usage(e.to_string()))?;
+            let meta = file.meta().map_err(|e| CliError::usage(e.to_string()))?;
+            sides.push((meta.started_at, meta.crawl_id, path));
+        }
+        if sides[0].1 == sides[1].1 {
+            return Err(CliError::usage(
+                "Vergleich mit sich selbst ist nicht erlaubt",
+            ));
+        }
+        sides.sort_by_key(|(at, id, _)| (*at, id.to_string()));
+        let comparison_config = args
+            .config
+            .as_ref()
+            .map(|path| {
+                let loaded = load_config_file(path)?;
+                build_config(loaded, args, false, rep).map(|cfg| cfg.compare)
+            })
+            .transpose()?;
+        let mut effective = args.clone();
+        effective.config = None;
+        effective.crawl_comparison = None;
+        effective.load_crawl = Some(sides[1].2.to_string_lossy().into_owned());
+        let mut plan = build_impl(&effective, paths, rep, batch, secrets, clock)?;
+        plan.explicit_previous = Some(sides[0].2.clone());
+        plan.explicit_compare_config = comparison_config;
+        return Ok(plan);
     }
     let format = parse_format(args)?;
     let xls = args
         .export_format
         .as_deref()
         .is_some_and(|s| s.eq_ignore_ascii_case("xls"));
-    let google = crate::google::validate(args, &paths)?;
+    let mut google = crate::google::validate(args, &paths)?;
 
     // Quelle
     let list_sources: Vec<String> = args
@@ -654,6 +704,15 @@ fn build_impl(
         None
     };
 
+    if args.timestamped_output {
+        if let Some(target) = &mut google {
+            target.timestamp = output
+                .as_ref()
+                .and_then(|p| p.file_name())
+                .map(|s| s.to_string_lossy().into_owned());
+        }
+    }
+
     let project = args
         .project_name
         .clone()
@@ -676,6 +735,8 @@ fn build_impl(
         xls,
         google,
         compare_with_previous,
+        explicit_previous: None,
+        explicit_compare_config: None,
         batch,
         segment: args.segment.clone(),
         source,
@@ -696,6 +757,26 @@ fn build_impl(
 }
 
 fn apply_api_options(cfg: &mut CrawlConfig, args: &RunArgs) -> Result<(), CliError> {
+    for (flag, values, count) in [
+        (
+            "--use-google-analytics-4",
+            args.use_google_analytics_4.as_deref(),
+            4,
+        ),
+        (
+            "--use-google-search-console",
+            args.use_google_search_console.as_deref(),
+            2,
+        ),
+    ] {
+        if let Some(values) = values {
+            if values.len() != count || values.iter().any(|s| s.trim().is_empty()) {
+                return Err(CliError::usage(format!(
+                    "{flag}: {count} nicht leere Werte für Konto und Property erforderlich"
+                )));
+            }
+        }
+    }
     os_integrations::crawl_glue::configure_google(
         cfg,
         args.use_google_analytics_4.as_deref(),

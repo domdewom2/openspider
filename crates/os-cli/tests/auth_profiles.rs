@@ -267,12 +267,40 @@ fn cookie_expiry_boundaries_use_the_injected_clock() {
         .header_for(&"https://site.test/".parse().unwrap())
         .unwrap();
     assert!(header.contains("valid=yes"));
-    assert!(header.contains("near=yes"));
+    // The 1-ms cookie is checked through import decisions below, never the wall-clock jar.
     assert!(!header.contains("expired="));
     assert_eq!(rep.warning_messages(), ["authentication cookies expired"]);
     assert!(jar
         .header_for(&"https://foreign.test/".parse().unwrap())
         .is_none());
+    let mut near_only = value.clone();
+    let secret: serde_json::Value =
+        serde_json::from_str(near_only["profile"]["secret"].as_str().unwrap()).unwrap();
+    near_only["profile"]["secret"] = serde_json::json!(
+        serde_json::json!({"cookies":[secret["cookies"][2].clone()]}).to_string()
+    );
+    std::fs::write(
+        &path,
+        os_store::auth_profiles::seal(
+            &near_only,
+            os_store::auth_profiles::Protection::Passphrase("fixture"),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    for (millis, expired) in [(1_767_225_600_000, false), (1_767_225_600_001, true)] {
+        let rep = os_cli::reporter::Reporter::new(false);
+        os_cli::auth::load_with_clock(
+            &config,
+            &paths,
+            &rep,
+            &os_fetch::MemorySecretStore::new(),
+            Some("fixture"),
+            &os_model::ManualClock::new(os_model::Timestamp::from_unix_millis(millis)),
+        )
+        .unwrap();
+        assert_eq!(!rep.warning_messages().is_empty(), expired);
+    }
     // The scheduler passes its clock all the way through plan construction.
     let key = os_store::auth_profiles::new_key();
     let store = os_fetch::MemorySecretStore::new();

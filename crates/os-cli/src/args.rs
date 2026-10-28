@@ -125,8 +125,8 @@ pub struct RunArgs {
     pub task_name: Option<String>,
 
     // ---- Vergleich ----------------------------------------------------------------------------
-    /// [noch nicht unterstützt] Vergleicht zwei Crawls.
-    #[arg(long, num_args = 0.., value_name = "ID1 ID2", help_heading = "Vergleich")]
+    /// Vergleicht zwei gespeicherte Crawls (Current nach Crawl-Datum).
+    #[arg(long, num_args = 2, value_name = "ID1 ID2", help_heading = "Vergleich")]
     pub crawl_comparison: Option<Vec<String>>,
 
     /// Vergleicht mit dem vorherigen erfolgreichen Crawl des Projekts.
@@ -139,12 +139,26 @@ pub struct RunArgs {
 
     // ---- APIs ---------------------------------------------------------------------------------
     /// Google Analytics 4.
-    #[arg(long, num_args = 0.., value_name = "KONTO ACCOUNT PROPERTY STROM", help_heading = "APIs")]
+    #[arg(
+        long,
+        num_args = 4,
+        value_name = "KONTO ACCOUNT PROPERTY STROM",
+        help_heading = "APIs"
+    )]
     pub use_google_analytics_4: Option<Vec<String>>,
 
     /// Google Search Console.
-    #[arg(long, num_args = 0.., value_name = "KONTO WEBSITE", help_heading = "APIs")]
+    #[arg(
+        long,
+        num_args = 2,
+        value_name = "KONTO WEBSITE",
+        help_heading = "APIs"
+    )]
     pub use_google_search_console: Option<Vec<String>>,
+
+    /// Universal Analytics wird nicht mehr unterstützt.
+    #[arg(long, num_args = 0.., help_heading = "APIs")]
+    pub use_google_analytics: Option<Vec<String>>,
 
     /// PageSpeed Insights.
     #[arg(long, help_heading = "APIs")]
@@ -315,9 +329,8 @@ pub fn long_option_names() -> Vec<String> {
 impl RunArgs {
     /// Die noch nicht unterstützten Optionen, die der Aufruf enthält (Namen mit `--`).
     pub fn unsupported(&self) -> Vec<&'static str> {
-        let checks: [(bool, &'static str); 4] = [
+        let checks: [(bool, &'static str); 3] = [
             (self.crawl_google_sheet.is_some(), "--crawl-google-sheet"),
-            (self.crawl_comparison.is_some(), "--crawl-comparison"),
             (self.email_on_complete.is_some(), "--email-on-complete"),
             (
                 self.export_custom_summary.is_some(),

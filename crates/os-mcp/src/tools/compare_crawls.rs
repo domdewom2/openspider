@@ -61,6 +61,7 @@ impl Tool for CompareCrawls {
         if comparison.current().meta.crawl_id.to_string() != a {
             comparison.swap();
         }
+        // AGENT-015: use the opened pair, including its mapping, for counts and IDs.
         let config = comparison.current().config.compare.change_detection.clone();
         change::calculate(&comparison, &config, &cancel).map_err(internal)?;
         if let Some(element) = opt_str(&args, "element")? {

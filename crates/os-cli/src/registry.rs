@@ -154,9 +154,9 @@ pub fn resolve_with(
                 _ => Err(unknown()),
             }
         }
-        Kind::Report => match reports::resolve(input) {
-            Ok(def) => Ok(Resolved::Report(def.name.to_string())),
-            Err(_) => Err(unknown()),
+        Kind::Report => match catalog::resolve_with(ExportKind::Report, input, cfg) {
+            Ok(catalog::ExportRef::Report(name)) => Ok(Resolved::Report(name)),
+            _ => Err(unknown()),
         },
     }
 }
@@ -231,6 +231,26 @@ pub fn split_list(list: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // spec: ONPAGE-023
+    #[test]
+    fn extension_resource_filters_follow_the_saved_parity_setting() {
+        let mut cfg = os_model::CrawlConfig::default();
+        for filter in ["Fonts", "Media", "XML"] {
+            let name = format!("Internal:{filter}");
+            assert!(!names(Kind::Tab).contains(&name));
+            assert!(resolve_with(Kind::Tab, &name, &cfg).is_err());
+            cfg.ui.parity_filters = false;
+            assert_eq!(
+                resolve_with(Kind::Tab, &name, &cfg),
+                Ok(Resolved::Tab {
+                    tab: "Internal".into(),
+                    filter: filter.into()
+                })
+            );
+            cfg.ui.parity_filters = true;
+        }
+    }
 
     // spec: OUT-192
     #[test]

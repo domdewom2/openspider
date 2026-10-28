@@ -143,6 +143,31 @@ async fn page_title_changes_are_counted_and_paginated() {
         .call(&ctx, json!({"a":a.id,"b":b.id}))
         .unwrap();
     let counts = summary.summary["change_detection"].as_array().unwrap();
+    let cancel = os_model::CancelToken::new();
+    let pair = os_analyze::compare::Comparison::open(
+        os_analyze::compare::CrawlSide::open(
+            &world.dir.path().join(format!("{}.ospider", a.id)),
+            world.dir.path(),
+        )
+        .unwrap(),
+        os_analyze::compare::CrawlSide::open(
+            &world.dir.path().join(format!("{}.ospider", b.id)),
+            world.dir.path(),
+        )
+        .unwrap(),
+        &[],
+        &cancel,
+    )
+    .unwrap();
+    let config = &pair.current().config.compare.change_detection;
+    os_analyze::compare::change::calculate(&pair, config, &cancel).unwrap();
+    let expected: Vec<_> = os_analyze::compare::change::counts(&pair, config, false)
+        .unwrap()
+        .into_iter()
+        .map(|r| json!({"element":r.element,"count":r.change}))
+        .collect();
+    assert_eq!(counts, &expected);
+
     for (element, expected) in [
         ("Page Titles", 2),
         ("Meta Description", 0),

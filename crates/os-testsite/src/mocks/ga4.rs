@@ -267,6 +267,37 @@ pub struct QuotaStatus {
     pub remaining: u64,
 }
 
+/// Hält Report-Antworten bis zur expliziten Freigabe durch den Test zurück.
+#[derive(Debug, Default)]
+pub struct ReportGate {
+    started: tokio::sync::Notify,
+    released: tokio::sync::Notify,
+    is_released: std::sync::atomic::AtomicBool,
+}
+
+impl ReportGate {
+    /// Wartet, bis eine Report-Anfrage die gesperrte Antwort erreicht hat.
+    pub async fn wait_for_request(&self) {
+        self.started.notified().await;
+    }
+
+    /// Gibt alle aktuellen und zukünftigen Report-Antworten frei.
+    pub fn release(&self) {
+        self.is_released.store(true, Ordering::SeqCst);
+        self.released.notify_waiters();
+    }
+
+    async fn wait(&self) {
+        let released = self.released.notified();
+        tokio::pin!(released);
+        released.as_mut().enable();
+        self.started.notify_one();
+        if !self.is_released.load(Ordering::SeqCst) {
+            released.await;
+        }
+    }
+}
+
 /// Steuerbarer Zustand des Mocks.
 #[derive(Debug, Clone)]
 pub struct MockConfig {
@@ -285,6 +316,8 @@ pub struct MockConfig {
     pub tokens_per_report: u64,
     /// Verzögerung je `runReport`.
     pub delay: Duration,
+    /// Optionale explizite Freigabe je `runReport` statt einer Zeitannahme.
+    pub report_gate: Option<Arc<ReportGate>>,
     /// `metadata.dataLossFromOtherRow`.
     pub data_loss_from_other_row: bool,
     /// `metadata.subjectToThresholding`.
@@ -309,6 +342,7 @@ impl Default for MockConfig {
             },
             tokens_per_report: 10,
             delay: Duration::ZERO,
+            report_gate: None,
             data_loss_from_other_row: false,
             thresholding: false,
             compatibility_down: false,
@@ -483,6 +517,9 @@ async fn handle(
                 let now = s.inflight.fetch_add(1, Ordering::SeqCst) + 1;
                 s.max_inflight.fetch_max(now, Ordering::SeqCst);
                 let _guard = Inflight(&s);
+                if let Some(gate) = &cfg.report_gate {
+                    gate.wait().await;
+                }
                 if !cfg.delay.is_zero() {
                     tokio::time::sleep(cfg.delay).await;
                 }

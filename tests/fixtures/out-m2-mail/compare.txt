@@ -28,7 +28,11 @@ Meta Description / Duplicate | Opportunity | Low | 7
 Page Titles / Same as H1 | Opportunity | Low | 7
 Structured Data / Missing Structured Data | Opportunity | Low | 7
 Issue / Filter | Previous | Current | Change | Change %
+Inlinks | 0 | 3 | +3 |
+Internal Outlinks | 0 | 3 | +3 |
 New | 0 | 3 | +3 |
+Unique Inlinks | 0 | 3 | +3 |
+Unique Internal Outlinks | 0 | 3 | +3 |
 Missing | 2 | 0 | -2 | -100.00%
 Analytics / All | 10 | 11 | +1 | 10.00%
 Canonicals / All | 9 | 10 | +1 | 11.11%
@@ -45,10 +49,8 @@ H2 / All | 9 | 10 | +1 | 11.11%
 Hreflang / All | 9 | 10 | +1 | 11.11%
 Hreflang / Missing | 9 | 10 | +1 | 11.11%
 Indexability | 0 | 1 | +1 |
-Inlinks | 0 | 1 | +1 |
 Internal / All | 11 | 12 | +1 | 9.09%
 Internal / HTML | 10 | 11 | +1 | 10.00%
-Internal Outlinks | 0 | 1 | +1 |
 Link Metrics / All | 10 | 11 | +1 | 10.00%
 Links / All | 9 | 10 | +1 | 11.11%
 Meta Description | 0 | 1 | +1 |
@@ -69,8 +71,6 @@ Structured Data / All | 9 | 10 | +1 | 11.11%
 Structured Data Unique Types | 0 | 1 | +1 |
 URL / All | 10 | 11 | +1 | 10.00%
 Unique External Outlinks | 0 | 1 | +1 |
-Unique Inlinks | 0 | 1 | +1 |
-Unique Internal Outlinks | 0 | 1 | +1 |
 Validation / All | 9 | 10 | +1 | 11.11%
 Word Count | 0 | 1 | +1 |
 Canonicals / Canonical Is Relative | 0 | 0 | +0 |

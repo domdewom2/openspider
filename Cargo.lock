@@ -5013,6 +5013,7 @@ dependencies = [
  "dirs",
  "futures-util",
  "os-analyze",
+ "os-cli",
  "os-engine",
  "os-export",
  "os-fetch",

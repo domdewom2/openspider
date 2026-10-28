@@ -9,15 +9,24 @@ use std::path::{Path, PathBuf};
 pub struct GoogleTarget {
     pub account: String,
     pub allow_override: bool,
+    pub timestamp: Option<String>,
 }
 impl GoogleTarget {
     pub fn client(&self, config: &CrawlConfig, paths: &AppPaths) -> Result<DriveClient, CliError> {
+        self.client_with_secrets(config, paths, os_fetch::secret_store_from_env())
+    }
+    pub fn client_with_secrets(
+        &self,
+        config: &CrawlConfig,
+        paths: &AppPaths,
+        secrets: std::sync::Arc<dyn os_fetch::SecretStore>,
+    ) -> Result<DriveClient, CliError> {
         let network = os_model::settings::AppSettings::load(&paths.settings)
             .map_err(|e| CliError::usage(e.to_string()))?
             .network;
         let ctx = ApiCtx {
             cfg: config.clone(),
-            secrets: os_fetch::secret_store_from_env(),
+            secrets,
             network,
             allow_api_override: self.allow_override,
             quota_ledger: None,
@@ -27,16 +36,28 @@ impl GoogleTarget {
     }
 }
 pub fn validate(args: &RunArgs, paths: &AppPaths) -> Result<Option<GoogleTarget>, CliError> {
-    if !args
+    validate_with_secrets(args, paths, os_fetch::secret_store_from_env())
+}
+
+pub fn validate_with_secrets(
+    args: &RunArgs,
+    paths: &AppPaths,
+    secrets: std::sync::Arc<dyn os_fetch::SecretStore>,
+) -> Result<Option<GoogleTarget>, CliError> {
+    let sheets = args
         .export_format
         .as_deref()
-        .is_some_and(|s| s.eq_ignore_ascii_case("gsheet"))
-    {
+        .is_some_and(|s| s.eq_ignore_ascii_case("gsheet"));
+    if !sheets && args.google_drive_account.is_none() {
         return Ok(None);
     }
-    let target = GoogleTarget { account: args.google_drive_account.clone().filter(|s| !s.trim().is_empty())
-        .ok_or_else(|| CliError::usage("gsheet benötigt --google-drive-account; Google-Konto zuerst in der App verbinden"))?, allow_override: args.allow_api_override };
-    target.client(&CrawlConfig::default(), paths)?;
+    let target = GoogleTarget {
+        account: args.google_drive_account.clone().filter(|s| !s.trim().is_empty())
+            .ok_or_else(|| CliError::usage("gsheet benötigt --google-drive-account; Google-Konto zuerst in der App verbinden"))?,
+        allow_override: args.allow_api_override,
+        timestamp: None,
+    };
+    target.client_with_secrets(&CrawlConfig::default(), paths, secrets)?;
     Ok(Some(target))
 }
 
@@ -99,6 +120,20 @@ pub async fn upload(
     token: &os_model::CancelToken,
     rep: &Reporter,
 ) -> Result<usize, String> {
+    upload_at(client, project, crawl, paths, single, None, token, rep).await
+}
+
+#[allow(clippy::too_many_arguments)]
+pub async fn upload_at(
+    client: &DriveClient,
+    project: &str,
+    crawl: &str,
+    paths: &[PathBuf],
+    single: bool,
+    timestamp: Option<&str>,
+    token: &os_model::CancelToken,
+    rep: &Reporter,
+) -> Result<usize, String> {
     let mut groups: Vec<Vec<_>> = Vec::new();
     if single {
         groups.push(paths.to_vec());
@@ -113,7 +148,8 @@ pub async fn upload(
         } else {
             tables[0].name.clone()
         };
-        let destination = os_export::target_gsheet::Destination::new(project, crawl, &name);
+        let mut destination = os_export::target_gsheet::Destination::new(project, crawl, &name);
+        destination.subfolder = timestamp.map(str::to_string);
         let result = os_export::target_gsheet::export(client, &destination, tables, token)
             .await
             .map_err(|e| e.to_string())?;

@@ -55,7 +55,7 @@ fn suffix(scope: Option<&SegmentFilter>) -> Option<&str> {
 
 /// Reserve names for every saved segment before opening a writer. Single-segment
 /// exports use the same plan as `all`, including on case-insensitive filesystems.
-fn file_name(
+pub(crate) fn file_name(
     file: &CrawlFile,
     canonical: &str,
     scope: Option<&SegmentFilter>,

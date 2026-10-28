@@ -1,6 +1,6 @@
 //! Additive U23 read adapters for the existing sidebar/view commands. No new IPC command names.
 use os_analyze::compare::{
-    ChangeFilter, CompareClass, FilterComparison, LinkComparison, LinkDirection, LinkRow,
+    change, ChangeFilter, CompareClass, FilterComparison, LinkComparison, LinkDirection, LinkRow,
     LinkSource, Side,
 };
 use os_analyze::views::{self, ColumnSelection, PageStart, ViewQuery};
@@ -24,9 +24,10 @@ pub(crate) async fn overview(app: &App, ctx: CallCtx) -> Result<Json, CmdError> 
     with_active(app, &ctx.window, move |a| {
         let rows = a.comparison.overview(&ctx.cancel).map_err(compare_error)?;
         let mut overview:Vec<_>=rows.iter().map(filter_json).collect();
-        let changes=super::ui_change::page(&mut a.comparison,&a.elements,super::ui_change::PageRequest{filter:"All",change:Some("changed"),offset:0,limit:1,content_threshold_pct:a.content_threshold_pct,sort:None},&ctx.cancel)?;
-        for element in std::iter::once("All").chain(a.elements.iter().map(|e|super::ui_change::filter_name(e))) {
-            let n=if element=="All" {changes["changedTotal"].as_u64().unwrap_or(0)} else {changes["changedCounts"][element].as_u64().unwrap_or(0)};
+        let config = a.change_config();
+        for element in std::iter::once("All").chain(change::ELEMENTS.iter()
+            .filter(|(e, _, _)| config.elements.contains(e)).map(|(_, label, _)| *label)) {
+            let n = change::ids(&a.comparison, element, true).map_err(compare_error)?.len();
             overview.push(json!({"tab":"Change Detection","filter":element,"label":element,"current":n,"previous":n,"change":n,"classes":null}));
         }
         let issues = a.comparison.issues(&ctx.cancel).map_err(compare_error)?;
@@ -84,7 +85,11 @@ pub(crate) async fn rows(app: &App, ctx: CallCtx, raw: Json) -> Result<Json, Cmd
         }
         ctx.cancel.checkpoint().map_err(|_| CmdError::new(ErrorCode::Cancelled,"err-cancelled"))?;
         if q.tab == "Change Detection" {
-            let mut page = super::ui_change::page(c, &a.elements, super::ui_change::PageRequest { filter: &q.filter, change: q.class.as_deref(), offset: args.offset, limit: args.limit, content_threshold_pct: a.content_threshold_pct, sort: q.sort.as_ref() }, &ctx.cancel)?;
+            let config = os_model::ChangeDetectionConfig {
+                elements: a.elements.iter().filter_map(|e| e.parse().ok()).collect(),
+                content_threshold_pct: a.content_threshold_pct,
+            };
+            let mut page = change_page(c, &config, &q, args.offset, args.limit)?;
             page["viewId"] = json!(args.view_id); page["version"] = json!(args.version); page["offset"] = json!(args.offset);
             return Ok(page);
         }
@@ -154,6 +159,51 @@ pub(crate) async fn rows(app: &App, ctx: CallCtx, raw: Json) -> Result<Json, Cmd
     }).await
 }
 
+/// C02 owns classification, columns and SQL sorting. Page only after the complete order is known.
+fn change_page(
+    c: &os_analyze::compare::Comparison,
+    config: &os_model::ChangeDetectionConfig,
+    request: &Query,
+    offset: u64,
+    limit: u32,
+) -> Result<Json, CmdError> {
+    if request
+        .class
+        .as_deref()
+        .is_some_and(|v| !["changed", "notChanged"].contains(&v))
+    {
+        return Err(CmdError::invalid_input("err-compare-input", "class"));
+    }
+    let changed = request.class.as_deref() != Some("notChanged");
+    let mut query = ViewQuery::new("Change Detection", &request.filter);
+    query.start = PageStart::Offset(offset);
+    query.limit = limit;
+    if let Some(sort) = &request.sort {
+        query.sort = super::super::view::sorts(std::slice::from_ref(sort));
+    }
+    if !request.search.is_empty() {
+        query.search = Some(views::SearchSpec::Simple(request.search.clone()));
+    }
+    let tab = change::tab_for_query(config, changed, &mut query);
+    let current = c.current();
+    let page = views::query_view_in(&[tab], &current.file, &current.config, &query)
+        .map_err(super::super::catalog::view_error)?;
+    let counts = change::counts(c, config, false).map_err(compare_error)?;
+    let mut union = os_analyze::compare::RoaringBitmap::new();
+    for row in &counts {
+        union |= change::ids(c, &row.element, true).map_err(compare_error)?;
+    }
+    let counts: std::collections::BTreeMap<_, _> =
+        counts.into_iter().map(|r| (r.element, r.change)).collect();
+    let content_available = change::content_available(c, Side::Current).map_err(compare_error)?
+        && change::content_available(c, Side::Previous).map_err(compare_error)?;
+    Ok(
+        json!({"columns":page.columns,"cells":page.rows,"rowKeys":page.row_keys.iter().map(|k|k.0).collect::<Vec<_>>(),
+        "partnerKeys":page.row_keys.iter().map(|k|c.partner(Side::Current,k.0)).collect::<Vec<_>>(),
+        "total":page.total,"side":"Current","filtersEnabled":true,"changedCounts":counts,"changedTotal":union.len(),"contentAvailable":content_available}),
+    )
+}
+
 /// Assign keys before filtering: a single index build replaces one linear search per row.
 fn keyed_link_rows(
     links: &LinkComparison,
@@ -213,6 +263,105 @@ fn sort_link_rows(rows: &mut [(i64, Vec<Value>)], index: usize, dir: SortDir) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    // spec: TECH-301
+    #[tokio::test]
+    async fn ui_command_and_cli_export_share_cells_counts_and_sorted_pages() {
+        let home = tempfile::tempdir().unwrap();
+        let paths = os_store::paths::app_paths_with_home(Some(home.path().as_os_str()));
+        paths.create_all().unwrap();
+        let old = super::super::change_fixture::fixture(
+            &paths.crawls,
+            1,
+            1,
+            os_model::CrawlConfig::default(),
+        );
+        let new = super::super::change_fixture::fixture(
+            &paths.crawls,
+            2,
+            2,
+            os_model::CrawlConfig::default(),
+        );
+        let app = App::new(crate::AppConfig::new(home.path())).unwrap();
+        let opened = app
+            .dispatch(
+                CallCtx::for_window("main"),
+                "compare.open",
+                json!({"current":new.path(),"previous":old.path(),"mapping":[],"elements":[]}),
+            )
+            .await
+            .unwrap();
+        let output = home.path().join("exports");
+        let args = os_cli::RunArgs {
+            crawl_comparison: Some(vec![
+                old.meta().unwrap().crawl_id.to_string(),
+                new.meta().unwrap().crawl_id.to_string(),
+            ]),
+            export_tabs: vec!["Change Detection:All".into()],
+            output_folder: Some(output.clone()),
+            ..Default::default()
+        };
+        let rep = os_cli::reporter::Reporter::new(false);
+        let plan = os_cli::plan::build(&args, paths, &rep).unwrap();
+        let outcome = os_cli::exec::execute(
+            plan,
+            rep,
+            os_cli::signals::Signals::manual(os_model::CancelToken::new()),
+        )
+        .await;
+        assert_eq!(outcome.exit, os_cli::Exit::Ok);
+        let request = json!({"viewId":"parity","version":opened["version"],"offset":0,"limit":100,"columns":[],
+            "comparison":{"current":opened["current"]["crawlId"],"previous":opened["previous"]["crawlId"],
+                "tab":"Change Detection","filter":"All","class":"changed"}});
+        let page = app
+            .dispatch(CallCtx::for_window("main"), "view.rows", request.clone())
+            .await
+            .unwrap();
+        let (header, csv) =
+            os_export::csv::read_table(&output.join("change_detection_all.csv")).unwrap();
+        assert_eq!(page["columns"], json!(header));
+        let csv: Vec<_> = csv.map(Result::unwrap).collect();
+        assert_eq!(page["total"], csv.len());
+        let cells: Vec<Vec<os_model::Value>> =
+            serde_json::from_value(page["cells"].clone()).unwrap();
+        assert_eq!(cells.len(), csv.len());
+        for (row, exported) in cells.iter().zip(&csv) {
+            assert_eq!(row.len(), exported.len());
+            for (value, text) in row.iter().zip(exported) {
+                match value {
+                    os_model::Value::Null => assert!(text.is_empty()),
+                    os_model::Value::Text(s) => assert_eq!(s, text),
+                    os_model::Value::Int(n) => assert_eq!(n.to_string(), *text),
+                    os_model::Value::Float(n) => {
+                        assert!((n - text.parse::<f64>().unwrap()).abs() <= 0.005)
+                    }
+                    os_model::Value::Bool(b) => assert_eq!(b.to_string(), *text),
+                }
+            }
+        }
+        assert_eq!(page["changedCounts"]["Page Titles"], 1);
+        let mut sorted = request;
+        sorted["comparison"]["filter"] = json!("All");
+        sorted["comparison"]["sort"] = json!({"column":"Word Count Change %","dir":"desc"});
+        let full = app
+            .dispatch(CallCtx::for_window("main"), "view.rows", sorted.clone())
+            .await
+            .unwrap();
+        sorted["offset"] = json!(2);
+        sorted["limit"] = json!(3);
+        let slice = app
+            .dispatch(CallCtx::for_window("main"), "view.rows", sorted)
+            .await
+            .unwrap();
+        assert_eq!(
+            slice["cells"],
+            json!(&full["cells"].as_array().unwrap()[2..5])
+        );
+        assert_eq!(
+            slice["rowKeys"],
+            json!(&full["rowKeys"].as_array().unwrap()[2..5])
+        );
+    }
+
     // spec: TECH-301
     #[test]
     fn link_sort_precedes_paging_and_preserves_keys() {

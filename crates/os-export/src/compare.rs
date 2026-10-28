@@ -652,6 +652,75 @@ pub fn save_report(
     crate::reports::save_report(&current.file, &current.config, name, out_dir, format)
 }
 
+/// Saves a report for one saved segment (OUT-011, OUT-113). Call with a fresh
+/// comparison so overview filter caches reflect the scoped population.
+pub fn save_report_in_segment(
+    comparison: &mut Comparison,
+    name: &str,
+    scope: &os_analyze::segments::SegmentFilter,
+    out_dir: &Path,
+    format: Format,
+    cancel: &CancelToken,
+) -> Result<ReportResult, ExportError> {
+    let current = comparison.current();
+    if !report_catalog::resolve(name).is_ok_and(|d| d.kind == ReportKind::CrawlOverview) {
+        return crate::segment::export_report(
+            &current.file,
+            &current.config,
+            name,
+            Some(scope),
+            out_dir,
+            format,
+        );
+    }
+    // Filter rows and aggregate summary rows must see the same segment on both sides.
+    struct Population<'a>(&'a mut Comparison);
+    impl Drop for Population<'_> {
+        fn drop(&mut self) {
+            for side in [self.0.current(), self.0.previous()] {
+                let _ = side
+                    .file
+                    .conn()
+                    .execute_batch("DROP VIEW IF EXISTS temp.urls");
+            }
+        }
+    }
+    let scoped = Population(comparison);
+    for side in [scoped.0.current(), scoped.0.previous()] {
+        crate::links_export::sql(side.file.conn().execute_batch(&format!(
+            "CREATE TEMP VIEW urls AS SELECT u.* FROM main.urls u WHERE {}",
+            scope.population_sql(),
+        )))?;
+    }
+    let def = report_catalog::resolve(name)?;
+    let path = out_dir.join(crate::segment::file_name(
+        &scoped.0.current().file,
+        def.file_stem,
+        Some(scope),
+        format.extension(),
+    )?);
+    let mut writer = open_writer(
+        &path,
+        format,
+        def.file_stem,
+        &writer_options(&scoped.0.current().config),
+    )?;
+    let rows = crawl_overview(scoped.0, cancel)?;
+    writer.header(&OVERVIEW_HEADER.map(String::from))?;
+    for row in rows {
+        cancel
+            .checkpoint()
+            .map_err(|_| ExportError::Write("Export abgebrochen".into()))?;
+        let (kinds, values) = row.to_values();
+        writer.row(&kinds, &values)?;
+    }
+    let info = writer.finish()?;
+    Ok(ReportResult {
+        warnings: info.warnings.clone(),
+        files: vec![info],
+    })
+}
+
 /// Alle Reportnamen des Menüs (Katalog und Tabellen-Einträge), die im Vergleichsmodus bedienbar sind.
 pub fn report_names() -> Vec<String> {
     let mut names = report_catalog::names();
