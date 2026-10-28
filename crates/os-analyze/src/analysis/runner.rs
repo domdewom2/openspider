@@ -188,7 +188,12 @@ pub fn run_with(
                 scope.spawn(move || {
                     // Eigene Verbindung je Arbeiter; scheitert das Öffnen, scheitern seine Schritte.
                     let conn =
-                        CrawlFile::open(path, OpenMode::ReadWrite).map_err(|e| e.to_string());
+                        CrawlFile::open(path, OpenMode::ReadWrite).and_then(|file| {
+                            // Jeder Arbeiter hatte zuvor 256 MiB Cache. Bei parallelen
+                            // Vollscans addieren sich diese Caches (250k: 1,59 GB RSS).
+                            file.conn().pragma_update(None, "cache_size", -65_536)?;
+                            Ok(file)
+                        }).map_err(|e| e.to_string());
                     loop {
                         if cancel.checkpoint().is_err() {
                             break;
@@ -365,6 +370,10 @@ mod scale_tests {
         _: &CrawlConfig,
         _: &CancelToken,
     ) -> Result<StepState, AnalyzeError> {
+        let cache: i64 = file
+            .conn()
+            .pragma_query_value(None, "cache_size", |r| r.get(0))?;
+        assert_eq!(cache, -65_536);
         let tx = file.conn().unchecked_transaction()?;
         for id in 1..=1000 {
             tx.execute(
