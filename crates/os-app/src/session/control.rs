@@ -197,6 +197,7 @@ pub async fn start_with_fetcher<F: os_fetch::Fetch>(
         h,
         CrawlEvent::Started(key.clone()),
     );
+    remember_crawl(app, file.to_string_lossy().into_owned()).await;
     Ok(CrawlRef {
         crawl_id: key.0,
         file: file.to_string_lossy().into_owned(),
@@ -283,6 +284,7 @@ pub async fn open(
             }
             app.sessions().set_current(ctx.window, updated);
         }
+        remember_crawl(app, summary.file.clone()).await;
         return Ok(summary);
     }
     replace_allowed(app, &ctx).await?;
@@ -317,6 +319,7 @@ pub async fn open(
         );
     }
     super::activate(app);
+    remember_crawl(app, summary.file.clone()).await;
     app.crawl_events().emit(app, CrawlEvent::Opened(key));
     Ok(summary)
 }
@@ -613,6 +616,7 @@ async fn start_apis(
         .emit(app, CrawlEvent::Started(key.clone()));
     app.crawl_events()
         .emit(app, CrawlEvent::Completed(key.clone()));
+    remember_crawl(app, path.to_string_lossy().into_owned()).await;
     Ok(CrawlRef {
         crawl_id: key.0,
         file: path.to_string_lossy().into_owned(),
@@ -654,4 +658,48 @@ async fn stop_checkpoint(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
         super::analysis::start_operation(app, s.clone(), None, true)?;
     }
     Ok(())
+}
+
+/// Persist every newly created/opened crawl, including starts outside the header.
+async fn remember_crawl(app: &App, path: String) {
+    let saved = app.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        saved.uistate().update(|ui| {
+            let Some(state) = ui.state.as_object_mut() else {
+                return;
+            };
+            let old = state
+                .get("recentCrawls")
+                .and_then(|v| v.as_array())
+                .cloned()
+                .unwrap_or_default();
+            let mut paths = vec![path];
+            for entry in old {
+                if let Some(path) = entry.get("path").and_then(|v| v.as_str()) {
+                    if !path.is_empty() && !paths.iter().any(|p| p == path) {
+                        paths.push(path.to_owned());
+                    }
+                }
+            }
+            state.insert(
+                "recentCrawls".into(),
+                serde_json::json!(paths
+                    .into_iter()
+                    .take(10)
+                    .map(|path| serde_json::json!({"path":path}))
+                    .collect::<Vec<_>>()),
+            );
+        })
+    })
+    .await;
+    let error = match result {
+        Ok(Ok(_)) => return,
+        Ok(Err(error)) => error,
+        Err(error) => internal("recent crawls", error.to_string()),
+    };
+    app.push_notice(Notice {
+        level: NoticeLevel::Warning,
+        code: error.message_key.to_string(),
+        args: error.args,
+    });
 }

@@ -86,6 +86,21 @@ impl UiStateStore {
 
     /// Speichert den Zustand unverändert und liefert ihn zurück.
     pub fn save(&self, state: &UiStateJson) -> Result<UiStateJson, CmdError> {
+        let _g = self.lock.lock().unwrap_or_else(|p| p.into_inner());
+        self.save_locked(state)
+    }
+
+    /// Atomically update one slice of the latest stored UI state.
+    pub fn update(&self, change: impl FnOnce(&mut UiStateJson)) -> Result<UiStateJson, CmdError> {
+        let _g = self.lock.lock().unwrap_or_else(|p| p.into_inner());
+        let mut state = read_state(&self.path())
+            .or_else(|| read_state(&self.backup_path()))
+            .unwrap_or_else(empty_state);
+        change(&mut state);
+        self.save_locked(&state)
+    }
+
+    fn save_locked(&self, state: &UiStateJson) -> Result<UiStateJson, CmdError> {
         if state.version == 0 {
             return Err(CmdError::invalid_input("err-invalid-uistate", "version"));
         }
@@ -102,7 +117,6 @@ impl UiStateStore {
                     .with_arg("max", MAX_UI_STATE_BYTES),
             );
         }
-        let _g = self.lock.lock().unwrap_or_else(|p| p.into_inner());
         std::fs::create_dir_all(&self.dir).map_err(|e| io_error(&self.dir, &e))?;
         let path = self.path();
         let tmp = self.dir.join(format!(
