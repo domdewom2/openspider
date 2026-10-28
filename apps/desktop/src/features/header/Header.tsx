@@ -1,3 +1,4 @@
+import { StatusCard } from "../statusbar/StatusCard";
 import { needsGuardConfirmation } from "../config/pages/auth-forms/session";
 import { useEffect, useRef, useState } from "react";
 import { useT } from "../../i18n";
@@ -199,6 +200,7 @@ export function Header() {
       <Button isDisabled={!allowed || running || !hasResults} onPress={clear}><Trash2 size={16} aria-hidden="true" />{t("header-clear")}</Button>
       <Button className="os-header-settings" aria-label={t("u35-header-settings")} onPress={() => { runAction("app.settings"); }}><Settings size={16} aria-hidden="true" /></Button>
     </form>
+    <StatusCard />
     {!normalized && mode === "spider" && <span id="os-url-error" className="os-header-hint">{t("header-invalid")}</span>}
     {sitemapMode && !validSitemap && <span className="os-header-hint">{t("header-sitemap-hint")}</span>}
     {mode === "spider" && missingFolderSlash(normalized, scope) && <span className="os-header-hint" role="status">{t("header-slash")}</span>}

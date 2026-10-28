@@ -9,3 +9,16 @@
 /* A01-18: the availability list and the version are separate footer items; keep them apart from each other and from the status. */
 .os-app-status > .os-menu-availability { flex: none; margin-inline: 14px; }
 .os-app-status > [data-testid="version"] { flex: none; white-space: nowrap; }
+
+/* K2-77 status card below the controls, shared session data. */
+.os-status-card { display: flex; flex-basis: 100%; flex-wrap: wrap; align-items: center; gap: var(--os-space-8) var(--os-space-16); padding: var(--os-space-8) var(--os-space-12); border: var(--os-line) solid var(--os-border); border-radius: var(--os-radius-card); background: var(--os-bg-surface); font-size: var(--os-font-small); font-variant-numeric: tabular-nums; }
+.os-status-card > span { white-space: nowrap; }
+.os-status-card-state { display: flex; align-items: center; gap: var(--os-space-8); }
+.os-status-dot { width: var(--os-space-8); height: var(--os-space-8); border-radius: var(--os-radius-card); background: var(--os-accent); }
+.os-status-card[data-phase="failed"] .os-status-dot { background: var(--os-issue-type-issue); }
+.os-status-card[data-phase="paused"] .os-status-dot { background: var(--os-issue-type-warning); }
+.os-status-card-progress { display: flex; flex: 1; align-items: center; min-width: var(--os-progress-min); gap: var(--os-space-8); }
+.os-status-card-progress strong { white-space: nowrap; }
+.os-status-card-progress .os-progress-track { height: var(--os-space-8); border-radius: var(--os-radius-card); }
+.os-shell > .os-app-status { height: var(--os-statusbar-height); min-height: var(--os-statusbar-height); overflow: auto hidden; white-space: nowrap; }
+.os-crawl-status { flex-wrap: nowrap; padding-block: 0; }

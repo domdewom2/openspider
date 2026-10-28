@@ -53,5 +53,6 @@
   --os-font-metric: 24px;
   --os-url-min: 160px;
   --os-upload-width: 152px;
+  --os-progress-min: 120px;
   color-scheme: light;
 }
