@@ -26,6 +26,24 @@ fn deferred_indexes_return_at_completion() {
         }
     };
     check(false);
+    let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+    for name in [
+        "canonicals_target",
+        "pagination_target",
+        "hreflang_target",
+        "url_counters_change_seq",
+    ] {
+        let exists: bool = file
+            .conn()
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='index' AND name=?1)",
+                [name],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert!(exists, "Writer-/Feed-Leser braucht {name}");
+    }
+    drop(file);
     writer
         .write(WriteBatch {
             meta: vec![("state".into(), "Completed".into())],

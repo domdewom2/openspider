@@ -58,25 +58,13 @@ pub const WRITE_PHASE_DROPPED: &[UrlIndex] = &[
     },
 ];
 
-/// Weitere zufällig gepflegte Indizes; sie werden am regulären Ende wiederhergestellt.
-pub const DEFERRED_INDEXES: &[UrlIndex] = &[
-    UrlIndex {
-        name: "canonicals_target",
-        create_sql: "CREATE INDEX IF NOT EXISTS canonicals_target ON canonicals(target_id)",
-    },
-    UrlIndex {
-        name: "pagination_target",
-        create_sql: "CREATE INDEX IF NOT EXISTS pagination_target ON pagination(target_id)",
-    },
-    UrlIndex {
-        name: "hreflang_target",
-        create_sql: "CREATE INDEX IF NOT EXISTS hreflang_target ON hreflang(target_id)",
-    },
-    UrlIndex {
-        name: "sitemap_entries_url",
-        create_sql: "CREATE INDEX IF NOT EXISTS sitemap_entries_url ON sitemap_entries(url_id)",
-    },
-];
+/// Nur Indizes ohne Writer-Leser aussetzen. canonicals_target, pagination_target und
+/// hreflang_target bleiben: write_page/stamp_dependants lesen sie bei Statusänderungen.
+/// url_counters_change_seq bleibt für den laufenden Änderungsfeed erhalten.
+pub const DEFERRED_INDEXES: &[UrlIndex] = &[UrlIndex {
+    name: "sitemap_entries_url",
+    create_sql: "CREATE INDEX IF NOT EXISTS sitemap_entries_url ON sitemap_entries(url_id)",
+}];
 
 /// Stellt die für Zielabfragen genutzten Indizes sortiert wieder her.
 pub fn ensure_deferred(conn: &Connection) -> Result<(), StoreError> {
