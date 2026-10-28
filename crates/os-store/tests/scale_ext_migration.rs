@@ -1,6 +1,8 @@
 use os_store::schema::{migrate, MIGRATIONS};
 use rusqlite::Connection;
 
+type ExtRow = (i64, String, Option<i64>, Option<f64>, Option<String>, i64);
+
 // spec: TECH-145
 #[test]
 fn compact_ext_preserves_values_and_change_stamps() {
@@ -13,7 +15,7 @@ fn compact_ext_preserves_values_and_change_stamps() {
         ["ü".repeat(800)],
     )
     .unwrap();
-    let before: Vec<(i64, String, Option<i64>, Option<f64>, Option<String>, i64)> = db
+    let before: Vec<ExtRow> = db
         .prepare("SELECT * FROM url_ext ORDER BY url_id,key")
         .unwrap()
         .query_map([], |r| {
@@ -30,7 +32,7 @@ fn compact_ext_preserves_values_and_change_stamps() {
         .map(Result::unwrap)
         .collect();
     migrate(&mut db, 4, MIGRATIONS).unwrap();
-    let after: Vec<(i64, String, Option<i64>, Option<f64>, Option<String>, i64)> = db
+    let after: Vec<ExtRow> = db
         .prepare("SELECT * FROM url_ext ORDER BY url_id,key")
         .unwrap()
         .query_map([], |r| {

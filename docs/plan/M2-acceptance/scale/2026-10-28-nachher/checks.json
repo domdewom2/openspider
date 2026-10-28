@@ -1,0 +1,53 @@
+{
+  "fmt": {
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 2.790820292
+  },
+  "clippy": {
+    "command": [
+      "cargo",
+      "clippy",
+      "--workspace",
+      "--exclude",
+      "openspider-desktop",
+      "--all-targets",
+      "--locked",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 23.629681792
+  },
+  "tests": {
+    "command": [
+      "cargo",
+      "test",
+      "--workspace",
+      "--exclude",
+      "openspider-desktop",
+      "--locked"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 1412.906113417,
+    "build_retry_note": "Disk-full link resolved by removing redundant exports and stripping 474 completed test executables (17.08 GB). Rebuilt logging_cli and logging_rotation unstripped because their backtrace assertions require function symbols; tests and assertions unchanged.",
+    "passed": 3865,
+    "ignored": 43,
+    "test_binaries_and_doctests": 512
+  },
+  "plan": {
+    "command": [
+      "python3",
+      "-I",
+      "docs/plan/M2-check.py"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 4.891309958999955
+  }
+}
