@@ -1,6 +1,6 @@
 .os-app.os-shell {
   grid-template-columns: minmax(0, 1fr) var(--shell-sidebar-grip, 6px) var(--shell-sidebar, 360px);
-  grid-template-rows: auto 28px minmax(0, 1fr) var(--shell-detail-grip, 6px) var(--shell-detail, 292.6px) auto;
+  grid-template-rows: auto minmax(28px, auto) minmax(0, 1fr) var(--shell-detail-grip, 6px) var(--shell-detail, 292.6px) auto;
   grid-template-areas: "header header header" "tabs sidebar-grip sidebar" "main sidebar-grip sidebar" "detail-grip sidebar-grip sidebar" "detail sidebar-grip sidebar" "status status status";
   overflow: hidden;
 }

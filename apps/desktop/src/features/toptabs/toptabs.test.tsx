@@ -55,8 +55,9 @@ it("offers checkboxes for every tab, protects Internal, and reopens a hidden tab
   expect(screen.queryByRole("tab", { name: "AMP" })).toBeNull();
   fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "AMP" }));
   await waitFor(() => expect(useTabs.getState().hidden).not.toContain("AMP"));
-  fireEvent.click(screen.getByRole("menuitem", { name: "Move Images up" }));
-  await waitFor(() => expect(useTabs.getState().order).toEqual(["Internal", "Images", "External", "AMP"]));
+  expect(screen.getByRole("menuitem", { name: "Configure tabs…" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("menuitem", { name: "Reset tabs" }));
+  await waitFor(() => expect(useTabs.getState().order).toEqual(fixtureTabs.map(t => t.id)));
 });
 
 // spec: UI-090

@@ -15,3 +15,5 @@
 /* Integrationsrunde 8 (wie A01-08 bei den Top-Tabs): fitTabs summiert die Tab-Breiten ohne den Flex-Abstand; mit Abstand 0 sind die
    gemessenen Breiten exakt (Windows-CI: „N-Grams“ ragte 15 px in „More detail tabs“, UI-001). */
 .os-detail .os-tabbar-list { gap: 0; overflow: hidden; }
+.os-detail-tabs { display: flex; min-width: 0; }
+.os-detail-tabs > .os-tabbar { flex: 1; min-width: 0; }

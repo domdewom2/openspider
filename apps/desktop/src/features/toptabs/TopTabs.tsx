@@ -9,9 +9,10 @@ import { MANDATORY_TAB, useTabs } from "../../state/tabs";
 import { TabContextMenuHost, TabsConfigDialog, tabContextEntries } from "../table-advanced/TabControls";
 import { useAction } from "../../ui/actions";
 import { registerMenuContributions } from "../../ui/menu/registry";
-import { TabBar } from "../../ui/primitives/TabBar";
-import type { MenuEntry } from "../../ui/primitives/Menu";
+import { TabBar, type TabBarConfig } from "../../ui/primitives/TabBar";
+import { tabLabel } from "../../i18n/canon";
 
+import "../shell/tabbar.css";
 import "./toptabs.css";
 
 export function TopTabs() {
@@ -49,28 +50,19 @@ function RegularTopTabs() {
   useAction("toptab.goto.7", () => s.select(s.order.filter(id => !s.hidden.includes(id))[6]));
   useAction("toptab.goto.8", () => s.select(s.order.filter(id => !s.hidden.includes(id))[7]));
   useAction("toptab.goto.9", () => s.select(s.order.filter(id => !s.hidden.includes(id))[8]));
-  const label = (id: string) => t(`tab-${id.toLowerCase().replaceAll(" ", "-")}`, undefined, { fallback: id });
-  const entries: MenuEntry[] = [
-    ...s.order.map(id => ({ id: `visible-${id}`, label: label(id), checked: !s.hidden.includes(id),
-      isDisabled: id === "Internal", disabledReason: id === "Internal" ? t("u10-tabs-internal") : undefined,
-      onCheckedChange: (checked: boolean): void => { void s.show(id, checked).catch(fail); } })),
-    ...s.order.flatMap((id, index) => [
-      { id: `open-${id}`, label: `${t("u10-tabs-open")} ${label(id)}`, separatorBefore: true,
-        onAction: (): void => { void s.show(id, true).catch(fail); s.select(id); } },
-      ...([-1, 1] as const).map(direction => ({ id: `move-${id}-${direction}`,
-        label: t(direction < 0 ? "u10-tabs-up" : "u10-tabs-down", { tab: label(id) }),
-        isDisabled: index + direction < 0 || index + direction >= s.order.length,
-        onAction: (): void => { const order = [...s.order]; [order[index], order[index + direction]] = [order[index + direction], order[index]]; void s.reorder(order).catch(fail); } })),
-    ]),
-    { id: "configure-tabs", label: t("u20-tabs-configure"), separatorBefore: true, onAction: (): void => setConfigure(true) },
-    { id: "reset-tabs", label: t("u10-tabs-reset"), onAction: (): void => void s.reset().catch(fail) },
-  ];
+  const label = (id: string) => tabLabel(t, id);
+  // UI-004/UI-112, A02-06: the same overflow menu as the detail and sidebar bars – visibility, clipped tabs, configure, reset.
+  const config: TabBarConfig = {
+    all: s.order.map(id => ({ id, label: label(id) })), hidden: s.hidden, mandatory: MANDATORY_TAB, mandatoryReason: t("u10-tabs-internal"),
+    onToggle: (id, visible) => void s.show(id, visible).catch(fail), onConfigure: () => setConfigure(true), onReset: () => void s.reset().catch(fail),
+    configureLabel: t("u20-tabs-configure"), resetLabel: t("u20-tabs-reset"),
+  };
   return <div className="u10-top-tabs">
     <TabContextMenuHost className="u20-tab-host" label={t("u20-tab-menu")} entriesFor={tab => tabContextEntries(t, tab, layout, {
       hide: ids => void s.hide(ids).catch(fail), configure: () => setConfigure(true), reset: () => void s.reset().catch(fail) })}>
       <TabBar tabs={s.order.filter(id => !s.hidden.includes(id)).map(id => ({ id, label: label(id) }))}
         selected={s.active} onSelect={s.select} onReorder={ids => void s.reorder(ids).catch(fail)}
-        label={t("u10-tabs")} overflowLabel={t("u10-tabs-configure")} overflowEntries={entries} />
+        label={t("u10-tabs")} overflowLabel={t("u10-tabs-configure")} config={config} />
     </TabContextMenuHost>
     <TabsConfigDialog isOpen={configure} onOpenChange={setConfigure} layout={layout} label={label}
       onApply={(order, hidden) => void s.layout(order, hidden).catch(fail)} />

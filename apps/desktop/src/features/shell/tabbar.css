@@ -1,0 +1,14 @@
+/* Shared look of the three tab bars (top, detail, sidebar; UI-004, UI-030, UI-060). M2-U34, A02-01 … A02-03: one line per label,
+   the height follows the font (no fixed height that cuts a second line), a long label ends with „…“ and its tooltip names the
+   full text. The overflow trigger is a flex item of its own, so a tab can never lie under it (A01-08).
+   TODO(M2-U30/U35): move into ui/ui.css together with the primitives. */
+.os-tabbar { display: flex; align-items: stretch; min-width: 0; position: relative; }
+.os-tabbar .os-tabbar-list { display: flex; flex: 1; min-width: 0; gap: 0; overflow: hidden; flex-wrap: nowrap; position: relative; }
+.os-tabbar .os-tab {
+  flex: 0 0 auto; height: auto; min-height: 28px; max-width: min(100%, 20rem); min-width: 0;
+  padding: 4px 12px; line-height: 18px; white-space: nowrap; box-sizing: border-box; cursor: default;
+}
+.os-tabbar .os-tab-label { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.os-tabbar .os-tab:focus-visible { outline: 2px solid var(--os-focus); outline-offset: -2px; }
+.os-tabbar .os-tab:hover:not([data-selected]) { background: var(--os-bg-hover); }
+.os-tabbar-overflow { display: flex; flex: none; align-items: center; padding-inline: 2px; }

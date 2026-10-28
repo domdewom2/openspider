@@ -10,6 +10,26 @@ export interface TabBarItem {
 }
 
 /**
+ * Configuration of a tab bar (UI-004, UI-030, UI-060, UI-112): the same overflow menu on all three bars lists every tab with its
+ * visibility, the tabs clipped by the width, „Tabs konfigurieren…“ and „Tabs zurücksetzen“ (A02-03, A02-06).
+ */
+export interface TabBarConfig {
+  /** All tabs of the bar in their order, visible and hidden ones. */
+  all: readonly TabBarItem[];
+  hidden: readonly string[];
+  /** The tab that cannot be hidden (top: Internal, detail: URL Details, sidebar: Overview). */
+  mandatory?: string;
+  mandatoryReason?: string;
+  onToggle: (id: string, visible: boolean) => void;
+  onConfigure: () => void;
+  onReset: () => void;
+  configureLabel: string;
+  resetLabel: string;
+  /** Disables visibility changes and reset while the stored layout is not loaded yet. */
+  isDisabled?: boolean;
+}
+
+/**
  * Welche Tabs passen in die Breite? Der gewählte bleibt sichtbar; alles Übrige wandert in den Überlauf (»).
  * Reine Funktion, damit sie ohne Layout testbar ist.
  */
@@ -45,12 +65,29 @@ export function moveItem<T>(list: readonly T[], from: number, to: number): T[] {
   return copy;
 }
 
+/** Entries of the overflow menu: visibility checkboxes for all tabs, the clipped tabs, then configure and reset. */
+export function overflowMenuEntries(config: TabBarConfig, clipped: readonly TabBarItem[], onSelect: (id: string) => void): MenuEntry[] {
+  return [
+    ...config.all.map((tab) => ({
+      id: `show-${tab.id}`, label: tab.label, checked: !config.hidden.includes(tab.id),
+      isDisabled: config.isDisabled || tab.id === config.mandatory,
+      disabledReason: tab.id === config.mandatory ? config.mandatoryReason : undefined,
+      onCheckedChange: (checked: boolean) => config.onToggle(tab.id, checked),
+    })),
+    ...clipped.map((tab, i) => ({ id: `goto-${tab.id}`, label: tab.label, separatorBefore: i === 0, onAction: () => onSelect(tab.id) })),
+    { id: "configure-tabs", label: config.configureLabel, separatorBefore: true, onAction: config.onConfigure },
+    { id: "reset-tabs", label: config.resetLabel, isDisabled: config.isDisabled, onAction: config.onReset },
+  ];
+}
+
 /**
- * Horizontale Tab-Leiste mit Überlauf-Dropdown und verschiebbarer Reihenfolge (Top-Tabs, Detail-Tabs). Roving Tabindex:
- * ←/→ wechselt den Tab, Pos1/Ende springt; Alt+Umschalt+←/→ verschiebt den Tab (Tastatur-Alternative zum Ziehen).
+ * Horizontale Tab-Leiste mit Überlauf-Dropdown und verschiebbarer Reihenfolge (Top-, Detail- und Seitenleisten-Tabs). Roving
+ * Tabindex: ←/→ wechselt den Tab, Pos1/Ende springt; Alt+Umschalt+←/→ verschiebt den Tab (Tastatur-Alternative zum Ziehen).
+ * Beschriftungen sind einzeilig; was nicht passt, endet mit „…“ und nennt den vollen Text im Tooltip (A02-01, A02-02, UI-007).
+ * Mit `config` ist der Überlaufknopf immer da und sein Platz wird vor dem Verteilen der Tabs abgezogen (A01-08).
  */
-export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReorder, measure, className, overflowEntries }: {
-  /** Optional complete overflow/configuration menu (M2-U10); default lists clipped tabs. */
+export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReorder, measure, className, overflowEntries, config }: {
+  /** Optional complete overflow/configuration menu (M2-U10); default lists clipped tabs. Ignored when `config` is set. */
   overflowEntries?: readonly MenuEntry[];
   tabs: readonly TabBarItem[];
   selected: string;
@@ -61,35 +98,55 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
   /** Breiten der Tabs und der Leiste; Standard: DOM-Messung (in Tests austauschbar). */
   measure?: (root: HTMLElement) => { widths: number[]; available: number; overflowWidth: number };
   className?: string;
+  config?: TabBarConfig;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const [hidden, setHidden] = useState<number[]>([]);
+  const [truncated, setTruncated] = useState<string[]>([]);
   const [dragFrom, setDragFrom] = useState<number | null>(null);
   const selectedIndex = Math.max(0, tabs.findIndex((t) => t.id === selected));
+  const alwaysMenu = !!config || !!overflowEntries;
 
   useLayoutEffect(() => {
     const el = root.current;
     if (!el) return;
     const run = () => {
-      const m = measure
-        ? measure(el)
-        : {
-            widths: [...el.querySelectorAll<HTMLElement>("[data-tab-measure]")].map((t) => t.offsetWidth),
-            available: el.clientWidth,
-            overflowWidth: 32,
-          };
-      setHidden(fitTabs(m.widths, m.available, m.overflowWidth, selectedIndex).hidden);
+      let m;
+      if (measure) m = measure(el);
+      else if (el.clientWidth === 0) {
+        // Not laid out (hidden pane, jsdom): nothing to distribute yet.
+        m = { widths: [], available: 0, overflowWidth: 0 };
+      } else {
+        const trigger = el.querySelector<HTMLElement>(":scope > [data-tabbar-overflow]");
+        const triggerWidth = trigger?.offsetWidth || 32;
+        // An always present trigger takes its room before the tabs are distributed; otherwise it only appears on overflow.
+        m = {
+          widths: [...el.querySelectorAll<HTMLElement>("[data-tab-measure]")].map((t) => t.offsetWidth),
+          available: el.clientWidth - (alwaysMenu ? triggerWidth : 0),
+          overflowWidth: alwaysMenu ? 0 : triggerWidth,
+        };
+      }
+      const next = fitTabs(m.widths, m.available, m.overflowWidth, selectedIndex).hidden;
+      setHidden((old) => (old.length === next.length && old.every((v, i) => v === next[i]) ? old : next));
+      const cut = [...el.querySelectorAll<HTMLElement>("[data-tab-id]")]
+        .filter((t) => !t.hidden && t.style.visibility !== "hidden")
+        .filter((t) => { const text = t.querySelector<HTMLElement>(".os-tab-label") ?? t; return text.scrollWidth > text.clientWidth + 0.5; })
+        .map((t) => t.dataset.tabId as string);
+      setTruncated((old) => (old.length === cut.length && old.every((v, i) => v === cut[i]) ? old : cut));
     };
     run();
     if (typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver(run);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [tabs, selectedIndex, measure]);
+  }, [tabs, selectedIndex, measure, alwaysMenu, hidden]);
 
   const move = (from: number, to: number) => onReorder?.(moveItem(tabs, from, to).map((t) => t.id));
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    // Keys from the overflow menu (a portal, bubbling through React) or its trigger do not move the tabs.
+    const target = e.target as HTMLElement;
+    if (!root.current?.contains(target) || target.closest?.("[data-tabbar-overflow]")) return;
     // Pfeiltasten gehen durch alle Tabs; ein versteckter Tab wird mit der Auswahl sichtbar
     const visible = tabs.map((_, i) => i);
     const pos = selectedIndex;
@@ -113,7 +170,9 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
     }
   };
 
-  const entries: MenuEntry[] = hidden.map((i) => ({ id: tabs[i]?.id ?? String(i), label: tabs[i]?.label ?? "", onAction: () => onSelect(tabs[i]?.id as string) }));
+  const clipped = hidden.map((i) => tabs[i]).filter((t): t is TabBarItem => !!t);
+  const entries: readonly MenuEntry[] = config ? overflowMenuEntries(config, clipped, onSelect)
+    : overflowEntries ?? clipped.map((t) => ({ id: t.id, label: t.label, onAction: () => onSelect(t.id) }));
 
   return (
     <div ref={root} className={cx("os-tabbar", className)} onKeyDown={onKeyDown}>
@@ -121,12 +180,15 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
         {tabs.map((t, i) => {
           const isHidden = hidden.includes(i);
           const isSelected = t.id === selected;
+          const isTruncated = truncated.includes(t.id);
           return (
             <div
               key={t.id}
               role="tab"
               data-tab-id={t.id}
               data-tab-measure=""
+              data-truncated={isTruncated || undefined}
+              title={isTruncated ? t.label : undefined}
               aria-selected={isSelected}
               tabIndex={isSelected ? 0 : -1}
               hidden={isHidden && !isSelected}
@@ -149,12 +211,16 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
               }}
               onDragEnd={() => setDragFrom(null)}
             >
-              {t.label}
+              <span className="os-tab-label">{t.label}</span>
             </div>
           );
         })}
       </div>
-      {(hidden.length > 0 || overflowEntries) && <Menu label={overflowLabel} entries={overflowEntries ?? entries} trigger={<IconButton label={overflowLabel} icon={<ChevronsRight size={14} />} />} />}
+      {(hidden.length > 0 || alwaysMenu) && (
+        <span className="os-tabbar-overflow" data-tabbar-overflow="">
+          <Menu label={overflowLabel} entries={entries} trigger={<IconButton label={overflowLabel} icon={<ChevronsRight size={14} />} />} />
+        </span>
+      )}
     </div>
   );
 }
