@@ -29,3 +29,16 @@ it.each(["pause", "stop"] as const)("locks %s immediately, until a core status a
     expect(screen.getByRole("button", { name: "Stop" })).toBeDisabled();
   }
 });
+
+// spec: UI-003
+it.each(["pause", "stop"] as const)("unlocks when natural completion wins the race with %s", async action => {
+  setupHeader(); await setLanguage("en");
+  useSession.getState().applyTick(tick);
+  const command = vi.spyOn(crawl, action).mockResolvedValue(undefined);
+  render(<Header />);
+  fireEvent.click(screen.getByRole("button", { name: action === "pause" ? "Pause" : "Stop" }));
+  await act(async () => { await Promise.resolve(); });
+  expect(command).toHaveBeenCalledTimes(1);
+  act(() => useSession.getState().applyTick({ ...tick, seq: 2, crawl: { ...tick.crawl!, phase: "completed", endReason: "queue_empty" } }));
+  expect(screen.getByRole("button", { name: "Clear" })).toBeEnabled();
+});

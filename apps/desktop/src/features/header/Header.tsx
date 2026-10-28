@@ -68,7 +68,10 @@ export function Header() {
   }, [status?.crawlId, status?.mode]);
 
   useEffect(() => {
-    if (pending === "pause" && status?.phase === "paused" || pending === "stop" && status?.endReason === "stopped") setPending(null);
+    if (!pending || !status) return;
+    // Natural completion can win the race with a control request. A paused
+    // status is only an acknowledgement for Pause, never for Stop from pause.
+    if (pending === "pause" && status.phase !== "running" || pending === "stop" && ["completed", "failed", "idle"].includes(status.phase)) setPending(null);
   }, [pending, status?.phase, status?.endReason]);
 
   async function perform(action: () => Promise<unknown>) {

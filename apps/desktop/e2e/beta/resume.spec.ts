@@ -59,12 +59,23 @@ test("a paused crawl survives a real process restart, appears in Recent and resu
       await crawl.open({ kind: "id", crawlId }); await crawl.resume();
     }, reference.crawlId);
     await expect(page.getByTestId("crawl-phase")).toHaveText("Completed", { timeout: 30_000 });
-    const addresses = await page.evaluate(async () => {
+    let addresses: string[] = [];
+    await expect.poll(async () => {
+      const rows = await page.evaluate(async () => {
       const { view } = await import(/* @vite-ignore */ String("/src/ipc/view.ts"));
       const handle = await view.open({ spec: { kind: "tab", tab: "Response Codes", filter: "All", search: null, sort: [] }, columns: ["Address"] });
       try { return (await view.rows({ viewId: handle.viewId, version: handle.version, offset: 0, limit: 100, columns: ["Address"] })).cells.map((row: unknown[]) => String(row[0])); }
-      finally { await view.close({ viewId: handle.viewId }); }
-    });
+      catch (error) {
+        const { toCmdError } = await import(/* @vite-ignore */ String("/src/ipc/errors.ts"));
+        // A tab generation can legitimately advance between open and rows when
+        // the final change feed publishes. Retry only that documented condition.
+        if (toCmdError(error).code === "Stale") return null;
+        throw error;
+      } finally { await view.close({ viewId: handle.viewId }); }
+      });
+      if (rows) addresses = rows;
+      return rows?.length ?? 0;
+    }, { timeout: 5000 }).toBe(27);
     // The table has 25 internal + 2 external URLs; robots/sitemap bookkeeping is excluded.
     expect(addresses).toHaveLength(27);
     expect(new Set(addresses).size).toBe(addresses.length);
