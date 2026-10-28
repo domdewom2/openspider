@@ -1203,6 +1203,7 @@ mod tests {
     }
 
     // spec: CRAWL-098
+    // spec: CRAWL-145
     #[tokio::test(start_paused = true)]
     async fn crawl_delay_is_reported_in_note_but_not_applied() {
         let body = "User-agent: *\nCrawl-delay: 5\nDisallow: /x\n";
@@ -1230,6 +1231,23 @@ mod tests {
         let mock = Mock::with(&[(ROBOTS, vec![ok("User-agent: *\nDisallow: /x\n")])]);
         let c = respect().check(&mock, &u("http://h.test/y")).await;
         assert_eq!(c.robots_fetch.expect("Erstabruf").1.note, None);
+    }
+
+    // spec: CRAWL-145
+    #[tokio::test(start_paused = true)]
+    async fn applied_crawl_delay_is_reported_in_the_robots_note() {
+        let mut config = cfg(RobotsMode::Respect, RobotsUnreachablePolicy::BlockHost);
+        config.respect_crawl_delay = true;
+        let gate = RobotsGate::new(config);
+        let mock = Mock::with(&[(
+            ROBOTS,
+            vec![ok("User-agent: *\nCrawl-delay: 2\nDisallow: /x\n")],
+        )]);
+        let checked = gate.check(&mock, &u("http://h.test/y")).await;
+        assert_eq!(
+            checked.robots_fetch.unwrap().1.note.as_deref(),
+            Some("Crawl-delay: 2 s (angewandt)")
+        );
     }
 
     // spec: CRAWL-098

@@ -24,7 +24,7 @@ export function useStatusSnapshot(): SessionState {
 export function Statusbar() {
   const t = useT();
   const f = useFormat();
-  const { crawl: c, analysis, mcp, throttled } = useStatusSnapshot();
+  const { crawl: c, analysis, mcp, throttled, crawlDelays } = useStatusSnapshot();
   const [sessionLost, setSessionLost] = useState(false);
   useEffect(() => {
     let live = true; setSessionLost(false);
@@ -44,6 +44,7 @@ export function Statusbar() {
     {sessionLost && <span role="status" className="os-status-warning">{t("form-login-session-lost")}</span>}
     <span data-testid="crawl-phase">{phase}{c?.endReason === "limit_reached" && ` (${t("status-limit")})`}</span>
     {Object.keys(throttled).length > 0 && <span className="os-status-warning">{t("status-throttled")}</span>}
+    {c?.phase === "running" && Object.entries(crawlDelays).map(([origin, delay]) => <span key={origin} title={origin}>{t(delay.applied ? "n03-status-delay-applied" : "n03-status-delay-ignored", { seconds: f.decimal(delay.seconds) })}</span>)}
     <span>{t("status-rate", { value: f.decimal(c?.rate ?? 0) })}</span>
     <span>{t("status-average", { value: f.decimal(c?.avgRate ?? 0) })}</span>
     <span>{t("status-count", { done: f.integer(c?.crawled ?? 0), total: f.integer((c?.crawled ?? 0) + (c?.queued ?? 0)), percent: c?.percent ?? 0 })}</span>

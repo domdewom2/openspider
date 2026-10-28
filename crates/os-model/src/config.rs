@@ -458,7 +458,7 @@ impl Default for RobotsConfig {
             show_blocked_internal: true,
             show_blocked_external: false,
             custom_files: Default::default(),
-            respect_crawl_delay: true,
+            respect_crawl_delay: false,
 
             mode: RobotsMode::Respect,
             unreachable_policy: RobotsUnreachablePolicy::BlockHost,

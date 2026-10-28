@@ -7,7 +7,7 @@ import fixture from "./tick-running.json";
 
 export const tick = fixture as Tick;
 export function setupHeader() {
-  useSession.setState({ seq: -1, crawl: null, analysis: null, mcp: null, throttled: {}, notices: [], views: {}, ops: {} });
+  useSession.setState({ seq: -1, crawl: null, analysis: null, mcp: null, throttled: {}, crawlDelays: {}, notices: [], views: {}, ops: {} });
   useHeader.setState({ mode: "spider", url: "", scope: "domain" });
   const core = new MockCore();
   core.handlers.set("crawl.validateStartUrl", (args) => ({ normalized: (args as { input: string }).input }));

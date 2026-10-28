@@ -15,6 +15,7 @@ export interface SessionState {
   seq: number;
   /** Active per-host pacing notices, retained when a dialog is dismissed. */
   throttled: Record<string, boolean>;
+  crawlDelays: Record<string, { seconds: number; applied: boolean }>;
   crawl: CrawlStatus | null;
   analysis: AnalysisStatus | null;
   mcp: McpStatus | null;
@@ -35,6 +36,7 @@ export interface SessionState {
 export const useSession = create<SessionState>((set, get) => ({
   seq: -1,
   throttled: {},
+  crawlDelays: {},
   crawl: null,
   analysis: null,
   mcp: null,
@@ -54,6 +56,7 @@ export const useSession = create<SessionState>((set, get) => ({
       return {
         seq: tick.seq,
         throttled: tick.crawl && ["idle", "completed", "failed"].includes(tick.crawl.phase) ? {} : reduceThrottle(tick.crawl && tick.crawl.crawlId !== s.crawl?.crawlId ? {} : s.throttled, tick.notices),
+        crawlDelays: reduceDelays(tick.crawl && tick.crawl.crawlId !== s.crawl?.crawlId ? {} : s.crawlDelays, tick.notices),
         crawl: tick.crawl ?? s.crawl,
         analysis: tick.analysis ?? s.analysis,
         mcp: tick.mcp ?? s.mcp,
@@ -67,7 +70,7 @@ export const useSession = create<SessionState>((set, get) => ({
     });
   },
   pushNotice(notice) {
-    set((s) => ({ notices: [...s.notices, notice], throttled: reduceThrottle(s.throttled, [notice]) }));
+    set((s) => ({ notices: [...s.notices, notice], throttled: reduceThrottle(s.throttled, [notice]), crawlDelays: reduceDelays(s.crawlDelays, [notice]) }));
   },
   dismissNotice(notice) {
     set((s) => ({ notices: s.notices.filter((n) => n !== notice) }));
@@ -90,6 +93,14 @@ function reduceThrottle(before: Record<string, boolean>, notices: Notice[]): Rec
     const host = String(n.args.host ?? "");
     if (n.code === "crawl-throttled") next[host] = true;
     if (n.code === "crawl-throttle-cleared") delete next[host];
+  }
+  return next;
+}
+
+function reduceDelays(before: SessionState["crawlDelays"], notices: Notice[]): SessionState["crawlDelays"] {
+  const next = { ...before };
+  for (const n of notices) if (n.code === "crawl-delay" && typeof n.args.seconds === "number" && Number.isFinite(n.args.seconds)) {
+    next[String(n.args.origin ?? "")] = { seconds: n.args.seconds, applied: n.args.applied === true };
   }
   return next;
 }

@@ -2203,7 +2203,7 @@
           "description": "Umgang mit robots.txt (Listenmodus: die Engine wendet `ignore` an)."
         },
         "respect_crawl_delay": {
-          "default": true,
+          "default": false,
           "description": "Crawl-delay aus robots.txt beachten (CRAWL-145).",
           "type": "boolean"
         },
@@ -3962,7 +3962,7 @@
       "default": {
         "custom_files": {},
         "mode": "respect",
-        "respect_crawl_delay": true,
+        "respect_crawl_delay": false,
         "retries": 2,
         "retry_delay_s": 5,
         "show_blocked_external": false,

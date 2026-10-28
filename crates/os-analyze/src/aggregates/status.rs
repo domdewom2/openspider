@@ -123,3 +123,14 @@ pub fn on_config_changed(
     tx.commit().map_err(StoreError::from)?;
     Ok(())
 }
+
+/// Stored robots bodies for the app's effective-agent pacing notice (CRAWL-145).
+/// Only the small per-origin table is read; URL tables are never scanned.
+pub fn robots_bodies(file: &CrawlFile) -> Result<Vec<(String, String)>, StoreError> {
+    let mut statement = file
+        .conn()
+        .prepare("SELECT origin, body FROM robots_files WHERE body IS NOT NULL")?;
+    let rows = statement.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?;
+    rows.collect::<Result<Vec<_>, _>>()
+        .map_err(StoreError::from)
+}
