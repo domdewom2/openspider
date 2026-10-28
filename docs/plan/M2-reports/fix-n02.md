@@ -2,7 +2,7 @@
 
 Basis: `origin/m2/n02` (`91d64ddc93d6c9d3f095c640f11bdec7f59d7bcb`), Branch `m2/fix-n02`, Worktree `/Users/dominikwojcik/Projects/wt-fix-n02`. Befundvorlage: `/Users/dominikwojcik/Projects/logs/fable-n02.md`, vollständig gelesen. Stand: 28.10.2026. Ursachen-Zeilennummern beziehen sich auf den Basisstand.
 
-**Paket abgeschlossen:** A1, MCP-1 bis MCP-4 und Befund 6 sind behoben. Die Orchestrator-Freigabe vom 28.10., 16:20 umfasst jetzt auch sämtliche mechanischen `ApiCtx`-Konstruktoranpassungen. A1 wurde in diesem Lauf vollständig umgesetzt; die bereits erledigten MCP- und README-Korrekturen wurden gemäß Auftrag erhalten. Es gab keinen Push, Merge oder PR.
+**Umsetzungsstand vor Fixrunde 2:** A1, MCP-1 bis MCP-4 und Befund 6 sind behoben. Die Orchestrator-Freigabe vom 28.10., 16:20 umfasst jetzt auch sämtliche mechanischen `ApiCtx`-Konstruktoranpassungen. A1 wurde in diesem Lauf vollständig umgesetzt; die bereits erledigten MCP- und README-Korrekturen wurden gemäß Auftrag erhalten. Es gab keinen Push, Merge oder PR.
 
 Ausgangsstand dieses Fortsetzungslaufs: sauberer Arbeitsbaum auf `a45db86b`. `node_modules` war vorhanden; `npm ci` war deshalb nicht erforderlich. Nach A1 wurden die verlangten Prüfungen vollständig erneut ausgeführt. Die nachfolgenden MCP-Ursachen und Änderungen dokumentieren den bereits vorhandenen Paketstand; ihre E2E-Abdeckung ist Bestandteil von Schritt 6.
 
@@ -40,7 +40,7 @@ Die bereits vorhandene Testisolation bleibt erhalten: Die betroffenen Lifecycle-
 
 **Änderung:** `App::subscribe` liefert ausstehende Ticks unmittelbar über den bestehenden Zusammenbau- und Pufferpfad nach. Der MCP-Loop versucht anschließend alle 100 ms den normalen, weiterhin vom Coalescer begrenzten Flush, auch bei unverändertem Status.
 
-**Test/Ergebnis:** Zwei Runtime-Regressionstests prüfen den echten Startfehler bei besetztem Port vor dem Abonnement, einmalige Zustellung sowie eine erst nach dem Abonnement eingereihte Notice trotz anfänglich blockierender Coalescer-Frist. Beide grün; auch `cmd_mcp_service` (6 Tests) und die unveränderten Autostart-E2Es sind grün.
+**Test/Ergebnis:** Zwei Runtime-Regressionstests prüfen den echten Startfehler bei besetztem Port vor dem Abonnement sowie eine erst nach dem Abonnement eingereihte Notice trotz anfänglich blockierender Coalescer-Frist. Fixrunde 2 injiziert die vorhandene `ManualClock` über `AppConfig::with_clock` und verwendet `#[tokio::test(start_paused = true)]`. App- und Tokio-Zeit werden gemeinsam kontrolliert vorgerückt. Assertions prüfen ausbleibende Zustellung bis 499 ms, die Hintergrundzustellung bei 500 ms ohne manuellen Flush sowie Einmaligkeit über spätere Ticks und erneutes Abonnieren. Der echte Startfehler wird beim Abonnieren sofort zugestellt und auch nach der Frist nicht wiederholt. Reale Sekunden-Timeouts und Polling-Schleifen sind entfernt. Die aktuellen Laufzahlen stehen im Abschnitt „Fixrunde 2“. `cmd_mcp_service` (6 Tests) und Autostart-E2Es gehören zu den nachfolgend dokumentierten früheren Prüfungen.
 
 ## MCP-4 – Token-Dialog / AGENT-002, UI-113: behoben
 
@@ -60,7 +60,7 @@ Die bereits vorhandene Testisolation bleibt erhalten: Die betroffenen Lifecycle-
 
 ## Prüfungen
 
-Alle langen Befehle liefen im Vordergrund über einen synchronen Python-Wrapper mit `subprocess.run(timeout=3600)` (3600000 ms) je Befehl. Die Abschlussprüfungen verwendeten ein von `tempfile` verwaltetes `OPENSPIDER_HOME`; die betroffenen Lifecycle-Tests erzeugen zusätzlich jeweils ihr eigenes temporäres Home im Unterprozess. Alle neun Prüf-/Buildbefehle endeten mit Exit 0. Die vollständigen Rohprotokolle liegen unter `/var/folders/fz/9flwb7b55t788nq02b9q761h0000gp/T/fix-n02-final-whbgohrx/` (`results.json`, `0.log` bis `8.log`), außerhalb des Repositorys. Der Prüfabschluss wurde separat in `e18b49f7` committed.
+Die im ursprünglichen Paketlauf dokumentierten langen Befehle liefen im Vordergrund über einen synchronen Python-Wrapper mit `subprocess.run(timeout=3600)` (3600000 ms) je Befehl. Die Abschlussprüfungen verwendeten ein von `tempfile` verwaltetes `OPENSPIDER_HOME`; die betroffenen Lifecycle-Tests erzeugen zusätzlich jeweils ihr eigenes temporäres Home im Unterprozess. Alle neun Prüf-/Buildbefehle endeten mit Exit 0. Die damaligen Rohprotokolle sind nicht mehr verfügbar; ein Verweis darauf entfällt. Die folgende Tabelle hält die damaligen Ergebnisse fest und ist kein neuer Lauf der Fixrunde 2. Der Prüfabschluss wurde separat in `e18b49f7` committed.
 
 | Prüfung | Ergebnis |
 | --- | --- |
@@ -101,8 +101,30 @@ Die folgenden Paketänderungen sind **Fremdänderungen im Sinne von K2-72**. Gru
 | `apps/desktop/src/features/mcp/AccessPanel.tsx` | Bereits erledigt: Fokus bei laufenden Token-Aktionen (U25) |
 | `tests/fixtures/crawl-m2-list/README.md` | Bereits erledigt: veralteter Dateihinweis (E06/Integrator) |
 
-Der A1-Commit `22a7bedc` umfasst genau 20 freigegebene Dateien. Die übrigen Paketkorrekturen blieben unverändert. Manifeste und Lockfile sind unverändert, Tokio bleibt **1.53.3**; kein `cargo update`. Commits verwenden ausschließlich explizite Dateipfade und den verlangten Co-Author-Trailer. Die MCP-E2E-Dateien wurden nicht geändert. Rohprotokolle liegen außerhalb des Repositorys; generierte Playwright-Artefakte und das paketbezogene `CARGO_TARGET_DIR=/Users/dominikwojcik/Projects/build.noindex/target-fix-n02` wurden nach den Prüfungen entfernt.
+Der A1-Commit `22a7bedc` umfasst genau 20 freigegebene Dateien. Die übrigen Paketkorrekturen blieben unverändert. Manifeste und Lockfile sind unverändert, Tokio bleibt **1.53.3**; kein `cargo update`. Commits verwenden ausschließlich explizite Dateipfade und den verlangten Co-Author-Trailer. Die MCP-E2E-Dateien wurden nicht geändert. Generierte Playwright-Artefakte und das paketbezogene `CARGO_TARGET_DIR=/Users/dominikwojcik/Projects/build.noindex/target-fix-n02` wurden nach den Prüfungen entfernt.
 
-## Abschluss von Schritt 7
+## Abschluss des ursprünglichen Schritts 7
 
 Bericht mit Ursache, Änderung, Test, Ergebnis und vollständiger Dateiliste der freigegebenen Fremdänderungen aktualisiert. A1 ist vollständig umgesetzt und geprüft. Alle verlangten Prüfungen sind grün; Arbeitsbaum sauber und paketbezogenes Target-Verzeichnis gelöscht. Kein Push, Merge oder PR.
+
+
+## Fixrunde 2 – Astra-Befunde 1–3
+
+**Befund 1 / Paketautorität:** Fixpakete haben keinen eigenen Eintrag in `docs/plan/M2-packages.json`. Maßgeblich ist der Auftrag `/Users/dominikwojcik/Projects/fix-n02.txt` einschließlich der Orchestrator-Entscheidungen und Konstruktorfreigabe vom 28.10., 16:20; die oben aufgeführten Fremdänderungen beziehen sich darauf. Das Nachführen einer Paketdefinition ist Sache des Orchestrators und kein offener Implementierungsschritt dieses Fixpakets.
+
+**Befund 2 / deterministische Tests:** Commit `c6a4a76f` ändert ausschließlich `crates/os-app/src/runtime/mod.rs` (freigegebener Fremdpfad). Beide Notice-Tests verwenden die bestehende App-Uhr-Abstraktion und pausierte Tokio-Zeit; die Fristgrenzen und einmalige Zustellung werden ausdrücklich geprüft. Keine Produktionslogik wurde geändert.
+
+**Befund 3 / Prüfnachweis:** Die Ergebnisse der folgenden lokalen Prüfungen werden dauerhaft hier im Repository dokumentiert. Verweise auf nicht vorhandene Rohprotokolle wurden entfernt. Alle vier Befehle liefen im Vordergrund mit `subprocess.run(timeout=3600)` (3600000 ms) je Befehl, ohne `cargo update`; Tokio bleibt 1.53.3, Manifeste und Lockfile unverändert.
+
+| Lokale Prüfung der Fixrunde 2 (28.10.2026) | Ergebnis |
+| --- | --- |
+| `cargo test -p os-app --lib subscription_notice_tests` | **2 bestanden**, 0 fehlgeschlagen, 0 ignoriert, 25 herausgefiltert; Testzeit 0,03 s; Exit 0 |
+| `cargo test -p os-app --lib` | **27 bestanden**, 0 fehlgeschlagen, 0 ignoriert, 0 herausgefiltert; Testzeit 4,07 s; Exit 0 |
+| `cargo fmt --all --check` | grün, Exit 0 |
+| `cargo clippy -p os-app --all-targets -- -D warnings` | grün, Exit 0; 54,10 s |
+
+Beide Testläufe melden ausschließlich die bereits bekannte macOS-Linkerwarnung zur Größe von `__eh_frame`; die Tests bestehen.
+
+**CI-/Plattform-/DoD-Nachweis:** folgt über den Integrationsbranch des Orchestrators. Es liegt hier keine CI-Lauf-ID vor. Die workspaceweiten Rust-Prüfungen, weitere Plattformläufe und erneute Desktop-Prüfungen wurden in dieser Fixrunde nicht ausgeführt; ihr aktueller Integrationsnachweis bleibt ausdrücklich offen. Die obige Tabelle dokumentiert den früheren Paketlauf.
+
+**Abschluss Fixrunde 2:** Beide beauftragten Schritte sind umgesetzt; alle vier lokalen Prüfungen sind grün. Zwei getrennte Commits mit dem verlangten Co-Author-Trailer. Arbeitsbaum sauber, paketbezogenes `CARGO_TARGET_DIR=/Users/dominikwojcik/Projects/build.noindex/target-fix-n02` entfernt. Kein Push, Merge oder PR. Der Integrationsnachweis bleibt wie oben ausgewiesen beim Orchestrator.
