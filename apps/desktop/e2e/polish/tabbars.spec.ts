@@ -125,3 +125,27 @@ test.describe("configuration controls (A02-06)", () => {
     }
   });
 });
+
+test.describe("ellipsis (A02-03)", () => {
+  test.use({ locale: "de-DE", colorScheme: "dark" });
+  // spec: UI-007
+  // spec: UI-060
+  test("a selected long tab in the 200 px sidebar ends with an ellipsis, its tooltip and accessible name keep the full text", async ({ alpha }) => {
+    const { page } = alpha;
+    await crawledWithSelection(alpha);
+    await page.setViewportSize({ width: 1024, height: 640 });
+    await showPanes(page, 200);
+    const list = page.getByRole("tablist", { name: "Crawl-Zusammenfassung" });
+    await page.getByRole("button", { name: "Weitere Seitenleisten-Tabs" }).click();
+    await page.getByRole("menuitem", { name: "Rechtschreibung & Grammatik", exact: true }).click();
+    const tab = list.getByRole("tab", { name: "Rechtschreibung & Grammatik", exact: true });
+    await expect(tab).toHaveAttribute("aria-selected", "true");
+    await expect(tab).toHaveAttribute("title", "Rechtschreibung & Grammatik");
+    const { tabs } = await measureBar(page, "sidebar");
+    const measured = tabs.find((t) => t.id === "spellingGrammar")!;
+    expect(measured.horizontalCut).toBe(true);
+    expect(measured.verticalCut).toBe(false);
+    expect(measured.outsideList).toBe(false);
+    expect(measured.overlapsTrigger).toBe(false);
+  });
+});

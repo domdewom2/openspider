@@ -205,4 +205,35 @@ describe("TabBar (Überlauf, Reihenfolge)", () => {
     expect(onSelect).toHaveBeenCalledWith("b");
     expect(screen.getByRole("button", { name: "More" })).toBeInTheDocument();
   });
+
+  // spec: UI-004 [P1]
+  // spec: UI-112
+  it("selects the focused tab with Enter and offers visibility, configure and reset in the overflow menu (A02-06)", () => {
+    const onSelect = vi.fn(); const onToggle = vi.fn(); const onConfigure = vi.fn(); const onReset = vi.fn();
+    const tabs = [{ id: "a", label: "Alpha" }, { id: "b", label: "Beta" }, { id: "c", label: "Gamma" }];
+    render(<TabBar tabs={tabs} selected="a" onSelect={onSelect} label="Views" overflowLabel="More"
+      measure={() => ({ widths: [100, 100, 100], available: 220, overflowWidth: 0 })}
+      config={{ all: [...tabs, { id: "d", label: "Delta" }], hidden: ["d"], mandatory: "a", onToggle, onConfigure, onReset, configureLabel: "Configure tabs…", resetLabel: "Reset tabs" }} />);
+    fireEvent.keyDown(screen.getByRole("tab", { name: "Beta" }), { key: "Enter" });
+    expect(onSelect).toHaveBeenCalledWith("b");
+    // „Gamma“ does not fit: it leaves the tab list (also for assistive technology) and is listed in the overflow menu.
+    expect(screen.queryByRole("tab", { name: "Gamma" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
+    expect(screen.getAllByRole("menuitemcheckbox").map(e => e.textContent?.replace(/^[☑☐]\s*/, ""))).toEqual(["Alpha", "Beta", "Gamma", "Delta"]);
+    expect(screen.getByRole("menuitemcheckbox", { name: "Alpha" })).toHaveAttribute("aria-disabled", "true");
+    fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Delta" }));
+    expect(onToggle).toHaveBeenCalledWith("d", true);
+    fireEvent.click(screen.getByRole("menuitem", { name: "Gamma" }));
+    expect(onSelect).toHaveBeenCalledWith("c");
+  });
+
+  // spec: UI-007
+  // spec: UI-004
+  it("keeps labels on one line and names a cut label in the tooltip (A02-01, A02-02)", () => {
+    const tabs = [{ id: "a", label: "Rechtschreibung und Grammatik" }];
+    const { container } = render(<TabBar tabs={tabs} selected="a" onSelect={() => undefined} label="Views" overflowLabel="More" />);
+    const label = container.querySelector<HTMLElement>(".os-tab-label")!;
+    expect(label).toHaveTextContent("Rechtschreibung und Grammatik");
+    expect(screen.getByRole("tab", { name: "Rechtschreibung und Grammatik" })).toBeInTheDocument();
+  });
 });

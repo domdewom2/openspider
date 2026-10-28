@@ -160,6 +160,12 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
       move(selectedIndex, selectedIndex + (e.key === "ArrowLeft" ? -1 : 1));
       return;
     }
+    if (e.key === "Enter" || e.key === " ") {
+      // Activation keys select the focused tab (WAI-ARIA tabs pattern; the sidebar's former RAC tabs did the same).
+      const id = target.closest<HTMLElement>("[role=tab]")?.dataset.tabId;
+      if (id) { e.preventDefault(); onSelect(id); }
+      return;
+    }
     let next: number | undefined;
     if (e.key === "ArrowRight") next = visible[Math.min(visible.length - 1, pos + 1)];
     else if (e.key === "ArrowLeft") next = visible[Math.max(0, pos - 1)];
