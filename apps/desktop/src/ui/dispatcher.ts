@@ -84,8 +84,9 @@ export function isInTable(target: EventTarget | null): boolean {
 
 export function isModalOpen(doc: Document = document): boolean {
   // `.os-modal`: modale Dialoge der Primitive (React Aria setzt kein aria-modal), sonst schluckt ein globales Esc-Kürzel
-  // (search.clear) die Esc-Taste, bevor der Dialog sie erhält.
-  return doc.querySelector('[aria-modal="true"], dialog[open], .os-modal') !== null;
+  // (search.clear) die Esc-Taste, bevor der Dialog sie erhält. `.os-popover`: offene Menüs und Auswahllisten (Überlaufmenü der
+  // Tab-Leisten, M2-U34) schließen mit Esc.
+  return doc.querySelector('[aria-modal="true"], dialog[open], .os-modal, .os-popover') !== null;
 }
 
 export interface DispatcherOptions {

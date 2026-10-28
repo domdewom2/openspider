@@ -37,15 +37,19 @@ export function Shell() {
       const header = root.querySelector<HTMLElement>(":scope > header");
       const footer = root.querySelector<HTMLElement>(":scope > footer");
       // Fractional heights (header/status bar content from other packages) must not be rounded to whole pixels.
-      setViewport({ width: root.clientWidth, height: root.clientHeight - (header?.getBoundingClientRect().height ?? 40) - (footer?.getBoundingClientRect().height ?? 24) });
+      const tabs = root.querySelector<HTMLElement>(":scope > nav")?.getBoundingClientRect().height;
+      setViewport({ width: root.clientWidth, height: root.clientHeight - (header?.getBoundingClientRect().height ?? 40) - (footer?.getBoundingClientRect().height ?? 24),
+        ...(tabs ? { tabs } : {}) });
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(root);
     const header = root.querySelector("header");
     const footer = root.querySelector("footer");
+    const tabs = root.querySelector(":scope > nav");
     if (header) observer.observe(header);
     if (footer) observer.observe(footer);
+    if (tabs) observer.observe(tabs);
     return () => { observer.disconnect(); root.classList.remove("os-shell"); };
   }, []);
   useEffect(() => {

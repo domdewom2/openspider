@@ -15,7 +15,9 @@ export interface Layout {
   sidebar: PaneState;
   detail: PaneState;
 }
-export interface Viewport { width: number; height: number }
+/** `tabs`: measured height of the tabs area (K2-77: navigation row plus pill row); defaults to one 28-px tab row. */
+export interface Viewport { width: number; height: number; tabs?: number }
+const tabsOf = (viewport: Viewport) => viewport.tabs ?? TABLE_TABS;
 export interface LayoutPixels {
   sidebar: number;
   detail: number;
@@ -43,7 +45,7 @@ export function measureLayout(viewport: Viewport, layout: Layout): LayoutPixels 
   const sidebar = !layout.sidebar.visible || layout.sidebar.collapsed ? 0
     : clamp(viewport.width * layout.sidebar.share, MIN_SIDEBAR, viewport.width - sidebarGrip - MIN_TABLE);
   const detail = !layout.detail.visible || layout.detail.collapsed ? 0
-    : clamp(viewport.height * layout.detail.share, MIN_DETAIL, viewport.height - detailGrip - MIN_TABLE - TABLE_TABS);
+    : clamp(viewport.height * layout.detail.share, MIN_DETAIL, viewport.height - detailGrip - MIN_TABLE - tabsOf(viewport));
   return { sidebar, detail, sidebarGrip, detailGrip,
     tableWidth: viewport.width - sidebarGrip - sidebar,
     tableHeight: viewport.height - detailGrip - detail };
@@ -56,7 +58,7 @@ export function finishDrag(layout: Layout, pane: Pane, pixels: number, viewport:
   const before = layout[pane];
   const next: PaneState = pixels < min / 2
     ? { ...before, visible: true, collapsed: true }
-    : { visible: true, collapsed: false, share: clamp(pixels, min, total - GRIP - MIN_TABLE - (pane === "detail" ? TABLE_TABS : 0)) / total };
+    : { visible: true, collapsed: false, share: clamp(pixels, min, total - GRIP - MIN_TABLE - (pane === "detail" ? tabsOf(viewport) : 0)) / total };
   return { ...layout, [pane]: next };
 }
 export function resetDivider(layout: Layout, pane: Pane, viewport: Viewport): Layout {

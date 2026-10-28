@@ -61,7 +61,12 @@ test.beforeEach(async ({ page }) => {
 test.afterEach(async () => { await bridge.stop(); });
 
 const sidebar = (page: import("@playwright/test").Page) => page.getByRole("complementary", { name: "Sidebar" });
-const openTab = async (page: import("@playwright/test").Page, name: string) => { await sidebar(page).getByRole("tab", { name, exact: true }).click(); };
+// M2-U34 (K2-72): tabs that do not fit the sidebar width are opened through its overflow menu (UI-060, UI-004).
+const openTab = async (page: import("@playwright/test").Page, name: string) => {
+  const tab = sidebar(page).getByRole("tab", { name, exact: true });
+  if (await tab.count()) await tab.click();
+  else { await sidebar(page).getByRole("button", { name: "More sidebar tabs" }).click(); await page.getByRole("menuitem", { name, exact: true }).click(); }
+};
 
 // spec: UI-066
 test("Site Structure shows directories and the depth distribution; views switch without changing the sum", async ({ page }) => {

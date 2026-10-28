@@ -1,5 +1,21 @@
-.u10-top-tabs { display: flex; height: 100%; min-width: 0; }
-.u10-top-tabs > .os-tabbar { flex: 1; min-width: 0; }
-/* A01-08: the overflow calculation of the TabBar sums tab widths without the flex gap; without a gap the measured widths are
-   exact, and the clip guarantees that a tab never reaches the "Configure tabs" button (UI-001). */
+/* K2-77: grouped navigation above the pill tabs; both rows stack in the tabs area of the shell grid. Colours only from ui/tokens. */
+.u10-top-tabs { display: flex; flex-direction: column; min-width: 0; }
+.u10-top-tabs > .u20-tab-host { flex: none; min-width: 0; padding: 4px 8px 6px; }
 .u10-top-tabs .os-tabbar-list { gap: 0; overflow: hidden; }
+.u34-nav { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0 4px; min-width: 0; padding: 0 8px; border-bottom: 1px solid var(--os-border); }
+.u34-nav-item { display: flex; align-items: center; flex: none; border-bottom: 2px solid transparent; }
+.u34-nav-current { border-bottom-color: var(--os-accent); }
+.u34-nav-button, .u34-nav-chevron { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 8px; border: 0; border-radius: var(--os-radius);
+  background: transparent; color: var(--os-text); font: inherit; white-space: nowrap; cursor: default; outline: none; }
+.u34-nav-chevron { padding: 0 4px; color: var(--os-text-muted); }
+.u34-nav-item:has(.u34-nav-chevron) .u34-nav-button { padding-right: 2px; }
+.u34-nav-current .u34-nav-button { color: var(--os-accent); font-weight: 600; }
+.u34-nav-button[data-hovered], .u34-nav-chevron[data-hovered] { background: var(--os-bg-hover); }
+.u34-nav-button[data-focus-visible], .u34-nav-chevron[data-focus-visible] { outline: 2px solid var(--os-focus); outline-offset: -2px; }
+.u34-nav-button[data-disabled] { color: var(--os-text-disabled); }
+/* Narrow tab area (small window or wide sidebar): the labels stay, the symbols go, so the navigation keeps to one row longer. */
+.u10-top-tabs { container-type: inline-size; }
+@container (max-width: 960px) {
+  .u34-nav-button > svg:first-child { display: none; }
+  .u34-nav-button { padding: 0 6px; }
+}

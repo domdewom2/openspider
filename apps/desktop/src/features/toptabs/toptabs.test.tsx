@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { flushUiState } from "../../state/uistate";
 import { createClient, setClient } from "../../ipc/client";
@@ -11,6 +11,7 @@ import { setLanguage } from "../../i18n";
 import type { CrawlStatus } from "../../ipc/gen/CrawlStatus";
 import { fixtureTabs, tableFixture } from "../table/fixtures/core";
 import { TopTabs } from "./TopTabs";
+import { runAction } from "../../ui/actions";
 
 let fx: ReturnType<typeof tableFixture>;
 beforeEach(async () => {
@@ -45,18 +46,71 @@ it("retains each tab's last filter and sort, and accepts navigation from Overvie
 });
 
 // spec: UI-004 [P1]
-it("offers checkboxes for every tab, protects Internal, and reopens a hidden tab", async () => {
+it("offers checkboxes for every tab of the group, protects Internal, and reopens a hidden tab", async () => {
   render(<TopTabs />); await screen.findByRole("tab", { name: "Internal" });
   fireEvent.click(screen.getByRole("button", { name: "Configure tabs" }));
-  expect(screen.getAllByRole("menuitemcheckbox")).toHaveLength(fixtureTabs.length);
+  // K2-77: the menu lists the tabs of the active group (URLs: Internal, External).
+  expect(screen.getAllByRole("menuitemcheckbox").map(e => e.textContent?.replace(/^[☑☐]\s*/, ""))).toEqual(["Internal", "External"]);
   expect(screen.getByRole("menuitemcheckbox", { name: "Internal" })).toHaveAttribute("aria-disabled", "true");
-  fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "AMP" }));
-  await waitFor(() => expect(useTabs.getState().hidden).toContain("AMP"));
-  expect(screen.queryByRole("tab", { name: "AMP" })).toBeNull();
-  fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "AMP" }));
-  await waitFor(() => expect(useTabs.getState().hidden).not.toContain("AMP"));
-  fireEvent.click(screen.getByRole("menuitem", { name: "Move Images up" }));
-  await waitFor(() => expect(useTabs.getState().order).toEqual(["Internal", "Images", "External", "AMP"]));
+  fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "External" }));
+  await waitFor(() => expect(useTabs.getState().hidden).toContain("External"));
+  fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "External" }));
+  await waitFor(() => expect(useTabs.getState().hidden).not.toContain("External"));
+  expect(screen.getByRole("menuitem", { name: "Configure tabs…" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("menuitem", { name: "Reset tabs" }));
+  await waitFor(() => expect(useTabs.getState().order).toEqual(fixtureTabs.map(t => t.id)));
+});
+
+// spec: UI-004 [P1]
+it("resets order and visibility only of the active group from its menus; the View menu resets all groups (K2-77)", async () => {
+  // Fixture groups: URLs = Internal, External; Content = Images; Technical = AMP.
+  await useTabs.getState().load();
+  await useTabs.getState().reorder(["External", "Internal", "Images", "AMP"]);
+  await useTabs.getState().show("AMP", false);
+  render(<TopTabs />); await screen.findByRole("tab", { name: "Internal" });
+  expect(screen.getAllByRole("tab").map(t => t.textContent)).toEqual(["External", "Internal"]);
+  fireEvent.click(screen.getByRole("button", { name: "Configure tabs" }));
+  fireEvent.click(await screen.findByRole("menuitem", { name: "Reset tabs" }));
+  await waitFor(() => expect(useTabs.getState().order.slice(0, 2)).toEqual(["Internal", "External"]));
+  // the other group keeps its hidden tab
+  expect(useTabs.getState().hidden).toEqual(["AMP"]);
+  await flushUiState();
+  expect(fx.core.uiState.state).toMatchObject({ topTabs: { order: ["Internal", "External", "Images", "AMP"], hidden: ["AMP"] } });
+  // context menu of a tab: same per-group reset
+  await act(async () => { await useTabs.getState().reorder(["External", "Internal", "Images", "AMP"]); });
+  fireEvent.contextMenu(screen.getByRole("tab", { name: "Internal" }));
+  fireEvent.click(await screen.findByRole("menuitem", { name: "Reset tabs" }));
+  await waitFor(() => expect(useTabs.getState().order.slice(0, 2)).toEqual(["Internal", "External"]));
+  expect(useTabs.getState().hidden).toEqual(["AMP"]);
+  // View › Reset tabs: every group
+  await act(async () => { runAction("view.resetTabs"); });
+  await waitFor(() => expect(useTabs.getState().hidden).toEqual([]));
+});
+
+// spec: UI-004
+it("groups the tabs: navigation above the pills, a group's ▾ jumps into any of its tabs, and group and tab survive a restart (K2-77)", async () => {
+  render(<TopTabs />); await screen.findByRole("tab", { name: "Internal" });
+  const nav = screen.getByRole("group", { name: "Areas" });
+  expect(within(nav).getAllByRole("button").map(b => b.textContent || b.getAttribute("aria-label"))).toEqual(expect.arrayContaining(["Overview", "URLs", "Content", "Tabs of Content", "Technical", "Configuration"]));
+  expect(screen.getAllByRole("tab").map(t => t.textContent)).toEqual(["Internal", "External"]);
+  // ≤ 2 clicks: group ▾ and the tab
+  fireEvent.click(within(nav).getByRole("button", { name: "Tabs of Technical" }));
+  fireEvent.click(await screen.findByRole("menuitem", { name: "AMP" }));
+  await waitFor(() => expect(useTabs.getState().active).toBe("AMP"));
+  expect(screen.getAllByRole("tab").map(t => t.textContent)).toEqual(["AMP"]);
+  // one click: the group opens on its last tab
+  fireEvent.click(within(nav).getByRole("button", { name: "URLs" }));
+  expect(useTabs.getState().active).toBe("Internal");
+  fireEvent.click(within(nav).getByRole("button", { name: "Technical" }));
+  expect(useTabs.getState().active).toBe("AMP");
+  fireEvent.click(within(nav).getByRole("button", { name: "Overview" }));
+  expect(useTabs.getState().view).toBe("overview");
+  expect(screen.queryByRole("tablist")).toBeNull();
+  await flushUiState();
+  expect(fx.core.uiState.state).toMatchObject({ topTabs: { active: "AMP", view: "overview", groupActive: { technical: "AMP", urls: "Internal" } } });
+  useTabs.setState({ active: "Internal", view: "tabs", groupActive: {}, loaded: false });
+  await act(async () => { await useTabs.getState().load(); });
+  expect(useTabs.getState()).toMatchObject({ active: "AMP", view: "overview" });
 });
 
 // spec: UI-090

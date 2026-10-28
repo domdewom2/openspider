@@ -54,7 +54,10 @@ export function Rendering() {
           {t("config-rendering-locked")}
         </p>
       )}
+      {/* A02-21: say why the mode cannot be chosen and what to do – new crawl, Chromium (not bundled before M3, K2-09). */}
+      {runMode !== "free" && runMode !== "foreign" && <p className="os-hint" role="note" data-testid="rendering-locked-how">{t("config-rendering-locked-how")}</p>}
       {mode === "javascript" && problems.length === 0 && <p className="os-hint">{t("config-rendering-js-note")}</p>}
+      {mode !== "javascript" && <p className="os-hint" role="note" data-testid="rendering-chromium-note">{t("config-rendering-chromium-note")}</p>}
       {problems.map((p, n) => (
         <div key={n} data-testid="rendering-problem">
           <Banner

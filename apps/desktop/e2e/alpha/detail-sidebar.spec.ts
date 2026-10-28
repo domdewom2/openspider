@@ -45,8 +45,11 @@ async function crawled(alpha: Alpha, sections?: Record<string, Record<string, un
 
 const detail = (page: Page) => page.getByRole("region", { name: "Details" });
 const panel = (page: Page, name: string) => page.getByRole("tabpanel", { name, exact: true });
+// M2-U34 (K2-72): Detail-Tabs, die nicht in die Breite passen, stehen im Überlaufmenü (UI-030, UI-004).
 const openDetailTab = async (page: Page, name: string) => {
-  await detail(page).getByRole("tab", { name, exact: true }).click();
+  const tab = detail(page).getByRole("tab", { name, exact: true });
+  if (await tab.count()) await tab.click();
+  else { await detail(page).getByRole("button", { name: "More detail tabs" }).click(); await page.getByRole("menuitem", { name, exact: true }).click(); }
   return panel(page, name);
 };
 
@@ -231,11 +234,15 @@ test("Issue names show the configured thresholds instead of raw placeholders", a
 test("every sidebar tab can be selected with the mouse", async ({ alpha }) => {
   const { page } = alpha;
   await crawled(alpha);
-  const tabs = page.getByRole("tablist", { name: "Crawl summary" }).getByRole("tab");
-  const names = await tabs.allInnerTexts();
+  // M2-U34 (K2-72): alle Reiter stehen im Überlaufmenü; nicht sichtbare werden dort per Maus gewählt (UI-060, UI-004).
+  await page.getByRole("button", { name: "More sidebar tabs" }).click();
+  const names = (await page.getByRole("menuitemcheckbox").allInnerTexts()).map((n) => n.replace(/^[☑☐]\s*/, ""));
+  await page.keyboard.press("Escape");
   expect(names).toContain("Spelling & Grammar");
   for (const name of names) {
-    await page.getByRole("tablist", { name: "Crawl summary" }).getByRole("tab", { name, exact: true }).click({ timeout: 5000 });
+    const tab = page.getByRole("tablist", { name: "Crawl summary" }).getByRole("tab", { name, exact: true });
+    if (await tab.count()) await tab.click({ timeout: 5000 });
+    else { await page.getByRole("button", { name: "More sidebar tabs" }).click(); await page.getByRole("menuitem", { name, exact: true }).click({ timeout: 5000 }); }
     await expect(page.getByRole("tablist", { name: "Crawl summary" }).getByRole("tab", { name, exact: true })).toHaveAttribute("aria-selected", "true");
   }
 });
