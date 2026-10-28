@@ -13,3 +13,9 @@
 .u34-nav-button[data-hovered], .u34-nav-chevron[data-hovered] { background: var(--os-bg-hover); }
 .u34-nav-button[data-focus-visible], .u34-nav-chevron[data-focus-visible] { outline: 2px solid var(--os-focus); outline-offset: -2px; }
 .u34-nav-button[data-disabled] { color: var(--os-text-disabled); }
+/* Narrow tab area (small window or wide sidebar): the labels stay, the symbols go, so the navigation keeps to one row longer. */
+.u10-top-tabs { container-type: inline-size; }
+@container (max-width: 960px) {
+  .u34-nav-button > svg:first-child { display: none; }
+  .u34-nav-button { padding: 0 6px; }
+}
