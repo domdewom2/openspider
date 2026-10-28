@@ -29,7 +29,10 @@ export function Menu({ trigger, entries, label, className }: { trigger: ReactNod
   );
 }
 
-export function MenuBody({ entries, label, className }: { entries: readonly MenuEntry[]; label: string; className?: string }) {
+export function MenuBody({ entries: all, label, className }: { entries: readonly MenuEntry[]; label: string; className?: string }) {
+  // Collections need unique keys; a duplicate id (e.g. one action contributed twice to a merged menu) would stop the whole menu
+  // from rendering, so only its first occurrence is kept (M2-U34, Fremdänderung).
+  const entries = all.filter((e, i) => all.findIndex(x => x.id === e.id) === i);
   return (
     <RacMenu className={cx("os-menu", className)} aria-label={label}>
       {entries.some(e => e.checked !== undefined) && <MenuSection selectionMode="multiple"
