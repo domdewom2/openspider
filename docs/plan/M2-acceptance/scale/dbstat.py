@@ -32,7 +32,10 @@ def measure(path):
             objects.append(dict(name=name, type=kind, table=table, bytes=size, unused=unused, rows=count))
         urls = next((o["rows"] for o in objects if o["name"] == "urls"), None)
         size = os.path.getsize(path)
-        return dict(file_bytes=size, wal_bytes=os.path.getsize(path + "-wal") if os.path.exists(path + "-wal") else 0,
+        return dict(analysis_state=(db.execute("SELECT value FROM crawl_meta WHERE key='analysis_state'").fetchone() or (None,))[0],
+                    analysis_steps=dict(db.execute("SELECT step,state FROM analysis_steps")),
+                    unused_bytes=db.execute("SELECT coalesce(sum(unused),0) FROM dbstat").fetchone()[0],
+                    file_bytes=size, wal_bytes=os.path.getsize(path + "-wal") if os.path.exists(path + "-wal") else 0,
                     page_size=db.execute("PRAGMA page_size").fetchone()[0],
                     freelist_count=db.execute("PRAGMA freelist_count").fetchone()[0],
                     url_rows=urls, bytes_per_url_row=size / urls if urls else None, objects=objects)

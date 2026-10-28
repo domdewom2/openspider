@@ -111,6 +111,8 @@ def main():
             md += ['', '## Größte Objekte', '', '| Objekt | Bytes | Bytes/URL | ungenutzte Bytes |','|---|---:|---:|---:|']
             md += [f'| {o["name"]} | {o["bytes"]} | {o["bytes"]/final:.1f} | {o["unused"]} |' for o in top]
             (dest/f'stage-{n}.md').write_text('\n'.join(md)+'\n')
+            if storage['analysis_state'] != 'completed' or 'pending' in storage['analysis_steps'].values():
+                raise RuntimeError(f'incomplete analysis: {storage["analysis_steps"]}')
             print(f'{n}: {storage["file_bytes"]} bytes, windows={windows}, results={dest}',flush=True)
         finally:
             site.send_signal(signal.SIGINT)
