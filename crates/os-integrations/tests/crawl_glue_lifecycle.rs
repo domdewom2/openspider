@@ -15,6 +15,28 @@ use os_testsite::mocks::{
 };
 use std::{collections::BTreeSet, sync::Arc};
 
+// Env overrides are process-global; isolate the real lifecycle in a child rather than
+// mutating OPENSPIDER_HOME beside parallel tests. The parent owns the temporary home.
+fn isolated_quota_home(test: &str) -> bool {
+    if std::env::var("OPENSPIDER_FIX_N02_QUOTA_CHILD").as_deref() == Ok(test) {
+        return false;
+    }
+    let home = tempfile::tempdir().unwrap();
+    let output = std::process::Command::new(std::env::current_exe().unwrap())
+        .args(["--exact", test, "--nocapture"])
+        .env("OPENSPIDER_FIX_N02_QUOTA_CHILD", test)
+        .env("OPENSPIDER_HOME", home.path())
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr),
+    );
+    true
+}
+
 fn clock() -> Arc<dyn Clock> {
     Arc::new(ManualClock::new(
         Timestamp::from_db("2026-10-19T12:00:00Z").unwrap(),
@@ -70,10 +92,14 @@ fn context(cfg: CrawlConfig) -> ApiCtx {
     }
 }
 
+// spec: INTEG-006
 // spec: INTEG-012
 // spec: CRAWL-037
 #[tokio::test]
 async fn apis_mode_assigns_bulk_and_per_url_results_without_crawling() {
+    if isolated_quota_home("apis_mode_assigns_bulk_and_per_url_results_without_crawling") {
+        return;
+    }
     let target_dir = tempfile::tempdir().unwrap();
     std::fs::write(
         target_dir.path().join("index.html"),
@@ -164,6 +190,13 @@ async fn apis_mode_assigns_bulk_and_per_url_results_without_crawling() {
         4
     );
     assert_eq!(gsc.requests_to("inspect").len(), 4);
+    // Exercise start_apis_mode_with -> ApiRun::new -> app_paths, not an injected helper path.
+    let home = std::path::PathBuf::from(std::env::var_os("OPENSPIDER_HOME").unwrap());
+    assert_eq!(
+        crawl_glue::quota_ledger_path(),
+        home.join("api-quotas.json")
+    );
+    assert!(home.join("api-quotas.json").is_file());
     assert_eq!(ahrefs.requests.all().len(), 1);
     assert_eq!(
         target.total_requests(),
@@ -270,6 +303,9 @@ fn scheduling_selection_keeps_account_property_and_stream() {
 // spec: INTEG-017
 #[tokio::test]
 async fn cli_google_selection_reaches_exact_account_property_and_stream() {
+    if isolated_quota_home("cli_google_selection_reaches_exact_account_property_and_stream") {
+        return;
+    }
     let ga = Ga4Mock::default();
     let gsc = GscMock::new();
     let server = MockServer::start(vec![Arc::new(ga.clone()), Arc::new(gsc.clone())])
