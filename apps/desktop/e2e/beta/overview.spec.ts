@@ -60,6 +60,7 @@ test("overview retains its last response during crawl updates and after resume",
       const { useSession } = await import(/* @vite-ignore */ String("/src/state/session.ts"));
       return useSession.getState().crawl?.crawled ?? 0;
     })).toBeGreaterThanOrEqual(8);
+    await expect.poll(async () => Number((await overview.getByRole("table", { name: "Summary", exact: true }).getByRole("row", { name: /^Total URLs Crawled/ }).getByRole("cell").first().innerText()).replace(/\D/g, ""))).toBeGreaterThanOrEqual(8);
     await page.evaluate(async () => {
       const { crawl } = await import(/* @vite-ignore */ String("/src/ipc/crawl.ts"));
       await crawl.pause();
