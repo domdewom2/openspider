@@ -1,0 +1,1 @@
+[{"path":"./nested//text.txt","bytes":[65,10],"append":false},{"path":"nested/text.txt","bytes":[66,10],"append":true}]

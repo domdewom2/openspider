@@ -429,8 +429,10 @@ async fn crawl_phase(
             let fetcher = plan.auth.fetcher(&plan.config, clock.clone())?;
             warn_disk(&path, rep);
             rep.phase("crawl");
+            let mut config = plan.config.clone();
+            config.custom_js.output_dir = plan.output.clone();
             let request = CrawlRequest {
-                config: plan.config.clone(),
+                config,
                 source,
                 file: path.clone(),
                 project: plan.project.clone(),

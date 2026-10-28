@@ -731,6 +731,14 @@
     "CustomJsConfig": {
       "description": "Custom JavaScript: bis zu 100 Snippets (INTEG-060).",
       "properties": {
+        "output_dir": {
+          "default": null,
+          "description": "Freigegebenes Ausgabeverzeichnis für Dateizugriffe der Snippets.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "snippets": {
           "default": [],
           "description": "Snippets in Ausführungs- und Spaltenreihenfolge.",
@@ -3654,6 +3662,7 @@
     "custom_js": {
       "$ref": "#/$defs/CustomJsConfig",
       "default": {
+        "output_dir": null,
         "snippets": []
       },
       "description": "Custom JavaScript (ab v2)."
