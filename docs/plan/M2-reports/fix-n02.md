@@ -113,3 +113,5 @@ Schritt 3 erneut geprüft: bestehende MCP-1-Allowlist entspricht der Entscheidun
 Schritt 4 erneut geprüft: `cargo test -p os-mcp --test m2_http` besteht (5 Tests). Der Regressionstest prüft den echten TCP/SSE-Abbruch mit Ein-Sekunden-Frist, 404 für die geschlossene Sitzung und Erhalt der zweiten Sitzung. Keine zusätzliche Produktänderung erforderlich.
 
 Schritt 5 erneut geprüft: beide `subscription_notice_tests` bestehen. `AccessPanel.tsx` verwendet bereits `aria-disabled` statt nativer Deaktivierung und `aria-busy`; die Aktionssperre bleibt wirksam. Die Fixture-README verweist bereits auf die vorhandene `list_m2_e06.rs`. Browser-Nachweis folgt unverändert in Schritt 6.
+
+Schritt 6 abgeschlossen: sämtliche 13 erneut ausgeführten Prüf-/Buildbefehle mit Exit 0. Formatierung und Clippy grün; Pakettests 318 bestanden / 1 regulär ignoriert, Notice-Tests 2 bestanden, App-Service 6 bestanden; CLI und Bridge gebaut; MCP-E2E 24/24 in 21,0 Minuten; Typecheck und Desktop-Tests 771/771 in 76 Dateien grün. Alle langen Befehle synchron mit 3600000 ms Timeout. Ledger-Tests und Paketlauf verwenden temporäre Homes. Keine E2E- oder Lockfile-Änderungen.
