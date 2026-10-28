@@ -105,3 +105,5 @@ Die folgenden freigegebenen Paketänderungen werden gemäß Arbeitsauftrag als *
 ## Erneuter Paketlauf ab `4b741111` (28.10.2026)
 
 Schritt 1 abgeschlossen: Arbeitsbaum anfangs sauber; `CLAUDE.md`, die vollständige Fable-Vorlage, Ursachen und vorhandene Korrekturen gelesen. `node_modules` vorhanden, daher kein erneutes `npm ci`. Vorgefundener Branch `m2/fix-n02` enthält bereits die MCP-Korrekturen und A1-Testisolation; diese werden erhalten.
+
+Schritt 2: A1 bleibt an der ausdrücklich begrenzten Dateiliste offen. Erneut am Code bestätigt: insbesondere `os-engine/src/crawl.rs:772`, `os-app/src/commands/api.rs:196`, `os-app/src/commands/export_summary.rs:121,221` und `os-mcp/src/tools/link_metrics.rs:96` konstruieren `ApiCtx` ohne Struct-Update. Ein zusätzliches `Option<PathBuf>` ist in Rust kein optionales Feld im Strukturliteral; ohne Anpassung dieser gesperrten Stellen entsteht E0063. Die vorhandene Prozessisolation bleibt bestehen. Keine inkompatible Strukturänderung, keine Umgehung über globale Zustände und keine Änderung gesperrter Pfade vorgenommen. Die erneute Prüfung wird bis Schritt 7 fortgesetzt.
