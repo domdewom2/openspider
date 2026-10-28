@@ -444,8 +444,17 @@ impl App {
     /// Abonniert die Ereignisse eines Fensters (ein Kanal je Fenster; ein früheres Abonnement wird ersetzt).
     pub fn subscribe(&self, window: WindowId, sink: Arc<dyn EventSink>) -> SubscriptionId {
         let id = self.0.windows.subscribe(window.clone(), sink);
-        // Subscription is the first opportunity to deliver queued startup notices and ticks.
-        self.flush_tick_to(vec![window]);
+        // Deliver queued startup notices immediately; otherwise leave tick contributions and
+        // watermarks untouched until the regular flush.
+        let has_notices = !self
+            .0
+            .notices
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .is_empty();
+        if has_notices {
+            self.flush_tick_to(vec![window]);
+        }
         id
     }
 
