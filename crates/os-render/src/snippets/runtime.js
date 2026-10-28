@@ -1,14 +1,38 @@
 (async () => {
   const tagged = new WeakMap();
+  const files = [];
+  function path(value) {
+    if (!/* FILE_ACCESS */) throw new Error('File access is not enabled');
+    const normalized = String(value).replaceAll('\\', '/');
+    if (!normalized || normalized.startsWith('/') || normalized.includes(':') ||
+        normalized.split('/').includes('..') || normalized.includes('\0')) {
+      throw new Error('Invalid output path');
+    }
+    const parts = normalized.split('/').filter(p => p && p !== '.');
+    if (!parts.length) throw new Error('Invalid output path');
+    return parts.join('/');
+  }
   const api = Object.freeze({
     data(value) { const token = {}; tagged.set(token, {value}); return token; },
     error(message) { const token = {}; tagged.set(token, {error: String(message)}); return token; },
-    // No host file bindings in P1. In particular, traversal can never reach disk.
-    saveText() { throw new Error('File access is not enabled'); },
-    saveUrls() { throw new Error('File access is not enabled'); }
+    async saveText(text, destination, append = false) {
+      files.push({path: path(destination), bytes: Array.from(new TextEncoder().encode(String(text))), append: !!append});
+    },
+    async saveUrls(urls, directory) {
+      const root = path(directory);
+      for (const address of urls) {
+        const url = new URL(address, location.href);
+        if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Invalid download URL');
+        const destination = path(root + '/' + url.hostname + '/' + decodeURIComponent(url.pathname));
+        const response = await fetch(url.href);
+        if (!response.ok) throw new Error('Download failed: ' + response.status);
+        files.push({path: destination, bytes: Array.from(new Uint8Array(await response.arrayBuffer())), append: false});
+      }
+    }
   });
   Object.defineProperty(window, 'openspider', {value: api, configurable: true});
   Object.defineProperty(window, 'seoSpider', {value: api, configurable: true});
+  const run = async () => {
   try {
     const result = await (async function(openspider, seoSpider) {
       /* USER_CODE */
@@ -23,4 +47,6 @@
   } catch (error) {
     return {values: [], error: String(error && error.message || error)};
   }
+  };
+  return {...await run(), files};
 })()
