@@ -107,3 +107,21 @@ describe("gen-ui-large", () => {
     expect(source.getCell(0, 5)).toBe(6);
   });
 });
+
+// spec: UI-033
+// spec: UI-145
+it("requests a detail reload on stale pages and keeps cached rows until replacement", async () => {
+  const { source, api } = setup();
+  source.onStale = vi.fn(); source.onError = vi.fn();
+  await source.ensureRow(0);
+  vi.mocked(api.rows).mockRejectedValueOnce({ code: "Stale", messageKey: "err-view-stale" });
+  await source.ensureRow(200);
+  expect(source.onStale).toHaveBeenCalledTimes(1);
+  expect(source.onError).not.toHaveBeenCalled();
+  expect(source.getCell(0, 0)).toBe(1);
+  expect(source.getCell(0, 200)).toBe(LOADING);
+  await source.onViewChanged(2, fixture.total + 1);
+  expect(source.version).toBe(2);
+  expect(source.rowKey(0)).toBe(1);
+  await source.dispose();
+});

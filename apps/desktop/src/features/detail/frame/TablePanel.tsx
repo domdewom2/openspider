@@ -90,15 +90,18 @@ export function TablePanel(props: TablePanelProps) {
     let live = true;
     let requested = latestRevision.current;
     let pending = false;
+    let stale = false;
+    source.onStale = () => { stale = true; };
     const timer = setInterval(() => {
-      if (pending || requested === latestRevision.current) return;
+      if (pending || (!stale && requested === latestRevision.current)) return;
+      stale = false;
       requested = latestRevision.current;
       pending = true;
       void view.update({ viewId: source.viewId, spec }).then(handle => {
         if (live) return source.onViewChanged(handle.version, handle.total ?? 0);
       }).catch(error => { if (live) setError(error); }).finally(() => { pending = false; });
     }, 500);
-    return () => { live = false; clearInterval(timer); };
+    return () => { live = false; source.onStale = undefined; clearInterval(timer); };
     // The source belongs to key (including spec); ticks only queue another refresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source]);

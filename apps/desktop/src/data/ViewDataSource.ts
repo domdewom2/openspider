@@ -1,5 +1,5 @@
 import { view } from "../ipc/view";
-import { isSilentError } from "../ipc/errors";
+import { isSilentError, toCmdError } from "../ipc/errors";
 import type { ViewHandle } from "../ipc/gen/ViewHandle";
 import type { RowWindow } from "../ipc/gen/RowWindow";
 
@@ -33,6 +33,7 @@ export class ViewDataSource {
   private queued: { version: number; total: number } | undefined;
   onScrollTo?: (row: number) => void;
   onError?: (error: unknown) => void;
+  onStale?: () => void;
 
   constructor(handle: ViewHandle, readonly api: ViewApi = view) {
     this.viewId = handle.viewId;
@@ -106,7 +107,11 @@ export class ViewDataSource {
         while (this.blocks.size > MAX_BLOCKS) this.blocks.delete(this.blocks.keys().next().value!);
         this.emit();
       })
-      .catch(error => { if (generation === this.generation && !this.disposed && !isSilentError(error)) this.onError?.(error); })
+      .catch(error => {
+        if (generation !== this.generation || this.disposed) return;
+        if (toCmdError(error).code === "Stale") this.onStale?.();
+        else if (!isSilentError(error)) this.onError?.(error);
+      })
       .finally(() => { if (generation === this.generation) this.pending.delete(index); });
     this.pending.set(index, job);
     return job;
@@ -153,7 +158,11 @@ export class ViewDataSource {
           const row = await this.api.locate({ viewId: this.viewId, urlId: anchor.key }, job.signal);
           if (job.signal.aborted || this.disposed) return;
           if (row !== null) { first = Math.max(0, row - relative); located = row; }
-        } catch (error) { if (job.signal.aborted || this.disposed) return; if (!isSilentError(error)) this.onError?.(error); else return; }
+        } catch (error) {
+          if (job.signal.aborted || this.disposed) return;
+          if (toCmdError(error).code === "Stale") this.onStale?.();
+          if (!isSilentError(error)) this.onError?.(error); else return;
+        }
       }
       first = Math.min(first, Math.max(0, total - 1));
       const last = Math.min(total - 1, first + height);
@@ -170,7 +179,10 @@ export class ViewDataSource {
       await Promise.all(loads);
     } catch (error) {
       // A request that outlived its version is dropped; the next announcement starts a new swap.
-      if (!job.signal.aborted && !this.disposed && !isSilentError(error)) this.onError?.(error);
+      if (!job.signal.aborted && !this.disposed) {
+        if (toCmdError(error).code === "Stale") this.onStale?.();
+        else if (!isSilentError(error)) this.onError?.(error);
+      }
       return;
     } finally {
       if (this.swap === job) this.swap = undefined;
