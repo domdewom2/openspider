@@ -127,6 +127,7 @@ pub fn change_all_v2_fields(c: &mut CrawlConfig) {
         attribute: Some("content".into()),
         output: ExtractorOutput::InnerHtml,
     }];
+    c.custom_js.output_dir = Some(std::path::PathBuf::from("snippet-output"));
     c.custom_js.snippets = vec![JsSnippet {
         name: "Titel".into(),
         kind: JsSnippetKind::Action,

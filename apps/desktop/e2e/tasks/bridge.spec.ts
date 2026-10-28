@@ -12,7 +12,7 @@ test("real bridge saves and reloads a scheduled task", async ({ page }) => {
   try {
     await page.goto(`/e2e/tasks/index.html?bridge=${encodeURIComponent(bridge!.url)}`);
     await page.waitForFunction(() => !!window.taskFixture);
-    const task: TaskDef = { ...fixture.task as TaskDef, id: null, name: "UI bridge task", enabled: false, crawl: { ...fixture.task.crawl, profile: null, authProfile: null }, apis: [], exports: [], notify: { onSuccess: false, onFailure: false, to: [] } };
+    const task: TaskDef = { ...fixture.task as TaskDef, id: null, name: "UI bridge task", enabled: false, crawl: { ...(fixture.task as TaskDef).crawl, profile: null, authProfile: null }, apis: [], exports: [], notify: { onSuccess: false, onFailure: false, to: [] } };
     const saved = await page.evaluate(async json => window.taskFixture.invoke("tasks.save", { task: JSON.parse(json) }), JSON.stringify(task)) as { id: string };
     try {
       await page.getByRole("button", { name: "Scheduling", exact: true }).click();

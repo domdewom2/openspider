@@ -192,6 +192,8 @@ pub(super) fn save_files(root: Option<&std::path::Path>, files: &Value) -> Resul
         return Ok(());
     };
     let root = root.ok_or("File access is not enabled")?;
+    // A configured CLI output folder may not have been created by an export yet.
+    fs::create_dir_all(root).map_err(|e| e.to_string())?;
     let root = root.canonicalize().map_err(|e| e.to_string())?;
     for file in files {
         let name = file["path"].as_str().ok_or("Invalid output path")?;
@@ -200,7 +202,9 @@ pub(super) fn save_files(root: Option<&std::path::Path>, files: &Value) -> Resul
             || name.starts_with('/')
             || name.contains(':')
             || name.contains('\0')
-            || name.split('/').any(|part| part == "..")
+            || name.split('/').any(|part| {
+                part == ".." || (part != "." && (part.ends_with('.') || part.ends_with(' ')))
+            })
         {
             return Err("Invalid output path".into());
         }
@@ -220,7 +224,15 @@ pub(super) fn save_files(root: Option<&std::path::Path>, files: &Value) -> Resul
                 Ok(meta) if meta.file_type().is_symlink() => {
                     return Err("Invalid output path: symlink".into())
                 }
-                Ok(_) => {}
+                Ok(_) => {
+                    if !destination
+                        .canonicalize()
+                        .map_err(|e| e.to_string())?
+                        .starts_with(&root)
+                    {
+                        return Err("Invalid output path: outside output directory".into());
+                    }
+                }
                 Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
                     if i + 1 < components.len() {
                         fs::create_dir(&destination).map_err(|e| e.to_string())?;

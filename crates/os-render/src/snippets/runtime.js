@@ -5,7 +5,7 @@
     if (!/* FILE_ACCESS */) throw new Error('File access is not enabled');
     const normalized = String(value).replaceAll('\\', '/');
     if (!normalized || normalized.startsWith('/') || normalized.includes(':') ||
-        normalized.split('/').includes('..') || normalized.includes('\0')) {
+        normalized.split('/').some(p => p === '..' || (p !== '.' && (p.endsWith('.') || p.endsWith(' ')))) || normalized.includes('\0')) {
       throw new Error('Invalid output path');
     }
     const parts = normalized.split('/').filter(p => p && p !== '.');

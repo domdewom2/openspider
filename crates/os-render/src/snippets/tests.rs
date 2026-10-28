@@ -534,6 +534,12 @@ fn file_operations_normalize_paths_append_and_reject_unsafe_destinations() {
         "../../../../tests/fixtures/integ-custom-js/output.json"
     ))
     .unwrap();
+    let new_output = directory.path().join("new-output");
+    runtime::save_files(Some(&new_output), &files).unwrap();
+    assert_eq!(
+        std::fs::read(new_output.join("nested").join("text.txt")).unwrap(),
+        b"A\nB\n"
+    );
     runtime::save_files(Some(directory.path()), &files).unwrap();
     assert_eq!(
         std::fs::read(directory.path().join("nested").join("text.txt")).unwrap(),
@@ -550,6 +556,10 @@ fn file_operations_normalize_paths_append_and_reject_unsafe_destinations() {
         "\\\\host\\share",
         "a\\..\\x",
         "a/../x",
+        "a/.. /escape",
+        "a/.../escape",
+        "a/trailing./escape",
+        "a/trailing /escape",
         "",
         ".",
     ] {
@@ -598,7 +608,7 @@ async fn requires_chromium_files_stay_in_the_approved_crawl_output_directory() {
     assert_eq!(page.snippets[0].error, None);
     assert_eq!(page.snippets[0].values, [Some("undefined".into())]);
     assert_eq!(
-        std::fs::read_to_string(output.path().join("nested/text.txt")).unwrap(),
+        std::fs::read_to_string(output.path().join("nested").join("text.txt")).unwrap(),
         "first\nsecond\n"
     );
     assert!(!std::fs::read_dir(output.path().join("downloads"))
