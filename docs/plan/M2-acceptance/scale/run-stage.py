@@ -24,7 +24,7 @@ def main():
     metadata = json.loads(subprocess.check_output(['cargo', 'metadata', '--no-deps', '--format-version', '1'], cwd=ROOT))
     binaries = Path(metadata['target_directory']) / 'release'
     date = datetime.date.today().isoformat()
-    dest = SCALE / date
+    dest = SCALE / os.environ.get('OS_SCALE_DEST', date)
     dest.mkdir(exist_ok=True)
     uptime = subprocess.check_output(['uptime'], text=True).strip()
     load = float(uptime.split('load averages:')[-1].strip().split()[0].replace(',', '.'))
@@ -76,6 +76,12 @@ def main():
             files = list((tmp/'home'/'crawls').glob('*.ospider'))
             if len(files) != 1: raise RuntimeError(f'expected one crawl file, got {files}')
             storage = dbstat.measure(str(files[0]))
+            export_dir = os.environ.get('OS_SCALE_EXPORT_DIR')
+            if export_dir:
+                subprocess.run([str(binaries/'openspider'), '--load-crawl', str(files[0]),
+                                '--headless', '--output-folder', export_dir,
+                                '--export-tabs', 'Internal:All', '--bulk-export', 'Links:All Inlinks'],
+                               env=env, check=True, timeout=5400)
             points = [(0,0)] + [(p['crawled'],p['elapsed_s']) for p in progress if p.get('crawled',0)>0]
             def at(count):
                 for (a,ta),(b,tb) in zip(points,points[1:]):
