@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { DataGrid, type GridController } from "../../grid/DataGrid";
 import { copySelection } from "../../grid/copy";
 import { currentLanguage, useT } from "../../i18n";
+import { columnLabel, filterLabel, tabLabel } from "../../i18n/canon";
 import { crawl } from "../../ipc/crawl";
 import { eventBus } from "../../ipc/events";
 import { toCmdError } from "../../ipc/errors";
@@ -252,7 +253,7 @@ function RegularUpperTable() {
     <div className="u10-toolbar">
       <div ref={filterRef}><ComboBox label={t("u10-filter")} selected={query.filter} onSelect={filter => tabs.query({ filter })}
         formatCount={n => new Intl.NumberFormat(locale).format(n)} options={filters.map(f => ({ id: f.id,
-          label: t(`filter-${f.labelTemplate.toLowerCase().replaceAll(" ", "-")}`, f.params, { fallback: f.id }),
+          label: filterLabel(t, f),
           count: f.state.kind === "needsCrawlAnalysis" ? null : f.count ?? null,
           hint: f.state.kind === "ready" ? undefined : t(`u10-filter-${f.state.kind}`),
           badge: f.issue ? <><Badge tone={f.issue.issueType === "issue" ? "danger" : f.issue.issueType === "warning" ? "warning" : "neutral"}>{t(`u10-issue-${f.issue.issueType}`)}</Badge>
@@ -288,7 +289,7 @@ function RegularUpperTable() {
           selection={controller.selection} onSelectionChange={controller.setSelection}
           cellColors={cellColors}
           onSortChange={sort => tabs.query({ sort })} onSortGesture={(column, extend) => tabs.query({ sort: cycleSort(query.sort, column, extend) })}
-          headerTitle={column => { const index = query.sort.findIndex(s => s.column === column); return index < 0 ? column : `${column} ${query.sort[index].dir === "asc" ? "↑" : "↓"}${query.sort.length > 1 ? index + 1 : ""}`; }}
+          headerTitle={column => { const index = query.sort.findIndex(s => s.column === column); const title = columnLabel(t, column); return index < 0 ? title : `${title} ${query.sort[index].dir === "asc" ? "↑" : "↓"}${query.sort.length > 1 ? index + 1 : ""}`; }}
           onColumnsChange={next => void columnState.change(tabs.active, next).catch(fail)}
           onContextMenu={showContext} onActivate={() => undefined} onError={fail} controller={setGrid}
           confirmLargeCopy={confirmLargeCopy} onExportSelection={() => openExport()}
@@ -304,8 +305,7 @@ function RegularUpperTable() {
       <MenuBody entries={menuEntries} label={t("u10-context")} />
     </Popover>
     <ColumnConfigurator tab={tabs.active} isOpen={configurator} onOpenChange={setConfigurator}
-      tabs={tabs.order.map(id => ({ id, label: t(`tab-${id.toLowerCase().replaceAll(" ", "-")}`, undefined, { fallback: id }) }))}
-      label={id => t(`tab-${id.toLowerCase().replaceAll(" ", "-")}`, undefined, { fallback: id })} />
+      tabs={tabs.order.map(id => ({ id, label: tabLabel(t, id) }))} label={id => tabLabel(t, id)} />
     <Dialog title={t("u20-columns-reset-all")} isOpen={resetAll} onOpenChange={setResetAll}
       footer={<DialogFooter okLabel={t("u20-reset")} cancelLabel={t("u10-cancel")} okVariant="danger"
         onOk={() => { setResetAll(false); void columnState.resetAll().catch(fail); }} onCancel={() => setResetAll(false)} />}>

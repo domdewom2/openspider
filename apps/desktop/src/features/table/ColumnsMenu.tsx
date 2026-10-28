@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useT } from "../../i18n";
+import { columnLabel } from "../../i18n/canon";
 import { type ColumnState } from "../../grid/DataGrid";
 import { Dialog, DialogFooter } from "../../ui/primitives/Dialog";
 import { Button } from "../../ui/primitives/Button";
@@ -32,7 +33,7 @@ export function ColumnsMenu({ columns, onChange, onReset }: {
       <Button onPress={() => { const next = draft.map(c => ({ ...c, visible: true })); setDraft(next); onChange(next); }}>{t("u10-columns-all")}</Button>
       <Button onPress={() => { const next = draft.map(c => ({ ...c, visible: fixed(c.key) })); setDraft(next); onChange(next); }}>{t("u10-columns-none")}</Button>
       <div className="u10-column-list">
-        {draft.filter(c => c.key.toLowerCase().includes(search.toLowerCase())).map(c => <div key={c.key}
+        {draft.filter(c => `${c.key} ${columnLabel(t, c.key)}`.toLowerCase().includes(search.toLowerCase())).map(c => <div key={c.key}
           className="u10-column-item" data-drop-target={target === c.key || undefined} draggable={!fixed(c.key)}
           onDragStart={() => setDrag(c.key)} onDragEnd={() => { setDrag(undefined); setTarget(undefined); }}
           onDragOver={e => { if (!fixed(c.key)) { e.preventDefault(); setTarget(c.key); } }}
@@ -43,8 +44,8 @@ export function ColumnsMenu({ columns, onChange, onReset }: {
           }}>
           <label><input type="checkbox" checked={c.visible} disabled={fixed(c.key)} onChange={e => {
             const next = draft.map(d => d.key === c.key ? { ...d, visible: e.target.checked } : d); setDraft(next); onChange(next);
-          }} />{c.key}</label>
-          {!fixed(c.key) && <input type="checkbox" aria-label={t("u10-columns-select", { column: c.key })} checked={selected.includes(c.key)}
+          }} />{columnLabel(t, c.key)}</label>
+          {!fixed(c.key) && <input type="checkbox" aria-label={t("u10-columns-select", { column: columnLabel(t, c.key) })} checked={selected.includes(c.key)}
             onChange={e => setSelected(e.target.checked ? [...selected, c.key] : selected.filter(key => key !== c.key))} />}
         </div>)}
       </div>
