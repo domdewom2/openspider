@@ -81,6 +81,18 @@ pub fn preflight(ctx: &ApiCtx, require: bool) -> Result<Vec<String>, ApiError> {
     Ok(warnings)
 }
 
+// Crawl callers pass a sidecar path; explicit ledger paths used by embedders remain supported.
+fn ledger_path(path: PathBuf, settings: &std::path::Path) -> PathBuf {
+    if path
+        .file_name()
+        .is_some_and(|name| name.to_string_lossy().ends_with(".api-quotas.json"))
+    {
+        settings.join("api-quotas.json")
+    } else {
+        path
+    }
+}
+
 /// Sources live for the whole run so bulk reports are fetched only once.
 pub struct ApiRun {
     ctx: ApiCtx,
@@ -91,6 +103,7 @@ pub struct ApiRun {
 }
 impl ApiRun {
     pub fn new(ctx: ApiCtx, clock: Arc<dyn Clock>, ledger: PathBuf) -> Self {
+        let ledger = ledger_path(ledger, &os_store::paths::app_paths().settings);
         let ga4 = Arc::new(crate::ga4::Ga4Source::new(clock.clone()));
         let gsc = Arc::new(crate::gsc::GscSource::new(
             clock.clone(),
@@ -416,4 +429,31 @@ fn persist(
     )
     .map_err(db)?;
     tx.commit().map_err(db)
+}
+
+#[cfg(test)]
+mod quota_path_tests {
+    use super::ledger_path;
+    use crate::quota::QuotaLedger;
+    use os_model::Timestamp;
+
+    // spec: INTEG-006
+    #[test]
+    fn crawl_sidecars_share_the_settings_quota_and_reset_at_pacific_midnight() {
+        let dir = tempfile::tempdir().unwrap();
+        let settings = dir.path().join("settings");
+        let crawls = dir.path().join("crawls");
+        let a = crawls.join("a.api-quotas.json");
+        let b = crawls.join("b.api-quotas.json");
+        let first = QuotaLedger::new(ledger_path(a.clone(), &settings));
+        let second = QuotaLedger::new(ledger_path(b.clone(), &settings));
+        let now = Timestamp::from_db("2026-03-09T06:59:59Z").unwrap();
+        let reset = Timestamp::from_db("2026-03-09T07:00:00Z").unwrap();
+        let property = include_str!("apis-mode-list.txt").lines().next().unwrap();
+        assert!(first.reserve("gsc", property, now, 1).unwrap());
+        assert!(!second.reserve("gsc", property, now, 1).unwrap());
+        assert!(second.reserve("gsc", property, reset, 1).unwrap());
+        assert!(settings.join("api-quotas.json").is_file());
+        assert!(!a.exists() && !b.exists());
+    }
 }

@@ -26,10 +26,17 @@ pub async fn start_apis_mode_with(
     clock: Arc<dyn os_model::Clock>,
 ) -> Result<(), ApiError> {
     validate_apis(&ctx)?;
-    let mut run = ApiRun::new(ctx, clock, file.path().with_extension("api-quotas.json"));
+    let mut run = ApiRun::new(ctx, clock, quota_ledger_path());
     run.validate(false)?;
     file.set_meta("source_mode", "apis").map_err(db)?;
     run.collect(file).await
+}
+
+/// Shared quota ledger in the application settings directory (INTEG-006).
+pub fn quota_ledger_path() -> std::path::PathBuf {
+    os_store::paths::app_paths()
+        .settings
+        .join("api-quotas.json")
 }
 
 pub(crate) fn db(_: impl std::fmt::Display) -> ApiError {
