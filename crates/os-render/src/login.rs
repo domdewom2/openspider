@@ -278,6 +278,11 @@ impl LoginSession {
         })
     }
     /// CDP access for automated fixture interaction; application commands never expose this handle.
+    /// Browser-level CDP endpoint for trusted native automation.
+    pub fn websocket_address(&self) -> &str {
+        &self.websocket
+    }
+
     pub fn page(&self) -> &Page {
         &self.page
     }

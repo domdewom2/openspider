@@ -1,27 +1,21 @@
 import { chromium, expect, test, type Browser, type Page } from "@playwright/test";
 import { createServer } from "node:http";
-import { readdir, readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { startBridge } from "../support/bridge";
 import type {} from "../config/harness";
 
-// Connect only to a new login browser whose target matches this test's loopback origin.
-async function loginBrowser(origin: string, previous: Set<string>): Promise<Browser> {
+// The bridge publishes the actual browser endpoint in this test's private directory.
+async function loginBrowser(origin: string, endpointFile: string): Promise<Browser> {
   let endpoint = "";
   await expect.poll(async () => {
-    for (const dir of await readdir(tmpdir())) {
-      if (!dir.startsWith("openspider-chromium-") || previous.has(dir)) continue;
-      try {
-        const [port, socket] = (await readFile(join(tmpdir(), dir, "DevToolsActivePort"), "utf8")).trim().split("\n");
-        const targets = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json() as { url: string }[];
-        if (targets.some((t) => t.url.startsWith(origin))) {
-          endpoint = `ws://127.0.0.1:${port}${socket}`;
-          return true;
-        }
-      } catch { /* Chromium may still be starting. */ }
-    }
-    return false;
+    try {
+      endpoint = await readFile(endpointFile, "utf8");
+      const url = new URL(endpoint);
+      const targets = await (await fetch(`http://127.0.0.1:${url.port}/json/list`)).json() as { url: string }[];
+      return targets.some((target) => target.url.startsWith(origin));
+    } catch { return false; }
   }, { timeout: 20_000 }).toBe(true);
   return chromium.connectOverCDP(endpoint);
 }
@@ -46,9 +40,15 @@ test("real bridge: capture, cancel configuration, reopen and activate only with 
   const address = server.address();
   if (!address || typeof address === "string") throw new Error("Loopback server unavailable");
   const origin = `http://127.0.0.1:${address.port}`;
+  const endpointDir = await mkdtemp(join(tmpdir(), "os-login-e2e-"));
+  const endpointFile = join(endpointDir, "cdp");
+  const previousEndpoint = process.env.OPENSPIDER_LOGIN_CDP_FILE;
   const previousHeadless = process.env.OPENSPIDER_LOGIN_HEADLESS;
+  process.env.OPENSPIDER_LOGIN_CDP_FILE = endpointFile;
   process.env.OPENSPIDER_LOGIN_HEADLESS = "1";
   const bridge = await startBridge();
+  if (previousEndpoint === undefined) delete process.env.OPENSPIDER_LOGIN_CDP_FILE;
+  else process.env.OPENSPIDER_LOGIN_CDP_FILE = previousEndpoint;
   if (previousHeadless === undefined) delete process.env.OPENSPIDER_LOGIN_HEADLESS;
   else process.env.OPENSPIDER_LOGIN_HEADLESS = previousHeadless;
   try {
@@ -61,10 +61,10 @@ test("real bridge: capture, cancel configuration, reopen and activate only with 
     for (const action of ["Cancel", "OK"]) {
       await page.evaluate(() => window.cfgFixture.open("auth.form"));
       const config = page.getByRole("dialog", { name: "Crawl configuration" });
-      const previous = new Set(await readdir(tmpdir()));
+      await rm(endpointFile, { force: true });
       await config.getByRole("textbox", { name: "Login URL" }).fill(`${origin}/login`);
       await config.getByRole("button", { name: "Add and open browser" }).click();
-      const browser = await loginBrowser(origin, previous);
+      const browser = await loginBrowser(origin, endpointFile);
       const login = browser.contexts().flatMap((c) => c.pages()).find((p) => p.url().startsWith(origin))!;
       await login.getByRole("textbox", { name: "User" }).fill("fixture");
       await login.getByLabel("Password").fill("secret");
@@ -87,6 +87,7 @@ test("real bridge: capture, cancel configuration, reopen and activate only with 
     }
   } finally {
     await bridge?.stop();
+    await rm(endpointDir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
     server.closeAllConnections();
     await new Promise<void>((resolve, reject) => server.close((e) => e ? reject(e) : resolve()));
   }
