@@ -1398,7 +1398,7 @@ Gemeinsame Regeln: Ein Limit von 0 oder leer bedeutet „unbegrenzt“, sofern n
   - [ ] Regelvorrang: längste passende Regel (nach Zeichenzahl des Musters) gewinnt; bei Gleichstand gewinnt `Allow`.
   - [ ] Platzhalter `*` und Ende-Anker `$` werden unterstützt; Vergleich auf dem prozentkodierten Pfad inklusive Query.
   - [ ] `Disallow:` (leer) erlaubt alles.
-  - [ ] Unbekannte Direktiven werden ignoriert; `Crawl-delay` wird gelesen und als Hinweis angezeigt; angewandt wird er nach CRAWL-145 (Option, OS-Default an; im Paritätsprofil aus). Der Hinweis steht je nach `robots.respect_crawl_delay` als Text „Crawl-delay: <n> s (angewandt)“ bzw. „Crawl-delay: <n> s (nicht angewandt)“ im Hinweisfeld der robots.txt-Zeile (`robots_files.note`); die Anzeige ist M2 (K-29).
+  - [ ] Unbekannte Direktiven werden ignoriert; `Crawl-delay` wird gelesen und als Hinweis angezeigt; angewandt wird er nach CRAWL-145 (Option, OS-Default aus seit K2-76; im Paritätsprofil aus). Der Hinweis steht je nach `robots.respect_crawl_delay` als Text „Crawl-delay: <n> s (angewandt)“ bzw. „Crawl-delay: <n> s (nicht angewandt)“ im Hinweisfeld der robots.txt-Zeile (`robots_files.note`); die Anzeige ist M2 (K-29).
   - [ ] BOM, CRLF/LF/CR-Zeilenenden, Kommentare (`#`) und Leerzeichen vor dem Doppelpunkt werden toleriert.
   - [ ] Nur die ersten 500 KiB werden ausgewertet (RFC 9309).
   - [ ] Weiterleitungen beim robots.txt-Abruf werden bis zu 5 Hops verfolgt.
@@ -2067,7 +2067,7 @@ Diese Punkte sind in der öffentlichen Doku nicht eindeutig. Sie werden per Blac
 
 ### CRAWL-145  Crawl-delay beachten
 - **Priorität:** P1
-- **Beschreibung:**  Crawl-delay beachten – `robots.respect_crawl_delay` (OS-Default an, Paritätsprofil aus); nennt die robots.txt des Hosts für den wirksamen robots-UA `Crawl-delay: n` (Dezimal, gekappt auf 0 … 60 s, Kappung als Ereignis), liegen zwischen zwei Anfragebeginnen an denselben Host:Port ≥ n s; gilt zusätzlich zu `max_urls_per_sec`/`max_per_host` (das strengere gewinnt); Hinweis „Crawl-delay: n s (angewandt)“ bzw. „(nicht angewandt)“; Akzeptanz mit simulierter Uhr.
+- **Beschreibung:**  Crawl-delay beachten – `robots.respect_crawl_delay` (OS-Default aus, Paritätsprofil aus; **Nutzerentscheidung 28.10.2026, K2-76:** bis dahin OS-Default an); nennt die robots.txt des Hosts für den wirksamen robots-UA `Crawl-delay: n` (Dezimal, gekappt auf 0 … 60 s, Kappung als Ereignis), liegen zwischen zwei Anfragebeginnen an denselben Host:Port ≥ n s; gilt zusätzlich zu `max_urls_per_sec`/`max_per_host` (das strengere gewinnt); Hinweis „Crawl-delay: n s (angewandt)“ bzw. „(nicht angewandt)“; Akzeptanz mit simulierter Uhr. **(OS-Festlegung K2-76)** Nennt die robots.txt eines gecrawlten Hosts einen Crawl-delay, zeigt die Desktop-App das während des Crawls zusätzlich in der Statusleiste (UI-013): nicht angewandt als Hinweis „Crawl-delay n s in robots.txt – nicht angewandt“ mit Verweis auf die Option, angewandt als Grund der Begrenzung der Crawl-Rate.
 - **Testfixture:** lokale Host-Antworten mit simulierter Uhr.
 
 ### CRAWL-146  adaptive Drosselung je Host

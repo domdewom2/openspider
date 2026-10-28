@@ -642,7 +642,7 @@ Spalte „Quelle“: **M1** = existiert laut M1 3.6 (Funktion in Klammern), **K-
 | Rolle | macOS | Windows | Größe / Zeilenhöhe |
 |---|---|---|---|
 | UI-Text | `system-ui, -apple-system` (Systemschrift) | `"Segoe UI Variable Text", "Segoe UI"` | 13 px / 18 px |
-| Tabelle kompakt / normal | wie UI | wie UI | 12 px in 22-px-Zeile / 13 px in 26-px-Zeile (UI-120) |
+| Tabelle kompakt / komfortabel | wie UI | wie UI | 13 px in 28-px-Zeile / 14 px in 44-px-Zeile (UI-120, K2-77) |
 | Statusleiste, Hinweise, Badges | wie UI | wie UI | 11 px / 14 px |
 | Abschnittstitel (Seitenleiste, Dialogseiten) | wie UI, 600 | wie UI, 600 | 13 px |
 | Dialogtitel | wie UI, 600 | wie UI, 600 | 17 px |
@@ -699,8 +699,8 @@ Semantische Tokens (Auszug; vollständige Liste in `src/ui/tokens/tokens.ts`). K
 | Größe | Wert | Verwendung |
 |---|---|---|
 | Raster | 4 px (Stufen 2, 4, 6, 8, 12, 16, 24, 32) | alle Abstände |
-| Tabellenzeile | 22 px kompakt (Standard für Datenansichten) / 26 px normal | UI-120 |
-| Spaltenkopf | 26 px kompakt / 30 px normal | |
+| Tabellenzeile | 28 px kompakt (Standard für Datenansichten) / 44 px komfortabel (K2-77) | UI-120 |
+| Spaltenkopf | 32 px kompakt / 44 px komfortabel (K2-77) | |
 | Zellinnenabstand | 6 px horizontal | |
 | Werkzeugzeilen | 32 px Höhe, Steuerelemente 24 px | Filter, Suche, Export |
 | Eingabefelder/Schaltflächen in Dialogen | 28 px | |
@@ -709,7 +709,7 @@ Semantische Tokens (Auszug; vollständige Liste in `src/ui/tokens/tokens.ts`). K
 | Trenner | 4 px sichtbar, 8 px Greiffläche; eingeklappt 6-px-Griff | UI-001 |
 | Radius | 4 px Steuerelemente, 8 px Dialoge, 0 px Tabellen | |
 
-**Entscheidung (Fable-Empfehlung) F-12:** Standard-Zeilenhöhe **kompakt (22 px bei 100 % Zoom)** für alle Datenansichten (obere Tabelle, Detailtabellen, Crawl-Verwaltung); „normal“ (26 px) wählbar; UI-120 in 05 um den Standard ergänzt.
+**Entscheidung (Fable-Empfehlung) F-12:** Standard-Zeilenhöhe **kompakt** für alle Datenansichten (obere Tabelle, Detailtabellen, Crawl-Verwaltung); UI-120 in 05 um den Standard ergänzt. **Nachtrag K2-77 (Nutzerentscheidung 28.10.2026):** kompakt = 28 px (Standard), „normal“ heißt in der Oberfläche „Komfortabel“ = 44 px; Stilvorgabe sind die Gestaltungsentwürfe des Nutzers (hell/dunkel, beim Orchestrator lokal, nicht im Repo): Logo links in der Kopfleiste, primärer Knopf in Akzentblau, Status-Karte mit Fortschritt und Kennzahlen unter der Kopfleiste, gruppierte Navigation (UI-004), Pillen-Tabs, Filter-Chips mit Zählern, Statuswerte als farbige Badges, Kennzahlen in der Seitenleiste groß gesetzt, Radien 8 px für Karten und Pillen.
 
 ### 5.4 Komponentenbestand (Design-System `src/ui/`)
 
@@ -1069,7 +1069,7 @@ Alle Fragen sind durch das Fable-Review vom 13.10.2026 entschieden; jede Zeile g
 | F-9 | Graph-Bibliothek | sigma.js + graphology (WebGL) für kraftgerichtete Graphen, d3-hierarchy + Canvas für Bäume, d3-cloud für Wortwolken, three.js/3d-force-graph für 3D; Cytoscape entfällt | 3.4; ARCHITECTURE |
 | F-10 | Kollation | Im Kern, **sprachunabhängig:** ICU4X `icu_collator` (Unicode-3.0) mit Root-Locale `und`, Stärke secondary; SQLite-Kollation `OS_TEXT` (os-store) für `ColumnKind::Text`; `ColumnKind::Url`/Address bytewise; bereits in M1 (Abhängigkeit + Kollation P00c, Nutzung P14), damit M1-Goldens nicht in M2 kippen | 4.5 (K-18); 05 UI-010; M1 3.9, P00c, P14 |
 | F-11 | Hauptfenster schließen | Schließen = App beenden auf beiden Plattformen; bei laufendem Crawl/Analyse/Export/HTTP-MCP modale Rückfrage „Pausieren und beenden“ (Standard, Pause + Checkpoint ≤ 3 s) / „Abbrechen“; Cmd+Q/Alt+F4/Datei → Beenden derselbe Pfad; Visualisierungs- und Einstellungsfenster schließen unabhängig | 2.9, 5.6; 05 UI-001/UI-002 |
-| F-12 | Standard-Zeilenhöhe | kompakt (22 px bei 100 % Zoom) für alle Datenansichten, „normal“ (26 px) wählbar | 5.3; 05 UI-120 |
+| F-12 | Standard-Zeilenhöhe | kompakt (28 px bei 100 % Zoom, K2-77; vorher 22 px) für alle Datenansichten, „Komfortabel“ (44 px) wählbar | 5.3; 05 UI-120 |
 | F-13 | Konfiguration während laufendem Crawl | CRAWL-126 bleibt führend; während „Läuft“ editierbar nur Schwellwerte/Voreinstellungen (02 §0.3, `duplicates.*`, `content.low_word_count`, `links.*`, `issues.ignore_non_indexable`), Segmente, `analysis.*`, `speed.threads` (live); Rest ausgegraut mit Tooltip „Crawl pausieren, um zu ändern“ + „Pausieren und bearbeiten“; `config.set` liefert `invalidatedSteps` | 1.5, 4.4 (`config.set`), 4.5 (K-20); 01 CRAWL-126 |
 | F-14 | Fremdprozess-Crawl | In M2 **nur lesend:** Erkennung über Registry + Heartbeat (`effective_state`), Anzeige „gestartet von <owner_kind> (PID <n>) – Steuerung nur dort“, Pause/Stop/Threads deaktiviert; Engine schreibt `owner_kind`/`owner_pid` in `crawl_meta` (M1-P15/P19, keine Schemaänderung); In-App-HTTP-MCP-Crawls laufen im App-Prozess und sind voll steuerbar; kooperative Steuerung (`control_request`) später ohne Schemaänderung möglich, nicht M2 | 4.4 (`crawl.open`, `crawl.pause`), 4.5 (K-3); 10 AGENT-020; M1 P15, P19 |
 | Zusatz | Mindestplattformen, `view.copy`-Grenze, Lint | macOS 13.0+ (arm64/x64), Windows 10 1809+ x64 mit WebView2 Evergreen (ARCHITECTURE, `tauri.conf.json`, M3-Installerplan); `view.copy` hart ≤ 1 000 000 Zellen, darüber Export; Lint auf blockierende DB-Aufrufe statt auf `async` | 2.3, 2.8, 3.3, 5.6, 7.1; 05 UI-012, 06 OUT-260 … 262; ARCHITECTURE |
