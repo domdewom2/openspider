@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ViewDataSource } from "../../data/ViewDataSource";
 import { DataGrid, defaultColumns, type ColumnState } from "../../grid/DataGrid";
 import { currentLanguage } from "../../i18n";
@@ -17,7 +17,7 @@ export class ComparisonPageSource extends ViewDataSource {
   constructor(readonly page: ComparisonPage) {
     super({ viewId: page.viewId, version: page.version, total: page.cells.length, state: "ready",
       columns: page.columns.map(key => ({ key, kind: { kind: "text" }, defaultWidth: /Address|Source|Destination/.test(key) ? 280 : 180,
-        defaultVisible: true, align: "left", sortable: true, searchable: [], extension: false })) }, {
+        defaultVisible: true, align: "left", sortable: key !== "Comparison Status" && key !== "Previous Address", searchable: [], extension: false })) }, {
       rows: async args => ({ ...args, rowKeys: page.rowKeys.slice(args.offset, args.offset + args.limit),
         cells: page.cells.slice(args.offset, args.offset + args.limit).map(row => args.columns.map(key => row[page.columns.indexOf(key)])) }),
       locate: async args => { const index = page.rowKeys.indexOf(args.urlId); return index < 0 ? null : index; },
@@ -41,8 +41,8 @@ export class ComparisonPageSource extends ViewDataSource {
   override async dispose() {}
 }
 
-export function ComparisonGrid({ page, label, sort, onSort, onSelect, onError, onExport, configuration }: {
-  configuration: Map<string, ColumnState[]>; page: ComparisonPage; label: string; sort?: SortKey; onSort: (sort: SortKey) => void;
+export function ComparisonGrid({ page, label, sort, onSort, onSelect, onError, onExport, configuration, selectedKey }: {
+  selectedKey?: number | null; configuration: Map<string, ColumnState[]>; page: ComparisonPage; label: string; sort?: SortKey; onSort: (sort: SortKey) => void;
   onSelect?: (key: number) => void; onError: (error: unknown) => void; onExport: () => void;
 }) {
   const source = useMemo(() => new ComparisonPageSource(page), [page]);
@@ -50,6 +50,7 @@ export function ComparisonGrid({ page, label, sort, onSort, onSelect, onError, o
   const [columns, updateColumns] = useState<ColumnState[]>(() => configuration.get(schema) ?? defaultColumns(source.columns));
   const setColumns = (next: ColumnState[]) => { configuration.set(schema, next); updateColumns(next); };
   const [selection, setSelection] = useState(SelectionModel.empty);
+  useEffect(() => { if (onSelect) setSelection(selectedKey == null ? SelectionModel.empty() : SelectionModel.empty().select(selectedKey)); }, [selectedKey]);
   const appearance = usePrefs(s => s.appearance);
   const select = (next: SelectionModel) => { setSelection(next); if (next.focus !== undefined) onSelect?.(next.focus); };
   return <>

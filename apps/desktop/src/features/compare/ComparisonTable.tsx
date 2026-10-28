@@ -34,7 +34,7 @@ export function ComparisonTable() {
     {error != null && <p role="alert">{describeError(t, toCmdError(error)).text}</p>}
     {!page && error == null && <p role="status">{t("compare-loading")}</p>}
     {page?.contentAvailable===false && <p role="status">{t("compare-content-unavailable")}</p>}
-    {page && <><p role="status">{t("compare-total",{count:page.total})}</p><ComparisonGrid key={`${state.query.tab}:${page.columns.join("|")}`} page={page} configuration={configuration.current} label={t("compare-table")} sort={state.query.sort}
+    {page && <><p role="status">{t("compare-total",{count:page.total})}</p><ComparisonGrid key={`${state.query.tab}:${page.columns.join("|")}`} page={page} selectedKey={state.selected} configuration={configuration.current} label={t("compare-table")} sort={state.query.sort}
       onSort={sort=>useComparison.setState({query:{...state.query,sort},selected:null,selectedPartner:null})}
       onSelect={key=>{const i=page.rowKeys.indexOf(key);selectComparisonUrl(key,page.side,page.partnerKeys?.[i] ?? null);}}
       onError={setError} onExport={()=>{void downloadComparison(state.query,"comparison.csv").catch(setError);}} />
