@@ -209,3 +209,23 @@ html[data-accent-warn="on"] .os-btn-primary { outline: 1px solid var(--os-text);
   .os-btn, .os-input, .os-select-button, .os-popover, .os-modal { border: 1px solid CanvasText; }
   .os-tab[data-selected], .os-listbox-item[data-focused], .os-menu-item[data-focused] { background: Highlight; color: HighlightText; forced-color-adjust: none; }
 }
+
+/* Shared tab primitives: moved from features/shell (U34 requirement). */
+.os-tabbar { display: flex; align-items: stretch; min-width: 0; position: relative; }
+.os-tabbar .os-tabbar-list { display: flex; flex: 1; min-width: 0; gap: 0; overflow: hidden; flex-wrap: nowrap; position: relative; }
+.os-tabbar .os-tab {
+  flex: 0 0 auto; height: var(--os-tab-height); min-height: var(--os-tab-height); max-width: min(100%, 20rem); min-width: 0;
+  padding: 0 var(--os-space-8); line-height: 1.25; white-space: nowrap; box-sizing: border-box; cursor: default;
+}
+.os-tabbar .os-tab-label { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.os-tabbar .os-tab:focus-visible { outline: 2px solid var(--os-focus); outline-offset: -2px; }
+.os-tabbar .os-tab:hover:not([data-selected]) { background: var(--os-bg-hover); }
+.os-tabbar-overflow { display: flex; flex: none; align-items: center; padding-inline: 2px; }
+/* Menu entries keep one line: a wrapping entry changed the popover height while it was positioned at the window edge
+   (WebKit reported "ResizeObserver loop"). */
+.os-tabbar-menu .os-menu-item { white-space: nowrap; }
+/* K2-77 pill tabs (top bar): rounded, outlined, the selected tab filled with the accent-derived selection colour. The spacing is a
+   margin (measured by the TabBar together with the tab width), not a flex gap. */
+.os-tabbar-pills .os-tab { margin-inline-end: var(--os-space-4); border: 1px solid var(--os-border); border-radius: 8px; padding: 0 var(--os-space-12); background: var(--os-bg-surface); }
+.os-tabbar-pills .os-tab.os-tab-selected, .os-tabbar-pills .os-tab[data-selected] { background: var(--os-bg-selection); border-color: var(--os-accent); box-shadow: none; color: var(--os-text); }
+.os-tabbar-pills .os-tabbar-overflow .os-icon-btn { border: 1px solid var(--os-border); border-radius: 8px; }

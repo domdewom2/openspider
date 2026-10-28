@@ -28,3 +28,8 @@
 .os-sidebar details > label { display: flex; align-items: center; gap: 4px; }
 .os-sidebar [aria-selected="true"] { background: var(--os-bg-selection); }
 @media (forced-colors: active) { .os-sidebar-stale { color: GrayText; } .os-sidebar-segments button { border: 1px solid ButtonText; } }
+
+/* First summary values form the prominent key metrics from the user design. */
+.os-sidebar-overview > .os-sidebar-table tbody tr:nth-child(-n+2) td:first-of-type { font-size: var(--os-font-metric); font-weight: 700; line-height: 1.2; }
+.os-sidebar-overview > .os-sidebar-table tbody tr:nth-child(2) td:first-of-type { color: var(--os-accent); }
+.os-sidebar-panel > p { margin: 0; padding: var(--os-space-24); color: var(--os-text-muted); }

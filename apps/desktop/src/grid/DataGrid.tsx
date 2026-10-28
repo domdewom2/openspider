@@ -1,4 +1,4 @@
-import { gridHeaderHeight } from "./theme";
+import { cellBadge, gridHeaderHeight } from "./theme";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { LOADING, type ViewDataSource } from "../data/ViewDataSource";
 import type { ColumnMeta } from "../ipc/gen/ColumnMeta";
@@ -218,7 +218,19 @@ export function DataGrid(props: DataGridProps) {
         const value = header ? { text: props.headerTitle?.(c.key) ?? (props.columnTitles?.[c.key] ?? c.key) + (c.sort ? ` ${c.sort === "asc" ? "↑" : "↓"} ${visible.filter(c => c.sort).findIndex(s => s.key === c.key) + 1}` : ""), color: t.text, align: "left" as const } : cell(c.index, row);
         const background = (value as { background?: string }).background;
         if (background) { ctx.fillStyle = background; ctx.fillRect(c.x, y, c.width, h); }
-        ctx.fillStyle = value.color; ctx.textAlign = value.align;
+        const badge = header || background ? null : cellBadge(c.key, value.text, t);
+        if (badge) {
+          const badgeWidth = Math.min(c.width - 8, measure(value.text) + 16);
+          const badgeX = c.x + (value.align === "right" ? c.width - badgeWidth - 4 : value.align === "center" ? (c.width - badgeWidth) / 2 : 4);
+          ctx.fillStyle = badge.background;
+          ctx.beginPath(); ctx.roundRect(badgeX, y + (h - 20) / 2, badgeWidth, 20, 8); ctx.fill();
+        }
+        if (!header && c.key === "Row") {
+          ctx.strokeStyle = key !== undefined && selection.has(key) ? t.accent : t["border.strong"];
+          ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(c.x + 8, y + h / 2 - 6, 12, 12, 4); ctx.stroke();
+          if (key !== undefined && selection.has(key)) { ctx.fillStyle = t.accent; ctx.fillRect(c.x + 11, y + h / 2 - 3, 6, 6); }
+        }
+        ctx.fillStyle = badge?.text ?? value.color; ctx.textAlign = value.align;
         const x = c.x + (value.align === "right" ? c.width - 8 : value.align === "center" ? c.width / 2 : 8);
         ctx.fillText(ellipsis(measure, value.text, c.width - (header ? 30 : 16)), x, y + h / 2);
         if (header) { ctx.textAlign = "right"; ctx.fillText("⋮", c.x + c.width - 8, y + h / 2); }

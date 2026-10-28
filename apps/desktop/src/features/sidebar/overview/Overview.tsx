@@ -1,3 +1,4 @@
+import { filterLabel, tabLabel } from "../../../i18n/canon";
 import { ComparisonNumbers } from "../../compare/ComparisonNumbers";
 import { useComparison } from "../../compare/model";
 import { useT, useFormat, type TFn } from "../../../i18n";
@@ -28,9 +29,9 @@ export function Overview({ data, collapsed, toggle, startAnalysis, staleSteps = 
       {SUMMARY_KEYS.map((key, i) => { const row = data.summary.find(r => r.key === key); return row ? <tr key={key}><th scope="row">{t(`sidebar-summary-${i}`)}</th><td>{f.integer(row.count)}</td><td>{pct(encountered ? row.count / encountered * 100 : 0)}</td></tr> : null; })}
     </tbody></table>
     {data.tabs.map(tab => <section key={tab.tab}>
-      <button type="button" className="os-sidebar-group" aria-expanded={!collapsed.includes(tab.tab)} onClick={() => toggle(tab.tab)}>{collapsed.includes(tab.tab) ? "▸" : "▾"} {tab.tab}</button>
-      {!collapsed.includes(tab.tab) && <table className="os-sidebar-table" aria-label={tab.tab}><thead><tr><th>{t("sidebar-name")}</th><th>{t("sidebar-urls")}</th><th>{t("sidebar-percent-total")}</th></tr></thead><tbody>{tab.filters.map(filter => <tr key={filter.id} className={(filter.state.kind === "stale" || staleSteps.includes(filter.analysisStep ?? "")) ? "os-sidebar-stale" : undefined}>
-        <th scope="row"><button type="button" onClick={() => navigate(tab.tab, filter.id)}>{filter.id}</button>{filter.issue && <IssueBadge badge={filter.issue} />}<FilterStatus state={filter.state} startAnalysis={startAnalysis} />{filter.state.kind !== "stale" && staleSteps.includes(filter.analysisStep ?? "") && <FilterStatus state={{ kind: "stale" }} />}</th>
+      <button type="button" className="os-sidebar-group" aria-expanded={!collapsed.includes(tab.tab)} onClick={() => toggle(tab.tab)}>{collapsed.includes(tab.tab) ? "▸" : "▾"} {tabLabel(t, tab.tab)}</button>
+      {!collapsed.includes(tab.tab) && <table className="os-sidebar-table" aria-label={tabLabel(t, tab.tab)}><thead><tr><th>{t("sidebar-name")}</th><th>{t("sidebar-urls")}</th><th>{t("sidebar-percent-total")}</th></tr></thead><tbody>{tab.filters.map(filter => <tr key={filter.id} className={(filter.state.kind === "stale" || staleSteps.includes(filter.analysisStep ?? "")) ? "os-sidebar-stale" : undefined}>
+        <th scope="row"><button type="button" onClick={() => navigate(tab.tab, filter.id)}>{filterLabel(t, filter.id)}</button>{filter.issue && <IssueBadge badge={filter.issue} />}<FilterStatus state={filter.state} startAnalysis={startAnalysis} />{filter.state.kind !== "stale" && staleSteps.includes(filter.analysisStep ?? "") && <FilterStatus state={{ kind: "stale" }} />}</th>
         <td>{hasCount(filter.state) && filter.count != null ? f.integer(filter.count) : "–"}</td><td>{hasCount(filter.state) ? pct(filter.pct) : "–"}</td>
       </tr>)}</tbody></table>}
     </section>)}
