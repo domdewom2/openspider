@@ -111,3 +111,5 @@ Schritt 2: A1 bleibt an der ausdrücklich begrenzten Dateiliste offen. Erneut am
 Schritt 3 erneut geprüft: bestehende MCP-1-Allowlist entspricht der Entscheidung; `cargo test -p os-mcp --test audit_parameters` besteht (1 Test). Keine zusätzliche Produktänderung erforderlich.
 
 Schritt 4 erneut geprüft: `cargo test -p os-mcp --test m2_http` besteht (5 Tests). Der Regressionstest prüft den echten TCP/SSE-Abbruch mit Ein-Sekunden-Frist, 404 für die geschlossene Sitzung und Erhalt der zweiten Sitzung. Keine zusätzliche Produktänderung erforderlich.
+
+Schritt 5 erneut geprüft: beide `subscription_notice_tests` bestehen. `AccessPanel.tsx` verwendet bereits `aria-disabled` statt nativer Deaktivierung und `aria-busy`; die Aktionssperre bleibt wirksam. Die Fixture-README verweist bereits auf die vorhandene `list_m2_e06.rs`. Browser-Nachweis folgt unverändert in Schritt 6.
