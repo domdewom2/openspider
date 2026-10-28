@@ -12,13 +12,15 @@ jobs:
   scale:
     runs-on: macos-15
     timeout-minutes: 180
-    continue-on-error: true
     env:
       CARGO_INCREMENTAL: '0'
       CARGO_PROFILE_DEV_DEBUG: line-tables-only
       CARGO_PROFILE_TEST_DEBUG: line-tables-only
       OPENSPIDER_SECRET_STORE: memory
       OS_SCALE_DEST: nightly-${{ github.run_id }}
+      # Hosted runners: allow elevated historical load; require current CPU idleness.
+      OS_SCALE_MAX_LOAD: '8'
+      OS_SCALE_MIN_IDLE: '80'
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -30,11 +32,11 @@ jobs:
           subprocess.run(['cargo','build','--release','--locked','-p','os-cli','-p','os-testsite'], check=True, timeout=5400)
           PY
       - name: Measure 100k and 250k
+        continue-on-error: true
         run: |
           python3 - <<'PY'
           import subprocess
           for n in (100000,250000):
-              subprocess.run(['scripts/bench/wait_quiet.sh','2','60'], check=True, timeout=5400)
               subprocess.run(['caffeinate','-i','python3','-I','docs/plan/M2-acceptance/scale/run-stage.py',str(n)], check=True, timeout=5400)
           PY
       - name: Compare storage growth
