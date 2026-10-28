@@ -169,3 +169,10 @@ describe("Theme anwenden", () => {
     expect(ok.rowHeight).toBe(22);
   });
 });
+
+// spec: UI-126
+it("K2-77 badge labels reach 4.5:1 in both themes", () => {
+  for (const theme of THEMES) for (const kind of ["success", "warning", "danger", "neutral"] as const) {
+    expect(contrast(THEME_TOKENS[theme][`badge.${kind}`], THEME_TOKENS[theme][`badge.${kind}Bg`])).toBeGreaterThanOrEqual(4.5);
+  }
+});

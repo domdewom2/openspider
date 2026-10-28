@@ -1,37 +1,6 @@
 /* Design-System (M2-ui-concept 5): alle Farben und Maße kommen aus den Tokens (--os-*), gesetzt von applyAppearance().
    Vorbelegung hier = helles Theme, damit der erste Frame vor dem Laden der Einstellungen nicht leer ist. */
-:root {
-  --os-bg-app: #eef0f3;
-  --os-bg-surface: #ffffff;
-  --os-bg-zebra: #f6f7f9;
-  --os-bg-selection: #d3ebdd;
-  --os-bg-selection-inactive: #e3efe8;
-  --os-bg-hover: #e6e9ed;
-  --os-bg-overlay: #ffffff;
-  --os-border: #d5d9de;
-  --os-border-strong: #737c86;
-  --os-text: #1b1f24;
-  --os-text-muted: #59626d;
-  --os-text-disabled: #8b939c;
-  --os-text-on-accent: #ffffff;
-  --os-accent: #17784a;
-  --os-accent-hover: #125f3b;
-  --os-focus: #1f62c4;
-  --os-link: #1f5fbf;
-  --os-status-3xx: #a86a00;
-  --os-status-4xx: #c42b2b;
-  --os-status-5xx: #c42b2b;
-  --os-issue-type-issue: #c42b2b;
-  --os-issue-type-warning: #a86a00;
-  --os-issue-type-opportunity: #1f62c4;
-  --os-font-ui: system-ui, -apple-system, sans-serif;
-  --os-font-mono: ui-monospace, Menlo, monospace;
-  --os-row-height: 22px;
-  --os-font-table: 12px;
-  --os-radius: 4px;
-  --os-radius-dialog: 8px;
-  color-scheme: light;
-}
+@import "./tokens/base.css";
 
 *,
 *::before,
