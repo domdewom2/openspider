@@ -4,7 +4,7 @@ Basis: `origin/m2/n02` (`91d64ddc93d6c9d3f095c640f11bdec7f59d7bcb`), Branch `m2/
 
 **Paket offen:** MCP-1 bis MCP-4 und Befund 6 sind behoben; A1 ist teilweise umgesetzt. Die verbleibende `ApiCtx`-Migration benötigt zusätzliche Pfadfreigaben. Es gab keinen Push, Merge oder PR.
 
-**Erneute Prüfung des vorgefundenen Stands am 28.10.2026:** Der Arbeitsbaum war bei Beginn sauber, HEAD war bereits `00ab1bbe`; die unten beschriebenen Produktänderungen und Prüfergebnisse waren damit schon committed. Die erneute Lektüre bestätigt die offene A1-Voraussetzung: Die ausdrücklich erlaubte Dateiliste enthält nicht alle Konstruktorstellen. „Alle Freigaben sind erteilt“ erweitert diese konkrete Dateiliste nicht um weitere Pfade. Es wurden deshalb keine Strukturdefinition mit anschließend fehlenden Pflichtfeldern und keine Änderungen außerhalb der Freigabe eingebracht. `cargo fmt --all --check` und der Desktop-Typecheck wurden erneut erfolgreich ausgeführt; die übrigen nachstehenden Ergebnisse stammen aus dem bereits dokumentierten Prüflauf und wurden in dieser Nachprüfung nicht erneut ausgeführt. Der Diff gegen `91d64ddc` enthält keine Änderungen an `apps/desktop/e2e/mcp/**`. Tokio steht unverändert auf 1.53.3. Sowohl das lokale `target` als auch das unten genannte Paket-Target sind bereits entfernt. Nächster Schritt bleibt die ausdrückliche Erweiterung der Dateifreigabe auf die unten aufgelisteten mechanischen Konstruktoranpassungen; anschließend A1 vollständig implementieren und sämtliche Prüfungen erneut durchführen.
+**Erneuter vollständiger Prüflauf am 28.10.2026:** Anfangs sauberer Arbeitsbaum auf `4b741111`. Die MCP-Korrekturen, README-Bereinigung und A1-Testisolation waren bereits committed vorhanden. Schritte 1–5 wurden in der vorgegebenen Reihenfolge am Code nachvollzogen und jeweils separat im Bericht committed; zusätzliche Produktänderungen waren für MCP-1 bis MCP-4 nicht erforderlich. Sämtliche unten aufgeführten Prüfungen wurden in diesem Lauf erneut ausgeführt und sind grün. A1 bleibt wegen der ausdrücklich begrenzten Dateiliste offen; die notwendigen Konstruktorstellen sind unten vollständig aufgelistet. Kein Push, Merge oder PR.
 
 ## A1 – Quota-Ledger / INTEG-006: teilweise umgesetzt, offen
 
@@ -12,7 +12,7 @@ Basis: `origin/m2/n02` (`91d64ddc93d6c9d3f095c640f11bdec7f59d7bcb`), Branch `m2/
 
 **Änderung:** Die betroffenen Lifecycle-Tests laufen in getrennten Unterprozessen mit je einem von `tempfile` verwalteten `OPENSPIDER_HOME`. Der Elternprozess verändert keine globalen Umgebungsvariablen; der temporäre Ordner bleibt bis zum Ende des Kindes bestehen. Die echten Mock-Abrufe und bisherigen Assertions laufen im Kind. Der INTEG-006-Test prüft zusätzlich nach `start_apis_mode_with` über `ApiRun::new`, dass `api-quotas.json` tatsächlich unter dem temporären Home entstanden ist.
 
-**Test/Ergebnis:** `env -u OPENSPIDER_HOME cargo test -p os-integrations --test crawl_glue_lifecycle`: **8 grün**. Die vorhandene API-Listen-Fixture und GSC-Mock-Inspektion werden weiterhin verwendet. Die Testisolation und die echte Fallback-Auflösung sind damit geprüft.
+**Test/Ergebnis:** `cargo test -p os-integrations --test crawl_glue_lifecycle`: **8 grün**. Die vorhandene API-Listen-Fixture und GSC-Mock-Inspektion werden weiterhin verwendet. Die Testisolation und die echte Fallback-Auflösung sind damit geprüft.
 
 **Offen:** `ApiCtx.quota_ledger: Option<PathBuf>`, dessen Bevorzugung im Laufzeitpfad sowie die Übergabe des App-Settings-Pfads sind nicht umgesetzt. Auch ein `Option`-Feld muss in bestehenden Rust-Strukturliteralen angegeben werden. Die notwendigen mechanischen Anpassungen liegen teilweise außerhalb der ausdrücklich erlaubten Dateien:
 
@@ -67,15 +67,15 @@ Die Freigabe dieser Konstruktoranpassungen ist der nächste notwendige Schritt. 
 
 ## Prüfungen
 
-Alle langen Befehle liefen im Vordergrund über einen externen Prozess-Wrapper mit 3600 Sekunden Timeout je Befehl. Für die Rust-Pakettests wurde zusätzlich ein temporäres `OPENSPIDER_HOME` verwendet; die gezielte Lifecycle-Gegenprobe lief ausdrücklich ohne einen solchen Wert im Elternprozess.
+Alle langen Befehle liefen im Vordergrund über einen synchronen Python-Wrapper mit `subprocess.run(timeout=3600)` (3600000 ms) je Befehl. Der Lauf verwendete ein von `tempfile` verwaltetes `OPENSPIDER_HOME`; die beiden betroffenen Lifecycle-Tests erzeugen zusätzlich jeweils ihr eigenes temporäres Home im Unterprozess. Alle 13 Prüf-/Buildbefehle endeten mit Exit 0. Die vollständigen Rohprotokolle dieses Laufs liegen unter `/var/folders/fz/9flwb7b55t788nq02b9q761h0000gp/T/fix-n02-verify-0c4dygse/` (`results.json`, `0.log` bis `12.log`), außerhalb des Repositorys.
 
 | Prüfung | Ergebnis |
 | --- | --- |
-| `npm ci` bei fehlendem `node_modules` | erfolgreich |
+| `npm ci` bei fehlendem `node_modules` | nicht erforderlich; Verzeichnis anfangs vorhanden |
 | `cargo fmt --all --check` | grün, Exit 0 |
-| `cargo clippy -p os-integrations -p os-mcp -p os-app --all-targets -- -D warnings` | grün, Exit 0; nach der letzten Teständerung erneut geprüft |
+| `cargo clippy -p os-integrations -p os-mcp -p os-app --all-targets -- -D warnings` | grün, Exit 0; 56 Sekunden |
 | `cargo test -p os-integrations -p os-mcp` | 318 bestanden, 0 fehlgeschlagen, 1 vorhandener Lighthouse-Test ignoriert |
-| `env -u OPENSPIDER_HOME cargo test -p os-integrations --test crawl_glue_lifecycle` | 8 bestanden; Gegenprobe nach Ergänzung der dauerhaften Isolation |
+| `cargo test -p os-integrations --test crawl_glue_lifecycle` | 8 bestanden; echte Fallback-Auflösung mit dauerhafter Prozessisolation |
 | `cargo test -p os-app --lib subscription_notice_tests` | 2 bestanden |
 | `cargo test -p os-app --test cmd_mcp_service` | 6 bestanden |
 | `cargo build -p os-cli --bin openspider` | erfolgreich; Voraussetzung des vorhandenen Export-Prozesstests |
@@ -84,7 +84,7 @@ Alle langen Befehle liefen im Vordergrund über einen externen Prozess-Wrapper m
 | `npm run -w apps/desktop typecheck` | grün, Exit 0 |
 | `npm run -w apps/desktop test` | **771/771 grün**, 76 Testdateien |
 
-Der erste Rust-Paketlauf scheiterte nur an der fehlenden CLI-Binärdatei, die der vorhandene MCP-Export-Prozesstest voraussetzt. Nach `cargo build -p os-cli --bin openspider` wurde der vollständige Paketlauf erfolgreich wiederholt. Ein vorhandener Test mit echter Lighthouse-Installation bleibt regulär ignoriert. Die MCP-E2E-Dateien und Assertions wurden nicht verändert oder abgeschwächt.
+Die CLI wurde vor dem vollständigen Rust-Paketlauf gebaut, da der vorhandene MCP-Export-Prozesstest sie benötigt. Der Paketlauf bestand ohne Wiederholung in 189,5 Sekunden. Ein vorhandener Test mit echter Lighthouse-Installation bleibt regulär ignoriert. Beim erfolgreichen Bridge-Link meldet der macOS-Linker eine Warnung zur Größe von `__eh_frame`; die Clippy-Prüfung mit `-D warnings` ist grün. Die MCP-E2E-Dateien und Assertions wurden nicht verändert oder abgeschwächt.
 
 ## Fremdänderungen / K2-72
 
@@ -102,16 +102,8 @@ Die folgenden freigegebenen Paketänderungen werden gemäß Arbeitsauftrag als *
 
 `crates/os-integrations/tests/crawl_glue_lifecycle.rs` enthält die Teilkorrektur der A1-Testisolation. Keine anderen Produktpfade, Manifeste oder Lockfiles wurden geändert. Tokio bleibt **1.53.3**; kein `cargo update`. Alle Commits verwenden explizite Dateipfade und den verlangten Co-Author-Trailer. Der Arbeitsbaum wurde abschließend bereinigt; das paketbezogene `CARGO_TARGET_DIR=/Users/dominikwojcik/Projects/build.noindex/target-fix-n02` wurde nach den Prüfungen gelöscht.
 
-## Erneuter Paketlauf ab `4b741111` (28.10.2026)
+## Abschluss von Schritt 7
 
-Schritt 1 abgeschlossen: Arbeitsbaum anfangs sauber; `CLAUDE.md`, die vollständige Fable-Vorlage, Ursachen und vorhandene Korrekturen gelesen. `node_modules` vorhanden, daher kein erneutes `npm ci`. Vorgefundener Branch `m2/fix-n02` enthält bereits die MCP-Korrekturen und A1-Testisolation; diese werden erhalten.
+Bericht mit Ursachen, Änderungen, Tests, Ergebnissen und Fremdänderungen aktualisiert. In diesem erneuten Lauf wurde ausschließlich dieser freigegebene Bericht geändert; sämtliche vorhandenen Produktkorrekturen wurden erhalten und erneut geprüft. A1 ist ausdrücklich weiterhin unvollständig: Die App übergibt noch keinen konfigurierten Ledger-Pfad. Grüne Tests ersetzen diese ausstehende Implementierung nicht.
 
-Schritt 2: A1 bleibt an der ausdrücklich begrenzten Dateiliste offen. Erneut am Code bestätigt: insbesondere `os-engine/src/crawl.rs:772`, `os-app/src/commands/api.rs:196`, `os-app/src/commands/export_summary.rs:121,221` und `os-mcp/src/tools/link_metrics.rs:96` konstruieren `ApiCtx` ohne Struct-Update. Ein zusätzliches `Option<PathBuf>` ist in Rust kein optionales Feld im Strukturliteral; ohne Anpassung dieser gesperrten Stellen entsteht E0063. Die vorhandene Prozessisolation bleibt bestehen. Keine inkompatible Strukturänderung, keine Umgehung über globale Zustände und keine Änderung gesperrter Pfade vorgenommen. Die erneute Prüfung wird bis Schritt 7 fortgesetzt.
-
-Schritt 3 erneut geprüft: bestehende MCP-1-Allowlist entspricht der Entscheidung; `cargo test -p os-mcp --test audit_parameters` besteht (1 Test). Keine zusätzliche Produktänderung erforderlich.
-
-Schritt 4 erneut geprüft: `cargo test -p os-mcp --test m2_http` besteht (5 Tests). Der Regressionstest prüft den echten TCP/SSE-Abbruch mit Ein-Sekunden-Frist, 404 für die geschlossene Sitzung und Erhalt der zweiten Sitzung. Keine zusätzliche Produktänderung erforderlich.
-
-Schritt 5 erneut geprüft: beide `subscription_notice_tests` bestehen. `AccessPanel.tsx` verwendet bereits `aria-disabled` statt nativer Deaktivierung und `aria-busy`; die Aktionssperre bleibt wirksam. Die Fixture-README verweist bereits auf die vorhandene `list_m2_e06.rs`. Browser-Nachweis folgt unverändert in Schritt 6.
-
-Schritt 6 abgeschlossen: sämtliche 13 erneut ausgeführten Prüf-/Buildbefehle mit Exit 0. Formatierung und Clippy grün; Pakettests 318 bestanden / 1 regulär ignoriert, Notice-Tests 2 bestanden, App-Service 6 bestanden; CLI und Bridge gebaut; MCP-E2E 24/24 in 21,0 Minuten; Typecheck und Desktop-Tests 771/771 in 76 Dateien grün. Alle langen Befehle synchron mit 3600000 ms Timeout. Ledger-Tests und Paketlauf verwenden temporäre Homes. Keine E2E- oder Lockfile-Änderungen.
+**Nächster Schritt:** Die oben genannten mechanischen `ApiCtx`-Konstruktoranpassungen zusätzlich zur bisherigen Dateiliste ausdrücklich freigeben; dann `quota_ledger: Option<PathBuf>` additiv einführen, in `ApiRun::new`/`start_apis_mode_with` bevorzugen, in `session/control.rs` den Ledger-Pfad aus `app.config().paths.settings` setzen und die reale Auflösung bei abweichender App-Konfiguration testen. Anschließend vollständige Prüfungen erneut ausführen. Keine Rückfrage oder zusätzliche Genehmigungsaktion ausgelöst.
