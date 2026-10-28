@@ -765,7 +765,7 @@ async fn export_phase(
         }
         if plan.compare_with_previous || plan.explicit_previous.is_some() {
             if let Some(result) = os_export::csv::with_header_labels(&plan.header_labels, || {
-                comparison_export(&file, &cfg, item, out, plan, &signals.cancel_token())
+                comparison_export(&file, &cfg, item, out, plan, &signals.cancel_token(), rep)
             }) {
                 match result {
                     Ok(infos) => {
@@ -1160,6 +1160,7 @@ fn comparison_export(
     out: &Path,
     plan: &Plan,
     cancel: &os_model::CancelToken,
+    rep: &Reporter,
 ) -> Option<Result<Vec<ExportFileInfo>, String>> {
     let format = plan.format;
     let segment = plan.segment.as_deref();
@@ -1190,6 +1191,16 @@ fn comparison_export(
                     os_export::compare::save_report(&mut c, name, out, format, cancel)
                 }
                 .map_err(|e| e.to_string())?;
+                for warning in report.warnings {
+                    // File warnings are emitted by report_file at the call site.
+                    if !report
+                        .files
+                        .iter()
+                        .any(|info| info.warnings.contains(&warning))
+                    {
+                        rep.warn(warning);
+                    }
+                }
                 files.extend(report.files);
             }
             return Ok(files);

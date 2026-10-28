@@ -218,3 +218,43 @@ value = "/a"
         }
     }
 }
+
+// spec: OUT-112
+// spec: OUT-113
+// spec: OUT-204
+#[test]
+fn comparison_report_warnings_are_counted_and_strict_fails() {
+    let env = Env::new();
+    std::fs::create_dir_all(env.crawls_dir()).unwrap();
+    let mut cfg = CrawlConfig::default();
+    cfg.extraction.cookies = false;
+    let old = fixture::fixture(&env.crawls_dir(), 1, 1, cfg.clone());
+    let new = fixture::fixture(&env.crawls_dir(), 2, 2, cfg);
+    let output = env.out();
+    for strict in [false, true] {
+        let mut args = vec![
+            "--crawl-comparison",
+            old.path().to_str().unwrap(),
+            new.path().to_str().unwrap(),
+            "--save-report",
+            "Cookie Summary",
+            "--output-folder",
+            output.to_str().unwrap(),
+            "--overwrite",
+        ];
+        if strict {
+            args.push("--strict");
+        }
+        let result = env.run(&args);
+        assert_eq!(result.code, if strict { 4 } else { 0 }, "{}", result.dump());
+        assert!(
+            result
+                .stderr
+                .contains("report 'Cookie Summary' requires cookie extraction"),
+            "{}",
+            result.dump()
+        );
+        assert!(result.stderr.contains("1 Warnungen"), "{}", result.dump());
+        assert!(output.join("cookie_summary.csv").is_file());
+    }
+}

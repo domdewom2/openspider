@@ -154,9 +154,9 @@ pub fn resolve_with(
                 _ => Err(unknown()),
             }
         }
-        Kind::Report => match reports::resolve(input) {
-            Ok(def) => Ok(Resolved::Report(def.name.to_string())),
-            Err(_) => Err(unknown()),
+        Kind::Report => match catalog::resolve_with(ExportKind::Report, input, cfg) {
+            Ok(catalog::ExportRef::Report(name)) => Ok(Resolved::Report(name)),
+            _ => Err(unknown()),
         },
     }
 }
