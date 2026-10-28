@@ -264,6 +264,8 @@ impl Default for JsSnippet {
 pub struct CustomJsConfig {
     /// Snippets in Ausführungs- und Spaltenreihenfolge.
     pub snippets: Vec<JsSnippet>,
+    /// Freigegebenes Ausgabeverzeichnis für Dateizugriffe der Snippets.
+    pub output_dir: Option<std::path::PathBuf>,
 }
 
 /// Eine Regel der Link-Positions-Klassifikation (INTEG-080 … 082).

@@ -744,6 +744,7 @@ fn random_config(
                     code: s!(),
                 })
                 .collect(),
+            ..Default::default()
         },
         link_positions: LinkPositionsConfig {
             rules: (0..(l.next().unwrap() % 3))

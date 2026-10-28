@@ -25,6 +25,7 @@ type ExtractionPages = Arc<Mutex<HashSet<String>>>;
 pub struct RunOptions {
     pub snippets: Vec<(u32, JsSnippet)>,
     pub rendering_timeout_ms: u32,
+    pub output_dir: Option<std::path::PathBuf>,
     extracting: ExtractionPages,
 }
 impl RunOptions {
@@ -38,6 +39,7 @@ impl RunOptions {
         let mime = content_type.split(';').next().unwrap_or("").trim();
         let mut out = Self {
             rendering_timeout_ms: cfg.rendering.page_timeout_s.saturating_mul(1000),
+            output_dir: cfg.custom_js.output_dir.clone(),
             ..Default::default()
         };
         if !internal

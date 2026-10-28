@@ -22,6 +22,19 @@ fn options(cfg: &CrawlConfig) -> RenderOpts {
     }
 }
 
+// spec: INTEG-072
+#[test]
+fn output_directory_is_optional_and_propagated_to_render_options() {
+    let mut cfg = config();
+    assert!(options(&cfg).snippets.output_dir.is_none());
+    let directory = tempfile::tempdir().unwrap();
+    cfg.custom_js.output_dir = Some(directory.path().to_path_buf());
+    assert_eq!(
+        options(&cfg).snippets.output_dir.as_deref(),
+        Some(directory.path())
+    );
+}
+
 // spec: INTEG-060
 // spec: INTEG-061
 // spec: INTEG-062
@@ -100,6 +113,7 @@ fn management_is_transactional_and_imports_require_preview_and_confirmation() {
                 ..Default::default()
             },
         ],
+        ..Default::default()
     });
     assert!(manager.is_err());
     assert_eq!(network_warning(&cfg).len(), 1);
@@ -107,7 +121,8 @@ fn management_is_transactional_and_imports_require_preview_and_confirmation() {
     let missing_action: JsSnippet =
         serde_json::from_str(r#"{"kind":"action","code":"window.scrollTo(0,100)"}"#).unwrap();
     assert!(SnippetManager::new(CustomJsConfig {
-        snippets: vec![missing_action]
+        snippets: vec![missing_action],
+        ..Default::default()
     })
     .is_err());
 }
