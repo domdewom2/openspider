@@ -126,6 +126,11 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResult>
                 result=LoginSession::open(&login_url,opts)=>result.map_err(|_|error())?,
                 _=async { while !cancel.is_cancelled() { tokio::time::sleep(Duration::from_millis(25)).await; } } => return Err(cancelled()),
             };
+            // The E2E bridge can publish the actual endpoint in its private test directory.
+            #[cfg(feature = "e2e-bridge")]
+            if let Some(path) = std::env::var_os("OPENSPIDER_LOGIN_CDP_FILE") {
+                std::fs::write(path, browser.websocket_address()).map_err(|_| error())?;
+            }
             let work=async {
                 if let Some(automation) = automation { automation(&browser).await?; }
                 loop {
