@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import { ChevronsRight } from "lucide-react";
 import { Menu, type MenuEntry } from "./Menu";
 import { IconButton } from "./Button";
@@ -107,41 +107,44 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
   const selectedIndex = Math.max(0, tabs.findIndex((t) => t.id === selected));
   const alwaysMenu = !!config || !!overflowEntries;
 
-  useLayoutEffect(() => {
+  // The latest measurement; one observer per bar calls it (a new observer per render reported "ResizeObserver loop" in WebKit).
+  const measureNow = useRef<() => void>(() => undefined);
+  measureNow.current = () => {
     const el = root.current;
     if (!el) return;
-    const run = () => {
-      let m;
-      if (measure) m = measure(el);
-      else if (el.clientWidth === 0) {
-        // Not laid out (hidden pane, jsdom): nothing to distribute yet.
-        m = { widths: [], available: 0, overflowWidth: 0 };
-      } else {
-        const trigger = el.querySelector<HTMLElement>(":scope > [data-tabbar-overflow]");
-        const triggerWidth = trigger?.offsetWidth || 32;
-        // An always present trigger takes its room before the tabs are distributed; otherwise it only appears on overflow.
-        m = {
-          widths: [...el.querySelectorAll<HTMLElement>("[data-tab-measure]")].map((t) => t.offsetWidth),
-          available: el.clientWidth - (alwaysMenu ? triggerWidth : 0),
-          overflowWidth: alwaysMenu ? 0 : triggerWidth,
-        };
-      }
-      const next = fitTabs(m.widths, m.available, m.overflowWidth, selectedIndex).hidden;
-      setHidden((old) => (old.length === next.length && old.every((v, i) => v === next[i]) ? old : next));
-      const cut = [...el.querySelectorAll<HTMLElement>("[data-tab-id]")]
-        .filter((t) => t.style.visibility !== "hidden")
-        .filter((t) => { const text = t.querySelector<HTMLElement>(".os-tab-label") ?? t; return text.scrollWidth > text.clientWidth + 0.5; })
-        .map((t) => t.dataset.tabId as string);
-      setTruncated((old) => (old.length === cut.length && old.every((v, i) => v === cut[i]) ? old : cut));
-    };
-    run();
-    if (typeof ResizeObserver === "undefined") return;
+    let m;
+    if (measure) m = measure(el);
+    else if (el.clientWidth === 0) {
+      // Not laid out (hidden pane, jsdom): nothing to distribute yet.
+      m = { widths: [], available: 0, overflowWidth: 0 };
+    } else {
+      const trigger = el.querySelector<HTMLElement>(":scope > [data-tabbar-overflow]");
+      const triggerWidth = trigger?.offsetWidth || 32;
+      // An always present trigger takes its room before the tabs are distributed; otherwise it only appears on overflow.
+      m = {
+        widths: [...el.querySelectorAll<HTMLElement>("[data-tab-measure]")].map((t) => t.offsetWidth),
+        available: el.clientWidth - (alwaysMenu ? triggerWidth : 0),
+        overflowWidth: alwaysMenu ? 0 : triggerWidth,
+      };
+    }
+    const next = fitTabs(m.widths, m.available, m.overflowWidth, selectedIndex).hidden;
+    setHidden((old) => (old.length === next.length && old.every((v, i) => v === next[i]) ? old : next));
+    const cut = [...el.querySelectorAll<HTMLElement>("[data-tab-id]")]
+      .filter((t) => t.style.visibility !== "hidden")
+      .filter((t) => { const text = t.querySelector<HTMLElement>(".os-tab-label") ?? t; return text.scrollWidth > text.clientWidth + 0.5; })
+      .map((t) => t.dataset.tabId as string);
+    setTruncated((old) => (old.length === cut.length && old.every((v, i) => v === cut[i]) ? old : cut));
+  };
+  useLayoutEffect(() => { measureNow.current(); }, [tabs, selectedIndex, measure, alwaysMenu, hidden]);
+  useEffect(() => {
+    const el = root.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
     // Re-measure in the next frame: a distribution change inside the observer callback would raise "ResizeObserver loop" errors.
     let frame = 0;
-    const ro = new ResizeObserver(() => { cancelAnimationFrame(frame); frame = requestAnimationFrame(run); });
+    const ro = new ResizeObserver(() => { cancelAnimationFrame(frame); frame = requestAnimationFrame(() => measureNow.current()); });
     ro.observe(el);
     return () => { cancelAnimationFrame(frame); ro.disconnect(); };
-  }, [tabs, selectedIndex, measure, alwaysMenu, hidden]);
+  }, []);
 
   const move = (from: number, to: number) => onReorder?.(moveItem(tabs, from, to).map((t) => t.id));
 
@@ -221,7 +224,7 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
       </div>
       {(hidden.length > 0 || alwaysMenu) && (
         <span className="os-tabbar-overflow" data-tabbar-overflow="">
-          <Menu label={overflowLabel} entries={entries} trigger={<IconButton label={overflowLabel} icon={<ChevronsRight size={14} />} />} />
+          <Menu label={overflowLabel} entries={entries} className="os-tabbar-menu" trigger={<IconButton label={overflowLabel} icon={<ChevronsRight size={14} />} />} />
         </span>
       )}
     </div>

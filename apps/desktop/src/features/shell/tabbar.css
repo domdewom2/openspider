@@ -12,3 +12,6 @@
 .os-tabbar .os-tab:focus-visible { outline: 2px solid var(--os-focus); outline-offset: -2px; }
 .os-tabbar .os-tab:hover:not([data-selected]) { background: var(--os-bg-hover); }
 .os-tabbar-overflow { display: flex; flex: none; align-items: center; padding-inline: 2px; }
+/* Menu entries keep one line: a wrapping entry changed the popover height while it was positioned at the window edge
+   (WebKit reported "ResizeObserver loop"). */
+.os-tabbar-menu .os-menu-item { white-space: nowrap; }
