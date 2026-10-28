@@ -20,6 +20,12 @@
 //! des Writers), `urls_change_seq` (Änderungsfeed) und die Indizes über Spalten mit wenigen Werten oder einem NULL-Anteil
 //! (`status_code`, `state`, `content_class`, `crawl_depth`, `indexability`, `redirect_target_id`,
 //! `canonical_target_id`): deren Änderungen liegen nahe beieinander.
+//!
+//! Davon getrennt ist die Gruppe [`DEFERRED_INDEXES`]: Ihre Indizes werden ab derselben Schwelle
+//! während des Schreibens ausgesetzt, aber im Abschlussbatch über [`ensure_deferred`] sortiert
+//! wiederhergestellt. Nach Abbruch oder Absturz baut [`crate::link_index::ensure_if_idle`] sie für
+//! ruhende Dateien wieder auf; laufende Crawls mit Heartbeat bleiben unberührt. Die Gruppe ist derzeit
+//! leer: `sitemap_entries_url` bleibt für Live-Leser und Rescans auch im großen Crawl erhalten.
 
 use rusqlite::Connection;
 
@@ -61,10 +67,8 @@ pub const WRITE_PHASE_DROPPED: &[UrlIndex] = &[
 /// Nur Indizes ohne Writer-Leser aussetzen. canonicals_target, pagination_target und
 /// hreflang_target bleiben: write_page/stamp_dependants lesen sie bei Statusänderungen.
 /// url_counters_change_seq bleibt für den laufenden Änderungsfeed erhalten.
-pub const DEFERRED_INDEXES: &[UrlIndex] = &[UrlIndex {
-    name: "sitemap_entries_url",
-    create_sql: "CREATE INDEX IF NOT EXISTS sitemap_entries_url ON sitemap_entries(url_id)",
-}];
+/// sitemap_entries_url bleibt für Live-Leser und Rescans erhalten.
+pub const DEFERRED_INDEXES: &[UrlIndex] = &[];
 
 /// Stellt die für Zielabfragen genutzten Indizes sortiert wieder her.
 pub fn ensure_deferred(conn: &Connection) -> Result<(), StoreError> {

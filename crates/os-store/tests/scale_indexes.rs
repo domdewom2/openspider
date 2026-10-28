@@ -32,6 +32,7 @@ fn deferred_indexes_return_at_completion() {
         "pagination_target",
         "hreflang_target",
         "url_counters_change_seq",
+        "sitemap_entries_url",
     ] {
         let exists: bool = file
             .conn()
@@ -41,7 +42,7 @@ fn deferred_indexes_return_at_completion() {
                 |r| r.get(0),
             )
             .unwrap();
-        assert!(exists, "Writer-/Feed-Leser braucht {name}");
+        assert!(exists, "Writer-/Feed-/Live-Leser braucht {name}");
     }
     drop(file);
     writer
