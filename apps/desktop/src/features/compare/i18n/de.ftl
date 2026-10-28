@@ -37,3 +37,4 @@ compare-note-migration = Ein älterer Crawl wurde als temporäre Kopie migriert;
 compare-note-collision = Mehrere frühere URLs werden auf { $address } abgebildet. Zugeordnete URL: { $winner }.
 compare-note-mapping = Mapping-Regel { $rule } hat ihr Schrittlimit erreicht. Betroffene URLs bleiben unverändert.
 compare-content-unavailable = Für einige URLs fehlen gespeicherte Inhaltsdaten. Diese Zellen bleiben leer.
+compare-links-table = Vergleich der Links

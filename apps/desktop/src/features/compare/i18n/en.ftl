@@ -37,3 +37,4 @@ compare-note-migration = An older crawl was migrated in a temporary copy; the or
 compare-note-collision = Several previous URLs map to { $address }. Paired URL: { $winner }.
 compare-note-mapping = Mapping rule { $rule } reached its work limit. Affected URLs were kept unchanged.
 compare-content-unavailable = Content comparison data is missing for some URLs. Those cells are blank.
+compare-links-table = Link comparison table
