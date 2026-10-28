@@ -56,6 +56,11 @@ pub fn redacted(args: &Value) -> Value {
         "element",
         "sections",
         "limit",
+        "offset",
+        "format",
+        "page",
+        "headers",
+        "cookies",
         "cursor",
         "confirm",
     ];
@@ -65,7 +70,12 @@ pub fn redacted(args: &Value) -> Value {
             result.insert(
                 key.into(),
                 match (key, value) {
-                    ("limit", Value::Number(_)) | ("confirm", Value::Bool(_)) => value.clone(),
+                    (
+                        "crawl_id" | "id" | "tab" | "filter" | "limit" | "offset" | "format"
+                        | "page",
+                        Value::String(_) | Value::Number(_) | Value::Bool(_) | Value::Null,
+                    )
+                    | ("confirm", Value::Bool(_)) => value.clone(),
                     (_, Value::Array(a)) => json!({"items":a.len()}),
                     _ => json!("[redacted]"),
                 },
