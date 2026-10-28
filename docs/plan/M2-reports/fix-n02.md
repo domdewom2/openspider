@@ -2,28 +2,21 @@
 
 Basis: `origin/m2/n02` (`91d64ddc93d6c9d3f095c640f11bdec7f59d7bcb`), Branch `m2/fix-n02`, Worktree `/Users/dominikwojcik/Projects/wt-fix-n02`. Befundvorlage: `/Users/dominikwojcik/Projects/logs/fable-n02.md`, vollständig gelesen. Stand: 28.10.2026. Ursachen-Zeilennummern beziehen sich auf den Basisstand.
 
-**Paket offen:** MCP-1 bis MCP-4 und Befund 6 sind behoben; A1 ist teilweise umgesetzt. Die verbleibende `ApiCtx`-Migration benötigt zusätzliche Pfadfreigaben. Es gab keinen Push, Merge oder PR.
+**Paket abgeschlossen:** A1, MCP-1 bis MCP-4 und Befund 6 sind behoben. Die Orchestrator-Freigabe vom 28.10., 16:20 umfasst jetzt auch sämtliche mechanischen `ApiCtx`-Konstruktoranpassungen. A1 wurde in diesem Lauf vollständig umgesetzt; die bereits erledigten MCP- und README-Korrekturen wurden gemäß Auftrag erhalten. Es gab keinen Push, Merge oder PR.
 
-**Erneuter vollständiger Prüflauf am 28.10.2026:** Anfangs sauberer Arbeitsbaum auf `4b741111`. Die MCP-Korrekturen, README-Bereinigung und A1-Testisolation waren bereits committed vorhanden. Schritte 1–5 wurden in der vorgegebenen Reihenfolge am Code nachvollzogen und jeweils separat im Bericht committed; zusätzliche Produktänderungen waren für MCP-1 bis MCP-4 nicht erforderlich. Sämtliche unten aufgeführten Prüfungen wurden in diesem Lauf erneut ausgeführt und sind grün. A1 bleibt wegen der ausdrücklich begrenzten Dateiliste offen; die notwendigen Konstruktorstellen sind unten vollständig aufgelistet. Kein Push, Merge oder PR.
+Ausgangsstand dieses Fortsetzungslaufs: sauberer Arbeitsbaum auf `a45db86b`. `node_modules` war vorhanden; `npm ci` war deshalb nicht erforderlich. Nach A1 wurden die verlangten Prüfungen vollständig erneut ausgeführt. Die nachfolgenden MCP-Ursachen und Änderungen dokumentieren den bereits vorhandenen Paketstand; ihre E2E-Abdeckung ist Bestandteil von Schritt 6.
 
-## A1 – Quota-Ledger / INTEG-006: teilweise umgesetzt, offen
+## A1 – Quota-Ledger / INTEG-006: behoben
 
 **Ursache:** `crates/os-integrations/src/crawl_glue/mod.rs:36–40` verwendet `app_paths()`; `crates/os-integrations/src/crawl_glue/runtime.rs:84–105` biegt Crawl-Sidecars anhand des Dateinamens auf dessen Settings-Verzeichnis um. `AppConfig::new(home)` verwendet dagegen einen ausdrücklich übergebenen App-Pfad. Ohne Übergabe können App und Crawl verschiedene Ledger verwenden. Die beiden APIs-mode-Lifecycle-Tests konnten bisher das echte Benutzerverzeichnis beschreiben.
 
-**Änderung:** Die betroffenen Lifecycle-Tests laufen in getrennten Unterprozessen mit je einem von `tempfile` verwalteten `OPENSPIDER_HOME`. Der Elternprozess verändert keine globalen Umgebungsvariablen; der temporäre Ordner bleibt bis zum Ende des Kindes bestehen. Die echten Mock-Abrufe und bisherigen Assertions laufen im Kind. Der INTEG-006-Test prüft zusätzlich nach `start_apis_mode_with` über `ApiRun::new`, dass `api-quotas.json` tatsächlich unter dem temporären Home entstanden ist.
+**Änderung:** `ApiCtx` hat additiv `quota_ledger: Option<PathBuf>`. `start_apis_mode_with` und `ApiRun::new` bevorzugen diesen vollständigen Ledger-Dateipfad unverändert, auch bei einem Dateinamen mit `.api-quotas.json`-Suffix. `session/control.rs` übergibt `app.config().paths.settings.join("api-quotas.json")`; die App-Konstruktoren in `commands/api.rs` und `commands/export_summary.rs` verwenden denselben Pfad. Alle übrigen Konstruktorstellen ergänzen ausschließlich `quota_ledger: None`. Ohne Kontextpfad bleibt die Auflösung über `app_paths()` erhalten; die bestehende explizite Ledger-Argumentübergabe für Einbetter bleibt kompatibel.
 
-**Test/Ergebnis:** `cargo test -p os-integrations --test crawl_glue_lifecycle`: **8 grün**. Die vorhandene API-Listen-Fixture und GSC-Mock-Inspektion werden weiterhin verwendet. Die Testisolation und die echte Fallback-Auflösung sind damit geprüft.
+Die bereits vorhandene Testisolation bleibt erhalten: Die betroffenen Lifecycle-Tests laufen in getrennten Unterprozessen mit je einem von `tempfile` verwalteten `OPENSPIDER_HOME`. Der Elternprozess verändert keine globalen Umgebungsvariablen. Auch der neue Regressionstest verwendet diese Isolation und ein zweites temporäres Verzeichnis für den konfigurierten Ledger.
 
-**Offen:** `ApiCtx.quota_ledger: Option<PathBuf>`, dessen Bevorzugung im Laufzeitpfad sowie die Übergabe des App-Settings-Pfads sind nicht umgesetzt. Auch ein `Option`-Feld muss in bestehenden Rust-Strukturliteralen angegeben werden. Die notwendigen mechanischen Anpassungen liegen teilweise außerhalb der ausdrücklich erlaubten Dateien:
+**Test/Ergebnis:** `cargo test -p os-integrations --test crawl_glue_lifecycle`: **9 grün**. `apis_mode_assigns_bulk_and_per_url_results_without_crawling` prüft mit Listen-Fixture und echten Mock-Inspektionen den Fallback über `start_apis_mode_with` → `ApiRun::new` → `app_paths()`. Der neue Test `configured_ledger_overrides_home_and_crawl_sidecars` (`// spec: INTEG-006`) prüft über dieselbe produktive Aufrufkette den abweichenden konfigurierten Pfad: vier echte Inspektionen, Erschöpfung des gemeinsamen Property-Kontingents, keine weiteren Inspektionen nach Neustart eines `ApiRun`, anschließend vier neue Inspektionen nach Mitternacht US-Pazifikzeit. Weder der temporäre Home-Fallback noch der übergebene Crawl-Sidecar werden dabei beschrieben. Der vollständige Paketlauf enthält diese neun Tests ebenfalls und ist grün.
 
-- `crates/os-engine/src/crawl.rs`
-- `crates/os-app/src/commands/api.rs`, `crates/os-app/src/commands/export_summary.rs`
-- `crates/os-cli/src/exec.rs`, `crates/os-cli/src/google.rs`, `crates/os-cli/tests/m2_l01.rs`
-- `crates/os-mcp/src/tools/link_metrics.rs`
-- `crates/os-integrations/src/psi/mobile.rs`
-- `crates/os-integrations/tests/{api_framework,drive_support,ga4_api,gsc_search_analytics,linkmetrics_providers,psi_local,psi_remote}.rs`
-
-Die Freigabe dieser Konstruktoranpassungen ist der nächste notwendige Schritt. Es wurde weder eine nicht kompilierende Feldmigration committed noch die Pfadgrenze überschritten. Die Isolation ist eine Teilkorrektur und behebt noch nicht die unterschiedliche Ledger-Auflösung bei expliziter App-Konfiguration.
+**Freigabe:** Die Orchestrator-Entscheidung vom 28.10., 16:20 erlaubt sämtliche mechanischen `ApiCtx`-Konstruktoranpassungen in `crates/**/src` und `crates/**/tests`. Damit ist die zuvor dokumentierte Pfadgrenze aufgelöst. Umsetzung: Commit `22a7bedc`.
 
 ## MCP-1 – Audit-Log / AGENT-043: behoben
 
@@ -67,49 +60,49 @@ Die Freigabe dieser Konstruktoranpassungen ist der nächste notwendige Schritt. 
 
 ## Prüfungen
 
-Alle langen Befehle liefen im Vordergrund über einen synchronen Python-Wrapper mit `subprocess.run(timeout=3600)` (3600000 ms) je Befehl. Der Lauf verwendete ein von `tempfile` verwaltetes `OPENSPIDER_HOME`; die beiden betroffenen Lifecycle-Tests erzeugen zusätzlich jeweils ihr eigenes temporäres Home im Unterprozess. Alle 13 Prüf-/Buildbefehle endeten mit Exit 0. Die vollständigen Rohprotokolle dieses Laufs liegen unter `/var/folders/fz/9flwb7b55t788nq02b9q761h0000gp/T/fix-n02-verify-0c4dygse/` (`results.json`, `0.log` bis `12.log`), außerhalb des Repositorys.
+Alle langen Befehle liefen im Vordergrund über einen synchronen Python-Wrapper mit `subprocess.run(timeout=3600)` (3600000 ms) je Befehl. Die Abschlussprüfungen verwendeten ein von `tempfile` verwaltetes `OPENSPIDER_HOME`; die betroffenen Lifecycle-Tests erzeugen zusätzlich jeweils ihr eigenes temporäres Home im Unterprozess. Alle neun Prüf-/Buildbefehle endeten mit Exit 0. Die vollständigen Rohprotokolle liegen unter `/var/folders/fz/9flwb7b55t788nq02b9q761h0000gp/T/fix-n02-final-whbgohrx/` (`results.json`, `0.log` bis `8.log`), außerhalb des Repositorys. Der Prüfabschluss wurde separat in `e18b49f7` committed.
 
 | Prüfung | Ergebnis |
 | --- | --- |
 | `npm ci` bei fehlendem `node_modules` | nicht erforderlich; Verzeichnis anfangs vorhanden |
+| `cargo test -p os-integrations --test crawl_glue_lifecycle` vor dem A1-Commit | **9/9 grün**, einschließlich explizitem Ledger-Pfad und echter Fallback-Auflösung |
 | `cargo fmt --all --check` | grün, Exit 0 |
-| `cargo clippy -p os-integrations -p os-mcp -p os-app --all-targets -- -D warnings` | grün, Exit 0; 56 Sekunden |
-| `cargo test -p os-integrations -p os-mcp` | 318 bestanden, 0 fehlgeschlagen, 1 vorhandener Lighthouse-Test ignoriert |
-| `cargo test -p os-integrations --test crawl_glue_lifecycle` | 8 bestanden; echte Fallback-Auflösung mit dauerhafter Prozessisolation |
-| `cargo test -p os-app --lib subscription_notice_tests` | 2 bestanden |
-| `cargo test -p os-app --test cmd_mcp_service` | 6 bestanden |
-| `cargo build -p os-cli --bin openspider` | erfolgreich; Voraussetzung des vorhandenen Export-Prozesstests |
+| `cargo clippy -p os-integrations -p os-mcp -p os-app --all-targets -- -D warnings` | grün, Exit 0; 70,6 Sekunden |
+| `cargo build -p os-cli --bin openspider` | erfolgreich; Voraussetzung des vorhandenen MCP-Export-Prozesstests |
+| `cargo test -p os-integrations -p os-mcp` | **319 bestanden**, 0 fehlgeschlagen, 1 vorhandener Lighthouse-Test ignoriert; 200,0 Sekunden |
+| `cargo test -p os-app --test cmd_mcp_service` | **6/6 grün** |
 | `cargo build -p os-app --features e2e-bridge --bin os-app-bridge -p os-testsite --bin os-testsite` | erfolgreich |
 | `npm run -w apps/desktop e2e -- e2e/mcp --project=chromium --project=webkit --workers=1` | **24/24 grün**, 21,0 Minuten, einschließlich zweimal echtem Zehn-Minuten-Ablauf |
 | `npm run -w apps/desktop typecheck` | grün, Exit 0 |
 | `npm run -w apps/desktop test` | **771/771 grün**, 76 Testdateien |
 
-Die CLI wurde vor dem vollständigen Rust-Paketlauf gebaut, da der vorhandene MCP-Export-Prozesstest sie benötigt. Der Paketlauf bestand ohne Wiederholung in 189,5 Sekunden. Ein vorhandener Test mit echter Lighthouse-Installation bleibt regulär ignoriert. Beim erfolgreichen Bridge-Link meldet der macOS-Linker eine Warnung zur Größe von `__eh_frame`; die Clippy-Prüfung mit `-D warnings` ist grün. Die MCP-E2E-Dateien und Assertions wurden nicht verändert oder abgeschwächt.
+Die CLI wurde vor dem Rust-Paketlauf gebaut, da der vorhandene MCP-Export-Prozesstest sie benötigt. Alle Abschlussprüfungen bestanden im ersten Lauf. Der vorhandene Test mit echter Lighthouse-Installation bleibt regulär ignoriert. Beim erfolgreichen Bridge-Link meldet der macOS-Linker die bekannte Größenwarnung für `__eh_frame`; Clippy mit `-D warnings` ist grün. Die MCP-E2E-Dateien und Assertions wurden nicht verändert oder abgeschwächt. Die bereits erledigten MCP-1–4- und README-Korrekturen wurden nicht erneut bearbeitet; die unveränderten E2Es bestätigen ihren Produktstand.
 
 ## Fremdänderungen / K2-72
 
-Die folgenden freigegebenen Paketänderungen werden gemäß Arbeitsauftrag als **Fremdänderungen im Sinne von K2-72** deklariert. Grundlage ist die explizite Orchestrator-Freigabe der Dateiliste:
+Die folgenden Paketänderungen sind **Fremdänderungen im Sinne von K2-72**. Grundlage sind die ursprüngliche ausdrückliche Pfadfreigabe sowie die erweiterte Orchestrator-Entscheidung vom 28.10., 16:20. Die Erweiterung erlaubt an sämtlichen `ApiCtx`-Konstruktorstellen ausschließlich das neue Feld mit `None` beziehungsweise mit dem bekannten App-Settings-Pfad.
 
 | Freigegebener Fremdpfad | Umfang |
 | --- | --- |
-| `crates/os-integrations/tests/crawl_glue_lifecycle.rs` | A1-Testisolation und echte Fallback-Auflösung |
-| `crates/os-mcp/src/audit.rs`, `crates/os-mcp/tests/audit_parameters.rs` | Audit-Allowlist und Regressionstest (K04-Linie) |
-| `crates/os-mcp/src/http.rs`, `crates/os-mcp/tests/m2_http.rs` | GET/SSE-Verbindungslebensdauer und HTTP-Test (K04/K17) |
-| `crates/os-app/src/runtime/mod.rs` | Nachlieferung beim Abonnieren und zwei Notice-Tests (Runtime-Besitzer) |
-| `crates/os-app/src/mcp/mod.rs` | Wiederholter Flush vorgemerkter Meldungen (K17) |
-| `apps/desktop/src/features/mcp/AccessPanel.tsx` | Fokus bei laufenden Token-Aktionen (U25) |
-| `tests/fixtures/crawl-m2-list/README.md` | Veralteter Dateihinweis (E06/Integrator) |
+| `crates/os-integrations/src/core.rs` | Additives Feld `ApiCtx.quota_ledger: Option<PathBuf>` |
+| `crates/os-integrations/src/crawl_glue/mod.rs`, `crates/os-integrations/src/crawl_glue/runtime.rs` | Vorrang des konfigurierten Ledgers vor Fallback und Sidecar-Auflösung |
+| `crates/os-integrations/tests/crawl_glue_lifecycle.rs` | Prozessisolation, echte Fallback-Auflösung und Regressionstest für explizites Ledger, Neustart und Tagesreset |
+| `crates/os-app/src/session/control.rs` | Ausschließlich Übergabe des Ledger-Dateipfads aus den App-Settings |
+| `crates/os-app/src/commands/api.rs`, `crates/os-app/src/commands/export_summary.rs` | An drei Konstruktorstellen ausschließlich neues Feld mit bekanntem App-Settings-Pfad |
+| `crates/os-engine/src/crawl.rs` | Ausschließlich `quota_ledger: None` im `ApiCtx`-Literal |
+| `crates/os-cli/src/exec.rs`, `crates/os-cli/src/google.rs`, `crates/os-cli/tests/m2_l01.rs` | Ausschließlich `quota_ledger: None` in den `ApiCtx`-Literalen |
+| `crates/os-mcp/src/tools/link_metrics.rs` | Ausschließlich `quota_ledger: None` im `ApiCtx`-Literal |
+| `crates/os-integrations/src/psi/mobile.rs` | Ausschließlich `quota_ledger: None` in zwei `ApiCtx`-Literalen |
+| `crates/os-integrations/tests/api_framework.rs`, `crates/os-integrations/tests/drive_support.rs`, `crates/os-integrations/tests/ga4_api.rs`, `crates/os-integrations/tests/gsc_search_analytics.rs`, `crates/os-integrations/tests/linkmetrics_providers.rs`, `crates/os-integrations/tests/psi_local.rs`, `crates/os-integrations/tests/psi_remote.rs` | Ausschließlich `quota_ledger: None` in den vorhandenen `ApiCtx`-Literalen |
+| `crates/os-mcp/src/audit.rs`, `crates/os-mcp/tests/audit_parameters.rs` | Bereits erledigt: Audit-Allowlist und Regressionstest (K04) |
+| `crates/os-mcp/src/http.rs`, `crates/os-mcp/tests/m2_http.rs` | Bereits erledigt: GET/SSE-Verbindungslebensdauer und HTTP-Test (K04/K17) |
+| `crates/os-app/src/runtime/mod.rs` | Bereits erledigt: Nachlieferung beim Abonnieren und Notice-Tests |
+| `crates/os-app/src/mcp/mod.rs` | Bereits erledigt: wiederholter Flush vorgemerkter Meldungen (K17) |
+| `apps/desktop/src/features/mcp/AccessPanel.tsx` | Bereits erledigt: Fokus bei laufenden Token-Aktionen (U25) |
+| `tests/fixtures/crawl-m2-list/README.md` | Bereits erledigt: veralteter Dateihinweis (E06/Integrator) |
 
-`crates/os-integrations/tests/crawl_glue_lifecycle.rs` enthält die Teilkorrektur der A1-Testisolation. Keine anderen Produktpfade, Manifeste oder Lockfiles wurden geändert. Tokio bleibt **1.53.3**; kein `cargo update`. Alle Commits verwenden explizite Dateipfade und den verlangten Co-Author-Trailer. Der Arbeitsbaum wurde abschließend bereinigt; das paketbezogene `CARGO_TARGET_DIR=/Users/dominikwojcik/Projects/build.noindex/target-fix-n02` wurde nach den Prüfungen gelöscht.
+Der A1-Commit `22a7bedc` umfasst genau 20 freigegebene Dateien. Die übrigen Paketkorrekturen blieben unverändert. Manifeste und Lockfile sind unverändert, Tokio bleibt **1.53.3**; kein `cargo update`. Commits verwenden ausschließlich explizite Dateipfade und den verlangten Co-Author-Trailer. Die MCP-E2E-Dateien wurden nicht geändert. Rohprotokolle liegen außerhalb des Repositorys; generierte Playwright-Artefakte und das paketbezogene `CARGO_TARGET_DIR=/Users/dominikwojcik/Projects/build.noindex/target-fix-n02` wurden nach den Prüfungen entfernt.
 
 ## Abschluss von Schritt 7
 
-Bericht mit Ursachen, Änderungen, Tests, Ergebnissen und Fremdänderungen aktualisiert. In diesem erneuten Lauf wurde ausschließlich dieser freigegebene Bericht geändert; sämtliche vorhandenen Produktkorrekturen wurden erhalten und erneut geprüft. A1 ist ausdrücklich weiterhin unvollständig: Die App übergibt noch keinen konfigurierten Ledger-Pfad. Grüne Tests ersetzen diese ausstehende Implementierung nicht.
-
-**Nächster Schritt:** Die oben genannten mechanischen `ApiCtx`-Konstruktoranpassungen zusätzlich zur bisherigen Dateiliste ausdrücklich freigeben; dann `quota_ledger: Option<PathBuf>` additiv einführen, in `ApiRun::new`/`start_apis_mode_with` bevorzugen, in `session/control.rs` den Ledger-Pfad aus `app.config().paths.settings` setzen und die reale Auflösung bei abweichender App-Konfiguration testen. Anschließend vollständige Prüfungen erneut ausführen. Keine Rückfrage oder zusätzliche Genehmigungsaktion ausgelöst.
-
-## Schritt 6 – Abschlussprüfung nach A1-Commit 22a7bedc
-
-Die zusätzlich freigegebene A1-Migration ist umgesetzt; der obige offene Status stammt aus dem vorherigen Lauf und wird in Schritt 7 konsolidiert. Alle neun Befehle des abschließenden Prüflaufs sind mit Exit 0 beendet: Format, Clippy (`-D warnings`), CLI-Build, Rust-Pakettests (**319 bestanden**, ein vorhandener Test ignoriert), `cmd_mcp_service` (**6 bestanden**), Bridge/Testsite-Build, unveränderte MCP-E2Es (**24/24**, Chromium und WebKit, ein Worker, 21,0 Minuten), Typecheck und Frontend-Tests (**771/771**). Der zusätzliche fokussierte Lifecycle-Lauf vor dem A1-Commit bestand mit **9/9** Tests.
-
-Alle langen Befehle liefen im Vordergrund mit `subprocess.run(timeout=3600)` (3600000 ms), die Abschlussprüfungen mit temporärem `OPENSPIDER_HOME`. Rohprotokolle: `/var/folders/fz/9flwb7b55t788nq02b9q761h0000gp/T/fix-n02-final-whbgohrx/` (`results.json`, `0.log` bis `8.log`). Die bekannte macOS-Linkerwarnung zu `__eh_frame` trat beim erfolgreichen Bridge-Build auf; Clippy ist grün. Kein Push, Merge oder PR.
+Bericht mit Ursache, Änderung, Test, Ergebnis und vollständiger Dateiliste der freigegebenen Fremdänderungen aktualisiert. A1 ist vollständig umgesetzt und geprüft. Alle verlangten Prüfungen sind grün; Arbeitsbaum sauber und paketbezogenes Target-Verzeichnis gelöscht. Kein Push, Merge oder PR.
