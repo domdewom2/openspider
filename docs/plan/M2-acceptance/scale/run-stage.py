@@ -8,6 +8,7 @@ import datetime
 import importlib.util
 import json
 import os
+import re
 from pathlib import Path
 import signal
 import subprocess
@@ -28,8 +29,16 @@ def main():
     dest.mkdir(exist_ok=True)
     uptime = subprocess.check_output(['uptime'], text=True).strip()
     load = float(uptime.split('load averages:')[-1].strip().split()[0].replace(',', '.'))
-    if load >= 2:
-        raise RuntimeError(f'load >= 2: {uptime}')
+    max_load = float(os.environ.get('OS_SCALE_MAX_LOAD', '2'))
+    min_idle = float(os.environ.get('OS_SCALE_MIN_IDLE', '0'))
+    idle = None
+    if load >= max_load:
+        raise RuntimeError(f'load >= {max_load}: {uptime}')
+    if min_idle:
+        top = subprocess.check_output(['top', '-l', '2', '-s', '1', '-n', '0'], text=True)
+        idle = float(re.findall(r'([0-9.]+)% idle', top)[-1])
+        if idle < min_idle:
+            raise RuntimeError(f'CPU idle {idle}% < {min_idle}%')
     spec = importlib.util.spec_from_file_location('dbstat', SCALE / 'dbstat.py')
     dbstat = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(dbstat)
@@ -94,7 +103,7 @@ def main():
             for begin in range(0,n,100000):
                 end=min(begin+100000,n); a=at(begin); b=at(end)
                 windows.append({'from':begin,'to':end,'seconds':b-a if a is not None and b is not None else None,'urls_per_s':(end-begin)/(b-a) if a is not None and b is not None and b>a else None})
-            result={'n':n,'commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'uptime':uptime,'cli_elapsed_s_sampled':elapsed,'progress':progress,'windows':windows,'samples':samples,'diag':diag,'phases':phases,'storage':storage,'measurement_notes':['Progress elapsed_s is integer seconds; window boundaries are linearly interpolated.','Sampling every 5 s can miss short peaks; process completion time can be overestimated by up to 5 s.','Parse is included in engine analyze_ns; worker sums overlap and are not wall-clock shares.']}
+            result={'quiet':{'max_load':max_load,'min_idle_pct':min_idle,'idle_pct':idle},'n':n,'commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'uptime':uptime,'cli_elapsed_s_sampled':elapsed,'progress':progress,'windows':windows,'samples':samples,'diag':diag,'phases':phases,'storage':storage,'measurement_notes':['Progress elapsed_s is integer seconds; window boundaries are linearly interpolated.','Sampling every 5 s can miss short peaks; process completion time can be overestimated by up to 5 s.','Parse is included in engine analyze_ns; worker sums overlap and are not wall-clock shares.']}
             (dest/f'stage-{n}.json').write_text(json.dumps(result,indent=2,ensure_ascii=False)+'\n')
             top=sorted(storage['objects'],key=lambda o:o['bytes'],reverse=True)[:10]
             md=[f'# Stufe {n}', '',f'- Load: {uptime}',f'- URLs: {final}; Datenbank: {storage["file_bytes"]} Bytes ({storage["file_bytes"]/final:.1f} Bytes/URL)',f'- WAL-Spitze (5-s-Abtastung): {max(s["wal_bytes"] for s in samples)} Bytes; RSS-Spitze: {max(s["rss_bytes"] for s in samples)} Bytes',f'- Freiliste: {storage["freelist_count"]} Seiten', '', '## Durchsatzfenster', '', '| URLs | URLs/s |','|---|---:|']
