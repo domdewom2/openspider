@@ -40,3 +40,13 @@ it("translates numeric image limits and custom exports while preserving user nam
   expect(i18n.translate("de", "Custom Search:Stock: EU Inlinks")).toBe("Eigene Suche: Stock: EU – eingehende Links");
   expect(i18n.translate("de", "Custom Extraction:Extractor 2 Inlinks")).toBe("Eigene Extraktion: Extraktor 2 – eingehende Links");
 });
+
+// spec: UI-121
+it("translates core prerequisite diagnostics in UI menus without changing CLI/report data", () => {
+  const reason = "report 'Crawl Overview' requires the crawl analysis: 2 filter(s) stay empty until it has run (Canonicals:Unlinked, Pagination:Unlinked Pagination URLs); run the crawl analysis first";
+  expect(i18n.translate("de", reason)).toBe("Crawl-Übersicht: Zuerst die Crawl-Analyse ausführen.");
+  expect(i18n.translate("en", reason)).toBe("Crawl Overview: Run the crawl analysis first.");
+  expect(i18n.translate("de", "report 'Orphan Pages' requires SitemapProcessed; report 'Orphan Pages' requires OrphanSourceAvailable")).toContain("Sitemap");
+  expect(i18n.translate("de", "report 'Cookie Summary' requires cookie extraction")).toBe("Cookie-Zusammenfassung: Erfasste Cookies sind erforderlich.");
+  expect(i18n.translate("de", "report 'Crawl Overview' requires future capability")).toBe("Crawl-Übersicht: Eine Voraussetzung für diesen Export fehlt.");
+});

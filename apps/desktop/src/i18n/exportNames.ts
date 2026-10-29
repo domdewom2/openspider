@@ -9,6 +9,25 @@ export function exportNameKey(name: string): string {
 }
 
 export function exportDisplayName(name: string, lookup: Lookup, separator = ": "): string | null {
+  if (name.startsWith("report '")) {
+    const clauses = [...name.matchAll(/(?:^|; )report '([^']+)' requires ([\s\S]*?)(?=; report '|$)/g)];
+    if (clauses.length) {
+      const messages = clauses.map(([, report, requirement]) => {
+        const label = exportDisplayName(report!, lookup, separator) ?? report!;
+        const kind = requirement!.startsWith("the crawl analysis:") ? "analysis" : ({
+          SitemapProcessed: "sitemap", OrphanSourceAvailable: "orphans",
+          "JavaScript rendering": "rendering", "cookie extraction": "cookies",
+          "HTTP header extraction": "headers", "HTML storage": "html",
+          "rendered HTML storage": "rendered-html", "stored rendered HTML": "rendered-html",
+          "saved screenshots": "screenshots", "spell checking": "spelling",
+          "grammar checking": "grammar", "accessibility extraction": "a11y",
+          "HTML validation": "validation", "JavaScript error reporting": "javascript-errors",
+        } as Record<string, string>)[requirement!] ?? "missing";
+        return lookup(`export-reason-${kind}`, { name: label });
+      });
+      return messages.every((value): value is string => value !== null) ? messages.join(" ") : null;
+    }
+  }
   // Custom names are user data, including punctuation and colons; only their group and generated suffix are translated.
   const custom = /^(Custom Search|Custom Extraction):(.+)$/.exec(name);
   if (custom) {
