@@ -42,7 +42,8 @@ pattern="${maker}|${product}|\\b${abbr}\\b|(?<![a-z])${abbr}_|\\b${abbr}-free"
 r1='ref'; r2='erenz'
 reference="${r1}${r2}|${r1}_version|${r1}_settings"
 v_major='1[0-9]|2[0-9]'
-version="\\b(${v_major})\\.[0-9]+\\b"
+# Kalenderdaten (TT.MM.JJJJ) ausnehmen: kein Treffer direkt nach „Ziffer.“ und keiner, auf den „.Ziffer“ folgt.
+version="(?<![0-9.])\\b(${v_major})\\.[0-9]+\\b(?!\\.[0-9])"
 pattern="${pattern}|(?:${reference}).*${version}|${version}.*(?:${reference})"
 
 # Ausnahmedatei einlesen (parallele Arrays; bash 3.2 kompatibel).

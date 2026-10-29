@@ -30,3 +30,7 @@ Validierung (lokal, macOS arm64):
 - 50 zusätzliche isolierte Skriptprüfungen in einem temporären Git-Repository: Marker, Groß-/Kleinschreibung, Reihenfolge, Versionsbereich, Zeilengrenzen, Allowlist und Referenz-CSV-Ausnahme grün; `git diff --check` grün.
 
 Aufräumen: Paketbezogenes Cargo-Target `/Users/dominikwojcik/Projects/build.noindex/target-neutral-ver` nach den Gates gelöscht; im Worktree existiert kein `target`.
+
+## Nachtrag Orchestrator (29.10.2026)
+
+Das Versionsmuster in `scripts/check-neutral.sh` nimmt Kalenderdaten (TT.MM.JJJJ) jetzt im Muster selbst aus (kein Treffer direkt nach „Ziffer.“ und keiner vor „.Ziffer“). Dadurch sind 87 Ausnahmen für Datumsangaben entfallen; 18 begründete Ausnahmen (Betriebssystem-/Node-Versionen, Mengenangaben) bleiben.

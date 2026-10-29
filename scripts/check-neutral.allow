@@ -7,108 +7,21 @@ package-lock.json	sha512-9rTIZ4ZjWwalCPiaY+kPiALLfOKgAz5CTi/Zb1L+qSZ8PH3zVo1T8Jc
 crates/os-render/resources/axe/axe.min.js	function sf(){if(window.perform	M2-D21: minifizierter Bezeichner sf in der unveränderten axe-core-Bibliothek (MPL-2.0), zufälliger Treffer, kein Produktbezug
 
 # neutral-ver: geprüfte Fehlalarme des strikten Versionsmusters (Datumsfragmente, Plattformen, Mengen, Abschnittsnummern).
-docs/plan/M1-acceptance/checklist.md	glische Oberfläche), exportiert am 14.10.2026; **5 von 5 Sites mit Status `present`** (Anf	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1-acceptance/checklist.md	**→ Entschieden 14.10.2026 (K-57): Standard `false` wie die Referenz; S	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1-acceptance/checklist.md	**→ Entschieden 14.10.2026:** A-4, A-23 und Crawl Depth folgen der Refe	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1-packages.json	ntscheidung (Fable-Empfehlung) vom 13.10.2026, M1.md 3.9): DREI Texte je Issue – what, why	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1-packages.json	31/032. NACHTRAG Welle-1-Sichtung (13.10.2026): ExportFileInfo.warnings (M1-N01) an Aufruf	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1-packages.json	(P19). NACHTRAG Welle-1-Sichtung (13.10.2026): ExportFileInfo.warnings (M1-N01) weiterrei	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1-packages.json	empelt. NACHTRAG Welle-1-Sichtung (13.10.2026): Analysezustand liegt in analysis_steps und	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1-packages.json	sktop). NACHTRAG Welle-1-Sichtung (13.10.2026): Reihenfolge der Konfiguration (P13): Crawl	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1-packages.json	el 2.8. NACHTRAG Welle-1-Sichtung (13.10.2026): alle Tests mit #[ignore = \"Benchmark…\"]	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1-packages.json	_notes": "Entscheidung Opus-Planer 14.10.2026 (Welle-4-Sichtung inkl. Fable-Gate Welle 4,	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1-packages.json	_notes": "Entscheidung Opus-Planer 14.10.2026 (Welle-4b-Sichtung inkl. Fable-Gate Welle 4b	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1-packages.json	füllen. NACHTRAG Welle-1-Sichtung (13.10.2026): CI-Job spec-coverage: `cargo test --worksp	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1-packages.json	_notes": "Entscheidung Opus-Planer 14.10.2026 nach dem Fable-Gate M1 (needs_work, 70/100;	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1-packages.json	_notes": "Entscheidung Opus-Planer 14.10.2026 nach dem Fable-Gate M1 (needs_work, 70/100),	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1-packages.json	_notes": "Entscheidung Opus-Planer 15.10.2026 (Welle 7b, K-72/K-73). KEINE Codeänderung an	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	`M1-Nxx` (ab Welle 2, Entscheidung 13.10.2026):** Rückmeldungen einer Welle (Schnittstelle	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	→ N14 → P29 (Referenzexporte seit 14.10.2026 auf `origin/parity/ref-reference`) → P31 → N	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	ntscheidung (Fable-Empfehlung) vom 13.10.2026, F-4 des M2-Konzepts):** drei eigene Texte j	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	ntscheidung (Fable-Empfehlung) vom 13.10.2026):** `issues_overview.csv` und Issues-Dateisa	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	le 4 (E8; Entscheidung Opus-Planer 14.10.2026 nach Sichtung aller Rückmeldungen von Welle	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	- **Nachtrag Welle-4-Sichtung (14.10.2026, Opus-Planer):** startet nach Welle 4b und d	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	Abnahme-Gate.** Opus-Planer hat am 14.10.2026 entschieden. Grundlage sind das Fable-Gate M	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	2.. · **Nachtrag Welle-2-Sichtung (13.10.2026):** AGENT-003 Werkzeugklasse `cost` in `tool	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	. **Endgültige Fassung Opus-Planer 14.10.2026 (Welle-3-Sichtung):** `Transferred` = Body-B	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	26) | Entscheidung Opus-Planer vom 14.10.2026 (Welle-4-Sichtung): Präfix bleibt – die Rege	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	ma) | Entscheidung Opus-Planer vom 14.10.2026 (Welle-4b-Sichtung): P29 gleicht `parity.osc	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	1). | Entscheidung Opus-Planer vom 14.10.2026 (M1-Gate, Grundsatz Parität): keine Tabellen	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	n“. | Entscheidung Opus-Planer vom 14.10.2026: **bewusste OS-Festlegung bleibt.** RFC 9309	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	an. | Entscheidung Opus-Planer vom 14.10.2026 (Parität; die Begründung „wie Referenz“ ist	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	s). | Entscheidung Opus-Planer vom 14.10.2026 (Parität): Duplikatvergleich ohne Groß-/Klei	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	ts. | Entscheidung Opus-Planer vom 14.10.2026 (A-35 ist eine Annahme, keine begründete Fes	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	st. | Entscheidung Opus-Planer vom 14.10.2026 (Parität, Gleichklang mit ONPAGE-015): nur H	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	]`. | Entscheidung Opus-Planer vom 14.10.2026 (Lücke, keine Festlegung → Parität): Positio	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	g). | Entscheidung Opus-Planer vom 14.10.2026: Kalibrierung nach UI-038 (ganzzahlige Breit	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	us. | Entscheidung Opus-Planer vom 15.10.2026 (Parität; der Ausschluss war eine Annahme, k	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	t`. | Entscheidung Opus-Planer vom 15.10.2026: **OS-Festlegung bleibt.** OpenSpider meldet	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	h“. | Entscheidung Opus-Planer vom 15.10.2026 (Parität; P31 hat die einfachere, exakte Reg	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	61. | Entscheidung Opus-Planer vom 15.10.2026 (Parität, Umsetzung von P31 bestätigt): Selb	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	en. | Entscheidung Opus-Planer vom 15.10.2026: `OS_TEXT` bleibt (Annahme A-4b). Belegt ist	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M1.md	os. | Entscheidung Opus-Planer vom 15.10.2026: Beide Ersatzbegründungen sind bestätigt. **	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M2-packages.json	eutralisierung (Nutzerentscheidung 16.10.2026): kein namentlicher Bezug auf das Referenzpr	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M2-packages.json	Auszug, Grund). Nutzerentscheidung 16.10.2026: öffentlich kein namentlicher Bezug auf das	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
 docs/plan/M2-packages.json	2.md 3.13 (verbindlich); Nutzer-Go 16.10.2026. Zuschnitt: E1 ohne Importer. Autonomo, evnx	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
-docs/plan/M2-packages.json	Welle 1. Inhalt exakt nach M2.md 3.14.1 (Konfiguration inkl. Defaults K2-29, Schema-Golde	Abschnittsnummern des M2-Plans (3.14.*), keine Produktversionen
-docs/plan/M2-packages.json	Welle 1. Inhalt exakt nach M2.md 3.14.9: AppConfig.secrets → Arc<dyn SecretStoreMut> (fro	Abschnittsnummern des M2-Plans (3.14.*), keine Produktversionen
-docs/plan/M2-packages.json	tellen und eingefrorene Dateien (3.14.13) nicht ändern. Integrationstests gegen Erweiterun	Abschnittsnummern des M2-Plans (3.14.*), keine Produktversionen
 docs/plan/M2-packages.json	60/K2-61/K2-63). User-Entscheidung 18.10.: MCP-Umfang ergänzen (Abgleich: Referenzprodukt	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
 docs/plan/M2-packages.json	ff-Auszug, Grund). Anlass (Messung 20.10., Apple M2, CLI-Standardkonfiguration, main 4b671	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
 docs/plan/M2-packages.json	n; dazu die sechs Nutzerpunkte vom 27.10. (A02-01 … A02-06, falls nicht als erledigt marki	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M2-packages.json	rund). AUFTRAG (Nutzerentscheidung 28.10.2026, K2-75a): echter visueller Polish nach der B	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M2-reports/c02.md	Stand: 27.10.2026. Worktree `wt-c02`, Branch `m2/c02`, Ausgang	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M2-reports/d03.md	Stand: Fix-Runde vom 19.10.2026, Branch `m2/d03`, lokal auf macOS arm64 (Dar	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
 docs/plan/M2-reports/fix-n02b-e2e.md	rces_and_filters` (`TECH-301`): je 10.000 Current- und Previous-Linkzeilen, alle drei Prese	Tausenderzahlen für Fixture-Mengen/Suchvolumen bzw. Leistung auf Referenzhardware, keine Produktversion
-docs/plan/M2-reports/k01.md	Stand: 18.10.2026, Branch `m2/k01`, macOS arm64 (Apple M1, 16	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M2-reports/k16.md	Fix-Runde zum Fable-Review vom 19.10.2026; Basis `123de3e`, vorheriger Paketstand `c3d	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M2-reports/o02.md	rk`, 85). Umsetzung: OpenAI Codex, 19.10.2026. Clean-Room: ausschließlich Repository-Code,	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M2-reports/t01.md	awler. Umsetzung: Claude Opus 5.5, 20.10.2026, macOS arm64.	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M2-reports/u03.md	Stand Erstumsetzung: 18.10.2026, Branch `m2/u03`, lokale macOS-Ausführung. C	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
 docs/plan/M2-reports/u10.md	Stand: 19.10.2026, Branch `m2/u10`, macOS 26.3 arm64 (Darwin 2	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
-docs/plan/M2-reports/u20.md	Stand: 19.10.2026, Branch `m2/u20` (von `main` @ `7193ccc`), C	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
 docs/plan/M2-reports/u24.md	Erstabgabe: 19.10.2026, Branch `m2/u24` (von `origin/main` 29c9b21)	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
-docs/plan/M2-spikes/S-1.md	Stand: 18.10.2026. Clean-Room: ausschließlich Spec, Plan und e	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
 docs/plan/M2-spikes/S-1.md	chine: Apple M1, 16 GiB RAM, macOS 26.3 (25D125). Sie weicht von UI-Referenz A (MacBook A	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
-docs/plan/M2-spikes/S-1b.md	Stand: 18.10.2026. Branch `m2/u02b`, Basis `ca88944` (S01 mit	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
 docs/plan/M2-spikes/S-1b.md	i M1 (`Macmini9,1`), 16 GiB, macOS 26.3 (25D125). Referenz A verlangt einen MacBook Air M	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
 docs/plan/M2-spikes/S-1b.md	## Referenzmessung 20.10.	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M2-spikes/S-1b.md	renzmessung (Gate-G0-Bedingung 1), 20.10.2026 03:58–04:12, Mac mini M1 16 GB, `origin/m2/u	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
 docs/plan/M2-spikes/S-3.md	i M1 (`Macmini9,1`), 16 GiB, macOS 26.3 (25D125), arm64,	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
 docs/plan/M2-spikes/S-5b.md	renz A: Mac mini M1, 16 GiB, macOS 26.3 (25D125), arm64, Node 22.20.0.	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
 docs/plan/M2-spikes/S-6.md	i M1 (`Macmini9,1`), 16 GiB, macOS 26.3 (25D125), arm64,	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
-docs/plan/M2.md	**Neutralität (Nutzerentscheidung 16.10.2026, M2-H01):** Das Referenzprodukt wird in Repo	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M2.md	erden gemäß Nutzerentscheidung vom 29.10.2026 entfernt.	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/plan/M2.md	eigene Site | **Nutzerentscheidung 28.10.2026:** `robots.respect_crawl_delay` OS-Default *	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
 docs/plan/M2.md	ß gegen die Nutzerentscheidung vom 16.10. | `scripts/check-neutral.sh` im Job `parity` (H0	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
 docs/plan/M2.md	| Nutzerentscheidung 16.10.: öffentlich kein namentlicher Bezug auf das Refe	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/01-crawl.md	en zu den Schaltern (OS-Festlegung 13.10.2026, Welle-2-Sichtung, K-40):** Hyperlink (`<a>`	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/01-crawl.md	- **Paritätsbefund M1 (14.10.2026, Befund B-02, K-55):** Die Referenz (Referen	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/02-tabs-onpage.md	n – CRAWL-006 führt, OS-Festlegung 14.10.2026, Welle-3-Sichtung, K-43). Subdomains gelten	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/02-tabs-onpage.md	revidiert nach Paritätslauf M1 vom 14.10.2026, K-58**: die Referenz zählt Werte, die sich	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/02-tabs-onpage.md	ect Chain 9; Entscheidung K-66 vom 15.10.2026, ersetzt „Ketten, die in einer Schleife ende	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/02-tabs-onpage.md	tsbefund M1, Entscheidung K-67 vom 15.10.2026, DEV-005): Die Referenz meldet für den gesch	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/02-tabs-onpage.md	revidiert nach Paritätslauf M1 vom 14.10.2026, K-58**: die Referenz zählt `?sort_by=x` mit	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/02-tabs-onpage.md	hme A-35b**, Paritätsbefund M1 vom 14.10.2026, Befund N-03, K-59, präzisiert durch K-68 vo	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/03-tabs-technical.md	inen nicht. (Paritätsbefund M1 vom 14.10.2026, Befund B-04, K-56: die Referenz führt alle	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/03-tabs-technical.md	in“ ist durch den Paritätslauf M1 (14.10.2026, Befund B-03, K-57) widerlegt: Referenzprodu	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/03-tabs-technical.md	iguration > Spider > Advanced; bis 14.10.2026 „an“). Selbst-Refresh = Refresh ohne Ziel-UR	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/03-tabs-technical.md	liegt. **Nachtrag Paritätslauf M1 (14.10.2026, K-56):** TECH-015 (Canonicals › Missing) un	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
 docs/spec/04-custom-integrations.md	t und auf alle CPU-Kerne verteilt; 10.000 URLs à 768 Dimensionen benötigen auf der Referenz	Tausenderzahlen für Fixture-Mengen/Suchvolumen bzw. Leistung auf Referenzhardware, keine Produktversion
 docs/spec/04-custom-integrations.md	nd dauert bei einer Stichprobe von 10.000 Punkten höchstens 30 s auf Referenzhardware (07-p	Tausenderzahlen für Fixture-Mengen/Suchvolumen bzw. Leistung auf Referenzhardware, keine Produktversion
-docs/spec/05-ui.md	Kalibrierung nach Paritätslauf M1 (14.10.2026, Befund N-04, K-64):** In den Paritäts-Sites	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/06-output-ops.md	ntscheidung (Fable-Empfehlung) vom 13.10.2026). `Description` = Text *what*, `How To Fix`	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/06-output-ops.md	rch den Paritätslauf M1 widerlegt (14.10.2026, K-58). Die Grundmenge dieses Panel-Exports	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/06-output-ops.md	ternen URLs (Paritätsbefund M1 vom 14.10.2026, K-58; vorher „alle internen URLs mit bekann	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/06-output-ops.md	m Abgleich mit der Cloud-Variante (16.10.2026) als OUT-273 (P1) geprüft; dieser Eintrag be	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/08-ai.md	PI**, Architekten-Entscheidung vom 13.10.2026; einstellbar 1–10, Standard 10; die Beta-Dok	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/08-ai.md	OpenRouter-Fehlerreferenz, geprüft 13.10.2026; Entscheidung (Fable-Empfehlung)):** OpenRou	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/08-ai.md	glichen. **Entschieden (Architekt, 13.10.2026):** höchstens 10 Fragen je Request bis zur G	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/08-ai.md	efusal (AI-005/AI-038) – erledigt (13.10.2026, OpenRouter-Fehlerreferenz):** Dokumentiert	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/08-ai.md	| V-A4 | **Erledigt (13.10.2026, OpenRouter-Fehlerreferenz):** Verweigerungs	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
 docs/spec/09-dataforseo.md	chvolumen): eigene Domain 42 / 17 (12.000), `competitor.test` 60 / 20 (20.000), `rival.test	Tausenderzahlen für Fixture-Mengen/Suchvolumen bzw. Leistung auf Referenzhardware, keine Produktversion
-docs/spec/09-dataforseo.md	,0024 $, Live 0,004 $ (Preisseite, 13.10.2026). Die Preisseite AI Mode (FAQ) belegt die Ab	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/PARITY.md	1 (Referenzprodukt (Free-Version), 14.10.2026)	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/PARITY.md	rity/report.md`. Der Planer hat am 14.10.2026 nach dem Grundsatz entschieden: **Parität mi	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-docs/spec/reviews-open-v1.md	ib-/Grammatik-Tutorial, geprüft am 13.10.2026) zeigt der Detail-Tab Fehler, Typ, Detail un	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
-tests/fixtures/tech-m2-sitemaps/REPORT.md	/ Darwin arm64; Rust 1.99.1; Node 22.20.0; npm 10.9.3. Rust mit `OPENSPIDER_SECRET_STORE=	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
