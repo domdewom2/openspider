@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Download &amp; installation | OpenSpider</title>
+<meta name="description" content="The public OpenSpider beta is in preparation. Platforms, documented system requirements and getting started with building the CLI from source.">
+<link rel="canonical" href="https://openspider.de/en/download/">
+<link rel="alternate" hreflang="de" href="https://openspider.de/download/">
+<link rel="alternate" hreflang="en" href="https://openspider.de/en/download/">
+<link rel="alternate" hreflang="x-default" href="https://openspider.de/download/">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="wrap">
+<header class="site-header">
+<a class="brand" href="/en/" aria-label="OpenSpider · Home"><img src="/assets/brand/openspider-mark.svg" width="40" height="40" alt="">OpenSpider</a>
+<nav aria-label="Main navigation"><a href="/en/features/">Features</a><a href="/en/download/" aria-current="page">Download</a><a href="/en/faq/">FAQ</a><a class="language" href="/download/" lang="de" hreflang="de" aria-label="Auf Deutsch lesen">DE</a></nav>
+</header>
+<main id="main" tabindex="-1">
+<section class="page-intro"><p class="eyebrow">OpenSpider</p><h1>Download & installation</h1><p class="lead">The public beta is on its way. Find the release status and documented requirements here.</p></section><section class="beta panel" id="beta" aria-labelledby="beta-title"><div><span class="eyebrow">BETA</span><h2 id="beta-title">Public beta in preparation</h2><p>We are preparing the public beta. Installers are not available here yet. Once a beta is published, you will find it on GitHub Releases.</p></div><div class="actions"><button class="button primary" disabled>Beta download – coming soon</button><a href="https://github.com/domdewom2/openspider/releases">View GitHub Releases ↗</a></div></section><section class="section"><h2>Platforms & requirements</h2><div class="grid"><article class="card"><h3>macOS</h3><p>Desktop: macOS 13 or later, Apple Silicon (arm64) or Intel (x86_64).</p></article><article class="card"><h3>Windows</h3><p>Desktop: Windows 10 version 1809 or later, or Windows 11, x64. Requires the WebView2 Evergreen Runtime.</p></article><article class="card"><h3>Linux</h3><p>Core, CLI and MCP over STDIO: Linux x86_64 with glibc. Linux desktop and Linux installation packages are not supported.</p></article></div><p>Documented hardware requirements: at least 4 GB RAM; 8 GB or more and an SSD are recommended. Resource needs depend on the crawl and rendering.</p></section><section class="section"><h2>Build the CLI from source</h2><p>For developers: building the CLI requires the Rust toolchain with Cargo; cloning requires Git. See the repository for further instructions.</p><pre><code>git clone https://github.com/domdewom2/openspider.git
+cd openspider
+cargo build --release -p os-cli</code></pre><p><a href="https://github.com/domdewom2/openspider#quick-start">Repository instructions ↗</a></p><h3>Print an MCP configuration</h3><pre><code>openspider mcp --print-config codex</code></pre></section></main>
+<footer><div><strong>OpenSpider</strong><p>For people and AI agents.</p><small>Code: Apache-2.0</small></div><nav aria-label="More links"><a href="/en/legal/">Legal notice</a><a href="/en/privacy/">Privacy</a><a href="https://github.com/domdewom2/openspider">GitHub ↗</a></nav></footer>
+</div>
+</body>
+</html>
