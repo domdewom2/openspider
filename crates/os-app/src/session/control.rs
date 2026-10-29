@@ -677,7 +677,7 @@ async fn remember_crawl(app: &App, path: String) {
                 .cloned()
                 .unwrap_or_default();
             let mut paths = vec![path];
-            for entry in old {
+            for entry in &old {
                 if let Some(path) = entry.get("path").and_then(|v| v.as_str()) {
                     if !path.is_empty() && !paths.iter().any(|p| p == path) {
                         paths.push(path.to_owned());
@@ -689,7 +689,12 @@ async fn remember_crawl(app: &App, path: String) {
                 serde_json::json!(paths
                     .into_iter()
                     .take(10)
-                    .map(|path| serde_json::json!({"path":path}))
+                    .map(|path| old
+                        .iter()
+                        .find(|entry| entry.get("path").and_then(|value| value.as_str())
+                            == Some(path.as_str()))
+                        .cloned()
+                        .unwrap_or_else(|| serde_json::json!({"path":path})))
                     .collect::<Vec<_>>()),
             );
         })

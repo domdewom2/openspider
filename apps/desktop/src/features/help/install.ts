@@ -72,8 +72,9 @@ export function installMainMenus(): () => void {
       throw e;
     }
     if (!live) return;
-    setRecent([{ path }, ...state.recent.filter((e) => e.path !== path)]);
-    await persist(entries => [{ path }, ...entries.filter(entry => entry.path !== path)]);
+    const entry = state.recent.find(entry => entry.path === path) ?? { path };
+    setRecent([entry, ...state.recent.filter((e) => e.path !== path)]);
+    await persist(entries => [entry, ...entries.filter(entry => entry.path !== path)]);
   };
   const file = (request: Parameters<typeof chooseFile>[0]) => chooseFile(request, () => live);
   on("crawl.open", () => file({ kind: "open", extensions: ["ospider"], title: "shortcut-crawl-open", submit: (path) => openPath(path) }));

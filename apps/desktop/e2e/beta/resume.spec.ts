@@ -39,7 +39,7 @@ test("a paused crawl survives a real process restart, appears in Recent and resu
     await expect.poll(() => page.evaluate(() => {
       const menu = window.__osMenu?.model;
       return JSON.stringify(menu?.menus.find(m => m.id === "file"));
-    })).toContain(reference.file);
+    })).toContain(site.base);
     const listing = await page.evaluate(async () => {
       const { crawls } = await import(/* @vite-ignore */ String("/src/ipc/crawls.ts"));
       return crawls.list({ show: "all" });
