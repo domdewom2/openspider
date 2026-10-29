@@ -9,6 +9,29 @@ export function exportNameKey(name: string): string {
 }
 
 export function exportDisplayName(name: string, lookup: Lookup, separator = ": "): string | null {
+  // The catalog owns export kind and name provenance. Never infer them from user text.
+  if (name.startsWith("custom-export:")) {
+    let metadata: unknown;
+    try { metadata = JSON.parse(name.slice("custom-export:".length)); } catch { return null; }
+    if (!metadata || typeof metadata !== "object") return null;
+    const data = metadata as Record<string, unknown>;
+    if ((data.group !== "search" && data.group !== "extraction") || typeof data.name !== "string" || typeof data.inlinks !== "boolean") return null;
+    const group = lookup(canonKey("tab", data.group === "search" ? "Custom Search" : "Custom Extraction"));
+    if (group === null) return null;
+    let label = data.name;
+    if (typeof data.generatedIndex === "number") {
+      const key = data.group === "search" ? "export-name-filter" : "export-name-extractor";
+      const generated = lookup(key, { n: data.generatedIndex });
+      if (generated === null) return null;
+      label = generated;
+    }
+    if (data.inlinks) {
+      const inlinks = lookup("export-name-inlinks", { name: label });
+      if (inlinks === null) return null;
+      label = inlinks;
+    }
+    return `${group}${separator}${label}`;
+  }
   if (name.startsWith("report '")) {
     const clauses = [...name.matchAll(/(?:^|; )report '([^']+)' requires ([\s\S]*?)(?=; report '|$)/g)];
     if (clauses.length) {
@@ -28,19 +51,11 @@ export function exportDisplayName(name: string, lookup: Lookup, separator = ": "
       return messages.every((value): value is string => value !== null) ? messages.join(" ") : null;
     }
   }
-  // Custom names are user data, including punctuation and colons; only their group and generated suffix are translated.
+  // Older catalogs lack provenance: preserve the entire custom name, including suffixes.
   const custom = /^(Custom Search|Custom Extraction):(.+)$/.exec(name);
   if (custom) {
     const group = lookup(canonKey("tab", custom[1]!));
-    if (group === null) return null;
-    let label = custom[2]!;
-    const inlinks = label.endsWith(" Inlinks");
-    if (inlinks) label = label.slice(0, -8);
-    const generated = /^Extractor (\d+)$/.exec(label);
-    if (generated) label = lookup("export-name-extractor", { n: generated[1] }) ?? label;
-    else label = lookup(exportNameKey(label)) ?? label;
-    if (inlinks) label = lookup("export-name-inlinks", { name: label }) ?? label;
-    return `${group}${separator}${label}`;
+    return group === null ? null : `${group}${separator}${custom[2]}`;
   }
   const part = (value: string): string | null => {
     const direct = lookup(exportNameKey(value)) ?? lookup(canonKey("tab", value)) ?? lookup(canonKey("filter", value));

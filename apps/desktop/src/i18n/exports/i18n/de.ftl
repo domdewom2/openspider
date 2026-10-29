@@ -103,3 +103,5 @@ export-reason-a11y = { $name }: Erfasste Barrierefreiheitsdaten sind erforderlic
 export-reason-validation = { $name }: Eine HTML-Validierung ist erforderlich.
 export-reason-javascript-errors = { $name }: Erfasste JavaScript-Fehler sind erforderlich.
 export-reason-missing = { $name }: Eine Voraussetzung für diesen Export fehlt.
+
+export-name-filter = Filter { $n }

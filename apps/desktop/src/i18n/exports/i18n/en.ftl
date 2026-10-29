@@ -103,3 +103,5 @@ export-reason-a11y = { $name }: Captured accessibility data is required.
 export-reason-validation = { $name }: HTML validation is required.
 export-reason-javascript-errors = { $name }: Captured JavaScript errors are required.
 export-reason-missing = { $name }: A prerequisite for this export is missing.
+
+export-name-filter = Filter { $n }
