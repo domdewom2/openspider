@@ -27,4 +27,6 @@ test("detects nested and plain text clipping and requires the full ellipsis name
   await expect(textFits(page.locator("main"), "display contents")).rejects.toThrow("Clipped display contents caption");
   await page.setContent('<main><div style="width:100px"><span>A caption that wraps onto several lines without clipping.</span></div></main>');
   await textFits(page.locator("main"), "wrapping");
+  await page.setContent('<main><svg width="300" height="30"><text x="0" y="20">Visible vector caption</text></svg></main>');
+  await textFits(page.locator("main"), "SVG text");
 });

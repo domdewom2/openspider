@@ -35,12 +35,12 @@ export async function textFits(root: Locator, name: string) {
           const target = document.getElementById(id);
           return target?.getAttribute("role") === "tooltip" ? target.textContent ?? "" : "";
         }).join(" ");
-        const names = [parent.title, parent.getAttribute("aria-label") ?? "", labelled, tooltip].map(normalize);
+        const names = [parent.getAttribute("title") ?? "", parent.getAttribute("aria-label") ?? "", labelled, tooltip].map(normalize);
         const namedEllipsis = css.textOverflow === "ellipsis" && names.some(label => label.length > 0 && label === fullText);
         const x = ["hidden", "clip"].includes(css.overflowX) && !namedEllipsis && rects.some(r => r.left < box.left - 1 || r.right > box.right + 1);
         const y = ["hidden", "clip"].includes(css.overflowY) && rects.some(r => r.top < box.top - 1 || r.bottom > box.bottom + 1);
         if (x || y) {
-          hits.push({ text, element: `${parent.tagName}.${parent.className}`, x, y });
+          hits.push({ text, element: `${parent.tagName}.${parent.getAttribute("class") ?? ""}`, x, y });
           break;
         }
       }
