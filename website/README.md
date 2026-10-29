@@ -1,7 +1,7 @@
 # OpenSpider Projektwebsite · M3-W01
 
 `site/` enthält die direkt auslieferbare Website: Deutsch unter `/`, Englisch unter
-`/en/`, jeweils Funktionen, Download/Installation, FAQ, Rechtstext-Platzhalter und
+`/en/`, jeweils Funktionen, Download/Installation, FAQ, Impressum und Datenschutz und
 404-Seite. Gemeinsames CSS, Bilder und Icons liegen unter `site/assets/`.
 Kein Build-Schritt, keine Laufzeitabhängigkeiten, kein ausführbares Browser-JavaScript.
 Das bestehende Verzeichnis `placeholder/` bleibt unverändert.
@@ -61,11 +61,9 @@ Dies ersetzt keine vollständige manuelle Prüfung mit Screenreader.
 
 ## Offene Punkte vor Veröffentlichung
 
-- Impressum und Datenschutzerklärung durch den Betreiber ergänzen, einschließlich
-  Angaben zur serverseitigen Datenverarbeitung. Beide Sprachen enthalten klare Platzhalter.
-- Finale Brand-Dateien durch den Orchestrator einsetzen; Herkunft, exakte Dateinamen
-  und anschließend neu zu erzeugende Icons/OG-Bild siehe `site/assets/brand/README.txt`.
-  Das externe Brand-README war hier nicht verfügbar; es wird nicht vorausgesetzt.
+- Impressum und Datenschutzerklärung sind aus evnxt.de/wojcik.de übernommen und an openspider.de angepasst
+  (keine Cookies, kein Tracking, Zugriffsprotokolle bis neun Wochen, Hoster Hetzner). Brand-Dateien sind eingesetzt;
+  das OG-Bild zeigt noch das alte Logo und wird vor der Veröffentlichung neu erzeugt.
 - Echte Screenshots ergänzen; die Website zeigt derzeit ausschließlich das Repo-Logo.
 - Beta nach Veröffentlichung auf GitHub Releases verlinken und Download-Button aktivieren.
 - Caddy-Fehlerseiten wie oben anbinden und HTTPS/404 nach dem Kopieren prüfen.
