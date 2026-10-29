@@ -220,3 +220,28 @@ fn cancellation_during_cookie_aggregation_stops_before_any_output_row() {
         }));
     }
 }
+
+// spec: OUT-112 [M2]
+#[test]
+fn shared_catalog_snapshot_preserves_every_report_prerequisite() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = file(dir.path());
+    let cfg = config();
+    let pending = os_export::reports::prereq::pending_analysis_filters(
+        &os_analyze::views::filter_counts(&file, &cfg).unwrap(),
+    );
+    for report in os_export::reports::report_tables() {
+        assert_eq!(
+            os_export::reports::prereq::availability_with_pending(
+                report.name,
+                report.requires,
+                &file,
+                &cfg,
+                &pending,
+            ),
+            os_export::reports::prereq::availability(report.name, report.requires, &file, &cfg),
+            "{}",
+            report.name,
+        );
+    }
+}
