@@ -95,8 +95,8 @@ impl TaskLauncher for ProcessLauncher {
 /// Zustand der Aufgabenverwaltung dieser App.
 #[derive(Default)]
 pub struct TasksState {
-    planner: Mutex<Option<Arc<dyn OsPlanner>>>,
-    planner_resolved: Mutex<bool>,
+    // None: noch nicht aufgelöst; Some(None): auf diesem System kein Planer.
+    planner: Mutex<Option<Option<Arc<dyn OsPlanner>>>>,
     launcher: Mutex<Option<Arc<dyn TaskLauncher>>>,
     zone: Mutex<Option<Arc<dyn Zone>>>,
     watchers: Mutex<HashMap<String, OpHandle>>,
@@ -105,11 +105,17 @@ pub struct TasksState {
 impl TasksState {
     /// Setzt den Planer des Betriebssystems (Tests: Dry-Run; die Hülle: das System).
     pub fn set_planner(&self, planner: Arc<dyn OsPlanner>) {
-        *self.planner.lock().unwrap_or_else(|p| p.into_inner()) = Some(planner);
-        *self
-            .planner_resolved
-            .lock()
-            .unwrap_or_else(|p| p.into_inner()) = true;
+        *self.planner.lock().unwrap_or_else(|p| p.into_inner()) = Some(Some(planner));
+    }
+
+    fn resolve_planner(
+        &self,
+        resolve: impl FnOnce() -> Option<Arc<dyn OsPlanner>>,
+    ) -> Option<Arc<dyn OsPlanner>> {
+        // Startabgleich und set_planner müssen dieselbe Sperre halten: eine bereits laufende
+        // Systemauflösung darf den injizierten Planer nicht nachträglich überschreiben (Linux: None).
+        let mut planner = self.planner.lock().unwrap_or_else(|p| p.into_inner());
+        planner.get_or_insert_with(resolve).clone()
     }
 
     /// Setzt den Starter für „Jetzt ausführen“.
@@ -146,38 +152,21 @@ fn history(app: &App) -> HistoryStore {
 /// Der Planer: gesetzt, sonst nach `OPENSPIDER_PLANNER` (`system`, `dry`, `off`); in der E2E-Bridge Dry-Run.
 fn planner_of(app: &App) -> Option<Arc<dyn OsPlanner>> {
     let state = app.ext::<TasksState>();
-    {
-        if *state
-            .planner_resolved
-            .lock()
-            .unwrap_or_else(|p| p.into_inner())
-        {
-            return state
-                .planner
-                .lock()
-                .unwrap_or_else(|p| p.into_inner())
-                .clone();
+    state.resolve_planner(|| {
+        let dry_dir = settings_dir(app).join("schedules").join("planner-dry");
+        let choice = std::env::var("OPENSPIDER_PLANNER").unwrap_or_default();
+        match choice.as_str() {
+            "off" => None,
+            "dry" => Some(planner::dry_run(planner::native_backend(), &dry_dir)),
+            _ if cfg!(feature = "e2e-bridge") => {
+                Some(planner::dry_run(planner::native_backend(), &dry_dir))
+            }
+            _ => planner::system(
+                Arc::new(SystemRunner),
+                &settings_dir(app).join("schedules").join("planner"),
+            ),
         }
-    }
-    let dry_dir = settings_dir(app).join("schedules").join("planner-dry");
-    let choice = std::env::var("OPENSPIDER_PLANNER").unwrap_or_default();
-    let resolved = match choice.as_str() {
-        "off" => None,
-        "dry" => Some(planner::dry_run(planner::native_backend(), &dry_dir)),
-        _ if cfg!(feature = "e2e-bridge") => {
-            Some(planner::dry_run(planner::native_backend(), &dry_dir))
-        }
-        _ => planner::system(
-            Arc::new(SystemRunner),
-            &settings_dir(app).join("schedules").join("planner"),
-        ),
-    };
-    *state.planner.lock().unwrap_or_else(|p| p.into_inner()) = resolved.clone();
-    *state
-        .planner_resolved
-        .lock()
-        .unwrap_or_else(|p| p.into_inner()) = true;
-    resolved
+    })
 }
 
 fn launcher_of(app: &App) -> Option<Arc<dyn TaskLauncher>> {
@@ -1397,5 +1386,53 @@ pub fn register(r: &mut Registry) {
             },
             handler,
         );
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use os_sched::planner::Backend;
+    use std::sync::mpsc;
+
+    // spec: OUT-166
+    // spec: OUT-170
+    #[test]
+    fn startup_resolution_cannot_overwrite_an_injected_planner() {
+        for has_system_planner in [false, true] {
+            let dir = tempfile::tempdir().unwrap();
+            let state = Arc::new(TasksState::default());
+            let injected = planner::dry_run(Backend::Launchd, &dir.path().join("injected"));
+            let system = has_system_planner
+                .then(|| planner::dry_run(Backend::TaskScheduler, &dir.path().join("system")));
+            let (entered_tx, entered_rx) = mpsc::channel();
+            let (release_tx, release_rx) = mpsc::channel();
+            std::thread::scope(|scope| {
+                let resolving_state = state.clone();
+                let resolving = scope.spawn(move || {
+                    resolving_state.resolve_planner(|| {
+                        entered_tx.send(()).unwrap();
+                        release_rx.recv().unwrap();
+                        system
+                    })
+                });
+                entered_rx.recv().unwrap();
+                // Die Gate hält die Auflösung offen, ohne Sleeps oder einen echten OS-Planer.
+                // Linux liefert None; auch diese Auflösung muss den Austausch sperren.
+                let locked = state.planner.try_lock().is_err();
+                let replacing = scope.spawn(|| state.set_planner(injected.clone()));
+                release_tx.send(()).unwrap();
+                assert_eq!(resolving.join().unwrap().is_some(), has_system_planner);
+                replacing.join().unwrap();
+                assert!(
+                    locked,
+                    "Auflösung und Austausch müssen dieselbe Sperre halten"
+                );
+            });
+            let resolved = state
+                .resolve_planner(|| panic!("injizierter Planer muss erhalten bleiben"))
+                .unwrap();
+            assert!(Arc::ptr_eq(&resolved, &injected));
+        }
     }
 }
