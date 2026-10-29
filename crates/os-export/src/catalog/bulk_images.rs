@@ -14,6 +14,7 @@ pub fn dynamic_entries(cfg: &os_model::CrawlConfig) -> Vec<super::DynamicEntry> 
             super::DynamicEntry {
                 file_stem: name.clone(),
                 name,
+                label_key: None,
                 header: crate::catalog::IMAGE_HEADER
                     .iter()
                     .map(|s| (*s).into())

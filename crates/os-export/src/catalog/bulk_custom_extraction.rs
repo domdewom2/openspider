@@ -55,9 +55,12 @@ fn all_extractions(job: &TableJob<'_>, writer: &mut dyn TableWriter) -> Result<u
 
 /// Inlinks use the shared standard-link exporter and the tab's non-empty criterion.
 pub fn dynamic_entries(cfg: &os_model::CrawlConfig) -> Vec<DynamicEntry> {
-    cfg.custom_extraction.extractors.iter().take(100).enumerate().map(|(i, _)| {
-        let name = format!("Custom Extraction:{} Inlinks", extractor_name(cfg, i));
-        DynamicEntry { file_stem: name.clone(), name, header: LINK_HEADER.iter().map(|s| (*s).into()).collect(), run: Box::new(move |job, writer| {
+    cfg.custom_extraction.extractors.iter().take(100).enumerate().map(|(i, extractor)| {
+        let label = extractor_name(cfg, i);
+        let generated_index = extractor.name.trim().is_empty().then_some(i + 1);
+        let name = format!("Custom Extraction:{label} Inlinks");
+        let label_key = Some(super::custom_label_key("extraction", &label, true, generated_index));
+        DynamicEntry { file_stem: name.clone(), name, label_key, header: LINK_HEADER.iter().map(|s| (*s).into()).collect(), run: Box::new(move |job, writer| {
             links_export::stream_links(job.file,
                 &format!("t.is_internal = 1 AND t.in_tables = 1 AND t.content_class = 'HTML' AND t.status_code BETWEEN 200 AND 299 AND EXISTS (SELECT 1 FROM custom_extraction_values e WHERE e.url_id = t.id AND e.def_index = {i} AND e.value <> '')"),
                 &[], LinkOrder::Inlinks, &links_export::link_kinds(), writer)
@@ -93,6 +96,52 @@ mod tests {
             .map(|r| r.unwrap().iter().map(str::to_owned).collect())
             .collect();
         (header, rows)
+    }
+
+    // spec: UI-121
+    // spec: OUT-061
+    #[test]
+    fn display_metadata_distinguishes_named_and_generated_extractors() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = fixture::create(&dir.path().join("extract.ospider"));
+        let mut cfg = file.config().unwrap();
+        let template = cfg.custom_extraction.extractors[0].clone();
+        cfg.custom_extraction.extractors = ["Screenshots", "Extractor 2", "Stock Inlinks", "  "]
+            .into_iter()
+            .map(|name| {
+                let mut extractor = template.clone();
+                extractor.name = name.into();
+                extractor
+            })
+            .collect();
+        let entries = dynamic_entries(&cfg);
+        assert_eq!(entries.len(), 4);
+        for (i, name) in ["Screenshots", "Extractor 2", "Stock Inlinks", "Extractor 4"]
+            .iter()
+            .enumerate()
+        {
+            let entry = &entries[i];
+            let canonical = format!("Custom Extraction:{name} Inlinks");
+            assert_eq!(entry.name, canonical);
+            assert_eq!(entry.file_stem, canonical);
+            assert_eq!(entry.header, LINK_HEADER);
+            let metadata: serde_json::Value = serde_json::from_str(
+                entry
+                    .label_key
+                    .as_ref()
+                    .unwrap()
+                    .strip_prefix("custom-export:")
+                    .unwrap(),
+            )
+            .unwrap();
+            assert_eq!(
+                metadata,
+                serde_json::json!({
+                    "group": "extraction", "name": name, "inlinks": true,
+                    "generatedIndex": if i == 3 { Some(4) } else { None },
+                })
+            );
+        }
     }
 
     // spec: OUT-061
