@@ -16,6 +16,8 @@ export interface SessionState {
   /** Active per-host pacing notices, retained when a dialog is dismissed. */
   throttled: Record<string, boolean>;
   crawlDelays: Record<string, { seconds: number; effectiveSeconds: number; applied: boolean }>;
+  openingCrawl: boolean;
+  openError: Notice | null;
   crawl: CrawlStatus | null;
   analysis: AnalysisStatus | null;
   analysisStarting: boolean;
@@ -39,6 +41,8 @@ export const useSession = create<SessionState>((set, get) => ({
   seq: -1,
   throttled: {},
   crawlDelays: {},
+  openingCrawl: false,
+  openError: null,
   crawl: null,
   analysis: null,
   analysisResult: null,
@@ -59,6 +63,7 @@ export const useSession = create<SessionState>((set, get) => ({
       for (const o of tick.ops) ops[o.opId] = o;
       return {
         seq: tick.seq,
+        ...reduceOpening(s, tick.notices),
         throttled: tick.crawl && ["idle", "completed", "failed"].includes(tick.crawl.phase) ? {} : reduceThrottle(tick.crawl && tick.crawl.crawlId !== s.crawl?.crawlId ? {} : s.throttled, tick.notices),
         crawlDelays: reduceDelays(tick.crawl && tick.crawl.crawlId !== s.crawl?.crawlId ? {} : s.crawlDelays, tick.notices),
         crawl: tick.crawl ?? s.crawl,
@@ -76,7 +81,7 @@ export const useSession = create<SessionState>((set, get) => ({
     });
   },
   pushNotice(notice) {
-    set((s) => ({ notices: [...s.notices, notice], throttled: reduceThrottle(s.throttled, [notice]), crawlDelays: reduceDelays(s.crawlDelays, [notice]), analysisResult: reduceAnalysisResult(s.analysisResult, [notice]) }));
+    set((s) => ({ notices: [...s.notices, notice], ...reduceOpening(s, [notice]), throttled: reduceThrottle(s.throttled, [notice]), crawlDelays: reduceDelays(s.crawlDelays, [notice]), analysisResult: reduceAnalysisResult(s.analysisResult, [notice]) }));
   },
   dismissNotice(notice) {
     set((s) => ({ notices: s.notices.filter((n) => n !== notice) }));
@@ -97,6 +102,8 @@ function reduceThrottle(before: Record<string, boolean>, notices: Notice[]): Rec
   const next = { ...before };
   for (const n of notices) {
     const host = String(n.args.host ?? "");
+    if (n.code === "memory-throttled") next["memory"] = true;
+    if (n.code === "memory-throttle-cleared") delete next["memory"];
     if (n.code === "crawl-throttled") next[host] = true;
     if (n.code === "crawl-throttle-cleared") delete next[host];
   }
@@ -122,4 +129,14 @@ function reduceAnalysisResult(before: SessionState["analysisResult"], notices: N
     if (notice.code === "analysis-failed") result = "failed";
   }
   return result;
+}
+
+function reduceOpening(before: Pick<SessionState, "openingCrawl" | "openError">, notices: Notice[]) {
+  let { openingCrawl, openError } = before;
+  for (const notice of notices) {
+    if (notice.code === "crawl-open-started") { openingCrawl = true; openError = null; }
+    if (notice.code === "crawl-open-completed") { openingCrawl = false; openError = null; }
+    if (notice.code === "crawl-open-failed") { openingCrawl = false; openError = notice; }
+  }
+  return { openingCrawl, openError };
 }

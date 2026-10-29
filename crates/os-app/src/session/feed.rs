@@ -16,6 +16,7 @@ pub(crate) struct Cursor {
     rows_at: Option<Duration>,
     pending: Option<ChangeSet>,
     pub(super) status: Option<CrawlStatus>,
+    memory_throttled: bool,
     delays: std::collections::HashMap<String, (f64, bool)>,
 }
 #[derive(Clone, Debug)]
@@ -168,6 +169,20 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
         .is_some_and(|t| now.saturating_sub(t) < Duration::from_millis(50))
     {
         return Ok(());
+    }
+    let memory_throttled = s.engine.is_some() && os_engine::memory::sample().low_available();
+    if old.memory_throttled != memory_throttled {
+        app.push_notice(Notice {
+            level: NoticeLevel::Info,
+            code: if memory_throttled {
+                "memory-throttled"
+            } else {
+                "memory-throttle-cleared"
+            }
+            .into(),
+            args: Default::default(),
+        });
+        old.memory_throttled = memory_throttled;
     }
     let before = old.clone();
     let clock = app.config().clock.clone();

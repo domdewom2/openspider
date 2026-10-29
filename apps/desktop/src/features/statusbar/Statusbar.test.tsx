@@ -82,3 +82,36 @@ it("shows limits, named analysis steps, statistics, and the always visible MCP m
   fireEvent.click(screen.getByText("Statistics"));
   expect(screen.getByText("Average response time: 0.231 s")).toBeVisible();
 });
+
+// spec: CRAWL-129
+it("retains memory throttling after notice dismissal and clears it on recovery", () => {
+  render(<Statusbar />);
+  act(() => {
+    useSession.getState().pushNotice({ level: "warning", code: "memory-throttled", args: {} });
+    useSession.getState().clearNotices(); vi.advanceTimersByTime(250);
+  });
+  expect(screen.getByText("Throttled")).toBeVisible();
+  act(() => {
+    useSession.getState().pushNotice({ level: "info", code: "memory-throttle-cleared", args: {} });
+    vi.advanceTimersByTime(250);
+  });
+  expect(screen.queryByText("Throttled")).toBeNull();
+});
+
+// spec: UI-124
+// spec: CRAWL-126 [M2]
+it("shows opening progress and a concrete failure reason from the real command notices", () => {
+  render(<Statusbar />);
+  act(() => {
+    useSession.getState().pushNotice({ level: "info", code: "crawl-open-started", args: {} });
+    vi.advanceTimersByTime(250);
+  });
+  expect(screen.getByTestId("crawl-opening")).toBeVisible();
+  expect(screen.getByRole("progressbar")).toBeInTheDocument();
+  act(() => {
+    useSession.getState().pushNotice({ level: "error", code: "crawl-open-failed", args: { code: "Store", detail: "file is not a database" } });
+    useSession.getState().clearNotices(); vi.advanceTimersByTime(250);
+  });
+  expect(screen.queryByTestId("crawl-opening")).toBeNull();
+  expect(screen.getByTestId("crawl-open-error")).toHaveTextContent("file is not a database");
+});

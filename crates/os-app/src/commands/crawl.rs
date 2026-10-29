@@ -81,7 +81,54 @@ fn clear<'a>(app: &'a App, ctx: CallCtx, _: serde_json::Value) -> BoxFuture<'a, 
     })
 }
 fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
-    Box::pin(async move { to_json(&control::open(app, ctx, parse_args(args)?).await?) })
+    Box::pin(async move {
+        let arg: OpenCrawlArgs = parse_args(args)?;
+        let request = serde_json::to_value(&arg).unwrap_or_default();
+        tracing::info!(request = %request, "Crawl-Datei öffnen: begonnen");
+        // Progress is transient; completed headless opens must not replay startup traffic.
+        let show_progress = app.subscribed_windows().contains(&ctx.window);
+        if show_progress {
+            app.push_notice(Notice {
+                level: NoticeLevel::Info,
+                code: "crawl-open-started".into(),
+                args: [("request".into(), request)].into(),
+            });
+        }
+        let started = std::time::Instant::now();
+        let result = control::open(app, ctx, arg).await;
+        let (code, level, args) = match &result {
+            Ok(summary) => {
+                tracing::info!(crawl_id = %summary.crawl_id, elapsed_ms = started.elapsed().as_millis(), "Crawl-Datei öffnen: abgeschlossen");
+                (
+                    "crawl-open-completed",
+                    NoticeLevel::Info,
+                    std::collections::BTreeMap::new(),
+                )
+            }
+            Err(error) => {
+                tracing::error!(code = ?error.code, reason = %error.message_key, detail = ?error.detail, elapsed_ms = started.elapsed().as_millis(), "Crawl-Datei öffnen: fehlgeschlagen");
+                (
+                    "crawl-open-failed",
+                    NoticeLevel::Error,
+                    [
+                        ("messageKey".into(), serde_json::json!(error.message_key)),
+                        ("args".into(), serde_json::json!(error.args)),
+                        ("detail".into(), serde_json::json!(error.detail)),
+                        ("code".into(), serde_json::json!(error.code)),
+                    ]
+                    .into(),
+                )
+            }
+        };
+        if show_progress || result.is_err() {
+            app.push_notice(Notice {
+                level,
+                code: code.into(),
+                args,
+            });
+        }
+        to_json(&result?)
+    })
 }
 fn save_as<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
