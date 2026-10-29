@@ -63,7 +63,7 @@ Dies ersetzt keine vollständige manuelle Prüfung mit Screenreader.
 
 - Impressum und Datenschutzerklärung sind aus evnxt.de/wojcik.de übernommen und an openspider.de angepasst
   (keine Cookies, kein Tracking, Zugriffsprotokolle bis neun Wochen, Hoster Hetzner). Brand-Dateien sind eingesetzt;
-  das OG-Bild zeigt noch das alte Logo und wird vor der Veröffentlichung neu erzeugt.
+  das OG-Bild ist aus dem neuen Logo erzeugt.
 - Echte Screenshots ergänzen; die Website zeigt derzeit ausschließlich das Repo-Logo.
 - Beta nach Veröffentlichung auf GitHub Releases verlinken und Download-Button aktivieren.
 - Caddy-Fehlerseiten wie oben anbinden und HTTPS/404 nach dem Kopieren prüfen.
