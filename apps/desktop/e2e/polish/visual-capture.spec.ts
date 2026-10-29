@@ -1,4 +1,4 @@
-import { test } from '../alpha/fixture';
+import { test, expect, type Alpha } from '../alpha/fixture';
 import { crawledWithSelection, showPanes } from './support';
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -6,6 +6,15 @@ test.use({ locale: "de-DE" });
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date("2026-10-28T12:00:00Z"));
 });
+
+// The capture needs loaded view counts and details after each theme/navigation change.
+async function readyTable(alpha: Alpha, theme: string) {
+  await expect(alpha.page.locator('html')).toHaveAttribute('data-theme', theme);
+  await alpha.settledGrid();
+  await expect.poll(() => alpha.counter()).toMatch(/^Angezeigt: 25 von 25(?: · 1 markiert)?$/);
+  await alpha.table().locator('canvas').click({ position: { x: 60, y: 46 } });
+  await expect(alpha.page.locator('.os-proptable').getByRole('cell', { name: alpha.startUrl, exact: true }).first()).toBeVisible();
+}
 
 // spec: UI-001
 test('own fx-ui-basic screenshots', async ({ alpha }) => {
@@ -17,6 +26,7 @@ test('own fx-ui-basic screenshots', async ({ alpha }) => {
       const { usePrefs } = await import(/* @vite-ignore */ path);
       await usePrefs.getState().patch({ appearance: { theme } });
     }, theme);
+    await readyTable(alpha, theme);
     const dir = resolve('../../docs/plan/M2-reports/u35');
     mkdirSync(dir, { recursive: true });
     await alpha.page.screenshot({ scale: "css", path: resolve(dir, `${process.env.U35_CAPTURE ?? 'nachher'}-${theme}-1024x640.png`) });
@@ -30,6 +40,7 @@ test('own fx-ui-basic screenshots', async ({ alpha }) => {
         const { usePrefs } = await import(/* @vite-ignore */ path);
         await usePrefs.getState().patch({ appearance: { theme } });
       }, theme);
+      await readyTable(alpha, theme);
       const dir = resolve('../../docs/plan/M2-reports/u35');
       await alpha.page.screenshot({ scale: 'css', path: resolve(dir, `nachher-${theme}-1440x900.png`) });
       await alpha.page.locator('[data-group="overview"] button').click();
