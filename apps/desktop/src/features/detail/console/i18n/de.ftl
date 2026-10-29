@@ -1,9 +1,9 @@
-console-level = Level
-console-level-all = Alle Level
+console-level = Stufe
+console-level-all = Alle Stufen
 console-level-error = Fehler
 console-level-warning = Warnung
 console-level-info = Hinweis
-console-level-log = Log
+console-level-log = Protokoll
 console-export-pages = Alle Seiten mit JavaScript-Problemen exportieren
 console-export-summary = Zusammenfassung aller Konsolenmeldungen
 console-export-needs-capture = Braucht einen Crawl mit JavaScript-Rendering und JavaScript-Fehlererfassung.

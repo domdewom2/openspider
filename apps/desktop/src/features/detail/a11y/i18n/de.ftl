@@ -1,8 +1,8 @@
 a11y-result = Ergebnis
-a11y-result-Violation = Violation
-a11y-result-Incomplete = Incomplete
-a11y-result-Inapplicable = Inapplicable
-a11y-result-Passed = Passed
+a11y-result-Violation = Verstoß
+a11y-result-Incomplete = Unvollständig
+a11y-result-Inapplicable = Nicht anwendbar
+a11y-result-Passed = Bestanden
 a11y-result-All = Alle
 a11y-rules = Regeln
 a11y-nodes = Betroffene Elemente

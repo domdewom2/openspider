@@ -2,7 +2,7 @@
 viz-kind-crawlTree = Crawl-Baum
 viz-kind-crawlGraph = Kraftgerichteter Crawl-Graph
 viz-kind-directoryTree = Verzeichnisbaum
-viz-kind-anchorWords = Wortwolke der Inlink-Ankertexte
+viz-kind-anchorWords = Wortwolke eingehender Ankertexte
 viz-pick-kind = Art der Visualisierung
 viz-data-changed = Daten geändert
 viz-refresh = Aktualisieren
@@ -119,7 +119,7 @@ viz-words-stopwords = Stoppwörter entfernen
 viz-words-nofollow = Nofollow-Links einbeziehen
 viz-words-max = Höchstzahl Begriffe
 viz-section-terms = Begriffe
-viz-word-label = { $term }: { $count } Links. Diese Inlinks in der Tabelle zeigen.
+viz-word-label = { $term }: { $count } Links. Diese eingehenden Links in der Tabelle zeigen.
 
 notice-viz-data-changed = Die Crawl-Daten einer Visualisierung haben sich geändert.
 notice-viz-provenance-missing = Diese Crawl-Datei enthält nicht, wo jede URL zuerst gefunden wurde.

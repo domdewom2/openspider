@@ -62,8 +62,8 @@ config-group-custom = Benutzerdefiniert
 
 config-page-spider-crawl = Crawl
 config-page-spider-extraction = Extraktion
-config-page-spider-limits = Limits
-config-page-spider-rendering = Rendering
+config-page-spider-limits = Grenzen
+config-page-spider-rendering = Seitendarstellung
 config-page-spider-advanced = Erweitert
 config-page-spider-presets = Voreinstellungen
 config-page-robots = robots.txt
