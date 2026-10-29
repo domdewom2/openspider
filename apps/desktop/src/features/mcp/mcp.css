@@ -13,3 +13,14 @@
 .os-mcp-path { overflow-wrap: anywhere; color: var(--os-text-muted); }
 .os-mcp-status { margin-inline-start: auto; }
 .os-mcp-notice { position: fixed; inset-inline-end: 16px; bottom: 40px; z-index: 20; max-width: min(420px, calc(100vw - 32px)); }
+
+/* Keep the catalogue readable in the real dialog; scroll horizontally below
+   its minimum width instead of breaking headings/tool identifiers into letters. */
+.os-mcp-tools-table { min-width: 1040px; table-layout: fixed; }
+.os-mcp-tools-table th { white-space: nowrap; overflow-wrap: normal; }
+.os-mcp-tools-table th:nth-child(1) { width: 200px; }
+.os-mcp-tools-table th:nth-child(2) { width: 220px; }
+.os-mcp-tools-table th:nth-child(3) { width: 90px; }
+.os-mcp-tools-table th:nth-child(4) { width: 330px; }
+.os-mcp-tools-table td { overflow-wrap: break-word; }
+.os-mcp-tools-table td:nth-child(2) code { white-space: nowrap; }

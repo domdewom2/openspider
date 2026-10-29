@@ -127,6 +127,23 @@ pub fn register(r: &mut Registry) {
     );
 }
 async fn run(app: &App, name: &str, args: Value) -> CmdResult {
+    // The local catalogue is independent of HTTP startup/shutdown and its state lock.
+    if name == "mcp.tools" {
+        let server = mcp::server(app, mcp::load(app)?)?;
+        return to_json(
+            &server
+                .catalog()
+                .into_iter()
+                .map(|(t, class, enabled)| ToolInfo {
+                    class: format!("{class:?}").to_ascii_lowercase(),
+                    name: t.name.to_string(),
+                    enabled,
+                    description: t.description.unwrap_or_default().to_string(),
+                    schema: serde_json::json!(t.input_schema),
+                })
+                .collect::<Vec<_>>(),
+        );
+    }
     let service = app.ext::<Service>();
     let mut state = service.state.lock().await;
     match name {
@@ -154,22 +171,6 @@ async fn run(app: &App, name: &str, args: Value) -> CmdResult {
                 masked: "••••••••".into(),
                 value: args.reveal.then_some(value),
             })
-        }
-        "mcp.tools" => {
-            let server = mcp::server(app, mcp::load(app)?)?;
-            to_json(
-                &server
-                    .catalog()
-                    .into_iter()
-                    .map(|(t, class, enabled)| ToolInfo {
-                        class: format!("{class:?}").to_ascii_lowercase(),
-                        name: t.name.to_string(),
-                        enabled,
-                        description: t.description.unwrap_or_default().to_string(),
-                        schema: serde_json::json!(t.input_schema),
-                    })
-                    .collect::<Vec<_>>(),
-            )
         }
 
         "mcp.setClasses" => {
