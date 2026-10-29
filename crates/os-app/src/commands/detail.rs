@@ -46,45 +46,56 @@ fn url_details<'a>(
         let args: UrlIdArgs = parse_args(args)?;
         let s = session(app, &ctx)?;
         app.read_pool()
-            .run_snapshot(s.key, move |file, _| {
-                Ok((|| {
-                    let props =
-                        os_analyze::details::url_properties(file, &s.config, UrlId(args.url_id))
-                            .map_err(view_error)?;
-                    if props.is_empty() {
-                        return Err(CmdError::new(ErrorCode::NotFound, "err-url-not-found"));
-                    }
-                    let mut rows = FIELDS
-                        .iter()
-                        .map(|(name, key)| NameValue {
-                            name: (*name).into(),
-                            value: props.iter().find(|(k, _)| k == key).and_then(|(_, v)| {
-                                if matches!(v, Value::Null)
-                                    || super::catalog::extraction_key(key)
-                                        .is_some_and(|k| !super::catalog::config_on(&s.config, k))
-                                {
-                                    None
-                                } else {
-                                    serde_json::to_value(v).ok()
-                                }
-                            }),
-                        })
-                        .collect::<Vec<_>>();
-                    for (name, value) in
-                        os_analyze::details::url_details(file, &s.config, UrlId(args.url_id))
-                            .map_err(view_error)?
-                    {
-                        // Leerer Text = kein Wert (z. B. Link Score vor dem Analyseschritt, M2-D08).
-                        let value = (!value.is_empty()).then_some(serde_json::Value::String(value));
-                        if let Some(row) = rows.iter_mut().find(|row| row.name == name) {
-                            row.value = value;
-                        } else {
-                            rows.push(NameValue { name, value });
+            .run_cached(
+                s.key,
+                "detail-properties",
+                crate::runtime::current_cancel(),
+                move |file, _| {
+                    let _snapshot = file.conn().unchecked_transaction()?;
+                    Ok((|| {
+                        let props = os_analyze::details::url_properties(
+                            file,
+                            &s.config,
+                            UrlId(args.url_id),
+                        )
+                        .map_err(view_error)?;
+                        if props.is_empty() {
+                            return Err(CmdError::new(ErrorCode::NotFound, "err-url-not-found"));
                         }
-                    }
-                    to_json(&rows)
-                })())
-            })
+                        let mut rows = FIELDS
+                            .iter()
+                            .map(|(name, key)| NameValue {
+                                name: (*name).into(),
+                                value: props.iter().find(|(k, _)| k == key).and_then(|(_, v)| {
+                                    if matches!(v, Value::Null)
+                                        || super::catalog::extraction_key(key).is_some_and(|k| {
+                                            !super::catalog::config_on(&s.config, k)
+                                        })
+                                    {
+                                        None
+                                    } else {
+                                        serde_json::to_value(v).ok()
+                                    }
+                                }),
+                            })
+                            .collect::<Vec<_>>();
+                        for (name, value) in
+                            os_analyze::details::url_details(file, &s.config, UrlId(args.url_id))
+                                .map_err(view_error)?
+                        {
+                            // Leerer Text = kein Wert (z. B. Link Score vor dem Analyseschritt, M2-D08).
+                            let value =
+                                (!value.is_empty()).then_some(serde_json::Value::String(value));
+                            if let Some(row) = rows.iter_mut().find(|row| row.name == name) {
+                                row.value = value;
+                            } else {
+                                rows.push(NameValue { name, value });
+                            }
+                        }
+                        to_json(&rows)
+                    })())
+                },
+            )
             .await?
     })
 }
@@ -101,34 +112,40 @@ fn headers<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture
             );
         }
         app.read_pool()
-            .run_snapshot(s.key, move |file, _| {
-                if os_store::queries::url_by_id(file.conn(), UrlId(args.url_id))?.is_none() {
-                    return Ok(Err(CmdError::new(ErrorCode::NotFound, "err-url-not-found")));
-                }
-                let mut dto = HeadersDto {
-                    status_line: os_store::queries::app_support::http_status_line(
-                        file.conn(),
-                        UrlId(args.url_id),
-                    )?,
-                    request: vec![],
-                    response: vec![],
-                };
-                if s.config.extraction.http_headers {
-                    for h in os_store::queries::headers(file.conn(), UrlId(args.url_id))? {
-                        let value = os_fetch::redact::header_value(&h.name, &h.value);
-                        let row = Header {
-                            name: h.name,
-                            value,
-                        };
-                        if h.request {
-                            dto.request.push(row);
-                        } else {
-                            dto.response.push(row);
+            .run_cached(
+                s.key,
+                "detail-properties",
+                crate::runtime::current_cancel(),
+                move |file, _| {
+                    let _snapshot = file.conn().unchecked_transaction()?;
+                    if os_store::queries::url_by_id(file.conn(), UrlId(args.url_id))?.is_none() {
+                        return Ok(Err(CmdError::new(ErrorCode::NotFound, "err-url-not-found")));
+                    }
+                    let mut dto = HeadersDto {
+                        status_line: os_store::queries::app_support::http_status_line(
+                            file.conn(),
+                            UrlId(args.url_id),
+                        )?,
+                        request: vec![],
+                        response: vec![],
+                    };
+                    if s.config.extraction.http_headers {
+                        for h in os_store::queries::headers(file.conn(), UrlId(args.url_id))? {
+                            let value = os_fetch::redact::header_value(&h.name, &h.value);
+                            let row = Header {
+                                name: h.name,
+                                value,
+                            };
+                            if h.request {
+                                dto.request.push(row);
+                            } else {
+                                dto.response.push(row);
+                            }
                         }
                     }
-                }
-                Ok(to_json(&dto))
-            })
+                    Ok(to_json(&dto))
+                },
+            )
             .await?
     })
 }
