@@ -1,4 +1,5 @@
 import { expect, test } from "../fixtures/app";
+import { textFits } from "./text-fit";
 
 test.use({ freshState: true, viewport: { width: 1024, height: 640 } });
 for (const lang of ["de", "en"]) {
@@ -22,6 +23,7 @@ for (const lang of ["de", "en"]) {
       expect(box!.y).toBeGreaterThanOrEqual(0);
       expect(box!.x + box!.width).toBeLessThanOrEqual(1025);
       expect(box!.y + box!.height).toBeLessThanOrEqual(641);
+      await textFits(dialog, `${action}-${lang}`);
       await info.attach(`${action}-${lang}`, { body: await page.screenshot(), contentType: "image/png" });
       await page.keyboard.press("Escape");
       await expect(dialog).toHaveCount(0);

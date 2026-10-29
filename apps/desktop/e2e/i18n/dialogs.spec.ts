@@ -1,4 +1,5 @@
 import { expect, test, type Page, type TestInfo, type Locator } from "@playwright/test";
+import { textFits } from "./text-fit";
 import type {} from "../config/harness";
 import type {} from "../export/harness";
 import type {} from "../integrations/harness";
@@ -48,25 +49,7 @@ async function fit(dialog: Locator, page: Page, info: TestInfo, name: string) {
   expect(box!.y).toBeGreaterThanOrEqual(0);
   expect(box!.x + box!.width).toBeLessThanOrEqual(1025);
   expect(box!.y + box!.height).toBeLessThanOrEqual(641);
-  const clipped = await dialog.locator("button, label, h1, h2, h3, [role=tab], .os-checkbox > span:last-child, .os-switch > span:last-child").evaluateAll(elements => elements.flatMap(el => {
-    if (el.getClientRects().length === 0 || el.children.length > 0) return [];
-    const e = el as HTMLElement;
-    const range = document.createRange(); range.selectNodeContents(e);
-    const text = range.getBoundingClientRect();
-    if (!text.width || !text.height) return [];
-    const own = getComputedStyle(e);
-    const namedEllipsis = own.textOverflow === "ellipsis" && !!(e.title || e.getAttribute("aria-label"));
-    // Overflow alone is not clipping: wrapped text can paint fully outside its inline/flex line box.
-    // Compare the actual text rectangle only with ancestors that clip their content.
-    for (let parent: HTMLElement | null = e; parent && parent !== document.body; parent = parent.parentElement) {
-      const css = getComputedStyle(parent); const box = parent.getBoundingClientRect();
-      const x = ["hidden", "clip"].includes(css.overflowX) && !namedEllipsis && (text.left < box.left - 1 || text.right > box.right + 1);
-      const y = ["hidden", "clip"].includes(css.overflowY) && (text.top < box.top - 1 || text.bottom > box.bottom + 1);
-      if (x || y) return [{ text: e.textContent, x, y }];
-    }
-    return [];
-  }));
-  expect(clipped, name).toEqual([]);
+  await textFits(dialog, name);
   await info.attach(name, { body: await page.screenshot(), contentType: "image/png" });
 }
 
@@ -132,6 +115,7 @@ for (const lang of ["de", "en"]) {
       await sections.nth(i).click();
       await expect(sections.nth(i)).toHaveAttribute("aria-selected", "true");
       await untranslated(page.locator("main"), page);
+      await textFits(page.locator("main"), `settings-${lang}-${i}`);
       await info.attach(`settings-${lang}-${i}`, { body: await page.screenshot(), contentType: "image/png" });
     }
     await page.goto("/e2e/mcp/index.html?transport=mock");
