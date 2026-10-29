@@ -1,3 +1,4 @@
+import { parse } from "@fluent/syntax";
 import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 import { checkCatalog, checkIdenticalGerman } from "./check";
@@ -13,7 +14,7 @@ const technical = ["XPath", "User-Agent", "Accept-Language", "KB", "ms", "MB", "
 const dataTemplates = ["s", "URLs", "/  URLs", "URLs/s", "API:  %", "+ / −", "Export:", "Host:  · Realm:", "PNG ×", "Version"];
 for (const value of [...equalGerman, ...technical, ...dataTemplates]) exceptions.add(value);
 
-// spec: UI-121 [P1]
+// spec: UI-121
 it("keeps de/en complete across every feature and reports unreviewed identical German values in CI (K2-75)", () => {
   const files = loadFtlFiles();
   expect(checkCatalog(files).problems).toEqual([]);
@@ -28,4 +29,23 @@ it("detects copied text, attributes and plurals while permitting glossary terms 
   expect(hits).toHaveLength(3);
   expect(hits.join("\n")).toContain("copied.title");
   expect(hits.join("\n")).toContain("plural");
+});
+
+// spec: UI-121
+it("keeps every canonical column a complete literal in de/en for the CLI build (K2-78)", () => {
+  const files = loadFtlFiles().filter(f => f.feature === "i18n/canon");
+  const columns = (lang: string) => {
+    const body = parse(files.find(f => f.lang === lang)!.source, { withSpans: false }).body;
+    expect(body.filter(entry => entry.type === "Junk")).toEqual([]);
+    const messages = body.filter(entry => entry.type === "Message" && entry.id.name.startsWith("column-"));
+    expect(messages.length).toBeGreaterThan(0);
+    for (const message of messages) {
+      if (message.type !== "Message") throw new Error("Expected message");
+      expect(message.attributes, message.id.name).toEqual([]);
+      expect(message.value?.elements.every(element => element.type === "TextElement"), message.id.name).toBe(true);
+      expect(message.value?.elements.map(element => element.type === "TextElement" ? element.value : "").join("").trim(), message.id.name).not.toBe("");
+    }
+    return messages.map(message => message.type === "Message" ? message.id.name : "").sort();
+  };
+  expect(columns("de")).toEqual(columns("en"));
 });

@@ -55,6 +55,7 @@ export function humanizeKey(key: string): string {
 export interface I18n {
   /** Verfügbare Sprachen (Dateien), `en` immer zuerst. */
   languages(): string[];
+  completeness(lang: string): number;
   has(lang: string, key: string): boolean;
   /** Schlüssel in der Sprache, dann in Englisch, dann Kanon-Fallback, dann abgeleiteter Name. */
   translate(lang: string, key: string, args?: TArgs, opts?: TOptions): string;
@@ -67,14 +68,23 @@ export interface I18n {
 export function createI18n(files: readonly FtlFile[], onWarn: (msg: string) => void = () => undefined): I18n {
   const byLang = new Map<string, FluentBundle>();
   const problems: string[] = [];
+  const keys = new Map<string, Set<string>>();
   const bundleFor = (lang: string): FluentBundle | undefined => byLang.get(lang);
 
   const langs = new Set<string>([DEFAULT_LANGUAGE]);
   for (const f of files) langs.add(f.lang);
   for (const lang of langs) {
     const bundle = new FluentBundle(lang, { useIsolating: false });
+    const translated = new Set<string>();
+    keys.set(lang, translated);
     for (const f of files.filter((x) => x.lang === lang)) {
-      const errs = bundle.addResource(new FluentResource(f.source), { allowOverrides: false });
+      const resource = new FluentResource(f.source);
+      for (const entry of resource.body) {
+        if (entry.id.startsWith("-")) continue;
+        if (entry.value !== null) translated.add(entry.id);
+        for (const attr of Object.keys(entry.attributes)) translated.add(`${entry.id}.${attr}`);
+      }
+      const errs = bundle.addResource(resource, { allowOverrides: false });
       for (const e of errs) problems.push(`${f.path}: ${e.message}`);
     }
     byLang.set(lang, bundle);
@@ -104,6 +114,12 @@ export function createI18n(files: readonly FtlFile[], onWarn: (msg: string) => v
 
   return {
     languages: () => [...ordered],
+    completeness(lang) {
+      const reference = keys.get(DEFAULT_LANGUAGE)!;
+      const translated = keys.get(lang);
+      const count = [...reference].filter(key => translated?.has(key)).length;
+      return count === reference.size ? 100 : Math.min(99, Math.round(100 * count / reference.size));
+    },
     has: (lang, key) => lookup(lang, key) !== null || exportDisplayName(key, (id, args) => format(lang, id, args), lang === "en" ? ":" : ": ") !== null,
     translate(lang, key, args, opts) {
       const own = format(lang, key, args) ?? exportDisplayName(key, (id, values) => format(lang, id, values), lang === "en" ? ":" : ": ");
