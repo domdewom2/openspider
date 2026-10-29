@@ -25,6 +25,7 @@ import { Resources } from "../resources/Resources";
 import { Headers } from "../headers/Headers";
 import { Cookies } from "../cookies/Cookies";
 import { CrawlPath } from "../crawl-path/CrawlPath";
+import { DetailVisible } from "./request";
 import { DetailEmpty, DetailError } from "./Feedback";
 import { useDetailPreferences } from "./preferences";
 import { DETAIL_BACK_EVENT, DETAIL_SHOW_TAB_EVENT, requestNavigation, useDetailSelection } from "./selection";
@@ -97,6 +98,14 @@ function RegularDetailFrame(props: DetailFrameProps) {
   for (const plugin of [...Object.values(extensionModules).flatMap(m => m.detailTab ? [m.detailTab] : []), ...(props.plugins ?? [])]) panels[plugin.id] = plugin.Component;
   if (selection.topTab === "Hreflang") panels.urlDetails = Hreflang;
   const tab = preferences.hidden.includes(active) ? "urlDetails" : active;
+  // Retain only visited, bounded table panels for the current selection. Changing the
+  // selection/crawl releases every old handle. Hidden panels do not poll for updates.
+  const retentionKey = JSON.stringify([selection.crawlId ?? crawl?.crawlId, selection.urlIds, selection.focus, selection.topTab]);
+  const [retained, setRetained] = useState<{ key: string; tabs: DetailTabId[] }>({ key: retentionKey, tabs: [] });
+  const cacheable = ["inlinks", "outlinks", "images", "resources", "duplicates"].includes(tab);
+  const visited = retained.key === retentionKey ? retained.tabs : [];
+  const shown = [...new Set([...visited, ...(cacheable ? [tab] : [])])];
+  useEffect(() => { setRetained({ key: retentionKey, tabs: shown }); }, [retentionKey, tab]);
   const Panel = panels[tab];
   const effectiveSelection = { ...selection, crawlId: selection.crawlId ?? crawl?.crawlId };
   const panelProps: DetailPanelProps = { selection: effectiveSelection, actions, rendering: props.rendering ?? features.rendering,
@@ -131,7 +140,13 @@ function RegularDetailFrame(props: DetailFrameProps) {
     <div className="os-detail-body" role="tabpanel" aria-label={t(`detail-tab-${tab}`)}>
       {!selected ? <DetailEmpty state={{ code: "NO_SELECTION" }} /> : showCrawlPath ? null : <>
         {multiFocus && <Banner>{t("detail-focus", { id: selection.focus ?? selection.urlIds[0] })}</Banner>}
-        {Panel ? <RegionBoundary key={`${tab}:${selection.crawlId ?? crawl?.crawlId ?? ""}`} name="detail"><Panel {...panelProps} /></RegionBoundary> : <DetailEmpty state={{ code: "NO_DATA_YET" }} />}
+        {shown.map(id => {
+          const CachedPanel = panels[id];
+          return CachedPanel && <div key={`${retentionKey}:${id}`} hidden={id !== tab} style={id === tab ? { display: "contents" } : undefined}>
+            <DetailVisible.Provider value={id === tab}><RegionBoundary name="detail"><CachedPanel {...panelProps} /></RegionBoundary></DetailVisible.Provider>
+          </div>;
+        })}
+        {!cacheable && (Panel ? <RegionBoundary key={`${tab}:${retentionKey}`} name="detail"><Panel {...panelProps} /></RegionBoundary> : <DetailEmpty state={{ code: "NO_DATA_YET" }} />)}
       </>}
     </div>
     <Dialog title={t("detail-tab-crawlPath")} isOpen={showCrawlPath} onOpenChange={setShowCrawlPath} size="large"

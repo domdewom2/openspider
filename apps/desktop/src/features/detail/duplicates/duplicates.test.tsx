@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { DetailVisible } from "../frame/request";
 import { Duplicates, sortPartners, textLines } from "./Duplicates";
 import { diffWords, tokenize } from "./diff";
 import { useSession } from "../../../state/session";
@@ -85,4 +86,18 @@ describe("Duplicate details", () => {
     const lines = textLines("one two\nthree", tokenize("one two\nthree"), [false, true, false]);
     expect(lines.map(l => l.changed)).toEqual([true, false]); expect(lines[0]!.parts.map(p => p.text)).toEqual(["one", " ", "two"]);
   });
+});
+
+// spec: UI-018
+// spec: UI-030
+it("keeps duplicate data on return and refreshes the final revision without loading hidden data", async () => {
+  const { rerender } = render(<DetailVisible.Provider value={true}><Duplicates {...props(10)} /></DetailVisible.Provider>);
+  await settle(400); expect(rows()).toHaveLength(2);
+  const before = callsOf(ctx.core, "detail.duplicates").length;
+  rerender(<DetailVisible.Provider value={false}><Duplicates {...props(10)} /></DetailVisible.Provider>);
+  act(() => useSession.setState({ countsVersion: useSession.getState().countsVersion + 1 }));
+  await settle(400); expect(callsOf(ctx.core, "detail.duplicates")).toHaveLength(before);
+  rerender(<DetailVisible.Provider value={true}><Duplicates {...props(10)} /></DetailVisible.Provider>);
+  expect(rows()).toHaveLength(2);
+  await settle(400); expect(callsOf(ctx.core, "detail.duplicates")).toHaveLength(before + 1);
 });
