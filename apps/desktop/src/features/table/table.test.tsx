@@ -420,3 +420,15 @@ it("refreshes the filter counts for every new counts version of the tick, indepe
   expect(counts).toHaveBeenCalledTimes(3);
   controller.dispose();
 });
+
+// spec: UI-018
+// spec: UI-016
+it("shows loading feedback instead of the no-data instruction while a filter opens", async () => {
+  render(<UpperTable />); await screen.findByTestId("grid");
+  let resolve!: (value: ViewHandle) => void;
+  vi.spyOn(view, "open").mockImplementation(() => new Promise(r => { resolve = r; }));
+  act(() => useTabs.getState().query({ filter: "HTML" }));
+  await waitFor(() => expect(resolve).toBeTypeOf("function"));
+  expect(screen.queryByText(/No data yet/)).toBeNull();
+  expect(screen.getByRole("progressbar")).toBeInTheDocument();
+});
