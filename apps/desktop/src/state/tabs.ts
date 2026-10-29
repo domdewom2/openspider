@@ -79,7 +79,7 @@ interface TabsState {
   layout(order: string[], hidden: string[], group?: TabGroupId): Promise<void>;
   focus(id: string, urlId: number): void;
 }
-/** Counts local layout edits (reorder, show, hide, layout, reset): a `load()` that overlaps an edit must not undo it (A01-19). */
+/** Counts local layout and navigation edits: a `load()` that overlaps an edit must not undo it (A01-19, UI-004). */
 let layoutEdits = 0;
 /** The whole `topTabs` section: layout plus navigation state (K2-77: group and tab survive a restart). */
 function persisted(s: Pick<TabsState, "order" | "hidden" | "active" | "view" | "groupActive">): Record<string, JsonValue> {
@@ -116,6 +116,7 @@ export const useTabs = create<TabsState>((set, get) => {
   },
   select(id, filter) {
     if (!get().catalog.some(t => t.id === id)) return;
+    layoutEdits++;
     const query = get().queries[id] ?? defaultQuery();
     const changed = get().active !== id || get().view !== "tabs";
     set({ active: id, view: "tabs", groupActive: { ...get().groupActive, [groupOf(id)]: id }, queries: { ...get().queries, [id]: { ...query, ...(filter ? { filter } : {}) } } });
@@ -131,6 +132,7 @@ export const useTabs = create<TabsState>((set, get) => {
     if (first) { void get().show(first, true).catch(() => undefined); get().select(first); }
   },
   showOverview() {
+    layoutEdits++;
     set({ view: "overview" });
     if (get().loaded) void save().catch(() => undefined);
   },

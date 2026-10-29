@@ -245,3 +245,30 @@ describe("Dispatcher am Dokument", () => {
     off();
   });
 });
+
+// spec: UI-113
+it("shares modal scans across menu entries and observes same-turn dialog mutations", () => {
+  const modal = document.createElement("dialog");
+  document.body.append(modal);
+  const query = vi.spyOn(document, "querySelector");
+  try {
+    for (let i = 0; i < 100; i++) expect(isModalOpen()).toBe(false);
+    expect(query).toHaveBeenCalledTimes(1);
+    modal.open = true;
+    expect(isModalOpen()).toBe(true);
+    modal.open = false;
+    modal.className = "os-modal";
+    expect(isModalOpen()).toBe(true);
+    modal.className = "os-popover";
+    expect(isModalOpen()).toBe(true);
+    modal.className = "";
+    modal.setAttribute("aria-modal", "true");
+    expect(isModalOpen()).toBe(true);
+    modal.removeAttribute("aria-modal");
+    expect(isModalOpen()).toBe(false);
+    modal.className = "os-modal";
+    expect(isModalOpen()).toBe(true);
+    modal.remove();
+    expect(isModalOpen()).toBe(false);
+  } finally { query.mockRestore(); modal.remove(); }
+});
