@@ -290,9 +290,11 @@ impl TabView {
             ViewSpec::Tab { tab, filter, .. } => (tab.clone(), filter.clone()),
             _ => return Err(CmdError::invalid_input("err-tab-required", "spec")),
         };
-        let work = app
-            .read_pool()
-            .run_with(session.key.clone(), token.clone(), move |file, _| {
+        let work = app.read_pool().run_cached(
+            session.key.clone(),
+            "table-build",
+            token.clone(),
+            move |file, _| {
                 let mut guard = lock(&slot);
                 let result = (|| {
                     match guard.as_mut() {
@@ -330,7 +332,8 @@ impl TabView {
                     ))
                 })();
                 Ok(result)
-            });
+            },
+        );
         let (snapshot, core, version, total, meta, state) =
             until_cancelled(&token, work).await??.map_err(view_error)?;
         let built = Built {

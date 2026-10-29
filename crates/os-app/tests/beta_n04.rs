@@ -103,12 +103,6 @@ async fn synthetic_5000_live_details_filter_pause_resume_and_reopen() {
         json!({"kind":"images","urlIds":[1],"search":null,"sort":[]}),
         json!({"kind":"tab","tab":"Internal","filter":"HTML","search":null,"sort":[]}),
     ] {
-        if spec["kind"] == "tab" {
-            drop(release.take());
-            for blocker in blockers.drain(..) {
-                blocker.await.unwrap();
-            }
-        }
         let before = Instant::now();
         let mut handle = tokio::time::timeout(
             Duration::from_secs(1),
@@ -117,11 +111,13 @@ async fn synthetic_5000_live_details_filter_pause_resume_and_reopen() {
         .await
         .expect("interactive details queued behind aggregate readers");
         if handle["state"] == "building" {
-            let op = first
-                .ops()
-                .wait(handle["op"]["opId"].as_str().unwrap())
-                .await
-                .unwrap();
+            let op = tokio::time::timeout(
+                Duration::from_secs(1),
+                first.ops().wait(handle["op"]["opId"].as_str().unwrap()),
+            )
+            .await
+            .expect("table build blocked by aggregate readers")
+            .unwrap();
             assert_eq!(op.state, os_app::dto::OpState::Done, "{:?}", op.error);
             handle = op.result.unwrap();
         }
@@ -144,6 +140,10 @@ async fn synthetic_5000_live_details_filter_pause_resume_and_reopen() {
             }
         }
         call(&first, "view.close", json!({"viewId":handle["viewId"]})).await;
+    }
+    drop(release.take());
+    for blocker in blockers.drain(..) {
+        blocker.await.unwrap();
     }
     call(&first, "crawl.pause", json!(null)).await;
     call(&first, "crawl.resume", json!(null)).await;
