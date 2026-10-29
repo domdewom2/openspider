@@ -4143,6 +4143,44 @@
   "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). ARBEITSLISTE (docs/plan/M2-acceptance/beta/befunde.md, Nutzer-Abnahme 28.10.2026): A02-07 Übersicht flackert während des Crawls zwischen „wird geladen“ und Inhalt; A02-08 Übersicht hängt nach Pause → Fortsetzen dauerhaft auf „wird geladen“; A02-09 Detail-Tabs Inlinks/Outlinks/Image Details/Ressourcen zeigen während des Crawls nur „…“ (Werte erst nach Pause); A02-10 Tabellenwechsel (Tab External) träge unter Crawl-Last; A02-11 Pause-Knopf wechselt verzögert, Crawl kommt spät zur Ruhe; A02-12 Begrenzung der Crawl-Rate unsichtbar; A02-13 Sprach- und Theme-Wechsel erst nach Neustart; A02-14 App-Menü „Beenden“ ohne Wirkung; A02-15 pausierter Crawl nach Neustart nicht auffindbar; A02-16 MCP-Dialog → Werkzeuge: Liste leer trotz freigegebener Klasse „Lesen“ (nur die Daten-/Logikseite; Spaltenbreiten und Darstellung macht U34); A02-18 „Crawl-Analyse starten“ ohne sichtbare Rückmeldung. Für jeden Befund zuerst die Ursache reproduzieren (E2E-A über die Bridge mit fx-ui-basic und künstlicher Verzögerung 50 ms bzw. Rust-Test), dann beheben, dann Regressionstest. ERWARTUNG je Befund nach Spec: UI-018 (gebündelte Aktualisierung ≤ 2/s je Ansicht, alte Werte bleiben bis zur Antwort stehen – kein Leerzustand zwischen zwei Ständen; nach Fortsetzen läuft die Aktualisierung weiter; Zähler nach Pause = gecrawlter Stand), UI-061, UI-030/032/033/035/036 und UI-145 (Detailinhalte auch während des Crawls innerhalb der Ladezeitgrenzen; Lesezugriffe dürfen nicht hinter dem Writer warten), UI-143 (Reaktionszeiten unter Crawl-Last), UI-003/CRAWL-126 (Knopf wechselt sofort in einen Zwischenzustand „Pausiere …“ und ist gesperrt, Pause mit Checkpoint ≤ 3 s, kein Doppelauslösen), UI-120/UI-121 (Wechsel ohne Neustart ≤ 200 ms auf alle offenen Fenster, nur die native Menüleiste darf einen Neustart-Hinweis zeigen), UI-001/UI-002 (Beenden über App-Menü, Cmd+Q, Datei → Beenden und Fenster-Schließen nehmen denselben Pfad: Rückfrage bei laufendem Crawl/Analyse/Export/MCP-Sitzung mit „Pausieren und beenden“, sonst sofort beenden), CRAWL-126/UI-124 (pausierter Crawl nach App-Neustart unter Datei → Zuletzt geöffnet und in der Crawl-Verwaltung, Fortsetzen ohne Doppel-URLs), UI-129 (Werkzeugliste zeigt die Werkzeuge der freigegebenen Klassen, Leerzustand mit Grund), UI-080/UI-082 (Analyse-Status sichtbar: läuft/Fortschritt/fertig, Fehler als Meldung). K2-76 (Nutzerentscheidung 28.10.2026, CRAWL-145 geändert): `robots.respect_crawl_delay` OS-Default **aus** (bisher an), Paritätsprofil unverändert aus; Default in crates/os-model/src/config.rs, Schema neu erzeugen, tests/fixtures/config/default.osconfig anpassen (Erwartungsänderung nach K2-63 mit Verweis auf K2-76); nennt die robots.txt einen Crawl-delay, erscheint der Hinweis „Crawl-delay: n s (angewandt)“ bzw. „(nicht angewandt)“ in der robots.txt-Zeile (bestehend) und zusätzlich einmalig sichtbar in der Statusleiste (z. B. „Crawl-delay 1 s in robots.txt – nicht angewandt“), solange der Crawl läuft; ist er angewandt, nennt die Statusleiste ihn als Grund der Begrenzung (UI-013). Tests: `// spec: CRAWL-145` (Default aus, Hinweis in beiden Zuständen), je Befund mindestens ein Test mit der Spec-ID oben. Neue Texte nur als i18n-Schlüssel mit de/en-Werten in einer Datei apps/desktop/src/features/<feature>/i18n/n03.ftl je Feature (U34/U33 führen sie danach zusammen). FREMDÄNDERUNG (K2-72-Grundsatz, Bericht „Fremdänderung (K2-75a)“): Grid, primitives und Darstellung (CSS) nicht anfassen – Darstellung ist U34; os-store/os-engine nicht anfassen (E07 läuft parallel), Lesepfad-Engpässe dort als Befund mit Messwert an den Planer. STOPPEN (K2-77, UI-003 geändert): neuer Knopf „Stoppen“ in der Kopfleiste (Logik und Zustandsautomat; Darstellung macht U35): beendet laufenden oder pausierten Crawl endgültig über den vorhandenen Kern-Befehl zum Beenden (crawl.stop o. ä.; fehlt er, additiv nach K2-61), Status „Gestoppt“, danach kein Fortsetzen, automatische Crawl-Analyse wie nach regulärem Ende; Pause und Stoppen schalten sofort in einen gesperrten Zwischenzustand. Test `// spec: UI-003`. Prüfungen C4 grün; Bericht docs/plan/M2-reports/n03.md je Befund: Ursache, Änderung, Test, Ergebnis. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
+  "id": "M2-N04",
+  "kind": "package",
+  "model": "sonnet",
+  "title": "Funktionsfehler aus dem Zwischentest 29.10. (K2-80): Detail-Tabs während/nach dem Crawl, Filter während des Crawls, Öffnen größerer Crawls nach Neustart, Zuletzt geöffnet mit Domain, MCP-Werkzeugliste, Speicherwächter unter macOS",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-018",
+   "UI-016",
+   "UI-030",
+   "UI-032",
+   "UI-033",
+   "UI-035",
+   "UI-145",
+   "UI-124",
+   "UI-129",
+   "CRAWL-126",
+   "CRAWL-129"
+  ],
+  "owns": [
+   "crates/os-app/src/{events,session,views}/**",
+   "crates/os-app/src/commands/{crawl,crawls,crawl_files,detail,detail_ext,mcp,view}.rs",
+   "crates/os-app/tests/beta_*.rs",
+   "crates/os-engine/src/memory.rs",
+   "apps/desktop/src/features/{crawls,mcp,statusbar,table}/** (ohne i18n/**)",
+   "apps/desktop/src/features/detail/{frame,inlinks,outlinks,images,resources,duplicates}/** (ohne i18n/**)",
+   "apps/desktop/src/state/{session,selection}.ts",
+   "apps/desktop/e2e/beta/**",
+   "docs/plan/M2-reports/n04.md"
+  ],
+  "depends_on": [
+   "M2-N03"
+  ],
+  "runner": "local-mac",
+  "size": "M",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 und 2a gehen vor; nur owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. ARBEITSLISTE docs/plan/M2-acceptance/beta/zwischentest-2026-10-29.md, Befunde Z-01 … Z-06 (Z-07 erledigt U33). Jeden Befund zuerst mit einer Fixture reproduzieren (os-testsite, ca. 5.000 URLs, Crawl mit Pause/Fortsetzen, Neustart der Sitzung) und die Ursache im Bericht benennen, dann beheben und mit getaggtem Test belegen. Z-01: Ursache unterscheiden zwischen Sperr-/Schreibkonkurrenz (Crawl, Nachlauf/Analyse) und Frontend-Zustand (Tabwechsel verwirft Daten); Lesepfad der Detail-Tabs darf während Schreibvorgängen nicht blockieren. Leistungsbudgets bei 1 Mio. URLs bleiben bei U31B, hier nur Korrektheit und Reaktionsfähigkeit bei einigen tausend URLs. Z-03: Öffnen darf nie still scheitern – Fortschritt oder Fehlermeldung, Logeintrag. Z-06: Messgröße unter macOS prüfen, Drosselung in der Statusleiste anzeigen. Konflikte mit U31B (views/**, commands/detail.rs) bei der Integration: kleine, getrennte Commits."
+ },
+ {
   "id": "M2-U34",
   "kind": "package",
   "model": "sonnet",
@@ -4334,7 +4372,8 @@
    "M2-U34",
    "M2-A03",
    "M2-N03",
-   "M2-U35"
+   "M2-U35",
+   "M2-N04"
   ],
   "size": "M",
   "runner": "cloud",
