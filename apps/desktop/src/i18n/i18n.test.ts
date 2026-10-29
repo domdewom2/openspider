@@ -168,3 +168,13 @@ describe("Sprachwechsel zur Laufzeit", () => {
     expect(resolveLanguage("system", ["de-AT"])).toBe("de");
   });
 });
+
+// spec: UI-121
+it("keeps unknown backend error keys in the UI language while preserving structured has() and explicit fallbacks", () => {
+  const i = createI18n([file("de", "err-fallback = Vorgang fehlgeschlagen."), file("en", "err-fallback = Operation failed.")]);
+  expect(i.has("de", "err-future-backend-error")).toBe(false);
+  expect(i.translate("de", "err-future-backend-error")).toBe("Vorgang fehlgeschlagen.");
+  expect(i.translate("en", "err-future-backend-error")).toBe("Operation failed.");
+  expect(i.translate("fr", "err-future-backend-error")).toBe("Operation failed.");
+  expect(i.translate("de", "err-future-backend-error", undefined, { fallback: "Explicit fallback" })).toBe("Explicit fallback");
+});

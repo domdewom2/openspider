@@ -113,6 +113,12 @@ export function createI18n(files: readonly FtlFile[], onWarn: (msg: string) => v
         if (en !== null) return en;
       }
       if (opts?.fallback) return opts.fallback;
+      // Older frontends may receive a new backend error key. Keep its main text in the UI language;
+      // structured callers still choose a more specific ErrorCode fallback through has().
+      if (key.startsWith("err-")) {
+        const error = format(lang, "err-fallback") ?? format(DEFAULT_LANGUAGE, "err-fallback");
+        if (error !== null) return error;
+      }
       onWarn(`i18n: Schlüssel ohne Übersetzung: ${key}`);
       return humanizeKey(key);
     },
