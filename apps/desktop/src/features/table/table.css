@@ -39,7 +39,8 @@
 .u10-toolbar { flex-wrap: nowrap; height: var(--os-toolbar-height); flex: none; overflow: auto hidden; }
 .u10-toolbar > * { flex: none; }
 .u10-toolbar .u34-chips { flex-wrap: nowrap; }
-.u10-toolbar .u20-search { width: var(--os-size-220); }
+/* Let the search yield space before the trailing column actions cross the pane edge. */
+.u10-toolbar .u20-search { flex: 0 1 var(--os-size-220); min-width: var(--os-size-80); }
 
 /* Long accessibility rule names keep the filter trigger inside the first tool row. */
 .u34-chip { display: block; max-width: var(--os-size-180); overflow: hidden; text-overflow: ellipsis; }

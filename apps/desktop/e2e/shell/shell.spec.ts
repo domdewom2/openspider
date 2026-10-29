@@ -126,20 +126,9 @@ for (const scale of [1, 1.25, 1.5, 2]) {
     await expect(page.locator(".os-app-sidebar")).toBeHidden();
     await action(page, "view.toggleSidebar");
     const collisions = await page.evaluate(() => {
-      // K2-72/UI-001: scroll contents are clipped by ancestors; only painted rectangles can collide.
-      const clipped = (e: HTMLElement) => {
-        const r = e.getBoundingClientRect();
-        let left = r.left, right = r.right, top = r.top, bottom = r.bottom;
-        for (let p = e.parentElement; p; p = p.parentElement) {
-          const css = getComputedStyle(p), b = p.getBoundingClientRect();
-          if (css.overflowX !== "visible") { left = Math.max(left, b.left); right = Math.min(right, b.right); }
-          if (css.overflowY !== "visible") { top = Math.max(top, b.top); bottom = Math.min(bottom, b.bottom); }
-        }
-        return { x: left, y: top, left, right, top, bottom, width: right - left, height: bottom - top };
-      };
       const elements = [...document.querySelectorAll<HTMLElement>('button,input,select,textarea,a[href],[tabindex="0"]')]
         .filter((e) => e.getClientRects().length > 0 && getComputedStyle(e).visibility !== "hidden")
-        .map((e) => ({ name: e.getAttribute("aria-label") ?? e.tagName, rect: clipped(e) })).filter(e => e.rect.width > 0 && e.rect.height > 0);
+        .map((e) => ({ name: e.getAttribute("aria-label") ?? e.tagName, rect: e.getBoundingClientRect() }));
       const failures: string[] = [];
       for (let i = 0; i < elements.length; i++) {
         const a = elements[i]!;

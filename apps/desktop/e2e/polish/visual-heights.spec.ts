@@ -1,5 +1,5 @@
 import { test, expect } from "../alpha/fixture";
-import { crawledWithSelection } from "./support";
+import { crawledWithSelection, showPanes } from "./support";
 
 test.beforeEach(async ({ page }) => {
   await page.clock.setFixedTime(new Date("2026-10-28T12:00:00Z"));
@@ -136,4 +136,35 @@ test('selection boxes and row ellipsis use the existing selection and context me
   await expect(row).toHaveAttribute('aria-selected', 'true');
   await alpha.page.keyboard.press('Escape');
   await expect(alpha.page.getByRole('dialog')).toHaveCount(0);
+});
+
+// spec: UI-001
+// spec: UI-113
+test('narrow table toolbar keeps every enabled action reachable by scrolling and focus', async ({ alpha }) => {
+  const { page } = alpha;
+  await page.setViewportSize({ width: 1024, height: 640 });
+  await crawledWithSelection(alpha);
+  await showPanes(page, 360);
+  await alpha.settledGrid();
+  const toolbar = page.locator('.u10-toolbar');
+  // Loaded filter chips force overflow; the original shell collision check stays unchanged.
+  expect(await toolbar.evaluate(el => el.scrollWidth > el.clientWidth)).toBe(true);
+  const controls = toolbar.locator('button:not(:disabled), input:not(:disabled), select:not(:disabled)');
+  for (const control of await controls.all()) {
+    if (!await control.isVisible()) continue;
+    await control.scrollIntoViewIfNeeded();
+    await control.focus();
+    await expect(control).toBeFocused();
+    await expect.poll(() => control.evaluate(el => {
+      const row = el.closest('.u10-toolbar')!.getBoundingClientRect();
+      const rect = el.getBoundingClientRect();
+      return { name: el.getAttribute('aria-label') ?? el.textContent,
+        row: { left: row.left, right: row.right, top: row.top, bottom: row.bottom },
+        rect: { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom },
+        within: rect.left >= row.left - .5 && rect.right <= row.right + .5
+          && rect.top >= row.top - .5 && rect.bottom <= row.bottom + .5 };
+    })).toMatchObject({ within: true });
+  }
+  await toolbar.getByRole('button', { name: 'Configure columns…', exact: true }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
 });
