@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useT, i18n, currentLanguage } from "../../i18n";
 import { exportApi } from "../../ipc/export";
 import { config } from "../../ipc/config";
@@ -77,6 +77,8 @@ export function ExportHost({ desktop = nativeExportDesktop }: { desktop?: Export
   const status = active ? combine(active.handles.map(h => ops[h.opId]), active.info?.files) : undefined;
   const crawlId = useSession(s => s.crawl?.crawlId);
   const countsVersion = useSession(s => s.countsVersion);
+  const latestCounts = useRef(countsVersion);
+  latestCounts.current = countsVersion;
   const [exports, setExports] = useState<ExportCatalog | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
@@ -100,10 +102,22 @@ export function ExportHost({ desktop = nativeExportDesktop }: { desktop?: Export
   useAction("export.multi", () => { if (!running) openExport({ kind: "multi" }); });
   useEffect(() => {
     let live = true;
+    let pending = false;
+    let requested: number | undefined;
     setExports(null);
-    if (crawlId) void exportApi.catalog().then(value => { if (live) setExports(value); }).catch(() => undefined);
-    return () => { live = false; };
-  }, [crawlId, countsVersion]);
+    // Preserve the last catalog while a single refresh catches up. Starting a
+    // request on every tick used to fill the core's read pool with obsolete work.
+    const refresh = async () => {
+      if (!live || !crawlId || pending || requested === latestCounts.current) return;
+      pending = true; requested = latestCounts.current;
+      try { const value = await exportApi.catalog(); if (live) setExports(previous => JSON.stringify(previous) === JSON.stringify(value) ? previous : value); }
+      catch { /* The next version retries; no crawl has no export catalog. */ }
+      finally { pending = false; }
+    };
+    void refresh();
+    const timer = setInterval(() => void refresh(), 500);
+    return () => { live = false; clearInterval(timer); };
+  }, [crawlId]);
   useEffect(() => {
     const offs: (() => void)[] = [];
     const menu: MenuContribution[] = [{ menu: "bulkExport", group: "multi", order: 0, items: [{ id: "export.multi", action: "export.multi", labelKey: "export-multi", enabled: c => c.hasCrawl === true && !running }] }];

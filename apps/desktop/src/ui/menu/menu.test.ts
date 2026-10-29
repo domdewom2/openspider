@@ -189,6 +189,10 @@ describe("Menü-Controller (Sprachwechsel ohne Neustart)", () => {
     const off = registerMenuContributions("test/base", BASE_MENU);
     await new Promise((r) => setTimeout(r, 0));
     expect(flattenItems(applied.at(-1)?.menus.flatMap((m) => m.items) ?? []).find((i) => i.id === "file.saveAs")?.enabled).toBe(false);
+    const unchanged = ctl.rebuilds();
+    notify(); notify();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(ctl.rebuilds()).toBe(unchanged);
     hasCrawl = true;
     notify();
     await new Promise((r) => setTimeout(r, 0));

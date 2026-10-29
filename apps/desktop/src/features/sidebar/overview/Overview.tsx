@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { ComparisonNumbers } from "../../compare/ComparisonNumbers";
 import { useComparison } from "../../compare/model";
 import { useT, useFormat, type TFn } from "../../../i18n";
@@ -15,7 +16,7 @@ export function overviewRows(data: OverviewDto, t: TFn): (string | number)[][] {
     ...data.tabs.flatMap(tab => tab.filters.map(f => [`${tab.tab}: ${f.id}`, hasCount(f.state) ? f.count ?? "–" : "–", hasCount(f.state) && f.pct != null ? `${f.pct.toFixed(1)} %` : "–"]))];
 }
 
-export function Overview({ data, collapsed, toggle, startAnalysis, staleSteps = [] }: { data: OverviewDto; collapsed: readonly string[]; staleSteps?: readonly string[]; toggle: (id: string) => void; startAnalysis: () => void }) {
+function OverviewContent({ data, collapsed, toggle, startAnalysis, staleSteps = [] }: { data: OverviewDto; collapsed: readonly string[]; staleSteps?: readonly string[]; toggle: (id: string) => void; startAnalysis: () => void }) {
   const t = useT();
   const f = useFormat();
   const navigate = useSidebarNavigation(s => s.navigate);
@@ -36,3 +37,6 @@ export function Overview({ data, collapsed, toggle, startAnalysis, staleSteps = 
     </section>)}
   </div>;
 }
+
+// Unrelated status ticks must not reconcile every filter row.
+export const Overview = memo(OverviewContent);

@@ -82,3 +82,24 @@ it("shows limits, named analysis steps, statistics, and the always visible MCP m
   fireEvent.click(screen.getByText("Statistics"));
   expect(screen.getByText("Average response time: 0.231 s")).toBeVisible();
 });
+
+// spec: UI-013
+// spec: UI-080 [M2]
+it("publishes the analysis phase and final stopped counters in the same status snapshot", () => {
+  useSession.getState().applyTick(tick);
+  render(<Statusbar />);
+  act(() => useSession.getState().applyTick({
+    ...tick, seq: 2,
+    crawl: { ...tick.crawl!, phase: "completed", endReason: "stopped", crawled: 8, queued: 19, percent: 29 },
+    analysis: { steps: [], running: true, current: null, percent: 0 },
+  }));
+  expect(screen.getByTestId("crawl-phase")).toHaveTextContent("Running");
+  expect(screen.getByText("Done 1,200 of 2,000 (60 %)")).toBeVisible();
+  act(() => { vi.advanceTimersByTime(250); });
+  expect(screen.getByTestId("crawl-phase")).toHaveTextContent("Analysis running");
+  expect(screen.getByText("Done 8 of 27 (29 %)")).toBeVisible();
+  act(() => useSession.getState().applyTick({ ...tick, seq: 3, crawl: null, analysis: { steps: [], running: false, current: null, percent: 100 } }));
+  act(() => { vi.advanceTimersByTime(250); });
+  expect(screen.getByTestId("crawl-phase")).toHaveTextContent("Stopped");
+  expect(screen.getByText("Done 8 of 27 (29 %)")).toBeVisible();
+});
