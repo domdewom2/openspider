@@ -247,7 +247,8 @@ async fn notices_wait_for_a_window_instead_of_getting_lost() {
     assert_eq!(app.flush_tick(), 0);
     let sink = Arc::new(CollectingSink::new());
     app.subscribe(win("main"), sink.clone());
-    assert_eq!(app.flush_tick(), 1);
+    // N03 delivers the queued notice during subscribe; a later flush has no new tick.
+    assert_eq!(app.flush_tick(), 0);
     let t = tick_of(sink.take().remove(0));
     assert_eq!(t.notices[0].code, "open-file");
 }
