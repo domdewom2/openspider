@@ -154,14 +154,16 @@ test.describe("ellipsis (A02-03)", () => {
 
 test.describe("grouped navigation (K2-77)", () => {
   test.use({ locale: "de-DE" });
-  // spec: UI-004
-  test("every top tab is reachable in at most two clicks from any group, at every window size", async ({ alpha }) => {
-    test.setTimeout(180_000);
-    const { page } = alpha;
-    await crawledWithSelection(alpha);
-    const tabs = await catalogTabs(page);
-    const nav = navBar(page);
-    for (const size of SIZES) {
+  // Je Fenstergröße ein eigener Test: dieselben Klicks und Erwartungen, aber jede Größe hat ihr eigenes Zeitbudget
+  // (der Gesamtdurchlauf überschritt auf Linux-WebKit-Runnern 180 s).
+  for (const size of SIZES) {
+    // spec: UI-004
+    test(`every top tab is reachable in at most two clicks from any group at ${size.width}×${size.height}`, async ({ alpha }) => {
+      test.setTimeout(180_000);
+      const { page } = alpha;
+      await crawledWithSelection(alpha);
+      const tabs = await catalogTabs(page);
+      const nav = navBar(page);
       await page.setViewportSize(size);
       await showPanes(page, "default");
       for (const tab of tabs) {
@@ -177,8 +179,8 @@ test.describe("grouped navigation (K2-77)", () => {
         }
         await expect(page.getByRole("tablist", { name: "Daten-Tabs" }).getByRole("tab", { name: tab.label, exact: true }), `${size.width}: ${tab.id}`).toHaveAttribute("aria-selected", "true");
       }
-    }
-  });
+    });
+  }
 
   // spec: UI-004 [P1]
   test("group, tab and the per-group layout survive a restart; „Konfiguration ▾“ opens a configuration page", async ({ alpha }) => {
