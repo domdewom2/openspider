@@ -13,6 +13,7 @@ test.describe("Sprachwechsel ohne Neustart", () => {
     const settings = await context.newPage();
     await app.open(settings, "settings", { "": "" });
     await settings.getByRole("button", { name: /Language/ }).click();
+    await expect(settings.getByRole("option")).toHaveText(["System language", "English", "Deutsch"]);
     await settings.getByRole("option", { name: "Deutsch" }).click();
 
     await expect(page.getByRole("navigation", { name: "Datenansichten" })).toBeVisible();

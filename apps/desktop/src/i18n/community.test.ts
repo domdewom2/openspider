@@ -26,3 +26,11 @@ it("keeps nearly complete community languages visibly incomplete", () => {
   const catalog = createI18n([file("en", source), file("pl", source.slice(0, source.lastIndexOf("\n")))]);
   expect(languageOptions(catalog).find(option => option.value === "pl")?.label).toBe("Polski (99%)");
 });
+
+// spec: UI-121
+it("offers only complete de/en production languages without percentages", () => {
+  expect(languageOptions(i18n)).toEqual([
+    { value: "en", label: "English" },
+    { value: "de", label: "Deutsch" },
+  ]);
+});

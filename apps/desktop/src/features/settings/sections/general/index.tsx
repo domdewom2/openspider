@@ -1,6 +1,7 @@
 import { RemovalConfirmationSettings } from "../../../table/RemovalConfirmationSettings";
 import { useMemo } from "react";
 import { i18n, useT } from "../../../../i18n";
+import { languageOptions } from "../../../../i18n/languages";
 import { usePrefs } from "../../../../state/prefs";
 import { Select, Switch, type RadioOption } from "../../../../ui/primitives";
 import { RestartNote } from "../../frame/RestartNote";
@@ -23,7 +24,7 @@ function General() {
   const notifications = usePrefs((s) => s.notifications);
   const patch = usePrefs((s) => s.patch);
   const options = useMemo<RadioOption[]>(
-    () => [{ value: "system", label: t("settings-general-language-system") }, ...i18n.languages().map((l) => ({ value: l, label: languageName(l) }))],
+    () => [{ value: "system", label: t("settings-general-language-system") }, ...languageOptions(i18n)],
     [t],
   );
   return (
