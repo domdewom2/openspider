@@ -1,6 +1,6 @@
 # Dokumentierte Paritaetsabweichungen (docs/plan/M1.md 5.3, Schritt 4). Stand M1-N18 (Welle 6b).
 #
-# Jede Abweichung zwischen OpenSpider und den Referenz-Exporten (Referenzprodukt 24.3 Free) ist entweder ein Fehler (-> Nachbesserungs-
+# Jede Abweichung zwischen OpenSpider und den Referenz-Exporten (Referenzprodukt (Free-Version)) ist entweder ein Fehler (-> Nachbesserungs-
 # auftrag im Abnahmebericht docs/plan/M1-acceptance/checklist.md, ohne Eintrag hier) oder steht hier mit Spec-ID und
 # Kennzeichen. Der Runner `os-parity` wendet die Eintraege beim Vergleich an und weist sie im Bericht aus.
 #

@@ -11,7 +11,7 @@
 //!   `http://` angegeben ist (das ist die Bestätigung des Nutzers, OS-Festlegung zu CRAWL-117).
 //!   Präfixe ohne Schema (`host`, `host/pfad`) und mit `https://` gelten nur für https.
 //!
-//! Benutzername und Passwort werden UTF-8-kodiert (Referenz-Fix 20.3).
+//! Benutzername und Passwort werden UTF-8-kodiert (Referenz-Fix).
 
 pub(crate) mod digest;
 pub(crate) mod ntlm;

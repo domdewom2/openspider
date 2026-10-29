@@ -1,7 +1,7 @@
 name: Parity
 
 # (Die Neutralitätsprüfung liegt seit K2-67 in neutral.yml: sie muss auch bei reinen Doku-Commits laufen.)
-# Paritätslauf gegen die Referenzexporte (Referenzprodukt 24.3 Free, docs/plan/M1.md 5; Abnahmekriterium A3) und
+# Paritätslauf gegen die Referenzexporte (Referenzprodukt (Free-Version), docs/plan/M1.md 5; Abnahmekriterium A3) und
 # Neutralitätsprüfung (M2-H01, docs/plan/M2.md 3.12). Der Job ersetzt den bisherigen Job `parity` aus ci.yml (den entfernt
 # M2-F04). Der Paritätslauf läuft nur, wenn unter tests/golden/parity/*/ref/ Referenzdateien liegen. Er endet mit
 # Exit-Code 0 (5/5 Sites, 38/38 Vergleiche, docs/plan/M1-acceptance/parity/report.md); A3 wird damit in der CI erzwungen.

@@ -1,5 +1,5 @@
 # Spaltenmapping Referenz -> OpenSpider fuer den Export "Page Titles:All" (Format: docs/plan/M1.md 5.2).
-# Stand M1-P29 (Welle 5): an die echten Kopfzeilen der Referenz (Referenzprodukt 24.3 Free, englische Oberflaeche) angepasst.
+# Stand M1-P29 (Welle 5): an die echten Kopfzeilen der Referenz (Referenzprodukt (Free-Version), englische Oberflaeche) angepasst.
 # Nur Spaltennamen der Kopfzeile; Beschreibungsspalten werden beim Einlesen verworfen (Clean-Room, A8).
 key = ["Address"]
 drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
