@@ -97,7 +97,7 @@ describe("SERP snippet", () => {
   // spec: ONPAGE-192 [M2]
   it("is the SERP lower tab of a Page Titles row and shows Title 1 and Meta Description 1", async () => {
     render(<DetailFrame selection={{ ...selection, topTab: "Page Titles" }} actions={ctx.actions} />); await settle(250);
-    await act(async () => { fireEvent.click(screen.getByRole("tab", { name: "SERP Snippet", hidden: true })); await vi.advanceTimersByTimeAsync(300); });
+    await act(async () => { fireEvent.click(screen.getByRole("tab", { name: "SERP-Snippet", hidden: true })); await vi.advanceTimersByTimeAsync(300); });
     expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue("Start");
     expect(screen.getByRole("textbox", { name: "Description" })).toHaveValue("A short description of the start page.");
   });

@@ -35,7 +35,7 @@ Bearbeiten
 Konfiguration
   + Spider-Konfiguration | ⌘K
   + Inhalte…
-  + Robots…
+  + robots.txt…
   + URL-Umschreibung…
   + Einschließen / Ausschließen…
   + Geschwindigkeit…
@@ -82,9 +82,9 @@ Visualisierungen
   + Verzeichnisgraph
   + 3D-Crawl-Graph
   + 3D-Verzeichnisgraph
-  + Inlink-Ankertext-Wortwolke
-  + Body-Text-Wortwolke
-  + Content-Cluster
+  + Wortwolke eingehender Ankertexte
+  + Wortwolke des Seitentexts
+  + Inhaltsgruppen
 
 Crawl-Analyse
   + Crawl-Analyse starten | ⇧⌘A
@@ -124,7 +124,7 @@ Hilfe
   + Tastaturkürzel
   + Nutzungsstatistik
   + Debug-Informationen
-  + Logs-Ordner öffnen
+  + Protokollordner öffnen
   - Nach Updates suchen | Verfügbar ab M3.
   + Über OpenSpider"
 `;
@@ -275,7 +275,7 @@ exports[`UI-002 win > de: vollständige Menüfolge, Modi und Katalog-Untermenüs
 Konfiguration
   + Spider-Konfiguration | Strg+K
   + Inhalte…
-  + Robots…
+  + robots.txt…
   + URL-Umschreibung…
   + Einschließen / Ausschließen…
   + Geschwindigkeit…
@@ -322,9 +322,9 @@ Visualisierungen
   + Verzeichnisgraph
   + 3D-Crawl-Graph
   + 3D-Verzeichnisgraph
-  + Inlink-Ankertext-Wortwolke
-  + Body-Text-Wortwolke
-  + Content-Cluster
+  + Wortwolke eingehender Ankertexte
+  + Wortwolke des Seitentexts
+  + Inhaltsgruppen
 
 Crawl-Analyse
   + Crawl-Analyse starten | Strg+Umschalt+A
@@ -359,7 +359,7 @@ Hilfe
   + Tastaturkürzel
   + Nutzungsstatistik
   + Debug-Informationen
-  + Logs-Ordner öffnen
+  + Protokollordner öffnen
   - Nach Updates suchen | Verfügbar ab M3.
   + Über OpenSpider"
 `;
