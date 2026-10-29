@@ -1,6 +1,7 @@
 // i18n-Kern (UI-121, M2-ui-concept 2.7): Fluent-Bundles je Sprache aus den .ftl-Dateien der Features.
 // Reine Logik ohne React und ohne Vite – die Dateien werden hineingereicht, damit sie sich testen lässt.
 import { FluentBundle, FluentResource, type FluentVariable } from "@fluent/bundle";
+import { exportDisplayName } from "./exportNames";
 import { negotiateLanguages } from "@fluent/langneg";
 
 export const DEFAULT_LANGUAGE = "en";
@@ -103,12 +104,12 @@ export function createI18n(files: readonly FtlFile[], onWarn: (msg: string) => v
 
   return {
     languages: () => [...ordered],
-    has: (lang, key) => lookup(lang, key) !== null,
+    has: (lang, key) => lookup(lang, key) !== null || exportDisplayName(key, (id, args) => format(lang, id, args), lang === "en" ? ":" : ": ") !== null,
     translate(lang, key, args, opts) {
-      const own = format(lang, key, args);
+      const own = format(lang, key, args) ?? exportDisplayName(key, (id, values) => format(lang, id, values), lang === "en" ? ":" : ": ");
       if (own !== null) return own;
       if (lang !== DEFAULT_LANGUAGE) {
-        const en = format(DEFAULT_LANGUAGE, key, args);
+        const en = format(DEFAULT_LANGUAGE, key, args) ?? exportDisplayName(key, (id, values) => format(DEFAULT_LANGUAGE, id, values), ":");
         if (en !== null) return en;
       }
       if (opts?.fallback) return opts.fallback;

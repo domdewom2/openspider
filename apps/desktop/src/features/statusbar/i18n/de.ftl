@@ -26,7 +26,7 @@ status-details = Statistik
 status-elapsed = Verstrichen: { $value }
 status-response = Mittlere Antwortzeit: { $value } s
 status-end-reason = Abschlussgrund: { $value }
-status-step-link_score = Link-Bewertung
+status-step-link_score = Link-Score
 status-step-canonicals = Kanonisierungen
 status-mcp-settings = MCP-Einstellungen
 

@@ -139,3 +139,32 @@ export function checkCatalog(files: readonly FtlFile[], required: readonly strin
   }
   return { problems, completeness, keys: enKeys.size };
 }
+
+/** K2-75: compare complete Fluent patterns, including attributes and plural branches. */
+export function checkIdenticalGerman(files: readonly FtlFile[], exceptions: ReadonlySet<string>): string[] {
+  const patterns = (source: string) => {
+    const out = new Map<string, unknown>();
+    for (const item of parse(source, { withSpans: false }).body) {
+      if (item.type !== "Message" && item.type !== "Term") continue;
+      if (item.value) out.set(item.id.name, item.value);
+      for (const attr of item.attributes) out.set(`${item.id.name}.${attr.id.name}`, attr.value);
+    }
+    return out;
+  };
+  const problems: string[] = [];
+  for (const de of files.filter(f => f.lang === "de")) {
+    const en = files.find(f => f.feature === de.feature && f.lang === "en");
+    if (!en) continue;
+    const english = patterns(en.source);
+    for (const [key, pattern] of patterns(de.source)) {
+      if (JSON.stringify(pattern) !== JSON.stringify(english.get(key))) continue;
+      const literals: string[] = [];
+      walk(pattern, node => { if (node.type === "TextElement") literals.push(node.value as string); });
+      const text = literals.join("").trim();
+      // Pure data placeholders and punctuation contain no language to translate.
+      if (!/[\p{L}]/u.test(text) || exceptions.has(text)) continue;
+      problems.push(`${de.path}: ${key} ist mit Englisch identisch: ${text}`);
+    }
+  }
+  return problems;
+}
