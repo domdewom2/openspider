@@ -40,20 +40,39 @@ async fn spawn_returns_the_handle_at_once_and_the_result_arrives_in_the_tick() {
     assert!(handle.cancellable);
     assert!(!handle.op_id.is_empty());
 
-    // erster Tick: die Operation läuft mit Fortschritt
+    // K2-63: Der MCP-Dienst flusht seit fix-n02 auch bei unverändertem Status
+    // regelmäßig. Er kann dem manuellen Flush zuvorkommen; geprüft wird deshalb
+    // die Zustellung im Tick, unabhängig davon, wer den Flush ausgelöst hat.
+    // erster Fortschritts-Tick: die Operation läuft
+    let mut received = Vec::new();
     assert!(
-        eventually(Duration::from_secs(2), || app
-            .ops()
-            .status(&handle.op_id)
-            .is_some_and(|s| s.done == 1))
+        eventually(Duration::from_secs(2), || {
+            app.flush_tick();
+            received.extend(sink.take());
+            received.iter().any(|event| {
+                matches!(event, UiEvent::Tick { tick }
+            if tick.ops.iter().any(|op| op.op_id == handle.op_id && op.done == 1))
+            })
+        })
         .await
     );
-    assert_eq!(app.flush_tick(), 1);
-    let first = match sink.take().remove(0) {
-        UiEvent::Tick { tick } => tick,
-        other => panic!("{other:?}"),
-    };
-    assert_eq!(first.seq, 1);
+    let first = received
+        .iter()
+        .filter_map(|event| match event {
+            UiEvent::Tick { tick }
+                if tick
+                    .ops
+                    .iter()
+                    .any(|op| op.op_id == handle.op_id && op.done == 1) =>
+            {
+                Some(tick)
+            }
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    assert_eq!(first.len(), 1, "Fortschritt genau einmal im Tick");
+    let first = first[0];
+    let first_seq = first.seq;
     let op = first.ops.iter().find(|o| o.op_id == handle.op_id).unwrap();
     assert_eq!(
         (op.state, op.done, op.total),
@@ -66,13 +85,35 @@ async fn spawn_returns_the_handle_at_once_and_the_result_arrives_in_the_tick() {
     assert!(sink.is_empty());
 
     release_tx.send(()).unwrap();
-    app.ops().wait(&handle.op_id).await.unwrap();
-    assert_eq!(app.flush_tick(), 1);
-    let second = match sink.take().remove(0) {
-        UiEvent::Tick { tick } => tick,
-        other => panic!("{other:?}"),
-    };
-    assert_eq!(second.seq, 2);
+    let mut received = Vec::new();
+    assert!(
+        eventually(Duration::from_secs(2), || {
+            app.flush_tick();
+            received.extend(sink.take());
+            received.iter().any(|event| {
+                matches!(event, UiEvent::Tick { tick }
+            if tick.ops.iter().any(|op| op.op_id == handle.op_id && op.state == OpState::Done))
+            })
+        })
+        .await
+    );
+    let results: Vec<_> = received
+        .iter()
+        .filter_map(|event| match event {
+            UiEvent::Tick { tick }
+                if tick
+                    .ops
+                    .iter()
+                    .any(|op| op.op_id == handle.op_id && op.state == OpState::Done) =>
+            {
+                Some(tick)
+            }
+            _ => None,
+        })
+        .collect();
+    assert_eq!(results.len(), 1, "Ergebnis genau einmal im Tick");
+    let second = results[0];
+    assert!(second.seq > first_seq);
     let op = second.ops.iter().find(|o| o.op_id == handle.op_id).unwrap();
     assert_eq!(op.state, OpState::Done);
     assert_eq!(op.result, Some(json!({ "rows": 4 })));
@@ -82,6 +123,7 @@ async fn spawn_returns_the_handle_at_once_and_the_result_arrives_in_the_tick() {
     assert_eq!(app.ops().running(), 0);
     assert!(app.ops().status(&handle.op_id).is_none());
     assert_eq!(app.flush_tick(), 0);
+    assert!(sink.is_empty());
 }
 
 // spec: UI-141
