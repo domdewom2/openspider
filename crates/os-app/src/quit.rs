@@ -72,6 +72,21 @@ pub async fn confirm(app: &App, accepted: bool) -> Result<(), CmdError> {
                 .await
                 .map_err(|_| CmdError::new(ErrorCode::Busy, "err-quit-operation-running"))?;
         }
+        // Stop scheduling work immediately, even while a background feed holds
+        // the session lock. Durability is still awaited below before exit.
+        for s in app.sessions().all() {
+            if let Some(engine) = s.engine {
+                if let Some(handle) = engine
+                    .handle
+                    .lock()
+                    .unwrap_or_else(|p| p.into_inner())
+                    .as_ref()
+                {
+                    handle.pause();
+                }
+            }
+        }
+        crate::session::interrupt_poll(app);
         let _guard = service.mutation.lock().await;
         for s in app.sessions().all() {
             if s.engine

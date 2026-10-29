@@ -162,3 +162,23 @@ it("keeps a reorder, a hide and a reset made while an older load is in flight (A
   expect(useTabs.getState().hidden).toEqual([]);
   expect(useTabs.getState().order).toEqual(fixtureTabs.map(t => t.id));
 });
+
+// spec: UI-004
+it("keeps group navigation and Overview selected while an earlier preferences read finishes", async () => {
+  await useTabs.getState().load();
+  const original = uistate.load.bind(uistate);
+  for (const navigate of [() => useTabs.getState().select("AMP"), () => useTabs.getState().showOverview()]) {
+    await flushUiState();
+    const stale = await original();
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const read = vi.spyOn(uistate, "load").mockImplementationOnce(async () => { await gate; return stale; });
+    const loading = useTabs.getState().load();
+    await waitFor(() => expect(read).toHaveBeenCalled());
+    navigate();
+    const { active, view, groupActive } = useTabs.getState();
+    release(); await loading;
+    expect(useTabs.getState()).toMatchObject({ active, view, groupActive });
+    read.mockRestore();
+  }
+});

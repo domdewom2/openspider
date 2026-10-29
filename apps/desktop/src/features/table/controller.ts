@@ -28,6 +28,8 @@ export class TableController {
   pending = false;
   private generation = 0;
   private countsRequest = 0;
+  private countsEpoch = 0;
+  private countsLoading?: Promise<void>;
   private listeners = new Set<() => void>();
   private revision = 0;
   private unsubscribe?: () => void;
@@ -42,7 +44,7 @@ export class TableController {
   fail = (error: unknown) => { if (!this.disposed && !isSilentError(error)) { this.error = error; this.emit(); } };
   setSelection = (selection: SelectionModel) => { this.selection = selection; useTableSelection.setState({ selection, viewId: this.source?.viewId, version: this.source?.version }); this.emit(); };
   activate() { this.disposed = false; }
-  resetCrawl() { this.countsRequest++; this.countsTick = -1; this.counts = { version: -1, filters: [] }; this.setSelection(SelectionModel.empty()); }
+  resetCrawl() { this.countsEpoch++; this.countsRequest++; this.countsTick = -1; this.counts = { version: -1, filters: [] }; this.setSelection(SelectionModel.empty()); }
   async open(tab: string, query: TabQuery): Promise<void> {
     const generation = ++this.generation;
     this.abortBuild?.();
@@ -111,12 +113,27 @@ export class TableController {
     });
   }
   async refreshCounts(): Promise<void> {
-    const request = ++this.countsRequest;
-    try {
-      const segment = useSegments.getState().filter;
-      const counts = await catalog.filterCounts(segment ? { segment } : {});
-      if (!this.disposed && request === this.countsRequest && counts.version >= this.counts.version) { this.counts = counts; this.emit(); }
-    } catch (error) { this.fail(error); }
+    this.countsRequest++;
+    if (this.countsLoading) return this.countsLoading;
+    // Ticks may arrive faster than a complete filter-count snapshot can be read.
+    // Keep one request in flight and coalesce all intervening ticks into one follow-up.
+    const refresh = async () => {
+      let requested: number;
+      do {
+        requested = this.countsRequest;
+        const epoch = this.countsEpoch;
+        const segment = useSegments.getState().filter;
+        try {
+          const counts = await catalog.filterCounts(segment ? { segment } : {});
+          if (!this.disposed && epoch === this.countsEpoch && JSON.stringify(segment) === JSON.stringify(useSegments.getState().filter) && counts.version >= this.counts.version) {
+            this.counts = counts; this.emit();
+          }
+        } catch (error) { this.fail(error); }
+      } while (!this.disposed && requested !== this.countsRequest);
+    };
+    this.countsLoading = refresh();
+    try { await this.countsLoading; }
+    finally { this.countsLoading = undefined; }
   }
   async tick(tick: Tick): Promise<void> {
     const jobs: Promise<void>[] = [];

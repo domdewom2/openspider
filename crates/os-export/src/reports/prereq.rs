@@ -103,7 +103,19 @@ pub fn availability(
     } else {
         Vec::new()
     };
-    let mut warnings = requirement_warnings(name, requires, cfg, &pending);
+    availability_with_pending(name, requires, file, cfg, &pending)
+}
+
+/// Catalog callers can share the analysis-filter snapshot across all reports.
+/// The snapshot must come from the same file/configuration as the requirements.
+pub fn availability_with_pending(
+    name: &str,
+    requires: &[ReportRequirement],
+    file: &os_store::CrawlFile,
+    cfg: &CrawlConfig,
+    pending_analysis: &[String],
+) -> Availability {
+    let mut warnings = requirement_warnings(name, requires, cfg, pending_analysis);
     warnings.extend(crate::catalog::bulk_web::availability_warnings(name, file));
     for req in requires {
         let missing = match req {

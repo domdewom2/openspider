@@ -192,7 +192,12 @@ impl SessionAccess for Access {
                 .map(|h| h.progress())
         });
         Some(SessionStatus {
-            state: progress.as_ref().map_or(s.state, |p| p.state),
+            // The terminal watch can precede the durable writer acknowledgement.
+            state: if progress.is_some() {
+                CrawlState::Running
+            } else {
+                s.state
+            },
             progress,
         })
     }

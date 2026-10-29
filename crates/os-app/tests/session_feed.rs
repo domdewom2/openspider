@@ -209,3 +209,64 @@ async fn counters_have_a_one_second_deadline_even_with_five_second_rows() {
     assert_eq!(changes.lock().unwrap().len(), 2);
     assert_eq!(changes.lock().unwrap()[1].ids, vec![os_model::UrlId(2)]);
 }
+
+// spec: UI-003
+// spec: UI-018
+#[tokio::test]
+async fn status_feed_does_not_wait_for_busy_table_readers() {
+    let dir = tempfile::tempdir().unwrap();
+    let (app, clock) = manual_app(dir.path());
+    let f = create(&dir.path().join("busy-readers.ospider"), cfg());
+    f.set_meta("state", "Paused").unwrap();
+    insert(&f, 1, 1);
+    open(&app, f.path()).await;
+    let session = app
+        .sessions()
+        .current(&os_app::WindowId("main".into()))
+        .unwrap();
+    clock.advance(Duration::from_secs(1));
+    feed::invalidate(&app, &session.key);
+
+    // Hold every ordinary reader until the status refresh has been attempted.
+    // The separate feed connection must still publish the fixture's counters.
+    let (entered_tx, mut entered_rx) = tokio::sync::mpsc::unbounded_channel();
+    let mut releases = Vec::new();
+    let mut readers = Vec::new();
+    for _ in 0..os_app::pool::DEFAULT_READ_CONNECTIONS {
+        let (release_tx, release_rx) = std::sync::mpsc::channel();
+        releases.push(release_tx);
+        let pool = app.read_pool().clone();
+        let key = session.key.clone();
+        let entered_tx = entered_tx.clone();
+        readers.push(tokio::spawn(async move {
+            pool.run(key, move |_, _| {
+                entered_tx.send(()).unwrap();
+                release_rx.recv().unwrap();
+                Ok(())
+            })
+            .await
+            .unwrap();
+        }));
+    }
+    for _ in 0..readers.len() {
+        entered_rx.recv().await.unwrap();
+    }
+    // Invalidate after all permits are held so a background poll during setup
+    // cannot turn this refresh into a debounced no-op.
+    feed::invalidate(&app, &session.key);
+    let refreshed =
+        tokio::time::timeout(Duration::from_secs(1), feed::refresh(&app, &session)).await;
+    for release in releases {
+        release.send(()).unwrap();
+    }
+    for reader in readers {
+        reader.await.unwrap();
+    }
+    refreshed
+        .expect("status polling must not queue behind table reads")
+        .unwrap();
+    assert_eq!(feed::snapshot(&app, session.key).await.unwrap().0.urls, 1);
+    let status = app.assemble_tick().unwrap().crawl.unwrap();
+    assert_eq!(status.crawled, 1);
+    assert_eq!(status.phase, CrawlPhase::Paused);
+}

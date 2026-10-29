@@ -57,6 +57,9 @@ pub fn find_filter<'a>(tab: &'a TabDef, name: &str) -> Option<&'a FilterDef> {
 /// Anzeigename eines Filters: Platzhalter `{pfad}` werden durch den aktuellen Konfigurationswert ersetzt
 /// (ONPAGE-002). Unbekannte Pfade bleiben unverändert stehen.
 pub fn label(filter_id: &str, cfg: &CrawlConfig) -> String {
+    if !filter_id.contains('{') {
+        return filter_id.to_owned();
+    }
     let json = serde_json::to_value(cfg).unwrap_or(Json::Null);
     label_with(filter_id, &json)
 }

@@ -24,11 +24,8 @@ export function useStatusSnapshot(): SessionState {
 export function Statusbar() {
   const t = useT();
   const f = useFormat();
-  const { crawl: c, mcp, throttled, crawlDelays } = useStatusSnapshot();
-  const storedAnalysis = useSession(s => s.analysis);
-  const analysisStarting = useSession(s => s.analysisStarting);
+  const { crawl: c, mcp, throttled, crawlDelays, analysis: storedAnalysis, analysisStarting, analysisResult } = useStatusSnapshot();
   const analysis = analysisStarting ? { steps: [], running: true, current: null, percent: 0 } : storedAnalysis;
-  const analysisResult = useSession(s => s.analysisResult);
   const [sessionLost, setSessionLost] = useState(false);
   useEffect(() => {
     let live = true; setSessionLost(false);

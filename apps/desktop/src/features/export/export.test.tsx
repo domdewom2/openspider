@@ -439,3 +439,26 @@ describe("multi export dialog after OUT-075 (A02-17)", () => {
     expect(banner).toHaveTextContent("Screenshots");
   });
 });
+
+// spec: UI-018
+it("keeps one export-catalog refresh in flight and catches up after tick bursts", async () => {
+  // Feste Uhr: Bündelungsintervall gezielt fortschalten statt real zu warten (Astra-Befund fix-int15b).
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval"] });
+  try {
+    let release!: (value: unknown) => void;
+    core.handlers.set("export.catalog", () => new Promise(resolve => { release = resolve; }));
+    useSession.setState({ crawl: { crawlId: "catalog-fixture" } as never });
+    render(<ExportHost desktop={desktop} />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+    expect(call("export.catalog")).toHaveLength(1);
+    act(() => {
+      for (let version = 1; version <= 20; version++) useSession.setState({ countsVersion: version });
+    });
+    await act(async () => { await vi.advanceTimersByTimeAsync(600); });
+    expect(call("export.catalog")).toHaveLength(1);
+    core.handlers.set("export.catalog", () => fixture.catalog);
+    await act(async () => { release(fixture.catalog); await vi.advanceTimersByTimeAsync(0); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(600); });
+    expect(call("export.catalog")).toHaveLength(2);
+  } finally { vi.useRealTimers(); }
+});

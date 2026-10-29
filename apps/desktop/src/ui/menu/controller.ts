@@ -36,6 +36,7 @@ export interface MenuControllerOptions {
 export function startMenuController(opts: MenuControllerOptions): MenuController {
   const native = opts.native ?? isTauri();
   let last: MenuModel | null = null;
+  let lastContext: MenuContext | undefined;
   let count = 0;
   let queued = false;
   let chain: Promise<unknown> = Promise.resolve();
@@ -52,7 +53,9 @@ export function startMenuController(opts: MenuControllerOptions): MenuController
   function rebuild(): Promise<MenuModel> {
     const run = async () => {
       const lang = useLanguageStore.getState().lang;
-      const model = buildMenuModel(allMenuContributions(), { platform: opts.platform, lang, t: getT(), ctx: opts.getContext(), native });
+      const context = opts.getContext();
+      lastContext = { ...context };
+      const model = buildMenuModel(allMenuContributions(), { platform: opts.platform, lang, t: getT(), ctx: context, native });
       count++;
       last = model;
       await applyModel(model);
@@ -73,7 +76,13 @@ export function startMenuController(opts: MenuControllerOptions): MenuController
   };
 
   const offs = [onLanguageChanged(async () => void (await rebuild())), onMenuContributionsChanged(schedule)];
-  if (opts.subscribeContext) offs.push(opts.subscribeContext(schedule));
+  if (opts.subscribeContext) offs.push(opts.subscribeContext(() => {
+    const context = opts.getContext();
+    // Numeric crawl ticks do not change menu permissions. Rebuilding hundreds
+    // of export entries for the same context delayed header acknowledgements.
+    if (!lastContext || Object.keys(context).length !== Object.keys(lastContext).length ||
+      Object.keys(context).some(key => !Object.hasOwn(lastContext!, key) || !Object.is(context[key], lastContext![key]))) schedule();
+  }));
   void rebuild();
 
   return {
