@@ -341,13 +341,13 @@ it("Native Menüaktionen beachten Textfeld- und Dialog-Scopes auch vor dem Menü
 });
 
 // spec: UI-002
-it("Statuszeile zeigt Deaktivierungsgründe einschließlich M3 für Updates", async () => {
+it("Statuszeile zeigt Deaktivierungsgründe für nicht verfügbare Aktionen", async () => {
   dispose = installMainMenus();
   const { MenuAvailability } = await import("./MenuAvailability");
   render(<MenuAvailability />);
   expect(screen.getByText(/Unavailable menu actions/)).toBeVisible();
   fireEvent.click(screen.getByText(/Unavailable menu actions/));
-  expect(screen.getByText("Check for updates: Available from M3.")).toBeVisible();
+  expect(screen.queryByText("Check for updates: Available from M3.")).not.toBeInTheDocument();
   const entry = screen.getByText("Spider configuration: This action requires an idle crawl with data or an available service.");
   expect(entry).toBeVisible();
   let off!: () => void;

@@ -23,5 +23,5 @@ it.each(["mac", "win"] as const)("%s: native Menüs haben Accelerator-Spalten un
   await applyNativeMenu(model);
   expect(nativeItems.find(item => item.id === "file.new")).toMatchObject({ text: "New crawl", accelerator: "CmdOrCtrl+N" });
   expect(nativeItems.find(item => item.id === "mcp.stop")).toMatchObject({ text: "Stop server", enabled: false });
-  expect(nativeItems.find(item => item.id === "help.updates")).toMatchObject({ text: "Check for updates", enabled: false });
+  expect(nativeItems.find(item => item.id === "help.updates")).toMatchObject({ text: "Check for updates", enabled: true });
 });
