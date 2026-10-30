@@ -27,6 +27,15 @@ print('ok: OUT-272 [M3] file associations and app icon; OUT-260 minimum OS')
 PY
 [[ "$mode" == --plist-only ]] && exit 0
 [[ "$(uname -s)" == Darwin ]] || { echo 'macOS required' >&2; exit 2; }
+executable="$(python3 - "$app/Contents/Info.plist" <<'PYEXEC'
+import plistlib, sys
+with open(sys.argv[1], 'rb') as f:
+    print(plistlib.load(f)['CFBundleExecutable'])
+PYEXEC
+)"
+for required in "$app/Contents/MacOS/$executable" "$app/Contents/MacOS/openspider"; do
+  file -b "$required" | grep -q 'Mach-O'
+done
 count=0
 while IFS= read -r -d '' binary; do
   # Inspect file contents rather than executable bits or suffixes (includes dylibs/helpers).
