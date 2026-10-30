@@ -314,8 +314,25 @@ fn several_scenarios_write_a_suite_report_and_one_report_each() {
 // spec: PERF-001
 #[test]
 fn a_child_process_reports_its_peak_rss_to_the_parent() {
-    let mut child = Command::new(exe())
-        .arg("list")
+    const CHILD_ENV: &str = "OPENSPIDER_RSS_TEST_CHILD";
+    if std::env::var_os(CHILD_ENV).is_some() {
+        // Keep touched pages resident across several 25-ms sampling intervals. The CLI's
+        // `list` command can exit before even one sample observes its initialized process.
+        let mut resident = vec![0u8; 8 * 1024 * 1024];
+        for byte in resident.iter_mut().step_by(4096) {
+            *byte = 1;
+        }
+        std::hint::black_box(&resident);
+        std::thread::sleep(Duration::from_millis(500));
+        std::hint::black_box(&resident);
+        return;
+    }
+    let mut child = Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "a_child_process_reports_its_peak_rss_to_the_parent",
+        ])
+        .env(CHILD_ENV, "1")
         .stdout(Stdio::null())
         .spawn()
         .unwrap();
