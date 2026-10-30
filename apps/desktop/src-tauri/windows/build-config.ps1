@@ -19,7 +19,9 @@ $phase = $Matches[4]; $number = [int]$Matches[5]
 if ($major -gt 255 -or $minor -gt 255 -or $patch -gt 64) { throw 'MSI-Versionsgrenze überschritten' }
 $stage = 999
 if ($phase) {
-    if ($number -lt 1 -or $number -gt 499) { throw 'Beta/RC-Nummer muss 1..499 sein' }
+    # beta.0 is reserved for the R04 dry run; RC still starts at 1.
+    $minimum = if ($phase -eq 'beta') { 0 } else { 1 }
+    if ($number -lt $minimum -or $number -gt 499) { throw 'Beta-Nummer muss 0..499, RC-Nummer 1..499 sein' }
     $stage = $number
     if ($phase -eq 'rc') { $stage += 499 }
 }

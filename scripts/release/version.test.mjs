@@ -19,15 +19,19 @@ test('version source propagates to all manifests and detects drift', () => {
       writeFileSync(join(root, file), JSON.stringify({ version: '0.1.0' }));
     }
     writeFileSync(join(root, 'package-lock.json'), JSON.stringify({ version: '0.1.0', packages: { '': { version: '0.1.0' }, 'apps/desktop': { version: '0.1.0' } } }));
+    writeFileSync(join(root, 'Cargo.lock'), 'version = 4\n\n[[package]]\nname = "os-cli"\nversion = "0.1.0"\n\n[[package]]\nname = "external"\nversion = "0.1.0"\nsource = "registry+https://example.invalid"\nchecksum = "fixture"\n');
     const run = (script, ...args) => spawnSync(process.execPath, [join(root, 'scripts/release', script), ...args], { cwd: tmpdir(), encoding: 'utf8' });
-    for (const version of ['1.0.0-beta.1', '1.0.0-rc.2', '1.0.0']) {
+    for (const version of ['1.0.0-beta.0', '1.0.0-beta.1', '1.0.0-rc.2', '1.0.0']) {
       assert.equal(run('set-version.mjs', version).status, 0);
       assert.match(run('check-version.mjs').stdout, new RegExp(version.replaceAll('.', '\\.')));
       const cargo = readFileSync(join(root, 'Cargo.toml'), 'utf8');
       assert.ok(cargo.includes(`version = "${version}"`));
+      const lock = readFileSync(join(root, 'Cargo.lock'), 'utf8');
+      assert.ok(lock.includes(`name = "os-cli"\nversion = "${version}"`));
+      assert.ok(lock.includes('name = "external"\nversion = "0.1.0"'));
       assert.ok(cargo.includes('semver = "1"'));
     }
-    for (const version of ['01.0.0', '1.0.0-beta.01', '1.0.0;echo unsafe']) {
+    for (const version of ['01.0.0', '1.0.0-beta.01', '1.0.0-rc.0', '1.0.0;echo unsafe']) {
       assert.notEqual(run('set-version.mjs', version).status, 0);
     }
     writeFileSync(join(root, 'apps/desktop/package.json'), '{"version":"9.0.0"}');

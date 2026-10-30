@@ -411,6 +411,10 @@ jobs:
             exit 1
           fi
           cp "${dmgs[0]}" "$out/"
+          # R04: standalone CLI archive from the signed app, including both Universal slices.
+          version="$(node --input-type=module -e "import {readVersion} from './scripts/release/check-version.mjs'; console.log(readVersion(process.cwd()))")"
+          tar -czf "$out/openspider_${version}_darwin-${ARCH}.tar.gz" \
+            -C "${apps[0]}/Contents/MacOS" openspider -C "$GITHUB_WORKSPACE" LICENSE NOTICE
           MACOS_EXPECTED_ARCH="$ARCH" scripts/release/check-macos-bundle.sh --smoke "${apps[0]}"
           if [[ "${{ steps.updater.outputs.enabled }}" == true ]]; then
             updates=("$BUNDLE_DIR"/macos/*.app.tar.gz)
