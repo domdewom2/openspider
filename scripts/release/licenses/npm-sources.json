@@ -1,0 +1,22 @@
+{
+  "@fluent/bundle@0.19.1": {
+    "url": "https://raw.githubusercontent.com/projectfluent/fluent.js/88582193c29a689241a4f7b2ca7086c802840264/LICENSE",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "reason": "npm archive omits LICENSE; source is the peeled release tag @fluent/bundle@0.19.1."
+  },
+  "@fluent/langneg@0.7.0": {
+    "url": "https://raw.githubusercontent.com/projectfluent/fluent.js/67e038ec83f7136fea29af09a2b080df94e074d3/LICENSE",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "reason": "npm archive omits LICENSE; source is the peeled release tag @fluent/langneg@0.7.0."
+  },
+  "client-only@0.0.1": {
+    "url": "https://raw.githubusercontent.com/facebook/react/9e3b772b8cabbd8cadc7522ebe3dde3279e79d9e/LICENSE",
+    "sha256": "52412d7bc7ce4157ea628bbaacb8829e0a9cb3c58f57f99176126bc8cf2bfc85",
+    "reason": "React marker package: npm manifest declares MIT and links facebook/react; archive contains only package.json, index.js and error.js. Include React's MIT license from v18.2.0 (2022, package publication year)."
+  },
+  "react-easy-swipe@0.0.21": {
+    "url": "https://raw.githubusercontent.com/leandrowd/react-easy-swipe/e4ff5cc71fe7732d25ba874dbd5b4cbe63072eea/LICENSE",
+    "sha256": "17e4fbc903cba1f1430c82cc0ad9f2472fd4a73e9b72168967255ebcbab1d9b7",
+    "reason": "npm and publishing commit omit LICENSE. Upstream added its MIT license in commit e4ff5cc (2022-08-30), copyright 2016 Leandro Lemos, consistent with the package's MIT declaration."
+  }
+}
