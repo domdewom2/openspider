@@ -58,6 +58,8 @@ pub struct AppSettings {
     pub accounts: AccountSettings,
     /// MCP-Server in der App (UI-129).
     pub mcp: McpSettings,
+    /// Automatische Update-Prüfung (OUT-250), ausschließlich app-weit.
+    pub updates: UpdateSettings,
     /// Logging und Aufbewahrung.
     pub logging: LoggingSettings,
 }
@@ -75,6 +77,7 @@ impl Default for AppSettings {
             accounts: AccountSettings::default(),
             mcp: McpSettings::default(),
             logging: LoggingSettings::default(),
+            updates: UpdateSettings::default(),
         }
     }
 }
@@ -441,5 +444,22 @@ impl AppSettings {
         leaves("", &serde_json::to_value(other).unwrap_or_default(), &mut b);
         let keys: std::collections::BTreeSet<_> = a.keys().chain(b.keys()).cloned().collect();
         keys.into_iter().filter(|k| a.get(k) != b.get(k)).collect()
+    }
+}
+
+/// Update-Einstellungen (OUT-250, OUT-222); nie Teil eines Konfigurationsprofils.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(default)]
+pub struct UpdateSettings {
+    pub check: bool,
+    /// Letzte Prüfung als ISO-8601-UTC-Zeitstempel; None vor der ersten Prüfung.
+    pub last_check: Option<String>,
+}
+impl Default for UpdateSettings {
+    fn default() -> Self {
+        Self {
+            check: true,
+            last_check: None,
+        }
     }
 }

@@ -1,0 +1,495 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AppSettings",
+  "description": "Alle App-Einstellungen.",
+  "type": "object",
+  "properties": {
+    "accounts": {
+      "description": "Verweise auf verbundene Konten (nie Geheimnisse).",
+      "$ref": "#/$defs/AccountSettings",
+      "default": {
+        "auto_connect": [],
+        "mail_accounts": [],
+        "notify_account": null,
+        "notify_on_failure": true,
+        "notify_on_success": false,
+        "notify_to": []
+      }
+    },
+    "appearance": {
+      "description": "Oberfläche (UI-120).",
+      "$ref": "#/$defs/AppearanceSettings",
+      "default": {
+        "accent": "#2f855a",
+        "live_interval_ms": 500,
+        "row_density": "compact",
+        "theme": "system",
+        "zebra": true,
+        "zoom_pct": 100
+      }
+    },
+    "export": {
+      "description": "Export-Standards (OUT-222).",
+      "$ref": "#/$defs/ExportSettings",
+      "default": {
+        "directory": null,
+        "format": "csv"
+      }
+    },
+    "general": {
+      "description": "Allgemein.",
+      "$ref": "#/$defs/GeneralSettings",
+      "default": {
+        "language": "system",
+        "notifications": true
+      }
+    },
+    "logging": {
+      "description": "Logging und Aufbewahrung.",
+      "$ref": "#/$defs/LoggingSettings",
+      "default": {
+        "level": "info",
+        "retention_days": 30
+      }
+    },
+    "mcp": {
+      "description": "MCP-Server in der App (UI-129).",
+      "$ref": "#/$defs/McpSettings",
+      "default": {
+        "autostart": false
+      }
+    },
+    "network": {
+      "description": "Netzwerk (CRAWL-122, OUT-269/270).",
+      "$ref": "#/$defs/NetworkSettings",
+      "default": {
+        "proxy": {
+          "bypass": [],
+          "host": "",
+          "kind": "http",
+          "mode": "system",
+          "port": 8080,
+          "username": null
+        },
+        "trusted_certificates": []
+      }
+    },
+    "retention": {
+      "description": "Aufbewahrung von Crawls (OUT-229).",
+      "$ref": "#/$defs/RetentionSettings",
+      "default": {
+        "custom_days": 30,
+        "keep_last": null,
+        "policy": "never"
+      }
+    },
+    "schema_version": {
+      "description": "Version des Dateiformats.",
+      "type": "integer",
+      "format": "uint32",
+      "default": 1,
+      "minimum": 0
+    },
+    "storage": {
+      "description": "Speicher (CRAWL-124, CRAWL-129).",
+      "$ref": "#/$defs/StorageSettings",
+      "default": {
+        "cache_limit_mb": null,
+        "crawls_dir": null,
+        "performance_profile": "balanced",
+        "ram_limit_gb": null,
+        "render_process_limit": null
+      }
+    },
+    "updates": {
+      "description": "Automatische Update-Prüfung (OUT-250), ausschließlich app-weit.",
+      "$ref": "#/$defs/UpdateSettings",
+      "default": {
+        "check": true,
+        "last_check": null
+      }
+    }
+  },
+  "$defs": {
+    "AccountSettings": {
+      "description": "Verweise auf Konten; die Zugangsdaten liegen im Schlüsselbund.",
+      "type": "object",
+      "properties": {
+        "auto_connect": {
+          "description": "API-Quellen, die beim Start automatisch verbunden werden (INTEG-011), als Quellen-Kennung (`ga4`, `gsc`, …).",
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "mail_accounts": {
+          "description": "Kennungen der E-Mail-Konten (OUT-280).",
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "notify_account": {
+          "description": "Konto für Benachrichtigungen bei Crawl-Ende; nicht gesetzt = keine Mail.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "notify_on_failure": {
+          "type": "boolean",
+          "default": true
+        },
+        "notify_on_success": {
+          "type": "boolean",
+          "default": false
+        },
+        "notify_to": {
+          "description": "Global completion recipients (OUT-281); empty disables mail.",
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "AppearanceSettings": {
+      "description": "Erscheinungsbild (UI-018, UI-120).",
+      "type": "object",
+      "properties": {
+        "accent": {
+          "description": "Akzentfarbe als `#rrggbb`.",
+          "type": "string",
+          "default": "#2f855a"
+        },
+        "live_interval_ms": {
+          "description": "Live-Intervall der Oberfläche in Millisekunden (250 – 5000).",
+          "type": "integer",
+          "format": "uint32",
+          "default": 500,
+          "minimum": 0
+        },
+        "row_density": {
+          "description": "Zeilenhöhe der Datenansichten.",
+          "$ref": "#/$defs/RowDensity",
+          "default": "compact"
+        },
+        "theme": {
+          "description": "Theme (Standard System).",
+          "$ref": "#/$defs/ThemeMode",
+          "default": "system"
+        },
+        "zebra": {
+          "description": "Alternierende Zeilenfarben.",
+          "type": "boolean",
+          "default": true
+        },
+        "zoom_pct": {
+          "description": "UI-Zoom in Prozent (80, 90, 100, 110, 125, 150).",
+          "type": "integer",
+          "format": "uint16",
+          "default": 100,
+          "maximum": 65535,
+          "minimum": 0
+        }
+      }
+    },
+    "ExportFormat": {
+      "type": "string",
+      "enum": [
+        "csv",
+        "xlsx"
+      ]
+    },
+    "ExportSettings": {
+      "description": "Export-Standards (OUT-222).",
+      "type": "object",
+      "properties": {
+        "directory": {
+          "description": "Standard-Exportordner (`export.directory`); nicht gesetzt = `<Dokumente>/OpenSpider/Exports`.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "format": {
+          "description": "Standardformat.",
+          "$ref": "#/$defs/ExportFormat",
+          "default": "csv"
+        }
+      }
+    },
+    "GeneralSettings": {
+      "description": "Allgemeine Einstellungen.",
+      "type": "object",
+      "properties": {
+        "language": {
+          "description": "Oberflächensprache; `system` folgt der Systemsprache (UI-121).",
+          "$ref": "#/$defs/UiLanguage",
+          "default": "system"
+        },
+        "notifications": {
+          "description": "Systembenachrichtigung bei Crawl-Ende und Fehlern.",
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "LoggingSettings": {
+      "description": "App-weite Logeinstellungen (OUT-241/242).",
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "string",
+          "default": "info"
+        },
+        "retention_days": {
+          "type": "integer",
+          "format": "uint32",
+          "default": 30,
+          "minimum": 0
+        }
+      }
+    },
+    "McpSettings": {
+      "description": "MCP in der App.",
+      "type": "object",
+      "properties": {
+        "autostart": {
+          "description": "MCP-Server beim Start der App starten.",
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "NetworkSettings": {
+      "description": "Netzwerk (App-weit; nicht Teil des Crawl-Profils).",
+      "type": "object",
+      "properties": {
+        "proxy": {
+          "description": "Proxy.",
+          "$ref": "#/$defs/ProxySettings",
+          "default": {
+            "bypass": [],
+            "host": "",
+            "kind": "http",
+            "mode": "system",
+            "port": 8080,
+            "username": null
+          }
+        },
+        "trusted_certificates": {
+          "description": "Vertrauenswürdige Zertifikate (Pfade zu `.crt`, `.pem`, `.cer`, `.der`; OUT-270).",
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "PerformanceProfile": {
+      "type": "string",
+      "enum": [
+        "balanced",
+        "max_speed",
+        "min_memory"
+      ]
+    },
+    "ProxyKind": {
+      "type": "string",
+      "enum": [
+        "http",
+        "https",
+        "socks5"
+      ]
+    },
+    "ProxyMode": {
+      "type": "string",
+      "enum": [
+        "system",
+        "none",
+        "manual"
+      ]
+    },
+    "ProxySettings": {
+      "description": "Proxy (CRAWL-122): genau ein manueller Proxy.",
+      "type": "object",
+      "properties": {
+        "bypass": {
+          "description": "Ausnahmeliste (Hosts, die nicht über den Proxy laufen).",
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "host": {
+          "description": "Host bei `mode = \"manual\"`.",
+          "type": "string",
+          "default": ""
+        },
+        "kind": {
+          "description": "Typ bei `mode = \"manual\"`.",
+          "$ref": "#/$defs/ProxyKind",
+          "default": "http"
+        },
+        "mode": {
+          "description": "Modus (Standard: Systemproxy).",
+          "$ref": "#/$defs/ProxyMode",
+          "default": "system"
+        },
+        "port": {
+          "description": "Port bei `mode = \"manual\"`.",
+          "type": "integer",
+          "format": "uint16",
+          "default": 8080,
+          "maximum": 65535,
+          "minimum": 0
+        },
+        "username": {
+          "description": "Benutzername; das Kennwort liegt im Schlüsselbund (`openspider/proxy/password`, OUT-225).",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        }
+      }
+    },
+    "RetentionPolicy": {
+      "type": "string",
+      "enum": [
+        "never",
+        "one_week",
+        "one_month",
+        "three_months",
+        "six_months",
+        "one_year",
+        "custom"
+      ]
+    },
+    "RetentionSettings": {
+      "description": "Aufbewahrung (OUT-229).",
+      "type": "object",
+      "properties": {
+        "custom_days": {
+          "description": "Tage bei `policy = \"custom\"`.",
+          "type": "integer",
+          "format": "uint32",
+          "default": 30,
+          "minimum": 0
+        },
+        "keep_last": {
+          "description": "Höchstens N ungesperrte Crawls behalten ([P2]); nicht gesetzt = unbegrenzt.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "default": null,
+          "minimum": 0
+        },
+        "policy": {
+          "description": "Richtlinie (Standard: nie löschen).",
+          "$ref": "#/$defs/RetentionPolicy",
+          "default": "never"
+        }
+      }
+    },
+    "RowDensity": {
+      "type": "string",
+      "enum": [
+        "compact",
+        "normal"
+      ]
+    },
+    "StorageSettings": {
+      "description": "Speicher (CRAWL-124, CRAWL-129).",
+      "type": "object",
+      "properties": {
+        "cache_limit_mb": {
+          "description": "None = max(512 MiB, 25 % RAM).",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "default": null,
+          "minimum": 0
+        },
+        "crawls_dir": {
+          "description": "Speicherort der Crawls; nicht gesetzt = Standard laut OUT-227.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "performance_profile": {
+          "description": "Cache-Leistungsprofil.",
+          "$ref": "#/$defs/PerformanceProfile",
+          "default": "balanced"
+        },
+        "ram_limit_gb": {
+          "description": "RAM-Obergrenze in GB mit einer Nachkommastelle; nicht gesetzt = 50 % des physischen RAM, begrenzt auf\n[1 GB, physischer RAM − 2 GB] (CRAWL-129).",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double",
+          "default": null
+        },
+        "render_process_limit": {
+          "description": "None = Kerne/2, höchstens 8.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "default": null,
+          "minimum": 0
+        }
+      }
+    },
+    "ThemeMode": {
+      "type": "string",
+      "enum": [
+        "system",
+        "light",
+        "dark"
+      ]
+    },
+    "UiLanguage": {
+      "type": "string",
+      "enum": [
+        "system",
+        "de",
+        "en"
+      ]
+    },
+    "UpdateSettings": {
+      "description": "Update-Einstellungen (OUT-250, OUT-222); nie Teil eines Konfigurationsprofils.",
+      "type": "object",
+      "properties": {
+        "check": {
+          "type": "boolean",
+          "default": true
+        },
+        "last_check": {
+          "description": "Letzte Prüfung als ISO-8601-UTC-Zeitstempel; None vor der ersten Prüfung.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        }
+      }
+    }
+  }
+}
