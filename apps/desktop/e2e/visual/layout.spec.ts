@@ -45,7 +45,8 @@ for (const lang of ["de", "en"]) for (const theme of ["light", "dark"]) for (con
           const known = observed.find(r => r.project === info.project.name && r.lang === lang && r.theme === theme && r.size.width === size.width)!;
           const knownHits = known.reports.flatMap(({ scene, result }) => result.text.map(hit => `${scene}: ${hit}`));
           expect(hits.filter(hit => !knownHits.includes(hit)), "Neue Textbefunde zusätzlich zu U32-002/U32-003").toEqual([]);
-          test.fail(true, info.project.name.startsWith("webkit") ? "U32-003: natives Select scrollHeight/clientHeight" : "U32-002: vertikal gekappte Tab-Beschriftungen");
+          // K2-63: U30 fixed all 48 Chromium label cases; only the 12 WebKit select cases remain.
+          if (info.project.name.startsWith("webkit")) test.fail(true, "U32-003: natives Select scrollHeight/clientHeight");
         }
         expect(hits).toEqual([]);
       }
