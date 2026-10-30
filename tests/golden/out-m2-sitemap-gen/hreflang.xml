@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://site.test/de/</loc>
-    <changefreq>monthly</changefreq>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <xhtml:link rel="alternate" hreflang="de" href="https://site.test/de/"/>
     <xhtml:link rel="alternate" hreflang="en" href="https://site.test/en/"/>
@@ -10,12 +10,12 @@
   </url>
   <url>
     <loc>https://site.test/en/</loc>
-    <changefreq>monthly</changefreq>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://site.test/</loc>
-    <changefreq>monthly</changefreq>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 </urlset>

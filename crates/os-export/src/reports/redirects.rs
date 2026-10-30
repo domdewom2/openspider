@@ -301,7 +301,7 @@ fn start_ids(file: &CrawlFile) -> Result<Vec<i64>, ExportError> {
         .conn()
         .query_row("SELECT COUNT(*) FROM list_input", [], |r| r.get(0)))?;
     if list_count > 0 {
-        return collect_ids(file, "SELECT u.id FROM list_input l JOIN urls u ON u.id = l.url_id WHERE l.outcome = 'ok' AND (u.redirect_url IS NOT NULL OR u.redirect_target_id IS NOT NULL) ORDER BY l.position");
+        return collect_ids(file, "SELECT u.id FROM list_input l JOIN urls u ON u.id = l.url_id WHERE l.outcome = 'ok' ORDER BY l.position");
     }
     let types = redirect_link_types();
     let linked = if db(os_store::link_index::present(file.conn()))? {
@@ -539,7 +539,10 @@ pub fn write_report_to(
 }
 
 fn error_target(file: &CrawlFile, chain: &Chain) -> Result<bool, ExportError> {
-    if chain.outcome == ChainOutcome::Loop || chain.outcome == ChainOutcome::LimitReached {
+    if chain.edges() == 0
+        || chain.outcome == ChainOutcome::Loop
+        || chain.outcome == ChainOutcome::LimitReached
+    {
         return Ok(false);
     }
     let Some(id) = chain.nodes.last().and_then(|n| n.id) else {
@@ -582,8 +585,7 @@ fn write_rows(
     ctx: &mut crate::types::ExportCtx<'_>,
     header: bool,
 ) -> Result<u64, ExportError> {
-    // Im Listenmodus ist ein nicht verfolgtes Ziel noch keine bekannte Ein-Sprung-Kette.
-    // Der Kettenreport behält diese Starts, damit der fehlende Abruf sichtbar bleibt (OUT-085).
+    // OUT-085: Im Listenmodus bleibt jede Listen-URL sichtbar, auch ohne Sprung.
     let is_list: bool =
         db(file
             .conn()
@@ -597,9 +599,7 @@ fn write_rows(
             RedirectReport::All => true,
             RedirectReport::Errors => error_target(file, &chain)?,
             RedirectReport::Chains => {
-                chain.edges() >= 2
-                    || chain.outcome == ChainOutcome::Loop
-                    || (is_list && chain.outcome == ChainOutcome::NotFollowed)
+                is_list || chain.edges() >= 2 || chain.outcome == ChainOutcome::Loop
             }
         };
         if keep {

@@ -132,6 +132,30 @@ pub fn build(
     response_codes(file, cfg, true, &mut rows)?;
     response_codes(file, cfg, false, &mut rows)?;
     tab_filters(&counts, &mut rows);
+    // OUT-080: preserve this configured filter even in older tab registries.
+    // External JavaScript redirects are not rendered (ONPAGE-057).
+    if counts.iter().any(|c| c.tab == "Response Codes")
+        && !counts
+            .iter()
+            .any(|c| c.tab == "Response Codes" && c.filter == "External Redirection (JavaScript)")
+    {
+        let value = (cfg.rendering.mode == RenderingMode::JavaScript).then_some(0);
+        let base = counts
+            .iter()
+            .find(|c| c.tab == "Response Codes" && c.filter == "All")
+            .and_then(|c| c.count);
+        let row = OverviewRow::new(
+            "Response Codes",
+            "External Redirection (JavaScript)",
+            value.map_or(Cell::Empty, Cell::Int),
+            value.zip(base).and_then(|(n, b)| pct2(n, b)),
+        );
+        let position = rows
+            .iter()
+            .rposition(|r| r.section == "Response Codes" && r.item == "External Redirection (3XX)")
+            .map_or(rows.len(), |p| p + 1);
+        rows.insert(position, row);
+    }
     crawl_depth(file, &mut rows)?;
     issue_rows(&counts, &mut rows);
     Ok(Overview {

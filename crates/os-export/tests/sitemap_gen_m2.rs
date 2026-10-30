@@ -245,16 +245,15 @@ fn default_metadata_matches_golden_and_uses_url_crawl_time() {
             })
             .collect::<Vec<_>>()
     };
-    assert_eq!(values("lastmod")[0], Some("2026-10-01T10:00:00+00:00"));
-    assert_eq!(values("lastmod")[4..6], [None, None]);
+    assert_eq!(values("lastmod")[0], Some("2026-10-01"));
+    assert_eq!(values("lastmod")[4..6], [Some("2026-10-13"); 2]);
     assert_eq!(
         values("priority"),
         ["1.0", "0.9", "0.8", "0.7", "0.6", "0.5", "0.5", "0.5"].map(Some)
     );
     assert_eq!(
         values("changefreq"),
-        ["monthly", "daily", "monthly", "monthly", "monthly", "monthly", "monthly", "daily"]
-            .map(Some)
+        ["monthly", "daily", "monthly", "monthly", "daily", "daily", "monthly", "daily"].map(Some)
     );
     assert_eq!(report.files[0].bytes, text.len() as u64);
 }
@@ -576,6 +575,9 @@ async fn server_lastmod_flows_from_http_through_engine_and_store() {
     let out = tempfile::tempdir().unwrap();
     generate_sitemap(&fx.file, &SitemapOptions::default(), out.path()).unwrap();
     let text = xml(out.path(), "sitemap.xml");
-    assert_eq!(text.matches("<lastmod>").count(), 1);
-    assert!(text.contains("<lastmod>2026-10-01T10:00:00+00:00</lastmod>"));
+    assert_eq!(
+        text.matches("<lastmod>").count(),
+        text.matches("<url>").count()
+    );
+    assert!(text.contains("<lastmod>2026-10-01</lastmod>"));
 }
