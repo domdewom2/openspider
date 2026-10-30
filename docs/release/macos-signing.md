@@ -39,7 +39,7 @@ gh variable set APPLE_SIGNING_IDENTITY --body 'Developer ID Application: Vorname
 gh variable set APPLE_TEAM_ID --body 'ABCDE12345'
 ```
 
-Fehlt eines dieser Apple-Elemente, endet der Signierjob mit grünem Status, einer Warnung (`::warning`) und einer Zusammenfassung, welche Namen fehlen. Es entstehen dann keine Release-Artefakte. Die unabhängigen Plattformtests laufen trotzdem; deren echte Fehler bleiben rot.
+Fehlt eines dieser Apple-Elemente, endet der Signierjob mit grünem Status, einer Warnung (`::warning`) und einer Zusammenfassung, welche Namen fehlen. Es entstehen dann keine Release-Artefakte. Die mit `run_tests=true` aktivierten Plattformtests laufen trotzdem; deren echte Fehler bleiben rot.
 
 ## Updater-Schlüssel und Kanal
 
@@ -51,16 +51,17 @@ Fehlt eines dieser Apple-Elemente, endet der Signierjob mit grünem Status, eine
 
 Fehlt der private oder öffentliche Schlüssel, werden Updater-Artefakte ausdrücklich übersprungen; signierte DMGs entstehen weiterhin. Ein falscher Schlüssel oder ein falsches Passwort ist dagegen ein Buildfehler. Schlüssel werden weder gedruckt noch in Artefakte geschrieben. Die temporäre Build-Konfiguration enthält nur den öffentlichen Schlüssel und den Endpunkt.
 
-`channel=stable` verwendet `https://github.com/domdewom2/openspider/releases/latest/download/latest.json`, `channel=beta` verwendet dort `latest-beta.json` (K3-03/K3-04). Der Workflow erzeugt keine Update-Manifeste und veröffentlicht nichts. R04 ordnet die architekturspezifischen Archive den Schlüsseln `darwin-aarch64` und `darwin-x86_64` zu; das Universal-Archiv bleibt optionales Zusatzasset. Die URL- und Signaturprüfung zur Laufzeit liegt bei U01/U02.
+`channel=stable` verwendet `https://github.com/domdewom2/openspider/releases/latest/download/latest.json`, `channel=beta` verwendet dort `latest-beta.json` (K3-03/K3-04). Der Build-Job erhält `OPENSPIDER_UPDATER_PUBKEY` aus der Repository-Variable und `OPENSPIDER_UPDATE_BETA=1` für Beta bzw. `0` für Stable; beide Werte stehen auch dem Tauri-/Rust-Build zur Verfügung. Der Workflow erzeugt keine Update-Manifeste und veröffentlicht nichts. R04 ordnet die architekturspezifischen Archive den Schlüsseln `darwin-aarch64` und `darwin-x86_64` zu; das Universal-Archiv bleibt optionales Zusatzasset. Die URL- und Signaturprüfung zur Laufzeit liegt bei U01/U02.
 
 ## Auslösen und Schnittstelle für R04
 
-- `workflow_dispatch`: `arch=all` (Standard), `aarch64`, `x86_64` oder `universal`; `channel=beta` (Standard) oder `stable`; `version` optional.
-- `workflow_call`: `version` (String, optional) und `channel` (String, Standard `stable`); erzeugt immer alle drei Architekturen. Secrets ausdrücklich übergeben oder `secrets: inherit` verwenden.
+- `workflow_dispatch`: `arch=all` (Standard), `aarch64`, `x86_64` oder `universal`; `channel=beta` (Standard) oder `stable`; `version` optional; `run_tests` (Boolean, Standard `true`).
+- `workflow_call`: `version` (String, optional), `channel` (String, Standard `stable`) und `run_tests` (Boolean, Standard `true`); erzeugt immer alle drei Architekturen. Secrets ausdrücklich übergeben oder `secrets: inherit` verwenden.
 - `version` muss der bereits vorbereiteten Workspace-Version entsprechen. Version und Lockfile setzt der Aufrufer vor dem Build; der Workflow prüft den Gleichstand, ohne Abhängigkeiten zu verändern.
 - Ausgabe `artifact_names`: JSON-Liste der tatsächlich hochgeladenen `openspider-macos-aarch64`, `openspider-macos-x86_64`, `openspider-macos-universal`; bei fehlender Apple-Konfiguration `[]`. Der Aufrufer benötigt `contents: read` und `actions: read`.
 - Kein Tag-Auslöser: Release-Tags verarbeitet künftig ausschließlich R04 (`release.yml`).
-- Jeder Branch-Push prüft Rust-Workspace und Frontend auf `macos-14` (arm64). Nächtlich und vor jedem manuellen/aufgerufenen Release zusätzlich `macos-15-intel` (K2-67, vorgeschlagener K3-06-Prüfweg; macOS 13 bleibt die Mindestplattform).
+- Push-Tests liegen in `ci.yml`; dieser Release-Workflow hat keinen Push- oder Zeitplan-Auslöser. Mit `run_tests=true` prüft er Rust-Workspace und Frontend auf `macos-14` (arm64) und `macos-15-intel`. `run_tests=false` überspringt diese Tests für bereits geprüfte R04-Builds; fehlgeschlagene aktivierte Tests blockieren den Build weiterhin. macOS 13 bleibt die Mindestplattform.
+- Alle verwendeten Actions sind auf Commit-SHAs fixiert; der Kommentar nennt den aufgelösten Tag bzw. den `stable`-Branch von `dtolnay/rust-toolchain`.
 
 ```sh
 gh workflow run release-macos.yml --ref m3/r01 -f arch=all -f channel=beta
@@ -120,7 +121,7 @@ Die Fixtures laufen auf Linux/macOS über `cargo test -p os-cli --test macos_bun
 
 ## Entitlements
 
-`apps/desktop/src-tauri/entitlements.plist` ist bewusst leer (nur ein leeres `<dict/>`); sie wird in `tauri.macos.conf.json` unter `bundle.macOS.entitlements` eingebunden, zusammen mit `hardenedRuntime: true` und `minimumSystemVersion: "13.0"` (Mindestplattform laut `docs/ARCHITECTURE.md`).
+`apps/desktop/src-tauri/entitlements.plist` ist bewusst leer (nur ein leeres `<dict/>`); sie wird ausschließlich in der gemeinsamen `tauri.conf.json` unter `bundle.macOS.entitlements` eingebunden, zusammen mit `hardenedRuntime: true` und `minimumSystemVersion: "13.0"` (Mindestplattform laut `docs/ARCHITECTURE.md`). `tauri.macos.conf.json` ergänzt nur die Bundle-Ziele `app` und `dmg`.
 
 Begründung, warum keine Ausnahmen nötig sind:
 
