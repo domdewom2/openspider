@@ -50,16 +50,6 @@ export async function scan(page: Page, name: string, scope?: string): Promise<vo
     passedRules: result.passes.map(rule => rule.id), incomplete: result.incomplete.map(rule => ({ id: rule.id, nodes: rule.nodes.length })) };
   await test.info().attach(`axe-${name}`, { body: JSON.stringify(evidence, null, 2), contentType: "application/json" });
   const findings = result.violations.filter(v => v.impact === "critical" || v.impact === "serious");
-  // Only the recorded rule/targets may use the existing expected-failure mechanism.
-  const knownTargets = name === "Crawl summary-issues-light"
-    ? ['tr:nth-child(5) > td:nth-child(2) > .os-sidebar-priority-medium.os-sidebar-badge > span', 'tr:nth-child(5) > .os-sidebar-priority-medium']
-    : name === "Crawl summary-segments-dark"
-      ? ['.os-sidebar-actions > button[type="button"]', '.os-sidebar-empty > button[type="button"]'] : undefined;
-  if (knownTargets && findings.length) {
-    expect(findings.map(v => ({ rule: v.id, impact: v.impact, targets: v.nodes.map(n => n.target.join(" ")).sort() })), "Additional findings must remain unexpected").toEqual([
-      { rule: "color-contrast", impact: "serious", targets: [...knownTargets].sort() },
-    ]);
-  }
   expect.soft(findings.map(v => ({ rule: v.id, impact: v.impact, nodes: v.nodes.map(n => ({ target: n.target, summary: n.failureSummary })) })), name).toEqual([]);
 }
 
