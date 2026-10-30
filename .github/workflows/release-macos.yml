@@ -121,6 +121,7 @@ jobs:
     if: ${{ !cancelled() && (needs.tests.result == 'success' || (!inputs.run_tests && needs.tests.result == 'skipped')) }}
     needs: tests
     name: signiertes DMG (${{ matrix.arch }})
+    environment: release
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
     strategy:
@@ -138,7 +139,6 @@ jobs:
       OPENSPIDER_SECRET_STORE: memory
       OPENSPIDER_DISABLE_UPDATE_CHECK: "1"
       RELEASE_VERSION: ${{ inputs.version }}
-      UPDATE_CHANNEL: ${{ inputs.channel || 'stable' }}
       OPENSPIDER_UPDATER_PUBKEY: ${{ vars.OPENSPIDER_UPDATER_PUBKEY }}
       OPENSPIDER_UPDATE_BETA: ${{ inputs.channel == 'beta' && '1' || '0' }}
     defaults:
@@ -246,7 +246,6 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
         run: |
           set -euo pipefail
-          case "$UPDATE_CHANNEL" in stable|beta) ;; *) echo "Ungültiger Kanal" >&2; exit 1 ;; esac
           # R04 sets the version and lockfile before calling; never mutate dependencies here.
           node scripts/release/check-version.mjs
           node --input-type=module - <<'JSVERSION'
@@ -259,7 +258,7 @@ jobs:
           python3 - <<'PYCONFIG'
           import json, os
           enabled = bool(os.environ['TAURI_SIGNING_PRIVATE_KEY'] and os.environ['OPENSPIDER_UPDATER_PUBKEY'])
-          channel = '-beta' if os.environ['UPDATE_CHANNEL'] == 'beta' else ''
+          channel = '-beta' if os.environ['OPENSPIDER_UPDATE_BETA'] == '1' else ''
           config = {'bundle': {'createUpdaterArtifacts': enabled}, 'plugins': {'updater': {
               'pubkey': os.environ['OPENSPIDER_UPDATER_PUBKEY'],
               'endpoints': [f'https://github.com/domdewom2/openspider/releases/latest/download/latest{channel}.json']}}}

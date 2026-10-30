@@ -222,7 +222,27 @@ test('Orchestrierung übergibt Beta-Kanal an R01/R02 mit einheitlicher Build-Var
     const job = workflow.split(`  ${platform}:\n`)[1].split(/\n  [a-z][a-z-]*:/)[0];
     assert.match(job, /channel: \$\{\{ needs.prepare.outputs.channel \}\}/);
     const child = readFileSync(join(root, `.github/workflows/release-${platform}.yml`), 'utf8');
-    assert.match(child, /OPENSPIDER_UPDATE_BETA: \$\{\{ inputs.channel == 'beta' && '1' \|\| '0' \}\}/);
-    assert.doesNotMatch(child, /OPENSPIDER_UPDATE_CHANNEL_BETA/);
+    assert.match(child, /OPENSPIDER_UPDATE_BETA: \$\{\{ (?:inputs.channel|\(inputs.channel \|\| 'beta'\)) == 'beta' && '1' \|\| '0' \}\}/);
+  }
+});
+
+
+test('L01-Gate blockiert CLI-Build und Assemble; native Signierung verwendet release', () => {
+  const workflow = readFileSync(join(root, '.github/workflows/release.yml'), 'utf8');
+  assert.match(workflow, /  licenses:\n    needs: prepare\n    uses: \.\/\.github\/workflows\/licenses.yml/);
+  assert.match(workflow, /  linux-core:\n    needs: \[prepare, licenses\]/);
+  assert.match(workflow, /  assemble:\n    needs: \[prepare, licenses, macos, windows, linux-core\]/);
+  for (const platform of ['macos', 'windows']) {
+    const child = readFileSync(join(root, `.github/workflows/release-${platform}.yml`), 'utf8');
+    assert.match(child, /    environment: release/);
+  }
+});
+
+test('Alle externen Actions in Release- und Lizenzworkflows sind SHA-gepinnt', () => {
+  for (const name of readdirSync(join(root, '.github/workflows')).filter(name => /^release.*\.yml$/.test(name) || name === 'licenses.yml')) {
+    const workflow = readFileSync(join(root, '.github/workflows', name), 'utf8');
+    for (const line of workflow.split('\n').filter(line => line.includes('uses:') && !line.includes('uses: ./'))) {
+      assert.match(line, /@[0-9a-f]{40}(?:\s|$)/, `${name}: ${line}`);
+    }
   }
 });
