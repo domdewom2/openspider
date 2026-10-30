@@ -94,7 +94,7 @@ target/debug/os-parity coverage --parity-report target/parity/report.json \
 Ohne `--evidence` wertet dieser Modus die kanonischen M1-/M2-Filterkataloge gegen das vollständige Laufjournal
 aus: je Filter-ID Tab-All auf allen referenzfähigen Sites und zusätzlich dessen eigener Filterexport, soweit
 vorhanden. Jeder Beleg verlangt identische URL-Mengen, null Zellfehler und vollständige Spalten; DEV ist erlaubt,
-REF-FREE sperrt. Nicht verglichene Present-Exporte sperren ebenfalls. Change Detection ist ausgeschlossen;
+REF-FREE sperrt. Historische M1-PDF-Ausnahmen DEV-016/022/024 geben nach Q02-P06 ebenfalls keine M2-Gutschrift. Nicht verglichene Present-Exporte sperren ebenfalls. Change Detection ist ausgeschlossen;
 der Nenner beträgt 155 und hängt nicht von den grünen Exporten ab. Gemeinsam verwendete Spec-IDs verlangen
 alle zugehörigen Filterbelege. SQ-10 sperrt Links/Internal bis zur Link-Score-Kalibrierung in M3.
 

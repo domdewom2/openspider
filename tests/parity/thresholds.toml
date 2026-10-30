@@ -61,3 +61,4 @@ security_unsafe_inlinks = 97.0
 security_relative_inlinks = 97.0
 links_uncrawlable = 97.0
 hreflang_targets = 97.0
+hreflang_unlinked = 97.0

@@ -727,3 +727,31 @@ fn sq01_one_bad_filter_does_not_block_its_siblings() {
         .unwrap()
         .contains(&json!("ONPAGE-031")));
 }
+
+// spec: ONPAGE-166
+#[test]
+fn historical_m1_pdf_exceptions_do_not_verify_m2_content() {
+    use serde_json::json;
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let mut parity = json!({"sites":[{"site":"legacy","exports":[{
+        "ref_file":"content_all.csv","mapping":"content_all","os":"tab:Content:All",
+        "status":"present","outcome":"compared","report":{
+            "export":"content_all","url_set_identical":true,"columns":[],
+            "missing_ref_columns":[],"missing_os_columns":[],"unmapped_ref_columns":[],
+            "applied_deviations":[]
+        }
+    }]}]});
+    let summary = os_parity::coverage::evidence::filter_summary(&root, &parity).unwrap();
+    assert!(summary["verified_ids"]
+        .as_array()
+        .unwrap()
+        .contains(&json!("ONPAGE-142")));
+    for id in ["DEV-016", "DEV-022", "DEV-024"] {
+        parity["sites"][0]["exports"][0]["report"]["applied_deviations"] = json!([{"id":id}]);
+        let summary = os_parity::coverage::evidence::filter_summary(&root, &parity).unwrap();
+        assert!(!summary["verified_ids"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("ONPAGE-142")));
+    }
+}

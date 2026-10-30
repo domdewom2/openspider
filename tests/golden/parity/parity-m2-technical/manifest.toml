@@ -345,7 +345,7 @@ os_file = "hreflang_non-200_hreflang_urls_report.csv"
 [[export]]
 ref_file = "report_hreflang_unlinked_hreflang_urls.csv"
 os = "report:Hreflang:Unlinked Hreflang URLs"
-mapping = "hreflang_targets"
+mapping = "hreflang_unlinked"
 status = "present"
 os_file = "hreflang_unlinked_hreflang_urls_report.csv"
 

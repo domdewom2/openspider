@@ -394,6 +394,21 @@ pub fn filter_summary(root: &Path, parity: &Value) -> Result<Value, ParityError>
                         if let Err(why) = check(&ev, &compared) {
                             failure.get_or_insert(why);
                         }
+                        if export["report"]["applied_deviations"]
+                            .as_array()
+                            .is_some_and(|ds| {
+                                ds.iter().any(|d| {
+                                    ["DEV-016", "DEV-022", "DEV-024"]
+                                        .iter()
+                                        .any(|id| d["id"] == *id)
+                                })
+                            })
+                        {
+                            failure.get_or_insert(
+                                "Q02-P06: historischer M1-PDF-Beleg ergibt keine M2-Verifikation"
+                                    .into(),
+                            );
+                        }
                     }
                 }
                 if all_count == 0 || selected == 0 {
