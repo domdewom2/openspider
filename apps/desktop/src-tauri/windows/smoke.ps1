@@ -34,8 +34,9 @@ foreach ($kind in @('nsis', 'msi')) {
         Assert (@(Get-ChildItem $install -Filter '*.exe').Count -ge 2) 'Desktop-Binary fehlt'
         & $cli --help | Out-Null
         Assert ($LASTEXITCODE -eq 0) 'Installierte CLI startet nicht'
-        $pathEntries = [Environment]::GetEnvironmentVariable('Path', $scope) -split ';'
-        Assert ($pathEntries -contains $install) "$scope PATH fehlt"
+        $pathEntries = @([Environment]::GetEnvironmentVariable('Path', $scope) -split ';' |
+            ForEach-Object { $_.TrimEnd('\') })
+        Assert ($pathEntries -contains $install.TrimEnd('\')) "$scope PATH fehlt"
         Assert (@(Get-ChildItem $menuRoot -Recurse -Filter '*OpenSpider*.lnk').Count -gt 0) 'Startmenü fehlt'
         $classes = if ($machine) { 'HKLM:\Software\Classes' } else { 'HKCU:\Software\Classes' }
         Assert (Test-Path "$classes\.ospider") 'Dateizuordnung fehlt'
@@ -58,7 +59,9 @@ foreach ($kind in @('nsis', 'msi')) {
         $remainingExe = @(Get-ChildItem $install -Recurse -File -ErrorAction SilentlyContinue |
             Where-Object { $_.Extension -in @('.exe', '.dll') -and $_.Name -notlike '*uninstall*' })
         Assert ($remainingExe.Count -eq 0) 'Programmdateien nach Deinstallation vorhanden'
-        Assert (-not (([Environment]::GetEnvironmentVariable('Path', $scope) -split ';') -contains $install)) 'PATH nicht entfernt'
+        $pathEntries = @([Environment]::GetEnvironmentVariable('Path', $scope) -split ';' |
+            ForEach-Object { $_.TrimEnd('\') })
+        Assert ($pathEntries -notcontains $install.TrimEnd('\')) 'PATH nicht entfernt'
         Assert (@(Get-ChildItem $menuRoot -Recurse -Filter '*OpenSpider*.lnk').Count -eq 0) 'Startmenü nicht entfernt'
         Assert (-not (Get-ScheduledTask -TaskPath '\OpenSpider\' -TaskName 'r02-fixture' -ErrorAction SilentlyContinue)) 'Aufgabe nicht entfernt'
         Assert ([bool](Get-ScheduledTask -TaskName 'OpenSpiderR02Keep' -ErrorAction SilentlyContinue)) 'Fremde Aufgabe entfernt'

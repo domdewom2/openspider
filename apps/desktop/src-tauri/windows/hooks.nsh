@@ -26,8 +26,12 @@
     StrCpy $0 "1"
     ExecWait '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\installer-maintenance.ps1" -Mode Uninstall -InstallDir "$INSTDIR" -RemoveUserData "$1"' $0
     ${If} $0 != 0
-      SetErrorLevel 1
-      Abort "Deinstallationsbereinigung fehlgeschlagen."
+      ${If} ${Silent}
+        DetailPrint "Warnung: Deinstallationsbereinigung fehlgeschlagen (Exit-Code $0); stille Deinstallation wird fortgesetzt."
+      ${Else}
+        SetErrorLevel 1
+        Abort "Deinstallationsbereinigung fehlgeschlagen (Exit-Code $0)."
+      ${EndIf}
     ${EndIf}
   ${EndIf}
 !macroend
