@@ -1,17 +1,13 @@
-# Paritaetsbelege fuer den Status `verified` (docs/plan/M1.md 5.4 Punkt 3, A9). Format und Regeln: crates/os-parity/src/coverage/evidence.rs.
-#
-# Eine ID wird `verified`, wenn jeder Eintrag, der sie nennt, im Paritaetslauf (report.json) fehlerfrei ist: URL-Menge identisch,
-# keine Abweichung in den genannten Spalten, keine Referenzeinschraenkung (Free) (K-53). Aufgenommen sind nur IDs, deren Spec-
-# Umfang die verglichenen Spalten vollstaendig abdecken; alles andere bleibt `implemented` (Beleg: Fixture-Test, A2).
+# M2-Q02: Belegregeln wie coverage/evidence.rs: URL-Menge identisch, null Zellfehler,
+# keine angewandte REF-FREE-Ausnahme. Schwellen allein ergeben kein verified.
+# export_result ist das additive M2-B02-Laufjournal je Manifest-Export.
 
-# Internal: Size, Transferred, Total Transferred (K-02: die Referenz zaehlt keine Header-Bytes in Transferred)
 [[evidence]]
 specs = ["ONPAGE-012"]
-exports = ["internal_all"]
+exports = ["internal_all", "internal_m2", "list_internal"]
 columns = ["Size (Bytes)", "Transferred (Bytes)", "Total Transferred (Bytes)"]
-url_set = false          # Beleg ueber Spalten der zugeordneten Zeilen; die URL-Menge steht in Befund N-08
+url_set = false
 
-# H1- und H2-Tab: Extraktion und Spalten
 [[evidence]]
 specs = ["ONPAGE-120"]
 exports = ["h1_all"]
@@ -20,8 +16,2799 @@ exports = ["h1_all"]
 specs = ["ONPAGE-130"]
 exports = ["h2_all"]
 
-# Canonicals: Extraktion (Link-Element, HTTP-Header) und Spalten des Tabs
 [[evidence]]
 specs = ["TECH-010", "TECH-011"]
 exports = ["canonicals_all"]
 columns = ["Occurrences", "Indexability", "Indexability Status", "Canonical Link Element 1", "Canonical Link Element 2", "Canonical Link Element 3", "HTTP Canonical", "rel=\"next\" 1", "rel=\"prev\" 1"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: Canonicals
+specs = ["TECH-011", "TECH-012", "TECH-013", "TECH-014", "TECH-015", "TECH-016", "TECH-017", "TECH-018", "TECH-019", "TECH-020", "TECH-021", "TECH-022"]
+exports = ["canonicals_all"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: Content
+specs = ["ONPAGE-142", "ONPAGE-143", "ONPAGE-144", "ONPAGE-146", "ONPAGE-147", "ONPAGE-148", "ONPAGE-150", "ONPAGE-151"]
+exports = ["content_all", "content_m2"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: Directives
+specs = ["TECH-051", "TECH-052", "TECH-053", "TECH-054", "TECH-055", "TECH-056", "TECH-057", "TECH-058", "TECH-059", "TECH-061", "TECH-062", "TECH-063", "TECH-064"]
+exports = ["directives_all"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: External
+specs = ["ONPAGE-025", "ONPAGE-026"]
+exports = ["external_all"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: H1
+specs = ["ONPAGE-009", "ONPAGE-121", "ONPAGE-122", "ONPAGE-123", "ONPAGE-124", "ONPAGE-125", "ONPAGE-126"]
+exports = ["h1_all"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: H2
+specs = ["ONPAGE-009", "ONPAGE-131", "ONPAGE-132", "ONPAGE-133", "ONPAGE-134", "ONPAGE-135"]
+exports = ["h2_all"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: Hreflang
+specs = ["TECH-071", "TECH-073", "TECH-074", "TECH-075", "TECH-076", "TECH-077", "TECH-078", "TECH-079", "TECH-080", "TECH-081", "TECH-082", "TECH-083", "TECH-084", "TECH-085"]
+exports = ["hreflang_all"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: Images
+specs = ["ONPAGE-171", "ONPAGE-174", "ONPAGE-175", "ONPAGE-176", "ONPAGE-177", "ONPAGE-179"]
+exports = ["images_all", "images_m2"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: Internal
+specs = ["ONPAGE-001", "ONPAGE-021", "ONPAGE-022", "ONPAGE-023", "ONPAGE-024"]
+exports = ["internal_all", "internal_m2", "list_internal"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: Links
+specs = ["TECH-130", "TECH-132", "TECH-133", "TECH-134", "TECH-135", "TECH-136", "TECH-137", "TECH-138", "TECH-139", "TECH-140", "TECH-141", "TECH-142", "TECH-143"]
+exports = ["links_all"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: Meta Description
+specs = ["ONPAGE-009", "ONPAGE-101", "ONPAGE-102", "ONPAGE-103", "ONPAGE-104", "ONPAGE-105", "ONPAGE-106", "ONPAGE-107"]
+exports = ["meta_description_all"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: Meta Keywords
+specs = ["ONPAGE-110", "ONPAGE-111", "ONPAGE-112", "ONPAGE-113"]
+exports = ["meta_keywords_all"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: Page Titles
+specs = ["ONPAGE-009", "ONPAGE-091", "ONPAGE-092", "ONPAGE-093", "ONPAGE-094", "ONPAGE-095", "ONPAGE-096", "ONPAGE-097", "ONPAGE-098"]
+exports = ["page_titles_all"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: Pagination
+specs = ["TECH-031", "TECH-032", "TECH-033", "TECH-034", "TECH-035", "TECH-036", "TECH-037", "TECH-038", "TECH-039", "TECH-040", "TECH-041"]
+exports = ["pagination_all"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: Response Codes
+specs = ["CRAWL-012", "ONPAGE-051", "ONPAGE-052", "ONPAGE-054", "ONPAGE-055", "ONPAGE-056", "ONPAGE-058", "ONPAGE-059", "ONPAGE-060", "ONPAGE-061", "ONPAGE-062", "ONPAGE-063"]
+exports = ["response_codes_all"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: Security
+specs = ["ONPAGE-001", "ONPAGE-031", "ONPAGE-032", "ONPAGE-033", "ONPAGE-034", "ONPAGE-035", "ONPAGE-036", "ONPAGE-037", "ONPAGE-038", "ONPAGE-039", "ONPAGE-040", "ONPAGE-041", "ONPAGE-042", "ONPAGE-043"]
+exports = ["security_all"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: URL
+specs = ["ONPAGE-070", "ONPAGE-071", "ONPAGE-072", "ONPAGE-073", "ONPAGE-074", "ONPAGE-075", "ONPAGE-076", "ONPAGE-077", "ONPAGE-078", "ONPAGE-079", "ONPAGE-080", "ONPAGE-081"]
+exports = ["url_all", "url_m2"]
+
+[[candidate_evidence]]
+q02 = true
+# Tab: Validation
+specs = ["TECH-281", "TECH-289", "TECH-290"]
+exports = ["validation_all"]
+
+[[export_result]]
+site = "out-basic-site"
+file = "internal_all.csv"
+mapping = "internal_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 894
+cells_equal = 894
+complete_columns = false
+
+[[export_result]]
+site = "out-basic-site"
+file = "external_all.csv"
+mapping = "external_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 5
+cells_equal = 5
+complete_columns = false
+
+[[export_result]]
+site = "out-basic-site"
+file = "response_codes_all.csv"
+mapping = "response_codes_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 152
+cells_equal = 152
+complete_columns = true
+
+[[export_result]]
+site = "out-basic-site"
+file = "links_all.csv"
+mapping = "links_all"
+outcome = "compared"
+agreement_pct = 90.323
+threshold_pct = 97.0
+passed = false
+url_set_identical = true
+cells_compared = 124
+cells_equal = 112
+complete_columns = true
+
+[[export_result]]
+site = "out-basic-site"
+file = "all_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 1067
+cells_equal = 1067
+complete_columns = true
+
+[[export_result]]
+site = "out-basic-site"
+file = "redirect_chains.csv"
+mapping = "redirect_chains"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = false
+
+[[export_result]]
+site = "out-basic-site"
+file = "crawl_overview.csv"
+mapping = "crawl_overview"
+outcome = "compared"
+agreement_pct = 93.72
+threshold_pct = 100.0
+passed = false
+url_set_identical = false
+cells_compared = 207
+cells_equal = 194
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-links"
+file = "internal_all.csv"
+mapping = "internal_m2"
+outcome = "compared"
+agreement_pct = 87.631
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 7810
+cells_equal = 6844
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-links"
+file = "response_codes_all.csv"
+mapping = "response_codes_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 1144
+cells_equal = 1144
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-links"
+file = "crawl_overview.csv"
+mapping = "crawl_overview"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-links"
+file = "links_all.csv"
+mapping = "links_all"
+outcome = "compared"
+agreement_pct = 91.677
+threshold_pct = 97.0
+passed = false
+url_set_identical = true
+cells_compared = 1562
+cells_equal = 1432
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-links"
+file = "links_non_descriptive_anchor_text_in_internal_outlinks.csv"
+mapping = "links_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 11
+cells_equal = 11
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-links"
+file = "links_pages_with_high_external_outlinks.csv"
+mapping = "links_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 11
+cells_equal = 11
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-links"
+file = "links_pages_with_high_internal_outlinks.csv"
+mapping = "links_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 11
+cells_equal = 11
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-links"
+file = "links_follow_nofollow_internal_inlinks_to_page.csv"
+mapping = "links_all"
+outcome = "compared"
+agreement_pct = 90.909
+threshold_pct = 97.0
+passed = false
+url_set_identical = true
+cells_compared = 11
+cells_equal = 10
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-links"
+file = "links_internal_nofollow_inlinks_only.csv"
+mapping = "links_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-links"
+file = "links_outlinks_to_localhost.csv"
+mapping = "links_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 22
+cells_equal = 22
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-links"
+file = "links_non_indexable_page_inlinks_only.csv"
+mapping = "links_all"
+outcome = "compared"
+agreement_pct = 90.909
+threshold_pct = 97.0
+passed = false
+url_set_identical = true
+cells_compared = 11
+cells_equal = 10
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-links"
+file = "links_pages_with_uncrawlable_internal_outlinks.csv"
+mapping = "links_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-links"
+file = "bulk_links_all_anchor_text.csv"
+mapping = "links_anchor_text"
+outcome = "compared"
+agreement_pct = 99.992
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 12955
+cells_equal = 12954
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-links"
+file = "bulk_links_external_links.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 2400
+cells_equal = 2400
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-links"
+file = "bulk_links_internal_nofollow_outlinks.csv"
+mapping = "all_inlinks"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-links"
+file = "bulk_links_internal_outlinks_with_no_anchor_text.csv"
+mapping = "all_inlinks"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-links"
+file = "bulk_links_non_descriptive_anchor_text_in_internal_outlinks.csv"
+mapping = "all_inlinks"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-links"
+file = "bulk_links_follow_nofollow_internal_inlinks_to_page.csv"
+mapping = "all_inlinks"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-links"
+file = "bulk_links_internal_nofollow_inlinks_only.csv"
+mapping = "all_inlinks"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-links"
+file = "bulk_links_outlinks_to_localhost.csv"
+mapping = "all_inlinks"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-links"
+file = "bulk_links_pages_with_uncrawlable_internal_outlinks.csv"
+mapping = "all_inlinks"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-links"
+file = "bulk_links_non_indexable_page_inlinks_only.csv"
+mapping = "all_inlinks"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-links"
+file = "crawl_path_deep8.csv"
+mapping = "crawl_path"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-list"
+file = "internal_all.csv"
+mapping = "list_internal"
+outcome = "compared"
+agreement_pct = 90.88
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 3136
+cells_equal = 2850
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-list"
+file = "response_codes_all.csv"
+mapping = "response_codes_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 368
+cells_equal = 368
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-list"
+file = "crawl_overview.csv"
+mapping = "crawl_overview"
+outcome = "compared"
+agreement_pct = 92.823
+threshold_pct = 100.0
+passed = false
+url_set_identical = false
+cells_compared = 209
+cells_equal = 194
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-list"
+file = "redirects_redirect_chains.csv"
+mapping = "list_chains"
+outcome = "compared"
+agreement_pct = 96.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 50
+cells_equal = 48
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-list"
+file = "redirects_redirect_canonical_chains.csv"
+mapping = "list_chains"
+outcome = "compared"
+agreement_pct = 95.918
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 49
+cells_equal = 47
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "internal_all.csv"
+mapping = "internal_m2"
+outcome = "compared"
+agreement_pct = 89.892
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 3245
+cells_equal = 2917
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "response_codes_all.csv"
+mapping = "response_codes_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 472
+cells_equal = 472
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "crawl_overview.csv"
+mapping = "crawl_overview"
+outcome = "compared"
+agreement_pct = 87.619
+threshold_pct = 100.0
+passed = false
+url_set_identical = false
+cells_compared = 210
+cells_equal = 184
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "page_titles_all.csv"
+mapping = "page_titles_all"
+outcome = "compared"
+agreement_pct = 77.111
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 450
+cells_equal = 347
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "meta_description_all.csv"
+mapping = "meta_description_all"
+outcome = "compared"
+agreement_pct = 77.778
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 450
+cells_equal = 350
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "meta_keywords_all.csv"
+mapping = "meta_keywords_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 350
+cells_equal = 350
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "h1_all.csv"
+mapping = "h1_all"
+outcome = "compared"
+agreement_pct = 85.714
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 350
+cells_equal = 300
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "h2_all.csv"
+mapping = "h2_all"
+outcome = "compared"
+agreement_pct = 85.714
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 350
+cells_equal = 300
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "content_all.csv"
+mapping = "content_m2"
+outcome = "compared"
+agreement_pct = 60.6
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 500
+cells_equal = 303
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "url_all.csv"
+mapping = "url_m2"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 531
+cells_equal = 531
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "images_all.csv"
+mapping = "images_m2"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 15
+cells_equal = 15
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "internal_flash.csv"
+mapping = "internal_m2"
+outcome = "compared"
+agreement_pct = 81.818
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 55
+cells_equal = 45
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "internal_other.csv"
+mapping = "internal_m2"
+outcome = "compared"
+agreement_pct = 81.818
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 55
+cells_equal = 45
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "url_repetitive_path.csv"
+mapping = "url_m2"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 9
+cells_equal = 9
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "url_internal_search.csv"
+mapping = "url_m2"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 9
+cells_equal = 9
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "url_broken_bookmark.csv"
+mapping = "url_m2"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "url_ga_tracking_parameters.csv"
+mapping = "url_m2"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 9
+cells_equal = 9
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "page_titles_over_561_pixels.csv"
+mapping = "page_titles_all"
+outcome = "compared"
+agreement_pct = 77.778
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 9
+cells_equal = 7
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "page_titles_below_200_pixels.csv"
+mapping = "page_titles_all"
+outcome = "compared"
+agreement_pct = 76.023
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 171
+cells_equal = 130
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "page_titles_same_as_h1.csv"
+mapping = "page_titles_all"
+outcome = "compared"
+agreement_pct = 77.778
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 9
+cells_equal = 7
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "page_titles_outside_head.csv"
+mapping = "page_titles_all"
+outcome = "compared"
+agreement_pct = 77.778
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 9
+cells_equal = 7
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "meta_description_over_985_pixels.csv"
+mapping = "meta_description_all"
+outcome = "compared"
+agreement_pct = 77.778
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 9
+cells_equal = 7
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "meta_description_below_400_pixels.csv"
+mapping = "meta_description_all"
+outcome = "compared"
+agreement_pct = 77.778
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 18
+cells_equal = 14
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "meta_description_outside_head.csv"
+mapping = "meta_description_all"
+outcome = "compared"
+agreement_pct = 77.778
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 9
+cells_equal = 7
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "h1_alt_text_in_h1.csv"
+mapping = "h1_all"
+outcome = "compared"
+agreement_pct = 85.714
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 7
+cells_equal = 6
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "h1_non_sequential.csv"
+mapping = "h1_all"
+outcome = "compared"
+agreement_pct = 85.714
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 7
+cells_equal = 6
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "h2_non_sequential.csv"
+mapping = "h2_all"
+outcome = "compared"
+agreement_pct = 85.714
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 7
+cells_equal = 6
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "content_near_duplicates.csv"
+mapping = "content_m2"
+outcome = "skipped"
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "content_soft_404_pages.csv"
+mapping = "content_m2"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "content_lorem_ipsum_placeholder.csv"
+mapping = "content_m2"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 2
+cells_equal = 2
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "content_readability_difficult.csv"
+mapping = "content_m2"
+outcome = "compared"
+agreement_pct = 42.857
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 14
+cells_equal = 6
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "content_readability_very_difficult.csv"
+mapping = "content_m2"
+outcome = "compared"
+agreement_pct = 42.857
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 161
+cells_equal = 69
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "images_missing_size_attributes.csv"
+mapping = "images_m2"
+outcome = "compared"
+agreement_pct = 0.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "meta_keywords_missing.csv"
+mapping = "meta_keywords_all"
+outcome = "compared"
+agreement_pct = 85.714
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 315
+cells_equal = 270
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "meta_keywords_duplicate.csv"
+mapping = "meta_keywords_all"
+outcome = "compared"
+agreement_pct = 85.714
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 14
+cells_equal = 12
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "meta_keywords_multiple.csv"
+mapping = "meta_keywords_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 7
+cells_equal = 7
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "bulk_content_near_duplicates.csv"
+mapping = "content_near_duplicates"
+outcome = "skipped"
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "bulk_images_images_missing_size_attributes.csv"
+mapping = "images_missing_sizes"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "serp_summary.csv"
+mapping = "serp_summary"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "sitemap_default.xml"
+mapping = "sitemap_xml"
+outcome = "compared"
+agreement_pct = 51.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = true
+cells_compared = 200
+cells_equal = 102
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "sitemap_options.xml"
+mapping = "sitemap_xml"
+outcome = "compared"
+agreement_pct = 75.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = true
+cells_compared = 200
+cells_equal = 150
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-onpage"
+file = "sitemap_images.xml"
+mapping = "sitemap_xml"
+outcome = "compared"
+agreement_pct = 50.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = true
+cells_compared = 8
+cells_equal = 4
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-security"
+file = "internal_all.csv"
+mapping = "internal_m2"
+outcome = "compared"
+agreement_pct = 89.412
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 935
+cells_equal = 836
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-security"
+file = "response_codes_all.csv"
+mapping = "response_codes_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 152
+cells_equal = 152
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-security"
+file = "crawl_overview.csv"
+mapping = "crawl_overview"
+outcome = "compared"
+agreement_pct = 94.787
+threshold_pct = 100.0
+passed = false
+url_set_identical = false
+cells_compared = 211
+cells_equal = 200
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-security"
+file = "security_all.csv"
+mapping = "security_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 119
+cells_equal = 119
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-security"
+file = "security_mixed_content.csv"
+mapping = "security_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-security"
+file = "security_form_url_insecure.csv"
+mapping = "security_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 14
+cells_equal = 14
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-security"
+file = "security_form_on_http_url.csv"
+mapping = "security_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 14
+cells_equal = 14
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-security"
+file = "security_unsafe_cross_origin_links.csv"
+mapping = "security_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 7
+cells_equal = 7
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-security"
+file = "security_protocol_relative_resource_links.csv"
+mapping = "security_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 7
+cells_equal = 7
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-security"
+file = "security_missing_hsts_header.csv"
+mapping = "security_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-security"
+file = "security_missing_content_security_policy_header.csv"
+mapping = "security_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 91
+cells_equal = 91
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-security"
+file = "security_missing_x_content_type_options_header.csv"
+mapping = "security_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 91
+cells_equal = 91
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-security"
+file = "security_missing_x_frame_options_header.csv"
+mapping = "security_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 91
+cells_equal = 91
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-security"
+file = "security_missing_secure_referrer_policy_header.csv"
+mapping = "security_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 91
+cells_equal = 91
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-security"
+file = "security_bad_content_type.csv"
+mapping = "security_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 14
+cells_equal = 14
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-security"
+file = "bulk_security_http_urls_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 191
+cells_equal = 191
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-security"
+file = "bulk_security_mixed_content_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-security"
+file = "bulk_security_form_url_insecure_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-security"
+file = "bulk_security_form_on_http_url_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "skipped"
+
+[[export_result]]
+site = "parity-m2-security"
+file = "bulk_security_unsafe_cross_origin_links_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-security"
+file = "bulk_security_protocol_relative_resource_links_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 2
+cells_equal = 2
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-security"
+file = "insecure_content.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "internal_all.csv"
+mapping = "internal_m2"
+outcome = "compared"
+agreement_pct = 84.83
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 3685
+cells_equal = 3126
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "response_codes_all.csv"
+mapping = "response_codes_all"
+outcome = "compared"
+agreement_pct = 98.529
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 544
+cells_equal = 536
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "crawl_overview.csv"
+mapping = "crawl_overview"
+outcome = "compared"
+agreement_pct = 81.159
+threshold_pct = 100.0
+passed = false
+url_set_identical = false
+cells_compared = 207
+cells_equal = 168
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "canonicals_all.csv"
+mapping = "canonicals_all"
+outcome = "compared"
+agreement_pct = 98.03
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 660
+cells_equal = 647
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "pagination_all.csv"
+mapping = "pagination_all"
+outcome = "compared"
+agreement_pct = 97.963
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 540
+cells_equal = 529
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "directives_all.csv"
+mapping = "directives_all"
+outcome = "compared"
+agreement_pct = 97.773
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 494
+cells_equal = 483
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "hreflang_all.csv"
+mapping = "hreflang_all"
+outcome = "compared"
+agreement_pct = 98.472
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 720
+cells_equal = 709
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "validation_all.csv"
+mapping = "validation_all"
+outcome = "compared"
+agreement_pct = 97.333
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 300
+cells_equal = 292
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "canonicals_canonical_is_relative.csv"
+mapping = "canonicals_all"
+outcome = "compared"
+agreement_pct = 98.864
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 88
+cells_equal = 87
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "canonicals_unlinked.csv"
+mapping = "canonicals_all"
+outcome = "compared"
+agreement_pct = 0.0
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 0
+cells_equal = 0
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "canonicals_invalid_attribute_in_annotation.csv"
+mapping = "canonicals_all"
+outcome = "compared"
+agreement_pct = 63.636
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 11
+cells_equal = 7
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "canonicals_contains_fragment_url.csv"
+mapping = "canonicals_all"
+outcome = "compared"
+agreement_pct = 90.909
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 11
+cells_equal = 10
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "canonicals_outside_head.csv"
+mapping = "canonicals_all"
+outcome = "compared"
+agreement_pct = 63.636
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 11
+cells_equal = 7
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "directives_noarchive.csv"
+mapping = "directives_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 24
+cells_equal = 24
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "directives_nosnippet.csv"
+mapping = "directives_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 16
+cells_equal = 16
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "directives_max_snippet.csv"
+mapping = "directives_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 16
+cells_equal = 16
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "directives_max_image_preview.csv"
+mapping = "directives_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 8
+cells_equal = 8
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "directives_max_video_preview.csv"
+mapping = "directives_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 8
+cells_equal = 8
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "directives_noimageindex.csv"
+mapping = "directives_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 8
+cells_equal = 8
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "directives_notranslate.csv"
+mapping = "directives_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 8
+cells_equal = 8
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "directives_unavailable_after.csv"
+mapping = "directives_all"
+outcome = "compared"
+agreement_pct = 75.0
+threshold_pct = 99.0
+passed = false
+url_set_identical = true
+cells_compared = 8
+cells_equal = 6
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "directives_outside_head.csv"
+mapping = "directives_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 8
+cells_equal = 8
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "hreflang_unlinked_hreflang_urls.csv"
+mapping = "hreflang_all"
+outcome = "compared"
+agreement_pct = 0.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 0
+cells_equal = 0
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "hreflang_inconsistent_language_region_return_links.csv"
+mapping = "hreflang_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 24
+cells_equal = 24
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "hreflang_non_canonical_return_links.csv"
+mapping = "hreflang_all"
+outcome = "compared"
+agreement_pct = 0.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 0
+cells_equal = 0
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "hreflang_noindex_return_links.csv"
+mapping = "hreflang_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 12
+cells_equal = 12
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "hreflang_multiple_entries.csv"
+mapping = "hreflang_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 20
+cells_equal = 20
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "hreflang_missing_self_reference.csv"
+mapping = "hreflang_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 20
+cells_equal = 20
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "hreflang_not_using_canonical.csv"
+mapping = "hreflang_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 20
+cells_equal = 20
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "hreflang_missing_x_default.csv"
+mapping = "hreflang_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 100
+cells_equal = 100
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "hreflang_outside_head.csv"
+mapping = "hreflang_all"
+outcome = "compared"
+agreement_pct = 62.5
+threshold_pct = 97.0
+passed = false
+url_set_identical = true
+cells_compared = 8
+cells_equal = 5
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "pagination_contains_pagination.csv"
+mapping = "pagination_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 90
+cells_equal = 90
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "pagination_first_page.csv"
+mapping = "pagination_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 63
+cells_equal = 63
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "pagination_paginated_2_pages.csv"
+mapping = "pagination_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 24
+cells_equal = 24
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "pagination_pagination_url_not_in_anchor_tag.csv"
+mapping = "pagination_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 81
+cells_equal = 81
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "pagination_non_200_pagination_urls.csv"
+mapping = "pagination_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 8
+cells_equal = 8
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "pagination_unlinked_pagination_urls.csv"
+mapping = "pagination_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "pagination_non_indexable.csv"
+mapping = "pagination_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "pagination_multiple_pagination_urls.csv"
+mapping = "pagination_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 9
+cells_equal = 9
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "pagination_pagination_loop.csv"
+mapping = "pagination_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 16
+cells_equal = 16
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "pagination_sequence_error.csv"
+mapping = "pagination_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 36
+cells_equal = 36
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "validation_invalid_html_elements_in_head.csv"
+mapping = "validation_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 5
+cells_equal = 5
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "validation_head_not_first_in_html_element.csv"
+mapping = "validation_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 5
+cells_equal = 5
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "validation_missing_head_tag.csv"
+mapping = "validation_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 5
+cells_equal = 5
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "validation_multiple_head_tags.csv"
+mapping = "validation_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 5
+cells_equal = 5
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "validation_missing_body_tag.csv"
+mapping = "validation_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 5
+cells_equal = 5
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "validation_multiple_body_tags.csv"
+mapping = "validation_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 5
+cells_equal = 5
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "validation_body_element_preceding_html.csv"
+mapping = "validation_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 5
+cells_equal = 5
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "validation_html_document_over_2mb.csv"
+mapping = "validation_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 5
+cells_equal = 5
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "validation_resource_over_2mb.csv"
+mapping = "validation_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 5
+cells_equal = 5
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "response_codes_internal_redirection_http_refresh.csv"
+mapping = "response_codes_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = false
+url_set_identical = false
+cells_compared = 8
+cells_equal = 8
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "redirects_redirect_canonical_chains.csv"
+mapping = "m2_redirects_redirect_canonical_chains"
+outcome = "compared"
+agreement_pct = 93.197
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 147
+cells_equal = 137
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "canonicals_canonical_chains.csv"
+mapping = "m2_canonicals_canonical_chains"
+outcome = "compared"
+agreement_pct = 95.833
+threshold_pct = 97.0
+passed = false
+url_set_identical = true
+cells_compared = 48
+cells_equal = 46
+complete_columns = false
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "canonicals_non_indexable_canonicals.csv"
+mapping = "m2_canonicals_non_indexable_canonicals"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "report_hreflang_all_hreflang_urls.csv"
+mapping = "hreflang_urls"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "report_hreflang_non_200_hreflang_urls.csv"
+mapping = "hreflang_urls"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "report_hreflang_unlinked_hreflang_urls.csv"
+mapping = "hreflang_urls"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "report_hreflang_missing_return_links.csv"
+mapping = "hreflang_missing_returns"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "report_hreflang_inconsistent_language_region_return_links.csv"
+mapping = "hreflang_inconsistent_returns"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "report_hreflang_non_canonical_return_links.csv"
+mapping = "hreflang_noncanonical_returns"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "report_hreflang_noindex_return_links.csv"
+mapping = "hreflang_noindex_returns"
+outcome = "error"
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_canonicals_contains_canonical_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 143
+cells_equal = 143
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_canonicals_self_referencing_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_canonicals_canonicalised_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 143
+cells_equal = 143
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_canonicals_missing_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 839
+cells_equal = 839
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_canonicals_multiple_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_canonicals_multiple_conflicting_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_canonicals_non_indexable_canonical_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 35
+cells_equal = 35
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_canonicals_canonical_is_relative_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 143
+cells_equal = 143
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_canonicals_unlinked_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 0.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_canonicals_invalid_attribute_in_annotation_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 12
+cells_equal = 12
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_canonicals_contains_fragment_url_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 12
+cells_equal = 12
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_canonicals_outside_head_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 12
+cells_equal = 12
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_index_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_noindex_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 96
+cells_equal = 96
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_follow_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_nofollow_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_none_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_noarchive_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 36
+cells_equal = 36
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_nosnippet_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 24
+cells_equal = 24
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_max_snippet_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 24
+cells_equal = 24
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_max_image_preview_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 12
+cells_equal = 12
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_max_video_preview_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 12
+cells_equal = 12
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_noodp_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_noydir_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_noimageindex_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 12
+cells_equal = 12
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_notranslate_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 12
+cells_equal = 12
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_unavailable_after_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 12
+cells_equal = 12
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_refresh_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 0.0
+threshold_pct = 97.0
+passed = false
+url_set_identical = false
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-m2-technical"
+file = "bulk_directives_outside_head_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 12
+cells_equal = 12
+complete_columns = true
+
+[[export_result]]
+site = "parity-onpage"
+file = "internal_all.csv"
+mapping = "internal_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 4761
+cells_equal = 4761
+complete_columns = false
+
+[[export_result]]
+site = "parity-onpage"
+file = "external_all.csv"
+mapping = "external_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 44
+cells_equal = 44
+complete_columns = false
+
+[[export_result]]
+site = "parity-onpage"
+file = "response_codes_all.csv"
+mapping = "response_codes_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 911
+cells_equal = 911
+complete_columns = true
+
+[[export_result]]
+site = "parity-onpage"
+file = "url_all.csv"
+mapping = "url_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 945
+cells_equal = 945
+complete_columns = true
+
+[[export_result]]
+site = "parity-onpage"
+file = "page_titles_all.csv"
+mapping = "page_titles_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 756
+cells_equal = 756
+complete_columns = true
+
+[[export_result]]
+site = "parity-onpage"
+file = "meta_description_all.csv"
+mapping = "meta_description_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 756
+cells_equal = 756
+complete_columns = true
+
+[[export_result]]
+site = "parity-onpage"
+file = "h1_all.csv"
+mapping = "h1_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 588
+cells_equal = 588
+complete_columns = true
+
+[[export_result]]
+site = "parity-onpage"
+file = "h2_all.csv"
+mapping = "h2_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 588
+cells_equal = 588
+complete_columns = true
+
+[[export_result]]
+site = "parity-onpage"
+file = "content_all.csv"
+mapping = "content_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 336
+cells_equal = 336
+complete_columns = true
+
+[[export_result]]
+site = "parity-onpage"
+file = "images_all.csv"
+mapping = "images_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 57
+cells_equal = 57
+complete_columns = true
+
+[[export_result]]
+site = "parity-onpage"
+file = "all_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 3322
+cells_equal = 3322
+complete_columns = true
+
+[[export_result]]
+site = "parity-onpage"
+file = "crawl_overview.csv"
+mapping = "crawl_overview"
+outcome = "compared"
+agreement_pct = 92.611
+threshold_pct = 100.0
+passed = false
+url_set_identical = false
+cells_compared = 203
+cells_equal = 188
+complete_columns = true
+
+[[export_result]]
+site = "parity-response"
+file = "internal_all.csv"
+mapping = "internal_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 2158
+cells_equal = 2158
+complete_columns = false
+
+[[export_result]]
+site = "parity-response"
+file = "external_all.csv"
+mapping = "external_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 24
+cells_equal = 24
+complete_columns = false
+
+[[export_result]]
+site = "parity-response"
+file = "response_codes_all.csv"
+mapping = "response_codes_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 407
+cells_equal = 407
+complete_columns = true
+
+[[export_result]]
+site = "parity-response"
+file = "all_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 1064
+cells_equal = 1064
+complete_columns = true
+
+[[export_result]]
+site = "parity-response"
+file = "all_error_(4xx_5xx_no_response)_inlinks.csv"
+mapping = "all_error_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 209
+cells_equal = 209
+complete_columns = true
+
+[[export_result]]
+site = "parity-response"
+file = "redirect_chains.csv"
+mapping = "redirect_chains"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 281
+cells_equal = 281
+complete_columns = false
+
+[[export_result]]
+site = "parity-response"
+file = "redirects_to_error.csv"
+mapping = "redirects_to_errors"
+outcome = "skipped"
+
+[[export_result]]
+site = "parity-response"
+file = "crawl_overview.csv"
+mapping = "crawl_overview"
+outcome = "compared"
+agreement_pct = 92.118
+threshold_pct = 100.0
+passed = false
+url_set_identical = false
+cells_compared = 203
+cells_equal = 187
+complete_columns = true
+
+[[export_result]]
+site = "parity-synthetic"
+file = "internal_all.csv"
+mapping = "internal_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 20652
+cells_equal = 20652
+complete_columns = false
+
+[[export_result]]
+site = "parity-synthetic"
+file = "links_all.csv"
+mapping = "links_all"
+outcome = "compared"
+agreement_pct = 91.195
+threshold_pct = 97.0
+passed = false
+url_set_identical = true
+cells_compared = 4168
+cells_equal = 3801
+complete_columns = true
+
+[[export_result]]
+site = "parity-synthetic"
+file = "all_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 50105
+cells_equal = 50105
+complete_columns = true
+
+[[export_result]]
+site = "parity-synthetic"
+file = "crawl_overview.csv"
+mapping = "crawl_overview"
+outcome = "compared"
+agreement_pct = 93.839
+threshold_pct = 100.0
+passed = false
+url_set_identical = false
+cells_compared = 211
+cells_equal = 198
+complete_columns = true
+
+[[export_result]]
+site = "parity-technical"
+file = "internal_all.csv"
+mapping = "internal_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 6065
+cells_equal = 6065
+complete_columns = false
+
+[[export_result]]
+site = "parity-technical"
+file = "canonicals_all.csv"
+mapping = "canonicals_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 1272
+cells_equal = 1272
+complete_columns = false
+
+[[export_result]]
+site = "parity-technical"
+file = "directives_all.csv"
+mapping = "directives_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 99.0
+passed = true
+url_set_identical = true
+cells_compared = 1069
+cells_equal = 1069
+complete_columns = false
+
+[[export_result]]
+site = "parity-technical"
+file = "hreflang_all.csv"
+mapping = "hreflang_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 1908
+cells_equal = 1908
+complete_columns = false
+
+[[export_result]]
+site = "parity-technical"
+file = "links_all.csv"
+mapping = "links_all"
+outcome = "compared"
+agreement_pct = 91.99
+threshold_pct = 97.0
+passed = false
+url_set_identical = true
+cells_compared = 1161
+cells_equal = 1068
+complete_columns = true
+
+[[export_result]]
+site = "parity-technical"
+file = "sitemaps_all.csv"
+mapping = "sitemaps_all"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 0
+cells_equal = 0
+complete_columns = true
+
+[[export_result]]
+site = "parity-technical"
+file = "all_inlinks.csv"
+mapping = "all_inlinks"
+outcome = "compared"
+agreement_pct = 100.0
+threshold_pct = 97.0
+passed = true
+url_set_identical = true
+cells_compared = 4849
+cells_equal = 4849
+complete_columns = true
+
+[[export_result]]
+site = "parity-technical"
+file = "crawl_overview.csv"
+mapping = "crawl_overview"
+outcome = "compared"
+agreement_pct = 90.196
+threshold_pct = 100.0
+passed = false
+url_set_identical = false
+cells_compared = 204
+cells_equal = 184
+complete_columns = true
