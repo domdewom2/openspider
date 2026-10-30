@@ -63,6 +63,8 @@ pub(crate) struct Control {
     pub notify: Notify,
     /// Gewünschte Zahl paralleler Threads.
     pub threads: AtomicU32,
+    /// Obergrenze durch Speicherschutz; u32::MAX bedeutet keine Drosselung.
+    pub memory_threads: AtomicU32,
     /// `STOP_*`.
     pub stop: AtomicU8,
     /// Grund einer Pause, die die Engine selbst auslöst (Speicherplatz): `(Code, Meldung)`.

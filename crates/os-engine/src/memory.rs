@@ -294,7 +294,7 @@ pub fn tick(input: &MemoryInputs<'_>) -> MemoryAction {
     } else {
         if previous.is_some_and(|previous| previous != 0) {
             tracing::info!("Speicherengpass beendet – Crawl-Drosselung aufgehoben");
-            MemoryAction::Throttle(input.config.speed.threads.max(1))
+            MemoryAction::Throttle(u32::MAX)
         } else {
             MemoryAction::None
         }
@@ -473,8 +473,8 @@ mod n04_tests {
         fn exit(&self, _: &tracing::span::Id) {}
     }
     // spec: CRAWL-129
-    #[test]
-    fn sixty_low_memory_ticks_log_once_then_recovery_restores_threads() {
+    #[tokio::test]
+    async fn sixty_low_memory_ticks_log_once_then_recovery_preserves_live_threads() {
         struct Reset;
         impl Drop for Reset {
             fn drop(&mut self) {
@@ -524,10 +524,85 @@ mod n04_tests {
             }
             assert_eq!(events.load(std::sync::atomic::Ordering::SeqCst), 1);
             available.store(8 << 30, std::sync::atomic::Ordering::SeqCst);
-            assert_eq!(tick(&input), MemoryAction::Throttle(4));
+            assert_eq!(tick(&input), MemoryAction::Throttle(u32::MAX));
             assert_eq!(tick(&input), MemoryAction::None);
             assert_eq!(events.load(std::sync::atomic::Ordering::SeqCst), 2);
         });
+        tokio::time::timeout(Duration::from_secs(45), live_threads_memory_fixture())
+            .await
+            .expect("live thread/memory fixture exceeded 45 s");
+    }
+
+    // spec: CRAWL-112, CRAWL-126, CRAWL-129
+    async fn live_threads_memory_fixture() {
+        use crate::testing::{test_deps, SimFetcher, SimSite, TokioClock};
+        use std::sync::atomic::{AtomicU64, Ordering};
+        let available = Arc::new(AtomicU64::new(8 << 30));
+        let injected = available.clone();
+        set_probe(Some(Arc::new(move || Sample {
+            engine_bytes: 128 << 20,
+            physical_bytes: 16 << 30,
+            available_bytes: injected.load(Ordering::SeqCst),
+            injected_limit: Some(8 << 30),
+            ..Default::default()
+        })));
+        let dir = tempfile::tempdir().unwrap();
+        let fetcher =
+            SimFetcher::new(SimSite::tree("site.test", 1000).delay(Duration::from_millis(300)));
+        let mut config = os_model::CrawlConfig::default();
+        config.speed.threads = 20;
+        let mut deps = test_deps();
+        deps.clock = TokioClock::new();
+        let handle = crate::start_crawl(
+            fetcher.clone(),
+            crate::CrawlRequest {
+                config,
+                source: crate::CrawlSource::Spider {
+                    start_url: "https://site.test/".into(),
+                },
+                file: dir.path().join("live-memory.ospider"),
+                project: "fixture".into(),
+                name: "live-memory".into(),
+            },
+            deps,
+        )
+        .await
+        .unwrap();
+        tokio::time::timeout(Duration::from_secs(5), async {
+            while fetcher.inflight() != 20 {
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+        })
+        .await
+        .expect("fixture did not reach the initial 20 requests");
+        // Keep recording every phase so the pre-fix run also exercises raising
+        // the desired value under pressure. Delays cover two memory ticks and
+        // let already running requests finish before measuring new concurrency.
+        let mut observed = Vec::new();
+        handle.set_threads(2);
+        tokio::time::sleep(Duration::from_millis(2200)).await;
+        observed.push(fetcher.inflight());
+        available.store(128 << 20, Ordering::SeqCst);
+        tokio::time::sleep(Duration::from_millis(2200)).await;
+        observed.push(fetcher.inflight());
+        available.store(8 << 30, Ordering::SeqCst);
+        tokio::time::sleep(Duration::from_millis(2200)).await;
+        observed.push(fetcher.inflight());
+        available.store(128 << 20, Ordering::SeqCst);
+        tokio::time::sleep(Duration::from_millis(2200)).await;
+        handle.set_threads(16);
+        tokio::time::sleep(Duration::from_millis(2200)).await;
+        observed.push(fetcher.inflight());
+        available.store(8 << 30, Ordering::SeqCst);
+        tokio::time::sleep(Duration::from_millis(2200)).await;
+        observed.push(fetcher.inflight());
+        handle.stop();
+        handle.wait().await.unwrap();
+        assert_eq!(
+            observed,
+            vec![2, 2, 2, 10, 16],
+            "live reduction, pressure, recovery, live raise under pressure, recovery"
+        );
     }
     // spec: CRAWL-129
     #[test]
