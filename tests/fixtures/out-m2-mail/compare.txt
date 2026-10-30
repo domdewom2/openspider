@@ -71,7 +71,7 @@ Structured Data / All | 9 | 10 | +1 | 11.11%
 Structured Data Unique Types | 0 | 1 | +1 |
 URL / All | 10 | 11 | +1 | 10.00%
 Unique External Outlinks | 0 | 1 | +1 |
-Validation / All | 9 | 10 | +1 | 11.11%
+Validation / All | 11 | 12 | +1 | 9.09%
 Word Count | 0 | 1 | +1 |
 Canonicals / Canonical Is Relative | 0 | 0 | +0 |
 Canonicals / Canonicalised | 0 | 0 | +0 |

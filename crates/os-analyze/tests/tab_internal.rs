@@ -712,12 +712,12 @@ async fn word_count_counts_only_the_content_area() {
 
 // spec: ONPAGE-013
 #[tokio::test]
-async fn text_ratio_is_visible_text_over_source_in_percent_with_one_decimal() {
+async fn text_ratio_is_visible_text_over_source_in_percent_with_three_decimals() {
     let fx = internal_site().await;
     let t = all_columns(&fx, "All");
-    // „sichtbar“ = 8 Zeichen, Quelltext 271 Zeichen: 8 / 271 × 100 = 2,95 → 3,0
+    // K2-63 / SQ-08, ONPAGE-013: 8 / 271 × 100 = 2,952 (drei Nachkommastellen in der Ansicht).
     assert_eq!(t.int("/content/script-style.html", "Size (bytes)"), 271);
-    assert!((t.float("/content/script-style.html", "Text Ratio") - 3.0).abs() < 1e-9);
+    assert!((t.float("/content/script-style.html", "Text Ratio") - 2.952).abs() < 1e-9);
     // Seite ohne Body-Text → 0
     assert!((t.float("/content/no-text.html", "Text Ratio")).abs() < 1e-9);
     assert_eq!(t.int("/content/no-text.html", "Word Count"), 0);
