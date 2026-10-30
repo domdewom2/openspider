@@ -113,7 +113,7 @@ fn style_blocks_and_style_attributes_in_html_are_scanned_too() {
          <template><div style=\"background:url(no.png)\"></div></template></body></html>",
     );
     let base = url::Url::parse("https://site.test/dir/page.html").unwrap();
-    let links = css::extract_inline(&doc, &base);
+    let links = css::extract_inline(&doc, &base, true);
     let resolved: Vec<&str> = links
         .iter()
         .map(|l| l.resolved.as_deref().unwrap())

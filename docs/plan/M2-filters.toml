@@ -30,11 +30,11 @@ module = "internal"
 package = "M2-D02"
 new = false
 filters = [
-  { id = "Flash", spec = "ONPAGE-023", kind = "live" },
+  { id = "Plugins", spec = "ONPAGE-023", kind = "live" },
   { id = "Other", spec = "ONPAGE-023", kind = "live" },
-  { id = "Media", spec = "ONPAGE-023", kind = "live", requires = ["ui.parity_filters=false"], extension = true },
-  { id = "Fonts", spec = "ONPAGE-023", kind = "live", requires = ["ui.parity_filters=false"], extension = true },
-  { id = "XML", spec = "ONPAGE-023", kind = "live", requires = ["ui.parity_filters=false"], extension = true },
+  { id = "Media", spec = "ONPAGE-023", kind = "live" },
+  { id = "Fonts", spec = "ONPAGE-023", kind = "live" },
+  { id = "XML", spec = "ONPAGE-023", kind = "live" },
 ]
 
 [[tab]]
@@ -153,7 +153,7 @@ new = false
 note = "requires bei ONPAGE-178/180 ist eine Planannahme; maßgeblich ist die Spec (M2-D03 prüft und meldet Abweichungen)."
 filters = [
   { id = "Background Images", spec = "ONPAGE-178", kind = "post_crawl:Images", issue = true, requires = ["images.parse_inline_css_backgrounds"] },
-  { id = "Missing Size Attributes", spec = "ONPAGE-179", kind = "post_crawl:Images", issue = true, requires = ["images.parse_inline_css_backgrounds"] },
+  { id = "Missing Size Attributes", spec = "ONPAGE-179", kind = "live", issue = true },
   { id = "Incorrectly Sized Images", spec = "ONPAGE-180", kind = "post_crawl:Images", issue = true, requires = ["rendering.mode=javascript"] },
 ]
 

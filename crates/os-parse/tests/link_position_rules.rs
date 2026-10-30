@@ -111,12 +111,13 @@ fn defaults_and_config_validation_enforce_the_final_content_rule() {
         vec![
             ("Navigation", vec!["nav", "menu"]),
             ("Header", vec!["header"]),
-            ("Sidebar", vec!["aside", "sidebar"]),
+            ("Aside", vec!["aside"]),
+            ("Sidebar", vec!["sidebar"]),
             ("Footer", vec!["footer"]),
             ("Content", vec![]),
         ]
     );
-    cfg.link_positions.rules.swap(0, 4);
+    cfg.link_positions.rules.swap(0, 5);
     assert!(!cfg.validate().errors.is_empty());
     cfg.link_positions = LinkPositionsConfig::default();
     assert_eq!(

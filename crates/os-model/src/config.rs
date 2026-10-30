@@ -285,6 +285,8 @@ pub struct SpiderConfig {
     pub images: StoreCrawl,
     /// CSS.
     pub css: StoreCrawl,
+    /// Style-Attribute ohne Rendering nach CSS-Verweisen durchsuchen (CRAWL-040).
+    pub css_style_attributes: bool,
     /// JavaScript.
     pub javascript: StoreCrawl,
     /// Medien.
@@ -322,6 +324,7 @@ impl Default for SpiderConfig {
 
             images: StoreCrawl::ON,
             css: StoreCrawl::ON,
+            css_style_attributes: false,
             javascript: StoreCrawl::ON,
             media: StoreCrawl::ON,
             internal: StoreCrawl::ON,
@@ -806,7 +809,6 @@ impl Default for UrlLimits {
             .map(String::from)
             .to_vec(),
             internal_search_params: [
-                "s",
                 "q",
                 "query",
                 "search",

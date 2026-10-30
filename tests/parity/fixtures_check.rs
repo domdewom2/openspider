@@ -1027,7 +1027,7 @@ fn holds(c: &Crawl, tab: &str, filter: &str, subject: &Subject<'_>) -> Option<bo
                 "CSS" => Class::Css,
                 "Images" => Class::Images,
                 "PDF" => Class::Pdf,
-                "Flash" => Class::Flash,
+                "Plugins" => Class::Flash,
                 "Other" => Class::Other,
                 "Unknown" => Class::Unknown,
                 _ => return None,
@@ -1980,23 +1980,33 @@ fn manifests_mappings_and_profile_are_consistent() {
             .map(|v| v.as_str().unwrap())
             .collect();
         assert!(!key.is_empty());
-        let drop: Vec<&str> = m["drop_ref_columns"]
-            .as_array()
-            .unwrap()
-            .iter()
+        let drop: Vec<&str> = m
+            .get("drop_ref_columns")
+            .and_then(toml::Value::as_array)
+            .into_iter()
+            .flatten()
             .map(|v| v.as_str().unwrap())
             .collect();
-        assert!(
-            drop.contains(&"Description") && drop.contains(&"How To Fix"),
-            "{slug}: drop_ref_columns"
-        );
+        if slug == "serp_summary" {
+            // ONPAGE-194: Description is the page's meta description, not issue prose.
+            assert_eq!(
+                m["columns"]["Description"].as_str(),
+                Some("Meta Description 1")
+            );
+        } else {
+            assert!(
+                drop.contains(&"Description") && drop.contains(&"How To Fix"),
+                "{slug}: drop_ref_columns"
+            );
+        }
         let cols = m["columns"].as_table().unwrap();
         assert!(!cols.is_empty());
         for k in &key {
             if *k != "#" {
                 assert!(
-                    cols.values().any(|v| v.as_str() == Some(k)
-                        || v.get("os").and_then(|o| o.as_str()) == Some(k)),
+                    cols.contains_key(*k)
+                        || cols.values().any(|v| v.as_str() == Some(k)
+                            || v.get("os").and_then(|o| o.as_str()) == Some(k)),
                     "{slug}: Schlüsselspalte {k} nicht in [columns] abgebildet"
                 );
             }

@@ -224,7 +224,14 @@ async fn validation_and_rejection_leave_config_untouched() {
             .iter()
             .map(|r| r["position"].as_str().unwrap())
             .collect::<Vec<_>>(),
-        vec!["Navigation", "Header", "Sidebar", "Footer", "Content"]
+        vec![
+            "Navigation",
+            "Header",
+            "Aside",
+            "Sidebar",
+            "Footer",
+            "Content"
+        ]
     );
     for (pointer, value) in [
         ("/config/title/min_chars", json!(500)),

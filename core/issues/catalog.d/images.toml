@@ -20,7 +20,7 @@ type = "Issue"
 priority = "Low"
 type_rule = "T-I2"
 priority_rule = "P-L1"
-needs_crawl_analysis = true
+needs_crawl_analysis = false
 doc_key = "images-missing-size-attributes"
 
 [[issue]]

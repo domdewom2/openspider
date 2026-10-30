@@ -176,7 +176,12 @@ pub fn parse_html(input: &ParseInput) -> ParsedPage {
         links.extend(crawlability::inspect(&doc, &base, cfg));
     }
     links.extend(alternates::extract(&doc, &base, cfg));
-    links.extend(css::extract_inline(&doc, &base));
+    links.extend(css::extract_inline(
+        &doc,
+        &base,
+        cfg.crawl.spider.css_style_attributes
+            || cfg.crawl.rendering.mode == os_model::RenderingMode::JavaScript,
+    ));
 
     let elements::ElementSets {
         mut titles,

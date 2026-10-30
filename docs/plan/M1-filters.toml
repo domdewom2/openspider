@@ -48,7 +48,10 @@ filters = [
   { id = "CSS", spec = "ONPAGE-026", kind = "live" },
   { id = "Images", spec = "ONPAGE-026", kind = "live" },
   { id = "PDF", spec = "ONPAGE-026", kind = "live" },
-  { id = "Flash", spec = "ONPAGE-026", kind = "live" },
+  { id = "Plugins", spec = "ONPAGE-026", kind = "live" },
+  { id = "Media", spec = "ONPAGE-026", kind = "live" },
+  { id = "Fonts", spec = "ONPAGE-026", kind = "live" },
+  { id = "XML", spec = "ONPAGE-026", kind = "live" },
   { id = "Other", spec = "ONPAGE-026", kind = "live" },
   { id = "Unknown", spec = "ONPAGE-026", kind = "live" },
 ]

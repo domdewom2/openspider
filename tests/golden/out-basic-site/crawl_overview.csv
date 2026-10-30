@@ -55,13 +55,16 @@ Directives,None,0,0.00
 Directives,Refresh,0,0.00
 External,All,0,
 External,CSS,0,
-External,Flash,0,
+External,Fonts,0,
 External,HTML,0,
 External,Images,0,
 External,JavaScript,0,
+External,Media,0,
 External,Other,0,
 External,PDF,0,
+External,Plugins,0,
 External,Unknown,0,
+External,XML,0,
 H1,All,12,100.00
 H1,Duplicate,0,0.00
 H1,Missing,0,0.00

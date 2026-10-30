@@ -12,6 +12,7 @@ include = []
 exclude = []
 
 [spider]
+css_style_attributes = false
 follow_internal_nofollow = false
 follow_external_nofollow = false
 store_uncrawlable_links = false
@@ -233,7 +234,6 @@ internal_search_segments = [
     "catalogsearch",
 ]
 internal_search_params = [
-    "s",
     "q",
     "query",
     "search",
@@ -377,11 +377,12 @@ position = "Header"
 contains = ["header"]
 
 [[link_positions.rules]]
+position = "Aside"
+contains = ["aside"]
+
+[[link_positions.rules]]
 position = "Sidebar"
-contains = [
-    "aside",
-    "sidebar",
-]
+contains = ["sidebar"]
 
 [[link_positions.rules]]
 position = "Footer"

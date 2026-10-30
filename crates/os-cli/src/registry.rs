@@ -99,10 +99,17 @@ pub fn names(kind: Kind) -> Vec<String> {
     names
 }
 
-/// Vergleichsform: Kleinschreibung, Leerräume um `:` und innerhalb zusammengefasst.
+/// Vergleichsform: Kleinschreibung, zusammengefasste Leerräume und Legacy-Filteralias.
 fn normalize(name: &str) -> String {
     name.split(':')
-        .map(|part| part.split_whitespace().collect::<Vec<_>>().join(" "))
+        .map(|part| {
+            let part = part.split_whitespace().collect::<Vec<_>>().join(" ");
+            if part.eq_ignore_ascii_case("flash") {
+                "Plugins".to_string()
+            } else {
+                part
+            }
+        })
         .collect::<Vec<_>>()
         .join(":")
         .to_lowercase()
@@ -141,7 +148,7 @@ pub fn resolve_with(
         suggestions: suggestions(kind, input),
     };
     match kind {
-        Kind::Tab => match catalog::resolve_with(ExportKind::Tab, input, cfg) {
+        Kind::Tab => match catalog::resolve_with(ExportKind::Tab, &normalize(input), cfg) {
             Ok(catalog::ExportRef::Tab { tab, filter }) => Ok(Resolved::Tab { tab, filter }),
             _ => Err(unknown()),
         },
@@ -232,24 +239,34 @@ pub fn split_list(list: &str) -> Vec<String> {
 mod tests {
     use super::*;
 
-    // spec: ONPAGE-023
+    // spec: ONPAGE-023, ONPAGE-026 (SQ-07)
     #[test]
-    fn extension_resource_filters_follow_the_saved_parity_setting() {
+    fn resource_filters_are_always_public_and_flash_remains_an_input_alias() {
         let mut cfg = os_model::CrawlConfig::default();
-        for filter in ["Fonts", "Media", "XML"] {
-            let name = format!("Internal:{filter}");
-            assert!(!names(Kind::Tab).contains(&name));
-            assert!(resolve_with(Kind::Tab, &name, &cfg).is_err());
-            cfg.ui.parity_filters = false;
-            assert_eq!(
-                resolve_with(Kind::Tab, &name, &cfg),
-                Ok(Resolved::Tab {
-                    tab: "Internal".into(),
-                    filter: filter.into()
-                })
-            );
-            cfg.ui.parity_filters = true;
+        for parity in [true, false] {
+            cfg.ui.parity_filters = parity;
+            for tab in ["Internal", "External"] {
+                for filter in ["Plugins", "Fonts", "Media", "XML"] {
+                    let name = format!("{tab}:{filter}");
+                    assert!(names(Kind::Tab).contains(&name));
+                    assert_eq!(
+                        resolve_with(Kind::Tab, &name, &cfg),
+                        Ok(Resolved::Tab {
+                            tab: tab.into(),
+                            filter: filter.into()
+                        })
+                    );
+                }
+                for alias in ["Flash", "fLaSh", " FLASH "] {
+                    assert_eq!(
+                        resolve_with(Kind::Tab, &format!(" {tab} : {alias}"), &cfg),
+                        resolve_with(Kind::Tab, &format!("{tab}:Plugins"), &cfg)
+                    );
+                }
+                assert!(!names(Kind::Tab).contains(&format!("{tab}:Flash")));
+            }
         }
+        assert!(resolve(Kind::Tab, "Internal:Flashlight").is_err());
     }
 
     // spec: OUT-192

@@ -1,0 +1,10 @@
+[
+  ["https://site.test/?s=stone", false],
+  ["https://site.test/?S=stone", false],
+  ["https://site.test/search?q=river", true],
+  ["https://site.test/suche/shoes", true],
+  ["https://site.test/research/", false],
+  ["https://site.test/?q=", false],
+  ["https://site.test/?Q=river", true],
+  ["https://site.test/?searchterm=river", true]
+]
