@@ -538,7 +538,7 @@ Summe: 154 Funktionen (P0: 28, P1: 102, P2: 24). Davon sind 6 Einträge Verweis-
 
 ### INTEG-027 Suchbereich „Content Area"
 - **Priorität:** P1
-- **Beschreibung:** Durchsucht den Text des konfigurierten Inhaltsbereichs, der auch für Wortanzahl und Duplicate-Content genutzt wird (Standard: Body ohne `<nav>` und `<footer>`; konfigurierbar per Ein-/Ausschluss von Elementen, Klassen und IDs; Definition führend in ONPAGE-140).
+- **Beschreibung:** Durchsucht den Text des konfigurierten Inhaltsbereichs, der auch für Wortanzahl und Duplicate-Content genutzt wird (Standard: Body ohne `<nav>`, `<footer>`, `<header>` und `<aside>` (SQ-09/K2-95); konfigurierbar per Ein-/Ausschluss von Elementen, Klassen und IDs; Definition führend in ONPAGE-140).
 - **Eingaben/Konfiguration:** Suchbereich = Content Area; Inhaltsbereich-Einstellungen.
 - **Ausgabe:** Trefferzahl.
 - **Akzeptanzkriterien:**

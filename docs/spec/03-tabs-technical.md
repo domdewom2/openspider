@@ -1107,7 +1107,7 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 ### TECH-100 Vergleich Original-HTML vs. gerendertes HTML (Grundlage)
 - **Priorität:** P1
 - **Beschreibung:** Für jede gerenderte interne HTML-Seite werden SEO-relevante Elemente einmal aus dem Original-HTML und einmal aus dem gerenderten DOM extrahiert und verglichen.
-- **Eingaben/Konfiguration:** Rendering-Modus JavaScript; Inhaltsbereich für Wortzählung (Content-Area-Konfiguration der Content-Spec; Standard: `<nav>` und `<footer>` ausgeschlossen).
+- **Eingaben/Konfiguration:** Rendering-Modus JavaScript; Inhaltsbereich für Wortzählung (Content-Area-Konfiguration der Content-Spec; Standard: `<nav>`, `<footer>`, `<header>` und `<aside>` ausgeschlossen, SQ-09/K2-95).
 - **Ausgabe (Spalten/Filter/Export):** Paare `HTML <X>` / `Rendered HTML <X>` für Title, Meta Description, H1 (erstes), Canonical (maßgeblich), Meta Robots (alle Token, kommagetrennt); Wortzahlen; Linkmengen.
 - **Akzeptanzkriterien:**
   - [ ] Textvergleich: führende/abschließende Leerzeichen entfernt, interne Whitespace-Folgen zu einem Leerzeichen zusammengefasst, HTML-Entitäten dekodiert; danach exakter, case-sensitiver Vergleich.
