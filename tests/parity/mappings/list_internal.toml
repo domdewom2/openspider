@@ -65,7 +65,7 @@ drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Refer
 "Text Ratio" = { os = "Text Ratio", tolerance_pct = 1.0, transform = ["decimal_comma"] }
 "Crawl Depth" = "Crawl Depth"
 "Folder Depth" = "Folder Depth"
-"Link Score" = "Link Score"
+"Link Score" = { ignore = true, reason = "SQ-10 / DEV-037: TECH-145 OS-Festlegung, Kalibrierung M3; keine verified-Gutschrift für Links/Internal" }
 "Inlinks" = "Inlinks"
 "Unique Inlinks" = "Unique Inlinks"
 "Unique JS Inlinks" = { ignore = true, reason = "nur mit JavaScript-Rendering (M2)" }

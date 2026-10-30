@@ -1,0 +1,8 @@
+﻿"Address","Indexability","Indexability Status","rel=""next"" 1","HTTP rel=""next"" 1","rel=""prev"" 1","HTTP rel=""prev"" 1","rel=""next"" 2","Canonical Link Element 1","HTTP Canonical","Meta Robots 1","X-Robots-Tag 1"
+"http://127.0.0.1:8907/pagination-sequence.html","Indexable","","http://127.0.0.1:8907/page-3.html","","","","","","","",""
+"http://127.0.0.1:8907/pagination-loop-b.html","Indexable","","http://127.0.0.1:8907/pagination-loop-a.html","","","","","","","",""
+"http://127.0.0.1:8907/pagination-404.html","Indexable","","http://127.0.0.1:8907/pagination-404-target.html","","","","","","","",""
+"http://127.0.0.1:8907/pagination-only-link.html","Indexable","","http://127.0.0.1:8907/pagination-unlinked.html","","","","","","","",""
+"http://127.0.0.1:8907/pagination-multiple.html","Indexable","","http://127.0.0.1:8907/page-2.html","","","","http://127.0.0.1:8907/page-3.html","","","",""
+"http://127.0.0.1:8907/page-1.html","Indexable","","http://127.0.0.1:8907/page-2.html","","","","","","","",""
+"http://127.0.0.1:8907/pagination-loop-a.html","Indexable","","http://127.0.0.1:8907/pagination-loop-b.html","","","","","","","",""

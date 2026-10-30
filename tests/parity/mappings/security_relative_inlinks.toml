@@ -1,0 +1,18 @@
+# N06: Spaltensatz nach Referenzkopfzeile; Soll und Ignoriergründe aus der Spec.
+key = ["Type", "Source", "Destination", "#"]
+drop_ref_columns = ["Description", "How To Fix"]
+
+[columns]
+"Type" = { os = "Type", map = { "HTML Canonical" = "Canonical", "HTML Hreflang" = "Hreflang", "Meta Refresh Redirect" = "Meta Refresh", "HTTP Refresh Redirect" = "HTTP Refresh" } }
+"Source" = "Source"
+"Destination" = "Destination"
+"Anchor Text" = "Anchor"
+"Alt Text" = "Alt Text"
+"Path Type" = "Path Type"
+
+[normalize]
+bool = "case-insensitive"
+base_url = true
+trim = true
+number_decimals = 3
+empty_equals_null = true

@@ -1,0 +1,2 @@
+﻿"Type","Source","Destination","Size (Bytes)","Alt Text","Anchor","Status Code","Status","Crawlability","Follow","Target","Rel","Path Type","Link Path","Link Position","Link Origin"
+"Hyperlink","http://127.0.0.1:8907/","http://127.0.0.1:8907/canonical-fragment.html","216","","/canonical-fragment.html","200","OK","Crawlable","true","","","Root-Relative","//body/main/ul/li[4]/a","Content","HTML"

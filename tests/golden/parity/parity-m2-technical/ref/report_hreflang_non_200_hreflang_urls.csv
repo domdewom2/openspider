@@ -1,0 +1,3 @@
+﻿"Type","Source","Destination","hreflang","Status Code","Status","Path Type","Unlinked","Link Origin"
+"Hyperlink","http://127.0.0.1:8907/","http://127.0.0.1:8907/pagination-404-target.html","","404","Not Found","Root-Relative","false","HTML"
+"HTML Hreflang","http://127.0.0.1:8907/lang-to-404.html","http://127.0.0.1:8907/pagination-404-target.html","de","404","Not Found","Root-Relative","false","HTML"

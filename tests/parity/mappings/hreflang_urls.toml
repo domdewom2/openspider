@@ -1,20 +1,15 @@
-# M2-P01: Spec-abgeleitete Spalten; keine Referenzwerte oder Beschreibungstexte.
-key = ["Address", "Hreflang URL", "#"]
+# N06: Spaltensatz nach Referenzkopfzeile; Soll und Ignoriergründe aus der Spec.
+key = ["Source", "hreflang Alternate", "#"]
 drop_ref_columns = ["Description", "How To Fix"]
 
 [columns]
-"Address" = "Address"
-"Hreflang Language" = "Hreflang Language"
-"Hreflang URL" = "Hreflang URL"
-"Annotation Source" = "Annotation Source"
-"Status Code" = "Status Code"
-"Indexability" = "Indexability"
-"Is Self Reference" = "Is Self Reference"
-"Status" = "Status"
+"Source" = "Address"
+"hreflang Alternate" = "Hreflang URL"
+"hreflang" = "Hreflang Language"
 
 [normalize]
+bool = "case-insensitive"
 base_url = true
 trim = true
-bool = "case-insensitive"
 number_decimals = 3
 empty_equals_null = true

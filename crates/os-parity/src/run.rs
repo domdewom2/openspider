@@ -348,6 +348,27 @@ fn find_file(dir: &Path, name: &str, depth: u32) -> Option<PathBuf> {
     if direct.is_file() {
         return Some(direct);
     }
+    // OUT-008: historical mappings flatten hyphens to underscores, while the
+    // exporter preserves them. Accept this additive spelling variant only when
+    // the current directory has exactly one matching file; never guess on a
+    // collision or search a different configuration variant.
+    let normalized = name.replace('-', "_");
+    let mut aliases = std::fs::read_dir(dir)
+        .ok()?
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .filter(|path| {
+            path.is_file()
+                && path
+                    .file_name()
+                    .is_some_and(|file| file.to_string_lossy().replace('-', "_") == normalized)
+        });
+    if let Some(alias) = aliases.next() {
+        if aliases.next().is_none() {
+            return Some(alias);
+        }
+        return None;
+    }
     if depth == 0 {
         return None;
     }
@@ -489,7 +510,7 @@ fn run_site(
             results.push(result_of(
                 e,
                 Outcome::Skipped {
-                    reason: format!("außerhalb des M1-Umfangs: {why}"),
+                    reason: why.clone(),
                 },
             ));
             continue;
@@ -534,7 +555,9 @@ fn run_site(
             ExportStatus::Unavailable => results.push(result_of(
                 e,
                 Outcome::Skipped {
-                    reason: "in der Referenz nicht exportierbar (unavailable)".into(),
+                    reason: e.skip.clone().unwrap_or_else(|| {
+                        "in der Referenz nicht exportierbar (unavailable)".into()
+                    }),
                 },
             )),
         }
@@ -656,10 +679,32 @@ fn run_site(
             }
         }
     }
-    let errors: Vec<_> = requests
+    let mut errors: Vec<_> = requests
         .iter()
         .map(|req| exporter.export(req).err())
         .collect();
+    // Nur fehlgeschlagene Namensgruppen einzeln wiederholen. Erfolgreiche Gruppen
+    // brauchen keinen weiteren Crawl; jeder Fehler bleibt seinem Export zugeordnet.
+    for (item, (p, destination)) in prepared.iter().zip(&mut destinations).enumerate() {
+        let req = &requests[*destination];
+        if errors[*destination].is_none() || req.bulk.len() + req.reports.len() <= 1 {
+            continue;
+        }
+        let mut retry = req.clone();
+        match &p.os {
+            OsExport::Bulk(_) => retry.bulk = vec![p.os.cli_value()],
+            OsExport::Report(_) => retry.reports = vec![p.os.cli_value()],
+            _ => continue,
+        }
+        retry.out_dir = req.out_dir.join(format!("fallback-{item}"));
+        *destination = requests.len();
+        errors.push(exporter.export(&retry).err());
+        requests.push(retry);
+    }
+    let site_failure = destinations
+        .iter()
+        .find_map(|i| errors[*i].as_ref())
+        .map(|e| format!("OpenSpider-Export fehlgeschlagen: {e}"));
     drop(test_site);
 
     let ref_bases = BaseUrls::from_base(&ref_base);
@@ -701,11 +746,7 @@ fn run_site(
     Ok(SiteResult {
         site: site.to_string(),
         present,
-        error: errors
-            .iter()
-            .flatten()
-            .next()
-            .map(|e| format!("OpenSpider-Export fehlgeschlagen: {e}")),
+        error: site_failure,
         exports: in_manifest_order(results, &manifest),
     })
 }
@@ -748,7 +789,7 @@ fn compare_one(
         &p.entry.select,
         os_bases,
     )?;
-    let devs = deviations.for_export(Some(site), &p.entry.mapping);
+    let devs = deviations.for_file(Some(site), &p.entry.mapping, Some(&p.entry.ref_file));
     let mut report = compare(&CompareInput {
         export: &p.entry.mapping,
         site: Some(site),
@@ -975,4 +1016,34 @@ fn select_rows(
             .retain(|r| rules.prepare(&r[index], bases) == expected);
     }
     Ok(table)
+}
+
+#[cfg(test)]
+mod filename_format_tests {
+    use super::*;
+
+    // spec: OUT-008
+    #[test]
+    fn hyphen_alias_is_unique_and_stays_in_its_configuration_variant() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("security_unsafe_cross-origin_links.csv");
+        std::fs::write(&file, "Address\n").unwrap();
+        assert_eq!(
+            find_file(dir.path(), "security_unsafe_cross_origin_links.csv", 3),
+            Some(file)
+        );
+        let variant = dir.path().join("variant-1");
+        std::fs::create_dir(&variant).unwrap();
+        std::fs::write(variant.join("only_here.csv"), "Address\n").unwrap();
+        assert_eq!(find_file(dir.path(), "only_here.csv", 3), None);
+        std::fs::write(
+            dir.path().join("security-unsafe_cross_origin_links.csv"),
+            "Address\n",
+        )
+        .unwrap();
+        assert_eq!(
+            find_file(dir.path(), "security_unsafe_cross_origin_links.csv", 3),
+            None
+        );
+    }
 }

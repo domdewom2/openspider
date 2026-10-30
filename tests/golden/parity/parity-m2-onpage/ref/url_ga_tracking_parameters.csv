@@ -1,0 +1,2 @@
+﻿"Address","Content Type","Status Code","Status","Indexability","Indexability Status","Hash","Length","Canonical Link Element 1","URL Encoded Address"
+"http://127.0.0.1:8906/tracking.html?utm_source=fixture&utm_medium=local&utm_campaign=m2","text/html; charset=utf-8","200","OK","Indexable","","7cfba4127c2f0128e460c8242dcd8302","87","","http://127.0.0.1:8906/tracking.html?utm_source=fixture&utm_medium=local&utm_campaign=m2"

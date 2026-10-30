@@ -1,0 +1,4 @@
+﻿"URL Missing Return Link","URL Not Returning Link","Expected Link","Response Code","hreflang"
+"http://127.0.0.1:8907/lang-missing-self.html","http://127.0.0.1:8907/lang-valid.html","http://127.0.0.1:8907/lang-missing-self.html","200",
+"http://127.0.0.1:8907/lang-multiple.html","http://127.0.0.1:8907/lang-valid.html","http://127.0.0.1:8907/lang-multiple.html","200",
+"http://127.0.0.1:8907/lang-multiple.html","http://127.0.0.1:8907/lang-inconsistent.html","http://127.0.0.1:8907/lang-multiple.html","200",

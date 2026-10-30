@@ -4,7 +4,9 @@ drop_ref_columns = ["Description", "How To Fix"]
 
 [columns]
 "Address" = "Address"
-"Content" = "Content"
+"Content Type" = { os = "Content", optional_ref = true }
+"Content" = { os = "Content", optional_ref = true }
+"HTTP Version" = { ignore = true, reason = "ONPAGE-030: HTTP-Version ist keine Security-Tab-Spalte" }
 "Status Code" = "Status Code"
 "Status" = "Status"
 "Indexability" = "Indexability"

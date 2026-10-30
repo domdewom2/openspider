@@ -2,249 +2,249 @@
 site = "parity-m2-onpage"
 port = 8906
 ref_version = "referenz-2026-10"
-exported_at = ""
-ref_settings = "Free, macOS, English (UK), Standardkonfiguration; Crawl Analysis ausgeführt. Hreflang/Pagination speichern, nicht crawlen. Always-Follow aus (Not Followed). Kein JavaScript, kein TLS. Gesperrte/leere Exporte als unavailable mit Grund dokumentieren."
+exported_at = "2026-10-30"
+ref_settings = "Hreflang/Pagination speichern, nicht crawlen. Always-Follow aus (Not Followed). Kein JavaScript, kein TLS. Erzeugt am 2026-10-30 mit der lizenzierten Referenzversion (nicht Free; alle Sites unter 500 URLs), Oberflaeche English (UK), Standardkonfiguration; einzige Aenderung: automatische Crawl-Analyse am Crawl-Ende (gleichwertig zu Crawl Analysis > Start). Exporte per Kommandozeile (headless) aus einem gespeicherten Crawl je Site; Tab-, Bulk- und Report-Exporte getrennt erzeugt. Per Oberflaeche erzeugt: parity-m2-list internal_all (Listenmodus-Export in Upload-Reihenfolge, mit Spalte Original Url), parity-m2-links crawl_path_deep8, parity-m2-onpage sitemap_options. XML-Dateien: Generator-Kommentar entfernt (Neutralitaet)."
 
 [[export]]
 ref_file = "internal_all.csv"
 os = "tab:Internal:All"
 mapping = "internal_m2"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "response_codes_all.csv"
 os = "tab:Response Codes:All"
 mapping = "response_codes_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "crawl_overview.csv"
 os = "report:Crawl Overview"
 mapping = "crawl_overview"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "page_titles_all.csv"
 os = "tab:Page Titles:All"
 mapping = "page_titles_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "meta_description_all.csv"
 os = "tab:Meta Description:All"
 mapping = "meta_description_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "meta_keywords_all.csv"
 os = "tab:Meta Keywords:All"
 mapping = "meta_keywords_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "h1_all.csv"
 os = "tab:H1:All"
 mapping = "h1_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "h2_all.csv"
 os = "tab:H2:All"
 mapping = "h2_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "content_all.csv"
 os = "tab:Content:All"
 mapping = "content_m2"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "url_all.csv"
 os = "tab:URL:All"
 mapping = "url_m2"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "images_all.csv"
 os = "tab:Images:All"
 mapping = "images_m2"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "internal_flash.csv"
 os = "tab:Internal:Flash"
 mapping = "internal_m2"
-status = "pending"
+status = "present" # Filter heisst in der Referenzversion Internal > Plugins
 
 [[export]]
 ref_file = "internal_other.csv"
 os = "tab:Internal:Other"
 mapping = "internal_m2"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "url_repetitive_path.csv"
 os = "tab:URL:Repetitive Path"
 mapping = "url_m2"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "url_internal_search.csv"
 os = "tab:URL:Internal Search"
 mapping = "url_m2"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "url_broken_bookmark.csv"
 os = "tab:URL:Broken Bookmark"
 mapping = "url_m2"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "url_ga_tracking_parameters.csv"
 os = "tab:URL:GA Tracking Parameters"
 mapping = "url_m2"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "page_titles_over_561_pixels.csv"
 os = "tab:Page Titles:Over 561 Pixels"
 mapping = "page_titles_all"
-status = "pending"
+status = "present" # Filter heisst in der Referenzversion Over X Pixels (Standard 561)
 
 [[export]]
 ref_file = "page_titles_below_200_pixels.csv"
 os = "tab:Page Titles:Below 200 Pixels"
 mapping = "page_titles_all"
-status = "pending"
+status = "present" # Filter heisst in der Referenzversion Below X Pixels (Standard 200)
 
 [[export]]
 ref_file = "page_titles_same_as_h1.csv"
 os = "tab:Page Titles:Same as H1"
 mapping = "page_titles_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "page_titles_outside_head.csv"
 os = "tab:Page Titles:Outside <head>"
 mapping = "page_titles_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "meta_description_over_985_pixels.csv"
 os = "tab:Meta Description:Over 985 Pixels"
 mapping = "meta_description_all"
-status = "pending"
+status = "present" # Filter heisst in der Referenzversion Over X Pixels (Standard 985)
 
 [[export]]
 ref_file = "meta_description_below_400_pixels.csv"
 os = "tab:Meta Description:Below 400 Pixels"
 mapping = "meta_description_all"
-status = "pending"
+status = "present" # Filter heisst in der Referenzversion Below X Pixels (Standard 400)
 
 [[export]]
 ref_file = "meta_description_outside_head.csv"
 os = "tab:Meta Description:Outside <head>"
 mapping = "meta_description_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "h1_alt_text_in_h1.csv"
 os = "tab:H1:Alt Text in h1"
 mapping = "h1_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "h1_non_sequential.csv"
 os = "tab:H1:Non-sequential"
 mapping = "h1_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "h2_non_sequential.csv"
 os = "tab:H2:Non-sequential"
 mapping = "h2_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "content_near_duplicates.csv"
 os = "tab:Content:Near Duplicates"
 mapping = "content_m2"
-status = "pending"
+status = "unavailable" # Near-Duplicate-Erkennung ist in der Standardkonfiguration aus; Export bleibt leer
 
 [[export]]
 ref_file = "content_soft_404_pages.csv"
 os = "tab:Content:Soft 404 Pages"
-mapping = "content_m2"
-status = "pending"
+mapping = "content_soft404"
+status = "present"
 
 [[export]]
 ref_file = "content_lorem_ipsum_placeholder.csv"
 os = "tab:Content:Lorem Ipsum Placeholder"
-mapping = "content_m2"
-status = "pending"
+mapping = "content_lorem"
+status = "present"
 
 [[export]]
 ref_file = "content_readability_difficult.csv"
 os = "tab:Content:Readability Difficult"
-mapping = "content_m2"
-status = "pending"
+mapping = "content_readability"
+status = "present"
 
 [[export]]
 ref_file = "content_readability_very_difficult.csv"
 os = "tab:Content:Readability Very Difficult"
-mapping = "content_m2"
-status = "pending"
+mapping = "content_readability"
+status = "present"
 
 [[export]]
 ref_file = "images_missing_size_attributes.csv"
 os = "tab:Images:Missing Size Attributes"
 mapping = "images_m2"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "meta_keywords_missing.csv"
 os = "tab:Meta Keywords:Missing"
 mapping = "meta_keywords_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "meta_keywords_duplicate.csv"
 os = "tab:Meta Keywords:Duplicate"
 mapping = "meta_keywords_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "meta_keywords_multiple.csv"
 os = "tab:Meta Keywords:Multiple"
 mapping = "meta_keywords_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "bulk_content_near_duplicates.csv"
 os = "bulk:Content:Near Duplicates"
 mapping = "content_near_duplicates"
-status = "pending"
+status = "unavailable" # Near-Duplicate-Erkennung ist in der Standardkonfiguration aus; Export bleibt leer
 
 [[export]]
 ref_file = "bulk_images_images_missing_size_attributes.csv"
 os = "bulk:Images:Images Missing Size Attributes Inlinks"
 mapping = "images_missing_sizes"
-status = "pending"
+status = "present" # Bulk-Export heisst in der Referenzversion Images > Missing Size Attributes
 
 [[export]]
 ref_file = "serp_summary.csv"
 os = "report:SERP Summary"
 mapping = "serp_summary"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "sitemap_default.xml"
 os = "sitemap:default"
 mapping = "sitemap_xml"
 os_file = "sitemap.xml"
-status = "pending"
+status = "present"
 [export.config]
 
 
@@ -253,7 +253,7 @@ ref_file = "sitemap_options.xml"
 os = "sitemap:default"
 mapping = "sitemap_xml"
 os_file = "sitemap.xml"
-status = "pending"
+status = "present"
 [export.config]
 "sitemap_gen.lastmod.source" = "server"
 "sitemap_gen.priority.enabled" = "true"
@@ -265,4 +265,4 @@ ref_file = "sitemap_images.xml"
 os = "sitemap:images"
 mapping = "sitemap_xml"
 os_file = "image-sitemap.xml"
-status = "pending"
+status = "present"

@@ -1,16 +1,17 @@
-# M2-P01: Spec-abgeleitete Spalten; keine Referenzwerte oder Beschreibungstexte.
-key = ["Address", "Hreflang URL", "#"]
+# N06: Spaltensatz nach Referenzkopfzeile; Soll und Ignoriergründe aus der Spec.
+key = ["URL with Inconsistent Language Return Link", "URL Target", "#"]
 drop_ref_columns = ["Description", "How To Fix"]
 
 [columns]
-"Address" = "Address"
-"Hreflang URL" = "Hreflang URL"
+"URL with Inconsistent Language Return Link" = "Address"
+"URL Target" = "Hreflang URL"
+"URL Returning with Inconsistent Language" = { ignore = true, reason = "OUT-094: Rücklinkquelle nicht im OS-Reportvertrag" }
 "Expected Language" = "Expected Language"
 "Actual Language" = "Actual Language"
 
 [normalize]
+bool = "case-insensitive"
 base_url = true
 trim = true
-bool = "case-insensitive"
 number_decimals = 3
 empty_equals_null = true

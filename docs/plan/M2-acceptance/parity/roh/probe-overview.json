@@ -1,0 +1,1851 @@
+{
+  "export": "crawl_overview",
+  "site": null,
+  "ref_rows": 474,
+  "os_rows": 485,
+  "matched": 286,
+  "missing_in_os": [
+    "response codes | external redirection (javascript)"
+  ],
+  "extra_in_os": [],
+  "cells_compared": 286,
+  "cells_equal": 0,
+  "agreement_pct": 0.0,
+  "columns": [
+    {
+      "ref_column": "URLs",
+      "os_column": "URLs",
+      "compared": 286,
+      "errors": 286,
+      "examples": [
+        {
+          "key": "internal | all",
+          "ref": "59",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "internal | html",
+          "ref": "51",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "internal | javascript",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "internal | css",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "internal | images",
+          "ref": "3",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "internal | pdf",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "internal | other",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "internal | unknown",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "external | all",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "external | html",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "external | javascript",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "external | css",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "external | images",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "external | pdf",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "external | other",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "external | unknown",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "security | all",
+          "ref": "59",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "security | http urls",
+          "ref": "59",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "security | https urls",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "security | mixed content",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "security | form url insecure",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "security | form on http url",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "security | unsafe cross-origin links",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "security | protocol-relative resource links",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "security | missing hsts header",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "security | missing content-security-policy header",
+          "ref": "58",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "security | missing x-content-type-options header",
+          "ref": "58",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "security | missing x-frame-options header",
+          "ref": "58",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "security | missing secure referrer-policy header",
+          "ref": "58",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "security | bad content type",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | all",
+          "ref": "59",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | blocked by robots.txt",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | blocked resource",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | no response",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | success (2xx)",
+          "ref": "58",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | redirection (3xx)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | redirection (javascript)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | redirection (meta refresh)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | redirection (http refresh)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | client error (4xx)",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | server error (5xx)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | internal all",
+          "ref": "59",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | internal blocked by robots.txt",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | internal blocked resource",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | internal no response",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | internal success (2xx)",
+          "ref": "58",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | internal redirection (3xx)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | internal redirection (javascript)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | internal redirection (meta refresh)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | internal redirection (http refresh)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | internal redirect chain",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | internal redirect loop",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | internal client error (4xx)",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | internal server error (5xx)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | external all",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | external blocked by robots.txt",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | external blocked resource",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | external no response",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | external success (2xx)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | external redirection (3xx)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | external redirection (meta refresh)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | external redirection (http refresh)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | external client error (4xx)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "response codes | external server error (5xx)",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "url | all",
+          "ref": "59",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "url | non ascii characters",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "url | underscores",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "url | uppercase",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "url | multiple slashes",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "url | repetitive path",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "url | internal search",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "url | parameters",
+          "ref": "3",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "url | broken bookmark",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "url | ga tracking parameters",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "url | over 115 characters",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "page titles | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "page titles | missing",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "page titles | duplicate",
+          "ref": "7",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "page titles | over 60 characters",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "page titles | below 30 characters",
+          "ref": "33",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "page titles | over 561 pixels",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "page titles | below 200 pixels",
+          "ref": "19",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "page titles | same as h1",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "page titles | multiple",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "page titles | outside <head>",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "meta description | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "meta description | missing",
+          "ref": "43",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "meta description | duplicate",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "meta description | over 155 characters",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "meta description | below 70 characters",
+          "ref": "4",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "meta description | over 985 pixels",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "meta description | below 400 pixels",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "meta description | multiple",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "meta description | outside <head>",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "meta keywords | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "meta keywords | missing",
+          "ref": "45",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "meta keywords | duplicate",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "meta keywords | multiple",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "h1 | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "h1 | missing",
+          "ref": "9",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "h1 | duplicate",
+          "ref": "29",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "h1 | over 70 characters",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "h1 | multiple",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "h1 | alt text in h1",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "h1 | non-sequential",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "h2 | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "h2 | missing",
+          "ref": "48",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "h2 | duplicate",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "h2 | over 70 characters",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "h2 | multiple",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "h2 | non-sequential",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "content | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "content | exact duplicates",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "content | near duplicates",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "content | low content pages",
+          "ref": "47",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "content | soft 404 pages",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "content | spelling errors",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "content | grammar errors",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "content | readability difficult",
+          "ref": "5",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "content | readability very difficult",
+          "ref": "23",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "content | lorem ipsum placeholder",
+          "ref": "1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "images | all",
+          "ref": "3",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "images | over 100 kb",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "images | missing alt text",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "images | missing alt attribute",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "images | alt text over 100 characters",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "images | background images",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "images | incorrectly sized images",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "images | missing size attributes",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "canonicals | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "canonicals | contains canonical",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "canonicals | self referencing",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "canonicals | canonicalised",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "canonicals | missing",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "canonicals | multiple",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "canonicals | multiple conflicting",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "canonicals | non-indexable canonical",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "canonicals | canonical is relative",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "canonicals | unlinked",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "canonicals | invalid attribute in annotation",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "canonicals | contains fragment url",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "canonicals | outside <head>",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagination | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagination | contains pagination",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagination | first page",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagination | paginated 2+ pages",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagination | pagination url not in anchor tag",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagination | non-200 pagination urls",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagination | unlinked pagination urls",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagination | non-indexable",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagination | multiple pagination urls",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagination | pagination loop",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagination | sequence error",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | all",
+          "ref": "58",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | index",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | noindex",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | follow",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | nofollow",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | none",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | noarchive",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | nosnippet",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | max-snippet",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | max-image-preview",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | max-video-preview",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | noimageindex",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | notranslate",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | unavailable_after",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | refresh",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "directives | outside <head>",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "hreflang | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "hreflang | contains hreflang",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "hreflang | non-200 hreflang urls",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "hreflang | unlinked hreflang urls",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "hreflang | missing return links",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "hreflang | inconsistent language & region return links",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "hreflang | non-canonical return links",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "hreflang | noindex return links",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "hreflang | incorrect language & region codes",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "hreflang | multiple entries",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "hreflang | missing self reference",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "hreflang | not using canonical",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "hreflang | missing x-default",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "hreflang | missing",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "hreflang | outside <head>",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "javascript | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "javascript | pages with blocked resources",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "javascript | contains javascript links",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "javascript | contains javascript content",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "javascript | noindex only in original html",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "javascript | nofollow only in original html",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "javascript | canonical only in rendered html",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "javascript | canonical mismatch",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "javascript | page title only in rendered html",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "javascript | page title updated by javascript",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "javascript | meta description only in rendered html",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "javascript | meta description updated by javascript",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "javascript | h1 only in rendered html",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "javascript | h1 updated by javascript",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "javascript | pages with javascript errors",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "links | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "links | pages with uncrawlable internal outlinks",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "links | pages with high crawl depth",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "links | pages without internal outlinks",
+          "ref": "46",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "links | internal nofollow outlinks",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "links | internal outlinks with no anchor text",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "links | non-descriptive anchor text in internal outlinks",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "links | pages with high external outlinks",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "links | pages with high internal outlinks",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "links | follow & nofollow internal inlinks to page",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "links | internal nofollow inlinks only",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "links | outlinks to localhost",
+          "ref": "6",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "links | non-indexable page inlinks only",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "structured data | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "structured data | contains structured data",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "structured data | validation errors",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "structured data | validation warnings",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "structured data | rich result validation errors",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "structured data | rich result validation warnings",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "structured data | parse errors",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "structured data | microdata urls",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "structured data | json-ld urls",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "structured data | rdfa urls",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "sitemaps | all",
+          "ref": "56",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "sitemaps | urls in sitemap",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "sitemaps | urls not in sitemap",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "sitemaps | orphan urls",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "sitemaps | non-indexable urls in sitemap",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "sitemaps | urls in multiple sitemaps",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "sitemaps | xml sitemap with over 50k urls",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | document request latency",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | lcp request discovery",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | render blocking requests",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | network dependency tree",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | use efficient cache lifetimes",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | layout shift culprits",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | optimize dom size",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | improve image delivery",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | forced reflow",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | legacy javascript",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | duplicated javascript",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | font display",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | avoid enormous network payloads",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | minify css",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | minify javascript",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | reduce unused css",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | reduce unused javascript",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | reduce javascript execution time",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "pagespeed | minimize main-thread work",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "mobile | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "mobile | viewport not set",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "mobile | target size",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "mobile | content not sized correctly",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "mobile | illegible font size",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "mobile | mobile alternate link",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "accessibility | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "custom search | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "custom extraction | all",
+          "ref": "50",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "custom javascript | all",
+          "ref": "58",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "analytics | all",
+          "ref": "51",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "analytics | sessions above 0",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "analytics | bounce rate above 70%",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "analytics | no ga data",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "analytics | non-indexable with ga data",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "analytics | orphan urls",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "search console | all",
+          "ref": "51",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "search console | clicks above 0",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "search console | no search analytics data",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "search console | non-indexable with search analytics data",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "search console | orphan urls",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "search console | url is not on google",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "search console | indexable url not indexed",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "search console | user-declared canonical not selected",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "search console | page is not mobile friendly",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "search console | rich result invalid",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "validation | all",
+          "ref": "59",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "validation | invalid html elements in <head>",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "validation | <body> element preceding <html>",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "validation | <head> not first in <html> element",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "validation | missing <head> tag",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "validation | multiple <head> tags",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "validation | missing <body> tag",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "validation | multiple <body> tags",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "validation | html document over 2mb",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "validation | resource over 2mb",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "link metrics | all",
+          "ref": "51",
+          "os": "Q02_PROBE"
+        }
+      ]
+    }
+  ],
+  "applied_deviations": [],
+  "dropped_ref_columns": [
+    "Total URLs",
+    "Total URLs Description"
+  ],
+  "ignored_columns": [
+    {
+      "column": "% of Total",
+      "reason": "abgeleitet aus URLs und Grundgesamtheit des Abschnitts; verglichen werden die Zaehler (URLs, A3). Die Grundgesamtheit unterscheidet sich ueber die robots.txt-Zeile (K-40) und die Crawl-Depth-Population"
+    }
+  ],
+  "unmapped_ref_columns": [],
+  "unmapped_os_columns": [],
+  "missing_ref_columns": [],
+  "missing_os_columns": [],
+  "ignored_ref_rows": [
+    "summary | total urls encountered",
+    "summary | total urls crawled",
+    "summary | total internal blocked by robots.txt",
+    "summary | total external blocked by robots.txt",
+    "summary | urls displayed",
+    "summary | total internal urls",
+    "summary | total external urls",
+    "summary | total internal indexable urls",
+    "summary | total internal non-indexable urls",
+    "internal | media",
+    "internal | fonts",
+    "internal | xml",
+    "internal | plugins",
+    "external | media",
+    "external | fonts",
+    "external | xml",
+    "external | plugins",
+    "url | contains space",
+    "content | semantically similar",
+    "content | low relevance content",
+    "directives | noodp",
+    "directives | noydir",
+    "javascript | uses old ajax crawling scheme urls",
+    "javascript | uses old ajax crawling scheme meta fragment tag",
+    "javascript | pages with javascript warnings",
+    "javascript | pages with chrome issues",
+    "amp | all",
+    "amp | non-200 response",
+    "amp | missing non-amp return link",
+    "amp | missing canonical to non-amp",
+    "amp | non-indexable canonical",
+    "amp | indexable",
+    "amp | non-indexable",
+    "amp | missing <html amp> tag",
+    "amp | missing/invalid <!doctype html> tag",
+    "amp | missing <head> tag",
+    "amp | missing <body> tag",
+    "amp | missing canonical",
+    "amp | missing/invalid <meta charset> tag",
+    "amp | missing/invalid <meta viewport> tag",
+    "amp | missing/invalid amp script",
+    "amp | missing/invalid amp boilerplate",
+    "amp | contains disallowed html",
+    "amp | other validation errors",
+    "structured data | missing",
+    "structured data | rich result feature detected",
+    "sitemaps | xml sitemap over 50mb",
+    "pagespeed | request errors",
+    "mobile | contains unsupported plugins",
+    "accessibility | accessibility score poor",
+    "accessibility | accessibility score needs improvement",
+    "accessibility | accessibility score good",
+    "accessibility | wcag 2.0 a violation",
+    "accessibility | wcag 2.0 aa violation",
+    "accessibility | wcag 2.0 aaa violation",
+    "accessibility | wcag 2.1 aa violation",
+    "accessibility | wcag 2.2 aa violation",
+    "accessibility | best practice violation",
+    "accessibility | accesskey attribute value must be unique",
+    "accessibility | ensure elements marked presentational are ignored",
+    "accessibility | elements must not have tabindex greater than zero",
+    "accessibility | scrollable region requires keyboard access",
+    "accessibility | skip-link target should exist & be focusable",
+    "accessibility | required aria attributes must be provided",
+    "accessibility | role=text should have no focusable descendants",
+    "accessibility | aria attribute must be used as specified for role",
+    "accessibility | aria attributes require valid values",
+    "accessibility | aria attributes require valid names",
+    "accessibility | aria commands require accessible name",
+    "accessibility | aria dialog & alertdialog require accessible name",
+    "accessibility | aria input fields require accessible name",
+    "accessibility | aria meter nodes require accessible name",
+    "accessibility | aria progressbar nodes require accessible name",
+    "accessibility | aria role should be appropriate for element",
+    "accessibility | aria roles must be contained by required parent",
+    "accessibility | aria roles require valid values",
+    "accessibility | aria toggle fields require accessible name",
+    "accessibility | aria tooltip nodes require accessible name",
+    "accessibility | aria treeitem nodes require accessible name",
+    "accessibility | certain aria roles must contain specific children",
+    "accessibility | deprecated aria roles must not be used",
+    "accessibility | aria-braille require non-braille equivalent",
+    "accessibility | aria-hidden elements contains focusable elements",
+    "accessibility | aria-hidden=true must not be used in <body>",
+    "accessibility | elements must only use permitted aria attributes",
+    "accessibility | elements must use allowed aria attributes",
+    "accessibility | ids used in aria & labels must be unique",
+    "accessibility | page requires means to bypass repeated blocks",
+    "accessibility | all page content must be contained by landmarks",
+    "accessibility | page requires one main landmark",
+    "accessibility | page must not have more than one banner landmark",
+    "accessibility | banner landmark must not be in another landmark",
+    "accessibility | page must not have multiple contentinfo landmarks",
+    "accessibility | page requires at most one main landmark",
+    "accessibility | complementary landmarks & asides must be top level",
+    "accessibility | contentinfo landmark must be top level landmark",
+    "accessibility | main landmark must not be in another landmark",
+    "accessibility | landmarks require unique role or accessible name",
+    "accessibility | form field must not have multiple label elements",
+    "accessibility | form <input> elements require labels",
+    "accessibility | form elements should have visible label",
+    "accessibility | autocomplete attribute must be used correctly",
+    "accessibility | frames require title attribute",
+    "accessibility | frames require unique title attribute",
+    "accessibility | frames should be tested with axe-core",
+    "accessibility | frames with focusable content must not use tabindex=-1",
+    "accessibility | page must contain <title>",
+    "accessibility | page must contain <h1>",
+    "accessibility | heading levels should only increase by one",
+    "accessibility | headings should not be empty",
+    "accessibility | meta viewport should allow zoom & scale up to 500%",
+    "accessibility | meta viewport zoom & scaling disabled",
+    "accessibility | html element lang attribute value must be valid",
+    "accessibility | html element requires lang attribute",
+    "accessibility | html lang & xml lang value should match",
+    "accessibility | lang attribute requires valid value",
+    "accessibility | delayed meta refresh must not be used",
+    "accessibility | timed meta refresh must not exist",
+    "accessibility | image button requires alternate text",
+    "accessibility | images require alternate text",
+    "accessibility | <object> elements require alternate text",
+    "accessibility | active <area> elements require alternate text",
+    "accessibility | alt text should not be repeated as text",
+    "accessibility | elements marked role=img require alternate text",
+    "accessibility | svg images & graphics require accessible text",
+    "accessibility | server-side image maps must not be used",
+    "accessibility | <video> elements require <track> for captions",
+    "accessibility | <video> or <audio> elements must not auto-play",
+    "accessibility | buttons require discernible text",
+    "accessibility | input buttons require discernible text",
+    "accessibility | inline text spacing must be adjustable",
+    "accessibility | links must be distinguishable",
+    "accessibility | links require discernible text",
+    "accessibility | links with same accessible name",
+    "accessibility | select element requires accessible name",
+    "accessibility | summary elements require discernible text",
+    "accessibility | deprecated <marquee> element must not be used",
+    "accessibility | <blink> elements deprecated & must not be used",
+    "accessibility | text requires higher color contrast ratio",
+    "accessibility | text requires higher color contrast to background",
+    "accessibility | touch targets require sufficient size & spacing",
+    "accessibility | interactive controls must not be nested",
+    "accessibility | list items must be contained in list elements",
+    "accessibility | lists must only contain <li> content elements",
+    "accessibility | <dl> must only have ordered <dt> & <dd> groups",
+    "accessibility | <dt> & <dd> elements must be contained by <dl>",
+    "accessibility | <th> element requires associated data cells",
+    "accessibility | table header attr must refer to cell in same table",
+    "accessibility | table headers require discernible text",
+    "accessibility | table with identical summary & caption text",
+    "accessibility | scope attribute should be used correctly on tables",
+    "search console | url is on google but has issues",
+    "search console | amp url invalid",
+    "validation | high carbon rating",
+    "ai | all",
+    "crawl depth | 0",
+    "crawl depth | 1",
+    "crawl depth | 2",
+    "crawl depth | 3",
+    "crawl depth | 4",
+    "crawl depth | 5",
+    "crawl depth | 6",
+    "crawl depth | 7",
+    "crawl depth | 8",
+    "crawl depth | 9",
+    "crawl depth | 10+",
+    "inlinks (top 20 urls) | {base}/bookmark-target.html",
+    "inlinks (top 20 urls) | {base}/outside-head.html",
+    "inlinks (top 20 urls) | {base}/?s=stone",
+    "inlinks (top 20 urls) | {base}/pixels/description-985.html",
+    "inlinks (top 20 urls) | {base}/readability-very-difficult.html",
+    "inlinks (top 20 urls) | {base}/keywords/duplicate-a.html",
+    "inlinks (top 20 urls) | {base}/keywords/long.html",
+    "inlinks (top 20 urls) | {base}/search?q=river",
+    "inlinks (top 20 urls) | {base}/unicode-3.html",
+    "inlinks (top 20 urls) | {base}/list-item-text.html",
+    "inlinks (top 20 urls) | {base}/pixels/description-401.html",
+    "inlinks (top 20 urls) | {base}/bookmarks.html",
+    "inlinks (top 20 urls) | {base}/unicode-2.html",
+    "inlinks (top 20 urls) | {base}/pixels/description-984.html",
+    "inlinks (top 20 urls) | {base}/images.html",
+    "inlinks (top 20 urls) | {base}/keywords/missing.html",
+    "inlinks (top 20 urls) | {base}/catalog/catalog/catalog.html",
+    "inlinks (top 20 urls) | {base}/readability-easy.html",
+    "inlinks (top 20 urls) | {base}/unicode-1.html",
+    "inlinks (top 20 urls) | {base}/pixels/title-562.html",
+    "response time (seconds) | 1"
+  ],
+  "os_only_rows": [
+    "accessibility | accesskeys",
+    "accessibility | area-alt",
+    "accessibility | aria-allowed-attr",
+    "accessibility | aria-allowed-role",
+    "accessibility | aria-braille-equivalent",
+    "accessibility | aria-command-name",
+    "accessibility | aria-conditional-attr",
+    "accessibility | aria-deprecated-role",
+    "accessibility | aria-dialog-name",
+    "accessibility | aria-hidden-body",
+    "accessibility | aria-hidden-focus",
+    "accessibility | aria-input-field-name",
+    "accessibility | aria-meter-name",
+    "accessibility | aria-progressbar-name",
+    "accessibility | aria-prohibited-attr",
+    "accessibility | aria-required-attr",
+    "accessibility | aria-required-children",
+    "accessibility | aria-required-parent",
+    "accessibility | aria-roles",
+    "accessibility | aria-text",
+    "accessibility | aria-toggle-field-name",
+    "accessibility | aria-tooltip-name",
+    "accessibility | aria-treeitem-name",
+    "accessibility | aria-valid-attr",
+    "accessibility | aria-valid-attr-value",
+    "accessibility | autocomplete-valid",
+    "accessibility | avoid-inline-spacing",
+    "accessibility | blink",
+    "accessibility | button-name",
+    "accessibility | bypass",
+    "accessibility | color-contrast",
+    "accessibility | color-contrast-enhanced",
+    "accessibility | definition-list",
+    "accessibility | dlitem",
+    "accessibility | document-title",
+    "accessibility | duplicate-id-aria",
+    "accessibility | empty-heading",
+    "accessibility | empty-table-header",
+    "accessibility | form-field-multiple-labels",
+    "accessibility | frame-focusable-content",
+    "accessibility | frame-tested",
+    "accessibility | frame-title",
+    "accessibility | frame-title-unique",
+    "accessibility | heading-order",
+    "accessibility | html-has-lang",
+    "accessibility | html-lang-valid",
+    "accessibility | html-xml-lang-mismatch",
+    "accessibility | identical-links-same-purpose",
+    "accessibility | image-alt",
+    "accessibility | image-redundant-alt",
+    "accessibility | input-button-name",
+    "accessibility | input-image-alt",
+    "accessibility | label",
+    "accessibility | label-title-only",
+    "accessibility | landmark-banner-is-top-level",
+    "accessibility | landmark-complementary-is-top-level",
+    "accessibility | landmark-contentinfo-is-top-level",
+    "accessibility | landmark-main-is-top-level",
+    "accessibility | landmark-no-duplicate-banner",
+    "accessibility | landmark-no-duplicate-contentinfo",
+    "accessibility | landmark-no-duplicate-main",
+    "accessibility | landmark-one-main",
+    "accessibility | landmark-unique",
+    "accessibility | link-in-text-block",
+    "accessibility | link-name",
+    "accessibility | list",
+    "accessibility | listitem",
+    "accessibility | marquee",
+    "accessibility | meta-refresh",
+    "accessibility | meta-refresh-no-exceptions",
+    "accessibility | meta-viewport",
+    "accessibility | meta-viewport-large",
+    "accessibility | nested-interactive",
+    "accessibility | no-autoplay-audio",
+    "accessibility | object-alt",
+    "accessibility | page-has-heading-one",
+    "accessibility | presentation-role-conflict",
+    "accessibility | region",
+    "accessibility | role-img-alt",
+    "accessibility | scope-attr-valid",
+    "accessibility | scrollable-region-focusable",
+    "accessibility | select-name",
+    "accessibility | server-side-image-map",
+    "accessibility | skip-link",
+    "accessibility | summary-name",
+    "accessibility | svg-img-alt",
+    "accessibility | tabindex",
+    "accessibility | table-duplicate-name",
+    "accessibility | target-size",
+    "accessibility | td-headers-attr",
+    "accessibility | th-has-data-cells",
+    "accessibility | valid-lang",
+    "accessibility | video-caption",
+    "crawl data – external | all",
+    "crawl data – external | css",
+    "crawl data – external | fonts",
+    "crawl data – external | html",
+    "crawl data – external | images",
+    "crawl data – external | javascript",
+    "crawl data – external | media",
+    "crawl data – external | other",
+    "crawl data – external | pdf",
+    "crawl data – external | plugins",
+    "crawl data – external | unknown",
+    "crawl data – external | xml",
+    "crawl data – internal | all",
+    "crawl data – internal | css",
+    "crawl data – internal | fonts",
+    "crawl data – internal | html",
+    "crawl data – internal | images",
+    "crawl data – internal | javascript",
+    "crawl data – internal | media",
+    "crawl data – internal | other",
+    "crawl data – internal | pdf",
+    "crawl data – internal | plugins",
+    "crawl data – internal | unknown",
+    "crawl data – internal | xml",
+    "crawl depth | 10",
+    "external | flash",
+    "internal | flash",
+    "issues | issues (high)",
+    "issues | issues (low)",
+    "issues | issues (medium)",
+    "issues | opportunities (high)",
+    "issues | opportunities (low)",
+    "issues | opportunities (medium)",
+    "issues | warnings (high)",
+    "issues | warnings (low)",
+    "issues | warnings (medium)",
+    "mobile | unsupported plugins",
+    "response codes | external other",
+    "response codes | external redirect chain",
+    "response codes | external redirect loop",
+    "response codes | internal other",
+    "response codes | other",
+    "response codes | redirect chain",
+    "response codes | redirect loop",
+    "response codes – external | all errors",
+    "response codes – external | blocked by robots.txt",
+    "response codes – external | blocked resource",
+    "response codes – external | client error (4xx)",
+    "response codes – external | no response",
+    "response codes – external | redirect chain",
+    "response codes – external | redirect loop",
+    "response codes – external | redirection (3xx)",
+    "response codes – external | redirection (http refresh)",
+    "response codes – external | redirection (javascript)",
+    "response codes – external | redirection (meta refresh)",
+    "response codes – external | server error (5xx)",
+    "response codes – external | success (2xx)",
+    "response codes – internal | all errors",
+    "response codes – internal | blocked by robots.txt",
+    "response codes – internal | blocked resource",
+    "response codes – internal | client error (4xx)",
+    "response codes – internal | no response",
+    "response codes – internal | redirect chain",
+    "response codes – internal | redirect loop",
+    "response codes – internal | redirection (3xx)",
+    "response codes – internal | redirection (http refresh)",
+    "response codes – internal | redirection (javascript)",
+    "response codes – internal | redirection (meta refresh)",
+    "response codes – internal | server error (5xx)",
+    "response codes – internal | success (2xx)",
+    "search console | amp url is invalid",
+    "search console | url is on google, but has issues",
+    "sitemaps | xml sitemap with over 50mb",
+    "structured data | missing structured data",
+    "summary | average response time (ms)",
+    "summary | average urls/s",
+    "summary | crawl end",
+    "summary | crawl start",
+    "summary | elapsed time",
+    "summary | mode",
+    "summary | openspider version",
+    "summary | skipped by depth limit",
+    "summary | skipped by exclude",
+    "summary | skipped by folder depth",
+    "summary | skipped by query parameters",
+    "summary | skipped by redirect limit",
+    "summary | skipped by url length",
+    "summary | skipped not in include",
+    "summary | start url",
+    "summary | urls remaining in queue",
+    "url | contains a space"
+  ],
+  "threshold_pct": 100.0,
+  "url_set_identical": false,
+  "passed": false,
+  "failures": [
+    "Zellübereinstimmung 0.000 % liegt unter 100.000 %",
+    "URL-Menge nicht identisch: 1 fehlen in OpenSpider, 0 zusätzlich"
+  ]
+}

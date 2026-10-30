@@ -1,0 +1,247 @@
+   Compiling os-parity v0.1.0 (/home/build/Projects/openspider-wt/m2-n06/crates/os-parity)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.77s
+     Running unittests src/lib.rs (target/debug/deps/os_parity-2ff7ecdd01f4a169)
+
+running 68 tests
+test coverage::evidence::strict_tests::incomplete_columns_and_missing_requested_columns_never_verify ... ok
+test coverage::evidence::strict_tests::sq01_denominator_excludes_change_detection ... ok
+test coverage::evidence::tests::clean_export_verifies_the_spec ... ok
+test coverage::evidence::tests::column_errors_url_set_and_free_restrictions_block_verification ... ok
+test coverage::results::tests::ansi_colors_and_windows_paths ... ok
+test coverage::results::tests::doc_tests_and_summary_lines_are_ignored ... ok
+test coverage::results::tests::junit_results ... ok
+test coverage::results::tests::junit_without_testsuite_is_an_error ... ok
+test coverage::results::tests::parses_binaries_and_outcomes ... ok
+test coverage::results::tests::same_function_name_in_two_binaries_stays_separate ... ok
+test coverage::scan::tests::comments_in_block_comments_and_strings_do_not_count ... ok
+test coverage::scan::tests::finds_tagged_tests_with_attributes_in_any_order ... ok
+test coverage::scan::tests::lifetimes_and_char_literals_do_not_break_lexing ... ok
+test coverage::scan::tests::module_declarations_and_path_attribute ... ok
+test coverage::scan::tests::multiline_ignore_reason_and_bare_ignore ... ok
+test coverage::scan::tests::nested_modules_are_tracked_and_braces_in_strings_ignored ... ok
+test coverage::scan::tests::proptest_macro_tests_are_found ... ok
+test coverage::scan::tests::spec_comment_variants ... ok
+test coverage::scan::tests::spec_id_pattern ... ok
+test coverage::scan::tests::tag_does_not_leak_to_later_function ... ok
+test coverage::targets::tests::join_norm_resolves_dots ... ok
+test coverage::targets::tests::module_dir_rules ... ok
+test csvio::tests::bom_and_crlf_are_tolerated ... ok
+test csvio::tests::delimiters_inside_quotes_do_not_count ... ok
+test csvio::tests::description_columns_are_dropped_on_read ... ok
+test csvio::tests::duplicate_headers_get_suffix ... ok
+test csvio::tests::empty_input_is_empty_table ... ok
+test csvio::tests::plain_comma_csv ... ok
+test csvio::tests::quotes_with_embedded_newline_and_escaped_quote ... ok
+test csvio::tests::ragged_rows_are_padded_and_extra_cells_cut ... ok
+test csvio::tests::semicolon_is_detected ... ok
+test csvio::tests::sep_hint_line_is_skipped ... ok
+test deviations::tests::aliased_table_name_is_accepted ... ok
+test deviations::tests::cell_and_row_matching ... ok
+test deviations::tests::documented_schema_names_and_ascii_kind_are_accepted ... ok
+test deviations::tests::filters_by_site_and_export ... ok
+test deviations::tests::parses_and_warns_about_incomplete_entries ... ok
+test deviations::tests::value_restriction_and_missing_file ... ok
+test diff::upload_format_tests::original_input_keys_preserve_duplicates_and_expose_changed_addresses ... ok
+test manifest::m2_tests::image_sitemap_output_name_matches_the_spec ... ok
+test manifest::m2_tests::invalid_list_sources_and_duplicate_export_files_are_rejected ... ok
+test manifest::tests::invalid_os_specs_are_rejected ... ok
+test manifest::tests::legacy_abbreviated_keys_are_not_accepted ... ok
+test manifest::tests::os_export_parsing_and_cli_values ... ok
+test manifest::tests::parses_manifest_with_defaults ... ok
+test manifest::tests::slug_follows_file_name_rule ... ok
+test manifest::tests::unknown_status_is_an_error ... ok
+test mapping::tests::composite_key_with_ordinal_is_kept ... ok
+test mapping::tests::empty_key_and_bad_bool_are_errors ... ok
+test mapping::tests::normalize_defaults_when_absent ... ok
+test mapping::tests::parses_columns_options_and_defaults ... ok
+test normalize::tests::base_url_match_respects_port_boundary_and_case ... ok
+test normalize::tests::base_urls_become_placeholders ... ok
+test normalize::tests::booleans_case_insensitive_and_loose ... ok
+test normalize::tests::empty_equals_null_only_when_enabled ... ok
+test normalize::tests::foreign_hosts_stay_untouched ... ok
+test normalize::tests::numbers_compare_after_rounding ... ok
+test normalize::tests::parse_number_is_strict ... ok
+test normalize::tests::prepare_trims_and_normalizes ... ok
+test normalize::tests::tolerance_is_relative_to_reference ... ok
+test normalize::tests::value_map_translates_reference ... ok
+test run::filename_format_tests::hyphen_alias_is_unique_and_stays_in_its_configuration_variant ... ok
+test thresholds::tests::builtin_values_follow_acceptance_criteria ... ok
+test thresholds::tests::file_overrides_builtin_and_longest_pattern_wins ... ok
+test thresholds::tests::missing_file_and_bad_toml ... ok
+test xml::tests::malformed_or_unsupported_xml_is_never_silently_accepted ... ok
+test xml::tests::schema_location_and_non_namespace_attributes_do_not_change_sitemap_data ... ok
+test xml::tests::sitemap_elements_entities_and_images ... ok
+
+test result: ok. 68 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running unittests src/main.rs (target/debug/deps/os_parity-4877acea1c0b20de)
+
+running 1 test
+test tests::cli_definition_is_consistent ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/coverage_bench.rs (target/debug/deps/coverage_bench-600f991c1a81cc13)
+
+running 7 tests
+test benchmark_ignores_are_valid_but_other_reasons_are_not ... ok
+test benchmark_prefix_is_recognised ... ok
+test benchmark_tests_are_neutral_for_the_status ... ok
+test extra_ids_do_not_count_for_summary_exit_code_or_strict ... ok
+test extra_section_is_deterministic ... ok
+test extra_spec_ids_get_their_own_section_and_no_unknown_tag_warning ... ok
+test load_packages_reads_extra_spec_ids_from_packages_only ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/coverage_m2.rs (target/debug/deps/coverage_m2-297ea80bb9886ea3)
+
+running 27 tests
+test a_complete_gate_can_pass_with_all_appendix_packages ... ok
+test all_new_ignore_prefixes_are_milestone_specific ... ok
+test ambiguous_frontend_titles_never_receive_credit ... ok
+test appendix_requires_the_assigned_package_and_each_marker ... ok
+test c9_appendix_placeholders_warn_in_development_but_block_the_gate ... ok
+test c9_recognizes_crate_wide_test_ownership ... ok
+test c9_rejects_a_placeholder_in_a_crate_without_owned_tests ... ok
+test cli_defaults_and_multiple_frontend_reports ... ok
+test development_defaults_to_wave_zero_and_requires_only_selected_packages ... ok
+test failed_frontend_result_overrides_ok_and_missing_results_stay_open ... ok
+test failed_tests_of_unmerged_packages_and_untagged_tests_still_block ... ok
+test gate_requires_all_waves_and_rejects_deferred_and_c9 ... ok
+test historical_m1_pdf_exceptions_do_not_verify_m2_content ... ok
+test junit_browser_projects_are_independent_of_retry_order ... ok
+test junit_numeric_entities_and_windows_paths_match_static_titles ... ok
+test junit_retries_use_the_last_identical_case_in_both_orders ... ok
+test legacy_ignores_warn_with_owners_until_merged_and_block_the_gate ... ok
+test legacy_ignores_without_owners_are_never_waived ... ok
+test m1_ids_are_known_without_counting_towards_m2_but_typos_warn ... ok
+test m2_development_reads_rust_vitest_playwright_measurements_and_appendix ... ok
+test malformed_junit_is_an_error ... ok
+test overlapping_template_patterns_are_ambiguous ... ok
+test repository_m2_report_includes_all_586_ids_including_spikes ... ok
+test sq01_one_bad_filter_does_not_block_its_siblings ... ok
+test template_titles_group_cases_and_fail_if_any_instance_fails ... ok
+test typescript_regex_literals_do_not_corrupt_groups_or_create_tags ... ok
+test untagged_and_misplaced_placeholders_and_old_m2_ignores_are_invalid ... ok
+
+test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.55s
+
+     Running tests/coverage_status.rs (target/debug/deps/coverage_status-d7c958ede27a113a)
+
+running 12 tests
+test both_inputs_can_be_combined ... ok
+test ignored_tests_without_valid_reason_are_listed ... ok
+test invalid_inputs_are_errors ... ok
+test junit_output_resolves_package_names_and_duplicate_test_files ... ok
+test no_results_means_every_id_is_open_with_a_warning ... ok
+test ok_failed_ignored_and_missing_results_are_distinguished ... ok
+test parity_evidence_sets_verified_only_for_clean_implemented_ids ... ok
+test same_function_name_in_lib_and_bin_of_one_package_is_told_apart ... ok
+test same_integration_test_name_in_several_crates_uses_test_sets_or_warns ... ok
+test status_file_is_deterministic_and_verified_is_preserved ... ok
+test status_rules_on_cargo_test_output ... ok
+test strict_mode_fails_on_ignored_tests_without_reason ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests/diff_cli.rs (target/debug/deps/diff_cli-1bf66fc7ef866798)
+
+running 4 tests
+test differences_below_threshold_exit_one ... ok
+test identical_exports_exit_zero_and_write_reports ... ok
+test thresholds_and_deviations_files_can_be_passed ... ok
+test unreadable_input_exits_two ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests/diff_engine.rs (target/debug/deps/diff_engine-c9183a0e8a19a768)
+
+running 12 tests
+test cell_rules_apply_per_column ... ok
+test composite_key_with_running_number_matches_duplicates ... ok
+test counts_agreement_and_percentage ... ok
+test deviations_remove_cells_and_rows_from_the_comparison ... ok
+test example_report_matches_golden ... ok
+test identical_files_give_full_agreement_and_pass ... ok
+test key_matching_reports_missing_and_extra_rows ... ok
+test missing_key_column_and_empty_files_are_errors ... ok
+test missing_os_column_counts_as_empty_values ... ok
+test reference_description_texts_never_reach_the_report ... ok
+test thresholds_decide_pass_or_fail ... ok
+test unmapped_ignored_and_dropped_columns_are_listed_not_compared ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/real_repo_files.rs (target/debug/deps/real_repo_files-859977978e29b2bf)
+
+running 7 tests
+test deviations_schema_example_from_the_real_file_parses ... ok
+test m2_filters_and_inlinks_are_compared_after_q02 ... ok
+test new_manifests_preserve_list_source_sitemap_variants_and_crawl_path_target ... ok
+test real_deviations_file_loads_without_warnings ... ok
+test real_mappings_and_manifests_load_and_reference_each_other ... ok
+test real_packages_file_loads_with_spec_and_extra_ids ... ok
+test real_thresholds_file_loads_and_covers_the_a3_exports ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
+
+     Running tests/reference_format.rs (target/debug/deps/reference_format-4905864f208a762a)
+
+running 17 tests
+test a_mapping_with_the_blocks_format_reads_the_reference_through_read_reference ... ok
+test absent_numbered_columns_accept_only_empty_or_zero ... ok
+test an_export_with_a_skip_reason_is_reported_as_out_of_scope ... ok
+test applied_deviations_are_reported_and_free_restrictions_are_kept_apart ... ok
+test cell_transforms_cover_case_zero_hex_and_paths ... ok
+test decimal_comma_and_percent_signs_are_normalized ... ok
+test deviations_support_deltas_column_lists_prefix_lists_and_export_lists ... ok
+test file_scoped_rows_do_not_excuse_links_all ... ok
+test keys_can_be_compared_case_insensitively ... ok
+test numbered_columns_absent_on_both_sides_are_complete ... ok
+test numbered_columns_the_reference_does_not_write_count_as_empty ... ok
+test reference_rows_with_the_same_key_collapse_when_dedupe_is_on ... ok
+test table_default_format_is_unchanged ... ok
+test terminal_hop_is_compared_with_final_status ... ok
+test the_block_format_becomes_a_table_without_descriptions ... ok
+test the_overview_compares_only_m1_filters_and_tolerates_os_only_rows ... ok
+test xpath_sequences_ignore_indexes_and_the_html_root ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/run_site.rs (target/debug/deps/run_site-e5c2f6daee1b8757)
+
+running 24 tests
+test a_present_export_with_a_skip_reason_is_not_requested_and_reported_as_out_of_scope ... ok
+test all_mode_requires_enough_present_sites ... ok
+test binary_resolution_prefers_argument_over_environment ... ok
+test command_exporter_reports_nonzero_exit ... ok
+test command_exporter_runs_the_binary_end_to_end ... ok
+test command_line_for_openspider_follows_the_cli_spec ... ok
+test deviations_and_thresholds_files_are_applied ... ok
+test differing_export_fails_the_run ... ok
+test discover_sites_lists_directories_with_manifest ... ok
+test exporter_failure_marks_all_exports_as_errors ... ok
+test list_source_and_configuration_variants_are_separate_requests_with_cli_arguments ... ok
+test m2_presence_gate_activates_only_when_m2_exports_are_present ... ok
+test matching_export_passes_and_writes_reports ... ok
+test missing_output_file_is_an_error_and_stale_files_do_not_count ... ok
+test ordered_mapping_rejects_a_permutation_even_when_every_cell_and_duplicate_matches ... ok
+test run_rejects_missing_binary_and_missing_site_selection ... ok
+test site_start_failure_is_reported ... ok
+test site_without_present_exports_does_not_crawl_and_fails_single_run ... ok
+test sitemap_xml_is_compared_by_urls_and_attributes_in_both_run_and_diff ... ok
+test tab_and_bulk_outputs_with_the_same_cli_filename_cannot_overwrite_each_other ... ok
+test target_selection_preserves_steps_and_reports_missing_os_target_as_difference ... ok
+test the_markdown_summary_lists_deviations_and_free_restrictions_separately ... ok
+test unknown_mapping_or_site_is_reported ... ok
+test unknown_report_does_not_break_other_exports ... ok
+
+test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+
+   Doc-tests os_parity
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

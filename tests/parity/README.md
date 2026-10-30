@@ -60,3 +60,43 @@ Anpassungen an das reale Referenzformat (Mapping-Optionen, siehe `crates/os-pari
   gilt die Referenz als leer, sobald OpenSpider die Spalte liefert.
 - Manifest `skip = "…"`: Referenz liegt vor, der Export gehört aber nicht zum M1-Umfang (übersprungen mit Grund).
 - Abweichungen: `delta`, `key_prefixes`, mehrere Spalten (`a|b`) und Exporte (`export = "x|y"`).
+
+## N06: beide Referenzgenerationen und strenge Filterbelege
+
+Nummerierte Spalten, die in der Referenz fehlen, erwarten in OpenSpider ausschließlich leer oder numerisch Null.
+Fehlen sie auf beiden Seiten, entsteht keine Spaltenlücke. Eine vorhandene Referenzspalte bleibt Pflicht.
+`optional_ref = true` an einer Spalte erlaubt deren Fehlen in einer Referenzgeneration; vorhandene Werte
+werden unverändert verglichen. Diese Option ersetzt keine fehlenden Produktspalten.
+
+Kettenmappings setzen `chain_end_target = true`: Status und Status Code im zusätzlichen Endzielblock
+`n+1` werden gegen Final Status und Final Status Code geprüft. Die eigentlichen Sprünge bleiben im Vergleich.
+Leere, nicht erzeugte Sprungspalten erzeugen dabei keine Lücke. Die Anzahl liefert je nach Report
+Number of Redirects, Number of Redirects/Canonicals oder Number of Canonicals.
+
+Reports und Bulk-Exporte werden je Gruppe angefordert. Schlägt eine Gruppe fehl, werden ihre Namen einzeln
+wiederholt. Ein unbekannter Name betrifft damit nur seinen eigenen Export. Abweichende Dateistämme stehen ausdrücklich als `os_file` im Manifest, insbesondere `Links:… (Bulk)`
+und Hreflang-Reports mit dem Suffix Report. Der eindeutige historische Bindestrich-Alias bleibt erhalten.
+Crawl Path bleibt nach SQ-14 bis zur CLI-Unterstützung in N11 mit Begründung übersprungen.
+
+`deviations.toml` unterstützt zusätzlich `file` (Referenzdateiname, mehrere mit `|`). Der Runner filtert diese
+Ausnahmen vor dem Vergleich. TECH-141 darf beispielsweise nur die Zeilen des Localhost-Filterexports
+entschuldigen. Belege in `evidence.toml` unterstützen die Selektoren `sites` und `files`; alle gewählten
+Exporte müssen verglichen sein. Fehlende oder ungemappte Spalten und fehlende angeforderte Belegspalten
+sperren verified, auch bei null Zellfehlern.
+
+B3g nach SQ-01 wird direkt durch os-parity berechnet:
+
+```sh
+target/debug/os-parity coverage --parity-report target/parity/report.json \
+  --write docs/plan/M2-acceptance/parity/verified.json
+```
+
+Ohne `--evidence` wertet dieser Modus die kanonischen M1-/M2-Filterkataloge gegen das vollständige Laufjournal
+aus: je Filter-ID Tab-All auf allen referenzfähigen Sites und zusätzlich dessen eigener Filterexport, soweit
+vorhanden. Jeder Beleg verlangt identische URL-Mengen, null Zellfehler und vollständige Spalten; DEV ist erlaubt,
+REF-FREE sperrt. Historische M1-PDF-Ausnahmen DEV-016/022/024 geben nach Q02-P06 ebenfalls keine M2-Gutschrift. Nicht verglichene Present-Exporte sperren ebenfalls. Change Detection ist ausgeschlossen;
+der Nenner beträgt 155 und hängt nicht von den grünen Exporten ab. Gemeinsam verwendete Spec-IDs verlangen
+alle zugehörigen Filterbelege. SQ-10 sperrt Links/Internal bis zur Link-Score-Kalibrierung in M3.
+
+Die Auswertung beschreibt Paritätsbelege. Der Coverage-Modus mit `--evidence` und Testergebnissen prüft zusätzlich
+den Implementierungsstatus aus den Spec-getaggten Tests. Er bleibt für die M1-Statusdatei verfügbar.

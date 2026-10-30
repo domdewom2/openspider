@@ -12,6 +12,7 @@ format = "blocks"
 
 [blocks]
 m1_filters = "docs/plan/M1-filters.toml"
+filters = ["docs/plan/M2-filters.toml"]
 os_only_rows_ok = true
 section_map = { "Depth (Clicks from Start URL)" = "Crawl Depth" }
 

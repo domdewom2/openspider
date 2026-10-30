@@ -12,8 +12,8 @@ drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Refer
 "Crawl Depth" = "Crawl Depth"
 "Inlinks" = "Inlinks"
 "Response Time" = { ignore = true, reason = "nicht deterministisch" }
-"Redirect URL" = "Redirect URL"
-"Redirect Type" = "Redirect Type"
+"Redirect URL" = { os = "Redirect URL", optional_ref = true }
+"Redirect Type" = { os = "Redirect Type", optional_ref = true }
 
 [normalize]
 base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}

@@ -1,17 +1,15 @@
-# Paritaetsbelege fuer den Status `verified` (docs/plan/M1.md 5.4 Punkt 3, A9). Format und Regeln: crates/os-parity/src/coverage/evidence.rs.
-#
-# Eine ID wird `verified`, wenn jeder Eintrag, der sie nennt, im Paritaetslauf (report.json) fehlerfrei ist: URL-Menge identisch,
-# keine Abweichung in den genannten Spalten, keine Referenzeinschraenkung (Free) (K-53). Aufgenommen sind nur IDs, deren Spec-
-# Umfang die verglichenen Spalten vollstaendig abdecken; alles andere bleibt `implemented` (Beleg: Fixture-Test, A2).
+# N06: Deklarative M1-Einzelbelege. B3g/SQ-01 wird von coverage ohne --evidence direkt aus den Filterkatalogen berechnet.
+# Kein generiertes Q02-Laufjournal und keine Kandidaten als Verifikation.
 
-# Internal: Size, Transferred, Total Transferred (K-02: die Referenz zaehlt keine Header-Bytes in Transferred)
+# M2-Q02: Belegregeln wie coverage/evidence.rs: URL-Menge identisch, null Zellfehler,
+# keine angewandte REF-FREE-Ausnahme. Schwellen allein ergeben kein verified.
+
 [[evidence]]
 specs = ["ONPAGE-012"]
-exports = ["internal_all"]
+exports = ["internal_all", "internal_m2", "list_internal"]
 columns = ["Size (Bytes)", "Transferred (Bytes)", "Total Transferred (Bytes)"]
-url_set = false          # Beleg ueber Spalten der zugeordneten Zeilen; die URL-Menge steht in Befund N-08
+url_set = false
 
-# H1- und H2-Tab: Extraktion und Spalten
 [[evidence]]
 specs = ["ONPAGE-120"]
 exports = ["h1_all"]
@@ -20,7 +18,6 @@ exports = ["h1_all"]
 specs = ["ONPAGE-130"]
 exports = ["h2_all"]
 
-# Canonicals: Extraktion (Link-Element, HTTP-Header) und Spalten des Tabs
 [[evidence]]
 specs = ["TECH-010", "TECH-011"]
 exports = ["canonicals_all"]
