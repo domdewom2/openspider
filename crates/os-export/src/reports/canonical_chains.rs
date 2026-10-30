@@ -112,8 +112,9 @@ impl Chain {
             .any(|n| !is_canonical(n))
     }
     fn selected(&self, pure: bool, list: bool) -> bool {
-        // Ein einzelner nicht verfolgter Sprung bleibt im Standard-Listenlauf sichtbar (OUT-085).
-        (self.targets.len() >= 2
+        // OUT-085: Auch Starts ohne Sprung stehen im kombinierten Listenreport.
+        (list && !pure
+            || self.targets.len() >= 2
             || self.outcome == Outcome::Loop
             || (list && self.outcome == Outcome::NotFollowed))
             && (!pure || (self.canonical() && !self.redirect()))
@@ -129,7 +130,7 @@ impl Chain {
                     .take(self.targets.len())
                     .filter_map(|n| n.kind.as_deref())
                     .collect();
-                if kinds.len() == 1 {
+                if kinds.len() <= 1 {
                     kinds.into_iter().next().unwrap_or("").into()
                 } else {
                     "Mixed".into()
@@ -201,7 +202,7 @@ const STARTS: &str = "WITH samples AS (
     LEFT JOIN samples ON samples.target_id = u.id LEFT JOIN urls s ON s.id = samples.source_id
     LEFT JOIN list_input li ON li.url_id = u.id
     WHERE u.in_tables = 1 AND u.state = 'done'
-      AND (u.redirect_url IS NOT NULL OR (:store = 1 AND u.canonical_self = 0 AND u.canonical_url IS NOT NULL))
+      AND (:list = 1 OR u.redirect_url IS NOT NULL OR (:store = 1 AND u.canonical_self = 0 AND u.canonical_url IS NOT NULL))
       AND ((:list = 1 AND li.url_id IS NOT NULL) OR (:list = 0 AND (
         u.discovered_via IN ('start', 'list_input', 'sitemap') OR samples.source_id IS NOT NULL OR u.id NOT IN (
           SELECT redirect_target_id FROM urls WHERE redirect_target_id IS NOT NULL AND redirect_target_id <> id

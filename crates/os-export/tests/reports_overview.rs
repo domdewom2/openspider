@@ -699,12 +699,26 @@ async fn placeholder_tabs_give_every_tab_with_all_filters_in_ui_order() {
     assert_eq!(secs[first - 1], "Response Codes \u{2013} External");
     assert_eq!(secs[first + tab_ids.len()], "Crawl Depth");
     for tab in &all {
-        let want: Vec<String> = tab
+        let mut want: Vec<String> = tab
             .filters
             .iter()
             .filter(|f| !f.is_stub())
             .map(|f| os_analyze::names::label(f.id, &cfg))
             .collect();
+        // OUT-080 / ONPAGE-057 (G25): the report includes this canonical M2 row
+        // even while the shared Response Codes registry lacks the filter.
+        if tab.id == "Response Codes"
+            && !want
+                .iter()
+                .any(|s| s == "External Redirection (JavaScript)")
+        {
+            let position = want
+                .iter()
+                .position(|s| s == "External Redirection (3XX)")
+                .unwrap()
+                + 1;
+            want.insert(position, "External Redirection (JavaScript)".into());
+        }
         let got: Vec<&str> = section_items(&t, tab.id);
         assert_eq!(
             got,

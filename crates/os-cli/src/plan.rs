@@ -88,6 +88,8 @@ pub struct Plan {
     pub resume_config: Option<CrawlConfig>,
     /// Exporte in Aufrufreihenfolge (Tabs, Bulk, Reports), ohne Duplikate.
     pub exports: Vec<Resolved>,
+    /// Normalisierte Auswahl für den Crawl-Path-Export (OUT-023).
+    pub crawl_path_urls: Vec<String>,
     /// Ausgabeformat.
     pub format: Format,
     /// Vorbereiteter Ausgabeordner (nur wenn Dateien entstehen).
@@ -626,6 +628,16 @@ fn build_impl(
             .then_some(rep)
             .or_else(|| batch.is_some().then_some(rep)),
     )?;
+    let crawl_path_urls = args
+        .export_crawl_path
+        .iter()
+        .flat_map(|arg| arg.split(','))
+        .map(|raw| {
+            os_url::parse_start_url(raw)
+                .map(|url| url.encoded)
+                .map_err(|e| CliError::usage(format!("--export-crawl-path: {e}")))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
     // Explicit CLI names always fail before a crawl, including when a preset is used.
     if !task_mode {
         resolve_exports(args, &config, None)?;
@@ -687,6 +699,7 @@ fn build_impl(
 
     // Ausgabeordner (nur, wenn Dateien entstehen)
     let output = if !exports.is_empty()
+        || !crawl_path_urls.is_empty()
         || args.save_crawl
         || args.create_sitemap
         || args.create_images_sitemap
@@ -743,6 +756,7 @@ fn build_impl(
         config,
         resume_config,
         exports,
+        crawl_path_urls,
         format,
         output,
         save_crawl: args.save_crawl,

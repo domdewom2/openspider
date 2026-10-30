@@ -2,7 +2,7 @@
 use fancy_regex::Regex;
 use os_model::{ChangeFreqBasis, CrawlConfig, LastmodSource, SitemapGenConfig, Timestamp};
 use os_store::CrawlFile;
-use time::{format_description::well_known::Iso8601, Date, UtcOffset};
+use time::{format_description::well_known::Iso8601, Date};
 
 use super::{db, escape_xml, sitemap_loc, MAX_LOC_CHARS, NAMESPACE, XML_DECLARATION};
 use crate::ExportError;
@@ -107,9 +107,12 @@ impl<'a> Settings<'a> {
         }
         let mut entry = format!("  <url>\n    <loc>{}</loc>\n", escape_xml(page.loc));
         let modified = page.modified.and_then(|m| Timestamp::from_db(m).ok());
+        let crawled = page.crawled.and_then(|c| Timestamp::from_db(c).ok());
         if self.cfg.lastmod.enabled {
             let lastmod = match self.cfg.lastmod.source {
-                LastmodSource::Server => modified.map(|m| m.to_export_with(UtcOffset::UTC)),
+                LastmodSource::Server => modified
+                    .or(crawled)
+                    .map(|m| m.0.to_offset(time::UtcOffset::UTC).date().to_string()),
                 LastmodSource::Custom => self.cfg.lastmod.custom_date.clone(),
             };
             if let Some(date) = lastmod {
@@ -122,13 +125,11 @@ impl<'a> Settings<'a> {
                     [(page.depth as usize).min(self.cfg.changefreq.by_depth.len() - 1)]
                 .as_str(),
                 ChangeFreqBasis::LastModified => {
-                    let age = page
-                        .crawled
-                        .and_then(|c| Timestamp::from_db(c).ok())
-                        .zip(modified)
-                        .map(|(c, m)| c.0 - m.0);
-                    if age
-                        .is_some_and(|a| a >= time::Duration::ZERO && a < time::Duration::hours(24))
+                    let age = crawled.zip(modified).map(|(c, m)| c.0 - m.0);
+                    if modified.is_none()
+                        || age.is_some_and(|a| {
+                            a >= time::Duration::ZERO && a < time::Duration::hours(24)
+                        })
                     {
                         "daily"
                     } else {
