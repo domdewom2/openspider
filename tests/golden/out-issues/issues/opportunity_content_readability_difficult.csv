@@ -1,2 +1,2 @@
-﻿Address,Word Count,Hash,Indexability,Indexability Status
-{BASE}/long-title.html,2,<VAR>,Indexable,
+﻿Address,Word Count,Sentence Count,Average Words Per Sentence,Flesch Reading Ease Score,Readability,Closest Similarity Match,No. Near Duplicates,Hash,Indexability,Indexability Status
+{BASE}/long-title.html,2,1,2.000,35.605,Hard,,,<VAR>,Indexable,

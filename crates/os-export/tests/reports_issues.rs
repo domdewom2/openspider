@@ -640,8 +640,12 @@ async fn issues_golden_with_the_real_tab_counters() {
         bases.push(format!("http://localhost:{port}"));
     }
     let bases: Vec<&str> = bases.iter().map(String::as_str).collect();
-    let golden_dir =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/golden/out-issues/issues");
+    // Stage regenerated expectations outside the repository when updating a subset (K2-63).
+    let golden_dir = std::env::var_os("OPENSPIDER_ISSUES_GOLDEN_OUT")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| {
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/golden/out-issues/issues")
+        });
     let mut exported: Vec<_> = std::fs::read_dir(tmp.path().join("issues"))
         .unwrap()
         .map(|e| e.unwrap())

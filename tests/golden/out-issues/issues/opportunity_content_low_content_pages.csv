@@ -1,8 +1,8 @@
-﻿Address,Word Count,Hash,Indexability,Indexability Status
-{BASE}/,1,<VAR>,Indexable,
-{BASE}/dup-a.html,2,<VAR>,Indexable,
-{BASE}/dup-b.html,2,<VAR>,Indexable,
-{BASE}/long-title.html,2,<VAR>,Indexable,
-{BASE}/no-h1.html,3,<VAR>,Indexable,
-{BASE}/no-title.html,3,<VAR>,Indexable,
-{BASE}/ok.html,7,<VAR>,Indexable,
+﻿Address,Word Count,Sentence Count,Average Words Per Sentence,Flesch Reading Ease Score,Readability,Closest Similarity Match,No. Near Duplicates,Hash,Indexability,Indexability Status
+{BASE}/,1,1,1.000,0.000,Very Hard,,,<VAR>,Indexable,
+{BASE}/dup-a.html,2,1,2.000,77.905,Fairly Easy,,,<VAR>,Indexable,
+{BASE}/dup-b.html,2,1,2.000,100.000,Very Easy,,,<VAR>,Indexable,
+{BASE}/long-title.html,2,1,2.000,35.605,Hard,,,<VAR>,Indexable,
+{BASE}/no-h1.html,3,1,3.000,100.000,Very Easy,,,<VAR>,Indexable,
+{BASE}/no-title.html,3,1,3.000,90.990,Very Easy,,,<VAR>,Indexable,
+{BASE}/ok.html,7,2,3.500,100.000,Very Easy,,,<VAR>,Indexable,
