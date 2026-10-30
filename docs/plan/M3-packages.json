@@ -421,7 +421,7 @@
    ".github/workflows/spec-coverage.yml (neu; spec-coverage-m2.yml bleibt)",
    "docs/plan/plan-check.py (neu, generische Planprüfung P1–P4, P12 für M3–M5)"
   ],
-  "prompt_notes": "Regeln: docs/plan/M3.md Abschnitt 2 (Abweichungen D1–D14 von M2.md 2/2a) und M2.md Abschnitt 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge abarbeiten; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN nach D4; Bericht unter docs/plan/M3-reports/<kurz-id>.md. Schritte: (1) `os-parity coverage --milestone M3|M4|M5` liest docs/plan/M<n>-packages.json; Status je spec_id wie M2 (implemented/deferred/open); `--milestone M2` und `M1` unverändert (Regressionstest). (2) Tags `// spec: <ID> [M3]`, `[M4]`, `[M5]` für mitgeprüfte Kriterien in extra_spec_ids; Bericht „Teilkriterien“ je Paket. (3) Gültige Ignore-Gründe: `M4:`, `M5:`, `P2:`, `Klärung K3-nn`/`K4-nn`/`K5-nn`, `Benchmark`, `Manuell:` (manuelle Kriterien mit Protokoll in M3-Q03 bzw. Mx-Q02). (4) Workflow spec-coverage.yml für alle drei Meilensteine. (5) docs/plan/plan-check.py: Felder/IDs/Wellen, Abhängigkeiten nur in frühere Wellen (auch meilensteinübergreifend), spec_ids genau einmal gegen die Spec-Dateien, Besitzüberschneidung je Welle (Stichprobe über Präfixe), Nutzer-Abnahmen mit runner human; Ausgabe wie M2-check.py.",
+  "prompt_notes": "Regeln: docs/plan/M3.md Abschnitt 2 (Abweichungen D1–D14 von M2.md 2/2a) und M2.md Abschnitt 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge abarbeiten; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN nach D4; Bericht unter docs/plan/M3-reports/<kurz-id>.md. Schritte: (1) `os-parity coverage --milestone M3|M4|M5` liest docs/plan/M<n>-packages.json; Status je spec_id wie M2 (implemented/deferred/open); `--milestone M2` und `M1` unverändert (Regressionstest). (2) Tags `// spec: <ID> [M3]`, `[M4]`, `[M5]` für mitgeprüfte Kriterien in extra_spec_ids; Bericht „Teilkriterien“ je Paket. (3) Gültige Ignore-Gründe: `M4:`, `M5:`, `P2:`, `Klärung K3-nn`/`K4-nn`/`K5-nn`, `Benchmark`, `Manuell:` (manuelle Kriterien mit Protokoll in M3-Q03 bzw. Mx-Q02). (4) Workflow spec-coverage.yml für alle drei Meilensteine. (5) docs/plan/plan-check.py: Felder/IDs/Wellen, Abhängigkeiten nur in frühere Wellen (auch meilensteinübergreifend), spec_ids genau einmal gegen die Spec-Dateien, Besitzüberschneidung je Welle (Stichprobe über Präfixe), Nutzer-Abnahmen mit runner human; Ausgabe wie M2-check.py. Nachtrag 31.10.2026 (K3-15): Die M3-Menge umfasst auch die 05-Einträge UI-094, UI-097, UI-098, UI-100 (Priorität P2, ausdrücklich in der M3-Zeile der README) und UI-102; die Abdeckungs- und Planprüfung darf P2-Einträge nicht pauschal ausschließen, wenn die README sie einem Meilenstein zuordnet.",
   "extra_spec_ids": []
  },
  {
@@ -647,6 +647,77 @@
   "extra_spec_ids": []
  },
  {
+  "id": "M3-V01",
+  "kind": "package",
+  "model": "sol",
+  "wave": "4b",
+  "size": "M",
+  "runner": "server",
+  "title": "Diagramm zum gewählten Übersichtseintrag: Ring- bzw. Balkendiagramm der Unterkategorien aus den vorhandenen Übersichtszählern, Zerlegungsangabe im Kern, Klick → Filter, Tabellenansicht, Export PNG/SVG/CSV, de/en",
+  "spec_ids": [
+   "UI-102"
+  ],
+  "extra_spec_ids": [
+   "UI-061"
+  ],
+  "depends_on": [
+   "M3-A01"
+  ],
+  "owns": [
+   "apps/desktop/src/features/sidebar/overview/** (Auswahlmodell, Tastatur, Teilung des Overview-Tabs)",
+   "apps/desktop/src/features/sidebar/overview-chart/** (neu: Diagramm, Legende, Tooltip, Tabellenansicht, Export, i18n de/en)",
+   "apps/desktop/src/features/sidebar/frame/{state.ts,layout.ts} (nur Zustand des Diagrammbereichs: Höhe, Einklappen, Ansicht)",
+   "apps/desktop/src/ui/tokens/{tokens.ts,tokens.test.ts} (nur Diagrammpalette chart.1 … chart.8, chart.other, chart.rest)",
+   "crates/os-app/src/dto/sidebar.rs (nur optionales Zerlegungsfeld an OverviewTab)",
+   "crates/os-app/src/commands/sidebar.rs (nur Befüllung des Zerlegungsfelds)",
+   "crates/os-app/src/commands/sidebar/partition.rs (neu, Untermodul von sidebar.rs)",
+   "crates/os-app/tests/cmd_sidebar_partition_*.rs (neu)",
+   "apps/desktop/src/ipc/gen/{OverviewTab,OverviewPartition}.ts (nur generierte Ausgabe der eigenen Typen)",
+   "tests/fixtures/ui/fx-ui-chart/** (neu)",
+   "apps/desktop/e2e/sidebar-chart/** (neu)",
+   "docs/plan/M3-reports/v01.md"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M3.md Abschnitt 2 (Abweichungen D1–D14 von M2.md 2/2a) und M2.md Abschnitt 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge abarbeiten; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN nach D4; Bericht unter docs/plan/M3-reports/<kurz-id>.md. B2: Tests für mitgeprüfte Kriterien der extra_spec_ids tragen `// spec: <ID> [M3]`; mindestens ein Test mit Ergebnis ok je dort genanntem Kriterium. Arbeitet auf einem Branch von `release/1.0` und merged dorthin; der Integrator überträgt den Merge nach main (D13). Spec: docs/spec/05-ui.md UI-102 (führend), Umfeld UI-060, UI-061, UI-018, UI-020, UI-126. Schritte: (1) Kern: optionales Feld der Zerlegung an `OverviewTab` (Filterkennungen der Kategorien in Katalogreihenfolge oder null) in dto/sidebar.rs, befüllt in commands/sidebar.rs über das neue Untermodul commands/sidebar/partition.rs nach der Tabelle in UI-102 (Internal und External: Inhaltstyp-Filter außer All; Response Codes: sieben Kategorien der Sicht ohne Präfix). Kein neues IPC-Kommando und keine neue Zählung: die Zähler liefert `sidebar.overview` bereits. ts-rs-Ausgabe nur für die eigenen Typen erzeugen. Disjunktheitstest je Zerlegung auf einer Crawl-Fixture (Summe der Kategorien = All auf fx-ui-basic, ≤ All allgemein), `// spec: UI-102`. (2) Overview: Auswahlmodell (Summary, Tab-Kopf, Filterzeile), Auf-/Zuklappen über Pfeilsymbol und Pfeil rechts/links, Pfeil hoch/runter, Klick auf Filterzeile navigiert weiter; bestehende UI-061-Kriterien bleiben grün (`// spec: UI-061 [M3]`). Teilung des Tabs mit Trenner nach UI-001-Regeln, Zustand nach UI-125. (3) Diagramm als eigene SVG-Komponente ohne neue Bibliothek (wie Site Structure, M2-ui-concept „Kleine Diagramme“): Ring bis 8 Kategorien, sonst Balken mit höchstens 10 Zeilen inkl. „Sonstige“; Einträge ohne Zerlegung als Balken ohne „Sonstige“ mit Hinweis zur Mehrfachzuordnung; Restkategorien „Nicht zugeordnet“/„Nicht angezeigt“; Summary-Zerlegung aus den Summary-Kennzahlen; Legende, Tooltip, Tabellenansicht, Klickziele über die Navigation der Seitenleiste; keine Animation während des Crawls. (4) Tokens `chart.*` mit Kontrasttest ≥ 3:1 in beiden Themes; Schraffur bei gleicher Farbe. (5) Export PNG 1×/2×, SVG 1.1 (Regeln wie UI-090; Hilfsfunktionen aus features/viz dürfen importiert, aber nicht geändert werden – viz/** gehört M3-V02), CSV nach den CSV-Regeln der Export-Engine, Kopieren als TSV. (6) i18n de/en vollständig, Zahlenformat wie die Übersicht. (7) Tests: vitest gegen fx-ui-chart für alle Zahlenkriterien aus UI-102; E2E unter e2e/sidebar-chart (Bridge mit fx-ui-chart, Live-Lauf fx-ui-basic mit Abgleich gegen die Übersicht, IPC-Zähler bei Auswahl unverändert, axe ohne critical/serious, Layout 1440×900 und 1024×640, Klickziele). Performance mit gen-ui-large (1 Mio. URLs): Server-Messung als Richtwert im Bericht; den Beleg auf Referenzhardware erhebt der Orchestrator auf dem Mac mini vor der Merge-Freigabe (D2, D5). (8) Pflichtprüfungen nach CLAUDE.md grün (cargo fmt/clippy/test, typecheck, vitest). Offene Spec-Fragen nicht raten, sondern im Bericht melden."
+ },
+ {
+  "id": "M3-V02",
+  "kind": "package",
+  "model": "sol",
+  "wave": "4b",
+  "size": "L",
+  "runner": "server",
+  "title": "Visualisierungen erweitern: kraftgerichteter Verzeichnisgraph, Links eines Knotens einblenden, 3D-Crawl- und -Verzeichnisgraph (WebGL), Body-Text-Wortwolke",
+  "spec_ids": [
+   "UI-094",
+   "UI-097",
+   "UI-098",
+   "UI-100"
+  ],
+  "extra_spec_ids": [
+   "UI-090",
+   "UI-146"
+  ],
+  "depends_on": [
+   "M3-A01"
+  ],
+  "owns": [
+   "apps/desktop/src/features/viz/** (ohne viz/cluster/**, das M4-E02 neu anlegt)",
+   "apps/desktop/e2e/viz/**",
+   "crates/os-app/src/commands/viz.rs",
+   "crates/os-app/src/dto/viz.rs (nur additive, optionale Felder)",
+   "crates/os-app/tests/cmd_viz_*.rs",
+   "crates/os-analyze/src/graph/**",
+   "crates/os-analyze/tests/graph_*.rs",
+   "apps/desktop/src/ipc/gen/{Viz*,Graph*,Word*}.ts (nur generierte Ausgabe der viz-Typen)",
+   "apps/desktop/src/ui/menu/contributions/main.ts (nur Gruppe „visualisations“)",
+   "apps/desktop/src/features/table-advanced/contextEntries.ts (nur Visualisierungs-Einträge des URL-Kontextmenüs)",
+   "apps/desktop/package.json, package-lock.json (nur eine 3D-Bibliothek, D9-Ausnahme K3-15)",
+   "tests/fixtures/ui/{fx-ui-dirs,fx-ui-words}/** (neu, nur falls für Kern-Tests nötig)",
+   "docs/plan/M3-reports/v02.md"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M3.md Abschnitt 2 (Abweichungen D1–D14 von M2.md 2/2a) und M2.md Abschnitt 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge abarbeiten; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN nach D4; Bericht unter docs/plan/M3-reports/<kurz-id>.md. B2: Tests für mitgeprüfte Kriterien der extra_spec_ids tragen `// spec: <ID> [M3]`; mindestens ein Test mit Ergebnis ok je dort genanntem Kriterium. Arbeitet auf einem Branch von `release/1.0` und merged dorthin; der Integrator überträgt den Merge nach main (D13). Spec: docs/spec/05-ui.md UI-094, UI-097, UI-098, UI-100 (führend), Rahmen UI-090, Optionen UI-092/UI-095/UI-096, Budgets UI-146. Ausgangslage (M2-K16/M2-U24): `VizKind` kennt directoryGraph, crawlGraph3d, directoryGraph3d, bodyWords; commands/viz.rs lehnt sie mit `err-viz-kind` ab; das 2D-Layout ist ein eigener Barnes-Hut-Worker (viz/model/force.ts), Rendering 2D über sigma/graphology. Schritte: (1) Lizenzprüfung vor jedem Code: 3D-Renderer. Vorschlag `three` (MIT) exakt gepinnt als einzige neue Laufzeitabhängigkeit; Alternativen im Bericht bewerten (3d-force-graph MIT, d3-force-3d MIT, ngraph.forcelayout BSD-3-Clause, regl MIT); nur Lizenzen nach CLAUDE.md, `npm run -w apps/desktop check:licenses` grün; das 3D-Layout als Erweiterung des vorhandenen Barnes-Hut-Workers (Octree, deterministisch mit Startwert) statt einer Layout-Bibliothek. Wird mehr als eine neue Abhängigkeit nötig: PAKET OFFEN mit Begründung. (2) Kern: viz.graph für directoryGraph, crawlGraph3d, directoryGraph3d freischalten; Verzeichnisgraph nutzt dieselben Knoten und Kanten wie der Verzeichnisbaum (UI-094). viz.words mit WordSource::Body: sichtbarer Text wie Word Count/UI-041 über die vorhandene Textextraktion (keine zweite Textlogik); ohne gespeichertes HTML ein Fehlercode für den Hinweis nach UI-016. Links eines Knotens (UI-097) bevorzugt als optionale Angabe an VizGraphArgs (Knoten, Richtung Inlinks/Inlinks auf Kinder/Outlinks/Outlinks von Kindern, nofollow einbeziehen, Navigation/Footer ausschließen) mit zusätzlichen Kanten vom Typ inlink/outlink; Kantenzahl = Unique Inlinks bzw. Unique Outlinks gemäß Optionen. Ein neues IPC-Kommando nur nach Rückfrage beim Planer (dann Registrierung nur in commands/viz.rs::register). Braucht der Kern eine neue Store-Abfrage außerhalb von owns: PAKET OFFEN. (3) 2D: Verzeichnisgraph mit allen Optionen aus UI-092/UI-095; Knoten-Kontextmenü „Inlinks zeigen“, „Inlinks auf Kinder zeigen“, „Outlinks zeigen“, „Outlinks von Kindern zeigen“, „Zurücksetzen“, Hervorhebung verbundener Knoten und Ausgrauen der übrigen, auch im Crawl-Graphen (UI-092). Menü Visualisierungen und URL-Kontextmenü für die neuen Arten freischalten. (4) 3D: WebGL-Szene mit instanzierten Knoten bis 100 000, Linksziehen dreht, Mausrad zoomt, Rechtsziehen verschiebt, Rechtsklick ohne Ziehen öffnet das Knoten-Kontextmenü (UI-098 OS-Festlegung), Farbe nach Indexierbarkeit/Response Code/Segment, Suche fliegt zum Knoten, PNG-Export, Link-Einblendung (UI-097) auch in 3D; ohne WebGL-Unterstützung ein Hinweis statt eines leeren Fensters. (5) Body-Wortwolke über die vorhandene Wortwolken-Ansicht mit Quelle Body, Optionen Stoppwörter (an), min. Wortlänge 3, max. Begriffe 100. (6) Tests: Rust graph_*/cmd_viz_* (Verzeichnisgraph = Verzeichnisbaum auf fx-ui-dirs, Kantenzahlen der Link-Einblendung und Body-Wörter auf fx-ui-words), vitest für Layout-Determinismus 3D und Steuerung, E2E unter e2e/viz (jede neue Visualisierung öffnen, SVG/CSV- bzw. PNG-Export, Link-Einblendung und Zurücksetzen, axe ohne critical/serious). 3D-Leistung (100 000 Knoten ≥ 30 fps nach Konvergenz, UI-098) und UI-146: Server headless als Richtwert im Bericht; den Beleg auf Referenzhardware (A) erhebt der Orchestrator auf dem Mac mini vor der Merge-Freigabe (D2, D5, eine Messung zur Zeit). (7) Pflichtprüfungen nach CLAUDE.md grün (cargo fmt/clippy/test, typecheck, vitest, check:licenses)."
+ },
+ {
   "id": "M3-N01",
   "kind": "package",
   "model": "sol",
@@ -662,7 +733,7 @@
    "Pfade nach Zuschnitt durch den Planer (Nachtrag in M3-packages.json vor dem Start)",
    "docs/plan/M3-reports/n01.md"
   ],
-  "prompt_notes": "Regeln: docs/plan/M3.md Abschnitt 2 (Abweichungen D1–D14 von M2.md 2/2a) und M2.md Abschnitt 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge abarbeiten; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN nach D4; Bericht unter docs/plan/M3-reports/<kurz-id>.md. Arbeitet auf Branch von `release/1.0` und merged dorthin; der Integrator überträgt den Merge nach main (D13). Arbeitsliste und owns setzt der Planer aus befunde-r1.md; je Befund ein Test (Spec-ID oder `// befund: B1-nn`). Keine neuen Fachfunktionen; Wünsche gehen in die Roadmap.",
+  "prompt_notes": "Regeln: docs/plan/M3.md Abschnitt 2 (Abweichungen D1–D14 von M2.md 2/2a) und M2.md Abschnitt 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge abarbeiten; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN nach D4; Bericht unter docs/plan/M3-reports/<kurz-id>.md. Arbeitet auf Branch von `release/1.0` und merged dorthin; der Integrator überträgt den Merge nach main (D13). Arbeitsliste und owns setzt der Planer aus befunde-r1.md; je Befund ein Test (Spec-ID oder `// befund: B1-nn`). Keine neuen Fachfunktionen; Wünsche gehen in die Roadmap. owns ohne die Pfade von M3-V01/M3-V02, solange diese offen sind (M3.md 4.2); Befunde in diesen Bereichen gehen in deren Fixrunde.",
   "extra_spec_ids": []
  },
  {
@@ -681,7 +752,7 @@
    "Pfade nach Zuschnitt durch den Planer, nur apps/desktop/src/** und apps/desktop/e2e/** (Nachtrag vor dem Start)",
    "docs/plan/M3-reports/n02.md"
   ],
-  "prompt_notes": "Regeln: docs/plan/M3.md Abschnitt 2 (Abweichungen D1–D14 von M2.md 2/2a) und M2.md Abschnitt 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge abarbeiten; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN nach D4; Bericht unter docs/plan/M3-reports/<kurz-id>.md. Wie M3-N01, nur Oberfläche; Ressourcenregel des Haupt-Macs (D5) bei lokalen E2E-Läufen. owns disjunkt zu N01 (Planer prüft vor dem Start).",
+  "prompt_notes": "Regeln: docs/plan/M3.md Abschnitt 2 (Abweichungen D1–D14 von M2.md 2/2a) und M2.md Abschnitt 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge abarbeiten; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN nach D4; Bericht unter docs/plan/M3-reports/<kurz-id>.md. Wie M3-N01, nur Oberfläche; Ressourcenregel des Haupt-Macs (D5) bei lokalen E2E-Läufen. owns disjunkt zu N01 (Planer prüft vor dem Start). owns ohne die Pfade von M3-V01/M3-V02, solange diese offen sind (M3.md 4.2); Befunde in diesen Bereichen gehen in deren Fixrunde.",
   "extra_spec_ids": []
  },
  {
@@ -696,12 +767,14 @@
   "spec_ids": [],
   "depends_on": [
    "M3-N01",
-   "M3-N02"
+   "M3-N02",
+   "M3-V01",
+   "M3-V02"
   ],
   "owns": [
    "docs/plan/M3-acceptance/beta/{befunde-r2.md,build-beta2.md}"
   ],
-  "prompt_notes": "Menschliche bzw. Orchestrator-Aufgabe (D11); kein Agent setzt Code um. Veröffentlichen, Versenden und Freigeben nur nach ausdrücklichem Go des Nutzers im Chat (D12). beta.2 aus release/1.0 (Tag nach Go), Veröffentlichung nach Go; die Teilnehmer aktualisieren über die App (echter Updatepfad beta.1 → beta.2 auf allen genutzten Plattformen = Beleg für B6, Rückmeldung je Teilnehmer). Dauer etwa 4 Tage. Befundliste wie Runde 1 (IDs B2-nn) mit Status je B1-Befund.",
+  "prompt_notes": "Menschliche bzw. Orchestrator-Aufgabe (D11); kein Agent setzt Code um. Veröffentlichen, Versenden und Freigeben nur nach ausdrücklichem Go des Nutzers im Chat (D12). beta.2 aus release/1.0 mit N01, N02, V01, V02 (Tag nach Go; Rückfallregel M3.md 4.3, falls V01/V02 nicht freigegeben), Veröffentlichung nach Go; die Teilnehmer aktualisieren über die App (echter Updatepfad beta.1 → beta.2 auf allen genutzten Plattformen = Beleg für B6, Rückmeldung je Teilnehmer). Dauer etwa 4 Tage. Befundliste wie Runde 1 (IDs B2-nn) mit Status je B1-Befund.",
   "extra_spec_ids": []
  },
  {
@@ -760,13 +833,15 @@
    "M3-P01",
    "M3-K01",
    "M3-B01",
-   "M3-N00"
+   "M3-N00",
+   "M3-V01",
+   "M3-V02"
   ],
   "owns": [
    "docs/plan/M3-acceptance/checklist.md",
    "docs/plan/M3-status.json"
   ],
-  "prompt_notes": "Regeln: docs/plan/M3.md Abschnitt 2 (Abweichungen D1–D14 von M2.md 2/2a) und M2.md Abschnitt 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge abarbeiten; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN nach D4; Bericht unter docs/plan/M3-reports/<kurz-id>.md. Belege je Kriterium B1–B12 (M3.md 8): CI-Lauf-IDs, Coverage `--milestone M3` 11/11 sowie M1 und M2 unverändert, Installations-/Update-Protokolle, manuelle Checks, Beta-Befundlisten mit Status, Website/Handbuch, Drittlizenzen. Offene Befunde nur mit Verweis auf Roadmap oder 1.0.x-Backlog. Entfiel ein Paket (K01 nach K3-01, N03), wird das mit Grund vermerkt.",
+  "prompt_notes": "Regeln: docs/plan/M3.md Abschnitt 2 (Abweichungen D1–D14 von M2.md 2/2a) und M2.md Abschnitt 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge abarbeiten; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN nach D4; Bericht unter docs/plan/M3-reports/<kurz-id>.md. Belege je Kriterium B1–B12 (M3.md 8): CI-Lauf-IDs, Coverage `--milestone M3` 16/16 (inkl. Visualisierung V01/V02, K3-15) sowie M1 und M2 unverändert, Installations-/Update-Protokolle, manuelle Checks, Beta-Befundlisten mit Status, Website/Handbuch, Drittlizenzen. Offene Befunde nur mit Verweis auf Roadmap oder 1.0.x-Backlog. Entfiel ein Paket (K01 nach K3-01, N03), wird das mit Grund vermerkt.",
   "extra_spec_ids": []
  },
  {
