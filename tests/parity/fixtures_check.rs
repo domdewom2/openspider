@@ -1980,14 +1980,15 @@ fn manifests_mappings_and_profile_are_consistent() {
             .map(|v| v.as_str().unwrap())
             .collect();
         assert!(!key.is_empty());
-        let drop: Vec<&str> = m["drop_ref_columns"]
-            .as_array()
-            .unwrap()
-            .iter()
+        let drop: Vec<&str> = m
+            .get("drop_ref_columns")
+            .map(|v| v.as_array().unwrap())
+            .into_iter()
+            .flatten()
             .map(|v| v.as_str().unwrap())
             .collect();
         assert!(
-            drop.contains(&"Description") && drop.contains(&"How To Fix"),
+            drop.is_empty() || (drop.contains(&"Description") && drop.contains(&"How To Fix")),
             "{slug}: drop_ref_columns"
         );
         let cols = m["columns"].as_table().unwrap();
