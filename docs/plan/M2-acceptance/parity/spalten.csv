@@ -69,8 +69,7 @@ out-basic-site,response_codes_all.csv,Redirect Type,Redirect Type,19,0
 out-basic-site,links_all.csv,Indexability,Indexability,12,0
 out-basic-site,links_all.csv,Indexability Status,Indexability Status,12,0
 out-basic-site,links_all.csv,Crawl Depth,Crawl Depth,12,0
-out-basic-site,links_all.csv,Link Score,Link Score,12,10
-out-basic-site,links_all.csv,Inlinks,Inlinks,12,2
+out-basic-site,links_all.csv,Inlinks,Inlinks,10,0
 out-basic-site,links_all.csv,Unique Inlinks,Unique Inlinks,10,0
 out-basic-site,links_all.csv,% of Total,% of Total,10,0
 out-basic-site,links_all.csv,Outlinks,Outlinks,10,0
@@ -139,7 +138,7 @@ out-basic-site,redirect_chains.csv,Status Code 10,Status Code 10,0,0
 out-basic-site,redirect_chains.csv,Status 10,Status 10,0,0
 out-basic-site,redirect_chains.csv,Redirect Type 10,Redirect Type 10,0,0
 out-basic-site,redirect_chains.csv,Redirect URL 10,Redirect URL 10,0,0
-out-basic-site,crawl_overview.csv,URLs,URLs,207,13
+out-basic-site,crawl_overview.csv,URLs,URLs,202,8
 parity-m2-links,internal_all.csv,Content Type,Content,142,0
 parity-m2-links,internal_all.csv,Status Code,Status Code,142,0
 parity-m2-links,internal_all.csv,Status,Status,142,0
@@ -149,14 +148,14 @@ parity-m2-links,internal_all.csv,Title 1,Title 1,142,0
 parity-m2-links,internal_all.csv,Title 1 Length,Title 1 Length,142,0
 parity-m2-links,internal_all.csv,Title 1 Pixel Width,Title 1 Pixel Width,142,0
 parity-m2-links,internal_all.csv,Meta Description 1,Meta Description 1,142,0
-parity-m2-links,internal_all.csv,Meta Description 1 Length,Meta Description 1 Length,142,142
-parity-m2-links,internal_all.csv,Meta Description 1 Pixel Width,Meta Description 1 Pixel Width,142,142
+parity-m2-links,internal_all.csv,Meta Description 1 Length,Meta Description 1 Length,0,0
+parity-m2-links,internal_all.csv,Meta Description 1 Pixel Width,Meta Description 1 Pixel Width,0,0
 parity-m2-links,internal_all.csv,Meta Keywords 1,Meta Keywords 1,142,0
-parity-m2-links,internal_all.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,142,142
+parity-m2-links,internal_all.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,0,0
 parity-m2-links,internal_all.csv,H1-1,H1-1,142,0
-parity-m2-links,internal_all.csv,H1-1 Length,H1-1 Length,142,140
+parity-m2-links,internal_all.csv,H1-1 Length,H1-1 Length,2,0
 parity-m2-links,internal_all.csv,H2-1,H2-1,142,0
-parity-m2-links,internal_all.csv,H2-1 Length,H2-1 Length,142,142
+parity-m2-links,internal_all.csv,H2-1 Length,H2-1 Length,0,0
 parity-m2-links,internal_all.csv,Meta Robots 1,Meta Robots 1,142,0
 parity-m2-links,internal_all.csv,X-Robots-Tag 1,X-Robots-Tag 1,142,0
 parity-m2-links,internal_all.csv,Meta Refresh 1,Meta Refresh 1,142,0
@@ -172,7 +171,6 @@ parity-m2-links,internal_all.csv,Word Count,Word Count,142,128
 parity-m2-links,internal_all.csv,Text Ratio,Text Ratio,142,0
 parity-m2-links,internal_all.csv,Crawl Depth,Crawl Depth,142,0
 parity-m2-links,internal_all.csv,Folder Depth,Folder Depth,142,0
-parity-m2-links,internal_all.csv,Link Score,Link Score,142,130
 parity-m2-links,internal_all.csv,Inlinks,Inlinks,142,0
 parity-m2-links,internal_all.csv,Unique Inlinks,Unique Inlinks,142,0
 parity-m2-links,internal_all.csv,% of Total,% of Total,142,0
@@ -192,6 +190,8 @@ parity-m2-links,internal_all.csv,H2-2 Length,H2-2 Length,142,0
 parity-m2-links,internal_all.csv,Meta Description 2,Meta Description 2,142,0
 parity-m2-links,internal_all.csv,Meta Description 2 Length,Meta Description 2 Length,142,0
 parity-m2-links,internal_all.csv,Meta Description 2 Pixel Width,Meta Description 2 Pixel Width,142,0
+parity-m2-links,internal_all.csv,Meta Keywords 2,Meta Keywords 2,142,0
+parity-m2-links,internal_all.csv,Meta Keywords 2 Length,Meta Keywords 2 Length,142,0
 parity-m2-links,internal_all.csv,Title 2,Title 2,142,0
 parity-m2-links,internal_all.csv,Title 2 Length,Title 2 Length,142,0
 parity-m2-links,internal_all.csv,Title 2 Pixel Width,Title 2 Pixel Width,142,0
@@ -203,10 +203,10 @@ parity-m2-links,response_codes_all.csv,Indexability Status,Indexability Status,1
 parity-m2-links,response_codes_all.csv,Inlinks,Inlinks,143,0
 parity-m2-links,response_codes_all.csv,Redirect URL,Redirect URL,143,0
 parity-m2-links,response_codes_all.csv,Redirect Type,Redirect Type,143,0
+parity-m2-links,crawl_overview.csv,URLs,URLs,205,9
 parity-m2-links,links_all.csv,Indexability,Indexability,142,0
 parity-m2-links,links_all.csv,Indexability Status,Indexability Status,142,0
 parity-m2-links,links_all.csv,Crawl Depth,Crawl Depth,142,0
-parity-m2-links,links_all.csv,Link Score,Link Score,142,130
 parity-m2-links,links_all.csv,Inlinks,Inlinks,142,0
 parity-m2-links,links_all.csv,Unique Inlinks,Unique Inlinks,142,0
 parity-m2-links,links_all.csv,% of Total,% of Total,142,0
@@ -217,7 +217,6 @@ parity-m2-links,links_all.csv,Unique External Outlinks,Unique External Outlinks,
 parity-m2-links,links_non_descriptive_anchor_text_in_internal_outlinks.csv,Indexability,Indexability,1,0
 parity-m2-links,links_non_descriptive_anchor_text_in_internal_outlinks.csv,Indexability Status,Indexability Status,1,0
 parity-m2-links,links_non_descriptive_anchor_text_in_internal_outlinks.csv,Crawl Depth,Crawl Depth,1,0
-parity-m2-links,links_non_descriptive_anchor_text_in_internal_outlinks.csv,Link Score,Link Score,1,0
 parity-m2-links,links_non_descriptive_anchor_text_in_internal_outlinks.csv,Inlinks,Inlinks,1,0
 parity-m2-links,links_non_descriptive_anchor_text_in_internal_outlinks.csv,Unique Inlinks,Unique Inlinks,1,0
 parity-m2-links,links_non_descriptive_anchor_text_in_internal_outlinks.csv,% of Total,% of Total,1,0
@@ -228,7 +227,6 @@ parity-m2-links,links_non_descriptive_anchor_text_in_internal_outlinks.csv,Uniqu
 parity-m2-links,links_pages_with_high_external_outlinks.csv,Indexability,Indexability,1,0
 parity-m2-links,links_pages_with_high_external_outlinks.csv,Indexability Status,Indexability Status,1,0
 parity-m2-links,links_pages_with_high_external_outlinks.csv,Crawl Depth,Crawl Depth,1,0
-parity-m2-links,links_pages_with_high_external_outlinks.csv,Link Score,Link Score,1,0
 parity-m2-links,links_pages_with_high_external_outlinks.csv,Inlinks,Inlinks,1,0
 parity-m2-links,links_pages_with_high_external_outlinks.csv,Unique Inlinks,Unique Inlinks,1,0
 parity-m2-links,links_pages_with_high_external_outlinks.csv,% of Total,% of Total,1,0
@@ -239,7 +237,6 @@ parity-m2-links,links_pages_with_high_external_outlinks.csv,Unique External Outl
 parity-m2-links,links_pages_with_high_internal_outlinks.csv,Indexability,Indexability,1,0
 parity-m2-links,links_pages_with_high_internal_outlinks.csv,Indexability Status,Indexability Status,1,0
 parity-m2-links,links_pages_with_high_internal_outlinks.csv,Crawl Depth,Crawl Depth,1,0
-parity-m2-links,links_pages_with_high_internal_outlinks.csv,Link Score,Link Score,1,0
 parity-m2-links,links_pages_with_high_internal_outlinks.csv,Inlinks,Inlinks,1,0
 parity-m2-links,links_pages_with_high_internal_outlinks.csv,Unique Inlinks,Unique Inlinks,1,0
 parity-m2-links,links_pages_with_high_internal_outlinks.csv,% of Total,% of Total,1,0
@@ -250,7 +247,6 @@ parity-m2-links,links_pages_with_high_internal_outlinks.csv,Unique External Outl
 parity-m2-links,links_follow_nofollow_internal_inlinks_to_page.csv,Indexability,Indexability,1,0
 parity-m2-links,links_follow_nofollow_internal_inlinks_to_page.csv,Indexability Status,Indexability Status,1,0
 parity-m2-links,links_follow_nofollow_internal_inlinks_to_page.csv,Crawl Depth,Crawl Depth,1,0
-parity-m2-links,links_follow_nofollow_internal_inlinks_to_page.csv,Link Score,Link Score,1,1
 parity-m2-links,links_follow_nofollow_internal_inlinks_to_page.csv,Inlinks,Inlinks,1,0
 parity-m2-links,links_follow_nofollow_internal_inlinks_to_page.csv,Unique Inlinks,Unique Inlinks,1,0
 parity-m2-links,links_follow_nofollow_internal_inlinks_to_page.csv,% of Total,% of Total,1,0
@@ -261,7 +257,6 @@ parity-m2-links,links_follow_nofollow_internal_inlinks_to_page.csv,Unique Extern
 parity-m2-links,links_internal_nofollow_inlinks_only.csv,Indexability,Indexability,0,0
 parity-m2-links,links_internal_nofollow_inlinks_only.csv,Indexability Status,Indexability Status,0,0
 parity-m2-links,links_internal_nofollow_inlinks_only.csv,Crawl Depth,Crawl Depth,0,0
-parity-m2-links,links_internal_nofollow_inlinks_only.csv,Link Score,Link Score,0,0
 parity-m2-links,links_internal_nofollow_inlinks_only.csv,Inlinks,Inlinks,0,0
 parity-m2-links,links_internal_nofollow_inlinks_only.csv,Unique Inlinks,Unique Inlinks,0,0
 parity-m2-links,links_internal_nofollow_inlinks_only.csv,% of Total,% of Total,0,0
@@ -272,7 +267,6 @@ parity-m2-links,links_internal_nofollow_inlinks_only.csv,Unique External Outlink
 parity-m2-links,links_outlinks_to_localhost.csv,Indexability,Indexability,2,0
 parity-m2-links,links_outlinks_to_localhost.csv,Indexability Status,Indexability Status,2,0
 parity-m2-links,links_outlinks_to_localhost.csv,Crawl Depth,Crawl Depth,2,0
-parity-m2-links,links_outlinks_to_localhost.csv,Link Score,Link Score,2,0
 parity-m2-links,links_outlinks_to_localhost.csv,Inlinks,Inlinks,2,0
 parity-m2-links,links_outlinks_to_localhost.csv,Unique Inlinks,Unique Inlinks,2,0
 parity-m2-links,links_outlinks_to_localhost.csv,% of Total,% of Total,2,0
@@ -283,7 +277,6 @@ parity-m2-links,links_outlinks_to_localhost.csv,Unique External Outlinks,Unique 
 parity-m2-links,links_non_indexable_page_inlinks_only.csv,Indexability,Indexability,1,0
 parity-m2-links,links_non_indexable_page_inlinks_only.csv,Indexability Status,Indexability Status,1,0
 parity-m2-links,links_non_indexable_page_inlinks_only.csv,Crawl Depth,Crawl Depth,1,0
-parity-m2-links,links_non_indexable_page_inlinks_only.csv,Link Score,Link Score,1,1
 parity-m2-links,links_non_indexable_page_inlinks_only.csv,Inlinks,Inlinks,1,0
 parity-m2-links,links_non_indexable_page_inlinks_only.csv,Unique Inlinks,Unique Inlinks,1,0
 parity-m2-links,links_non_indexable_page_inlinks_only.csv,% of Total,% of Total,1,0
@@ -294,7 +287,6 @@ parity-m2-links,links_non_indexable_page_inlinks_only.csv,Unique External Outlin
 parity-m2-links,links_pages_with_uncrawlable_internal_outlinks.csv,Indexability,Indexability,0,0
 parity-m2-links,links_pages_with_uncrawlable_internal_outlinks.csv,Indexability Status,Indexability Status,0,0
 parity-m2-links,links_pages_with_uncrawlable_internal_outlinks.csv,Crawl Depth,Crawl Depth,0,0
-parity-m2-links,links_pages_with_uncrawlable_internal_outlinks.csv,Link Score,Link Score,0,0
 parity-m2-links,links_pages_with_uncrawlable_internal_outlinks.csv,Inlinks,Inlinks,0,0
 parity-m2-links,links_pages_with_uncrawlable_internal_outlinks.csv,Unique Inlinks,Unique Inlinks,0,0
 parity-m2-links,links_pages_with_uncrawlable_internal_outlinks.csv,% of Total,% of Total,0,0
@@ -319,6 +311,97 @@ parity-m2-links,bulk_links_external_links.csv,Path Type,Path Type,200,0
 parity-m2-links,bulk_links_external_links.csv,Link Path,Link Path,200,0
 parity-m2-links,bulk_links_external_links.csv,Link Position,Link Position,200,0
 parity-m2-links,bulk_links_external_links.csv,Link Origin,Link Origin,200,0
+parity-m2-links,bulk_links_internal_nofollow_outlinks.csv,Size (Bytes),Size (Bytes),2,1
+parity-m2-links,bulk_links_internal_nofollow_outlinks.csv,Alt Text,Alt Text,2,0
+parity-m2-links,bulk_links_internal_nofollow_outlinks.csv,Anchor,Anchor,2,0
+parity-m2-links,bulk_links_internal_nofollow_outlinks.csv,Status Code,Status Code,2,0
+parity-m2-links,bulk_links_internal_nofollow_outlinks.csv,Status,Status,2,1
+parity-m2-links,bulk_links_internal_nofollow_outlinks.csv,Follow,Follow,2,0
+parity-m2-links,bulk_links_internal_nofollow_outlinks.csv,Target,Target,2,0
+parity-m2-links,bulk_links_internal_nofollow_outlinks.csv,Rel,Rel,2,0
+parity-m2-links,bulk_links_internal_nofollow_outlinks.csv,Path Type,Path Type,2,0
+parity-m2-links,bulk_links_internal_nofollow_outlinks.csv,Link Path,Link Path,2,0
+parity-m2-links,bulk_links_internal_nofollow_outlinks.csv,Link Position,Link Position,2,0
+parity-m2-links,bulk_links_internal_nofollow_outlinks.csv,Link Origin,Link Origin,2,0
+parity-m2-links,bulk_links_internal_outlinks_with_no_anchor_text.csv,Size (Bytes),Size (Bytes),1,0
+parity-m2-links,bulk_links_internal_outlinks_with_no_anchor_text.csv,Alt Text,Alt Text,1,0
+parity-m2-links,bulk_links_internal_outlinks_with_no_anchor_text.csv,Anchor,Anchor,1,0
+parity-m2-links,bulk_links_internal_outlinks_with_no_anchor_text.csv,Status Code,Status Code,1,0
+parity-m2-links,bulk_links_internal_outlinks_with_no_anchor_text.csv,Status,Status,1,0
+parity-m2-links,bulk_links_internal_outlinks_with_no_anchor_text.csv,Follow,Follow,1,0
+parity-m2-links,bulk_links_internal_outlinks_with_no_anchor_text.csv,Target,Target,1,0
+parity-m2-links,bulk_links_internal_outlinks_with_no_anchor_text.csv,Rel,Rel,1,0
+parity-m2-links,bulk_links_internal_outlinks_with_no_anchor_text.csv,Path Type,Path Type,1,0
+parity-m2-links,bulk_links_internal_outlinks_with_no_anchor_text.csv,Link Path,Link Path,1,0
+parity-m2-links,bulk_links_internal_outlinks_with_no_anchor_text.csv,Link Position,Link Position,1,0
+parity-m2-links,bulk_links_internal_outlinks_with_no_anchor_text.csv,Link Origin,Link Origin,1,0
+parity-m2-links,bulk_links_non_descriptive_anchor_text_in_internal_outlinks.csv,Size (Bytes),Size (Bytes),2,0
+parity-m2-links,bulk_links_non_descriptive_anchor_text_in_internal_outlinks.csv,Alt Text,Alt Text,2,0
+parity-m2-links,bulk_links_non_descriptive_anchor_text_in_internal_outlinks.csv,Anchor,Anchor,2,0
+parity-m2-links,bulk_links_non_descriptive_anchor_text_in_internal_outlinks.csv,Status Code,Status Code,2,0
+parity-m2-links,bulk_links_non_descriptive_anchor_text_in_internal_outlinks.csv,Status,Status,2,0
+parity-m2-links,bulk_links_non_descriptive_anchor_text_in_internal_outlinks.csv,Follow,Follow,2,0
+parity-m2-links,bulk_links_non_descriptive_anchor_text_in_internal_outlinks.csv,Target,Target,2,0
+parity-m2-links,bulk_links_non_descriptive_anchor_text_in_internal_outlinks.csv,Rel,Rel,2,0
+parity-m2-links,bulk_links_non_descriptive_anchor_text_in_internal_outlinks.csv,Path Type,Path Type,2,0
+parity-m2-links,bulk_links_non_descriptive_anchor_text_in_internal_outlinks.csv,Link Path,Link Path,2,0
+parity-m2-links,bulk_links_non_descriptive_anchor_text_in_internal_outlinks.csv,Link Position,Link Position,2,0
+parity-m2-links,bulk_links_non_descriptive_anchor_text_in_internal_outlinks.csv,Link Origin,Link Origin,2,0
+parity-m2-links,bulk_links_follow_nofollow_internal_inlinks_to_page.csv,Size (Bytes),Size (Bytes),2,0
+parity-m2-links,bulk_links_follow_nofollow_internal_inlinks_to_page.csv,Alt Text,Alt Text,2,0
+parity-m2-links,bulk_links_follow_nofollow_internal_inlinks_to_page.csv,Anchor,Anchor,2,0
+parity-m2-links,bulk_links_follow_nofollow_internal_inlinks_to_page.csv,Status Code,Status Code,2,0
+parity-m2-links,bulk_links_follow_nofollow_internal_inlinks_to_page.csv,Status,Status,2,0
+parity-m2-links,bulk_links_follow_nofollow_internal_inlinks_to_page.csv,Follow,Follow,2,0
+parity-m2-links,bulk_links_follow_nofollow_internal_inlinks_to_page.csv,Target,Target,2,0
+parity-m2-links,bulk_links_follow_nofollow_internal_inlinks_to_page.csv,Rel,Rel,2,0
+parity-m2-links,bulk_links_follow_nofollow_internal_inlinks_to_page.csv,Path Type,Path Type,2,0
+parity-m2-links,bulk_links_follow_nofollow_internal_inlinks_to_page.csv,Link Path,Link Path,2,0
+parity-m2-links,bulk_links_follow_nofollow_internal_inlinks_to_page.csv,Link Position,Link Position,2,0
+parity-m2-links,bulk_links_follow_nofollow_internal_inlinks_to_page.csv,Link Origin,Link Origin,2,0
+parity-m2-links,bulk_links_internal_nofollow_inlinks_only.csv,Size (Bytes),Size (Bytes),0,0
+parity-m2-links,bulk_links_internal_nofollow_inlinks_only.csv,Alt Text,Alt Text,0,0
+parity-m2-links,bulk_links_internal_nofollow_inlinks_only.csv,Anchor,Anchor,0,0
+parity-m2-links,bulk_links_internal_nofollow_inlinks_only.csv,Status Code,Status Code,0,0
+parity-m2-links,bulk_links_internal_nofollow_inlinks_only.csv,Status,Status,0,0
+parity-m2-links,bulk_links_internal_nofollow_inlinks_only.csv,Follow,Follow,0,0
+parity-m2-links,bulk_links_internal_nofollow_inlinks_only.csv,Target,Target,0,0
+parity-m2-links,bulk_links_internal_nofollow_inlinks_only.csv,Rel,Rel,0,0
+parity-m2-links,bulk_links_internal_nofollow_inlinks_only.csv,Path Type,Path Type,0,0
+parity-m2-links,bulk_links_internal_nofollow_inlinks_only.csv,Link Path,Link Path,0,0
+parity-m2-links,bulk_links_internal_nofollow_inlinks_only.csv,Link Position,Link Position,0,0
+parity-m2-links,bulk_links_internal_nofollow_inlinks_only.csv,Link Origin,Link Origin,0,0
+parity-m2-links,bulk_links_outlinks_to_localhost.csv,Size (Bytes),Size (Bytes),200,0
+parity-m2-links,bulk_links_outlinks_to_localhost.csv,Alt Text,Alt Text,200,0
+parity-m2-links,bulk_links_outlinks_to_localhost.csv,Anchor,Anchor,200,0
+parity-m2-links,bulk_links_outlinks_to_localhost.csv,Status Code,Status Code,200,0
+parity-m2-links,bulk_links_outlinks_to_localhost.csv,Status,Status,200,0
+parity-m2-links,bulk_links_outlinks_to_localhost.csv,Follow,Follow,200,0
+parity-m2-links,bulk_links_outlinks_to_localhost.csv,Target,Target,200,0
+parity-m2-links,bulk_links_outlinks_to_localhost.csv,Rel,Rel,200,0
+parity-m2-links,bulk_links_outlinks_to_localhost.csv,Path Type,Path Type,200,0
+parity-m2-links,bulk_links_outlinks_to_localhost.csv,Link Path,Link Path,200,0
+parity-m2-links,bulk_links_outlinks_to_localhost.csv,Link Position,Link Position,200,0
+parity-m2-links,bulk_links_outlinks_to_localhost.csv,Link Origin,Link Origin,200,0
+parity-m2-links,bulk_links_pages_with_uncrawlable_internal_outlinks.csv,Follow,Follow,0,0
+parity-m2-links,bulk_links_pages_with_uncrawlable_internal_outlinks.csv,Target,Target,0,0
+parity-m2-links,bulk_links_pages_with_uncrawlable_internal_outlinks.csv,Rel,Rel,0,0
+parity-m2-links,bulk_links_pages_with_uncrawlable_internal_outlinks.csv,Path Type,Path Type,0,0
+parity-m2-links,bulk_links_pages_with_uncrawlable_internal_outlinks.csv,Link Path,Link Path,0,0
+parity-m2-links,bulk_links_pages_with_uncrawlable_internal_outlinks.csv,Link Position,Link Position,0,0
+parity-m2-links,bulk_links_pages_with_uncrawlable_internal_outlinks.csv,Link Origin,Link Origin,0,0
+parity-m2-links,bulk_links_non_indexable_page_inlinks_only.csv,Size (Bytes),Size (Bytes),1,0
+parity-m2-links,bulk_links_non_indexable_page_inlinks_only.csv,Alt Text,Alt Text,1,0
+parity-m2-links,bulk_links_non_indexable_page_inlinks_only.csv,Anchor,Anchor,1,0
+parity-m2-links,bulk_links_non_indexable_page_inlinks_only.csv,Status Code,Status Code,1,0
+parity-m2-links,bulk_links_non_indexable_page_inlinks_only.csv,Status,Status,1,0
+parity-m2-links,bulk_links_non_indexable_page_inlinks_only.csv,Follow,Follow,1,0
+parity-m2-links,bulk_links_non_indexable_page_inlinks_only.csv,Target,Target,1,0
+parity-m2-links,bulk_links_non_indexable_page_inlinks_only.csv,Rel,Rel,1,0
+parity-m2-links,bulk_links_non_indexable_page_inlinks_only.csv,Path Type,Path Type,1,0
+parity-m2-links,bulk_links_non_indexable_page_inlinks_only.csv,Link Path,Link Path,1,0
+parity-m2-links,bulk_links_non_indexable_page_inlinks_only.csv,Link Position,Link Position,1,0
+parity-m2-links,bulk_links_non_indexable_page_inlinks_only.csv,Link Origin,Link Origin,1,0
 parity-m2-list,internal_all.csv,Address,Address,56,0
 parity-m2-list,internal_all.csv,Content Type,Content,56,0
 parity-m2-list,internal_all.csv,Status Code,Status Code,56,0
@@ -326,17 +409,17 @@ parity-m2-list,internal_all.csv,Status,Status,56,0
 parity-m2-list,internal_all.csv,Indexability,Indexability,56,0
 parity-m2-list,internal_all.csv,Indexability Status,Indexability Status,56,0
 parity-m2-list,internal_all.csv,Title 1,Title 1,56,0
-parity-m2-list,internal_all.csv,Title 1 Length,Title 1 Length,56,2
-parity-m2-list,internal_all.csv,Title 1 Pixel Width,Title 1 Pixel Width,56,2
+parity-m2-list,internal_all.csv,Title 1 Length,Title 1 Length,54,0
+parity-m2-list,internal_all.csv,Title 1 Pixel Width,Title 1 Pixel Width,54,0
 parity-m2-list,internal_all.csv,Meta Description 1,Meta Description 1,56,0
-parity-m2-list,internal_all.csv,Meta Description 1 Length,Meta Description 1 Length,56,56
-parity-m2-list,internal_all.csv,Meta Description 1 Pixel Width,Meta Description 1 Pixel Width,56,56
+parity-m2-list,internal_all.csv,Meta Description 1 Length,Meta Description 1 Length,0,0
+parity-m2-list,internal_all.csv,Meta Description 1 Pixel Width,Meta Description 1 Pixel Width,0,0
 parity-m2-list,internal_all.csv,Meta Keywords 1,Meta Keywords 1,56,0
-parity-m2-list,internal_all.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,56,56
+parity-m2-list,internal_all.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,0,0
 parity-m2-list,internal_all.csv,H1-1,H1-1,56,0
-parity-m2-list,internal_all.csv,H1-1 Length,H1-1 Length,56,4
+parity-m2-list,internal_all.csv,H1-1 Length,H1-1 Length,52,0
 parity-m2-list,internal_all.csv,H2-1,H2-1,56,0
-parity-m2-list,internal_all.csv,H2-1 Length,H2-1 Length,56,56
+parity-m2-list,internal_all.csv,H2-1 Length,H2-1 Length,0,0
 parity-m2-list,internal_all.csv,Meta Robots 1,Meta Robots 1,56,0
 parity-m2-list,internal_all.csv,X-Robots-Tag 1,X-Robots-Tag 1,56,0
 parity-m2-list,internal_all.csv,Meta Refresh 1,Meta Refresh 1,56,0
@@ -348,11 +431,10 @@ parity-m2-list,internal_all.csv,"HTTP rel=""prev"" 1","HTTP rel=""prev"" 1",56,0
 parity-m2-list,internal_all.csv,Size (Bytes),Size (bytes),56,0
 parity-m2-list,internal_all.csv,Transferred (Bytes),Transferred (bytes),56,0
 parity-m2-list,internal_all.csv,Total Transferred (Bytes),Total Transferred (bytes),56,0
-parity-m2-list,internal_all.csv,Word Count,Word Count,56,2
-parity-m2-list,internal_all.csv,Text Ratio,Text Ratio,56,2
+parity-m2-list,internal_all.csv,Word Count,Word Count,54,0
+parity-m2-list,internal_all.csv,Text Ratio,Text Ratio,54,0
 parity-m2-list,internal_all.csv,Crawl Depth,Crawl Depth,56,0
 parity-m2-list,internal_all.csv,Folder Depth,Folder Depth,56,0
-parity-m2-list,internal_all.csv,Link Score,Link Score,56,50
 parity-m2-list,internal_all.csv,Inlinks,Inlinks,56,0
 parity-m2-list,internal_all.csv,Unique Inlinks,Unique Inlinks,56,0
 parity-m2-list,internal_all.csv,% of Total,% of Total,56,0
@@ -383,7 +465,7 @@ parity-m2-list,response_codes_all.csv,Indexability Status,Indexability Status,46
 parity-m2-list,response_codes_all.csv,Inlinks,Inlinks,46,0
 parity-m2-list,response_codes_all.csv,Redirect URL,Redirect URL,46,0
 parity-m2-list,response_codes_all.csv,Redirect Type,Redirect Type,46,0
-parity-m2-list,crawl_overview.csv,URLs,URLs,209,15
+parity-m2-list,crawl_overview.csv,URLs,URLs,205,11
 parity-m2-list,redirects_redirect_chains.csv,Chain Type,Chain Type,1,0
 parity-m2-list,redirects_redirect_chains.csv,Number of Redirects,Number of Redirects,1,0
 parity-m2-list,redirects_redirect_chains.csv,Loop,Redirect Loop,1,0
@@ -402,8 +484,8 @@ parity-m2-list,redirects_redirect_chains.csv,Status Code 2,Status Code 2,1,0
 parity-m2-list,redirects_redirect_chains.csv,Status 2,Status 2,1,0
 parity-m2-list,redirects_redirect_chains.csv,Redirect Type 2,Redirect Type 2,1,0
 parity-m2-list,redirects_redirect_chains.csv,Redirect URL 2,Redirect URL 2,1,0
-parity-m2-list,redirects_redirect_chains.csv,Status Code 3,Status Code 3,1,1
-parity-m2-list,redirects_redirect_chains.csv,Status 3,Status 3,1,1
+parity-m2-list,redirects_redirect_chains.csv,Status Code 3,Status Code 3,1,0
+parity-m2-list,redirects_redirect_chains.csv,Status 3,Status 3,1,0
 parity-m2-list,redirects_redirect_chains.csv,Redirect Type 3,Redirect Type 3,1,0
 parity-m2-list,redirects_redirect_chains.csv,Redirect URL 3,Redirect URL 3,1,0
 parity-m2-list,redirects_redirect_chains.csv,Status Code 4,Status Code 4,1,0
@@ -435,6 +517,7 @@ parity-m2-list,redirects_redirect_chains.csv,Status 10,Status 10,1,0
 parity-m2-list,redirects_redirect_chains.csv,Redirect Type 10,Redirect Type 10,1,0
 parity-m2-list,redirects_redirect_chains.csv,Redirect URL 10,Redirect URL 10,1,0
 parity-m2-list,redirects_redirect_canonical_chains.csv,Chain Type,Chain Type,1,0
+parity-m2-list,redirects_redirect_canonical_chains.csv,Number of Redirects/Canonicals,Number of Redirects,1,0
 parity-m2-list,redirects_redirect_canonical_chains.csv,Loop,Redirect Loop,1,0
 parity-m2-list,redirects_redirect_canonical_chains.csv,Temp Redirect in Chain,Temp Redirect in Chain,1,0
 parity-m2-list,redirects_redirect_canonical_chains.csv,Final Address,Final Address,1,0
@@ -451,8 +534,8 @@ parity-m2-list,redirects_redirect_canonical_chains.csv,Status Code 2,Status Code
 parity-m2-list,redirects_redirect_canonical_chains.csv,Status 2,Status 2,1,0
 parity-m2-list,redirects_redirect_canonical_chains.csv,Redirect Type 2,Redirect Type 2,1,0
 parity-m2-list,redirects_redirect_canonical_chains.csv,Redirect URL 2,Redirect URL 2,1,0
-parity-m2-list,redirects_redirect_canonical_chains.csv,Status Code 3,Status Code 3,1,1
-parity-m2-list,redirects_redirect_canonical_chains.csv,Status 3,Status 3,1,1
+parity-m2-list,redirects_redirect_canonical_chains.csv,Status Code 3,Status Code 3,1,0
+parity-m2-list,redirects_redirect_canonical_chains.csv,Status 3,Status 3,1,0
 parity-m2-list,redirects_redirect_canonical_chains.csv,Redirect Type 3,Redirect Type 3,1,0
 parity-m2-list,redirects_redirect_canonical_chains.csv,Redirect URL 3,Redirect URL 3,1,0
 parity-m2-list,redirects_redirect_canonical_chains.csv,Status Code 4,Status Code 4,1,0
@@ -489,17 +572,19 @@ parity-m2-onpage,internal_all.csv,Status,Status,59,0
 parity-m2-onpage,internal_all.csv,Indexability,Indexability,59,0
 parity-m2-onpage,internal_all.csv,Indexability Status,Indexability Status,59,0
 parity-m2-onpage,internal_all.csv,Title 1,Title 1,59,0
-parity-m2-onpage,internal_all.csv,Title 1 Length,Title 1 Length,59,9
-parity-m2-onpage,internal_all.csv,Title 1 Pixel Width,Title 1 Pixel Width,59,12
+parity-m2-onpage,internal_all.csv,Title 1 Length,Title 1 Length,50,0
+parity-m2-onpage,internal_all.csv,Title 1 Pixel Width,Title 1 Pixel Width,50,3
 parity-m2-onpage,internal_all.csv,Meta Description 1,Meta Description 1,59,0
-parity-m2-onpage,internal_all.csv,Meta Description 1 Length,Meta Description 1 Length,59,52
-parity-m2-onpage,internal_all.csv,Meta Description 1 Pixel Width,Meta Description 1 Pixel Width,59,52
+parity-m2-onpage,internal_all.csv,Meta Description 1 Length,Meta Description 1 Length,7,0
+parity-m2-onpage,internal_all.csv,Meta Description 1 Pixel Width,Meta Description 1 Pixel Width,7,0
 parity-m2-onpage,internal_all.csv,Meta Keywords 1,Meta Keywords 1,59,0
-parity-m2-onpage,internal_all.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,59,53
+parity-m2-onpage,internal_all.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,6,0
+parity-m2-onpage,internal_all.csv,Meta Keywords 2,Meta Keywords 2,59,0
+parity-m2-onpage,internal_all.csv,Meta Keywords 2 Length,Meta Keywords 2 Length,59,58
 parity-m2-onpage,internal_all.csv,H1-1,H1-1,59,0
-parity-m2-onpage,internal_all.csv,H1-1 Length,H1-1 Length,59,18
+parity-m2-onpage,internal_all.csv,H1-1 Length,H1-1 Length,41,0
 parity-m2-onpage,internal_all.csv,H2-1,H2-1,59,0
-parity-m2-onpage,internal_all.csv,H2-1 Length,H2-1 Length,59,57
+parity-m2-onpage,internal_all.csv,H2-1 Length,H2-1 Length,2,0
 parity-m2-onpage,internal_all.csv,Meta Robots 1,Meta Robots 1,59,0
 parity-m2-onpage,internal_all.csv,X-Robots-Tag 1,X-Robots-Tag 1,59,0
 parity-m2-onpage,internal_all.csv,Meta Refresh 1,Meta Refresh 1,59,0
@@ -511,11 +596,10 @@ parity-m2-onpage,internal_all.csv,"HTTP rel=""prev"" 1","HTTP rel=""prev"" 1",59
 parity-m2-onpage,internal_all.csv,Size (Bytes),Size (bytes),59,0
 parity-m2-onpage,internal_all.csv,Transferred (Bytes),Transferred (bytes),59,0
 parity-m2-onpage,internal_all.csv,Total Transferred (Bytes),Total Transferred (bytes),59,0
-parity-m2-onpage,internal_all.csv,Word Count,Word Count,59,10
-parity-m2-onpage,internal_all.csv,Text Ratio,Text Ratio,59,11
+parity-m2-onpage,internal_all.csv,Word Count,Word Count,50,1
+parity-m2-onpage,internal_all.csv,Text Ratio,Text Ratio,50,2
 parity-m2-onpage,internal_all.csv,Crawl Depth,Crawl Depth,59,0
 parity-m2-onpage,internal_all.csv,Folder Depth,Folder Depth,59,0
-parity-m2-onpage,internal_all.csv,Link Score,Link Score,59,54
 parity-m2-onpage,internal_all.csv,Inlinks,Inlinks,59,0
 parity-m2-onpage,internal_all.csv,Unique Inlinks,Unique Inlinks,59,0
 parity-m2-onpage,internal_all.csv,% of Total,% of Total,59,0
@@ -546,7 +630,7 @@ parity-m2-onpage,response_codes_all.csv,Indexability Status,Indexability Status,
 parity-m2-onpage,response_codes_all.csv,Inlinks,Inlinks,59,0
 parity-m2-onpage,response_codes_all.csv,Redirect URL,Redirect URL,59,0
 parity-m2-onpage,response_codes_all.csv,Redirect Type,Redirect Type,59,0
-parity-m2-onpage,crawl_overview.csv,URLs,URLs,210,26
+parity-m2-onpage,crawl_overview.csv,URLs,URLs,205,21
 parity-m2-onpage,page_titles_all.csv,Occurrences,Occurrences,50,0
 parity-m2-onpage,page_titles_all.csv,Title 1,Title 1,50,0
 parity-m2-onpage,page_titles_all.csv,Title 1 Length,Title 1 Length,50,0
@@ -554,8 +638,8 @@ parity-m2-onpage,page_titles_all.csv,Title 1 Pixel Width,Title 1 Pixel Width,50,
 parity-m2-onpage,page_titles_all.csv,Indexability,Indexability,50,0
 parity-m2-onpage,page_titles_all.csv,Indexability Status,Indexability Status,50,0
 parity-m2-onpage,page_titles_all.csv,Title 2,Title 2,50,0
-parity-m2-onpage,page_titles_all.csv,Title 2 Length,Title 2 Length,50,50
-parity-m2-onpage,page_titles_all.csv,Title 2 Pixel Width,Title 2 Pixel Width,50,50
+parity-m2-onpage,page_titles_all.csv,Title 2 Length,Title 2 Length,50,0
+parity-m2-onpage,page_titles_all.csv,Title 2 Pixel Width,Title 2 Pixel Width,50,0
 parity-m2-onpage,meta_description_all.csv,Occurrences,Occurrences,50,0
 parity-m2-onpage,meta_description_all.csv,Meta Description 1,Meta Description 1,50,0
 parity-m2-onpage,meta_description_all.csv,Meta Description 1 Length,Meta Description 1 Length,50,0
@@ -563,8 +647,8 @@ parity-m2-onpage,meta_description_all.csv,Meta Description 1 Pixel Width,Meta De
 parity-m2-onpage,meta_description_all.csv,Indexability,Indexability,50,0
 parity-m2-onpage,meta_description_all.csv,Indexability Status,Indexability Status,50,0
 parity-m2-onpage,meta_description_all.csv,Meta Description 2,Meta Description 2,50,0
-parity-m2-onpage,meta_description_all.csv,Meta Description 2 Length,Meta Description 2 Length,50,50
-parity-m2-onpage,meta_description_all.csv,Meta Description 2 Pixel Width,Meta Description 2 Pixel Width,50,50
+parity-m2-onpage,meta_description_all.csv,Meta Description 2 Length,Meta Description 2 Length,50,0
+parity-m2-onpage,meta_description_all.csv,Meta Description 2 Pixel Width,Meta Description 2 Pixel Width,50,0
 parity-m2-onpage,meta_keywords_all.csv,Occurrences,Occurrences,50,0
 parity-m2-onpage,meta_keywords_all.csv,Meta Keywords 1,Meta Keywords 1,50,0
 parity-m2-onpage,meta_keywords_all.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,50,0
@@ -578,18 +662,18 @@ parity-m2-onpage,h1_all.csv,H1-1 Length,H1-1 Length,50,0
 parity-m2-onpage,h1_all.csv,Indexability,Indexability,50,0
 parity-m2-onpage,h1_all.csv,Indexability Status,Indexability Status,50,0
 parity-m2-onpage,h1_all.csv,H1-2,H1-2,50,0
-parity-m2-onpage,h1_all.csv,H1-2 Length,H1-2 Length,50,50
+parity-m2-onpage,h1_all.csv,H1-2 Length,H1-2 Length,50,0
 parity-m2-onpage,h2_all.csv,Occurrences,Occurrences,50,0
 parity-m2-onpage,h2_all.csv,H2-1,H2-1,50,0
 parity-m2-onpage,h2_all.csv,H2-1 Length,H2-1 Length,50,0
 parity-m2-onpage,h2_all.csv,Indexability,Indexability,50,0
 parity-m2-onpage,h2_all.csv,Indexability Status,Indexability Status,50,0
 parity-m2-onpage,h2_all.csv,H2-2,H2-2,50,0
-parity-m2-onpage,h2_all.csv,H2-2 Length,H2-2 Length,50,50
+parity-m2-onpage,h2_all.csv,H2-2 Length,H2-2 Length,50,0
 parity-m2-onpage,content_all.csv,Word Count,Word Count,50,1
 parity-m2-onpage,content_all.csv,Sentence Count,Sentence Count,50,49
 parity-m2-onpage,content_all.csv,Average Words Per Sentence,Average Words Per Sentence,50,49
-parity-m2-onpage,content_all.csv,Flesch Reading Ease Score,Flesch Reading Ease Score,50,49
+parity-m2-onpage,content_all.csv,Flesch Reading Ease Score,Flesch Reading Ease Score,50,27
 parity-m2-onpage,content_all.csv,Readability,Readability,50,49
 parity-m2-onpage,content_all.csv,Closest Near Duplicate Match,Closest Similarity Match,50,0
 parity-m2-onpage,content_all.csv,No. Near Duplicates,No. Near Duplicates,50,0
@@ -616,17 +700,17 @@ parity-m2-onpage,internal_flash.csv,Status,Status,1,0
 parity-m2-onpage,internal_flash.csv,Indexability,Indexability,1,0
 parity-m2-onpage,internal_flash.csv,Indexability Status,Indexability Status,1,0
 parity-m2-onpage,internal_flash.csv,Title 1,Title 1,1,0
-parity-m2-onpage,internal_flash.csv,Title 1 Length,Title 1 Length,1,1
-parity-m2-onpage,internal_flash.csv,Title 1 Pixel Width,Title 1 Pixel Width,1,1
+parity-m2-onpage,internal_flash.csv,Title 1 Length,Title 1 Length,0,0
+parity-m2-onpage,internal_flash.csv,Title 1 Pixel Width,Title 1 Pixel Width,0,0
 parity-m2-onpage,internal_flash.csv,Meta Description 1,Meta Description 1,1,0
-parity-m2-onpage,internal_flash.csv,Meta Description 1 Length,Meta Description 1 Length,1,1
-parity-m2-onpage,internal_flash.csv,Meta Description 1 Pixel Width,Meta Description 1 Pixel Width,1,1
+parity-m2-onpage,internal_flash.csv,Meta Description 1 Length,Meta Description 1 Length,0,0
+parity-m2-onpage,internal_flash.csv,Meta Description 1 Pixel Width,Meta Description 1 Pixel Width,0,0
 parity-m2-onpage,internal_flash.csv,Meta Keywords 1,Meta Keywords 1,1,0
-parity-m2-onpage,internal_flash.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,1,1
+parity-m2-onpage,internal_flash.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,0,0
 parity-m2-onpage,internal_flash.csv,H1-1,H1-1,1,0
-parity-m2-onpage,internal_flash.csv,H1-1 Length,H1-1 Length,1,1
+parity-m2-onpage,internal_flash.csv,H1-1 Length,H1-1 Length,0,0
 parity-m2-onpage,internal_flash.csv,H2-1,H2-1,1,0
-parity-m2-onpage,internal_flash.csv,H2-1 Length,H2-1 Length,1,1
+parity-m2-onpage,internal_flash.csv,H2-1 Length,H2-1 Length,0,0
 parity-m2-onpage,internal_flash.csv,Meta Robots 1,Meta Robots 1,1,0
 parity-m2-onpage,internal_flash.csv,X-Robots-Tag 1,X-Robots-Tag 1,1,0
 parity-m2-onpage,internal_flash.csv,Meta Refresh 1,Meta Refresh 1,1,0
@@ -638,11 +722,10 @@ parity-m2-onpage,internal_flash.csv,"HTTP rel=""prev"" 1","HTTP rel=""prev"" 1",
 parity-m2-onpage,internal_flash.csv,Size (Bytes),Size (bytes),1,0
 parity-m2-onpage,internal_flash.csv,Transferred (Bytes),Transferred (bytes),1,0
 parity-m2-onpage,internal_flash.csv,Total Transferred (Bytes),Total Transferred (bytes),1,0
-parity-m2-onpage,internal_flash.csv,Word Count,Word Count,1,1
-parity-m2-onpage,internal_flash.csv,Text Ratio,Text Ratio,1,1
+parity-m2-onpage,internal_flash.csv,Word Count,Word Count,0,0
+parity-m2-onpage,internal_flash.csv,Text Ratio,Text Ratio,0,0
 parity-m2-onpage,internal_flash.csv,Crawl Depth,Crawl Depth,1,0
 parity-m2-onpage,internal_flash.csv,Folder Depth,Folder Depth,1,0
-parity-m2-onpage,internal_flash.csv,Link Score,Link Score,1,1
 parity-m2-onpage,internal_flash.csv,Inlinks,Inlinks,1,0
 parity-m2-onpage,internal_flash.csv,Unique Inlinks,Unique Inlinks,1,0
 parity-m2-onpage,internal_flash.csv,% of Total,% of Total,1,0
@@ -662,6 +745,8 @@ parity-m2-onpage,internal_flash.csv,H2-2 Length,H2-2 Length,1,0
 parity-m2-onpage,internal_flash.csv,Meta Description 2,Meta Description 2,1,0
 parity-m2-onpage,internal_flash.csv,Meta Description 2 Length,Meta Description 2 Length,1,0
 parity-m2-onpage,internal_flash.csv,Meta Description 2 Pixel Width,Meta Description 2 Pixel Width,1,0
+parity-m2-onpage,internal_flash.csv,Meta Keywords 2,Meta Keywords 2,1,0
+parity-m2-onpage,internal_flash.csv,Meta Keywords 2 Length,Meta Keywords 2 Length,1,0
 parity-m2-onpage,internal_flash.csv,Title 2,Title 2,1,0
 parity-m2-onpage,internal_flash.csv,Title 2 Length,Title 2 Length,1,0
 parity-m2-onpage,internal_flash.csv,Title 2 Pixel Width,Title 2 Pixel Width,1,0
@@ -671,17 +756,17 @@ parity-m2-onpage,internal_other.csv,Status,Status,1,0
 parity-m2-onpage,internal_other.csv,Indexability,Indexability,1,0
 parity-m2-onpage,internal_other.csv,Indexability Status,Indexability Status,1,0
 parity-m2-onpage,internal_other.csv,Title 1,Title 1,1,0
-parity-m2-onpage,internal_other.csv,Title 1 Length,Title 1 Length,1,1
-parity-m2-onpage,internal_other.csv,Title 1 Pixel Width,Title 1 Pixel Width,1,1
+parity-m2-onpage,internal_other.csv,Title 1 Length,Title 1 Length,0,0
+parity-m2-onpage,internal_other.csv,Title 1 Pixel Width,Title 1 Pixel Width,0,0
 parity-m2-onpage,internal_other.csv,Meta Description 1,Meta Description 1,1,0
-parity-m2-onpage,internal_other.csv,Meta Description 1 Length,Meta Description 1 Length,1,1
-parity-m2-onpage,internal_other.csv,Meta Description 1 Pixel Width,Meta Description 1 Pixel Width,1,1
+parity-m2-onpage,internal_other.csv,Meta Description 1 Length,Meta Description 1 Length,0,0
+parity-m2-onpage,internal_other.csv,Meta Description 1 Pixel Width,Meta Description 1 Pixel Width,0,0
 parity-m2-onpage,internal_other.csv,Meta Keywords 1,Meta Keywords 1,1,0
-parity-m2-onpage,internal_other.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,1,1
+parity-m2-onpage,internal_other.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,0,0
 parity-m2-onpage,internal_other.csv,H1-1,H1-1,1,0
-parity-m2-onpage,internal_other.csv,H1-1 Length,H1-1 Length,1,1
+parity-m2-onpage,internal_other.csv,H1-1 Length,H1-1 Length,0,0
 parity-m2-onpage,internal_other.csv,H2-1,H2-1,1,0
-parity-m2-onpage,internal_other.csv,H2-1 Length,H2-1 Length,1,1
+parity-m2-onpage,internal_other.csv,H2-1 Length,H2-1 Length,0,0
 parity-m2-onpage,internal_other.csv,Meta Robots 1,Meta Robots 1,1,0
 parity-m2-onpage,internal_other.csv,X-Robots-Tag 1,X-Robots-Tag 1,1,0
 parity-m2-onpage,internal_other.csv,Meta Refresh 1,Meta Refresh 1,1,0
@@ -693,11 +778,10 @@ parity-m2-onpage,internal_other.csv,"HTTP rel=""prev"" 1","HTTP rel=""prev"" 1",
 parity-m2-onpage,internal_other.csv,Size (Bytes),Size (bytes),1,0
 parity-m2-onpage,internal_other.csv,Transferred (Bytes),Transferred (bytes),1,0
 parity-m2-onpage,internal_other.csv,Total Transferred (Bytes),Total Transferred (bytes),1,0
-parity-m2-onpage,internal_other.csv,Word Count,Word Count,1,1
-parity-m2-onpage,internal_other.csv,Text Ratio,Text Ratio,1,1
+parity-m2-onpage,internal_other.csv,Word Count,Word Count,0,0
+parity-m2-onpage,internal_other.csv,Text Ratio,Text Ratio,0,0
 parity-m2-onpage,internal_other.csv,Crawl Depth,Crawl Depth,1,0
 parity-m2-onpage,internal_other.csv,Folder Depth,Folder Depth,1,0
-parity-m2-onpage,internal_other.csv,Link Score,Link Score,1,1
 parity-m2-onpage,internal_other.csv,Inlinks,Inlinks,1,0
 parity-m2-onpage,internal_other.csv,Unique Inlinks,Unique Inlinks,1,0
 parity-m2-onpage,internal_other.csv,% of Total,% of Total,1,0
@@ -717,6 +801,8 @@ parity-m2-onpage,internal_other.csv,H2-2 Length,H2-2 Length,1,0
 parity-m2-onpage,internal_other.csv,Meta Description 2,Meta Description 2,1,0
 parity-m2-onpage,internal_other.csv,Meta Description 2 Length,Meta Description 2 Length,1,0
 parity-m2-onpage,internal_other.csv,Meta Description 2 Pixel Width,Meta Description 2 Pixel Width,1,0
+parity-m2-onpage,internal_other.csv,Meta Keywords 2,Meta Keywords 2,1,0
+parity-m2-onpage,internal_other.csv,Meta Keywords 2 Length,Meta Keywords 2 Length,1,0
 parity-m2-onpage,internal_other.csv,Title 2,Title 2,1,0
 parity-m2-onpage,internal_other.csv,Title 2 Length,Title 2 Length,1,0
 parity-m2-onpage,internal_other.csv,Title 2 Pixel Width,Title 2 Pixel Width,1,0
@@ -763,8 +849,8 @@ parity-m2-onpage,page_titles_over_561_pixels.csv,Title 1 Pixel Width,Title 1 Pix
 parity-m2-onpage,page_titles_over_561_pixels.csv,Indexability,Indexability,1,0
 parity-m2-onpage,page_titles_over_561_pixels.csv,Indexability Status,Indexability Status,1,0
 parity-m2-onpage,page_titles_over_561_pixels.csv,Title 2,Title 2,1,0
-parity-m2-onpage,page_titles_over_561_pixels.csv,Title 2 Length,Title 2 Length,1,1
-parity-m2-onpage,page_titles_over_561_pixels.csv,Title 2 Pixel Width,Title 2 Pixel Width,1,1
+parity-m2-onpage,page_titles_over_561_pixels.csv,Title 2 Length,Title 2 Length,1,0
+parity-m2-onpage,page_titles_over_561_pixels.csv,Title 2 Pixel Width,Title 2 Pixel Width,1,0
 parity-m2-onpage,page_titles_below_200_pixels.csv,Occurrences,Occurrences,19,0
 parity-m2-onpage,page_titles_below_200_pixels.csv,Title 1,Title 1,19,0
 parity-m2-onpage,page_titles_below_200_pixels.csv,Title 1 Length,Title 1 Length,19,0
@@ -772,8 +858,8 @@ parity-m2-onpage,page_titles_below_200_pixels.csv,Title 1 Pixel Width,Title 1 Pi
 parity-m2-onpage,page_titles_below_200_pixels.csv,Indexability,Indexability,19,0
 parity-m2-onpage,page_titles_below_200_pixels.csv,Indexability Status,Indexability Status,19,0
 parity-m2-onpage,page_titles_below_200_pixels.csv,Title 2,Title 2,19,0
-parity-m2-onpage,page_titles_below_200_pixels.csv,Title 2 Length,Title 2 Length,19,19
-parity-m2-onpage,page_titles_below_200_pixels.csv,Title 2 Pixel Width,Title 2 Pixel Width,19,19
+parity-m2-onpage,page_titles_below_200_pixels.csv,Title 2 Length,Title 2 Length,19,0
+parity-m2-onpage,page_titles_below_200_pixels.csv,Title 2 Pixel Width,Title 2 Pixel Width,19,0
 parity-m2-onpage,page_titles_same_as_h1.csv,Occurrences,Occurrences,1,0
 parity-m2-onpage,page_titles_same_as_h1.csv,Title 1,Title 1,1,0
 parity-m2-onpage,page_titles_same_as_h1.csv,Title 1 Length,Title 1 Length,1,0
@@ -781,8 +867,8 @@ parity-m2-onpage,page_titles_same_as_h1.csv,Title 1 Pixel Width,Title 1 Pixel Wi
 parity-m2-onpage,page_titles_same_as_h1.csv,Indexability,Indexability,1,0
 parity-m2-onpage,page_titles_same_as_h1.csv,Indexability Status,Indexability Status,1,0
 parity-m2-onpage,page_titles_same_as_h1.csv,Title 2,Title 2,1,0
-parity-m2-onpage,page_titles_same_as_h1.csv,Title 2 Length,Title 2 Length,1,1
-parity-m2-onpage,page_titles_same_as_h1.csv,Title 2 Pixel Width,Title 2 Pixel Width,1,1
+parity-m2-onpage,page_titles_same_as_h1.csv,Title 2 Length,Title 2 Length,1,0
+parity-m2-onpage,page_titles_same_as_h1.csv,Title 2 Pixel Width,Title 2 Pixel Width,1,0
 parity-m2-onpage,page_titles_outside_head.csv,Occurrences,Occurrences,1,0
 parity-m2-onpage,page_titles_outside_head.csv,Title 1,Title 1,1,0
 parity-m2-onpage,page_titles_outside_head.csv,Title 1 Length,Title 1 Length,1,0
@@ -790,8 +876,8 @@ parity-m2-onpage,page_titles_outside_head.csv,Title 1 Pixel Width,Title 1 Pixel 
 parity-m2-onpage,page_titles_outside_head.csv,Indexability,Indexability,1,0
 parity-m2-onpage,page_titles_outside_head.csv,Indexability Status,Indexability Status,1,0
 parity-m2-onpage,page_titles_outside_head.csv,Title 2,Title 2,1,0
-parity-m2-onpage,page_titles_outside_head.csv,Title 2 Length,Title 2 Length,1,1
-parity-m2-onpage,page_titles_outside_head.csv,Title 2 Pixel Width,Title 2 Pixel Width,1,1
+parity-m2-onpage,page_titles_outside_head.csv,Title 2 Length,Title 2 Length,1,0
+parity-m2-onpage,page_titles_outside_head.csv,Title 2 Pixel Width,Title 2 Pixel Width,1,0
 parity-m2-onpage,meta_description_over_985_pixels.csv,Occurrences,Occurrences,1,0
 parity-m2-onpage,meta_description_over_985_pixels.csv,Meta Description 1,Meta Description 1,1,0
 parity-m2-onpage,meta_description_over_985_pixels.csv,Meta Description 1 Length,Meta Description 1 Length,1,0
@@ -799,8 +885,8 @@ parity-m2-onpage,meta_description_over_985_pixels.csv,Meta Description 1 Pixel W
 parity-m2-onpage,meta_description_over_985_pixels.csv,Indexability,Indexability,1,0
 parity-m2-onpage,meta_description_over_985_pixels.csv,Indexability Status,Indexability Status,1,0
 parity-m2-onpage,meta_description_over_985_pixels.csv,Meta Description 2,Meta Description 2,1,0
-parity-m2-onpage,meta_description_over_985_pixels.csv,Meta Description 2 Length,Meta Description 2 Length,1,1
-parity-m2-onpage,meta_description_over_985_pixels.csv,Meta Description 2 Pixel Width,Meta Description 2 Pixel Width,1,1
+parity-m2-onpage,meta_description_over_985_pixels.csv,Meta Description 2 Length,Meta Description 2 Length,1,0
+parity-m2-onpage,meta_description_over_985_pixels.csv,Meta Description 2 Pixel Width,Meta Description 2 Pixel Width,1,0
 parity-m2-onpage,meta_description_below_400_pixels.csv,Occurrences,Occurrences,2,0
 parity-m2-onpage,meta_description_below_400_pixels.csv,Meta Description 1,Meta Description 1,2,0
 parity-m2-onpage,meta_description_below_400_pixels.csv,Meta Description 1 Length,Meta Description 1 Length,2,0
@@ -808,8 +894,8 @@ parity-m2-onpage,meta_description_below_400_pixels.csv,Meta Description 1 Pixel 
 parity-m2-onpage,meta_description_below_400_pixels.csv,Indexability,Indexability,2,0
 parity-m2-onpage,meta_description_below_400_pixels.csv,Indexability Status,Indexability Status,2,0
 parity-m2-onpage,meta_description_below_400_pixels.csv,Meta Description 2,Meta Description 2,2,0
-parity-m2-onpage,meta_description_below_400_pixels.csv,Meta Description 2 Length,Meta Description 2 Length,2,2
-parity-m2-onpage,meta_description_below_400_pixels.csv,Meta Description 2 Pixel Width,Meta Description 2 Pixel Width,2,2
+parity-m2-onpage,meta_description_below_400_pixels.csv,Meta Description 2 Length,Meta Description 2 Length,2,0
+parity-m2-onpage,meta_description_below_400_pixels.csv,Meta Description 2 Pixel Width,Meta Description 2 Pixel Width,2,0
 parity-m2-onpage,meta_description_outside_head.csv,Occurrences,Occurrences,1,0
 parity-m2-onpage,meta_description_outside_head.csv,Meta Description 1,Meta Description 1,1,0
 parity-m2-onpage,meta_description_outside_head.csv,Meta Description 1 Length,Meta Description 1 Length,1,0
@@ -817,29 +903,30 @@ parity-m2-onpage,meta_description_outside_head.csv,Meta Description 1 Pixel Widt
 parity-m2-onpage,meta_description_outside_head.csv,Indexability,Indexability,1,0
 parity-m2-onpage,meta_description_outside_head.csv,Indexability Status,Indexability Status,1,0
 parity-m2-onpage,meta_description_outside_head.csv,Meta Description 2,Meta Description 2,1,0
-parity-m2-onpage,meta_description_outside_head.csv,Meta Description 2 Length,Meta Description 2 Length,1,1
-parity-m2-onpage,meta_description_outside_head.csv,Meta Description 2 Pixel Width,Meta Description 2 Pixel Width,1,1
+parity-m2-onpage,meta_description_outside_head.csv,Meta Description 2 Length,Meta Description 2 Length,1,0
+parity-m2-onpage,meta_description_outside_head.csv,Meta Description 2 Pixel Width,Meta Description 2 Pixel Width,1,0
 parity-m2-onpage,h1_alt_text_in_h1.csv,Occurrences,Occurrences,1,0
 parity-m2-onpage,h1_alt_text_in_h1.csv,H1-1,H1-1,1,0
 parity-m2-onpage,h1_alt_text_in_h1.csv,H1-1 Length,H1-1 Length,1,0
 parity-m2-onpage,h1_alt_text_in_h1.csv,Indexability,Indexability,1,0
 parity-m2-onpage,h1_alt_text_in_h1.csv,Indexability Status,Indexability Status,1,0
 parity-m2-onpage,h1_alt_text_in_h1.csv,H1-2,H1-2,1,0
-parity-m2-onpage,h1_alt_text_in_h1.csv,H1-2 Length,H1-2 Length,1,1
+parity-m2-onpage,h1_alt_text_in_h1.csv,H1-2 Length,H1-2 Length,1,0
 parity-m2-onpage,h1_non_sequential.csv,Occurrences,Occurrences,1,0
 parity-m2-onpage,h1_non_sequential.csv,H1-1,H1-1,1,0
 parity-m2-onpage,h1_non_sequential.csv,H1-1 Length,H1-1 Length,1,0
 parity-m2-onpage,h1_non_sequential.csv,Indexability,Indexability,1,0
 parity-m2-onpage,h1_non_sequential.csv,Indexability Status,Indexability Status,1,0
 parity-m2-onpage,h1_non_sequential.csv,H1-2,H1-2,1,0
-parity-m2-onpage,h1_non_sequential.csv,H1-2 Length,H1-2 Length,1,1
+parity-m2-onpage,h1_non_sequential.csv,H1-2 Length,H1-2 Length,1,0
 parity-m2-onpage,h2_non_sequential.csv,Occurrences,Occurrences,1,0
 parity-m2-onpage,h2_non_sequential.csv,H2-1,H2-1,1,0
 parity-m2-onpage,h2_non_sequential.csv,H2-1 Length,H2-1 Length,1,0
 parity-m2-onpage,h2_non_sequential.csv,Indexability,Indexability,1,0
 parity-m2-onpage,h2_non_sequential.csv,Indexability Status,Indexability Status,1,0
 parity-m2-onpage,h2_non_sequential.csv,H2-2,H2-2,1,0
-parity-m2-onpage,h2_non_sequential.csv,H2-2 Length,H2-2 Length,1,1
+parity-m2-onpage,h2_non_sequential.csv,H2-2 Length,H2-2 Length,1,0
+parity-m2-onpage,content_lorem_ipsum_placeholder.csv,Occurrences,Occurrences,1,1
 parity-m2-onpage,content_lorem_ipsum_placeholder.csv,Indexability,Indexability,1,0
 parity-m2-onpage,content_lorem_ipsum_placeholder.csv,Indexability Status,Indexability Status,1,0
 parity-m2-onpage,content_readability_difficult.csv,Word Count,Word Count,2,0
@@ -852,7 +939,7 @@ parity-m2-onpage,content_readability_difficult.csv,Indexability Status,Indexabil
 parity-m2-onpage,content_readability_very_difficult.csv,Word Count,Word Count,23,0
 parity-m2-onpage,content_readability_very_difficult.csv,Sentence Count,Sentence Count,23,23
 parity-m2-onpage,content_readability_very_difficult.csv,Average Words Per Sentence,Average Words Per Sentence,23,23
-parity-m2-onpage,content_readability_very_difficult.csv,Flesch Reading Ease Score,Flesch Reading Ease Score,23,23
+parity-m2-onpage,content_readability_very_difficult.csv,Flesch Reading Ease Score,Flesch Reading Ease Score,23,1
 parity-m2-onpage,content_readability_very_difficult.csv,Readability,Readability,23,23
 parity-m2-onpage,content_readability_very_difficult.csv,Indexability,Indexability,23,0
 parity-m2-onpage,content_readability_very_difficult.csv,Indexability Status,Indexability Status,23,0
@@ -867,14 +954,14 @@ parity-m2-onpage,meta_keywords_missing.csv,Meta Keywords 1 Length,Meta Keywords 
 parity-m2-onpage,meta_keywords_missing.csv,Indexability,Indexability,45,0
 parity-m2-onpage,meta_keywords_missing.csv,Indexability Status,Indexability Status,45,0
 parity-m2-onpage,meta_keywords_missing.csv,Meta Keywords 2,Meta Keywords 2,45,0
-parity-m2-onpage,meta_keywords_missing.csv,Meta Keywords 2 Length,Meta Keywords 2 Length,45,45
+parity-m2-onpage,meta_keywords_missing.csv,Meta Keywords 2 Length,Meta Keywords 2 Length,45,0
 parity-m2-onpage,meta_keywords_duplicate.csv,Occurrences,Occurrences,2,0
 parity-m2-onpage,meta_keywords_duplicate.csv,Meta Keywords 1,Meta Keywords 1,2,0
 parity-m2-onpage,meta_keywords_duplicate.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,2,0
 parity-m2-onpage,meta_keywords_duplicate.csv,Indexability,Indexability,2,0
 parity-m2-onpage,meta_keywords_duplicate.csv,Indexability Status,Indexability Status,2,0
 parity-m2-onpage,meta_keywords_duplicate.csv,Meta Keywords 2,Meta Keywords 2,2,0
-parity-m2-onpage,meta_keywords_duplicate.csv,Meta Keywords 2 Length,Meta Keywords 2 Length,2,2
+parity-m2-onpage,meta_keywords_duplicate.csv,Meta Keywords 2 Length,Meta Keywords 2 Length,2,0
 parity-m2-onpage,meta_keywords_multiple.csv,Occurrences,Occurrences,1,0
 parity-m2-onpage,meta_keywords_multiple.csv,Meta Keywords 1,Meta Keywords 1,1,0
 parity-m2-onpage,meta_keywords_multiple.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,1,0
@@ -882,6 +969,21 @@ parity-m2-onpage,meta_keywords_multiple.csv,Meta Keywords 2,Meta Keywords 2,1,0
 parity-m2-onpage,meta_keywords_multiple.csv,Meta Keywords 2 Length,Meta Keywords 2 Length,1,0
 parity-m2-onpage,meta_keywords_multiple.csv,Indexability,Indexability,1,0
 parity-m2-onpage,meta_keywords_multiple.csv,Indexability Status,Indexability Status,1,0
+parity-m2-onpage,bulk_images_images_missing_size_attributes.csv,Alt Text,Alt Text,0,0
+parity-m2-onpage,bulk_images_images_missing_size_attributes.csv,Length,Size,0,0
+parity-m2-onpage,bulk_images_images_missing_size_attributes.csv,Path Type,Path Type,0,0
+parity-m2-onpage,bulk_images_images_missing_size_attributes.csv,Link Path,Link Path,0,0
+parity-m2-onpage,bulk_images_images_missing_size_attributes.csv,Link Position,Link Position,0,0
+parity-m2-onpage,bulk_images_images_missing_size_attributes.csv,Link Origin,Link Origin,0,0
+parity-m2-onpage,bulk_images_images_missing_size_attributes.csv,Real Dimensions,Real Dimensions (WxH),0,0
+parity-m2-onpage,bulk_images_images_missing_size_attributes.csv,Dimensions in Attributes,Dimensions in Attributes (WxH),0,0
+parity-m2-onpage,bulk_images_images_missing_size_attributes.csv,Display Dimensions,Display Dimensions (WxH),0,0
+parity-m2-onpage,serp_summary.csv,Title,Title 1,50,0
+parity-m2-onpage,serp_summary.csv,Character Length,Title 1 Length,50,0
+parity-m2-onpage,serp_summary.csv,Pixel Length,Title 1 Pixel Width,50,39
+parity-m2-onpage,serp_summary.csv,Description,Meta Description 1,50,0
+parity-m2-onpage,serp_summary.csv,Character Length (2),Meta Description 1 Length,50,0
+parity-m2-onpage,serp_summary.csv,Pixel Length (2),Meta Description 1 Pixel Width,50,0
 parity-m2-onpage,sitemap_default.xml,Lastmod,Lastmod,50,50
 parity-m2-onpage,sitemap_default.xml,Changefreq,Changefreq,50,48
 parity-m2-onpage,sitemap_default.xml,Priority,Priority,50,0
@@ -900,17 +1002,17 @@ parity-m2-security,internal_all.csv,Status,Status,17,0
 parity-m2-security,internal_all.csv,Indexability,Indexability,17,0
 parity-m2-security,internal_all.csv,Indexability Status,Indexability Status,17,0
 parity-m2-security,internal_all.csv,Title 1,Title 1,17,0
-parity-m2-security,internal_all.csv,Title 1 Length,Title 1 Length,17,3
-parity-m2-security,internal_all.csv,Title 1 Pixel Width,Title 1 Pixel Width,17,3
+parity-m2-security,internal_all.csv,Title 1 Length,Title 1 Length,14,0
+parity-m2-security,internal_all.csv,Title 1 Pixel Width,Title 1 Pixel Width,14,0
 parity-m2-security,internal_all.csv,Meta Description 1,Meta Description 1,17,0
-parity-m2-security,internal_all.csv,Meta Description 1 Length,Meta Description 1 Length,17,17
-parity-m2-security,internal_all.csv,Meta Description 1 Pixel Width,Meta Description 1 Pixel Width,17,17
+parity-m2-security,internal_all.csv,Meta Description 1 Length,Meta Description 1 Length,0,0
+parity-m2-security,internal_all.csv,Meta Description 1 Pixel Width,Meta Description 1 Pixel Width,0,0
 parity-m2-security,internal_all.csv,Meta Keywords 1,Meta Keywords 1,17,0
-parity-m2-security,internal_all.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,17,17
+parity-m2-security,internal_all.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,0,0
 parity-m2-security,internal_all.csv,H1-1,H1-1,17,0
-parity-m2-security,internal_all.csv,H1-1 Length,H1-1 Length,17,17
+parity-m2-security,internal_all.csv,H1-1 Length,H1-1 Length,0,0
 parity-m2-security,internal_all.csv,H2-1,H2-1,17,0
-parity-m2-security,internal_all.csv,H2-1 Length,H2-1 Length,17,17
+parity-m2-security,internal_all.csv,H2-1 Length,H2-1 Length,0,0
 parity-m2-security,internal_all.csv,Meta Robots 1,Meta Robots 1,17,0
 parity-m2-security,internal_all.csv,X-Robots-Tag 1,X-Robots-Tag 1,17,0
 parity-m2-security,internal_all.csv,Meta Refresh 1,Meta Refresh 1,17,0
@@ -922,11 +1024,10 @@ parity-m2-security,internal_all.csv,"HTTP rel=""prev"" 1","HTTP rel=""prev"" 1",
 parity-m2-security,internal_all.csv,Size (Bytes),Size (bytes),17,0
 parity-m2-security,internal_all.csv,Transferred (Bytes),Transferred (bytes),17,0
 parity-m2-security,internal_all.csv,Total Transferred (Bytes),Total Transferred (bytes),17,0
-parity-m2-security,internal_all.csv,Word Count,Word Count,17,2
-parity-m2-security,internal_all.csv,Text Ratio,Text Ratio,17,3
+parity-m2-security,internal_all.csv,Word Count,Word Count,15,0
+parity-m2-security,internal_all.csv,Text Ratio,Text Ratio,15,1
 parity-m2-security,internal_all.csv,Crawl Depth,Crawl Depth,17,0
 parity-m2-security,internal_all.csv,Folder Depth,Folder Depth,17,0
-parity-m2-security,internal_all.csv,Link Score,Link Score,17,3
 parity-m2-security,internal_all.csv,Inlinks,Inlinks,17,0
 parity-m2-security,internal_all.csv,Unique Inlinks,Unique Inlinks,17,0
 parity-m2-security,internal_all.csv,% of Total,% of Total,17,0
@@ -946,6 +1047,8 @@ parity-m2-security,internal_all.csv,H2-2 Length,H2-2 Length,17,0
 parity-m2-security,internal_all.csv,Meta Description 2,Meta Description 2,17,0
 parity-m2-security,internal_all.csv,Meta Description 2 Length,Meta Description 2 Length,17,0
 parity-m2-security,internal_all.csv,Meta Description 2 Pixel Width,Meta Description 2 Pixel Width,17,0
+parity-m2-security,internal_all.csv,Meta Keywords 2,Meta Keywords 2,17,0
+parity-m2-security,internal_all.csv,Meta Keywords 2 Length,Meta Keywords 2 Length,17,0
 parity-m2-security,internal_all.csv,Title 2,Title 2,17,0
 parity-m2-security,internal_all.csv,Title 2 Length,Title 2 Length,17,0
 parity-m2-security,internal_all.csv,Title 2 Pixel Width,Title 2 Pixel Width,17,0
@@ -957,7 +1060,8 @@ parity-m2-security,response_codes_all.csv,Indexability Status,Indexability Statu
 parity-m2-security,response_codes_all.csv,Inlinks,Inlinks,19,0
 parity-m2-security,response_codes_all.csv,Redirect URL,Redirect URL,19,0
 parity-m2-security,response_codes_all.csv,Redirect Type,Redirect Type,19,0
-parity-m2-security,crawl_overview.csv,URLs,URLs,211,11
+parity-m2-security,crawl_overview.csv,URLs,URLs,204,4
+parity-m2-security,security_all.csv,Content Type,Content,17,0
 parity-m2-security,security_all.csv,Status Code,Status Code,17,0
 parity-m2-security,security_all.csv,Status,Status,17,0
 parity-m2-security,security_all.csv,Indexability,Indexability,17,0
@@ -965,6 +1069,7 @@ parity-m2-security,security_all.csv,Indexability Status,Indexability Status,17,0
 parity-m2-security,security_all.csv,Canonical Link Element 1,Canonical Link Element 1,17,0
 parity-m2-security,security_all.csv,Meta Robots 1,Meta Robots 1,17,0
 parity-m2-security,security_all.csv,X-Robots-Tag 1,X-Robots-Tag 1,17,0
+parity-m2-security,security_mixed_content.csv,Content Type,Content,0,0
 parity-m2-security,security_mixed_content.csv,Status Code,Status Code,0,0
 parity-m2-security,security_mixed_content.csv,Status,Status,0,0
 parity-m2-security,security_mixed_content.csv,Indexability,Indexability,0,0
@@ -972,6 +1077,7 @@ parity-m2-security,security_mixed_content.csv,Indexability Status,Indexability S
 parity-m2-security,security_mixed_content.csv,Canonical Link Element 1,Canonical Link Element 1,0,0
 parity-m2-security,security_mixed_content.csv,Meta Robots 1,Meta Robots 1,0,0
 parity-m2-security,security_mixed_content.csv,X-Robots-Tag 1,X-Robots-Tag 1,0,0
+parity-m2-security,security_form_url_insecure.csv,Content Type,Content,2,0
 parity-m2-security,security_form_url_insecure.csv,Status Code,Status Code,2,0
 parity-m2-security,security_form_url_insecure.csv,Status,Status,2,0
 parity-m2-security,security_form_url_insecure.csv,Indexability,Indexability,2,0
@@ -979,6 +1085,7 @@ parity-m2-security,security_form_url_insecure.csv,Indexability Status,Indexabili
 parity-m2-security,security_form_url_insecure.csv,Canonical Link Element 1,Canonical Link Element 1,2,0
 parity-m2-security,security_form_url_insecure.csv,Meta Robots 1,Meta Robots 1,2,0
 parity-m2-security,security_form_url_insecure.csv,X-Robots-Tag 1,X-Robots-Tag 1,2,0
+parity-m2-security,security_form_on_http_url.csv,Content Type,Content,2,0
 parity-m2-security,security_form_on_http_url.csv,Status Code,Status Code,2,0
 parity-m2-security,security_form_on_http_url.csv,Status,Status,2,0
 parity-m2-security,security_form_on_http_url.csv,Indexability,Indexability,2,0
@@ -986,6 +1093,7 @@ parity-m2-security,security_form_on_http_url.csv,Indexability Status,Indexabilit
 parity-m2-security,security_form_on_http_url.csv,Canonical Link Element 1,Canonical Link Element 1,2,0
 parity-m2-security,security_form_on_http_url.csv,Meta Robots 1,Meta Robots 1,2,0
 parity-m2-security,security_form_on_http_url.csv,X-Robots-Tag 1,X-Robots-Tag 1,2,0
+parity-m2-security,security_unsafe_cross_origin_links.csv,Content Type,Content,1,0
 parity-m2-security,security_unsafe_cross_origin_links.csv,Status Code,Status Code,1,0
 parity-m2-security,security_unsafe_cross_origin_links.csv,Status,Status,1,0
 parity-m2-security,security_unsafe_cross_origin_links.csv,Indexability,Indexability,1,0
@@ -993,6 +1101,7 @@ parity-m2-security,security_unsafe_cross_origin_links.csv,Indexability Status,In
 parity-m2-security,security_unsafe_cross_origin_links.csv,Canonical Link Element 1,Canonical Link Element 1,1,0
 parity-m2-security,security_unsafe_cross_origin_links.csv,Meta Robots 1,Meta Robots 1,1,0
 parity-m2-security,security_unsafe_cross_origin_links.csv,X-Robots-Tag 1,X-Robots-Tag 1,1,0
+parity-m2-security,security_protocol_relative_resource_links.csv,Content Type,Content,1,0
 parity-m2-security,security_protocol_relative_resource_links.csv,Status Code,Status Code,1,0
 parity-m2-security,security_protocol_relative_resource_links.csv,Status,Status,1,0
 parity-m2-security,security_protocol_relative_resource_links.csv,Indexability,Indexability,1,0
@@ -1000,6 +1109,7 @@ parity-m2-security,security_protocol_relative_resource_links.csv,Indexability St
 parity-m2-security,security_protocol_relative_resource_links.csv,Canonical Link Element 1,Canonical Link Element 1,1,0
 parity-m2-security,security_protocol_relative_resource_links.csv,Meta Robots 1,Meta Robots 1,1,0
 parity-m2-security,security_protocol_relative_resource_links.csv,X-Robots-Tag 1,X-Robots-Tag 1,1,0
+parity-m2-security,security_missing_hsts_header.csv,Content Type,Content,0,0
 parity-m2-security,security_missing_hsts_header.csv,Status Code,Status Code,0,0
 parity-m2-security,security_missing_hsts_header.csv,Status,Status,0,0
 parity-m2-security,security_missing_hsts_header.csv,Indexability,Indexability,0,0
@@ -1007,6 +1117,7 @@ parity-m2-security,security_missing_hsts_header.csv,Indexability Status,Indexabi
 parity-m2-security,security_missing_hsts_header.csv,Canonical Link Element 1,Canonical Link Element 1,0,0
 parity-m2-security,security_missing_hsts_header.csv,Meta Robots 1,Meta Robots 1,0,0
 parity-m2-security,security_missing_hsts_header.csv,X-Robots-Tag 1,X-Robots-Tag 1,0,0
+parity-m2-security,security_missing_content_security_policy_header.csv,Content Type,Content,13,0
 parity-m2-security,security_missing_content_security_policy_header.csv,Status Code,Status Code,13,0
 parity-m2-security,security_missing_content_security_policy_header.csv,Status,Status,13,0
 parity-m2-security,security_missing_content_security_policy_header.csv,Indexability,Indexability,13,0
@@ -1014,6 +1125,7 @@ parity-m2-security,security_missing_content_security_policy_header.csv,Indexabil
 parity-m2-security,security_missing_content_security_policy_header.csv,Canonical Link Element 1,Canonical Link Element 1,13,0
 parity-m2-security,security_missing_content_security_policy_header.csv,Meta Robots 1,Meta Robots 1,13,0
 parity-m2-security,security_missing_content_security_policy_header.csv,X-Robots-Tag 1,X-Robots-Tag 1,13,0
+parity-m2-security,security_missing_x_content_type_options_header.csv,Content Type,Content,13,0
 parity-m2-security,security_missing_x_content_type_options_header.csv,Status Code,Status Code,13,0
 parity-m2-security,security_missing_x_content_type_options_header.csv,Status,Status,13,0
 parity-m2-security,security_missing_x_content_type_options_header.csv,Indexability,Indexability,13,0
@@ -1021,6 +1133,7 @@ parity-m2-security,security_missing_x_content_type_options_header.csv,Indexabili
 parity-m2-security,security_missing_x_content_type_options_header.csv,Canonical Link Element 1,Canonical Link Element 1,13,0
 parity-m2-security,security_missing_x_content_type_options_header.csv,Meta Robots 1,Meta Robots 1,13,0
 parity-m2-security,security_missing_x_content_type_options_header.csv,X-Robots-Tag 1,X-Robots-Tag 1,13,0
+parity-m2-security,security_missing_x_frame_options_header.csv,Content Type,Content,13,0
 parity-m2-security,security_missing_x_frame_options_header.csv,Status Code,Status Code,13,0
 parity-m2-security,security_missing_x_frame_options_header.csv,Status,Status,13,0
 parity-m2-security,security_missing_x_frame_options_header.csv,Indexability,Indexability,13,0
@@ -1028,6 +1141,7 @@ parity-m2-security,security_missing_x_frame_options_header.csv,Indexability Stat
 parity-m2-security,security_missing_x_frame_options_header.csv,Canonical Link Element 1,Canonical Link Element 1,13,0
 parity-m2-security,security_missing_x_frame_options_header.csv,Meta Robots 1,Meta Robots 1,13,0
 parity-m2-security,security_missing_x_frame_options_header.csv,X-Robots-Tag 1,X-Robots-Tag 1,13,0
+parity-m2-security,security_missing_secure_referrer_policy_header.csv,Content Type,Content,13,0
 parity-m2-security,security_missing_secure_referrer_policy_header.csv,Status Code,Status Code,13,0
 parity-m2-security,security_missing_secure_referrer_policy_header.csv,Status,Status,13,0
 parity-m2-security,security_missing_secure_referrer_policy_header.csv,Indexability,Indexability,13,0
@@ -1035,6 +1149,7 @@ parity-m2-security,security_missing_secure_referrer_policy_header.csv,Indexabili
 parity-m2-security,security_missing_secure_referrer_policy_header.csv,Canonical Link Element 1,Canonical Link Element 1,13,0
 parity-m2-security,security_missing_secure_referrer_policy_header.csv,Meta Robots 1,Meta Robots 1,13,0
 parity-m2-security,security_missing_secure_referrer_policy_header.csv,X-Robots-Tag 1,X-Robots-Tag 1,13,0
+parity-m2-security,security_bad_content_type.csv,Content Type,Content,2,0
 parity-m2-security,security_bad_content_type.csv,Status Code,Status Code,2,0
 parity-m2-security,security_bad_content_type.csv,Status,Status,2,0
 parity-m2-security,security_bad_content_type.csv,Indexability,Indexability,2,0
@@ -1054,6 +1169,11 @@ parity-m2-security,bulk_security_http_urls_inlinks.csv,Path Type,Path Type,16,0
 parity-m2-security,bulk_security_http_urls_inlinks.csv,Link Path,Link Path,16,0
 parity-m2-security,bulk_security_http_urls_inlinks.csv,Link Position,Link Position,16,0
 parity-m2-security,bulk_security_http_urls_inlinks.csv,Link Origin,Link Origin,16,0
+parity-m2-security,bulk_security_unsafe_cross_origin_links_inlinks.csv,Alt Text,Alt Text,1,0
+parity-m2-security,bulk_security_unsafe_cross_origin_links_inlinks.csv,Anchor,Anchor,1,0
+parity-m2-security,bulk_security_unsafe_cross_origin_links_inlinks.csv,Target,Target,1,0
+parity-m2-security,bulk_security_unsafe_cross_origin_links_inlinks.csv,Rel,Rel,1,0
+parity-m2-security,bulk_security_protocol_relative_resource_links_inlinks.csv,Anchor Text,Anchor,1,0
 parity-m2-security,bulk_security_protocol_relative_resource_links_inlinks.csv,Alt Text,Alt Text,1,0
 parity-m2-security,bulk_security_protocol_relative_resource_links_inlinks.csv,Path Type,Path Type,1,0
 parity-m2-security,insecure_content.csv,Size (Bytes),Size (Bytes),0,0
@@ -1074,20 +1194,20 @@ parity-m2-technical,internal_all.csv,Status,Status,67,0
 parity-m2-technical,internal_all.csv,Indexability,Indexability,67,4
 parity-m2-technical,internal_all.csv,Indexability Status,Indexability Status,67,4
 parity-m2-technical,internal_all.csv,Title 1,Title 1,67,0
-parity-m2-technical,internal_all.csv,Title 1 Length,Title 1 Length,67,7
-parity-m2-technical,internal_all.csv,Title 1 Pixel Width,Title 1 Pixel Width,67,7
+parity-m2-technical,internal_all.csv,Title 1 Length,Title 1 Length,60,0
+parity-m2-technical,internal_all.csv,Title 1 Pixel Width,Title 1 Pixel Width,60,0
 parity-m2-technical,internal_all.csv,Title 2,Title 2,67,0
-parity-m2-technical,internal_all.csv,Title 2 Length,Title 2 Length,67,66
-parity-m2-technical,internal_all.csv,Title 2 Pixel Width,Title 2 Pixel Width,67,66
+parity-m2-technical,internal_all.csv,Title 2 Length,Title 2 Length,1,0
+parity-m2-technical,internal_all.csv,Title 2 Pixel Width,Title 2 Pixel Width,1,0
 parity-m2-technical,internal_all.csv,Meta Description 1,Meta Description 1,67,0
-parity-m2-technical,internal_all.csv,Meta Description 1 Length,Meta Description 1 Length,67,67
-parity-m2-technical,internal_all.csv,Meta Description 1 Pixel Width,Meta Description 1 Pixel Width,67,67
+parity-m2-technical,internal_all.csv,Meta Description 1 Length,Meta Description 1 Length,0,0
+parity-m2-technical,internal_all.csv,Meta Description 1 Pixel Width,Meta Description 1 Pixel Width,0,0
 parity-m2-technical,internal_all.csv,Meta Keywords 1,Meta Keywords 1,67,0
-parity-m2-technical,internal_all.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,67,67
+parity-m2-technical,internal_all.csv,Meta Keywords 1 Length,Meta Keywords 1 Length,0,0
 parity-m2-technical,internal_all.csv,H1-1,H1-1,67,0
-parity-m2-technical,internal_all.csv,H1-1 Length,H1-1 Length,67,65
+parity-m2-technical,internal_all.csv,H1-1 Length,H1-1 Length,2,0
 parity-m2-technical,internal_all.csv,H2-1,H2-1,67,0
-parity-m2-technical,internal_all.csv,H2-1 Length,H2-1 Length,67,67
+parity-m2-technical,internal_all.csv,H2-1 Length,H2-1 Length,0,0
 parity-m2-technical,internal_all.csv,Meta Robots 1,Meta Robots 1,67,0
 parity-m2-technical,internal_all.csv,X-Robots-Tag 1,X-Robots-Tag 1,67,0
 parity-m2-technical,internal_all.csv,Meta Refresh 1,Meta Refresh 1,67,0
@@ -1099,11 +1219,10 @@ parity-m2-technical,internal_all.csv,"HTTP rel=""prev"" 1","HTTP rel=""prev"" 1"
 parity-m2-technical,internal_all.csv,Size (Bytes),Size (bytes),67,0
 parity-m2-technical,internal_all.csv,Transferred (Bytes),Transferred (bytes),67,0
 parity-m2-technical,internal_all.csv,Total Transferred (Bytes),Total Transferred (bytes),67,0
-parity-m2-technical,internal_all.csv,Word Count,Word Count,67,7
-parity-m2-technical,internal_all.csv,Text Ratio,Text Ratio,67,9
+parity-m2-technical,internal_all.csv,Word Count,Word Count,60,0
+parity-m2-technical,internal_all.csv,Text Ratio,Text Ratio,60,2
 parity-m2-technical,internal_all.csv,Crawl Depth,Crawl Depth,67,2
 parity-m2-technical,internal_all.csv,Folder Depth,Folder Depth,67,0
-parity-m2-technical,internal_all.csv,Link Score,Link Score,67,51
 parity-m2-technical,internal_all.csv,Inlinks,Inlinks,67,0
 parity-m2-technical,internal_all.csv,Unique Inlinks,Unique Inlinks,67,0
 parity-m2-technical,internal_all.csv,% of Total,% of Total,67,0
@@ -1123,6 +1242,8 @@ parity-m2-technical,internal_all.csv,H2-2 Length,H2-2 Length,67,0
 parity-m2-technical,internal_all.csv,Meta Description 2,Meta Description 2,67,0
 parity-m2-technical,internal_all.csv,Meta Description 2 Length,Meta Description 2 Length,67,0
 parity-m2-technical,internal_all.csv,Meta Description 2 Pixel Width,Meta Description 2 Pixel Width,67,0
+parity-m2-technical,internal_all.csv,Meta Keywords 2,Meta Keywords 2,67,0
+parity-m2-technical,internal_all.csv,Meta Keywords 2 Length,Meta Keywords 2 Length,67,0
 parity-m2-technical,response_codes_all.csv,Content Type,Content,68,0
 parity-m2-technical,response_codes_all.csv,Status Code,Status Code,68,0
 parity-m2-technical,response_codes_all.csv,Status,Status,68,0
@@ -1131,7 +1252,7 @@ parity-m2-technical,response_codes_all.csv,Indexability Status,Indexability Stat
 parity-m2-technical,response_codes_all.csv,Inlinks,Inlinks,68,0
 parity-m2-technical,response_codes_all.csv,Redirect URL,Redirect URL,68,0
 parity-m2-technical,response_codes_all.csv,Redirect Type,Redirect Type,68,0
-parity-m2-technical,crawl_overview.csv,URLs,URLs,207,39
+parity-m2-technical,crawl_overview.csv,URLs,URLs,203,35
 parity-m2-technical,canonicals_all.csv,Occurrences,Occurrences,60,2
 parity-m2-technical,canonicals_all.csv,Indexability,Indexability,60,4
 parity-m2-technical,canonicals_all.csv,Indexability Status,Indexability Status,60,4
@@ -1141,21 +1262,20 @@ parity-m2-technical,canonicals_all.csv,Meta Robots 1,Meta Robots 1,60,0
 parity-m2-technical,canonicals_all.csv,X-Robots-Tag 1,X-Robots-Tag 1,60,0
 parity-m2-technical,canonicals_all.csv,"rel=""next"" 1","rel=""next"" 1",60,0
 parity-m2-technical,canonicals_all.csv,"rel=""prev"" 1","rel=""prev"" 1",60,0
-parity-m2-technical,canonicals_all.csv,"HTTP rel=""next"" 1","HTTP rel=""next"" 1",60,0
-parity-m2-technical,canonicals_all.csv,"HTTP rel=""prev"" 1","HTTP rel=""prev"" 1",60,0
 parity-m2-technical,pagination_all.csv,Indexability,Indexability,60,4
 parity-m2-technical,pagination_all.csv,Indexability Status,Indexability Status,60,4
 parity-m2-technical,pagination_all.csv,"rel=""next"" 1","rel=""next"" 1",60,0
 parity-m2-technical,pagination_all.csv,"rel=""prev"" 1","rel=""prev"" 1",60,0
 parity-m2-technical,pagination_all.csv,"rel=""next"" 2","rel=""next"" 2",60,0
 parity-m2-technical,pagination_all.csv,Canonical Link Element 1,Canonical Link Element 1,60,3
+parity-m2-technical,pagination_all.csv,HTTP Canonical,HTTP Canonical 1,60,0
 parity-m2-technical,pagination_all.csv,Meta Robots 1,Meta Robots 1,60,0
 parity-m2-technical,pagination_all.csv,X-Robots-Tag 1,X-Robots-Tag 1,60,0
 parity-m2-technical,pagination_all.csv,HTTP Canonical 1,HTTP Canonical 1,60,0
 parity-m2-technical,directives_all.csv,Occurrences,Occurrences,62,0
 parity-m2-technical,directives_all.csv,Meta Robots 1,Meta Robots 1,62,0
 parity-m2-technical,directives_all.csv,X-Robots-Tag 1,X-Robots-Tag 1,62,0
-parity-m2-technical,directives_all.csv,Meta Refresh 1,Meta Refresh 1,60,0
+parity-m2-technical,directives_all.csv,Meta Refresh 1,Meta Refresh 1,62,2
 parity-m2-technical,directives_all.csv,Canonical Link Element 1,Canonical Link Element 1,62,3
 parity-m2-technical,directives_all.csv,HTTP Canonical,HTTP Canonical 1,62,0
 parity-m2-technical,directives_all.csv,Indexability,Indexability,62,4
@@ -1186,8 +1306,6 @@ parity-m2-technical,canonicals_canonical_is_relative.csv,Meta Robots 1,Meta Robo
 parity-m2-technical,canonicals_canonical_is_relative.csv,X-Robots-Tag 1,X-Robots-Tag 1,8,0
 parity-m2-technical,canonicals_canonical_is_relative.csv,"rel=""next"" 1","rel=""next"" 1",8,0
 parity-m2-technical,canonicals_canonical_is_relative.csv,"rel=""prev"" 1","rel=""prev"" 1",8,0
-parity-m2-technical,canonicals_canonical_is_relative.csv,"HTTP rel=""next"" 1","HTTP rel=""next"" 1",8,0
-parity-m2-technical,canonicals_canonical_is_relative.csv,"HTTP rel=""prev"" 1","HTTP rel=""prev"" 1",8,0
 parity-m2-technical,canonicals_unlinked.csv,Occurrences,Occurrences,0,0
 parity-m2-technical,canonicals_unlinked.csv,Indexability,Indexability,0,0
 parity-m2-technical,canonicals_unlinked.csv,Indexability Status,Indexability Status,0,0
@@ -1197,8 +1315,6 @@ parity-m2-technical,canonicals_unlinked.csv,Meta Robots 1,Meta Robots 1,0,0
 parity-m2-technical,canonicals_unlinked.csv,X-Robots-Tag 1,X-Robots-Tag 1,0,0
 parity-m2-technical,canonicals_unlinked.csv,"rel=""next"" 1","rel=""next"" 1",0,0
 parity-m2-technical,canonicals_unlinked.csv,"rel=""prev"" 1","rel=""prev"" 1",0,0
-parity-m2-technical,canonicals_unlinked.csv,"HTTP rel=""next"" 1","HTTP rel=""next"" 1",0,0
-parity-m2-technical,canonicals_unlinked.csv,"HTTP rel=""prev"" 1","HTTP rel=""prev"" 1",0,0
 parity-m2-technical,canonicals_invalid_attribute_in_annotation.csv,Occurrences,Occurrences,1,1
 parity-m2-technical,canonicals_invalid_attribute_in_annotation.csv,Indexability,Indexability,1,1
 parity-m2-technical,canonicals_invalid_attribute_in_annotation.csv,Indexability Status,Indexability Status,1,1
@@ -1208,8 +1324,6 @@ parity-m2-technical,canonicals_invalid_attribute_in_annotation.csv,Meta Robots 1
 parity-m2-technical,canonicals_invalid_attribute_in_annotation.csv,X-Robots-Tag 1,X-Robots-Tag 1,1,0
 parity-m2-technical,canonicals_invalid_attribute_in_annotation.csv,"rel=""next"" 1","rel=""next"" 1",1,0
 parity-m2-technical,canonicals_invalid_attribute_in_annotation.csv,"rel=""prev"" 1","rel=""prev"" 1",1,0
-parity-m2-technical,canonicals_invalid_attribute_in_annotation.csv,"HTTP rel=""next"" 1","HTTP rel=""next"" 1",1,0
-parity-m2-technical,canonicals_invalid_attribute_in_annotation.csv,"HTTP rel=""prev"" 1","HTTP rel=""prev"" 1",1,0
 parity-m2-technical,canonicals_contains_fragment_url.csv,Occurrences,Occurrences,1,0
 parity-m2-technical,canonicals_contains_fragment_url.csv,Indexability,Indexability,1,0
 parity-m2-technical,canonicals_contains_fragment_url.csv,Indexability Status,Indexability Status,1,0
@@ -1219,8 +1333,6 @@ parity-m2-technical,canonicals_contains_fragment_url.csv,Meta Robots 1,Meta Robo
 parity-m2-technical,canonicals_contains_fragment_url.csv,X-Robots-Tag 1,X-Robots-Tag 1,1,0
 parity-m2-technical,canonicals_contains_fragment_url.csv,"rel=""next"" 1","rel=""next"" 1",1,0
 parity-m2-technical,canonicals_contains_fragment_url.csv,"rel=""prev"" 1","rel=""prev"" 1",1,0
-parity-m2-technical,canonicals_contains_fragment_url.csv,"HTTP rel=""next"" 1","HTTP rel=""next"" 1",1,0
-parity-m2-technical,canonicals_contains_fragment_url.csv,"HTTP rel=""prev"" 1","HTTP rel=""prev"" 1",1,0
 parity-m2-technical,canonicals_outside_head.csv,Occurrences,Occurrences,1,1
 parity-m2-technical,canonicals_outside_head.csv,Indexability,Indexability,1,1
 parity-m2-technical,canonicals_outside_head.csv,Indexability Status,Indexability Status,1,1
@@ -1230,8 +1342,6 @@ parity-m2-technical,canonicals_outside_head.csv,Meta Robots 1,Meta Robots 1,1,0
 parity-m2-technical,canonicals_outside_head.csv,X-Robots-Tag 1,X-Robots-Tag 1,1,0
 parity-m2-technical,canonicals_outside_head.csv,"rel=""next"" 1","rel=""next"" 1",1,0
 parity-m2-technical,canonicals_outside_head.csv,"rel=""prev"" 1","rel=""prev"" 1",1,0
-parity-m2-technical,canonicals_outside_head.csv,"HTTP rel=""next"" 1","HTTP rel=""next"" 1",1,0
-parity-m2-technical,canonicals_outside_head.csv,"HTTP rel=""prev"" 1","HTTP rel=""prev"" 1",1,0
 parity-m2-technical,directives_noarchive.csv,Occurrences,Occurrences,3,0
 parity-m2-technical,directives_noarchive.csv,Meta Robots 1,Meta Robots 1,3,0
 parity-m2-technical,directives_noarchive.csv,X-Robots-Tag 1,X-Robots-Tag 1,3,0
@@ -1404,6 +1514,7 @@ parity-m2-technical,pagination_contains_pagination.csv,"rel=""next"" 1","rel=""n
 parity-m2-technical,pagination_contains_pagination.csv,"rel=""prev"" 1","rel=""prev"" 1",10,0
 parity-m2-technical,pagination_contains_pagination.csv,"rel=""next"" 2","rel=""next"" 2",10,0
 parity-m2-technical,pagination_contains_pagination.csv,Canonical Link Element 1,Canonical Link Element 1,10,0
+parity-m2-technical,pagination_contains_pagination.csv,HTTP Canonical,HTTP Canonical 1,10,0
 parity-m2-technical,pagination_contains_pagination.csv,Meta Robots 1,Meta Robots 1,10,0
 parity-m2-technical,pagination_contains_pagination.csv,X-Robots-Tag 1,X-Robots-Tag 1,10,0
 parity-m2-technical,pagination_contains_pagination.csv,HTTP Canonical 1,HTTP Canonical 1,10,0
@@ -1413,6 +1524,7 @@ parity-m2-technical,pagination_first_page.csv,"rel=""next"" 1","rel=""next"" 1",
 parity-m2-technical,pagination_first_page.csv,"rel=""prev"" 1","rel=""prev"" 1",7,0
 parity-m2-technical,pagination_first_page.csv,"rel=""next"" 2","rel=""next"" 2",7,0
 parity-m2-technical,pagination_first_page.csv,Canonical Link Element 1,Canonical Link Element 1,7,0
+parity-m2-technical,pagination_first_page.csv,HTTP Canonical,HTTP Canonical 1,7,0
 parity-m2-technical,pagination_first_page.csv,Meta Robots 1,Meta Robots 1,7,0
 parity-m2-technical,pagination_first_page.csv,X-Robots-Tag 1,X-Robots-Tag 1,7,0
 parity-m2-technical,pagination_first_page.csv,HTTP Canonical 1,HTTP Canonical 1,7,0
@@ -1421,6 +1533,7 @@ parity-m2-technical,pagination_paginated_2_pages.csv,Indexability Status,Indexab
 parity-m2-technical,pagination_paginated_2_pages.csv,"rel=""next"" 1","rel=""next"" 1",3,0
 parity-m2-technical,pagination_paginated_2_pages.csv,"rel=""prev"" 1","rel=""prev"" 1",3,0
 parity-m2-technical,pagination_paginated_2_pages.csv,Canonical Link Element 1,Canonical Link Element 1,3,0
+parity-m2-technical,pagination_paginated_2_pages.csv,HTTP Canonical,HTTP Canonical 1,3,0
 parity-m2-technical,pagination_paginated_2_pages.csv,Meta Robots 1,Meta Robots 1,3,0
 parity-m2-technical,pagination_paginated_2_pages.csv,X-Robots-Tag 1,X-Robots-Tag 1,3,0
 parity-m2-technical,pagination_paginated_2_pages.csv,HTTP Canonical 1,HTTP Canonical 1,3,0
@@ -1430,6 +1543,7 @@ parity-m2-technical,pagination_pagination_url_not_in_anchor_tag.csv,"rel=""next"
 parity-m2-technical,pagination_pagination_url_not_in_anchor_tag.csv,"rel=""prev"" 1","rel=""prev"" 1",9,0
 parity-m2-technical,pagination_pagination_url_not_in_anchor_tag.csv,"rel=""next"" 2","rel=""next"" 2",9,0
 parity-m2-technical,pagination_pagination_url_not_in_anchor_tag.csv,Canonical Link Element 1,Canonical Link Element 1,9,0
+parity-m2-technical,pagination_pagination_url_not_in_anchor_tag.csv,HTTP Canonical,HTTP Canonical 1,9,0
 parity-m2-technical,pagination_pagination_url_not_in_anchor_tag.csv,Meta Robots 1,Meta Robots 1,9,0
 parity-m2-technical,pagination_pagination_url_not_in_anchor_tag.csv,X-Robots-Tag 1,X-Robots-Tag 1,9,0
 parity-m2-technical,pagination_pagination_url_not_in_anchor_tag.csv,HTTP Canonical 1,HTTP Canonical 1,9,0
@@ -1438,6 +1552,7 @@ parity-m2-technical,pagination_non_200_pagination_urls.csv,Indexability Status,I
 parity-m2-technical,pagination_non_200_pagination_urls.csv,"rel=""next"" 1","rel=""next"" 1",1,0
 parity-m2-technical,pagination_non_200_pagination_urls.csv,"rel=""prev"" 1","rel=""prev"" 1",1,0
 parity-m2-technical,pagination_non_200_pagination_urls.csv,Canonical Link Element 1,Canonical Link Element 1,1,0
+parity-m2-technical,pagination_non_200_pagination_urls.csv,HTTP Canonical,HTTP Canonical 1,1,0
 parity-m2-technical,pagination_non_200_pagination_urls.csv,Meta Robots 1,Meta Robots 1,1,0
 parity-m2-technical,pagination_non_200_pagination_urls.csv,X-Robots-Tag 1,X-Robots-Tag 1,1,0
 parity-m2-technical,pagination_non_200_pagination_urls.csv,HTTP Canonical 1,HTTP Canonical 1,1,0
@@ -1446,6 +1561,7 @@ parity-m2-technical,pagination_unlinked_pagination_urls.csv,Indexability Status,
 parity-m2-technical,pagination_unlinked_pagination_urls.csv,"rel=""next"" 1","rel=""next"" 1",0,0
 parity-m2-technical,pagination_unlinked_pagination_urls.csv,"rel=""prev"" 1","rel=""prev"" 1",0,0
 parity-m2-technical,pagination_unlinked_pagination_urls.csv,Canonical Link Element 1,Canonical Link Element 1,0,0
+parity-m2-technical,pagination_unlinked_pagination_urls.csv,HTTP Canonical,HTTP Canonical 1,0,0
 parity-m2-technical,pagination_unlinked_pagination_urls.csv,Meta Robots 1,Meta Robots 1,0,0
 parity-m2-technical,pagination_unlinked_pagination_urls.csv,X-Robots-Tag 1,X-Robots-Tag 1,0,0
 parity-m2-technical,pagination_unlinked_pagination_urls.csv,HTTP Canonical 1,HTTP Canonical 1,0,0
@@ -1454,6 +1570,7 @@ parity-m2-technical,pagination_non_indexable.csv,Indexability Status,Indexabilit
 parity-m2-technical,pagination_non_indexable.csv,"rel=""next"" 1","rel=""next"" 1",0,0
 parity-m2-technical,pagination_non_indexable.csv,"rel=""prev"" 1","rel=""prev"" 1",0,0
 parity-m2-technical,pagination_non_indexable.csv,Canonical Link Element 1,Canonical Link Element 1,0,0
+parity-m2-technical,pagination_non_indexable.csv,HTTP Canonical,HTTP Canonical 1,0,0
 parity-m2-technical,pagination_non_indexable.csv,Meta Robots 1,Meta Robots 1,0,0
 parity-m2-technical,pagination_non_indexable.csv,X-Robots-Tag 1,X-Robots-Tag 1,0,0
 parity-m2-technical,pagination_non_indexable.csv,HTTP Canonical 1,HTTP Canonical 1,0,0
@@ -1463,6 +1580,7 @@ parity-m2-technical,pagination_multiple_pagination_urls.csv,"rel=""next"" 1","re
 parity-m2-technical,pagination_multiple_pagination_urls.csv,"rel=""prev"" 1","rel=""prev"" 1",1,0
 parity-m2-technical,pagination_multiple_pagination_urls.csv,"rel=""next"" 2","rel=""next"" 2",1,0
 parity-m2-technical,pagination_multiple_pagination_urls.csv,Canonical Link Element 1,Canonical Link Element 1,1,0
+parity-m2-technical,pagination_multiple_pagination_urls.csv,HTTP Canonical,HTTP Canonical 1,1,0
 parity-m2-technical,pagination_multiple_pagination_urls.csv,Meta Robots 1,Meta Robots 1,1,0
 parity-m2-technical,pagination_multiple_pagination_urls.csv,X-Robots-Tag 1,X-Robots-Tag 1,1,0
 parity-m2-technical,pagination_multiple_pagination_urls.csv,HTTP Canonical 1,HTTP Canonical 1,1,0
@@ -1471,6 +1589,7 @@ parity-m2-technical,pagination_pagination_loop.csv,Indexability Status,Indexabil
 parity-m2-technical,pagination_pagination_loop.csv,"rel=""next"" 1","rel=""next"" 1",2,0
 parity-m2-technical,pagination_pagination_loop.csv,"rel=""prev"" 1","rel=""prev"" 1",2,0
 parity-m2-technical,pagination_pagination_loop.csv,Canonical Link Element 1,Canonical Link Element 1,2,0
+parity-m2-technical,pagination_pagination_loop.csv,HTTP Canonical,HTTP Canonical 1,2,0
 parity-m2-technical,pagination_pagination_loop.csv,Meta Robots 1,Meta Robots 1,2,0
 parity-m2-technical,pagination_pagination_loop.csv,X-Robots-Tag 1,X-Robots-Tag 1,2,0
 parity-m2-technical,pagination_pagination_loop.csv,HTTP Canonical 1,HTTP Canonical 1,2,0
@@ -1480,6 +1599,7 @@ parity-m2-technical,pagination_sequence_error.csv,"rel=""next"" 1","rel=""next""
 parity-m2-technical,pagination_sequence_error.csv,"rel=""prev"" 1","rel=""prev"" 1",4,0
 parity-m2-technical,pagination_sequence_error.csv,"rel=""next"" 2","rel=""next"" 2",4,0
 parity-m2-technical,pagination_sequence_error.csv,Canonical Link Element 1,Canonical Link Element 1,4,0
+parity-m2-technical,pagination_sequence_error.csv,HTTP Canonical,HTTP Canonical 1,4,0
 parity-m2-technical,pagination_sequence_error.csv,Meta Robots 1,Meta Robots 1,4,0
 parity-m2-technical,pagination_sequence_error.csv,X-Robots-Tag 1,X-Robots-Tag 1,4,0
 parity-m2-technical,pagination_sequence_error.csv,HTTP Canonical 1,HTTP Canonical 1,4,0
@@ -1536,15 +1656,16 @@ parity-m2-technical,response_codes_internal_redirection_http_refresh.csv,Indexab
 parity-m2-technical,response_codes_internal_redirection_http_refresh.csv,Inlinks,Inlinks,1,0
 parity-m2-technical,response_codes_internal_redirection_http_refresh.csv,Redirect URL,Redirect URL,1,0
 parity-m2-technical,response_codes_internal_redirection_http_refresh.csv,Redirect Type,Redirect Type,1,0
-parity-m2-technical,redirects_redirect_canonical_chains.csv,Chain Type,Chain Type,3,1
+parity-m2-technical,redirects_redirect_canonical_chains.csv,Chain Type,Chain Type,2,0
+parity-m2-technical,redirects_redirect_canonical_chains.csv,Number of Redirects/Canonicals,Number of Redirects,3,0
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Loop,Redirect Loop,3,0
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Temp Redirect in Chain,Temp Redirect in Chain,3,0
-parity-m2-technical,redirects_redirect_canonical_chains.csv,Final Address,Final Address,3,1
-parity-m2-technical,redirects_redirect_canonical_chains.csv,Final Indexability,Final Indexability,3,1
-parity-m2-technical,redirects_redirect_canonical_chains.csv,Final Indexability Status,Final Indexability Status,3,1
+parity-m2-technical,redirects_redirect_canonical_chains.csv,Final Address,Final Address,2,0
+parity-m2-technical,redirects_redirect_canonical_chains.csv,Final Indexability,Final Indexability,2,0
+parity-m2-technical,redirects_redirect_canonical_chains.csv,Final Indexability Status,Final Indexability Status,2,0
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Final Content,Final Content Type,3,0
-parity-m2-technical,redirects_redirect_canonical_chains.csv,Final Status Code,Final Status Code,3,1
-parity-m2-technical,redirects_redirect_canonical_chains.csv,Final Status,Final Status,3,1
+parity-m2-technical,redirects_redirect_canonical_chains.csv,Final Status Code,Final Status Code,2,0
+parity-m2-technical,redirects_redirect_canonical_chains.csv,Final Status,Final Status,2,0
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Status Code 1,Status Code 1,3,0
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Status 1,Status 1,3,0
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Redirect Type 1,Redirect Type 1,3,0
@@ -1553,12 +1674,12 @@ parity-m2-technical,redirects_redirect_canonical_chains.csv,Status Code 2,Status
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Status 2,Status 2,3,0
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Redirect Type 2,Redirect Type 2,3,0
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Redirect URL 2,Redirect URL 2,3,0
-parity-m2-technical,redirects_redirect_canonical_chains.csv,Status Code 3,Status Code 3,3,1
-parity-m2-technical,redirects_redirect_canonical_chains.csv,Status 3,Status 3,3,1
+parity-m2-technical,redirects_redirect_canonical_chains.csv,Status Code 3,Status Code 3,3,0
+parity-m2-technical,redirects_redirect_canonical_chains.csv,Status 3,Status 3,3,0
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Redirect Type 3,Redirect Type 3,3,0
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Redirect URL 3,Redirect URL 3,3,0
-parity-m2-technical,redirects_redirect_canonical_chains.csv,Status Code 4,Status Code 4,3,1
-parity-m2-technical,redirects_redirect_canonical_chains.csv,Status 4,Status 4,3,1
+parity-m2-technical,redirects_redirect_canonical_chains.csv,Status Code 4,Status Code 4,3,0
+parity-m2-technical,redirects_redirect_canonical_chains.csv,Status 4,Status 4,2,0
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Redirect Type 4,Redirect Type 4,3,0
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Redirect URL 4,Redirect URL 4,3,0
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Status Code 5,Status Code 5,3,0
@@ -1586,6 +1707,7 @@ parity-m2-technical,redirects_redirect_canonical_chains.csv,Status 10,Status 10,
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Redirect Type 10,Redirect Type 10,3,0
 parity-m2-technical,redirects_redirect_canonical_chains.csv,Redirect URL 10,Redirect URL 10,3,0
 parity-m2-technical,canonicals_canonical_chains.csv,Chain Type,Chain Type,1,0
+parity-m2-technical,canonicals_canonical_chains.csv,Number of Canonicals,Number of Redirects,1,0
 parity-m2-technical,canonicals_canonical_chains.csv,Loop,Redirect Loop,1,0
 parity-m2-technical,canonicals_canonical_chains.csv,Final Address,Final Address,1,0
 parity-m2-technical,canonicals_canonical_chains.csv,Final Indexability,Final Indexability,1,0
@@ -1601,8 +1723,8 @@ parity-m2-technical,canonicals_canonical_chains.csv,Status Code 2,Status Code 2,
 parity-m2-technical,canonicals_canonical_chains.csv,Status 2,Status 2,1,0
 parity-m2-technical,canonicals_canonical_chains.csv,Redirect Type 2,Redirect Type 2,1,0
 parity-m2-technical,canonicals_canonical_chains.csv,Redirect URL 2,Redirect URL 2,1,0
-parity-m2-technical,canonicals_canonical_chains.csv,Status Code 3,Status Code 3,1,1
-parity-m2-technical,canonicals_canonical_chains.csv,Status 3,Status 3,1,1
+parity-m2-technical,canonicals_canonical_chains.csv,Status Code 3,Status Code 3,1,0
+parity-m2-technical,canonicals_canonical_chains.csv,Status 3,Status 3,1,0
 parity-m2-technical,canonicals_canonical_chains.csv,Redirect Type 3,Redirect Type 3,1,0
 parity-m2-technical,canonicals_canonical_chains.csv,Redirect URL 3,Redirect URL 3,1,0
 parity-m2-technical,canonicals_canonical_chains.csv,Status Code 4,Status Code 4,1,0
@@ -1633,6 +1755,24 @@ parity-m2-technical,canonicals_canonical_chains.csv,Status Code 10,Status Code 1
 parity-m2-technical,canonicals_canonical_chains.csv,Status 10,Status 10,1,0
 parity-m2-technical,canonicals_canonical_chains.csv,Redirect Type 10,Redirect Type 10,1,0
 parity-m2-technical,canonicals_canonical_chains.csv,Redirect URL 10,Redirect URL 10,1,0
+parity-m2-technical,canonicals_non_indexable_canonicals.csv,Indexability,Indexability,2,0
+parity-m2-technical,canonicals_non_indexable_canonicals.csv,Indexability Status,Indexability Status,2,0
+parity-m2-technical,canonicals_non_indexable_canonicals.csv,Status Code,Status Code,2,0
+parity-m2-technical,canonicals_non_indexable_canonicals.csv,Status,Status,2,0
+parity-m2-technical,canonicals_non_indexable_canonicals.csv,Unlinked,Unlinked,2,0
+parity-m2-technical,report_hreflang_all_hreflang_urls.csv,hreflang,Hreflang Language,29,0
+parity-m2-technical,report_hreflang_non_200_hreflang_urls.csv,hreflang,Hreflang Language,1,0
+parity-m2-technical,report_hreflang_non_200_hreflang_urls.csv,Status Code,Status Code,1,0
+parity-m2-technical,report_hreflang_non_200_hreflang_urls.csv,Status,Status,1,0
+parity-m2-technical,report_hreflang_unlinked_hreflang_urls.csv,hreflang,Hreflang Language,0,0
+parity-m2-technical,report_hreflang_unlinked_hreflang_urls.csv,Status Code,Status Code,0,0
+parity-m2-technical,report_hreflang_missing_return_links.csv,Expected Link,Missing Return Link To,3,0
+parity-m2-technical,report_hreflang_missing_return_links.csv,Response Code,Hreflang URL Status Code,3,0
+parity-m2-technical,report_hreflang_missing_return_links.csv,hreflang,Hreflang Language,3,3
+parity-m2-technical,report_hreflang_inconsistent_language_region_return_links.csv,Expected Language,Expected Language,0,0
+parity-m2-technical,report_hreflang_inconsistent_language_region_return_links.csv,Actual Language,Actual Language,0,0
+parity-m2-technical,report_hreflang_non_canonical_return_links.csv,Canonical,Canonical Of Hreflang URL,0,0
+parity-m2-technical,report_hreflang_noindex_return_links.csv,Language,Hreflang Language,1,0
 parity-m2-technical,bulk_canonicals_contains_canonical_inlinks.csv,Size (Bytes),Size (Bytes),12,0
 parity-m2-technical,bulk_canonicals_contains_canonical_inlinks.csv,Alt Text,Alt Text,12,0
 parity-m2-technical,bulk_canonicals_contains_canonical_inlinks.csv,Anchor,Anchor,12,0
@@ -2110,7 +2250,7 @@ parity-onpage,all_inlinks.csv,Path Type,Path Type,277,0
 parity-onpage,all_inlinks.csv,Link Path,Link Path,277,0
 parity-onpage,all_inlinks.csv,Link Position,Link Position,277,0
 parity-onpage,all_inlinks.csv,Link Origin,Link Origin,277,0
-parity-onpage,crawl_overview.csv,URLs,URLs,203,15
+parity-onpage,crawl_overview.csv,URLs,URLs,199,11
 parity-response,internal_all.csv,Content Type,Content,46,0
 parity-response,internal_all.csv,Status Code,Status Code,46,0
 parity-response,internal_all.csv,Status,Status,46,0
@@ -2217,11 +2357,11 @@ parity-response,redirect_chains.csv,Status 1,Status 1,6,0
 parity-response,redirect_chains.csv,Redirect Type 1,Redirect Type 1,6,0
 parity-response,redirect_chains.csv,Redirect URL 1,Redirect URL 1,6,0
 parity-response,redirect_chains.csv,Status Code 2,Status Code 2,6,0
-parity-response,redirect_chains.csv,Status 2,Status 2,6,0
+parity-response,redirect_chains.csv,Status 2,Status 2,6,1
 parity-response,redirect_chains.csv,Redirect Type 2,Redirect Type 2,6,0
 parity-response,redirect_chains.csv,Redirect URL 2,Redirect URL 2,6,0
-parity-response,redirect_chains.csv,Status Code 3,Status Code 3,3,0
-parity-response,redirect_chains.csv,Status 3,Status 3,3,0
+parity-response,redirect_chains.csv,Status Code 3,Status Code 3,6,0
+parity-response,redirect_chains.csv,Status 3,Status 3,6,1
 parity-response,redirect_chains.csv,Redirect Type 3,Redirect Type 3,6,0
 parity-response,redirect_chains.csv,Redirect URL 3,Redirect URL 3,6,0
 parity-response,redirect_chains.csv,Status Code 4,Status Code 4,6,0
@@ -2232,8 +2372,8 @@ parity-response,redirect_chains.csv,Status Code 5,Status Code 5,6,0
 parity-response,redirect_chains.csv,Status 5,Status 5,6,0
 parity-response,redirect_chains.csv,Redirect Type 5,Redirect Type 5,6,0
 parity-response,redirect_chains.csv,Redirect URL 5,Redirect URL 5,6,0
-parity-response,redirect_chains.csv,Status Code 6,Status Code 6,5,0
-parity-response,redirect_chains.csv,Status 6,Status 6,5,0
+parity-response,redirect_chains.csv,Status Code 6,Status Code 6,6,0
+parity-response,redirect_chains.csv,Status 6,Status 6,6,0
 parity-response,redirect_chains.csv,Redirect Type 6,Redirect Type 6,6,0
 parity-response,redirect_chains.csv,Redirect URL 6,Redirect URL 6,6,0
 parity-response,redirect_chains.csv,Status Code 7,Status Code 7,6,0
@@ -2252,7 +2392,57 @@ parity-response,redirect_chains.csv,Status Code 10,Status Code 10,6,0
 parity-response,redirect_chains.csv,Status 10,Status 10,6,0
 parity-response,redirect_chains.csv,Redirect Type 10,Redirect Type 10,6,0
 parity-response,redirect_chains.csv,Redirect URL 10,Redirect URL 10,6,0
-parity-response,crawl_overview.csv,URLs,URLs,203,16
+parity-response,redirects_to_error.csv,Chain Type,Chain Type,4,0
+parity-response,redirects_to_error.csv,Number of Redirects,Number of Redirects,4,0
+parity-response,redirects_to_error.csv,Loop,Redirect Loop,4,0
+parity-response,redirects_to_error.csv,Temp Redirect in Chain,Temp Redirect in Chain,4,1
+parity-response,redirects_to_error.csv,Final Address,Final Address,4,0
+parity-response,redirects_to_error.csv,Final Indexability,Final Indexability,4,0
+parity-response,redirects_to_error.csv,Final Indexability Status,Final Indexability Status,4,0
+parity-response,redirects_to_error.csv,Final Content,Final Content Type,4,0
+parity-response,redirects_to_error.csv,Final Status Code,Final Status Code,4,0
+parity-response,redirects_to_error.csv,Final Status,Final Status,4,1
+parity-response,redirects_to_error.csv,Status Code 1,Status Code 1,4,0
+parity-response,redirects_to_error.csv,Status 1,Status 1,4,0
+parity-response,redirects_to_error.csv,Redirect Type 1,Redirect Type 1,4,0
+parity-response,redirects_to_error.csv,Redirect URL 1,Redirect URL 1,4,0
+parity-response,redirects_to_error.csv,Status Code 2,Status Code 2,4,0
+parity-response,redirects_to_error.csv,Status 2,Status 2,4,1
+parity-response,redirects_to_error.csv,Redirect Type 2,Redirect Type 2,4,0
+parity-response,redirects_to_error.csv,Redirect URL 2,Redirect URL 2,4,0
+parity-response,redirects_to_error.csv,Status Code 3,Status Code 3,4,0
+parity-response,redirects_to_error.csv,Status 3,Status 3,4,0
+parity-response,redirects_to_error.csv,Redirect Type 3,Redirect Type 3,4,0
+parity-response,redirects_to_error.csv,Redirect URL 3,Redirect URL 3,4,0
+parity-response,redirects_to_error.csv,Status Code 4,Status Code 4,4,0
+parity-response,redirects_to_error.csv,Status 4,Status 4,4,0
+parity-response,redirects_to_error.csv,Redirect Type 4,Redirect Type 4,4,0
+parity-response,redirects_to_error.csv,Redirect URL 4,Redirect URL 4,4,0
+parity-response,redirects_to_error.csv,Status Code 5,Status Code 5,4,0
+parity-response,redirects_to_error.csv,Status 5,Status 5,4,0
+parity-response,redirects_to_error.csv,Redirect Type 5,Redirect Type 5,4,0
+parity-response,redirects_to_error.csv,Redirect URL 5,Redirect URL 5,4,0
+parity-response,redirects_to_error.csv,Status Code 6,Status Code 6,4,0
+parity-response,redirects_to_error.csv,Status 6,Status 6,4,0
+parity-response,redirects_to_error.csv,Redirect Type 6,Redirect Type 6,4,0
+parity-response,redirects_to_error.csv,Redirect URL 6,Redirect URL 6,4,0
+parity-response,redirects_to_error.csv,Status Code 7,Status Code 7,4,0
+parity-response,redirects_to_error.csv,Status 7,Status 7,4,0
+parity-response,redirects_to_error.csv,Redirect Type 7,Redirect Type 7,4,0
+parity-response,redirects_to_error.csv,Redirect URL 7,Redirect URL 7,4,0
+parity-response,redirects_to_error.csv,Status Code 8,Status Code 8,4,0
+parity-response,redirects_to_error.csv,Status 8,Status 8,4,0
+parity-response,redirects_to_error.csv,Redirect Type 8,Redirect Type 8,4,0
+parity-response,redirects_to_error.csv,Redirect URL 8,Redirect URL 8,4,0
+parity-response,redirects_to_error.csv,Status Code 9,Status Code 9,4,0
+parity-response,redirects_to_error.csv,Status 9,Status 9,4,0
+parity-response,redirects_to_error.csv,Redirect Type 9,Redirect Type 9,4,0
+parity-response,redirects_to_error.csv,Redirect URL 9,Redirect URL 9,4,0
+parity-response,redirects_to_error.csv,Status Code 10,Status Code 10,4,0
+parity-response,redirects_to_error.csv,Status 10,Status 10,4,0
+parity-response,redirects_to_error.csv,Redirect Type 10,Redirect Type 10,4,0
+parity-response,redirects_to_error.csv,Redirect URL 10,Redirect URL 10,4,0
+parity-response,crawl_overview.csv,URLs,URLs,200,13
 parity-synthetic,internal_all.csv,Content Type,Content,400,0
 parity-synthetic,internal_all.csv,Status Code,Status Code,400,0
 parity-synthetic,internal_all.csv,Status,Status,400,0
@@ -2310,7 +2500,6 @@ parity-synthetic,internal_all.csv,Title 2 Pixel Width,Title 2 Pixel Width,400,0
 parity-synthetic,links_all.csv,Indexability,Indexability,379,0
 parity-synthetic,links_all.csv,Indexability Status,Indexability Status,378,0
 parity-synthetic,links_all.csv,Crawl Depth,Crawl Depth,379,0
-parity-synthetic,links_all.csv,Link Score,Link Score,379,367
 parity-synthetic,links_all.csv,Inlinks,Inlinks,379,0
 parity-synthetic,links_all.csv,Unique Inlinks,Unique Inlinks,379,0
 parity-synthetic,links_all.csv,% of Total,% of Total,379,0
@@ -2330,7 +2519,7 @@ parity-synthetic,all_inlinks.csv,Path Type,Path Type,4176,0
 parity-synthetic,all_inlinks.csv,Link Path,Link Path,4176,0
 parity-synthetic,all_inlinks.csv,Link Position,Link Position,4176,0
 parity-synthetic,all_inlinks.csv,Link Origin,Link Origin,4169,0
-parity-synthetic,crawl_overview.csv,URLs,URLs,211,13
+parity-synthetic,crawl_overview.csv,URLs,URLs,207,9
 parity-technical,internal_all.csv,Content Type,Content,111,0
 parity-technical,internal_all.csv,Status Code,Status Code,111,0
 parity-technical,internal_all.csv,Status,Status,111,0
@@ -2397,13 +2586,11 @@ parity-technical,canonicals_all.csv,Meta Robots 1,Meta Robots 1,106,0
 parity-technical,canonicals_all.csv,X-Robots-Tag 1,X-Robots-Tag 1,106,0
 parity-technical,canonicals_all.csv,"rel=""next"" 1","rel=""next"" 1",106,0
 parity-technical,canonicals_all.csv,"rel=""prev"" 1","rel=""prev"" 1",106,0
-parity-technical,canonicals_all.csv,"HTTP rel=""next"" 1","HTTP rel=""next"" 1",106,0
-parity-technical,canonicals_all.csv,"HTTP rel=""prev"" 1","HTTP rel=""prev"" 1",106,0
 parity-technical,directives_all.csv,Occurrences,Occurrences,107,0
 parity-technical,directives_all.csv,Meta Robots 1,Meta Robots 1,107,0
 parity-technical,directives_all.csv,Meta Robots 2,Meta Robots 2,107,0
 parity-technical,directives_all.csv,X-Robots-Tag 1,X-Robots-Tag 1,107,0
-parity-technical,directives_all.csv,Meta Refresh 1,Meta Refresh 1,106,0
+parity-technical,directives_all.csv,Meta Refresh 1,Meta Refresh 1,107,1
 parity-technical,directives_all.csv,Canonical Link Element 1,Canonical Link Element 1,107,0
 parity-technical,directives_all.csv,Canonical Link Element 2,Canonical Link Element 2,107,0
 parity-technical,directives_all.csv,HTTP Canonical,HTTP Canonical 1,107,0
@@ -2430,7 +2617,6 @@ parity-technical,hreflang_all.csv,Indexability Status,Indexability Status,106,0
 parity-technical,links_all.csv,Indexability,Indexability,106,0
 parity-technical,links_all.csv,Indexability Status,Indexability Status,106,0
 parity-technical,links_all.csv,Crawl Depth,Crawl Depth,106,0
-parity-technical,links_all.csv,Link Score,Link Score,106,93
 parity-technical,links_all.csv,Inlinks,Inlinks,105,0
 parity-technical,links_all.csv,Unique Inlinks,Unique Inlinks,105,0
 parity-technical,links_all.csv,% of Total,% of Total,105,0
@@ -2455,4 +2641,4 @@ parity-technical,all_inlinks.csv,Path Type,Path Type,405,0
 parity-technical,all_inlinks.csv,Link Path,Link Path,405,0
 parity-technical,all_inlinks.csv,Link Position,Link Position,405,0
 parity-technical,all_inlinks.csv,Link Origin,Link Origin,400,0
-parity-technical,crawl_overview.csv,URLs,URLs,204,20
+parity-technical,crawl_overview.csv,URLs,URLs,202,18

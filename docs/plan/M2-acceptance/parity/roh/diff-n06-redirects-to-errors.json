@@ -1,0 +1,463 @@
+{
+  "export": "redirects_to_errors",
+  "site": "parity-response",
+  "ref_rows": 4,
+  "os_rows": 5,
+  "matched": 4,
+  "missing_in_os": [],
+  "extra_in_os": [
+    "{BASE}/r-to-blocked"
+  ],
+  "cells_compared": 200,
+  "cells_equal": 197,
+  "agreement_pct": 98.5,
+  "columns": [
+    {
+      "ref_column": "Chain Type",
+      "os_column": "Chain Type",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Number of Redirects",
+      "os_column": "Number of Redirects",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Loop",
+      "os_column": "Redirect Loop",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Temp Redirect in Chain",
+      "os_column": "Temp Redirect in Chain",
+      "compared": 4,
+      "errors": 1,
+      "examples": [
+        {
+          "key": "{BASE}/r-meta-to-404.html",
+          "ref": "true",
+          "os": "False"
+        }
+      ]
+    },
+    {
+      "ref_column": "Final Address",
+      "os_column": "Final Address",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Final Indexability",
+      "os_column": "Final Indexability",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Final Indexability Status",
+      "os_column": "Final Indexability Status",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Final Content",
+      "os_column": "Final Content Type",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Final Status Code",
+      "os_column": "Final Status Code",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Final Status",
+      "os_column": "Final Status",
+      "compared": 4,
+      "errors": 1,
+      "examples": [
+        {
+          "key": "{BASE}/r-to-dead",
+          "ref": "Connection Timeout",
+          "os": "Connection Refused"
+        }
+      ]
+    },
+    {
+      "ref_column": "Status Code 1",
+      "os_column": "Status Code 1",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 1",
+      "os_column": "Status 1",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect Type 1",
+      "os_column": "Redirect Type 1",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 1",
+      "os_column": "Redirect URL 1",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code 2",
+      "os_column": "Status Code 2",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 2",
+      "os_column": "Status 2",
+      "compared": 4,
+      "errors": 1,
+      "examples": [
+        {
+          "key": "{BASE}/r-to-dead",
+          "ref": "Connection Timeout",
+          "os": "Connection Refused"
+        }
+      ]
+    },
+    {
+      "ref_column": "Redirect Type 2",
+      "os_column": "Redirect Type 2",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 2",
+      "os_column": "Redirect URL 2",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code 3",
+      "os_column": "Status Code 3",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 3",
+      "os_column": "Status 3",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect Type 3",
+      "os_column": "Redirect Type 3",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 3",
+      "os_column": "Redirect URL 3",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code 4",
+      "os_column": "Status Code 4",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 4",
+      "os_column": "Status 4",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect Type 4",
+      "os_column": "Redirect Type 4",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 4",
+      "os_column": "Redirect URL 4",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code 5",
+      "os_column": "Status Code 5",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 5",
+      "os_column": "Status 5",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect Type 5",
+      "os_column": "Redirect Type 5",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 5",
+      "os_column": "Redirect URL 5",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code 6",
+      "os_column": "Status Code 6",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 6",
+      "os_column": "Status 6",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect Type 6",
+      "os_column": "Redirect Type 6",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 6",
+      "os_column": "Redirect URL 6",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code 7",
+      "os_column": "Status Code 7",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 7",
+      "os_column": "Status 7",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect Type 7",
+      "os_column": "Redirect Type 7",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 7",
+      "os_column": "Redirect URL 7",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code 8",
+      "os_column": "Status Code 8",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 8",
+      "os_column": "Status 8",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect Type 8",
+      "os_column": "Redirect Type 8",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 8",
+      "os_column": "Redirect URL 8",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code 9",
+      "os_column": "Status Code 9",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 9",
+      "os_column": "Status 9",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect Type 9",
+      "os_column": "Redirect Type 9",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 9",
+      "os_column": "Redirect URL 9",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code 10",
+      "os_column": "Status Code 10",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 10",
+      "os_column": "Status 10",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect Type 10",
+      "os_column": "Redirect Type 10",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 10",
+      "os_column": "Redirect URL 10",
+      "compared": 4,
+      "errors": 0,
+      "examples": []
+    }
+  ],
+  "applied_deviations": [],
+  "dropped_ref_columns": [],
+  "ignored_columns": [
+    {
+      "column": "Source",
+      "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle; OpenSpider nennt `Sample Source`"
+    },
+    {
+      "column": "Alt Text",
+      "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+    },
+    {
+      "column": "Anchor Text",
+      "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+    },
+    {
+      "column": "Link Path",
+      "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+    },
+    {
+      "column": "Link Position",
+      "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+    },
+    {
+      "column": "Content 1",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 2",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 3",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 4",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 5",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 6",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 7",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 8",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 9",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 10",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    }
+  ],
+  "unmapped_ref_columns": [],
+  "unmapped_os_columns": [
+    "Inlinks",
+    "Sample Source"
+  ],
+  "missing_ref_columns": [],
+  "missing_os_columns": [],
+  "ignored_ref_rows": [],
+  "os_only_rows": [],
+  "threshold_pct": 97.0,
+  "url_set_identical": false,
+  "passed": false,
+  "failures": [
+    "URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich"
+  ]
+}

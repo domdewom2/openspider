@@ -1,0 +1,198 @@
+{
+  "baseline": "b4aebd7c1f9cb552ae74ff8f6c7431bd439c0fed",
+  "definition": "Q02 M1 scope, current os-parity diff; full M2 scope is reported separately",
+  "passed": 38,
+  "total": 38,
+  "checks": [
+    {
+      "site": "out-basic-site",
+      "file": "internal_all.csv",
+      "passed": true
+    },
+    {
+      "site": "out-basic-site",
+      "file": "external_all.csv",
+      "passed": true
+    },
+    {
+      "site": "out-basic-site",
+      "file": "response_codes_all.csv",
+      "passed": true
+    },
+    {
+      "site": "out-basic-site",
+      "file": "links_all.csv",
+      "passed": true
+    },
+    {
+      "site": "out-basic-site",
+      "file": "all_inlinks.csv",
+      "passed": true
+    },
+    {
+      "site": "out-basic-site",
+      "file": "redirect_chains.csv",
+      "passed": true
+    },
+    {
+      "site": "out-basic-site",
+      "file": "crawl_overview.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-onpage",
+      "file": "internal_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-onpage",
+      "file": "external_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-onpage",
+      "file": "response_codes_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-onpage",
+      "file": "url_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-onpage",
+      "file": "page_titles_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-onpage",
+      "file": "meta_description_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-onpage",
+      "file": "h1_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-onpage",
+      "file": "h2_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-onpage",
+      "file": "content_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-onpage",
+      "file": "images_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-onpage",
+      "file": "all_inlinks.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-onpage",
+      "file": "crawl_overview.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-response",
+      "file": "internal_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-response",
+      "file": "external_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-response",
+      "file": "response_codes_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-response",
+      "file": "all_inlinks.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-response",
+      "file": "all_error_(4xx_5xx_no_response)_inlinks.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-response",
+      "file": "redirect_chains.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-response",
+      "file": "crawl_overview.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-synthetic",
+      "file": "internal_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-synthetic",
+      "file": "links_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-synthetic",
+      "file": "all_inlinks.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-synthetic",
+      "file": "crawl_overview.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-technical",
+      "file": "internal_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-technical",
+      "file": "canonicals_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-technical",
+      "file": "directives_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-technical",
+      "file": "hreflang_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-technical",
+      "file": "links_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-technical",
+      "file": "sitemaps_all.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-technical",
+      "file": "all_inlinks.csv",
+      "passed": true
+    },
+    {
+      "site": "parity-technical",
+      "file": "crawl_overview.csv",
+      "passed": true
+    }
+  ]
+}

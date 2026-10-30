@@ -9,15 +9,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 54,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -31,10 +23,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 5,
-    "missing_ref_columns": [
-      "Redirect Type",
-      "Redirect URL"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -57,11 +46,11 @@
     "ref_file": "links_all.csv",
     "mapping": "links_all",
     "outcome": "compared",
-    "agreement_pct": 90.323,
+    "agreement_pct": 100.0,
     "threshold_pct": 97.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
-    "compared_columns": 11,
+    "compared_columns": 10,
     "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
@@ -91,48 +80,7 @@
     "url_set_identical": true,
     "compared_columns": 50,
     "missing_ref_columns": [],
-    "missing_os_columns": [
-      "Status Code 1",
-      "Status 1",
-      "Redirect Type 1",
-      "Redirect URL 1",
-      "Status Code 2",
-      "Status 2",
-      "Redirect Type 2",
-      "Redirect URL 2",
-      "Status Code 3",
-      "Status 3",
-      "Redirect Type 3",
-      "Redirect URL 3",
-      "Status Code 4",
-      "Status 4",
-      "Redirect Type 4",
-      "Redirect URL 4",
-      "Status Code 5",
-      "Status 5",
-      "Redirect Type 5",
-      "Redirect URL 5",
-      "Status Code 6",
-      "Status 6",
-      "Redirect Type 6",
-      "Redirect URL 6",
-      "Status Code 7",
-      "Status 7",
-      "Redirect Type 7",
-      "Redirect URL 7",
-      "Status Code 8",
-      "Status 8",
-      "Redirect Type 8",
-      "Redirect URL 8",
-      "Status Code 9",
-      "Status 9",
-      "Redirect Type 9",
-      "Redirect URL 9",
-      "Status Code 10",
-      "Status 10",
-      "Redirect Type 10",
-      "Redirect URL 10"
-    ],
+    "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
   {
@@ -140,7 +88,7 @@
     "ref_file": "crawl_overview.csv",
     "mapping": "crawl_overview",
     "outcome": "compared",
-    "agreement_pct": 93.72,
+    "agreement_pct": 96.04,
     "threshold_pct": 100.0,
     "passed": false,
     "url_set_identical": false,
@@ -154,20 +102,12 @@
     "ref_file": "internal_all.csv",
     "mapping": "internal_m2",
     "outcome": "compared",
-    "agreement_pct": 87.631,
+    "agreement_pct": 98.233,
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": false,
-    "compared_columns": 55,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 56,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -189,18 +129,26 @@
     "site": "parity-m2-links",
     "ref_file": "crawl_overview.csv",
     "mapping": "crawl_overview",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 95.61,
+    "threshold_pct": 100.0,
+    "passed": false,
+    "url_set_identical": false,
+    "compared_columns": 1,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-links",
     "ref_file": "links_all.csv",
     "mapping": "links_all",
     "outcome": "compared",
-    "agreement_pct": 91.677,
+    "agreement_pct": 100.0,
     "threshold_pct": 97.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
-    "compared_columns": 11,
+    "compared_columns": 10,
     "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
@@ -214,7 +162,7 @@
     "threshold_pct": 97.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 11,
+    "compared_columns": 10,
     "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
@@ -228,7 +176,7 @@
     "threshold_pct": 97.0,
     "passed": false,
     "url_set_identical": false,
-    "compared_columns": 11,
+    "compared_columns": 10,
     "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
@@ -242,7 +190,7 @@
     "threshold_pct": 97.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 11,
+    "compared_columns": 10,
     "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
@@ -252,11 +200,11 @@
     "ref_file": "links_follow_nofollow_internal_inlinks_to_page.csv",
     "mapping": "links_all",
     "outcome": "compared",
-    "agreement_pct": 90.909,
+    "agreement_pct": 100.0,
     "threshold_pct": 97.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
-    "compared_columns": 11,
+    "compared_columns": 10,
     "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
@@ -270,7 +218,7 @@
     "threshold_pct": 97.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 11,
+    "compared_columns": 10,
     "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
@@ -282,9 +230,9 @@
     "outcome": "compared",
     "agreement_pct": 100.0,
     "threshold_pct": 97.0,
-    "passed": false,
-    "url_set_identical": false,
-    "compared_columns": 11,
+    "passed": true,
+    "url_set_identical": true,
+    "compared_columns": 10,
     "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
@@ -294,11 +242,11 @@
     "ref_file": "links_non_indexable_page_inlinks_only.csv",
     "mapping": "links_all",
     "outcome": "compared",
-    "agreement_pct": 90.909,
+    "agreement_pct": 100.0,
     "threshold_pct": 97.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
-    "compared_columns": 11,
+    "compared_columns": 10,
     "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
@@ -312,7 +260,7 @@
     "threshold_pct": 97.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 11,
+    "compared_columns": 10,
     "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
@@ -329,16 +277,7 @@
     "compared_columns": 5,
     "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Type",
-      "Size (Bytes)",
-      "Status",
-      "Target",
-      "Rel",
-      "Path Type",
-      "Link Path",
-      "Link Origin"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-links",
@@ -358,75 +297,131 @@
     "site": "parity-m2-links",
     "ref_file": "bulk_links_internal_nofollow_outlinks.csv",
     "mapping": "all_inlinks",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 91.667,
+    "threshold_pct": 97.0,
+    "passed": false,
+    "url_set_identical": true,
+    "compared_columns": 12,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-links",
     "ref_file": "bulk_links_internal_outlinks_with_no_anchor_text.csv",
     "mapping": "all_inlinks",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 100.0,
+    "threshold_pct": 97.0,
+    "passed": true,
+    "url_set_identical": true,
+    "compared_columns": 12,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-links",
     "ref_file": "bulk_links_non_descriptive_anchor_text_in_internal_outlinks.csv",
     "mapping": "all_inlinks",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 100.0,
+    "threshold_pct": 97.0,
+    "passed": true,
+    "url_set_identical": true,
+    "compared_columns": 12,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-links",
     "ref_file": "bulk_links_follow_nofollow_internal_inlinks_to_page.csv",
     "mapping": "all_inlinks",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 100.0,
+    "threshold_pct": 97.0,
+    "passed": true,
+    "url_set_identical": true,
+    "compared_columns": 12,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-links",
     "ref_file": "bulk_links_internal_nofollow_inlinks_only.csv",
     "mapping": "all_inlinks",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 100.0,
+    "threshold_pct": 97.0,
+    "passed": true,
+    "url_set_identical": true,
+    "compared_columns": 12,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-links",
     "ref_file": "bulk_links_outlinks_to_localhost.csv",
     "mapping": "all_inlinks",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 100.0,
+    "threshold_pct": 97.0,
+    "passed": false,
+    "url_set_identical": false,
+    "compared_columns": 12,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-links",
     "ref_file": "bulk_links_pages_with_uncrawlable_internal_outlinks.csv",
-    "mapping": "all_inlinks",
-    "outcome": "error"
+    "mapping": "links_uncrawlable",
+    "outcome": "compared",
+    "agreement_pct": 100.0,
+    "threshold_pct": 97.0,
+    "passed": true,
+    "url_set_identical": true,
+    "compared_columns": 7,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-links",
     "ref_file": "bulk_links_non_indexable_page_inlinks_only.csv",
     "mapping": "all_inlinks",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 100.0,
+    "threshold_pct": 97.0,
+    "passed": true,
+    "url_set_identical": true,
+    "compared_columns": 12,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-links",
     "ref_file": "crawl_path_deep8.csv",
     "mapping": "crawl_path",
-    "outcome": "error"
+    "outcome": "skipped"
   },
   {
     "site": "parity-m2-list",
     "ref_file": "internal_all.csv",
     "mapping": "list_internal",
     "outcome": "compared",
-    "agreement_pct": 90.88,
+    "agreement_pct": 100.0,
     "threshold_pct": 97.0,
     "passed": false,
     "url_set_identical": false,
-    "compared_columns": 56,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 55,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -449,7 +444,7 @@
     "ref_file": "crawl_overview.csv",
     "mapping": "crawl_overview",
     "outcome": "compared",
-    "agreement_pct": 92.823,
+    "agreement_pct": 94.634,
     "threshold_pct": 100.0,
     "passed": false,
     "url_set_identical": false,
@@ -463,46 +458,13 @@
     "ref_file": "redirects_redirect_chains.csv",
     "mapping": "list_chains",
     "outcome": "compared",
-    "agreement_pct": 96.0,
+    "agreement_pct": 100.0,
     "threshold_pct": 97.0,
     "passed": false,
     "url_set_identical": false,
     "compared_columns": 50,
     "missing_ref_columns": [],
-    "missing_os_columns": [
-      "Status Code 3",
-      "Status 3",
-      "Redirect Type 3",
-      "Redirect URL 3",
-      "Status Code 4",
-      "Status 4",
-      "Redirect Type 4",
-      "Redirect URL 4",
-      "Status Code 5",
-      "Status 5",
-      "Redirect Type 5",
-      "Redirect URL 5",
-      "Status Code 6",
-      "Status 6",
-      "Redirect Type 6",
-      "Redirect URL 6",
-      "Status Code 7",
-      "Status 7",
-      "Redirect Type 7",
-      "Redirect URL 7",
-      "Status Code 8",
-      "Status 8",
-      "Redirect Type 8",
-      "Redirect URL 8",
-      "Status Code 9",
-      "Status 9",
-      "Redirect Type 9",
-      "Redirect URL 9",
-      "Status Code 10",
-      "Status 10",
-      "Redirect Type 10",
-      "Redirect URL 10"
-    ],
+    "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
   {
@@ -510,76 +472,28 @@
     "ref_file": "redirects_redirect_canonical_chains.csv",
     "mapping": "list_chains",
     "outcome": "compared",
-    "agreement_pct": 95.918,
+    "agreement_pct": 100.0,
     "threshold_pct": 97.0,
     "passed": false,
     "url_set_identical": false,
-    "compared_columns": 49,
-    "missing_ref_columns": [
-      "Number of Redirects"
-    ],
-    "missing_os_columns": [
-      "Status Code 3",
-      "Status 3",
-      "Redirect Type 3",
-      "Redirect URL 3",
-      "Status Code 4",
-      "Status 4",
-      "Redirect Type 4",
-      "Redirect URL 4",
-      "Status Code 5",
-      "Status 5",
-      "Redirect Type 5",
-      "Redirect URL 5",
-      "Status Code 6",
-      "Status 6",
-      "Redirect Type 6",
-      "Redirect URL 6",
-      "Status Code 7",
-      "Status 7",
-      "Redirect Type 7",
-      "Redirect URL 7",
-      "Status Code 8",
-      "Status 8",
-      "Redirect Type 8",
-      "Redirect URL 8",
-      "Status Code 9",
-      "Status 9",
-      "Redirect Type 9",
-      "Redirect URL 9",
-      "Status Code 10",
-      "Status 10",
-      "Redirect Type 10",
-      "Redirect URL 10"
-    ],
-    "unmapped_ref_columns": [
-      "Number of Redirects/Canonicals"
-    ]
+    "compared_columns": 50,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-onpage",
     "ref_file": "internal_all.csv",
     "mapping": "internal_m2",
     "outcome": "compared",
-    "agreement_pct": 89.892,
+    "agreement_pct": 97.892,
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": false,
-    "compared_columns": 55,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 56,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Meta Keywords 2",
-      "Meta Keywords 2 Length"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-onpage",
@@ -600,7 +514,7 @@
     "ref_file": "crawl_overview.csv",
     "mapping": "crawl_overview",
     "outcome": "compared",
-    "agreement_pct": 87.619,
+    "agreement_pct": 89.756,
     "threshold_pct": 100.0,
     "passed": false,
     "url_set_identical": false,
@@ -614,9 +528,9 @@
     "ref_file": "page_titles_all.csv",
     "mapping": "page_titles_all",
     "outcome": "compared",
-    "agreement_pct": 77.111,
+    "agreement_pct": 99.333,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
     "compared_columns": 9,
     "missing_ref_columns": [],
@@ -628,9 +542,9 @@
     "ref_file": "meta_description_all.csv",
     "mapping": "meta_description_all",
     "outcome": "compared",
-    "agreement_pct": 77.778,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
     "compared_columns": 9,
     "missing_ref_columns": [],
@@ -656,9 +570,9 @@
     "ref_file": "h1_all.csv",
     "mapping": "h1_all",
     "outcome": "compared",
-    "agreement_pct": 85.714,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
     "compared_columns": 7,
     "missing_ref_columns": [],
@@ -670,9 +584,9 @@
     "ref_file": "h2_all.csv",
     "mapping": "h2_all",
     "outcome": "compared",
-    "agreement_pct": 85.714,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
     "compared_columns": 7,
     "missing_ref_columns": [],
@@ -684,7 +598,7 @@
     "ref_file": "content_all.csv",
     "mapping": "content_m2",
     "outcome": "compared",
-    "agreement_pct": 60.6,
+    "agreement_pct": 65.0,
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": true,
@@ -733,20 +647,12 @@
     "ref_file": "internal_flash.csv",
     "mapping": "internal_m2",
     "outcome": "compared",
-    "agreement_pct": 81.818,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
-    "compared_columns": 55,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 56,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -755,20 +661,12 @@
     "ref_file": "internal_other.csv",
     "mapping": "internal_m2",
     "outcome": "compared",
-    "agreement_pct": 81.818,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": false,
-    "compared_columns": 55,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 56,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -833,9 +731,9 @@
     "ref_file": "page_titles_over_561_pixels.csv",
     "mapping": "page_titles_all",
     "outcome": "compared",
-    "agreement_pct": 77.778,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
     "compared_columns": 9,
     "missing_ref_columns": [],
@@ -847,7 +745,7 @@
     "ref_file": "page_titles_below_200_pixels.csv",
     "mapping": "page_titles_all",
     "outcome": "compared",
-    "agreement_pct": 76.023,
+    "agreement_pct": 98.246,
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": true,
@@ -861,9 +759,9 @@
     "ref_file": "page_titles_same_as_h1.csv",
     "mapping": "page_titles_all",
     "outcome": "compared",
-    "agreement_pct": 77.778,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
     "compared_columns": 9,
     "missing_ref_columns": [],
@@ -875,9 +773,9 @@
     "ref_file": "page_titles_outside_head.csv",
     "mapping": "page_titles_all",
     "outcome": "compared",
-    "agreement_pct": 77.778,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
     "compared_columns": 9,
     "missing_ref_columns": [],
@@ -889,9 +787,9 @@
     "ref_file": "meta_description_over_985_pixels.csv",
     "mapping": "meta_description_all",
     "outcome": "compared",
-    "agreement_pct": 77.778,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
     "compared_columns": 9,
     "missing_ref_columns": [],
@@ -903,9 +801,9 @@
     "ref_file": "meta_description_below_400_pixels.csv",
     "mapping": "meta_description_all",
     "outcome": "compared",
-    "agreement_pct": 77.778,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
     "compared_columns": 9,
     "missing_ref_columns": [],
@@ -917,9 +815,9 @@
     "ref_file": "meta_description_outside_head.csv",
     "mapping": "meta_description_all",
     "outcome": "compared",
-    "agreement_pct": 77.778,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
     "compared_columns": 9,
     "missing_ref_columns": [],
@@ -931,9 +829,9 @@
     "ref_file": "h1_alt_text_in_h1.csv",
     "mapping": "h1_all",
     "outcome": "compared",
-    "agreement_pct": 85.714,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
     "compared_columns": 7,
     "missing_ref_columns": [],
@@ -945,9 +843,9 @@
     "ref_file": "h1_non_sequential.csv",
     "mapping": "h1_all",
     "outcome": "compared",
-    "agreement_pct": 85.714,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
     "compared_columns": 7,
     "missing_ref_columns": [],
@@ -959,9 +857,9 @@
     "ref_file": "h2_non_sequential.csv",
     "mapping": "h2_all",
     "outcome": "compared",
-    "agreement_pct": 85.714,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
     "compared_columns": 7,
     "missing_ref_columns": [],
@@ -977,49 +875,36 @@
   {
     "site": "parity-m2-onpage",
     "ref_file": "content_soft_404_pages.csv",
-    "mapping": "content_m2",
+    "mapping": "content_soft404",
     "outcome": "error"
   },
   {
     "site": "parity-m2-onpage",
     "ref_file": "content_lorem_ipsum_placeholder.csv",
-    "mapping": "content_m2",
+    "mapping": "content_lorem",
     "outcome": "compared",
-    "agreement_pct": 100.0,
+    "agreement_pct": 66.667,
     "threshold_pct": 99.0,
-    "passed": true,
+    "passed": false,
     "url_set_identical": true,
-    "compared_columns": 2,
-    "missing_ref_columns": [
-      "Average Words Per Sentence",
-      "Closest Near Duplicate Match",
-      "Flesch Reading Ease Score",
-      "Hash",
-      "No. Near Duplicates",
-      "Readability",
-      "Sentence Count",
-      "Word Count"
-    ],
-    "missing_os_columns": [],
-    "unmapped_ref_columns": [
+    "compared_columns": 3,
+    "missing_ref_columns": [],
+    "missing_os_columns": [
       "Occurrences"
-    ]
+    ],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-onpage",
     "ref_file": "content_readability_difficult.csv",
-    "mapping": "content_m2",
+    "mapping": "content_readability",
     "outcome": "compared",
     "agreement_pct": 42.857,
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": false,
     "compared_columns": 7,
-    "missing_ref_columns": [
-      "Closest Near Duplicate Match",
-      "Hash",
-      "No. Near Duplicates"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [
       "Sentence Count",
       "Average Words Per Sentence",
@@ -1031,18 +916,14 @@
   {
     "site": "parity-m2-onpage",
     "ref_file": "content_readability_very_difficult.csv",
-    "mapping": "content_m2",
+    "mapping": "content_readability",
     "outcome": "compared",
-    "agreement_pct": 42.857,
+    "agreement_pct": 56.522,
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": false,
     "compared_columns": 7,
-    "missing_ref_columns": [
-      "Closest Near Duplicate Match",
-      "Hash",
-      "No. Near Duplicates"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [
       "Sentence Count",
       "Average Words Per Sentence",
@@ -1070,9 +951,9 @@
     "ref_file": "meta_keywords_missing.csv",
     "mapping": "meta_keywords_all",
     "outcome": "compared",
-    "agreement_pct": 85.714,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
     "compared_columns": 7,
     "missing_ref_columns": [],
@@ -1084,9 +965,9 @@
     "ref_file": "meta_keywords_duplicate.csv",
     "mapping": "meta_keywords_all",
     "outcome": "compared",
-    "agreement_pct": 85.714,
+    "agreement_pct": 100.0,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
     "compared_columns": 7,
     "missing_ref_columns": [],
@@ -1117,13 +998,29 @@
     "site": "parity-m2-onpage",
     "ref_file": "bulk_images_images_missing_size_attributes.csv",
     "mapping": "images_missing_sizes",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 0.0,
+    "threshold_pct": 97.0,
+    "passed": false,
+    "url_set_identical": false,
+    "compared_columns": 9,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-onpage",
     "ref_file": "serp_summary.csv",
     "mapping": "serp_summary",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 87.0,
+    "threshold_pct": 97.0,
+    "passed": false,
+    "url_set_identical": false,
+    "compared_columns": 6,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-onpage",
@@ -1172,20 +1069,12 @@
     "ref_file": "internal_all.csv",
     "mapping": "internal_m2",
     "outcome": "compared",
-    "agreement_pct": 89.412,
+    "agreement_pct": 99.883,
     "threshold_pct": 99.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
-    "compared_columns": 55,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 56,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -1208,7 +1097,7 @@
     "ref_file": "crawl_overview.csv",
     "mapping": "crawl_overview",
     "outcome": "compared",
-    "agreement_pct": 94.787,
+    "agreement_pct": 98.039,
     "threshold_pct": 100.0,
     "passed": false,
     "url_set_identical": false,
@@ -1226,21 +1115,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 7,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Content",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 8,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Content Type",
-      "HTTP Version"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-security",
@@ -1251,21 +1129,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 7,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Content",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 8,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Content Type",
-      "HTTP Version"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-security",
@@ -1276,21 +1143,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 7,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Content",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 8,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Content Type",
-      "HTTP Version"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-security",
@@ -1301,21 +1157,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 7,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Content",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 8,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Content Type",
-      "HTTP Version"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-security",
@@ -1326,21 +1171,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 7,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Content",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 8,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Content Type",
-      "HTTP Version"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-security",
@@ -1351,21 +1185,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 7,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Content",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 8,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Content Type",
-      "HTTP Version"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-security",
@@ -1376,21 +1199,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 7,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Content",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 8,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Content Type",
-      "HTTP Version"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-security",
@@ -1401,21 +1213,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 7,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Content",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 8,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Content Type",
-      "HTTP Version"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-security",
@@ -1426,21 +1227,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 7,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Content",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 8,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Content Type",
-      "HTTP Version"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-security",
@@ -1451,21 +1241,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 7,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Content",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 8,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Content Type",
-      "HTTP Version"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-security",
@@ -1476,21 +1255,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 7,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Content",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 8,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Content Type",
-      "HTTP Version"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-security",
@@ -1501,21 +1269,10 @@
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": false,
-    "compared_columns": 7,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Content",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 8,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Content Type",
-      "HTTP Version"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-security",
@@ -1534,35 +1291,30 @@
   {
     "site": "parity-m2-security",
     "ref_file": "bulk_security_mixed_content_inlinks.csv",
-    "mapping": "all_inlinks",
+    "mapping": "security_mixed_inlinks",
     "outcome": "compared",
     "agreement_pct": 100.0,
     "threshold_pct": 97.0,
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 0,
-    "missing_ref_columns": [
-      "Alt Text",
-      "Anchor",
-      "Follow",
-      "Link Origin",
-      "Link Path",
-      "Link Position",
-      "Path Type",
-      "Rel",
-      "Size (Bytes)",
-      "Status",
-      "Status Code",
-      "Target"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-security",
     "ref_file": "bulk_security_form_url_insecure_inlinks.csv",
-    "mapping": "all_inlinks",
-    "outcome": "error"
+    "mapping": "security_form_inlinks",
+    "outcome": "compared",
+    "agreement_pct": 100.0,
+    "threshold_pct": 97.0,
+    "passed": true,
+    "url_set_identical": true,
+    "compared_columns": 0,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-security",
@@ -1573,35 +1325,30 @@
   {
     "site": "parity-m2-security",
     "ref_file": "bulk_security_unsafe_cross_origin_links_inlinks.csv",
-    "mapping": "all_inlinks",
-    "outcome": "error"
-  },
-  {
-    "site": "parity-m2-security",
-    "ref_file": "bulk_security_protocol_relative_resource_links_inlinks.csv",
-    "mapping": "all_inlinks",
+    "mapping": "security_unsafe_inlinks",
     "outcome": "compared",
     "agreement_pct": 100.0,
     "threshold_pct": 97.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 2,
-    "missing_ref_columns": [
-      "Anchor",
-      "Follow",
-      "Link Origin",
-      "Link Path",
-      "Link Position",
-      "Rel",
-      "Size (Bytes)",
-      "Status",
-      "Status Code",
-      "Target"
-    ],
+    "compared_columns": 4,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Anchor Text"
-    ]
+    "unmapped_ref_columns": []
+  },
+  {
+    "site": "parity-m2-security",
+    "ref_file": "bulk_security_protocol_relative_resource_links_inlinks.csv",
+    "mapping": "security_relative_inlinks",
+    "outcome": "compared",
+    "agreement_pct": 100.0,
+    "threshold_pct": 97.0,
+    "passed": true,
+    "url_set_identical": true,
+    "compared_columns": 3,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-security",
@@ -1622,20 +1369,12 @@
     "ref_file": "internal_all.csv",
     "mapping": "internal_m2",
     "outcome": "compared",
-    "agreement_pct": 84.83,
+    "agreement_pct": 99.54,
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": false,
-    "compared_columns": 55,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "compared_columns": 56,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -1658,7 +1397,7 @@
     "ref_file": "crawl_overview.csv",
     "mapping": "crawl_overview",
     "outcome": "compared",
-    "agreement_pct": 81.159,
+    "agreement_pct": 82.759,
     "threshold_pct": 100.0,
     "passed": false,
     "url_set_identical": false,
@@ -1672,19 +1411,13 @@
     "ref_file": "canonicals_all.csv",
     "mapping": "canonicals_all",
     "outcome": "compared",
-    "agreement_pct": 98.03,
+    "agreement_pct": 97.593,
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": true,
-    "compared_columns": 11,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3"
-    ],
-    "missing_os_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1"
-    ],
+    "compared_columns": 9,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
   {
@@ -1692,40 +1425,26 @@
     "ref_file": "pagination_all.csv",
     "mapping": "pagination_all",
     "outcome": "compared",
-    "agreement_pct": 97.963,
+    "agreement_pct": 98.167,
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": false,
-    "compared_columns": 9,
-    "missing_ref_columns": [
-      "Occurrences"
-    ],
+    "compared_columns": 10,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1",
-      "HTTP Canonical"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
     "ref_file": "directives_all.csv",
     "mapping": "directives_all",
     "outcome": "compared",
-    "agreement_pct": 97.773,
+    "agreement_pct": 97.379,
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": false,
     "compared_columns": 8,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -1739,20 +1458,7 @@
     "passed": false,
     "url_set_identical": false,
     "compared_columns": 12,
-    "missing_ref_columns": [
-      "HTML hreflang 4",
-      "HTML hreflang 4 URL",
-      "HTML hreflang 5",
-      "HTML hreflang 5 URL",
-      "HTML hreflang 6",
-      "HTML hreflang 6 URL",
-      "HTML hreflang 7",
-      "HTML hreflang 7 URL",
-      "HTML hreflang 8",
-      "HTML hreflang 8 URL",
-      "HTTP hreflang 2",
-      "HTTP hreflang 2 URL"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -1768,32 +1474,20 @@
     "compared_columns": 5,
     "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Size (Bytes)",
-      "Transferred (Bytes)",
-      "Total Transferred (Bytes)",
-      "CO2 (mg)",
-      "Carbon Rating"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
     "ref_file": "canonicals_canonical_is_relative.csv",
     "mapping": "canonicals_all",
     "outcome": "compared",
-    "agreement_pct": 98.864,
+    "agreement_pct": 98.611,
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": false,
-    "compared_columns": 11,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3"
-    ],
-    "missing_os_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1"
-    ],
+    "compared_columns": 9,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
   {
@@ -1805,15 +1499,9 @@
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": false,
-    "compared_columns": 11,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3"
-    ],
-    "missing_os_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1"
-    ],
+    "compared_columns": 9,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
   {
@@ -1821,19 +1509,13 @@
     "ref_file": "canonicals_invalid_attribute_in_annotation.csv",
     "mapping": "canonicals_all",
     "outcome": "compared",
-    "agreement_pct": 63.636,
+    "agreement_pct": 55.556,
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": true,
-    "compared_columns": 11,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3"
-    ],
-    "missing_os_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1"
-    ],
+    "compared_columns": 9,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
   {
@@ -1841,19 +1523,13 @@
     "ref_file": "canonicals_contains_fragment_url.csv",
     "mapping": "canonicals_all",
     "outcome": "compared",
-    "agreement_pct": 90.909,
+    "agreement_pct": 88.889,
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": true,
-    "compared_columns": 11,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3"
-    ],
-    "missing_os_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1"
-    ],
+    "compared_columns": 9,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
   {
@@ -1861,19 +1537,13 @@
     "ref_file": "canonicals_outside_head.csv",
     "mapping": "canonicals_all",
     "outcome": "compared",
-    "agreement_pct": 63.636,
+    "agreement_pct": 55.556,
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": true,
-    "compared_columns": 11,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3"
-    ],
-    "missing_os_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1"
-    ],
+    "compared_columns": 9,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
   {
@@ -1886,15 +1556,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 8,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -1908,15 +1570,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 8,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -1930,15 +1584,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 8,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -1952,15 +1598,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 8,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -1974,15 +1612,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 8,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -1996,15 +1626,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 8,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -2018,15 +1640,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 8,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -2040,15 +1654,7 @@
     "passed": false,
     "url_set_identical": true,
     "compared_columns": 8,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -2062,15 +1668,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 8,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -2084,22 +1682,7 @@
     "passed": false,
     "url_set_identical": false,
     "compared_columns": 10,
-    "missing_ref_columns": [
-      "HTML hreflang 3",
-      "HTML hreflang 3 URL",
-      "HTML hreflang 4",
-      "HTML hreflang 4 URL",
-      "HTML hreflang 5",
-      "HTML hreflang 5 URL",
-      "HTML hreflang 6",
-      "HTML hreflang 6 URL",
-      "HTML hreflang 7",
-      "HTML hreflang 7 URL",
-      "HTML hreflang 8",
-      "HTML hreflang 8 URL",
-      "HTTP hreflang 2",
-      "HTTP hreflang 2 URL"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -2113,20 +1696,7 @@
     "passed": false,
     "url_set_identical": false,
     "compared_columns": 12,
-    "missing_ref_columns": [
-      "HTML hreflang 4",
-      "HTML hreflang 4 URL",
-      "HTML hreflang 5",
-      "HTML hreflang 5 URL",
-      "HTML hreflang 6",
-      "HTML hreflang 6 URL",
-      "HTML hreflang 7",
-      "HTML hreflang 7 URL",
-      "HTML hreflang 8",
-      "HTML hreflang 8 URL",
-      "HTTP hreflang 2",
-      "HTTP hreflang 2 URL"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -2140,20 +1710,7 @@
     "passed": false,
     "url_set_identical": false,
     "compared_columns": 12,
-    "missing_ref_columns": [
-      "HTML hreflang 4",
-      "HTML hreflang 4 URL",
-      "HTML hreflang 5",
-      "HTML hreflang 5 URL",
-      "HTML hreflang 6",
-      "HTML hreflang 6 URL",
-      "HTML hreflang 7",
-      "HTML hreflang 7 URL",
-      "HTML hreflang 8",
-      "HTML hreflang 8 URL",
-      "HTTP hreflang 2",
-      "HTTP hreflang 2 URL"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -2167,20 +1724,7 @@
     "passed": false,
     "url_set_identical": false,
     "compared_columns": 12,
-    "missing_ref_columns": [
-      "HTML hreflang 4",
-      "HTML hreflang 4 URL",
-      "HTML hreflang 5",
-      "HTML hreflang 5 URL",
-      "HTML hreflang 6",
-      "HTML hreflang 6 URL",
-      "HTML hreflang 7",
-      "HTML hreflang 7 URL",
-      "HTML hreflang 8",
-      "HTML hreflang 8 URL",
-      "HTTP hreflang 2",
-      "HTTP hreflang 2 URL"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -2194,22 +1738,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 10,
-    "missing_ref_columns": [
-      "HTML hreflang 3",
-      "HTML hreflang 3 URL",
-      "HTML hreflang 4",
-      "HTML hreflang 4 URL",
-      "HTML hreflang 5",
-      "HTML hreflang 5 URL",
-      "HTML hreflang 6",
-      "HTML hreflang 6 URL",
-      "HTML hreflang 7",
-      "HTML hreflang 7 URL",
-      "HTML hreflang 8",
-      "HTML hreflang 8 URL",
-      "HTTP hreflang 2",
-      "HTTP hreflang 2 URL"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -2223,22 +1752,7 @@
     "passed": false,
     "url_set_identical": false,
     "compared_columns": 10,
-    "missing_ref_columns": [
-      "HTML hreflang 3",
-      "HTML hreflang 3 URL",
-      "HTML hreflang 4",
-      "HTML hreflang 4 URL",
-      "HTML hreflang 5",
-      "HTML hreflang 5 URL",
-      "HTML hreflang 6",
-      "HTML hreflang 6 URL",
-      "HTML hreflang 7",
-      "HTML hreflang 7 URL",
-      "HTML hreflang 8",
-      "HTML hreflang 8 URL",
-      "HTTP hreflang 2",
-      "HTTP hreflang 2 URL"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -2252,22 +1766,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 10,
-    "missing_ref_columns": [
-      "HTML hreflang 3",
-      "HTML hreflang 3 URL",
-      "HTML hreflang 4",
-      "HTML hreflang 4 URL",
-      "HTML hreflang 5",
-      "HTML hreflang 5 URL",
-      "HTML hreflang 6",
-      "HTML hreflang 6 URL",
-      "HTML hreflang 7",
-      "HTML hreflang 7 URL",
-      "HTML hreflang 8",
-      "HTML hreflang 8 URL",
-      "HTTP hreflang 2",
-      "HTTP hreflang 2 URL"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -2281,22 +1780,7 @@
     "passed": false,
     "url_set_identical": false,
     "compared_columns": 10,
-    "missing_ref_columns": [
-      "HTML hreflang 3",
-      "HTML hreflang 3 URL",
-      "HTML hreflang 4",
-      "HTML hreflang 4 URL",
-      "HTML hreflang 5",
-      "HTML hreflang 5 URL",
-      "HTML hreflang 6",
-      "HTML hreflang 6 URL",
-      "HTML hreflang 7",
-      "HTML hreflang 7 URL",
-      "HTML hreflang 8",
-      "HTML hreflang 8 URL",
-      "HTTP hreflang 2",
-      "HTTP hreflang 2 URL"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -2310,24 +1794,7 @@
     "passed": false,
     "url_set_identical": true,
     "compared_columns": 8,
-    "missing_ref_columns": [
-      "HTML hreflang 2",
-      "HTML hreflang 2 URL",
-      "HTML hreflang 3",
-      "HTML hreflang 3 URL",
-      "HTML hreflang 4",
-      "HTML hreflang 4 URL",
-      "HTML hreflang 5",
-      "HTML hreflang 5 URL",
-      "HTML hreflang 6",
-      "HTML hreflang 6 URL",
-      "HTML hreflang 7",
-      "HTML hreflang 7 URL",
-      "HTML hreflang 8",
-      "HTML hreflang 8 URL",
-      "HTTP hreflang 2",
-      "HTTP hreflang 2 URL"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -2340,16 +1807,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 9,
-    "missing_ref_columns": [
-      "Occurrences"
-    ],
+    "compared_columns": 10,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1",
-      "HTTP Canonical"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2360,16 +1821,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 9,
-    "missing_ref_columns": [
-      "Occurrences"
-    ],
+    "compared_columns": 10,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1",
-      "HTTP Canonical"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2380,17 +1835,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 8,
-    "missing_ref_columns": [
-      "Occurrences",
-      "rel=\"next\" 2"
-    ],
+    "compared_columns": 9,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1",
-      "HTTP Canonical"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2401,16 +1849,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 9,
-    "missing_ref_columns": [
-      "Occurrences"
-    ],
+    "compared_columns": 10,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1",
-      "HTTP Canonical"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2421,17 +1863,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 8,
-    "missing_ref_columns": [
-      "Occurrences",
-      "rel=\"next\" 2"
-    ],
+    "compared_columns": 9,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1",
-      "HTTP Canonical"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2442,17 +1877,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 8,
-    "missing_ref_columns": [
-      "Occurrences",
-      "rel=\"next\" 2"
-    ],
+    "compared_columns": 9,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1",
-      "HTTP Canonical"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2463,17 +1891,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 8,
-    "missing_ref_columns": [
-      "Occurrences",
-      "rel=\"next\" 2"
-    ],
+    "compared_columns": 9,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1",
-      "HTTP Canonical"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2484,16 +1905,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 9,
-    "missing_ref_columns": [
-      "Occurrences"
-    ],
+    "compared_columns": 10,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1",
-      "HTTP Canonical"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2504,17 +1919,10 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 8,
-    "missing_ref_columns": [
-      "Occurrences",
-      "rel=\"next\" 2"
-    ],
+    "compared_columns": 9,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1",
-      "HTTP Canonical"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2525,16 +1933,10 @@
     "threshold_pct": 99.0,
     "passed": false,
     "url_set_identical": false,
-    "compared_columns": 9,
-    "missing_ref_columns": [
-      "Occurrences"
-    ],
+    "compared_columns": 10,
+    "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1",
-      "HTTP Canonical"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2548,13 +1950,7 @@
     "compared_columns": 5,
     "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Size (Bytes)",
-      "Transferred (Bytes)",
-      "Total Transferred (Bytes)",
-      "CO2 (mg)",
-      "Carbon Rating"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2568,13 +1964,7 @@
     "compared_columns": 5,
     "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Size (Bytes)",
-      "Transferred (Bytes)",
-      "Total Transferred (Bytes)",
-      "CO2 (mg)",
-      "Carbon Rating"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2588,13 +1978,7 @@
     "compared_columns": 5,
     "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Size (Bytes)",
-      "Transferred (Bytes)",
-      "Total Transferred (Bytes)",
-      "CO2 (mg)",
-      "Carbon Rating"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2608,13 +1992,7 @@
     "compared_columns": 5,
     "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Size (Bytes)",
-      "Transferred (Bytes)",
-      "Total Transferred (Bytes)",
-      "CO2 (mg)",
-      "Carbon Rating"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2628,13 +2006,7 @@
     "compared_columns": 5,
     "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Size (Bytes)",
-      "Transferred (Bytes)",
-      "Total Transferred (Bytes)",
-      "CO2 (mg)",
-      "Carbon Rating"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2648,13 +2020,7 @@
     "compared_columns": 5,
     "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Size (Bytes)",
-      "Transferred (Bytes)",
-      "Total Transferred (Bytes)",
-      "CO2 (mg)",
-      "Carbon Rating"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2668,13 +2034,7 @@
     "compared_columns": 5,
     "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Size (Bytes)",
-      "Transferred (Bytes)",
-      "Total Transferred (Bytes)",
-      "CO2 (mg)",
-      "Carbon Rating"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2688,13 +2048,7 @@
     "compared_columns": 5,
     "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Size (Bytes)",
-      "Transferred (Bytes)",
-      "Total Transferred (Bytes)",
-      "CO2 (mg)",
-      "Carbon Rating"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2708,13 +2062,7 @@
     "compared_columns": 5,
     "missing_ref_columns": [],
     "missing_os_columns": [],
-    "unmapped_ref_columns": [
-      "Size (Bytes)",
-      "Transferred (Bytes)",
-      "Total Transferred (Bytes)",
-      "CO2 (mg)",
-      "Carbon Rating"
-    ]
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -2735,147 +2083,140 @@
     "ref_file": "redirects_redirect_canonical_chains.csv",
     "mapping": "m2_redirects_redirect_canonical_chains",
     "outcome": "compared",
-    "agreement_pct": 93.197,
+    "agreement_pct": 100.0,
     "threshold_pct": 97.0,
     "passed": false,
     "url_set_identical": false,
-    "compared_columns": 49,
-    "missing_ref_columns": [
-      "Number of Redirects"
-    ],
-    "missing_os_columns": [
-      "Status Code 4",
-      "Status 4",
-      "Redirect Type 4",
-      "Redirect URL 4",
-      "Status Code 5",
-      "Status 5",
-      "Redirect Type 5",
-      "Redirect URL 5",
-      "Status Code 6",
-      "Status 6",
-      "Redirect Type 6",
-      "Redirect URL 6",
-      "Status Code 7",
-      "Status 7",
-      "Redirect Type 7",
-      "Redirect URL 7",
-      "Status Code 8",
-      "Status 8",
-      "Redirect Type 8",
-      "Redirect URL 8",
-      "Status Code 9",
-      "Status 9",
-      "Redirect Type 9",
-      "Redirect URL 9",
-      "Status Code 10",
-      "Status 10",
-      "Redirect Type 10",
-      "Redirect URL 10"
-    ],
-    "unmapped_ref_columns": [
-      "Number of Redirects/Canonicals"
-    ]
+    "compared_columns": 50,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
     "ref_file": "canonicals_canonical_chains.csv",
     "mapping": "m2_canonicals_canonical_chains",
     "outcome": "compared",
-    "agreement_pct": 95.833,
+    "agreement_pct": 100.0,
     "threshold_pct": 97.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
-    "compared_columns": 48,
-    "missing_ref_columns": [
-      "Number of Redirects",
-      "Temp Redirect in Chain"
-    ],
-    "missing_os_columns": [
-      "Status Code 3",
-      "Status 3",
-      "Redirect Type 3",
-      "Redirect URL 3",
-      "Status Code 4",
-      "Status 4",
-      "Redirect Type 4",
-      "Redirect URL 4",
-      "Status Code 5",
-      "Status 5",
-      "Redirect Type 5",
-      "Redirect URL 5",
-      "Status Code 6",
-      "Status 6",
-      "Redirect Type 6",
-      "Redirect URL 6",
-      "Status Code 7",
-      "Status 7",
-      "Redirect Type 7",
-      "Redirect URL 7",
-      "Status Code 8",
-      "Status 8",
-      "Redirect Type 8",
-      "Redirect URL 8",
-      "Status Code 9",
-      "Status 9",
-      "Redirect Type 9",
-      "Redirect URL 9",
-      "Status Code 10",
-      "Status 10",
-      "Redirect Type 10",
-      "Redirect URL 10"
-    ],
-    "unmapped_ref_columns": [
-      "Number of Canonicals"
-    ]
+    "compared_columns": 49,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
     "ref_file": "canonicals_non_indexable_canonicals.csv",
     "mapping": "m2_canonicals_non_indexable_canonicals",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 100.0,
+    "threshold_pct": 97.0,
+    "passed": false,
+    "url_set_identical": false,
+    "compared_columns": 5,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
     "ref_file": "report_hreflang_all_hreflang_urls.csv",
     "mapping": "hreflang_urls",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 100.0,
+    "threshold_pct": 97.0,
+    "passed": false,
+    "url_set_identical": false,
+    "compared_columns": 1,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
     "ref_file": "report_hreflang_non_200_hreflang_urls.csv",
-    "mapping": "hreflang_urls",
-    "outcome": "error"
+    "mapping": "hreflang_targets",
+    "outcome": "compared",
+    "agreement_pct": 100.0,
+    "threshold_pct": 97.0,
+    "passed": false,
+    "url_set_identical": false,
+    "compared_columns": 3,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
     "ref_file": "report_hreflang_unlinked_hreflang_urls.csv",
-    "mapping": "hreflang_urls",
-    "outcome": "error"
+    "mapping": "hreflang_unlinked",
+    "outcome": "compared",
+    "agreement_pct": 0.0,
+    "threshold_pct": 97.0,
+    "passed": false,
+    "url_set_identical": false,
+    "compared_columns": 2,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
     "ref_file": "report_hreflang_missing_return_links.csv",
     "mapping": "hreflang_missing_returns",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 66.667,
+    "threshold_pct": 97.0,
+    "passed": false,
+    "url_set_identical": false,
+    "compared_columns": 3,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
     "ref_file": "report_hreflang_inconsistent_language_region_return_links.csv",
     "mapping": "hreflang_inconsistent_returns",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 0.0,
+    "threshold_pct": 97.0,
+    "passed": false,
+    "url_set_identical": false,
+    "compared_columns": 2,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
     "ref_file": "report_hreflang_non_canonical_return_links.csv",
     "mapping": "hreflang_noncanonical_returns",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 0.0,
+    "threshold_pct": 97.0,
+    "passed": false,
+    "url_set_identical": false,
+    "compared_columns": 1,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
     "ref_file": "report_hreflang_noindex_return_links.csv",
     "mapping": "hreflang_noindex_returns",
-    "outcome": "error"
+    "outcome": "compared",
+    "agreement_pct": 100.0,
+    "threshold_pct": 97.0,
+    "passed": false,
+    "url_set_identical": false,
+    "compared_columns": 1,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-m2-technical",
@@ -3293,15 +2634,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 54,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -3315,10 +2648,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 5,
-    "missing_ref_columns": [
-      "Redirect Type",
-      "Redirect URL"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -3453,7 +2783,7 @@
     "ref_file": "crawl_overview.csv",
     "mapping": "crawl_overview",
     "outcome": "compared",
-    "agreement_pct": 92.611,
+    "agreement_pct": 94.472,
     "threshold_pct": 100.0,
     "passed": false,
     "url_set_identical": false,
@@ -3472,15 +2802,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 54,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -3494,10 +2816,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 5,
-    "missing_ref_columns": [
-      "Redirect Type",
-      "Redirect URL"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -3548,48 +2867,35 @@
     "ref_file": "redirect_chains.csv",
     "mapping": "redirect_chains",
     "outcome": "compared",
-    "agreement_pct": 100.0,
+    "agreement_pct": 99.308,
     "threshold_pct": 97.0,
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 50,
     "missing_ref_columns": [],
-    "missing_os_columns": [
-      "Status Code 6",
-      "Status 6",
-      "Redirect Type 6",
-      "Redirect URL 6",
-      "Status Code 7",
-      "Status 7",
-      "Redirect Type 7",
-      "Redirect URL 7",
-      "Status Code 8",
-      "Status 8",
-      "Redirect Type 8",
-      "Redirect URL 8",
-      "Status Code 9",
-      "Status 9",
-      "Redirect Type 9",
-      "Redirect URL 9",
-      "Status Code 10",
-      "Status 10",
-      "Redirect Type 10",
-      "Redirect URL 10"
-    ],
+    "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
   {
     "site": "parity-response",
     "ref_file": "redirects_to_error.csv",
     "mapping": "redirects_to_errors",
-    "outcome": "skipped"
+    "outcome": "compared",
+    "agreement_pct": 98.5,
+    "threshold_pct": 97.0,
+    "passed": false,
+    "url_set_identical": false,
+    "compared_columns": 50,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "unmapped_ref_columns": []
   },
   {
     "site": "parity-response",
     "ref_file": "crawl_overview.csv",
     "mapping": "crawl_overview",
     "outcome": "compared",
-    "agreement_pct": 92.118,
+    "agreement_pct": 93.5,
     "threshold_pct": 100.0,
     "passed": false,
     "url_set_identical": false,
@@ -3608,15 +2914,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 54,
-    "missing_ref_columns": [
-      "Canonical Link Element 2",
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -3625,11 +2923,11 @@
     "ref_file": "links_all.csv",
     "mapping": "links_all",
     "outcome": "compared",
-    "agreement_pct": 91.195,
+    "agreement_pct": 100.0,
     "threshold_pct": 97.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
-    "compared_columns": 11,
+    "compared_columns": 10,
     "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
@@ -3653,7 +2951,7 @@
     "ref_file": "crawl_overview.csv",
     "mapping": "crawl_overview",
     "outcome": "compared",
-    "agreement_pct": 93.839,
+    "agreement_pct": 95.652,
     "threshold_pct": 100.0,
     "passed": false,
     "url_set_identical": false,
@@ -3672,13 +2970,7 @@
     "passed": true,
     "url_set_identical": true,
     "compared_columns": 56,
-    "missing_ref_columns": [
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -3691,14 +2983,9 @@
     "threshold_pct": 99.0,
     "passed": true,
     "url_set_identical": true,
-    "compared_columns": 12,
-    "missing_ref_columns": [
-      "Canonical Link Element 3"
-    ],
-    "missing_os_columns": [
-      "HTTP rel=\"next\" 1",
-      "HTTP rel=\"prev\" 1"
-    ],
+    "compared_columns": 10,
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
   {
@@ -3706,18 +2993,12 @@
     "ref_file": "directives_all.csv",
     "mapping": "directives_all",
     "outcome": "compared",
-    "agreement_pct": 100.0,
+    "agreement_pct": 99.907,
     "threshold_pct": 99.0,
-    "passed": true,
-    "url_set_identical": true,
+    "passed": false,
+    "url_set_identical": false,
     "compared_columns": 10,
-    "missing_ref_columns": [
-      "Canonical Link Element 3",
-      "Meta Refresh 2",
-      "Meta Robots 3",
-      "X-Robots-Tag 2",
-      "X-Robots-Tag 3"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -3728,17 +3009,10 @@
     "outcome": "compared",
     "agreement_pct": 100.0,
     "threshold_pct": 97.0,
-    "passed": true,
-    "url_set_identical": true,
+    "passed": false,
+    "url_set_identical": false,
     "compared_columns": 18,
-    "missing_ref_columns": [
-      "HTML hreflang 7",
-      "HTML hreflang 7 URL",
-      "HTML hreflang 8",
-      "HTML hreflang 8 URL",
-      "HTTP hreflang 2",
-      "HTTP hreflang 2 URL"
-    ],
+    "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
   },
@@ -3747,11 +3021,11 @@
     "ref_file": "links_all.csv",
     "mapping": "links_all",
     "outcome": "compared",
-    "agreement_pct": 91.99,
+    "agreement_pct": 100.0,
     "threshold_pct": 97.0,
-    "passed": false,
+    "passed": true,
     "url_set_identical": true,
-    "compared_columns": 11,
+    "compared_columns": 10,
     "missing_ref_columns": [],
     "missing_os_columns": [],
     "unmapped_ref_columns": []
@@ -3789,7 +3063,7 @@
     "ref_file": "crawl_overview.csv",
     "mapping": "crawl_overview",
     "outcome": "compared",
-    "agreement_pct": 90.196,
+    "agreement_pct": 91.089,
     "threshold_pct": 100.0,
     "passed": false,
     "url_set_identical": false,

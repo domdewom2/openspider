@@ -44,58 +44,46 @@ def spec_for(e, column='', key=''):
 
 
 def classify(e, column, ref, measured, key=''):
-    if column in e.get('_missing_os', []) and any(token in column for token in ['Sentence','Reading','Readability']):
-        return 'Implementierungsfehler', 'os-analyze', 'crates/os-analyze/src/tabs/content.rs (fehlende Spalten im Export-View)'
-    if 'Outlinks To Localhost' in e['os'] or key == 'links | outlinks to localhost':
-        return 'Referenzbesonderheit', 'os-parity', 'tests/parity/deviations.toml (TECH-141: Start-Host+Port ist ausgenommen)'
-    if column == 'Inlinks' and key in ['{BASE}/contact.html','{BASE}/products.html']:
-        return 'Referenzbesonderheit', 'os-parity', 'tests/parity/deviations.toml (TECH-130/K-07, fehlende Inlinks-Spalte in DEV-011)'
-    if column == 'Word Count' and ref == '4' and measured == '3' and ('/graph/' in key or '/bookmarks.html' in key):
-        return 'Referenzbesonderheit', 'os-parity', 'tests/parity/deviations.toml (ONPAGE-140/141: benachbarte Inline-Anker ohne Leerraum)'
-    if column == 'URLs' and measured == '' and key in ['url | broken bookmark','content | near duplicates','images | background images','images | incorrectly sized images']:
-        return 'Referenzbesonderheit', 'os-parity', 'tests/parity/deviations.toml (OUT-080: needs_config/needs_rendering schreibt leer)'
-
-    if column == 'Nicht verglichen' and e['status'] == 'present':
-        return 'Mapping-/Formatfehler', 'os-parity', 'tests/golden/parity/parity-response/manifest.toml (veraltetes M1-skip fuer OUT-084)'
+    # N06: entschiedene SQ-02…13 sind Produktaufträge. Dokumentierte DEV sind
+    # bereits im Runner angewandt; unentschuldigte Werte werden nicht nachträglich grün.
     if column == 'Nicht verglichen':
-        return 'Referenzbesonderheit', 'os-parity', 'tests/golden/parity/*/manifest.toml (dokumentierte Nichtverfuegbarkeit)'
-    if e['mapping'] == 'crawl_overview' and column == 'Zeilenmenge':
-        return 'Mapping-/Formatfehler', 'os-parity', 'tests/parity/mappings/crawl_overview.toml (Abschnitts-/Filternamen)'
-    if column == 'URLs' and measured == '':
-        return 'Implementierungsfehler', 'os-export', 'crates/os-export/src/reports/overview.rs (Zustand/Zaehler)'
-    if column == 'URLs' and key.startswith('security |'):
-        return 'Implementierungsfehler', 'os-analyze', 'crates/os-analyze/src/tabs/security.rs'
-    if column == 'URLs' and key.startswith('content | readability'):
-        return 'Implementierungsfehler', 'os-parse', 'crates/os-parse/src/ (Lesbarkeit)'
-    if column == 'URLs' and key.startswith('internal | other'):
-        return 'Referenzbesonderheit', 'os-parity', 'tests/parity/deviations.toml (ONPAGE-024/DEV-014: fehlender Content-Type ist Unknown)'
-
-    if column in ['Mapping', 'Nicht verglichen']:
-        return 'Mapping-/Formatfehler', 'os-parity', 'crates/os-parity/src/run.rs; tests/parity/mappings/' + e['mapping'] + '.toml'
+        return 'Dokumentierter Skip', 'os-parity', 'tests/golden/parity/*/manifest.toml (Grund im Laufjournal)'
+    if column == 'Exportfehler' and e['mapping'] == 'content_soft404':
+        return 'Implementierungsfehler', 'os-analyze', 'N08: crates/os-analyze/src/tabs/content.rs (URL-Schlüssel fehlt)'
+    if column == 'Mapping':
+        if key in e.get('_missing_os', []) and e['mapping'].startswith('content'):
+            return 'Implementierungsfehler', 'os-analyze', 'N08: crates/os-analyze/src/tabs/content.rs; crates/os-export/src/pipeline.rs'
+        return 'Mapping-/Formatfehler', 'os-parity', 'tests/parity/mappings/' + e['mapping'] + '.toml'
     if column == 'Exportfehler':
         return 'Mapping-/Formatfehler', 'os-parity', 'crates/os-parity/src/run.rs; tests/golden/parity/*/manifest.toml'
-    if ref == '0' or ref == '0.000':
-        if measured == '' and any(t in column for t in ['Length', 'Width', 'Count', 'Ratio']):
-            return 'Referenzbesonderheit', 'os-parity', 'tests/parity/deviations.toml (DEV-003/004, Geltungsbereich der neuen Mapping-Slugs)'
-    if column in ['Text Ratio']:
-        return 'Mapping-/Formatfehler', 'os-parity', 'tests/parity/mappings/' + e['mapping'] + '.toml (Rundung/Toleranz)'
     if 'sitemap' in e['mapping']:
-        return 'Implementierungsfehler', 'os-export', 'crates/os-export/src/sitemap_gen/'
-    if column == 'Original Url / Reihenfolge' or e['mapping'] == 'list_internal' and column in ['Zeilenmenge', 'Address']:
-        return 'Referenzbesonderheit', 'os-cli', 'crates/os-cli/src/listing.rs (CRAWL-030: ungueltige Eingaben beibehalten)'
-    if any(t in column for t in ['Width', 'Word Count', 'Reading', 'Readability', 'Sentence']):
-        return 'Implementierungsfehler', 'os-parse', 'crates/os-parse/src/ (Pixel/Text/Lesbarkeit); crates/os-analyze/src/tabs/'
+        return 'Implementierungsfehler', 'os-export', 'N11 / G22: crates/os-export/src/sitemap_gen/'
     if 'chain' in e['mapping']:
-        return 'Mapping-/Formatfehler', 'os-parity', 'tests/parity/mappings/' + e['mapping'] + '.toml (OUT-081, DEV-019/030 und Spaltenalias)'
+        return 'Implementierungsfehler', 'os-export', 'N11 / G23: crates/os-export/src/reports/'
+    if column == 'Text Ratio' or any(t in column for t in ['Word Count', 'Reading', 'Readability', 'Sentence']):
+        return 'Implementierungsfehler', 'os-parse', 'N08 / G06–08/G20: crates/os-parse/src/; crates/os-analyze/src/tabs/content.rs'
+    if 'Pixel Width' in column:
+        return 'Implementierungsfehler', 'os-parse', 'N07 / G21: crates/os-parse/src/pixel/'
+    if column == 'Zeilenmenge' and e['mapping'] == 'crawl_overview':
+        return 'Implementierungsfehler', 'os-export', 'N11 / G25: crates/os-export/src/reports/overview.rs'
+    if column == 'URLs' and key.startswith('security |'):
+        return 'Implementierungsfehler', 'os-analyze', 'N10 / G10/G14: crates/os-analyze/src/tabs/security.rs'
+    if column == 'URLs' and key.startswith('internal |'):
+        return 'Implementierungsfehler', 'os-analyze', 'N07 / G12: crates/os-analyze/src/tabs/internal.rs'
+    if column == 'URLs' and key.startswith('content |'):
+        return 'Implementierungsfehler', 'os-parse', 'N08: crates/os-parse/src/readability.rs'
+    if e['mapping'].startswith(('canonicals', 'hreflang', 'pagination', 'validation', 'directives', 'response_codes')):
+        return 'Implementierungsfehler', 'os-analyze', 'N09 / G14–17: crates/os-analyze/src/tabs/; crates/os-parse/src/'
     if e['os'].startswith('bulk:'):
-        return 'Implementierungsfehler', 'os-export', 'crates/os-export/src/links_export.rs; crates/os-export/src/pipeline.rs'
-    return 'Implementierungsfehler', 'os-analyze', 'crates/os-analyze/src/tabs/; crates/os-analyze/src/analysis/steps/'
+        return 'Implementierungsfehler', 'os-export', 'N07/N09: Linkposition und Linktypen gemäß Triage G17/G24'
+    return 'Implementierungsfehler', 'os-analyze', 'N07–N10: Zuordnung nach triage.md G09–G21'
 
 rows = []
 accepted = []
 exports = []
 site_counts = []
 metadata = []
+columns = []
 for site in summary['sites']:
     counts = collections.Counter()
     for e in site['exports']:
@@ -109,8 +97,9 @@ for site in summary['sites']:
             exports.append([site['site'], e['ref_file'], e['mapping'], r['ref_rows'], r['os_rows'],
                             r['agreement_pct'], r['threshold_pct'], r['url_set_identical'],
                             r.get('row_order_identical', ''), r['passed'], r['cells_compared'],
-                            r['cells_compared']-r['cells_equal']])
+                            r['cells_compared']-r['cells_equal'], e['status'], e['outcome'], ''])
             for c in r['columns']:
+                columns.append([site['site'], e['ref_file'], c['ref_column'], c['os_column'], c['compared'], c['errors']])
                 if c['errors']:
                     # max_examples=100000 in the run: every differing cell is retained.
                     for x in c['examples']:
@@ -122,7 +111,7 @@ for site in summary['sites']:
                     rows.append([site['site'], e['ref_file'], e['mapping'], 'Zeilenmenge', key,
                                  'vorhanden' if direction == 'missing_in_os' else 'fehlt',
                                  'fehlt' if direction == 'missing_in_os' else 'vorhanden', spec_for(e, 'URLs', key),
-                                 *classify(e, 'Zeilenmenge', '', '')])
+                                 *classify(e, 'Zeilenmenge', '', '', key)])
             if r.get('row_order_identical') is False:
                 rows.append([site['site'], e['ref_file'], e['mapping'], 'Original Url / Reihenfolge', '*',
                              'Upload-Reihenfolge', 'abweichend', 'OUT-015, OUT-085',
@@ -131,7 +120,7 @@ for site in summary['sites']:
                 for col in r[field]:
                     rows.append([site['site'], e['ref_file'], e['mapping'], 'Mapping', col,
                                  field, 'nicht vollstaendig verglichen', spec_for(e, col),
-                                 *classify(e, 'Mapping', '', '')])
+                                 *classify(e, 'Mapping', '', '', col)])
             metadata.append(dict(site=site['site'], ref_file=e['ref_file'], mapping=e['mapping'],
                                  outcome='compared', agreement_pct=r['agreement_pct'], threshold_pct=r['threshold_pct'],
                                  passed=r['passed'], url_set_identical=r['url_set_identical'],
@@ -140,13 +129,15 @@ for site in summary['sites']:
         else:
             column = 'Exportfehler' if e['outcome']=='error' else 'Nicht verglichen'
             reason = e.get('message', e.get('reason', ''))
+            exports.append([site['site'], e['ref_file'], e['mapping']] + [''] * 9 + [e['status'], e['outcome'], reason])
             rows.append([site['site'], e['ref_file'], e['mapping'], column, '*', e['status'], reason,
                          spec_for(e), *classify(e, column, '', '')])
             metadata.append(dict(site=site['site'], ref_file=e['ref_file'], mapping=e['mapping'], outcome=e['outcome']))
     site_counts.append([site['site'], len(site['exports']), counts['compared'], counts['passed'], counts['failed'], counts['error'], counts['skipped']])
 
 for name, header, data in [
-    ('exporte.csv', ['Site','Export','Mapping','Referenzzeilen','OS-Zeilen','Prozent','Schwelle','URL-Menge','Reihenfolge','Bestanden','Zellen','Zellfehler'],exports),
+    ('exporte.csv', ['Site','Export','Mapping','Referenzzeilen','OS-Zeilen','Prozent','Schwelle','URL-Menge','Reihenfolge','Bestanden','Zellen','Zellfehler','Status','Ergebnis','Grund'],exports),
+    ('spalten.csv', ['Site','Export','Referenzspalte','OS-Spalte','Verglichen','Fehler'], columns),
     ('befunde.csv', ['Site','Export','Mapping','Spalte','URL/Schluessel','Referenz','OpenSpider','Spec-ID','Kategorie','Crate','Datei'], rows),
     ('abweichungen.csv', ['Site','Export','ID','Spec-ID','Anzahl','Scope','Begruendung','Beispiele'],accepted),
     ('sites.csv', ['Site','Exporte','Verglichen','Bestanden','Verfehlt','Fehler','Uebersprungen'],site_counts)]:
