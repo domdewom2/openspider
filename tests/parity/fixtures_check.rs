@@ -1995,8 +1995,10 @@ fn manifests_mappings_and_profile_are_consistent() {
         for k in &key {
             if *k != "#" {
                 assert!(
-                    cols.values().any(|v| v.as_str() == Some(k)
-                        || v.get("os").and_then(|o| o.as_str()) == Some(k)),
+                    // Mapping::os_name_of_key resolves reference names through [columns].
+                    cols.contains_key(*k)
+                        || cols.values().any(|v| v.as_str() == Some(k)
+                            || v.get("os").and_then(|o| o.as_str()) == Some(k)),
                     "{slug}: Schlüsselspalte {k} nicht in [columns] abgebildet"
                 );
             }
