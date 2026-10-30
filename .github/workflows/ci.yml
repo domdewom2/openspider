@@ -84,7 +84,7 @@ jobs:
           if [ "$EVENT" = "schedule" ]; then intel=true; fi
           if [ "$EVENT" = "workflow_dispatch" ] && [ "$INTEL_INPUT" != "false" ]; then intel=true; fi
           case "$REF" in refs/tags/v*) intel=true ;; esac
-          arm='{"name":"macos-arm64","os":"macos-14"}'
+          arm='{"name":"macos-arm64","os":"macos-15"}'
           x64='{"name":"macos-x64","os":"macos-15-intel"}'
           win='{"name":"windows-x64","os":"windows-latest"}'
           if [ "$intel" = "true" ]; then
@@ -348,7 +348,7 @@ jobs:
   # fehl, wenn eine M1-ID den Status `open` hat; `--strict` zusätzlich bei ignorierten Tests ohne gültigen Grund.
   spec-coverage:
     name: spec-coverage
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 60
     # Integration Teil 5: ohne Debuginfo (macOS-arm64: "No space left on device" im Post-Schritt von rust-cache, wie bei build).
     env:
