@@ -25,6 +25,7 @@ export const KNOWN_SECTIONS: readonly { id: string; order: number }[] = [
   { id: "external-tools", order: 80 },
   { id: "email", order: 85 },
   { id: "mcp", order: 90 },
+  { id: "updates", order: 95 },
 ];
 
 export const sectionTitleKey = (id: string): string => `settings-section-${id}`;

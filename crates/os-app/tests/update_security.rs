@@ -81,3 +81,22 @@ fn rejection_emits_a_warning_without_payload_or_key_material() {
     assert!(!logged.contains("changed-payload"));
     assert!(!logged.contains(PUBKEY.trim()));
 }
+
+// spec: OUT-252
+#[test]
+fn build_beta_variable_selects_endpoint_and_manifest_policy_together() {
+    let context = os_app::update::UpdateContext::default();
+    let beta = option_env!("OPENSPIDER_UPDATE_BETA") == Some("1");
+    assert_eq!(context.beta, beta);
+    assert_eq!(
+        context.endpoint,
+        if beta {
+            "https://github.com/domdewom2/openspider/releases/latest/download/latest-beta.json"
+        } else {
+            "https://github.com/domdewom2/openspider/releases/latest/download/latest.json"
+        }
+    );
+    let mut manifest: UpdateManifest = serde_json::from_str(MANIFEST).unwrap();
+    manifest.version = "1.1.0-beta.1".parse().unwrap();
+    assert_eq!(manifest.validate(context.beta).is_ok(), beta);
+}

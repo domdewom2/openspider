@@ -108,7 +108,7 @@ pub async fn confirm(app: &App, accepted: bool) -> Result<(), CmdError> {
         Ok(())
     }
     .await;
-    if result.is_ok() {
+    if result.is_ok() && crate::update::install::on_quit(app).await {
         if let Some(host) = app.window_host() {
             host.exit();
         }

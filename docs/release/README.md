@@ -32,6 +32,8 @@ Build-Variablen:
   einmalig in `apps/desktop/src-tauri/build_update.rs` und wird von `build.rs` verwendet.
   Endpunkte entstehen als `https://github.com/<repo>/releases/latest/download/<manifest>`.
   Diese Variable allein überschreibt keine eingehende Updater-Konfiguration.
+  Einzige Kanalvariable für Update-Kern, CLI und Tauri-Adapter; Windows wählt
+  sein NSIS-/MSI-Target über den Tauri-Updater selbst.
 - Der feste HTTP-User-Agent des Update-Kerns ist `OpenSpider-Updater`, ohne Kennung.
 
 K3-04, Orchestrator-Entscheid vom 30.10.2026: Bis 1.0 werden Betas als **normale

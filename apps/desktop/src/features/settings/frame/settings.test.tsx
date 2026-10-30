@@ -37,7 +37,7 @@ describe("Einstellungsfenster: Rahmen", () => {
   it("kennt alle Abschnitte aus 1.5; Allgemein und Oberfläche sind fertig, die übrigen Platzhalter", () => {
     const sections = resolveSections();
     expect(sections.map((s) => s.id)).toEqual(KNOWN_SECTIONS.map((k) => k.id));
-    expect(sections.filter((s) => s.Component).map((s) => s.id)).toEqual(["general", "appearance", "storage", "crawls", "exports", "network", "accounts", "email", "mcp"]);
+    expect(sections.filter((s) => s.Component).map((s) => s.id)).toEqual(["general", "appearance", "storage", "crawls", "exports", "network", "accounts", "email", "mcp", "updates"]);
     expect(sectionOfAnchor("appearance.zoom")).toBe("appearance");
   });
 

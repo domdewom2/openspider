@@ -1,0 +1,24 @@
+update-title = Updates
+update-auto = Automatisch nach Updates suchen
+update-checking = Suche nach Updates …
+update-current = OpenSpider ist aktuell.
+update-environment = Die Update-Prüfung ist durch OPENSPIDER_DISABLE_UPDATE_CHECK=1 deaktiviert.
+update-disabled-settings = Die Update-Prüfung ist in den Einstellungen deaktiviert.
+update-disabled-missing-key = Die Update-Prüfung ist nicht verfügbar, weil der Signaturschlüssel fehlt.
+update-disabled-invalid-key = Die Update-Prüfung ist nicht verfügbar, weil der Signaturschlüssel ungültig ist.
+update-disabled-unavailable = Die Update-Prüfung ist in diesem Build nicht verfügbar.
+update-failed = Das Update konnte nicht abgeschlossen werden. Bitte erneut versuchen.
+update-version = Version { $version }
+update-notes = Release-Notes
+update-no-notes = Für diese Version sind keine Hinweise verfügbar.
+update-downloading = Download: { $done } von { $total } Bytes
+update-progress = Download-Fortschritt
+update-download = Im Hintergrund herunterladen
+update-now = Jetzt installieren und neu starten
+update-on-quit = Beim Beenden installieren
+update-after-crawl = Nach Crawl-Ende installieren
+update-queued-quit = Das Update wird beim Beenden installiert.
+update-queued-crawl = Das Update wird nach Crawl-Ende installiert.
+update-close = Schließen
+update-privacy = Die Prüfung sendet nur Version, Betriebssystem und Architektur an GitHub. GitHub sieht dabei Ihre IP-Adresse.
+update-queued-now = Die Installation wird nach Abschluss laufender Vorgänge vorbereitet …

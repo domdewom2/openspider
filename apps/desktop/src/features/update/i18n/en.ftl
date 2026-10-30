@@ -1,0 +1,24 @@
+update-title = Software updates
+update-auto = Automatically check for updates
+update-checking = Checking for updates …
+update-current = OpenSpider is up to date.
+update-environment = Update checks are disabled by OPENSPIDER_DISABLE_UPDATE_CHECK=1.
+update-disabled-settings = Update checks are disabled in Settings.
+update-disabled-missing-key = Update checks are unavailable because the signing key is missing.
+update-disabled-invalid-key = Update checks are unavailable because the signing key is invalid.
+update-disabled-unavailable = Update checks are unavailable in this build.
+update-failed = The update could not be completed. Please try again.
+update-version = Version { $version }
+update-notes = Release notes
+update-no-notes = No notes are available for this release.
+update-downloading = Download: { $done } of { $total } bytes
+update-progress = Download progress
+update-download = Download in background
+update-now = Install now and restart
+update-on-quit = Install on quit
+update-after-crawl = Install after crawl ends
+update-queued-quit = The update will be installed on quit.
+update-queued-crawl = The update will be installed after the crawl ends.
+update-close = Close
+update-privacy = The check sends only version, operating system and architecture to GitHub. GitHub also sees your IP address.
+update-queued-now = Preparing installation after active operations finish …

@@ -64,7 +64,7 @@ export function mainMenuContributions(state: MainMenuState): MenuContribution[] 
     group("visualisations", "graphs", 10, ["crawlTree", "crawlGraph", "directoryTree", "directoryGraph", "crawlGraph3d", "directoryGraph3d", "anchorWords", "bodyWords", "contentCluster"].map((s) => action(`viz.${s}`, data))),
     group("help", "help", 11, [
       action("help.manual"), { ...action("help.shortcuts"), labelKey: "menu-item-shortcuts" }, action("help.usage"),
-      action("help.debug"), action("help.logs"), { ...action("help.updates", () => false), disabledReasonKey: "u04-updates-m3" },
+      action("help.debug"), action("help.logs"), action("help.updates"),
       { ...action("app.about"), id: "help.about", labelKey: "menu-item-about" },
     ]),
   ];
