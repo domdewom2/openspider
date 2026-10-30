@@ -174,6 +174,25 @@ fn clip(s: &str) -> String {
 
 /// Führt den Vergleich aus. Schwellen werden mit [`evaluate`] angewandt.
 pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
+    // OUT-015 / OUT-085: upload-order exports retain the original input, including
+    // duplicates and invalid URLs. Address can be empty or normalized and is not
+    // the identity of an uploaded row. Keep older ordered formats compatible.
+    if input.mapping.ordered
+        && input
+            .mapping
+            .key
+            .first()
+            .is_some_and(|key| key == "Address")
+        && input.reference.index_of("Original Url").is_some()
+        && input.os.index_of("Original Url").is_some()
+    {
+        let mut mapping = input.mapping.clone();
+        mapping.key[0] = "Original Url".into();
+        return compare(&CompareInput {
+            mapping: &mapping,
+            ..*input
+        });
+    }
     let CompareInput {
         export,
         site,
@@ -539,4 +558,55 @@ pub fn run(args: &DiffArgs) -> Result<bool, ParityError> {
     }
     print!("{}", crate::report::render_markdown(&report));
     Ok(report.passed)
+}
+
+#[cfg(test)]
+mod upload_format_tests {
+    use super::*;
+
+    // spec: OUT-015, OUT-085
+    #[test]
+    fn original_input_keys_preserve_duplicates_and_expose_changed_addresses() {
+        let mapping = Mapping::parse(
+            "ordered = true\nkey = ['Address', '#']\n[columns]\nAddress = 'Address'\n",
+        )
+        .unwrap();
+        let reference = crate::csvio::parse_csv(
+            b"Original Url,Address\nHTTP://example/a,http://example/a\nHTTP://example/a,http://example/a\nbad,\n",
+            &[],
+        )
+        .unwrap();
+        let mut os = reference.clone();
+        os.rows[0][1] = "http://example/other".into();
+        let bases = BaseUrls::from_base("http://example");
+        let report = compare(&CompareInput {
+            export: "list_internal",
+            site: None,
+            reference: &reference,
+            os: &os,
+            mapping: &mapping,
+            ref_bases: &bases,
+            os_bases: &bases,
+            deviations: &[],
+        })
+        .unwrap();
+        assert_eq!(report.matched, 3);
+        assert!(report.url_set_identical);
+        assert_eq!(report.row_order_identical, Some(true));
+        assert_eq!(report.columns[0].ref_column, "Address");
+        assert_eq!(report.columns[0].errors, 1);
+        os.rows.swap(1, 2);
+        let report = compare(&CompareInput {
+            export: "list_internal",
+            site: None,
+            reference: &reference,
+            os: &os,
+            mapping: &mapping,
+            ref_bases: &bases,
+            os_bases: &bases,
+            deviations: &[],
+        })
+        .unwrap();
+        assert_eq!(report.row_order_identical, Some(false));
+    }
 }
