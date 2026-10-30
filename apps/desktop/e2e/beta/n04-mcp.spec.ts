@@ -18,7 +18,7 @@ test("real app lists MCP tools while stopped and keeps whole column headings", a
     for (const header of await table.locator("th").all()) {
       expect(await header.evaluate(el => getComputedStyle(el).whiteSpace)).toBe("nowrap");
     }
-    await expect(table.getByText("query_urls", { exact: true }).first()).toBeVisible();
+    await expect(table.locator("td:nth-child(2) code").filter({ hasText: /^query_urls$/ })).toBeVisible();
     await expect(table).toBeVisible();
   } finally { await bridge.stop(); }
 });

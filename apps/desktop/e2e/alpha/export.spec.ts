@@ -93,6 +93,9 @@ async function exportFromMenu(page: Page, action: string, options: { format?: "x
     await expect(dialog.getByText(/^Suggested filename: .*\.xlsx$/)).toBeVisible();
   }
   await dialog.getByRole("button", { name: "Save…" }).click();
+  // onStarted closes the dialog and replaces the previous export status together.
+  // Do not mistake an earlier completion banner for this export finishing.
+  await expect(dialog).not.toBeVisible();
   await expect(page.getByRole("region", { name: "Export status" })).toContainText("Export complete.");
 }
 

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { DataGrid, type GridController } from "../../grid/DataGrid";
 import { copySelection } from "../../grid/copy";
 import { currentLanguage, useT } from "../../i18n";
-import { ChevronDown, FolderTree, List, Upload } from "lucide-react";
+import { ChevronDown, Columns3, FolderTree, List, Upload } from "lucide-react";
 import { columnLabel, filterLabel, tabLabel } from "../../i18n/canon";
 import { crawl } from "../../ipc/crawl";
 import { eventBus } from "../../ipc/events";
@@ -288,7 +288,7 @@ function RegularUpperTable() {
           { id: "export-multi", label: t("u34-export-multi"), onAction: () => { runAction("export.multi"); } },
         ]} trigger={<IconButton label={t("u34-export-more")} icon={<ChevronDown size={14} />} />} />
       </div>
-      <Button onPress={() => setConfigurator(true)} isDisabled={!columns.length}>{t("u20-columns-open")}</Button>
+      <IconButton label={t("u20-columns-open")} title={t("u20-columns-open")} icon={<Columns3 size={16} />} onPress={() => setConfigurator(true)} isDisabled={!columns.length} />
       <ColumnsMenu columns={columns} onChange={next => void columnState.change(tabs.active, next).catch(fail)} onReset={() => void columnState.reset(tabs.active).catch(fail)} />
     </div>
     {searchError && <p role="alert" className="u20-error">{searchError}</p>}
