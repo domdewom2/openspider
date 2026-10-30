@@ -150,6 +150,6 @@ ref_file = "crawl_path_deep8.csv"
 os = "report:Crawl Path Report"
 mapping = "crawl_path"
 status = "present"
-skip = "SQ-14 / OUT-023: CLI-Export folgt in N11; Detail-Export separat durch Fixture-Tests belegt"
+skip = "SQ-14 / OUT-023: N11-CLI vorhanden; Runner-Ansteuerung und Verbindungs-Mapping fehlen (Messfehler Q02b gemeldet, Code-Freigabe ausstehend)"
 [export.select]
 "Target Address" = "/deep/8.html"
