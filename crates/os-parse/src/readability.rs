@@ -70,7 +70,8 @@ pub fn facts(text: &str) -> Vec<(ExtKey, Value)> {
     facts_with_words(text, None)
 }
 
-fn facts_with_words(text: &str, word_count: Option<u32>) -> Vec<(ExtKey, Value)> {
+/// Lesbarkeitswerte mit derselben Wortzahl wie die Inhaltsanalyse (einschließlich A-35b).
+pub fn facts_with_words(text: &str, word_count: Option<u32>) -> Vec<(ExtKey, Value)> {
     if !text.chars().any(char::is_alphabetic) {
         return Vec::new();
     }
