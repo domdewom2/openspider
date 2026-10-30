@@ -106,6 +106,7 @@ verify_app() {
   fi
   run "Signatur (codesign --verify --deep --strict)" 1 codesign --verify --deep --strict --verbose=2 "$app"
   check_flags "$app"
+  run "Bundle: alle Mach-O-Dateien, Mindestplattform, Dateizuordnungen" 1 bash "$(dirname "${BASH_SOURCE[0]}")/check-macos-bundle.sh" "$app"
   if run "Gatekeeper (spctl -a -t exec)" "$require_notarized" spctl -a -t exec -vv "$app"; then
     if [[ "$require_notarized" == "1" ]] && ! grep -q 'source=Notarized Developer ID' <<<"$last_output"; then
       echo "-> FEHLER: Quelle ist nicht 'Notarized Developer ID'"

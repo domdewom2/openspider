@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  Entitlements der OpenSpider-Desktop-App (M2-Z01). Die App ist nicht sandboxed und läuft mit Hardened Runtime
-  (tauri.conf.json: bundle.macOS.hardenedRuntime). Bewusst KEINE Ausnahmen:
+  Entitlements der OpenSpider-Desktop-App (M3-R01, aufgebaut auf M2-Z01). Die App ist nicht sandboxed und läuft mit Hardened Runtime
+  (tauri.macos.conf.json: bundle.macOS.hardenedRuntime). Bewusst KEINE Ausnahmen:
 
   - JIT / unsigned executable memory (com.apple.security.cs.allow-jit, allow-unsigned-executable-memory):
     nicht nötig. Das JavaScript von WKWebView läuft im WebContent-Prozess, den Apple selbst signiert und startet;
