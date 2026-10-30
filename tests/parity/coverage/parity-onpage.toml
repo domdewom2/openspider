@@ -315,7 +315,7 @@ miss = ["ext:/ctype/t-png.png"]
 
 [[case]]
 tab = "External"
-filter = "Flash"
+filter = "Plugins"
 hit = ["ext:/ctype/t-swf"]
 miss = ["ext:/ctype/t-json.json"]
 

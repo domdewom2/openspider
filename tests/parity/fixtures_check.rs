@@ -1027,7 +1027,7 @@ fn holds(c: &Crawl, tab: &str, filter: &str, subject: &Subject<'_>) -> Option<bo
                 "CSS" => Class::Css,
                 "Images" => Class::Images,
                 "PDF" => Class::Pdf,
-                "Flash" => Class::Flash,
+                "Plugins" => Class::Flash,
                 "Other" => Class::Other,
                 "Unknown" => Class::Unknown,
                 _ => return None,

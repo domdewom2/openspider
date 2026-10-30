@@ -73,7 +73,7 @@ status = "present"
 
 [[export]]
 ref_file = "internal_flash.csv"
-os = "tab:Internal:Flash"
+os = "tab:Internal:Plugins"
 mapping = "internal_m2"
 status = "present" # Filter heisst in der Referenzversion Internal > Plugins
 
