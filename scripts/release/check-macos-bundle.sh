@@ -43,13 +43,21 @@ while IFS= read -r -d '' binary; do
   count=$((count + 1))
   codesign --verify --strict --all-architectures "$binary"
   archs="$(lipo -archs "$binary")"
+  # Apple's Bash 3.2 does not apply errexit to a failed [[ ... ]] in case.
+  # Reject explicitly; otherwise a thin file can pass as Universal on macOS.
+  arch_matches=false
   case "${MACOS_EXPECTED_ARCH:-}" in
-    universal) [[ " $(echo "$archs" | tr ' ' '\n' | sort | tr '\n' ' ')" == ' arm64 x86_64 ' ]] ;;
-    aarch64) [[ "$archs" == arm64 ]] ;;
-    x86_64) [[ "$archs" == x86_64 ]] ;;
-    '') ;;
+    universal)
+      case "$archs" in 'x86_64 arm64'|'arm64 x86_64') arch_matches=true ;; esac ;;
+    aarch64) if [[ "$archs" == arm64 ]]; then arch_matches=true; fi ;;
+    x86_64) if [[ "$archs" == x86_64 ]]; then arch_matches=true; fi ;;
+    '') arch_matches=true ;;
     *) echo 'Invalid MACOS_EXPECTED_ARCH' >&2; exit 2 ;;
   esac
+  if [[ "$arch_matches" != true ]]; then
+    echo "Architecture mismatch: $binary (expected ${MACOS_EXPECTED_ARCH}, found $archs)" >&2
+    exit 1
+  fi
   # Every slice must carry runtime, a secure timestamp and no entitlement exceptions.
   for slice in $archs; do
     info="$(codesign -dvv --arch "$slice" "$binary" 2>&1)"
