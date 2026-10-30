@@ -1,4 +1,4 @@
-# macOS-Signier- und Notarisierungs-Pipeline (M2-Z01, vorgezogen aus M3).
+# macOS-Pipeline M3-R01 (auf M2-Z01): native Tests, drei DMGs, Updater-Signaturen.
 #
 # Baut die Desktop-App, signiert sie mit Developer ID (Hardened Runtime), notarisiert sie, heftet das Ticket und erzeugt
 # ein signiertes, notarisiertes DMG. Ergebnis ist ausschließlich ein Actions-Artefakt (14 Tage); es wird nichts
@@ -12,26 +12,58 @@
 name: Release macOS
 
 on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Release-Version ohne v (leer = Workspace-Version)"
+        type: string
+        default: ""
+      channel:
+        type: string
+        default: stable
+    outputs:
+      artifact_names:
+        description: "JSON-Liste der Artefaktnamen; leer bei fehlenden Apple-Zugangsdaten"
+        value: ${{ jobs.artifacts.outputs.names }}
+    secrets:
+      APPLE_CERTIFICATE:
+        required: false
+      APPLE_CERTIFICATE_PASSWORD:
+        required: false
+      APPLE_ID:
+        required: false
+      APPLE_PASSWORD:
+        required: false
+      KEYCHAIN_PASSWORD:
+        required: false
+      TAURI_SIGNING_PRIVATE_KEY:
+        required: false
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD:
+        required: false
   workflow_dispatch:
     inputs:
-      arch:
-        description: "Architektur des Builds"
+      version:
+        description: "Release-Version ohne v (leer = Workspace-Version)"
+        type: string
+        default: ""
+      channel:
+        description: "Update-Kanal"
         type: choice
-        options:
-          - universal
-          - aarch64
-          - x86_64
-        default: universal
-      intel:
-        description: "Zusätzlich ein Intel-DMG nativ auf macos-15-intel bauen (OUT-261)"
-        type: boolean
-        default: true
+        options: [stable, beta]
+        default: beta
+      arch:
+        description: "Architektur (all = drei DMGs)"
+        type: choice
+        options: [all, universal, aarch64, x86_64]
+        default: all
   push:
-    tags:
-      - "v*"
+    branches: ["**"]
+  schedule:
+    - cron: "23 3 * * *"
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: release-macos-${{ github.ref }}
@@ -41,20 +73,67 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  macos:
-    # K2-67 / OUT-261: Matrix aus dem bisherigen Lauf (macos-15, Architektur laut Eingabe, bei Tags universal) und dem
-    # Intel-DMG (nativ auf macos-15-intel). Der Intel-Eintrag läuft bei Tags und bei workflow_dispatch mit Eingabe `intel`.
-    # Beide Einträge führen dieselben Signier- und Notarisierungsschritte aus.
-    name: signiertes DMG (${{ matrix.arch || inputs.arch || 'universal' }}${{ matrix.suffix }})
+  # OUT-260: arm64 bei jedem Push. K3-06: Intel nachts und vor Releases.
+  tests:
+    name: Tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 90
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && !inputs.intel && '[{"os":"macos-15","arch":"","suffix":""}]' || '[{"os":"macos-15","arch":"","suffix":""},{"os":"macos-15-intel","arch":"x86_64","suffix":"-intel"}]') }}
+        os: ${{ fromJSON(github.event_name == 'push' && inputs.channel == '' && '["macos-14"]' || '["macos-14","macos-15-intel"]') }}
     env:
-      # Hauptlauf (arch leer): Eingabe, bei Tag-Auslösung universal. Intel-Eintrag: x86_64.
-      ARCH: ${{ matrix.arch || inputs.arch || 'universal' }}
+      OPENSPIDER_SECRET_STORE: memory
+      CARGO_INCREMENTAL: 0
+      CARGO_BUILD_JOBS: 4
+      CARGO_PROFILE_DEV_DEBUG: "0"
+      CARGO_PROFILE_TEST_DEBUG: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install chromium webkit
+      - name: Testumgebung
+        run: |
+          echo "OPENSPIDER_CHROMIUM=$(node -e 'console.log(require("playwright").chromium.executablePath())')" >> "$GITHUB_ENV"
+          mkdir -p apps/desktop/src-tauri/binaries
+          triple="$(rustc -vV | sed -n 's/^host: //p')"
+          cargo build -p os-cli --bin openspider -j 4 --locked
+          cp target/debug/openspider "apps/desktop/src-tauri/binaries/openspider-$triple"
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets -j 4 --locked -- -D warnings
+      - run: cargo test --workspace -j 4 --locked
+      - run: npm run -w apps/desktop typecheck && npm run -w apps/desktop test && npm run -w apps/desktop check:static
+      - run: python3 -m unittest discover -s tests/release -p 'test_macos_*.py' -v
+      - run: bash scripts/check-neutral.sh
+
+  macos:
+    # Reusable workflows retain the caller event_name (including a tag push).
+    if: inputs.channel != ''
+    needs: tests
+    name: signiertes DMG (${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: macos-14, arch: aarch64}
+          - {os: macos-15-intel, arch: x86_64}
+          - {os: macos-14, arch: universal}
+    env:
+      ARCH: ${{ matrix.arch }}
+      MACOSX_DEPLOYMENT_TARGET: '13.0'
+      CARGO_BUILD_JOBS: 4
+      CARGO_INCREMENTAL: 0
+      OPENSPIDER_SECRET_STORE: memory
+      OPENSPIDER_DISABLE_UPDATE_CHECK: "1"
+      RELEASE_VERSION: ${{ inputs.version }}
+      UPDATE_CHANNEL: ${{ inputs.channel || 'stable' }}
     defaults:
       run:
         shell: bash
@@ -70,6 +149,10 @@ jobs:
           APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
         run: |
+          if [[ "${{ inputs.arch || 'all' }}" != all && "${{ inputs.arch || 'all' }}" != "$ARCH" ]]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           missing=()
           for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_ID APPLE_PASSWORD KEYCHAIN_PASSWORD \
                       APPLE_SIGNING_IDENTITY APPLE_TEAM_ID; do
@@ -129,6 +212,58 @@ jobs:
         if: steps.check.outputs.ready == 'true'
         run: npm ci
 
+      - name: Version, Kanal und Updater konfigurieren
+        if: steps.check.outputs.ready == 'true'
+        id: updater
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          OPENSPIDER_UPDATER_PUBKEY: ${{ vars.OPENSPIDER_UPDATER_PUBKEY }}
+        run: |
+          set -euo pipefail
+          case "$UPDATE_CHANNEL" in stable|beta) ;; *) echo "Ungültiger Kanal" >&2; exit 1 ;; esac
+          # R04 sets the version and lockfile before calling; never mutate dependencies here.
+          node scripts/release/check-version.mjs
+          node --input-type=module - <<'JSVERSION'
+          import { readVersion } from './scripts/release/check-version.mjs';
+          const expected = process.env.RELEASE_VERSION;
+          if (expected && expected !== readVersion(process.cwd())) {
+            throw new Error('Eingabe version muss der vorbereiteten Workspace-Version entsprechen');
+          }
+          JSVERSION
+          python3 - <<'PYCONFIG'
+          import json, os
+          enabled = bool(os.environ['TAURI_SIGNING_PRIVATE_KEY'] and os.environ['OPENSPIDER_UPDATER_PUBKEY'])
+          channel = '-beta' if os.environ['UPDATE_CHANNEL'] == 'beta' else ''
+          config = {'bundle': {'createUpdaterArtifacts': enabled}, 'plugins': {'updater': {
+              'pubkey': os.environ['OPENSPIDER_UPDATER_PUBKEY'],
+              'endpoints': [f'https://github.com/domdewom2/openspider/releases/latest/download/latest{channel}.json']}}}
+          with open(os.environ['RUNNER_TEMP'] + '/macos-build.json', 'w') as f:
+              json.dump(config, f)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write(f"enabled={str(enabled).lower()}\n")
+          PYCONFIG
+          if [[ -z "$TAURI_SIGNING_PRIVATE_KEY" || -z "$OPENSPIDER_UPDATER_PUBKEY" ]]; then
+            echo "::notice::Updater-Artefakte übersprungen: TAURI_SIGNING_PRIVATE_KEY oder OPENSPIDER_UPDATER_PUBKEY fehlt."
+            echo "Updater-Artefakte übersprungen: Schlüssel fehlen." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: CLI bauen (Universal per lipo)
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p apps/desktop/src-tauri/binaries
+          for triple in aarch64-apple-darwin x86_64-apple-darwin; do
+            if [[ "$ARCH" == universal || "$TAURI_TARGET" == "$triple" ]]; then
+              cargo build -p os-cli --bin openspider --release --target "$triple" -j 4 --locked
+              cp "target/$triple/release/openspider" "apps/desktop/src-tauri/binaries/openspider-$triple"
+            fi
+          done
+          if [[ "$ARCH" == universal ]]; then
+            lipo -create apps/desktop/src-tauri/binaries/openspider-{x86_64,aarch64}-apple-darwin \
+              -output apps/desktop/src-tauri/binaries/openspider-universal-apple-darwin
+            lipo -archs apps/desktop/src-tauri/binaries/openspider-universal-apple-darwin
+          fi
+
       - name: Schlüsselbund anlegen und Zertifikat importieren
         if: steps.check.outputs.ready == 'true'
         env:
@@ -180,7 +315,9 @@ jobs:
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-        run: npm run -w apps/desktop tauri -- build --target "$TAURI_TARGET" --bundles app,dmg
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: npm run -w apps/desktop tauri -- build --target "$TAURI_TARGET" --config "$RUNNER_TEMP/macos-build.json" --bundles app,dmg -- --locked -j 4
 
       # Das DMG selbst bekommt eine eigene Signatur, Notarisierung und Heftung (Tauri notarisiert nur die App darin).
       - name: DMG signieren, notarisieren, heften
@@ -247,6 +384,12 @@ jobs:
             exit 1
           fi
           cp "${dmgs[0]}" "$out/"
+          MACOS_EXPECTED_ARCH="$ARCH" scripts/release/check-macos-bundle.sh --smoke "${apps[0]}"
+          if [[ "${{ steps.updater.outputs.enabled }}" == true ]]; then
+            updates=("$BUNDLE_DIR"/macos/*.app.tar.gz)
+            [[ ${#updates[@]} -eq 1 && -s "${updates[0]}.sig" ]]
+            cp "${updates[0]}" "${updates[0]}.sig" "$out/"
+          fi
           rc=0
           scripts/release/verify-macos.sh "${apps[0]}" 2>&1 | tee "$out/verify-app.log" || rc=1
           scripts/release/verify-macos.sh "${dmgs[0]}" 2>&1 | tee "$out/verify-dmg.log" || rc=1
@@ -263,7 +406,7 @@ jobs:
         if: always() && steps.check.outputs.ready == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: openspider-macos-${{ env.ARCH }}${{ matrix.suffix }}
+          name: openspider-macos-${{ env.ARCH }}
           path: release-artifacts/
           retention-days: 14
           if-no-files-found: warn
@@ -274,3 +417,71 @@ jobs:
           security delete-keychain "$RUNNER_TEMP/openspider-signing.keychain-db" 2>/dev/null || true
           rm -f "$RUNNER_TEMP/openspider-certificate.p12"
           echo "Temporärer Schlüsselbund entfernt."
+
+  universal-smoke:
+    if: needs.macos.result == 'success' && (inputs.arch == '' || inputs.arch == 'all' || inputs.arch == 'universal')
+    needs: macos
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, macos-15-intel]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        id: download
+        continue-on-error: true
+        with:
+          name: openspider-macos-universal
+          path: universal-artifact
+      - name: Universal-DMG nativ starten (App und CLI)
+        if: steps.download.outcome == 'success'
+        env:
+          MACOS_EXPECTED_ARCH: universal
+          OPENSPIDER_SECRET_STORE: memory
+          OPENSPIDER_DISABLE_UPDATE_CHECK: "1"
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/universal-mount"
+          trap 'hdiutil detach -quiet "$RUNNER_TEMP/universal-mount" || true' EXIT
+          dmgs=(universal-artifact/*.dmg)
+          [[ ${#dmgs[@]} -eq 1 ]]
+          hdiutil attach -quiet -nobrowse -readonly -mountpoint "$RUNNER_TEMP/universal-mount" "${dmgs[0]}"
+          scripts/release/check-macos-bundle.sh --smoke "$RUNNER_TEMP/universal-mount/OpenSpider.app"
+      - name: Fehlendes Artefakt einordnen
+        if: steps.download.outcome != 'success'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+        run: |
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_ID APPLE_PASSWORD KEYCHAIN_PASSWORD APPLE_SIGNING_IDENTITY APPLE_TEAM_ID; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "::notice::Universal-Smoke übersprungen: Apple-Konfiguration unvollständig."
+              exit 0
+            fi
+          done
+          echo "::error::Universal-Artefakt fehlt trotz vollständiger Apple-Konfiguration."
+          exit 1
+
+  artifacts:
+    if: always() && needs.macos.result == 'success'
+    needs: macos
+    runs-on: ubuntu-latest
+    outputs:
+      names: ${{ steps.list.outputs.names }}
+    steps:
+      - name: Vorhandene Artefaktnamen für R04
+        id: list
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          names="$(gh api --paginate "repos/$GH_REPO/actions/runs/$RUN_ID/artifacts" --jq '[.artifacts[] | select(.name | startswith("openspider-macos-")) | .name]' | jq -cs 'add')"
+          echo "names=$names" >> "$GITHUB_OUTPUT"
