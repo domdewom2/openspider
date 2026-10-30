@@ -19,7 +19,6 @@ import { client } from "../../ipc/client";
 import { chooseFile } from "./files";
 import { useHelp } from "./state";
 import license from "../../../../../LICENSE?raw";
-import notice from "../../../../../NOTICE?raw";
 import "./help.css";
 
 export function ShortcutHelp({ platform = currentPlatform() }: { platform?: Platform }) {
@@ -32,16 +31,24 @@ export function ShortcutHelp({ platform = currentPlatform() }: { platform?: Plat
 
 function About() {
   const t = useT();
+  const [licenseQuery, setLicenseQuery] = useState("");
+  const [licenseData, setLicenseData] = useState<typeof import("./licenses")>();
   const [info, setInfo] = useState<AppInfo>();
   const [error, setError] = useState<string>();
   useEffect(() => {
     const abort = new AbortController();
     void app.info(abort.signal).then(setInfo).catch((e) => { if (!abort.signal.aborted) setError(toCmdError(e).messageKey); });
+    void import("./licenses").then((data) => { if (!abort.signal.aborted) setLicenseData(data); }).catch((e) => { if (!abort.signal.aborted) setError(toCmdError(e).messageKey); });
     return () => abort.abort();
   }, []);
   return <><p>OpenSpider {info?.version} {info?.build}</p>{error && <p role="alert">{t(error)}</p>}
     <details><summary>{t("u04-license")}</summary><pre>{license}</pre></details>
-    <details><summary>{t("u04-third-party")}</summary><pre>{notice}</pre></details></>;
+    <details><summary>{t("u04-third-party")}</summary>
+      <label>{t("u04-license-search")} <input type="search" value={licenseQuery} onChange={(event) => setLicenseQuery(event.target.value)} /></label>
+      {licenseData ? licenseData.licenseDocuments.map((document) => <section key={document.name} aria-label={document.name}>
+        <h3>{document.name}</h3><pre style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{licenseData.searchLicenseText(document.text, licenseQuery) || t("u04-license-no-match")}</pre>
+      </section>) : <p role="status">{t("u04-loading")}</p>}
+    </details></>;
 }
 
 export function DebugHelp() {
