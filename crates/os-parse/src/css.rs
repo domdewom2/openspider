@@ -30,8 +30,12 @@ impl RefKind {
     }
 }
 
-/// Verweise aus `<style>`-Elementen und `style=`-Attributen.
-pub fn extract_inline(doc: &Document, base: &url::Url) -> Vec<ExtractedLink> {
+/// Verweise aus `<style>`-Elementen; `style=`-Attribute nur bei `style_attributes` (CRAWL-040).
+pub fn extract_inline(
+    doc: &Document,
+    base: &url::Url,
+    style_attributes: bool,
+) -> Vec<ExtractedLink> {
     let mut out = Vec::new();
     walk(doc, |el, ordinal, position| {
         let v = el.value();
@@ -48,8 +52,10 @@ pub fn extract_inline(doc: &Document, base: &url::Url) -> Vec<ExtractedLink> {
                 ));
             }
         };
-        if let Some(style) = v.attr("style") {
-            make(scan(style), &mut out);
+        if style_attributes {
+            if let Some(style) = v.attr("style") {
+                make(scan(style), &mut out);
+            }
         }
         if v.name() == "style" && (is_html(el) || &*v.name.ns == "http://www.w3.org/2000/svg") {
             let css: String = el.text().collect();
@@ -491,7 +497,7 @@ mod tests {
     fn style_attribute_without_braces() {
         let doc = Document::parse("<body><div style=\"background:url(bg.png); color:red\">x</div>");
         let base = url::Url::parse("https://site.test/p/").unwrap();
-        let links = extract_inline(&doc, &base);
+        let links = extract_inline(&doc, &base, true);
         assert_eq!(links.len(), 1);
         assert_eq!(
             links[0].resolved.as_deref(),

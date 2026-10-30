@@ -81,6 +81,10 @@ pub(super) const TITLE_20: &[(char, u8)] = &[
     ('x', 10),
     ('y', 9),
     ('z', 10),
+    // G21: separate measured glyphs in the 20 px title profile; other profiles keep font metrics.
+    ('Σ', 11),
+    ('ς', 11),
+    ('σ', 11),
     ('–', 13),
 ];
 
