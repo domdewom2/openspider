@@ -21,6 +21,7 @@ use std::{
 #[derive(Default)]
 pub struct SessionService {
     pub(crate) mutation: Arc<tokio::sync::Mutex<()>>,
+    poll_cancel: Mutex<Option<os_model::CancelToken>>,
     pub(crate) feeds: Mutex<HashMap<CrawlKey, feed::Cursor>>,
     pub(crate) parts: Mutex<TickParts>,
     pub(crate) analysis: Mutex<HashMap<CrawlKey, AnalysisStatus>>,
@@ -107,24 +108,52 @@ pub async fn poll(app: &App) -> Result<(), CmdError> {
     let Ok(_guard) = service.mutation.try_lock() else {
         return Ok(());
     };
-    let mut seen = std::collections::HashSet::new();
-    for s in app.sessions().all() {
-        if !seen.insert(s.key.clone()) {
-            continue;
+    let cancel = os_model::CancelToken::new();
+    *service
+        .poll_cancel
+        .lock()
+        .unwrap_or_else(|p| p.into_inner()) = Some(cancel.clone());
+    let result = crate::runtime::with_cancel(cancel, async {
+        let mut seen = std::collections::HashSet::new();
+        for s in app.sessions().all() {
+            if !seen.insert(s.key.clone()) {
+                continue;
+            }
+            let finished = s.engine.as_ref().is_some_and(|e| {
+                e.handle
+                    .lock()
+                    .unwrap_or_else(|p| p.into_inner())
+                    .as_ref()
+                    .is_some_and(|h| h.progress().state != CrawlState::Running)
+            });
+            if finished {
+                control::settle(app, &s, None).await?;
+            }
+            feed::refresh(app, &s).await?;
         }
-        let finished = s.engine.as_ref().is_some_and(|e| {
-            e.handle
-                .lock()
-                .unwrap_or_else(|p| p.into_inner())
-                .as_ref()
-                .is_some_and(|h| h.progress().state != CrawlState::Running)
-        });
-        if finished {
-            control::settle(app, &s, None).await?;
-        }
-        feed::refresh(app, &s).await?;
+        Ok(())
+    })
+    .await;
+    service
+        .poll_cancel
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .take();
+    result
+}
+
+/// Control commands interrupt background reads before waiting for the mutation lock.
+pub(crate) fn interrupt_poll(app: &App) {
+    if let Some(cancel) = app
+        .ext::<SessionService>()
+        .poll_cancel
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .as_ref()
+    {
+        cancel.cancel();
+        app.interrupt_hub().poke();
     }
-    Ok(())
 }
 
 pub fn close(app: &App, window: &WindowId, cleared: bool) {

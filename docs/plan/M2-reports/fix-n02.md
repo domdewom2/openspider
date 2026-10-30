@@ -136,3 +136,42 @@ Beide Testläufe melden ausschließlich die bereits bekannte macOS-Linkerwarnung
 Lokale Prüfungen: `cargo test -p os-app` vollständig einschließlich aller Integrationstests und Doc-Tests grün (426 bestanden, 0 fehlgeschlagen, 0 ignoriert; 775,93 s). Beide `subscription_notice_tests` und beide ursprünglich fehlgeschlagenen Tests bestehen. `cargo fmt --all --check` (10,65 s) und `cargo clippy -p os-app --all-targets -- -D warnings` (111,81 s) jeweils Exit 0. Jeder Befehl lief mit `subprocess.run(timeout=3600)` (3600000 ms). Der erste Testversuch brach beim Linken wegen Platzmangels ab; nach Löschen des Paket-Targets liefen Tests und Clippy mit `CARGO_PROFILE_DEV_DEBUG=0`, `CARGO_PROFILE_TEST_DEBUG=0` und `CARGO_INCREMENTAL=0` erfolgreich. Beim Test-Build erschien die bekannte macOS-Linkerwarnung zu `__eh_frame`. Dies ist ein lokaler macOS-Nachweis, kein neuer Linux-CI-Lauf.
 
 Manifeste und Lockfile unverändert, Tokio weiterhin 1.53.3; kein `cargo update`. Zwei getrennte Commits mit Co-Author-Trailer, kein Push, Merge oder PR. Das Paket-Target `/Users/dominikwojcik/Projects/build.noindex/target-fix-int15` ist gelöscht; der Arbeitsbaum wird sauber übergeben.
+
+
+## Integrationskorrektur int-15 (zweite Runde)
+
+Paket `fix-int15b`, Basis `origin/m2/int-15` (`4c312c64`), Branch `m2/fix-int15b`. Tokio bleibt **1.53.3**; Manifeste und Lockfile unverändert, kein `cargo update`.
+
+**A/B – Zustellung statt Flush-Zeitpunkt.** A erwartete einen manuellen Tick, obwohl `App::subscribe` wartende Notices seit fix-int15 unmittelbar zustellt. Der Test prüft nun die genau einmalige Startmeldung beim Abonnieren und keine Wiederholung beim nächsten Flush. B abonniert bereits vor dem Start der Operation: Ursache ist hier der regelmäßige MCP-Flush aus fix-n02 (`8846ebd8`), der dem Test-Flush zuvorkommen kann. Fortschritt und Ergebnis kommen im Tick an. Der Test sammelt diese Ereignisse, prüft ihre einmalige Zustellung, steigende Sequenznummern und den Leerlauf danach. Er verlangt weder einen bestimmten Flush-Auslöser noch ein nach der Tick-Zustellung noch verfügbares `ops.wait`-Ergebnis. Beide Anpassungen sind gemäß K2-63 im Testkommentar begründet; Spec-IDs und die Notice-Nachlieferung bleiben erhalten. Vollständige Paketläufe vor den Produktkorrekturen: os-app 437 bestanden, Desktop 19 bestanden/1 vorhandener P2-Test ignoriert, jeweils keine Fehler.
+
+**C – Ursachen und Produktkorrekturen.** Lokales Chromium mit vier Workern reproduzierte Pause-Latenzen bis 11,74 s sowie Quit-/Resume-/Header-Fehler und verspätete Feed-Zustände. Stack-Sampling zeigte wiederholte Filterzählungen im Exportkatalog und konkurrierende Zählerabfragen. Der Katalog berechnet die Report-Voraussetzungen jetzt aus einem gemeinsamen SQLite-Snapshot statt den kompletten Filterzählerstand pro Analyse-Report zu wiederholen. Statische Labels und leere Filterparameter serialisieren nicht mehr die gesamte Konfiguration. Tabellenzähler und Exportkatalog bündeln eingehende Ticks bei höchstens einer laufenden Aktualisierung. Unveränderte Kataloge und Menüberechtigungen lösen keinen Menü-Neuaufbau aus. Die große Sidebar-Übersicht wird bei unveränderten Daten nicht erneut abgeglichen und nachrangig gerendert.
+
+Der Statusfeed verwendet eine eigene Cache-Verbindung, unabhängig von belegten Tabellenlesern und mit erhaltenem inkrementellen Aggregatcache. Pause/Stop signalisieren der Engine vor dem Warten auf die Sitzungssperre und unterbrechen Hintergrundleser. Quit wartet weiterhin den dauerhaften Abschluss ab. Hat der Poller den angeforderten Abschluss bereits gejoint, bleibt die Steuerungsbestätigung erfolgreich. Terminale Watch-Werte werden erst nach dem dauerhaften Join als terminaler Sitzungs-/MCP-Zustand veröffentlicht; damit verschwindet auch das unter Last beobachtete MCP-Metadatenrennen. U34 zählt Navigation als lokale Bearbeitung: Verspätete gespeicherte UI-Zustände setzen Gruppe, Tab und Übersicht nicht zurück.
+
+WebKit deckte zusätzlich einen Statusleistenfehler auf: Die Analysephase wurde direkt gelesen, die Crawl-Zähler aus einem um 250 ms gebündelten Snapshot. Dadurch konnte eine abgeschlossene Running-Phase mit alten Zählern erscheinen. Alle Statusleistenwerte einschließlich Analysefeedback stammen jetzt aus demselben Snapshot.
+
+Neue Fixture-/Rennentests prüfen ausgelastete Tabellenleser, Steuerung bei gehaltener Sitzungssperre, gebündelte Aktualisierungen, verspätete Navigation, gemeinsame Report-Voraussetzungen und den atomaren Wechsel zu finalen Stop-Zählern. Zwei Sidebar-Unit-Tests warten mit unveränderten Assertions auf nachrangige Daten bzw. asynchron bestätigte Steuerung; K2-63-Kommentare erläutern dies. Die Playwright-Tests, ihre Assertions und Timeouts sind unverändert. Keine pauschale Timeout-Erhöhung.
+
+**Abschließender lokaler Prüfnachweis (29.10.2026).**
+
+| Prüfung | Ergebnis |
+| --- | --- |
+| `cargo fmt --all --check` | grün, Exit 0 |
+| `cargo clippy --locked --workspace --all-targets -- -D warnings` | grün, Exit 0 |
+| `cargo test --locked --workspace --no-fail-fast` | **3913 bestanden**, 0 Fehler, 44 vorhandene ignorierte Tests; Exit 0, 2761,57 s einschließlich Build |
+| `npm run -w apps/desktop typecheck` | grün, Exit 0 |
+| `npm run -w apps/desktop test` | 84 Dateien, **818 Tests bestanden**, 0 Fehler |
+| `python3 -I docs/plan/M2-check.py` | grün, Exit 0; 118 Pakete/590 Spec-IDs |
+| `bash scripts/check-neutral.sh` | grün, Exit 0; keine Fundstellen |
+| Acht gemeldete Chromium-Tests gemeinsam, vier Worker | **8/8 bestanden**, 1,0 min |
+| Vollständige E2E-A-Suite, Chromium, zwei Worker, einschließlich Performance-Projekten | **348/348 bestanden**, 0 Fehler/Skips; 18,4 min |
+| Sieben betroffene Dateien mit WebKit, zwei Worker | **20 bestanden**, 3 vorhandene Chromium-spezifische DPR-Skips, 0 Fehler; 2,2 min |
+| WebKit-Stop-Test dreimal wiederholt | **3/3 bestanden**, 28,4 s |
+
+Alle langen Befehle liefen mit `subprocess.run(timeout=3600)` (3600000 ms) ohne vorzeitigen Abbruch. Der echte MCP-Sitzungstest wartet absichtlich zehn Minuten (600000 ms); das ist kein Hänger. Browserläufe verwenden die frisch gebaute, unoptimierte echte App-Bridge. Die lokalen macOS-Ergebnisse ersetzen keinen Windows-/Linux-CI-Nachweis.
+
+**Prüfumgebung und Zwischenfehler.** Ein Workspace-Build scheiterte beim Linken am vollen Datenträger. Nach Bereinigung ausschließlich des Paket-Targets verwenden die Rust-Gates `CARGO_INCREMENTAL=0`, Debug-Informationen aus, Opt-Level 1 und vier Build-Jobs. Ein Zwischenlauf mit `CARGO_PROFILE_TEST_STRIP=symbols` scheiterte ausschließlich an zwei Backtrace-Assertions (App/CLI), die den Namen der auslösenden Funktion verlangen. Der abschließende Lauf erhält mit `CARGO_PROFILE_TEST_STRIP=none` diese Symbole; die Logging-Assertions bleiben unverändert. Die bekannte macOS-Linkerwarnung zu `__eh_frame` ist kein Testfehler.
+
+Ein früher Chromium-Gesamtlauf hatte 345 bestandene Tests und einen Infrastrukturfehler (`ENOENT` für `os-testsite`); die zwei abhängigen Performance-Tests liefen deshalb nicht. Das MCP-Fixture sucht direkt unter `CARGO_TARGET_DIR/debug`, wo die Target-Bereinigung den Testserver entfernt hatte. Die abschließenden Browserläufe verwenden einen separaten Laufzeitpfad mit allen Fixture-Werkzeugen. Ein weiterer Gesamtlauf bestand bereits mit 348/348; nach der anschließend durch WebKit gefundenen Statusleistenkorrektur wurde der vollständige Nachweis erneut geführt und besteht ebenfalls mit 348/348. Im abschließenden Performance-Lauf: erstes Bild des 10000-Knoten-Graphen nach 174 ms, Layout-Konvergenz nach 2,67 s, etwa 60 fps; SVG-Export 8,6 ms/1,17 MB. Baumgraph: Einklappen 35,3 ms, Aufklappen 48,7 ms.
+
+**Lokale Commits:** `9b33aa73` (A/B-Zustellung), `c616711d` (Exportkatalog), `e3b3d2c6` (Steuerung/Feed/dauerhafter Abschluss), `784f85c4` (UI-Aktualisierung/Navigation/Statusleiste). Alle mit `Co-Authored-By: OpenAI Codex <noreply@openai.com>`; Bericht separat. Kein Push, Merge oder PR. Die paketbezogenen Targets `target-fix-int15b` und `target-fix-int15b-bridge` sowie temporäre Laufzeitwerkzeuge sind entfernt. Format, Clippy, M2-check, Neutralitätsprüfung und `git diff --check` wurden auf dem endgültigen Stand erneut erfolgreich ausgeführt. Der Arbeitsbaum wird nach dem Bericht-Commit sauber geprüft.

@@ -116,7 +116,8 @@ it("keeps old values grey, shows stale steps from the core and starts only a use
   expect(await screen.findByText("Analysis outdated – analyze again")).toBeVisible();
   expect(core.calls.some(c => c.cmd === "analysis.start")).toBe(false);
   expect(screen.queryByRole("tab", { name: "Analysis" })).not.toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Low Content Pages" }).closest("tr")).toHaveTextContent("1");
+  // K2-63: overview rows are deferred behind urgent controls; await the same fixture value.
+  expect((await screen.findByRole("button", { name: "Low Content Pages" })).closest("tr")).toHaveTextContent("1");
   fireEvent.click(screen.getByRole("button", { name: "Analyze again" }));
   await waitFor(() => expect(core.calls.filter(c => c.cmd === "analysis.start").at(-1)?.args).toEqual({ steps: null }));
   const before = core.calls.filter(c => c.cmd === "analysis.start").length;
@@ -251,7 +252,8 @@ it("keeps an accepted analysis start disabled until the core finishes the operat
   await waitFor(() => expect(core.calls.some(c => c.cmd === "analysis.start")).toBe(true));
   expect(start).toBeDisabled();
   act(() => useSession.setState({ ops: { "analyze-1": { opId: "analyze-1", labelKey: "analysis", done: 1, state: "done" } } }));
-  expect(start).toBeEnabled();
+  // K2-63: the operation tick and accepted start may settle in separate React commits.
+  await waitFor(() => expect(start).toBeEnabled());
 });
 
 // spec: UI-082 [M2]

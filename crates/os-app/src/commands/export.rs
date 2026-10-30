@@ -240,6 +240,12 @@ fn catalog_command<'a>(
         let s = catalog::session(app, &ctx)?;
         app.read_pool()
             .run_snapshot(s.key, move |file, _| {
+                // All report prerequisites belong to this one SQLite snapshot.
+                // Recomputing every filter for each report monopolized the read
+                // pool and delayed crawl control and status delivery.
+                let pending = os_analyze::views::filter_counts(file, &s.config)
+                    .map(|counts| os_export::reports::prereq::pending_analysis_filters(&counts))
+                    .unwrap_or_else(|_| vec!["analysis state unavailable".into()]);
                 let groups = |kind| {
                     let entries = if kind == ExportKind::Bulk {
                         core::bulk_tables()
@@ -248,11 +254,12 @@ fn catalog_command<'a>(
                     };
                     let mut out: BTreeMap<String, Vec<ExportItem>> = BTreeMap::new();
                     for name in core::list_with(kind, &s.config) {
-                        let availability = os_export::reports::prereq::availability(
+                        let availability = os_export::reports::prereq::availability_with_pending(
                             &name,
                             requirement(kind, &name, &entries),
                             file,
                             &s.config,
+                            &pending,
                         );
                         let group = name.split(':').next().unwrap_or("Exports").to_owned();
                         out.entry(group).or_default().push(ExportItem {

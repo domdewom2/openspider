@@ -407,11 +407,48 @@ pub async fn resume(app: &App, ctx: CallCtx) -> Result<(), CmdError> {
 }
 
 pub async fn pause_or_stop(app: &App, ctx: CallCtx, stop: bool) -> Result<(), CmdError> {
+    let requested = super::current(app, &ctx.window)?;
+    super::writable(&requested)?;
+    // Signal the engine before waiting for a background snapshot to release the
+    // session lock; otherwise it keeps fetching throughout that wait.
+    let signalled = requested.engine.as_ref().is_some_and(|engine| {
+        let handle = engine.handle.lock().unwrap_or_else(|p| p.into_inner());
+        if let Some(handle) = handle.as_ref() {
+            if stop {
+                handle.stop();
+            } else {
+                handle.pause();
+            }
+            true
+        } else {
+            false
+        }
+    });
+    super::interrupt_poll(app);
     let service = app.ext::<SessionService>();
     let _guard = service.mutation.lock().await;
     let s = super::current(app, &ctx.window)?;
-    super::writable(&s)?;
-    settle(app, &s, Some(stop)).await?;
+    if s.key != requested.key {
+        return Err(super::busy());
+    }
+    // The poller may have joined the signalled engine before we got the lock.
+    let joined = s.engine.as_ref().is_none_or(|engine| {
+        engine
+            .handle
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .is_none()
+    });
+    let acknowledged = signalled
+        && joined
+        && match s.state {
+            CrawlState::Running => false,
+            CrawlState::Paused | CrawlState::Incomplete => !stop,
+            CrawlState::Completed | CrawlState::Failed => true,
+        };
+    if !acknowledged {
+        settle(app, &s, Some(stop)).await?;
+    }
     feed::invalidate(app, &s.key);
     feed::refresh(app, &s).await
 }
@@ -705,4 +742,74 @@ async fn remember_crawl(app: &App, path: String) {
         code: error.message_key.to_string(),
         args: error.args,
     });
+}
+
+#[cfg(test)]
+mod control_priority_tests {
+    use super::*;
+    use std::time::Duration;
+
+    // spec: UI-003
+    // spec: CRAWL-126 [M2]
+    #[tokio::test]
+    async fn pause_signals_the_engine_while_a_background_snapshot_holds_the_session_lock() {
+        let home = tempfile::tempdir().unwrap();
+        let app = App::new(crate::AppConfig::new(home.path())).unwrap();
+        let mut cfg = CrawlConfig::default();
+        cfg.analysis.auto_at_end = false;
+        cfg.speed.threads = 1;
+        let links = (0..20)
+            .map(|i| format!("<a href='/p/{i}'>Next</a>"))
+            .collect::<String>();
+        let mut site = os_engine::testing::SimSite::new()
+            .delay(Duration::from_millis(100))
+            .page("https://fixture.test/", &links);
+        for i in 0..20 {
+            site = site.page(&format!("https://fixture.test/p/{i}"), "Done");
+        }
+        let ctx = CallCtx::for_window("main");
+        let req = serde_json::from_value(serde_json::json!({
+            "source": {"kind":"spider", "url":"https://fixture.test/"}, "scope":"domain"
+        }))
+        .unwrap();
+        start_with_fetcher(
+            &app,
+            ctx.clone(),
+            req,
+            cfg,
+            os_engine::testing::SimFetcher::new(site),
+        )
+        .await
+        .unwrap();
+        let service = app.ext::<SessionService>();
+        let guard = service.mutation.lock().await;
+        let session = super::super::current(&app, &ctx.window).unwrap();
+        let engine = session.engine.clone().unwrap();
+        let mut progress = engine.handle.lock().unwrap().as_ref().unwrap().watch();
+        let worker = app.clone();
+        let pause = tokio::spawn(async move { pause_or_stop(&worker, ctx, false).await });
+        let stopped = tokio::time::timeout(Duration::from_secs(2), async {
+            while progress.borrow_and_update().state == CrawlState::Running {
+                progress.changed().await.unwrap();
+            }
+            progress.borrow().state
+        })
+        .await;
+        // A terminal engine watch is not yet a durable acknowledgement.
+        feed::invalidate(&app, &session.key);
+        feed::refresh(&app, &session).await.unwrap();
+        assert_eq!(
+            app.sessions()
+                .current(&crate::WindowId("main".into()))
+                .unwrap()
+                .state,
+            CrawlState::Running
+        );
+        // Emulate the poller joining the signalled handle before the command
+        // acquires the lock. The acknowledgement must remain successful.
+        settle(&app, &session, None).await.unwrap();
+        drop(guard);
+        pause.await.unwrap().unwrap();
+        assert_eq!(stopped.unwrap(), CrawlState::Paused);
+    }
 }
