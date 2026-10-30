@@ -1,0 +1,11 @@
+[book]
+title = "OpenSpider Contributor Handbook"
+description = "Repository guide for contributors and project agents"
+language = "en"
+src = "src"
+
+[build]
+build-dir = "book"
+
+[output.html]
+site-url = "/docs/"
