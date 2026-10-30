@@ -163,6 +163,11 @@ Die Updater-Signatur wird über das endgültige Authenticode-signierte Paket ers
 `channel=beta` auf `latest-beta.json` am selben Ort. R04 muss den passenden Wert
 explizit übergeben; der Workflow setzt dazu auch die vom F01-Build-Skript gelesene
 Variable `OPENSPIDER_UPDATE_BETA=1` beziehungsweise `0`. Die App hat keine Kanalwahl.
+Fehlen Ereignis-Eingaben ganz oder ist `channel` leer, verwendet der Workflow
+`beta` für Build-Overlay und App-Build; `offline_webview` fällt auf `false` zurück.
+Auch `build-config.ps1` verwendet bei ausgelassenem oder leerem Kanal `beta`
+(bei leerem Wert mit Warnung). Andere Kanalwerte werden abgelehnt.
+Ein `workflow_call` ohne Kanal übernimmt weiterhin seinen deklarierten Standard `stable`.
 
 R04 kann den Workflow über `uses: ./.github/workflows/release-windows.yml`,
 `with: { channel: beta, offline_webview: false }` und `secrets: inherit` aufrufen.
