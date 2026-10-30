@@ -33,5 +33,17 @@ if CommandLine.arguments.count > 2 {
         fputs("U32: native menu item could not be pressed\n", stderr); exit(1)
     }
 }
+if CommandLine.arguments.count > 3 {
+    // Capture the actual open native menu before Escape closes it; never a DOM menu facsimile.
+    usleep(250_000)
+    let capture = Process()
+    capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+    capture.arguments = ["-x", CommandLine.arguments[3]]
+    try capture.run()
+    capture.waitUntilExit()
+    guard capture.terminationStatus == 0 else { fputs("U32: native menu capture failed\n", stderr); exit(1) }
+    CGEvent(keyboardEventSource: nil, virtualKey: 53, keyDown: true)?.post(tap: .cghidEventTap)
+    CGEvent(keyboardEventSource: nil, virtualKey: 53, keyDown: false)?.post(tap: .cghidEventTap)
+}
 let data = try JSONSerialization.data(withJSONObject: tree(bar), options: [.sortedKeys, .prettyPrinted])
 FileHandle.standardOutput.write(data)

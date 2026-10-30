@@ -1,7 +1,7 @@
 // @ts-check
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, stat } from "node:fs/promises";
 import { join } from "node:path";
 /** @param {{browser: import('../e2e-b/u32-cases.mjs').NativeBrowser, evaluate: (script: string) => Promise<any>, check: (name: string, fn: () => Promise<any>) => Promise<void>, output: string, appPid: number}} ctx */
 export async function menuCases({ browser, evaluate, check, output, appPid }) {
@@ -15,7 +15,12 @@ export async function menuCases({ browser, evaluate, check, output, appPid }) {
       const native = JSON.parse(execFileSync(helper, [String(appPid)], { encoding: "utf8", timeout: 15_000 }));
       const model = await browser.execute("return window.__osMenu.model");
       const nativeTitles = native.children.map((/** @type {{title: string}} */ c) => c.title);
-      for (const menu of model.menus) assert.ok(nativeTitles.includes(menu.label), `Native menu missing: ${menu.label}`);
+      for (const menu of model.menus) {
+        assert.ok(nativeTitles.includes(menu.label), `Native menu missing: ${menu.label}`);
+        const capture = join(output, `menu-${lang}-${menu.id}.png`);
+        execFileSync(helper, [String(appPid), menu.label, capture], { timeout: 15_000 });
+        assert.ok((await stat(capture)).size > 1000, `Native menu screenshot missing: ${menu.label}`);
+      }
       const snapshot = JSON.stringify(native, null, 2) + "\n";
       await writeFile(join(output, `menu-${lang}.json`), snapshot);
       const baselines = new URL("./baselines/darwin/", import.meta.url);
