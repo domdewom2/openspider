@@ -716,7 +716,7 @@ const INTERNAL_NOFOLLOW: [&str; 4] = [
 ];
 const EXTERNAL_NOFOLLOW: [&str; 3] = ["/ext-nofollow", "/ext-sponsored", "/ext-ugc"];
 
-// spec: CRAWL-056
+// spec: CRAWL-056, ONPAGE-025
 #[tokio::test]
 async fn nofollow_links_are_stored_with_follow_false_but_not_requested() {
     let fx = crawl_fixture("crawl-nofollow", CrawlConfig::default()).await;
@@ -737,6 +737,10 @@ async fn nofollow_links_are_stored_with_follow_false_but_not_requested() {
     }
     for path in EXTERNAL_NOFOLLOW {
         assert_eq!(ext_hits(&fx, path), 0, "{path}");
+        assert!(
+            in_tables(&fx, &format!("http://external.test{path}")),
+            "{path}"
+        );
     }
     // Links ohne rel und die Gegenprobe werden angefragt.
     assert_eq!(hits(&fx, "/frei"), 1);
@@ -762,7 +766,7 @@ async fn nofollow_links_are_stored_with_follow_false_but_not_requested() {
     }
 }
 
-// spec: CRAWL-056
+// spec: CRAWL-056, ONPAGE-025
 #[tokio::test]
 async fn follow_internal_nofollow_requests_internal_targets_only() {
     let fx = crawl_fixture(
@@ -778,6 +782,10 @@ async fn follow_internal_nofollow_requests_internal_targets_only() {
     }
     for path in EXTERNAL_NOFOLLOW {
         assert_eq!(ext_hits(&fx, path), 0, "{path}");
+        assert!(
+            in_tables(&fx, &format!("http://external.test{path}")),
+            "{path}"
+        );
     }
     // Die Anzeige bleibt: Folgen = false.
     assert_eq!(

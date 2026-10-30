@@ -214,10 +214,11 @@ pub struct Cand<'a> {
 }
 
 impl Cand<'_> {
-    /// Relations remain stored, but an unfollowed navigation/alternate edge does
+    /// Relations remain stored, but an unfollowed internal navigation/alternate edge does
     /// not discover a table row or a shorter crawl path (CRAWL-038/047/056).
     fn hidden_edge(&self) -> bool {
-        !self.crawl
+        self.internal
+            && !self.crawl
             && (self.reason == Some(NotCrawledReason::Nofollow)
                 || self.source.as_ref().is_some_and(|(_, kind, _)| {
                     matches!(
@@ -581,7 +582,7 @@ impl Core {
         }
         Admission {
             enqueue: true,
-            in_tables: c.store && !c.hidden_edge(),
+            in_tables: c.store,
             reason: None,
             rule_flag,
         }
