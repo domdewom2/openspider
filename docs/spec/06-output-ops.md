@@ -294,7 +294,7 @@ Prioritäten: **P0** = MVP-Kern, **P1** = für Parität nötig, **P2** = später
 
 ### OUT-023 Crawl-Path-Report einer URL
 - **Priorität:** P1
-- **Beschreibung:** Für eine gewählte URL wird der kürzeste Pfad ab Start-URL ausgegeben, über den der Crawler sie gefunden hat. Erreichbar über Rechtsklick → Export → Crawl Path Report (nicht im Reports-Menü).
+- **Beschreibung:** Für eine gewählte URL wird der kürzeste Pfad ab Start-URL ausgegeben, über den der Crawler sie gefunden hat. Erreichbar über Rechtsklick → Export → Crawl Path Report (nicht im Reports-Menü) und per CLI über `--export-crawl-path "<URL>[,<URL>…]"` (OS-Erweiterung, K2-88, SQ-14; Namensprüfung nach OUT-203, Format nach OUT-195, Ausgabeordner nach OUT-190; Dateiname `crawl_path_report.csv` bzw. Endung nach Format).
 - **Eingaben/Konfiguration:** gewählte URL(s).
 - **Ausgabe:** Spalten `Target Address` (die gewählte URL, wichtig bei Mehrfachauswahl), `Step` (0 = Zielseite), `Address`, `Status Code`, `Link Type` (Typ des Verweises, über den `Address` vom nächsthöheren Schritt aus erreicht wurde: Werte wie `Type` in OUT-031), `Anchor`, `Crawl Depth`. Reihenfolge: Zielseite zuerst, Start-URL zuletzt (von unten nach oben lesen). `Link Type`/`Anchor` der letzten Zeile (Start-URL bzw. Sitemap) sind leer.
 - **Akzeptanzkriterien:**
@@ -305,6 +305,7 @@ Prioritäten: **P0** = MVP-Kern, **P1** = für Parität nötig, **P2** = später
   - [ ] Für eine URL, die nur über GA/GSC bekannt ist (nicht gecrawlt), ist der Report leer (nur Kopfzeile) mit Hinweis „nicht über Links erreicht“.
   - [ ] Im Listenmodus: Pfad besteht nur aus der Listen-URL selbst und ggf. Weiterleitungen.
   - [ ] Mehrfachauswahl von 3 URLs → eine Datei, Blöcke je `Target Address` in Auswahlreihenfolge.
+  - [ ] CLI: `--load-crawl <datei> --export-crawl-path "<BASE>/a/b/c"` erzeugt `crawl_path_report.csv` mit denselben Zeilen wie der Export aus der Oberfläche; mehrere URLs → eine Datei, Blöcke in Argumentreihenfolge; eine URL, die nicht im Crawl ist, ergibt nur die Kopfzeile und eine Warnung auf stderr (Exit-Code 0) (K2-88, SQ-14).
 - **Testfixture:** `out-crawl-path`: lineare Linkkette über 3 Ebenen, eine 301-Zwischenstation, zwei gleich lange Pfade zu `/diamond` (über `/l` und `/r`, `/l` zuerst verlinkt) + Seite nur in `sitemap.xml`.
 
 ### OUT-024 Exporte im unteren Fenster: SERP Snippet, Rendered Page, View Source
@@ -897,7 +898,7 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 ### OUT-083 Redirects: Redirect & Canonical Chains
 - **Priorität:** P1
 - **Beschreibung:** Ketten aus Weiterleitungen **und/oder** Canonicals mit mindestens 2 Gliedern (z. B. 301 auf eine Seite, deren Canonical woandershin zeigt).
-- **Ausgabe:** wie OUT-081; `Redirect Type n` kann zusätzlich `Canonical` (Link-Element) bzw. `HTTP Canonical` (HTTP-`Link`-Header) sein. **Werteliste `Chain Type` für Ketten mit Canonical-Gliedern (führend hier, OS-Festlegung zu R-16; die Kettenermittlung steht in TECH-026):** `Canonical` = nur Canonical-Glieder; `Redirect & Canonical` = mindestens ein Weiterleitungs- und ein Canonical-Glied. Reine Weiterleitungsketten behalten ihre Werte aus OUT-081 (`Mixed` bezeichnet nur Weiterleitungsketten mit unterschiedlichen Weiterleitungsarten). Die früheren Werte `Canonical`/`Redirect`/`Mixed` aus TECH-025 entfallen. Das Sprunglimit ist dasselbe Weiterleitungslimit wie in OUT-081 (CRAWL-072); ein Canonical-Glied zählt wie ein Sprung.
+- **Ausgabe:** wie OUT-081; `Redirect Type n` kann zusätzlich `Canonical` (Link-Element) bzw. `HTTP Canonical` (HTTP-`Link`-Header) sein. **Werteliste `Chain Type` für Ketten mit Canonical-Gliedern (führend hier, OS-Festlegung zu R-16; die Kettenermittlung steht in TECH-026):** `Canonical` = nur Canonical-Glieder; `Redirect & Canonical` = mindestens ein Weiterleitungs- und ein Canonical-Glied. Reine Weiterleitungsketten behalten ihre Werte aus OUT-081 (`Mixed` bezeichnet nur Weiterleitungsketten mit unterschiedlichen Weiterleitungsarten). Die früheren Werte `Canonical`/`Redirect`/`Mixed` aus TECH-025 entfallen. Das Sprunglimit ist dasselbe Weiterleitungslimit wie in OUT-081 (CRAWL-072); ein Canonical-Glied zählt wie ein Sprung. Die Referenz schreibt für Ketten aus Weiterleitungs- und Canonical-Gliedern `Mixed`; OpenSpider bleibt bei `Redirect & Canonical`, die Abweichung ist als DEV geführt (K2-88, SQ-13e).
 - **Akzeptanzkriterien:**
   - [ ] `/h` 301→ `/i` (Canonical → `/j`, 200, self-canonical) → 2 Glieder, `Final Address`=`/j`, `Chain Type`=`Redirect & Canonical`, `Redirect Type 1`=`HTTP Redirect`, `Redirect Type 2`=`Canonical`.
   - [ ] Reine Canonical-Kette A→B→C erscheint hier mit `Chain Type`=`Canonical` (gleiche Zeile wie in OUT-086).
@@ -1252,11 +1253,11 @@ Menü „Sitemaps → XML-Sitemap erstellen / Bild-Sitemap erstellen“. Ein Ass
 ### OUT-123 Sitemap: lastmod
 - **Priorität:** P1
 - **Beschreibung:** Optionales `<lastmod>`-Element.
-- **Eingaben/Konfiguration:** „lastmod aufnehmen“ (Standard an); Quelle: „Server-Antwort (Last-Modified)“ (Standard) oder „Benutzerdefiniertes Datum“ (Datumsauswahl, gilt für alle URLs).
-- **Ausgabe:** W3C-Datetime, Format `YYYY-MM-DD` bei benutzerdefiniertem Datum, `YYYY-MM-DDThh:mm:ss+00:00` bei Server-Datum **(OS-Festlegung)**.
+- **Eingaben/Konfiguration:** „lastmod aufnehmen“ (Standard an); Quelle: „Server-Antwort (Last-Modified)“ (Standard; ohne gültigen Header ersatzweise das Crawl-Datum der URL) oder „Benutzerdefiniertes Datum“ (Datumsauswahl, gilt für alle URLs).
+- **Ausgabe:** W3C-Datetime als Datum ohne Uhrzeit, `YYYY-MM-DD` (UTC), für alle Quellen (K2-88, SQ-11, wie die Referenz; vorher Server-Datum mit Uhrzeit).
 - **Akzeptanzkriterien:**
-  - [ ] Server-Quelle: URL mit `Last-Modified: Tue, 01 Oct 2026 10:00:00 GMT` → `<lastmod>2026-10-01T10:00:00+00:00</lastmod>`.
-  - [ ] Server-Quelle, kein/ungültiger Header → kein `<lastmod>` für diese URL (nicht das Crawldatum).
+  - [ ] Server-Quelle: URL mit `Last-Modified: Tue, 01 Oct 2026 10:00:00 GMT` → `<lastmod>2026-10-01</lastmod>`.
+  - [ ] Server-Quelle, kein/ungültiger Header → `<lastmod>` = Datum des Abrufs dieser URL (Crawl-Datum, UTC; K2-88, SQ-11; vorher kein `<lastmod>`). Tests verwenden eine feste Uhr; der Paritätsvergleich normalisiert das Crawl-Datum.
   - [ ] Benutzerdefiniert `2026-10-13` → alle URLs `<lastmod>2026-10-13</lastmod>`.
   - [ ] Abgeschaltet → kein `<lastmod>` in der Datei.
 - **Testfixture:** `out-sitemap-gen` (Fixture-Server setzt `Last-Modified` für ausgewählte Seiten, einmal ungültig).
@@ -1279,7 +1280,7 @@ Menü „Sitemaps → XML-Sitemap erstellen / Bild-Sitemap erstellen“. Ein Ass
 - **Eingaben/Konfiguration:** „changefreq aufnehmen“ (Standard an); Basis: „Last-Modified-Header“ oder „Crawl-Tiefe“. Bei Tiefe: Tabelle Tiefe → Wert (`always`, `hourly`, `daily`, `weekly`, `monthly`, `yearly`, `never`), Standard **(OS-Festlegung)**: 0 = daily, 1 = daily, 2 = weekly, 3 = weekly, ≥ 4 = monthly.
 - **Ausgabe:** `<changefreq>`.
 - **Akzeptanzkriterien:**
-  - [ ] Basis Last-Modified: Header jünger als 24 h relativ zum Crawlzeitpunkt der URL → `daily`; älter oder fehlend → `monthly`.
+  - [ ] Basis Last-Modified: Header jünger als 24 h relativ zum Crawlzeitpunkt der URL → `daily`; Header fehlt oder ungültig → `daily` (Ersatz Crawl-Datum wie OUT-123; K2-88, SQ-11; vorher `monthly`); Header älter → `monthly` (prüft M2-N11 am Referenzexport `sitemap_default.xml`, Abweichung an den Planer).
   - [ ] Grenzfall: genau 24 h → `monthly` (strikt „innerhalb der letzten 24 h“).
   - [ ] Basis Tiefe: Werte gemäß Tabelle.
 - **Testfixture:** `out-sitemap-gen` (Fixture-Server setzt `Last-Modified` dynamisch auf jetzt − 1 h bzw. jetzt − 48 h).

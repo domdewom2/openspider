@@ -251,13 +251,13 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Eingaben/Konfiguration:** Antwortstatus, robots.txt-Entscheidung, Direktiven (TECH-050), Canonical (TECH-010).
 - **Ausgabe (Spalten/Filter/Export):** Spalten `Indexability` (Werte `Indexable` / `Non-Indexable`) und `Indexability Status` (leer bei indexierbar, sonst genau ein Grund).
 - **Akzeptanzkriterien:**
-  - [ ] Gründe und ihre Reihenfolge der Prüfung (der erste zutreffende gewinnt): `Blocked by Robots.txt` → `No Response` (Timeout, DNS-, TLS-, Verbindungsfehler) → `Redirected` (3xx, auch Meta-Refresh-Weiterleitung auf andere URL) → `Client Error` (4xx) → `Server Error` (5xx) → `Self Referencing Meta Refresh` (nur wenn TECH-068 an) → `noindex` (aus Meta Robots, nutzer­agent-spezifischem Meta-Tag oder X-Robots-Tag, inkl. `none`) → `Canonicalised` (Canonical zeigt auf andere URL, TECH-014).
+  - [ ] Gründe und ihre Reihenfolge der Prüfung (der erste zutreffende gewinnt): `Blocked by Robots.txt` → `No Response` (Timeout, DNS-, TLS-, Verbindungsfehler) → `Redirected` (3xx, auch Meta-Refresh-Weiterleitung auf andere URL) → `Client Error` (4xx) → `Server Error` (5xx) → `Self Referencing Meta Refresh` (nur wenn TECH-068 an) → `noindex` (aus Meta Robots, nutzer­agent-spezifischem Meta-Tag oder X-Robots-Tag, inkl. `none`) → `Unavailable After` (Token `unavailable_after` mit parsebarem Datum vor dem Abrufzeitpunkt, TECH-063; K2-86, SQ-05; Position nach `noindex` ist Festlegung) → `Canonicalised` (Canonical zeigt auf andere URL, TECH-014).
   - [ ] Eine 200-Antwort ohne einen dieser Gründe ist `Indexable`. Nicht-HTML-Ressourcen (z. B. PDF) können per X-Robots-Tag oder HTTP-Canonical non-indexable werden.
   - [ ] Eine Seite mit `noindex` **und** fremdem Canonical erhält Status `noindex` (Reihenfolge oben).
   - [ ] Externe URLs werden nur nach Status bewertet (kein HTML geladen); ein externer 200 gilt als `Indexable`.
-  - [ ] Meta Refresh (Element oder `Refresh`-Header) mit Ziel ≠ eigener URL (nach TECH-002, jede Verzögerung) → `Redirected`.
-  - [ ] Meta Refresh auf die eigene URL oder ohne Ziel (`content="30"`) → bei Standardkonfiguration (TECH-068 aus) unverändert `Indexable` (sofern kein anderer Grund greift). Mit eingeschalteter Option TECH-068 → `Non-Indexable` mit Grund `Self Referencing Meta Refresh` (Statustext ist Festlegung, siehe Anhang A); eingeordnet in der Prüfreihenfolge direkt nach `Server Error` und vor `noindex` (Standard geändert nach Paritätslauf M1, K-57).
-- **Testfixture:** `tests/fixtures/tech/indexability/`: je eine Seite pro Grund (robots-gesperrt, 301, 404, 503, Timeout-Route mit 30 s Verzögerung, `noindex`, `none`, X-Robots-Tag `noindex` auf PDF, fremder Canonical, `noindex`+fremder Canonical, `refresh-other.html` mit `5; url=/ziel`, `refresh-self.html` mit `30; url=<eigene URL>`, `refresh-bare.html` mit `content="60"`), Startseite verlinkt alle. Erwartung bei Standard: `refresh-other` → `Redirected`, `refresh-self` und `refresh-bare` → `Indexable`. Mit TECH-068 an: `refresh-self` und `refresh-bare` → `Self Referencing Meta Refresh`.
+  - [ ] Meta Refresh (Element oder `Refresh`-Header) mit Ziel ≠ eigener URL (nach TECH-002, jede Verzögerung) → `Redirected`. Ein `Refresh`-Header mit Ziel = eigener URL → ebenfalls `Redirected`, unabhängig von TECH-068 (K2-86, SQ-05; Beleg Referenz `parity-m2-technical` `refresh-self.html`); ein `Refresh`-Header ohne Ziel bleibt ohne Wirkung (CRAWL-015).
+  - [ ] Meta Refresh (nur Element) auf die eigene URL oder ohne Ziel (`content="30"`) → bei Standardkonfiguration (TECH-068 aus) unverändert `Indexable` (sofern kein anderer Grund greift). Mit eingeschalteter Option TECH-068 → `Non-Indexable` mit Grund `Self Referencing Meta Refresh` (Statustext ist Festlegung, siehe Anhang A); eingeordnet in der Prüfreihenfolge direkt nach `Server Error` und vor `noindex` (Standard geändert nach Paritätslauf M1, K-57).
+- **Testfixture:** `tests/fixtures/tech/indexability/`: je eine Seite pro Grund (robots-gesperrt, 301, 404, 503, Timeout-Route mit 30 s Verzögerung, `noindex`, `none`, X-Robots-Tag `noindex` auf PDF, fremder Canonical, `noindex`+fremder Canonical, `refresh-other.html` mit `5; url=/ziel`, `refresh-self.html` mit `30; url=<eigene URL>`, `refresh-bare.html` mit `content="60"`), Startseite verlinkt alle. Erwartung bei Standard: `refresh-other` → `Redirected`, `refresh-self` und `refresh-bare` → `Indexable`. Mit TECH-068 an: `refresh-self` und `refresh-bare` → `Self Referencing Meta Refresh`. Ergänzung K2-86: `refresh-self-header` (Header `Refresh: 5; url=<eigene URL>`) → in beiden Läufen `Redirected`; `unavailable-past.html` (`unavailable_after` 2000-01-01) → `Unavailable After`.
 
 ### TECH-002 URL-Vergleich und Auflösung für technische Verweise
 - **Priorität:** P0
@@ -285,7 +285,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
   - [ ] Elemente innerhalb `<template>` werden für SEO-Extraktion ignoriert.
   - [ ] Implementierung: Tree-Builder nach HTML5-Spezifikation (z. B. html5ever) – reines Streaming ohne Tree-Construction-Regeln reicht nicht.
   - [ ] Abhängigkeit von TECH-008: Das Flag `in_head` wird **immer** berechnet (es wird z. B. für die Auswahlregel in TECH-017 gebraucht). Die darauf beruhenden **Filter** „Outside \<head>“ (TECH-023, TECH-065, TECH-086 sowie die gleichnamigen Filter für Page Titles und Meta Description in der On-Page-Spec) werden aber nur befüllt, wenn „Perform HTML Validation“ (TECH-008) aktiv ist; sonst stehen sie in der Übersicht mit 0 und dem Hinweis „HTML-Validierung deaktiviert“.
-- **Testfixture:** `tests/fixtures/tech/outside-head/`: Seiten mit Canonical, Meta Robots, hreflang, Title jeweils (a) korrekt im Head, (b) im Body, (c) im Head nach `<img>`, (d) im Head nach `<noscript><link …></noscript>`. Zwei Läufe: TECH-008 an → (b) und (c) stehen in den Outside-Filtern, (a) und (d) nicht; TECH-008 aus → alle Outside-Filter leer, Spalten `Canonical Link Element 1` usw. trotzdem gefüllt.
+- **Testfixture:** `tests/fixtures/tech/outside-head/`: Seiten mit Canonical, Meta Robots, hreflang, Title jeweils (a) korrekt im Head, (b) im Body, (c) im Head nach `<img>`, (d) im Head nach `<noscript><link …></noscript>`. Zwei Läufe: TECH-008 an → (b) und (c) stehen in den Outside-Filtern, (a) und (d) nicht; TECH-008 aus → alle Outside-Filter leer; Wertespalten in beiden Läufen gleich: Canonical und hreflang aus (b) und (c) erscheinen nicht in den Wertespalten (TECH-023, TECH-086; K2-86, SQ-04), Meta Robots und Title weiterhin.
 
 ### TECH-004 Mehrwertige Spalten „… 1, … 2, …“
 - **Priorität:** P0
@@ -377,7 +377,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Priorität:** P0
 - **Beschreibung:** Übersichtstabelle aller internen URLs, für die Canonical-Aussagen sinnvoll sind.
 - **Eingaben/Konfiguration:** –
-- **Ausgabe (Spalten/Filter/Export):** Spalten in dieser Reihenfolge: `Address`, `Occurrences` (Anzahl Canonical-Angaben über beide Quellen), `Indexability`, `Indexability Status`, `Canonical Link Element 1..n`, `HTTP Canonical 1..n`, `Meta Robots 1..n`, `X-Robots-Tag 1..n`, `rel="next" 1`, `rel="prev" 1`. Filter: TECH-012 bis TECH-023 plus „All“.
+- **Ausgabe (Spalten/Filter/Export):** Spalten in dieser Reihenfolge: `Address`, `Occurrences` (Anzahl Canonical-Angaben über beide Quellen), `Indexability`, `Indexability Status`, `Canonical Link Element 1..n`, `HTTP Canonical 1..n`, `Meta Robots 1..n`, `X-Robots-Tag 1..n`, `rel="next" 1`, `rel="prev" 1`. Filter: TECH-012 bis TECH-023 plus „All“. Die Referenz exportiert zusätzlich `HTTP rel="next" 1`/`HTTP rel="prev" 1`; OpenSpider führt sie in diesem Tab nicht, der Paritätsvergleich ignoriert sie (K2-88, SQ-13f).
 - **Akzeptanzkriterien:**
   - [ ] Population: interne HTML- oder PDF-Seiten mit 2xx, plus interne Nicht-HTML-2xx-URLs mit HTTP-Canonical. URLs ohne 2xx erscheinen nicht. (Paritätsbefund M1 vom 14.10.2026, Befund B-04, K-56: die Referenz führt alle 2xx, Fixture `/s201`; vorher „Status 200“.)
   - [ ] Filter „All“ = Population; jede URL kann in mehreren Filtern zugleich stehen.
@@ -486,12 +486,12 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Priorität:** P1
 - **Beschreibung:** Canonical-Ziele, auf die keine normale Verlinkung im Crawl zeigt; sie wurden nur über das Canonical entdeckt.
 - **Eingaben/Konfiguration:** Canonicals crawlen (CRAWL-046). Nachlauf-Filter.
-- **Ausgabe (Spalten/Filter/Export):** Filter „Unlinked“; Einstufung: Warnung / Mittel. Gelistet wird die **Seite mit dem Canonical** (Quelle), Export „Unlinked Canonical“ listet Quelle und Ziel.
+- **Ausgabe (Spalten/Filter/Export):** Filter „Unlinked“; Einstufung: Warnung / Mittel. Gelistet wird das **Canonical-Ziel**, sofern es als interne URL gecrawlt wurde (K2-86, SQ-06; vorher die Quelle; Beleg Referenz `parity-m2-technical` `canonical-unlinked-target.html`); Export „Unlinked Canonical“ listet unverändert Quelle und Ziel.
 - **Akzeptanzkriterien:**
-  - [ ] Bedingung: Seite hat eine Canonical-URL C (≠ sich selbst), und C hat im Crawl keinen eingehenden Hyperlink (`<a href>`, `<area href>`; JS-Links im JS-Modus zählen) von einer internen Seite. Eingänge über Canonical, hreflang, Pagination-Link-Element, Redirect oder Sitemap zählen nicht als Verlinkung.
+  - [ ] Bedingung: URL C ist Canonical-Ziel mindestens einer anderen Seite, und C hat im Crawl keinen eingehenden Hyperlink (`<a href>`, `<area href>`; JS-Links im JS-Modus zählen) von einer internen Seite. Eingänge über Canonical, hreflang, Pagination-Link-Element, Redirect oder Sitemap zählen nicht als Verlinkung.
   - [ ] Self-Referencing-Canonicals werden nicht als Unlinked gemeldet.
   - [ ] Ein Link nur aus einer non-indexable Seite zählt als Verlinkung (Festlegung).
-- **Testfixture:** `canonical-basic/to-unlinked.html` mit Canonical auf `/hidden` (nirgends verlinkt) und `/to-linked` mit Canonical auf eine im Menü verlinkte Seite.
+- **Testfixture:** `canonical-basic/to-unlinked.html` mit Canonical auf `/hidden` (nirgends verlinkt; gelistet wird `/hidden`) und `/to-linked` mit Canonical auf eine im Menü verlinkte Seite (nicht gelistet).
 
 ### TECH-021 Filter „Invalid Attribute In Annotation“
 - **Priorität:** P1
@@ -501,6 +501,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: Ein Canonical-Link-Element trägt eines der Attribute `hreflang`, `lang`, `media`, `type` (Wert egal, auch leer), **oder** ein Canonical-Eintrag im `Link`-Header hat einen dieser Parameter.
   - [ ] Andere Attribute (`id`, `class`, `data-*`, `title`) lösen den Filter nicht aus.
+  - [ ] Ein Canonical mit einem dieser Attribute bzw. Parameter zählt **nur** für diesen Filter: nicht in `Canonical Link Element n`/`HTTP Canonical n`, nicht in `Occurrences`, keine Wirkung auf Indexierbarkeit (`Canonicalised`) und Folgefilter (K2-86, SQ-04; Beleg Referenz `canonical-invalid-attribute.html`).
 - **Testfixture:** `canonical-basic/attr-hreflang.html`, `/attr-media`, `/attr-type-header` (Header `Link: <…>; rel="canonical"; type="text/html"`), `/attr-class` (Negativtest).
 
 ### TECH-022 Filter „Contains Fragment URL“
@@ -520,7 +521,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Ausgabe (Spalten/Filter/Export):** Filter „Outside \<head>“; Einstufung: Fehler / Hoch.
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: Mindestens ein HTML-Canonical mit `in_head = false`.
-  - [ ] Ein Canonical im Body wird trotzdem in `Canonical Link Element n` angezeigt und zählt in Occurrences.
+  - [ ] Ein Canonical außerhalb des Heads zählt **nur** für diesen Filter: nicht in `Canonical Link Element n`, nicht in `Occurrences`, keine Wirkung auf Indexierbarkeit und Folgefilter; unabhängig von TECH-008, da `in_head` immer berechnet wird (K2-86, SQ-04; vorher „wird angezeigt und zählt in Occurrences“; Beleg Referenz `canonical-outside.html`: Occurrences 0, Indexable).
   - [ ] HTTP-Canonicals lösen den Filter nie aus.
 - **Testfixture:** `tests/fixtures/tech/outside-head/canonical-body.html`, `/canonical-after-img.html`.
 
@@ -565,9 +566,9 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Priorität:** P1
 - **Beschreibung:** Tabelle der internen HTML-Seiten mit Paginierungsbezug.
 - **Eingaben/Konfiguration:** –
-- **Ausgabe (Spalten/Filter/Export):** `Address`, `Occurrences` (Anzahl next+prev-Angaben), `Indexability`, `Indexability Status`, `rel="next" 1..n`, `rel="prev" 1..n`, `Canonical Link Element 1..n`, `HTTP Canonical 1..n`, `Meta Robots 1..n`, `X-Robots-Tag 1..n`. Filter: TECH-032 bis TECH-041 plus „All“.
+- **Ausgabe (Spalten/Filter/Export):** `Address`, `Occurrences` (Anzahl next+prev-Angaben), `Indexability`, `Indexability Status`, `rel="next" 1..n`, `rel="prev" 1..n`, `Canonical Link Element 1..n`, `HTTP Canonical 1..n`, `Meta Robots 1..n`, `X-Robots-Tag 1..n`. Filter: TECH-032 bis TECH-041 plus „All“. Die Referenz exportiert kein `Occurrences`, dafür `HTTP rel="next" 1`/`HTTP rel="prev" 1`; der Paritätsvergleich ignoriert diese Spalten (K2-88, SQ-13f).
 - **Akzeptanzkriterien:**
-  - [ ] Population: interne HTML-200-Seiten **und** Paginierungsziele, die gecrawlt wurden (auch mit Nicht-200-Status, damit TECH-036 sie zeigen kann).
+  - [ ] Population: interne HTML-Seiten mit 2xx (K2-85, SQ-03; vorher zusätzlich gecrawlte Paginierungsziele ohne 2xx). Gecrawlte Ziele ohne 2xx sind keine eigene Zeile; sie erscheinen nur in TECH-036 und dessen Export.
   - [ ] Paginierung crawlen aus (CRAWL-047) → Ziele, die nur per Link-Element bekannt sind, werden nicht abgerufen; TECH-036/037 bleiben für sie leer.
   - [ ] „Respect Next/Prev“ an (CRAWL-093) → Seiten mit `prev` werden gecrawlt und ihre Links verfolgt, sind aber in allen Tabellen **außer dem Pagination-Tab** ausgeblendet (Festlegung, Anhang A Punkt 35).
 - **Testfixture:** `tests/fixtures/tech/pagination/`, Läufe mit Paginierung crawlen an/aus und „Respect Next/Prev“ an.
@@ -703,7 +704,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Eingaben/Konfiguration:** –
 - **Ausgabe (Spalten/Filter/Export):** `Address`, `Occurrences` (Anzahl Meta-Robots + X-Robots-Tag-Werte), `Meta Robots 1..n`, `X-Robots-Tag 1..n`, `Meta Refresh 1..n`, `Canonical Link Element 1..n`, `HTTP Canonical 1..n`. Filter TECH-052 bis TECH-065 plus „All“. Standardspalten am Ende: `Indexability`, `Indexability Status`.
 - **Akzeptanzkriterien:**
-  - [ ] Population: alle internen URLs mit einer HTTP-Antwort (jeder Status), da X-Robots-Tag auch an Nicht-HTML und Nicht-200-Antworten hängen kann.
+  - [ ] Population: alle internen URLs mit 2xx-Antwort, jeder Inhaltstyp, da X-Robots-Tag auch an Nicht-HTML hängen kann (K2-85, SQ-03; vorher jeder Status; Beleg Referenz: 3xx und 404 fehlen auf `parity-m2-technical` und `parity-technical`).
   - [ ] Spaltenwert `Meta Robots n` enthält den Rohinhalt des Attributs `content`; bei spezifischem Agent mit Präfix, z. B. `googlebot: noindex`.
   - [ ] Jeder Filter TECH-052–TECH-064 prüft auf das **Vorhandensein des Tokens** in irgendeiner Quelle (Meta oder Header, generisch oder zum Token passend), nicht auf die effektive Wirkung (die regelt TECH-066).
   - [ ] „Respect Noindex“ an (CRAWL-091) → noindex-URLs werden gecrawlt und ihre Links verfolgt, sind aber in Tabellen/Exporten ausgeblendet – ausgenommen die Directives-Filter dieses Tabs (Festlegung, Anhang A Punkt 35). Zusammen mit TECH-068 an werden nur Seiten mit dem Grund `noindex` ausgeblendet, nicht Selbst-Refresh-Seiten.
@@ -826,7 +827,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: Token `unavailable_after` mit beliebigem Wert vorhanden.
   - [ ] Akzeptierte Datumsformate zum Parsen: ISO 8601, RFC 822/1123, RFC 850. Nicht parsebarer Wert → trotzdem im Filter.
-  - [ ] Ein Datum in der Vergangenheit ändert die Indexierbarkeit **nicht** (Festlegung; nur Hinweis).
+  - [ ] Ein parsebares Datum vor dem Abrufzeitpunkt → `Non-Indexable`, Status `Unavailable After` (TECH-001; K2-86, SQ-05; vorher „ändert die Indexierbarkeit nicht“; Beleg Referenz `directive-7.html`). Datum in der Zukunft oder nicht parsebar → Indexierbarkeit unverändert.
 - **Testfixture:** `directives/unavailable.html` (Zukunft, ISO), `/unavailable-past.html` (RFC 850 mit Komma).
 
 ### TECH-064 Filter „Refresh“
@@ -867,7 +868,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 
 ### TECH-068 Option „Respect Self Referencing Meta Refresh“
 - **Priorität:** P1
-- **Beschreibung:** Führender Eintrag (K-12; CRAWL-094 verweist hierher). Legt fest, ob eine Seite, die sich per Meta Refresh (oder `Refresh`-Header) selbst neu lädt, als nicht indexierbar geführt wird. Solche Selbst-Refreshes sind verbreitet (z. B. Nachrichtenseiten, die sich periodisch aktualisieren) und schaden der Indexierung meist nicht. Sie sollen aber sichtbar werden, damit man sie bewusst prüft. Die frühere Annahme „die Referenz stuft sie standardmäßig als nicht indexierbar ein“ ist durch den Paritätslauf M1 (14.10.2026, Befund B-03, K-57) widerlegt: Referenzprodukt Free (Standardkonfiguration) führt Selbst-Refresh-Seiten als `Indexable` und zeigt den Refresh als Weiterleitung auf sich selbst (CRAWL-015). Der Standard folgt deshalb der Referenz; die Option erlaubt das Einschalten.
+- **Beschreibung:** Führender Eintrag (K-12; CRAWL-094 verweist hierher). Legt fest, ob eine Seite, die sich per Meta Refresh selbst neu lädt, als nicht indexierbar geführt wird. Ein Selbst-Refresh per `Refresh`-Header ist seit K2-86 (SQ-05) unabhängig von dieser Option `Redirected` (TECH-001). Solche Selbst-Refreshes sind verbreitet (z. B. Nachrichtenseiten, die sich periodisch aktualisieren) und schaden der Indexierung meist nicht. Sie sollen aber sichtbar werden, damit man sie bewusst prüft. Die frühere Annahme „die Referenz stuft sie standardmäßig als nicht indexierbar ein“ ist durch den Paritätslauf M1 (14.10.2026, Befund B-03, K-57) widerlegt: Referenzprodukt Free (Standardkonfiguration) führt Selbst-Refresh-Seiten als `Indexable` und zeigt den Refresh als Weiterleitung auf sich selbst (CRAWL-015). Der Standard folgt deshalb der Referenz; die Option erlaubt das Einschalten.
 - **Eingaben/Konfiguration:** `respect_self_referencing_meta_refresh` (bool, Konfigurationsschlüssel `advanced.respect_self_ref_meta_refresh`), Standard **aus** (wie Referenz; Konfiguration > Spider > Advanced; bis 14.10.2026 „an“). Selbst-Refresh = Refresh ohne Ziel-URL oder mit Ziel, das nach TECH-002 gleich der eigenen URL ist (Fragment ignoriert).
 - **Ausgabe (Spalten/Filter/Export):** `Indexability = Non-Indexable`, `Indexability Status = Self Referencing Meta Refresh` (Statustext Festlegung).
 - **Akzeptanzkriterien:**
@@ -877,7 +878,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
   - [ ] Refresh auf `https://site.test/p#top` von `https://site.test/p` ist ein Selbst-Refresh.
   - [ ] Folgefilter, die Indexierbarkeit nutzen (TECH-018, TECH-079, TECH-215 usw.), sehen bei Option an die Seite als nicht indexierbar.
   - [ ] Die Option wirkt ohne neuen Crawl (Neuberechnung der Indexierbarkeit und der abhängigen Filter).
-- **Testfixture:** `tests/fixtures/tech/directives/refresh-self-*`: `refresh-self-0.html` (`0; url=<self>`), `refresh-self-300.html`, `refresh-bare.html`, `refresh-self-fragment.html` (`url=<self>#top`), `refresh-query.html` (`url=<self>?x=1`), `refresh-self-header` (Header-Variante). Außerdem steht `refresh-self-0.html` in `sitemap.xml`, damit bei Option an TECH-215 auslöst. Läufe mit Option an und aus.
+- **Testfixture:** `tests/fixtures/tech/directives/refresh-self-*`: `refresh-self-0.html` (`0; url=<self>`), `refresh-self-300.html`, `refresh-bare.html`, `refresh-self-fragment.html` (`url=<self>#top`), `refresh-query.html` (`url=<self>?x=1`), `refresh-self-header` (Header-Variante: in beiden Läufen `Redirected`, K2-86). Außerdem steht `refresh-self-0.html` in `sitemap.xml`, damit bei Option an TECH-215 auslöst. Läufe mit Option an und aus.
 
 ---
 
@@ -904,7 +905,7 @@ Begriffe: Eine **Annotation** ist ein Paar (Code, URL) auf Seite P. Die **Annota
 - **Eingaben/Konfiguration:** „Store Hreflang“ (TECH-070), „Crawl Hreflang“ (TECH-087), für Sitemap-hreflang zusätzlich „Crawl Linked XML Sitemaps“ (TECH-210) oder eine direkt angegebene Sitemap.
 - **Ausgabe (Spalten/Filter/Export):** `Address`, `Title 1`, `Occurrences` (Anzahl Annotationen gesamt), `HTML hreflang 1..n` (Code), `HTML hreflang 1..n URL`, `HTTP hreflang 1..n`, `HTTP hreflang 1..n URL`, `Sitemap hreflang 1..n`, `Sitemap hreflang 1..n URL`. Spaltenreihenfolge pro Index: Code, dann URL. Filter TECH-073 bis TECH-086 plus „All“ (14 Filter + All). Untere Detailansicht TECH-089. Standardspalten am Ende: `Indexability`, `Indexability Status`.
 - **Akzeptanzkriterien:**
-  - [ ] Population: interne HTML-2xx-Seiten (K-56, vorher 200), interne Nicht-HTML-URLs mit HTTP-hreflang, URLs mit Sitemap-hreflang sowie gecrawlte hreflang-Ziele (für TECH-074).
+  - [ ] Population: interne HTML-2xx-Seiten (K-56, vorher 200) und interne Nicht-HTML-2xx-URLs mit HTTP-hreflang; URLs mit Sitemap-hreflang, soweit sie diese Bedingung erfüllen. Gecrawlte hreflang-Ziele ohne 2xx sind keine eigene Zeile; sie erscheinen nur in TECH-074 und dessen Export (K2-85, SQ-03; vorher Teil der Population).
   - [ ] Abhängigkeit von der Konfiguration:
     - Store aus → Tab leer, alle Filter 0, Hinweis „hreflang wird nicht gespeichert“.
     - Store an, Crawl aus → Tab und alle Filter, die nur die eigene Seite brauchen (TECH-073, TECH-080–TECH-086), sind befüllt. Filter, die den Zustand des Alternates brauchen (TECH-074, TECH-076–TECH-079), werden nur für Alternates befüllt, die anderweitig gecrawlt wurden (z. B. weil sie verlinkt sind). Alternates, die **nur** per hreflang bekannt sind, erscheinen in keinem anderen Tab als URL-Zeile (keine Tabellen-Sichtbarkeit, nicht in Internal/External, nicht in den Zählern des Crawl Overview), und ihre hreflang-Linkzeilen fehlen in `Links:All Inlinks` und den übrigen Link-Exporten. In den hreflang-Spalten der Quellseite stehen sie weiterhin (Paritätsbefund M1, Befund N-08, K-62; Fixture `parity-technical` `/hl/it/`).
@@ -1067,7 +1068,7 @@ Begriffe: Eine **Annotation** ist ein Paar (Code, URL) auf Seite P. Die **Annota
 - **Ausgabe (Spalten/Filter/Export):** Filter „Outside \<head>“; Einstufung: Fehler / Hoch.
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: mindestens eine HTML-Annotation mit `in_head = false`.
-  - [ ] Annotationen außerhalb des Heads zählen trotzdem für alle anderen hreflang-Filter (Festlegung).
+  - [ ] Annotationen außerhalb des Heads zählen **nur** für diesen Filter: nicht in den hreflang-Spalten, nicht in `Occurrences` und nicht für die übrigen hreflang-Filter (z. B. Missing Self Reference, Missing x-default); unabhängig von TECH-008 (K2-86, SQ-04; vorher „zählen für alle anderen Filter“; Beleg Referenz `lang-outside.html`).
 - **Testfixture:** `outside-head/hreflang-body.html`.
 
 ### TECH-087 Hreflang crawlen, externe Domains als intern (CDN-Liste)
@@ -1351,7 +1352,7 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 - **Ausgabe (Spalten/Filter/Export):** Filter „Pages With High External Outlinks“; Einstufung: Warnung / Niedrig.
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: Anzahl externer Outlinks mit `Follow = true` (nicht unique) `≥ Schwelle`.
-- **Testfixture:** `links/many-external.html` mit 100 follow- und 20 nofollow-externen Links → gelistet; `/99-external.html` → nicht.
+- **Testfixture:** `links/many-external.html` mit 100 follow- und 20 nofollow-externen Links → gelistet. Der frühere Negativfall `/99-external.html` ist gestrichen: die Referenz listet `parity-m2-links` `external-99.html`; ob sie anders zählt oder eine niedrigere Schwelle nutzt, ist offen, die Schwelle bleibt 100 (K2-86, SQ-13a).
 
 ### TECH-138 Filter „Pages With High Internal Outlinks“
 - **Priorität:** P1
@@ -1431,7 +1432,7 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
   - **Auflösung `res(u)`:** von u aus Weiterleitungen (HTTP 3xx, Meta Refresh, JavaScript-Weiterleitung, interne HSTS-Umleitung) und Canonicals (Link-Element oder HTTP-Header) folgen, bis ein Knoten aus V erreicht ist; höchstens 10 Schritte; bei Schleife oder Abbruch undefiniert.
   - **Kanten:** Für jede Quelle s ∈ V ist `T(s)` die *Menge* der aufgelösten Hyperlink-Ziele (`<a href>`) von s ohne s selbst und ohne undefinierte Ziele (Mehrfachlinks zählen einmal). `F(s)` ⊆ `T(s)` sind die Ziele mit mindestens einem folgbaren Link (kein nofollow/ugc/sponsored, Quelle nicht per Meta Robots nofollow). Ausgangsgrad `out(s) = |T(s)|`: nofollow-Ziele zählen im Nenner, erhalten aber keinen Anteil.
   - **Iteration:** Dämpfung d = 0,85, genau k = 10 Durchläufe, Startwert 1/n je Knoten. Je Durchlauf erhält jeder Knoten den Grundwert (1 − d)/n; jede Quelle mit `out(s) > 0` gibt `d · r(s) / out(s)` an jedes Ziel in `F(s)` weiter. Knoten ohne Ausgangskanten geben nichts weiter; es wird nichts umverteilt. Rechnung in f64, Summation in fester Reihenfolge (Knoten-ID aufsteigend).
-  - **Normierung:** min/max über die Rohwerte in V; Standard logarithmisch `round(1 + 99 · (ln r − ln min) / (ln max − ln min))`, alternativ linear `round(1 + 99 · (r − min) / (max − min))` als interne Option; kaufmännische Rundung. Welche Variante der Referenz entspricht, entscheidet der Benchmark (Anhang A Punkt 36).
+  - **Normierung:** min/max über die Rohwerte in V; Standard logarithmisch `round(1 + 99 · (ln r − ln min) / (ln max − ln min))`, alternativ linear `round(1 + 99 · (r − min) / (max − min))` als interne Option; kaufmännische Rundung. Welche Variante der Referenz entspricht, entscheidet die Kalibrierung (Anhang A Punkt 36). **Stand M2 (K2-88, SQ-10):** Formel und Normierung sind OS-Festlegung; Abweichungen von der Referenz laufen als DEV „TECH-145 OS-Festlegung, Kalibrierung M3“ (Spalte `Link Score` in Links und Internal im Paritätsvergleich ignoriert). Die Kalibrierung an den vier Referenzgraphen der Paritäts-Sites ist ein M3-Paket.
 - **Ausgabe (Spalten/Filter/Export):** `Link Score` (ganzzahlig 1–100; leer für nicht teilnehmende URLs) in den Tabs Links und Internal sowie in den URL-Details; Skalierungsgröße für Visualisierungen (UI). `% of Total`.
 - **Akzeptanzkriterien:**
   - [ ] `% of Total` = `Unique Inlinks / Anzahl interner HTML-200-Seiten × 100`, 2 Nachkommastellen (Festlegung; die Referenz nennt die Formel nicht).
@@ -2104,9 +2105,9 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 - **Priorität:** P1
 - **Beschreibung:** Übersicht der Strukturbefunde.
 - **Eingaben/Konfiguration:** „Perform HTML Validation“ (TECH-008) für TECH-282–TECH-288; TECH-289/290 immer; TECH-291 nur im JS-Rendering-Modus.
-- **Ausgabe (Spalten/Filter/Export):** `Address`, `Content Type`, `Status Code`, `Status`, `Indexability`, `Indexability Status`. Filter TECH-282 bis TECH-291 plus „All“.
+- **Ausgabe (Spalten/Filter/Export):** `Address`, `Content Type`, `Status Code`, `Status`, `Indexability`, `Indexability Status`. Filter TECH-282 bis TECH-291 plus „All“. Die Referenz exportiert zusätzlich `Size`, `Transferred`, `CO2` und `Carbon Rating`; OpenSpider führt sie in diesem Tab nicht (Werte in TECH-289 … 291), der Paritätsvergleich ignoriert sie (K2-88, SQ-13f).
 - **Akzeptanzkriterien:**
-  - [ ] Population: interne HTML-Seiten mit Status 200; für TECH-290 zusätzlich interne JS/CSS-Ressourcen.
+  - [ ] Population: alle internen URLs, jeder Status und Inhaltstyp (K2-85, SQ-03; vorher interne HTML-Seiten mit Status 200; Beleg Referenz `validation_all` auf allen Sites). Die Filter prüfen weiter nur ihre Gegenstände: TECH-282 … 289 HTML-Seiten, TECH-290 JS/CSS-Ressourcen.
   - [ ] TECH-008 aus → Filter TECH-282–288 stehen in der Übersicht mit dem Hinweis „HTML-Validierung deaktiviert“; TECH-289–291 werden normal befüllt.
 - **Testfixture:** `validation/`.
 
