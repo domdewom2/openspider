@@ -60,11 +60,12 @@ class BundleTests(unittest.TestCase):
     # // spec: OUT-261 [P1]
     def test_every_macho_slice_requires_signature_runtime_timestamp_and_empty_entitlements(self):
         self.assertEqual(self.check().returncode, 0)
+        (self.app / 'Contents/Resources/helper.bin').touch()
         tools = pathlib.Path(self.temp.name) / 'tools'
         tools.mkdir()
         commands = {
             'uname': 'echo Darwin',
-            'file': 'case "$*" in *MacOS*) echo Mach-O;; *) echo data;; esac',
+            'file': 'case "$*" in *MacOS*|*helper.bin*) echo Mach-O;; *) echo data;; esac',
             'lipo': 'echo "x86_64 arm64"',
             'codesign': r"""
 case "$*" in
@@ -74,7 +75,9 @@ case "$*" in
     else
       echo '<plist version="1.0"><dict/></plist>'
     fi ;;
-  *--verify*) [ "${BROKEN:-}" != unsigned ] ;;
+  *--verify*)
+    # Reject only the embedded helper, after App/CLI checks have passed.
+    case "$*" in *helper.bin*) [ "${BROKEN:-}" != unsigned ];; *) true;; esac ;;
   *)
     [ "${BROKEN:-}" != adhoc ] || echo 'Signature=adhoc'
     [ "${BROKEN:-}" = runtime ] || echo 'CodeDirectory flags=0x10000(runtime)'
