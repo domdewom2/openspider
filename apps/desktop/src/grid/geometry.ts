@@ -1,14 +1,15 @@
+import { gridHeaderHeight } from "./theme";
 import type { ColumnState } from "./DataGrid";
 
 // Well below every supported engine's scroll-height limit, including at 200% zoom.
 export const MAX_SCROLL_HEIGHT = 1_000_000;
 export const clamp = (n: number, max: number) => Math.max(0, Math.min(max, n));
 export function rowWindow(total: number, height: number, rowHeight: number) {
-  const capacity = Math.max(1, Math.floor(Math.max(0, height - rowHeight - 4) / rowHeight));
+  const capacity = Math.max(1, Math.floor(Math.max(0, height - gridHeaderHeight(rowHeight)) / rowHeight));
   return { capacity, maxFirst: Math.max(0, total - capacity) };
 }
 export function scrollExtent(total: number, height: number, rowHeight: number) {
-  return Math.max(height, Math.min(MAX_SCROLL_HEIGHT, total * rowHeight + rowHeight + 4));
+  return Math.max(height, Math.min(MAX_SCROLL_HEIGHT, total * rowHeight + gridHeaderHeight(rowHeight)));
 }
 export function rowToScroll(row: number, maxFirst: number, range: number) {
   return maxFirst ? clamp(row, maxFirst) / maxFirst * range : 0;

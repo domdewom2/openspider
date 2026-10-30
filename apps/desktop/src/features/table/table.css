@@ -1,32 +1,52 @@
-.u10-table { display: flex; flex-direction: column; width: 100%; height: 100%; min-width: 0; min-height: 0; }
-.u10-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(--os-border); }
+.u10-table { display:flex; flex-direction:column; width:100%; height:100%; min-width:0; min-height:0; }
+.u10-toolbar { display:flex; flex-wrap:wrap; gap:var(--os-size-8); align-items:center; padding:var(--os-size-8) var(--os-size-8); border-bottom:var(--os-line) solid var(--os-border); }
 /* Chips and filter on the left, segment controls, search and actions on the right (K2-77). */
-.u10-toolbar > div:nth-child(3) { margin-left: auto; }
-.u10-toolbar label { display: flex; gap: 6px; align-items: center; }
-.u10-grid-host { flex: 1; min-height: 0; overflow: hidden; }
-.u10-counter { padding: 4px 8px; border-top: 1px solid var(--os-border); font-size: 11px; color: var(--os-text-muted); }
-.u10-operation { display: flex; gap: 8px; align-items: center; }
-.u10-menu-anchor { position: fixed; width: 1px; height: 1px; pointer-events: none; }
-.u10-column-list { max-height: 45vh; overflow: auto; margin-block: 8px; }
-.u10-column-item { display: flex; justify-content: space-between; gap: 12px; padding: 4px; border-top: 2px solid transparent; }
-.u10-column-item[data-drop-target] { border-top-color: var(--os-accent); }
-.u10-column-actions { display: flex; gap: 6px; }
+.u10-toolbar > div:nth-child(3) { margin-left:auto; }
+.u10-toolbar label { display:flex; gap:var(--os-size-8); align-items:center; }
+.u10-grid-host { flex:1; min-height:0; overflow:hidden; }
+.u10-counter { padding:var(--os-size-4) var(--os-size-8); border-top:var(--os-line) solid var(--os-border); font-size:var(--os-font-small); color:var(--os-text-muted); }
+.u10-operation { display:flex; gap:var(--os-size-8); align-items:center; }
+.u10-menu-anchor { position:fixed; width:var(--os-line); height:var(--os-line); pointer-events:none; }
+.u10-column-list { max-height:45vh; overflow:auto; margin-block:var(--os-size-8); }
+.u10-column-item { display:flex; justify-content:space-between; gap:var(--os-size-12); padding:var(--os-size-4); border-top:var(--os-focus-width) solid transparent; }
+.u10-column-item[data-drop-target] { border-top-color:var(--os-accent); }
+.u10-column-actions { display:flex; gap:var(--os-size-8); }
 
-.u10-toolbar .os-combobox { width: min(340px, 40vw); }
+.u10-toolbar .os-combobox { width:min(var(--os-size-340), 40vw); }
 
 /* K2-77 toolbar: filter chips with counts, list/tree switch, split button „Exportieren ▾“. Colours only from ui/tokens. */
-.u34-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.u34-chip { border-radius: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.u34-chip[aria-pressed="true"] { background: var(--os-bg-selection); border-color: var(--os-accent); font-weight: 600; }
-.u34-segmented { display: inline-flex; }
-.u34-segment { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; }
-.u34-segmented > .u34-segment:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
-.u34-segmented > .u34-segment:last-child { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left-width: 0; }
-.u34-segment[aria-pressed="true"] { background: var(--os-bg-selection); border-color: var(--os-accent); }
-.u34-split { display: inline-flex; align-items: center; }
-.u34-split > .os-btn:first-child { display: inline-flex; gap: 6px; align-items: center; border-top-right-radius: 0; border-bottom-right-radius: 0; }
-.u34-split .os-icon-btn { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left-width: 0; }
-.u34-overview { align-items: center; justify-content: center; }
-.u34-overview-text { max-width: 56ch; color: var(--os-text-muted); text-align: center; padding: 16px; }
-/* K2-77: the filter dropdown sits in the chip row; its label stays the accessible name but is not shown. */
-.u10-toolbar .os-combobox > .os-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.u34-chips { display:flex; flex-wrap:wrap; gap:var(--os-size-8); align-items:center; }
+.u34-chip { border-radius:var(--os-size-8); white-space:nowrap; font-variant-numeric:tabular-nums; }
+.u34-chip[aria-pressed="true"] { background:var(--os-bg-selection); border-color:var(--os-accent); font-weight:600; }
+.u34-segmented { display:inline-flex; }
+.u34-segment { display:inline-flex; align-items:center; justify-content:center; min-width:var(--os-size-32); }
+.u34-segmented > .u34-segment:first-child { border-top-right-radius:0; border-bottom-right-radius:0; }
+.u34-segmented > .u34-segment:last-child { border-top-left-radius:0; border-bottom-left-radius:0; border-left-width:0; }
+.u34-segment[aria-pressed="true"] { background:var(--os-bg-selection); border-color:var(--os-accent); }
+.u34-split { display:inline-flex; align-items:center; }
+.u34-split > .os-btn:first-child { display:inline-flex; gap:var(--os-size-8); align-items:center; border-top-right-radius:0; border-bottom-right-radius:0; }
+.u34-split .os-icon-btn { border-top-left-radius:0; border-bottom-left-radius:0; border-left-width:0; }
+.u34-overview { align-items:center; justify-content:center; }
+.u34-overview-text { max-width:56ch; color:var(--os-text-muted); text-align:center; padding:var(--os-size-16); }
+/* K2-77:the filter dropdown sits in the chip row; its label stays the accessible name but is not shown. */
+.u10-toolbar .os-combobox > .os-label { position:absolute; width:var(--os-line); height:var(--os-line); overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+/* Each tool row is exactly 32px, controls 24px; narrower panes wrap into complete rows. */
+.u10-toolbar { padding: var(--os-space-4) var(--os-space-8); gap: var(--os-space-8); border-bottom: 0; min-height: var(--os-toolbar-height); }
+.u10-toolbar .os-btn, .u10-toolbar .os-input, .u10-toolbar .os-select-button, .u10-toolbar .os-combobox-button { height: var(--os-toolbar-control); }
+.u10-toolbar .os-field { gap: 0; }
+.u10-toolbar .os-btn { padding-inline: var(--os-space-8); }
+.u10-toolbar .os-search { min-width: 0; }
+.u10-toolbar { flex-wrap: nowrap; height: var(--os-toolbar-height); flex: none; overflow: auto hidden; }
+.u10-toolbar > * { flex: none; }
+.u10-toolbar .u34-chips { flex-wrap: nowrap; }
+/* Let the search yield space before the trailing column actions cross the pane edge. */
+.u10-toolbar .u20-search { flex: 0 1 var(--os-size-220); min-width: var(--os-size-80); }
+
+/* Long accessibility rule names keep the filter trigger inside the first tool row. */
+.u34-chip { display: block; max-width: var(--os-size-180); overflow: hidden; text-overflow: ellipsis; }
+.u10-toolbar .os-combobox { width: var(--os-size-160); }
+
+/* Classic native scrollbars must not subtract height from the 32/24px tool row.
+   Trackpads, Shift+wheel and keyboard focus continue to scroll to every action. */
+.u10-toolbar { scrollbar-width: none; }
+.u10-toolbar::-webkit-scrollbar { display: none; }

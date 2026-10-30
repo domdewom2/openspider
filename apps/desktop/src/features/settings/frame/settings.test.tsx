@@ -1,3 +1,4 @@
+import { ACCENT_PALETTE } from "../../../ui/tokens/tokens";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { startAppearanceSync, type AppearanceHandle } from "../../../app/appearance";
@@ -59,6 +60,7 @@ describe("Einstellungsfenster: Rahmen", () => {
 });
 
 describe("Einstellungen: Oberfläche (UI-120)", () => {
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
   it("Theme-Wechsel wirkt sofort auf das Dokument und wird im Kern gespeichert", async () => {
     render(<SettingsFrame anchor="appearance" />);
@@ -70,17 +72,19 @@ describe("Einstellungen: Oberfläche (UI-120)", () => {
     await waitFor(() => expect(core.settings.appearance.theme).toBe("dark"));
   });
 
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
-  it("Dichte kompakt (22 px) ist Standard; normal setzt 26 px", async () => {
+  it("Dichte kompakt (28 px) ist Standard; normal setzt 44 px", async () => {
     render(<SettingsFrame anchor="appearance" />);
     const group = await screen.findByRole("radiogroup", { name: "Row height in tables" });
     expect(group).toBeInTheDocument();
-    expect(document.documentElement.style.getPropertyValue("--os-row-height")).toBe("22px");
-    fireEvent.click(within(group).getByRole("radio", { name: /Normal/ }));
-    await waitFor(() => expect(document.documentElement.style.getPropertyValue("--os-row-height")).toBe("26px"));
+    expect(document.documentElement.style.getPropertyValue("--os-row-height")).toBe("28px");
+    fireEvent.click(within(group).getByRole("radio", { name: /Comfortable/ }));
+    await waitFor(() => expect(document.documentElement.style.getPropertyValue("--os-row-height")).toBe("44px"));
     expect(document.documentElement.dataset.density).toBe("normal");
   });
 
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
   it("Akzent #FFFF66 zeigt die Kontrastwarnung und setzt die Rahmen-Markierung; Speichern bleibt möglich", async () => {
     render(<SettingsFrame anchor="appearance" />);
@@ -91,6 +95,7 @@ describe("Einstellungen: Oberfläche (UI-120)", () => {
     await waitFor(() => expect(core.settings.appearance.accent).toBe("#ffff66"));
   });
 
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
   it("Zoom wird über den WebView-Zoom gesetzt; Zurücksetzen stellt die Standardwerte wieder her", async () => {
     render(<SettingsFrame anchor="appearance" />);
@@ -161,4 +166,16 @@ describe("Einstellungen: Sprache (UI-121)", () => {
     await usePrefs.getState().patch({ general: { language: "de" } });
     expect(seen).toEqual([["general.language"]]);
   });
+});
+
+// spec: UI-120
+it("K2-77 displays the legacy default as Blue and still allows the Green preset without migrating settings", async () => {
+  render(<SettingsFrame anchor="appearance" />);
+  const blue = await screen.findByRole("button", { name: "Blue" });
+  expect(blue).toHaveAttribute("aria-pressed", "true");
+  expect(core.settings.appearance.accent.toLowerCase()).toBe("#2f855a");
+  const green = ACCENT_PALETTE.find(c => c.id === "green")!;
+  fireEvent.click(screen.getByRole("button", { name: "Green" }));
+  await waitFor(() => expect(core.settings.appearance.accent).toBe(green.hex.toLowerCase()));
+  await waitFor(() => expect(document.documentElement.style.getPropertyValue("--os-accent")).toBe(green.hex.toUpperCase()));
 });

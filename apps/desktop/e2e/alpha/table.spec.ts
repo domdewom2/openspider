@@ -125,7 +125,8 @@ test("sorting cycles ascending, descending and off, and ties keep the F-3 order 
 // Alpha 2, einfache Suche und Zähler „N von M“ (UI-011, UI-006): fremde IDs, kein Spec-Tag.
 test("simple search matches the Address on Enter, shows N of M and clears with Escape", async ({ alpha }) => {
   const { page } = alpha;
-  await crawled(alpha, "Response Codes");
+  // K2-63/K2-77: all eleven search hits must fit at the new 28px density.
+  await crawled(alpha, "Response Codes", TALL);
   await expect(alpha.table()).toContainText("Showing: 27 of 27");
   const search = page.getByRole("searchbox", { name: "Search Address", exact: true });
   await search.fill("PAGE-1");
@@ -191,7 +192,7 @@ async function selectWhileSortedRowsArrive(alpha: Alpha): Promise<{ origin: Snap
     await alpha.settledGrid();
   }
   expect(target, "page-2.html ist im Bild").toBeGreaterThanOrEqual(0);
-  await page.locator(".os-data-grid").click({ position: { x: 160, y: 26 + 22 * target + 11 } });
+  await page.locator(".os-data-grid").click({ position: { x: 160, y: 32 + 28 * target + 14 } });
   await expect(alpha.table()).toContainText("1 selected");
 
   const read = async (): Promise<Snapshot | null> => {

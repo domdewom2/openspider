@@ -1,11 +1,36 @@
-.os-crawl-status { display: flex; flex: 1; flex-wrap: wrap; align-items: center; gap: 4px 14px; padding-block: 4px; min-width: 0; }
-.os-crawl-status > span { white-space: nowrap; }
-.os-status-warning { color: var(--os-issue-type-warning); }
-.os-status-danger { color: var(--os-issue-type-issue); }
-.os-mcp-status { color: inherit; background: transparent; border: none; cursor: pointer; font: inherit; text-decoration: underline; }
-.os-status-details { position: absolute; inset-inline-end: 12px; bottom: 60px; display: grid; gap: 8px; padding: 12px; background: var(--os-bg-surface); border: 1px solid var(--os-border); z-index: 10; }
-.os-analysis-progress { display: flex; gap: 8px; align-items: center; }
-.os-analysis-progress .os-progress { width: 100px; }
-/* A01-18: the availability list and the version are separate footer items; keep them apart from each other and from the status. */
-.os-app-status > .os-menu-availability { flex: none; margin-inline: 14px; }
-.os-app-status > [data-testid="version"] { flex: none; white-space: nowrap; }
+.os-crawl-status { display:flex; flex:1; flex-wrap:wrap; align-items:center; gap:var(--os-size-4) var(--os-size-16); padding-block:var(--os-size-4); min-width:0; }
+.os-crawl-status > span { white-space:nowrap; }
+.os-status-warning { color:var(--os-issue-type-warning); }
+.os-status-danger { color:var(--os-issue-type-issue); }
+.os-mcp-status { color:inherit; background:transparent; border:none; cursor:pointer; font:inherit; text-decoration:underline; }
+.os-status-details { position:absolute; inset-inline-end:var(--os-size-12); bottom:var(--os-size-60); display:grid; gap:var(--os-size-8); padding:var(--os-size-12); background:var(--os-bg-surface); border:var(--os-line) solid var(--os-border); z-index:10; }
+.os-analysis-progress { display:flex; gap:var(--os-size-8); align-items:center; }
+.os-analysis-progress .os-progress { width:var(--os-size-100); }
+/* A01-18:the availability list and the version are separate footer items; keep them apart from each other and from the status. */
+.os-app-status > .os-menu-availability { flex:none; margin-inline:var(--os-size-16); }
+.os-app-status > [data-testid="version"] { flex:none; white-space:nowrap; }
+
+/* K2-77 status card below the controls, shared session data. */
+.os-status-card { display:flex; flex-basis:100%; flex-wrap:wrap; align-items:center; gap:var(--os-space-8) var(--os-space-16); padding:var(--os-space-8) var(--os-space-12); border:var(--os-line) solid var(--os-border); border-radius:var(--os-radius-card); background:var(--os-bg-surface); font-size:var(--os-font-small); font-variant-numeric:tabular-nums; }
+.os-status-card > span { white-space:nowrap; }
+.os-status-card-state { display:flex; align-items:center; gap:var(--os-space-8); }
+.os-status-dot { width:var(--os-space-8); height:var(--os-space-8); border-radius:var(--os-radius-card); background:var(--os-accent); }
+.os-status-card[data-phase="failed"] .os-status-dot { background:var(--os-issue-type-issue); }
+.os-status-card[data-phase="paused"] .os-status-dot { background:var(--os-issue-type-warning); }
+.os-status-card-progress { display:flex; flex:1; align-items:center; min-width:var(--os-progress-min); gap:var(--os-space-8); }
+.os-status-card-progress strong { white-space:nowrap; }
+.os-status-card-progress .os-progress-track { height:var(--os-space-8); border-radius:var(--os-radius-card); }
+.os-shell > .os-app-status { height:var(--os-statusbar-height); min-height:var(--os-statusbar-height); overflow:auto hidden; white-space:nowrap; }
+.os-crawl-status { flex-wrap:nowrap; padding-block:0; }
+/* The footer scrolls as one strip so its siblings never paint over one another. */
+.os-crawl-status { flex: none; min-width: max-content; }
+.os-status-details { position: fixed; bottom: var(--os-statusbar-height); }
+.os-app-status .os-menu-availability ul { position: fixed; bottom: var(--os-statusbar-height); inset-inline-start: var(--os-space-12); }
+
+/* Keep MCP and the footer actions visible while long telemetry scrolls independently. */
+.os-crawl-status { flex: 1; min-width: 0; height: 100%; gap: var(--os-space-8); }
+.os-status-scroll { display: flex; flex: 1; min-width: 0; height: 100%; align-items: center; gap: var(--os-space-16); overflow: auto hidden; scrollbar-width: thin; }
+.os-status-scroll > span { white-space: nowrap; }
+.os-status-scroll::-webkit-scrollbar { height: var(--os-space-4); }
+.os-status-scroll::-webkit-scrollbar-thumb { background: var(--os-border-strong); border-radius: var(--os-radius); }
+.os-crawl-status > .os-mcp-status, .os-crawl-status > details { flex: none; white-space: nowrap; }

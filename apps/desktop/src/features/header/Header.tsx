@@ -1,3 +1,4 @@
+import { StatusCard } from "../statusbar/StatusCard";
 import { needsGuardConfirmation } from "../config/pages/auth-forms/session";
 import { useEffect, useRef, useState } from "react";
 import { useT } from "../../i18n";
@@ -11,7 +12,10 @@ import { useSession } from "../../state/session";
 import { useAction } from "../../ui/actions";
 import { Button } from "../../ui/primitives/Button";
 import { Dialog, DialogFooter } from "../../ui/primitives/Dialog";
-import { ProgressBar } from "../../ui/primitives/Feedback";
+import { Globe, Play, Pause, Square, Trash2, Settings } from "lucide-react";
+import { runAction } from "../../ui/actions";
+import brandLight from "../../assets/brand/mark-light.svg";
+import brandDark from "../../assets/brand/mark-dark.svg";
 import { eventBus } from "../../ipc/events";
 import { reportError } from "../notifications/controller";
 import { missingFolderSlash, normalizeInput, rememberUrl, useHeader } from "./model";
@@ -165,16 +169,17 @@ export function Header() {
   }
 
   return <div className="os-crawl-header" data-testid="crawl-header">
+    <h1 className="os-brand" aria-label="OpenSpider"><img className="os-brand-light" src={brandLight} alt="" /><img className="os-brand-dark" src={brandDark} alt="" /><span>Open<span>Spider</span></span></h1>
     <form onSubmit={(e) => { e.preventDefault(); requestStart(); }}>
-      <label>{t("header-mode")}<select value={mode} disabled={!allowed || running} onChange={(e) => chooseMode(e.target.value as CrawlModeDto)}>
+      <label className="os-header-mode"><span className="os-visually-hidden">{t("header-mode")}</span><select value={mode} disabled={!allowed || running} onChange={(e) => chooseMode(e.target.value as CrawlModeDto)}>
         <option value="spider">{t("header-spider")}</option><option value="list">{t("header-list")}</option><option value="apis">APIs</option>
         {(mode === "serp" || mode === "compare") && <option value={mode}>{t(`header-${mode}`)}</option>}
       </select></label>
       {mode === "spider" ? <>
-        <label className="os-start-url">{t("header-url")}<input ref={input} value={url} list="os-start-history" aria-invalid={!normalized} aria-describedby={!normalized ? "os-url-error" : undefined}
+        <label className="os-start-url"><span className="os-visually-hidden">{t("header-url")}</span><Globe size={16} aria-hidden="true" /><input ref={input} value={url} list="os-start-history" aria-invalid={!normalized} aria-describedby={!normalized ? "os-url-error" : undefined}
           onChange={(e) => useHeader.setState({ url: e.target.value })} autoComplete="off" spellCheck={false} /></label>
         <datalist id="os-start-history">{history.map((u) => <option key={u} value={u} />)}</datalist>
-        <label>{t("header-scope")}<select value={scope} disabled={!allowed || running || resumable} onChange={(e) => useHeader.setState({ scope: e.target.value as StartRequest["scope"] })}>
+        <label className="os-header-scope"><span className="os-visually-hidden">{t("header-scope")}</span><select value={scope} disabled={!allowed || running || resumable} onChange={(e) => useHeader.setState({ scope: e.target.value as StartRequest["scope"] })}>
           <option value="domain">{t("header-domain")}</option><option value="subdomains">{t("header-subdomains")}</option><option value="folder">{t("header-folder")}</option>
         </select></label>
       </> : <>
@@ -190,12 +195,14 @@ export function Header() {
         <label className="os-start-url">{t("header-paste")}<textarea value={list} onChange={(e) => { setList(e.target.value); setListLabel(""); }} /></label>
         </>}
       </>}
-      <Button type="submit" isDisabled={!canStart}>{t("header-start")}</Button>
-      <Button isDisabled={!allowed || (!running && !resumable)} onPress={pauseResume}>{t(pending === "pause" ? "n03-header-pausing" : resumable ? "header-resume" : "header-pause")}</Button>
-      <Button isDisabled={!allowed || (!running && !resumable)} onPress={stop}>{t(pending === "stop" ? "n03-header-stopping" : "n03-header-stop")}</Button>
-      <Button isDisabled={!allowed || running || !hasResults} onPress={clear}>{t("header-clear")}</Button>
-      <div className="os-header-progress"><ProgressBar label={t("header-progress")} value={status?.percent ?? 0} /><span>{status?.percent ?? 0} %</span></div>
+      {running || resumable || pending ?
+        <Button variant="primary" isDisabled={!allowed || (!running && !resumable)} onPress={pauseResume}>{resumable ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}{t(pending === "pause" ? "n03-header-pausing" : resumable ? "header-resume" : "header-pause")}</Button> :
+        <Button variant="primary" type="submit" isDisabled={!canStart}><Play size={16} aria-hidden="true" />{t("header-start")}</Button>}
+      <Button isDisabled={!allowed || (!running && !resumable)} onPress={stop}><Square size={16} aria-hidden="true" />{t(pending === "stop" ? "n03-header-stopping" : "n03-header-stop")}</Button>
+      <Button isDisabled={!allowed || running || !hasResults} onPress={clear}><Trash2 size={16} aria-hidden="true" />{t("header-clear")}</Button>
+      <Button className="os-header-settings" aria-label={t("u35-header-settings")} onPress={() => { runAction("app.settings"); }}><Settings size={16} aria-hidden="true" /></Button>
     </form>
+    <StatusCard />
     {!normalized && mode === "spider" && <span id="os-url-error" className="os-header-hint">{t("header-invalid")}</span>}
     {sitemapMode && !validSitemap && <span className="os-header-hint">{t("header-sitemap-hint")}</span>}
     {mode === "spider" && missingFolderSlash(normalized, scope) && <span className="os-header-hint" role="status">{t("header-slash")}</span>}

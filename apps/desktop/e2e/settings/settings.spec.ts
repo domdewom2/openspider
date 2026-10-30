@@ -8,6 +8,7 @@ const LIGHT_BG = "rgb(238, 240, 243)";
 const DARK_BG = "rgb(19, 20, 22)";
 
 test.describe("Einstellungsfenster und Erscheinungsbild", () => {
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
   test("Umschalten des Themes wirkt ohne Neustart auf alle offenen Fenster", async ({ page, context, app }) => {
     await app.open(page, "main");
@@ -25,6 +26,7 @@ test.describe("Einstellungsfenster und Erscheinungsbild", () => {
     expect(await backgroundOf(settings)).toBe(DARK_BG);
   });
 
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
   test("System folgt dem Betriebssystem-Theme zur Laufzeit", async ({ page, app }) => {
     await page.emulateMedia({ colorScheme: "light" });
@@ -35,17 +37,19 @@ test.describe("Einstellungsfenster und Erscheinungsbild", () => {
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark", { timeout: 1000 });
   });
 
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
-  test("Akzent #FFFF66 löst die Kontrastwarnung aus, Standard-Dichte ist kompakt (22 px)", async ({ page, app }) => {
+  test("Akzent #FFFF66 löst die Kontrastwarnung aus, Standard-Dichte ist kompakt (28 px)", async ({ page, app }) => {
     await app.open(page, "settings", { "": "" });
     await page.getByRole("tab", { name: /Appearance|Oberfläche/ }).click();
     await expect(page.locator("html")).toHaveAttribute("data-density", "compact");
-    expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--os-row-height"))).toBe("22px");
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--os-row-height"))).toBe("28px");
     await page.getByRole("textbox", { name: /Custom color|Eigene Farbe/ }).fill("#FFFF66");
     await expect(page.getByTestId("accent-warning")).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("data-accent-warn", "on");
   });
 
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
   test("Zoom skaliert ohne Neustart (CSS-Zoom außerhalb von Tauri)", async ({ page, app }) => {
     await app.open(page, "settings", { "": "" });

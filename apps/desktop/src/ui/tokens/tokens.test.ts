@@ -44,7 +44,8 @@ const PAIRS: { fg: TokenName; bgs: TokenName[]; min: number; why: string }[] = [
 
 describe("Design-Tokens: Kontrast (UI-120)", () => {
   for (const theme of THEMES) {
-    // spec: UI-120
+    // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
+  // spec: UI-120
     it(`alle Token-Paare erreichen die Mindestkontraste im Theme ${theme}`, () => {
       const t = THEME_TOKENS[theme];
       const failures: string[] = [];
@@ -58,6 +59,7 @@ describe("Design-Tokens: Kontrast (UI-120)", () => {
     });
   }
 
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
   it("Status-, Issue-, Diff- und Segmentfarben haben je eine Hell- und eine Dunkel-Variante mit >= 3:1", () => {
     for (const name of TOKEN_NAMES.filter((n) => /^(status|issue\.type|diff\.(add|del)$)/.test(n))) {
@@ -79,6 +81,7 @@ describe("Design-Tokens: Kontrast (UI-120)", () => {
     }
   });
 
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
   it("alle acht Akzentfarben der Palette haben >= 3:1 gegen bg.app und bg.surface in beiden Themes", () => {
     expect(ACCENT_PALETTE).toHaveLength(8);
@@ -91,6 +94,7 @@ describe("Design-Tokens: Kontrast (UI-120)", () => {
     }
   });
 
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
   it("eine Akzentfarbe unter 3:1 (#FFFF66) löst die Warnung mit Kontrastwert aus", () => {
     const light = accentInfo("#FFFF66", "light");
@@ -99,6 +103,7 @@ describe("Design-Tokens: Kontrast (UI-120)", () => {
     expect(accentInfo("#FFFF66", "dark").warn).toBe(false);
   });
 
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
   it("abgeleitete Auswahlfarben halten text >= 4,5:1 auch bei freier Akzentfarbe", () => {
     for (const accent of ["#FFFF66", "#FF0000", "#0000FF", "#222222", "#00FFAA"]) {
@@ -131,6 +136,7 @@ describe("Farbrechnung", () => {
 });
 
 describe("Theme anwenden", () => {
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
   it("System folgt der Systemeinstellung, Hell/Dunkel sind fest", () => {
     expect(resolveTheme("system", true)).toBe("dark");
@@ -139,6 +145,7 @@ describe("Theme anwenden", () => {
     expect(resolveTheme("dark", false)).toBe("dark");
   });
 
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
   it("applyAppearance schreibt Tokens, Dichte, Zebra und Zoom auf das Wurzelelement", () => {
     const root = document.createElement("div");
@@ -147,17 +154,19 @@ describe("Theme anwenden", () => {
     expect(root.dataset.theme).toBe("dark");
     expect(root.dataset.density).toBe("normal");
     expect(root.style.getPropertyValue("--os-bg-surface").toUpperCase()).toBe("#1B1D20");
-    expect(root.style.getPropertyValue("--os-row-height")).toBe("26px");
+    expect(root.style.getPropertyValue("--os-row-height")).toBe("44px");
     expect(root.style.getPropertyValue("--os-zoom")).toBe("1.25");
   });
 
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
-  it("Standard ist System, 22 px kompakt und Zebra an; Zeilenhöhe normal bei 150 % = 39 px", () => {
+  it("Standard ist System, 28 px kompakt und Zebra an; Zeilenhöhe normal bei 150 % = 66 px", () => {
     expect(DEFAULT_APPEARANCE).toMatchObject({ theme: "system", density: "compact", zebra: true, zoomPct: 100 });
-    expect(SIZES.rowHeight.compact).toBe(22);
-    expect(SIZES.rowHeight.normal * 1.5).toBe(39);
+    expect(SIZES.rowHeight.compact).toBe(28);
+    expect(SIZES.rowHeight.normal * 1.5).toBe(66);
   });
 
+  // K2-63: Dichte-Erwartungen nach K2-77 (28/44 px).
   // spec: UI-120
   it("Akzentwarnung setzt im Canvas-Theme einen Rahmen in Textfarbe", () => {
     const tokens = resolveTokens("light", "#FFFF66");
@@ -166,6 +175,13 @@ describe("Theme anwenden", () => {
     expect(warn.selectionOutline).toBe(tokens.text);
     expect(ok.selectionOutline).toBeNull();
     expect(ok.bgCellZebra).toBe(ok.bgCell);
-    expect(ok.rowHeight).toBe(22);
+    expect(ok.rowHeight).toBe(28);
   });
+});
+
+// spec: UI-126
+it("K2-77 badge labels reach 4.5:1 in both themes", () => {
+  for (const theme of THEMES) for (const kind of ["success", "warning", "danger", "neutral"] as const) {
+    expect(contrast(THEME_TOKENS[theme][`badge.${kind}`], THEME_TOKENS[theme][`badge.${kind}Bg`])).toBeGreaterThanOrEqual(4.5);
+  }
 });

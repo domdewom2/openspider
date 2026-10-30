@@ -1,4 +1,4 @@
-.os-rendered-shot { background: var(--os-bg-app); }
-.os-rendered-figure { margin: 0; display: flex; flex-direction: column; align-items: flex-start; padding: 0; }
-.os-rendered-tile { position: relative; flex: none; background: var(--os-bg-hover); }
-.os-rendered-tile img { user-select: none; }
+.os-rendered-shot { background:var(--os-bg-app); }
+.os-rendered-figure { margin:0; display:flex; flex-direction:column; align-items:flex-start; padding:0; }
+.os-rendered-tile { position:relative; flex:none; background:var(--os-bg-hover); }
+.os-rendered-tile img { user-select:none; }

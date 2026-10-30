@@ -152,6 +152,10 @@ pub fn init(app: &App) {
         drop(app);
         let mut previous = Some(McpStatus::Off);
         let mut timer = tokio::time::interval(std::time::Duration::from_millis(100));
+        // Tokio's first interval tick is immediate. Startup already delivers its
+        // notices above; periodic delivery must start after the first 100 ms,
+        // rather than racing newly spawned operations during initialization.
+        timer.tick().await;
         loop {
             timer.tick().await;
             let Some(app) = weak.upgrade() else { break };

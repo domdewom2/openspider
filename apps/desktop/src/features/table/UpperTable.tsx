@@ -1,3 +1,4 @@
+import { Dashboard } from "../dashboard/Dashboard";
 import { ComparisonTable } from "../compare/ComparisonTable";
 import { useComparison } from "../compare/model";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
@@ -52,14 +53,7 @@ import "./table.css";
 export function UpperTable() {
   const active = useComparison(s => !!s.session);
   const overview = useTabs(s => s.view === "overview");
-  return active ? <ComparisonTable /> : overview ? <OverviewPlaceholder /> : <RegularUpperTable />;
-}
-/** „Übersicht“ of the grouped navigation (UI-004, K2-77): the dashboard comes with M2-U35; until then an explained empty area. */
-function OverviewPlaceholder() {
-  const t = useT();
-  return <section className="u10-table u34-overview" aria-label={t("u34-nav-overview")} data-overview-placeholder="">
-    <p className="u34-overview-text">{t("u34-overview-pending")}</p>
-  </section>;
+  return active ? <ComparisonTable /> : overview ? <Dashboard /> : <RegularUpperTable />;
 }
 function RegularUpperTable() {
   const t = useT(); const locale = currentLanguage(); const tabs = useTabs();
@@ -259,12 +253,12 @@ function RegularUpperTable() {
     activeFilter?.state.kind === "needsConfig" ? { code: "FEATURE_DISABLED" as const, arg: activeFilter.state.key } :
     activeFilter?.state.kind === "needsRendering" ? { code: "NEEDS_JS_RENDERING" as const } : null;
   return <section className="u10-table" data-shortcut-scope="table" aria-label={t("u10-table")}>
-    <div className="u10-toolbar">
+    <div className="u10-toolbar" key={tabs.active}>
       {/* K2-77: the first filters of the tab (and the active one) as chips with counts; all filters stay in the dropdown. */}
       <div className="u34-chips" role="group" aria-label={t("u34-quick-filters")}>
         {[...filters.slice(0, 3), ...(activeFilter && !filters.slice(0, 3).includes(activeFilter) ? [activeFilter] : [])].map(f => {
           const count = f.state.kind === "needsCrawlAnalysis" || f.count == null ? "" : ` (${new Intl.NumberFormat(locale).format(f.count)})`;
-          return <button key={f.id} type="button" className="os-btn u34-chip" aria-pressed={query.filter === f.id} onClick={() => tabs.query({ filter: f.id })}>{filterLabel(t, f)}{count}</button>;
+          return <button key={f.id} type="button" className="os-btn u34-chip" title={`${filterLabel(t, f)}${count}`} aria-pressed={query.filter === f.id} onClick={() => tabs.query({ filter: f.id })}>{filterLabel(t, f)}{count}</button>;
         })}
       </div>
       <div ref={filterRef}><ComboBox label={t("u10-filter")} selected={query.filter} onSelect={filter => tabs.query({ filter })}

@@ -41,6 +41,7 @@ export function Statusbar() {
   const index = current ? analysis!.steps.indexOf(current) + 1 : null;
   const memory = (bytes: number | null | undefined) => bytes == null ? unknown : f.bytes(bytes);
   return <div className="os-crawl-status" data-testid="crawl-status">
+    <div className="os-status-scroll" role="group" aria-label={t("status-details")} tabIndex={0}>
     <span>{t("status-mode", { mode: t(`header-${c?.mode ?? chosenMode}`) })}</span>
     {sessionLost && <span role="status" className="os-status-warning">{t("form-login-session-lost")}</span>}
     <span data-testid="crawl-phase">{phase}{c?.endReason === "limit_reached" && ` (${t("status-limit")})`}</span>
@@ -57,6 +58,7 @@ export function Statusbar() {
       {c?.memoryStage && c.memoryStage !== "normal" && ` (${t(`status-memory-${c.memoryStage}`)})`}
     </span>
     <span>{t("status-file", { value: memory(c?.fileBytes) })}</span>
+    </div>
     <McpMenu>
       {mcp?.kind === "connected" ? t(mcp.clients === 1 ? "status-mcp-client" : "status-mcp-clients", { count: mcp.clients }) : mcp?.kind === "ready" ? t("status-mcp-ready", { port: mcp.port }) : t("status-mcp-off")}
     </McpMenu>

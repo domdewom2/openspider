@@ -1,3 +1,4 @@
+import { Button } from "../../../ui/primitives/Button";
 import { useState } from "react";
 import { useT } from "../../../i18n";
 import type { PanelKind } from "../../../ipc/gen/PanelKind";
@@ -17,7 +18,7 @@ export function PanelActions({ which, rows }: { which: PanelKind; rows: (string 
   // UI-060: every sidebar table is exportable through the shared export dialog (format, file name, status).
   const save = () => openExport(which === "issues" ? { kind: "issues", which } : { kind: "sidebar", which });
   return <>
-    <div className="os-sidebar-actions" data-sidebar-export-which={which}><button type="button" onClick={() => void copy()}>{t("sidebar-copy")}</button><button type="button" onClick={save}>{t("sidebar-export")}</button></div>
+    <div className="os-sidebar-actions" data-sidebar-export-which={which}><Button variant="tool" onPress={() => void copy()}>{t("sidebar-copy")}</Button><Button variant="tool" onPress={save}>{t("sidebar-export")}</Button></div>
     <QueryFeedback error={error} />
   </>;
 }

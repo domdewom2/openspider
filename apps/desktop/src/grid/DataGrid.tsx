@@ -1,9 +1,10 @@
+import { cellBadge, gridHeaderHeight } from "./theme";
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { LOADING, type ViewDataSource } from "../data/ViewDataSource";
 import type { ColumnMeta } from "../ipc/gen/ColumnMeta";
 import type { SortKey } from "../ipc/gen/SortKey";
 import { SelectionModel } from "../state/selection";
-import type { TokenMap } from "../ui/tokens/tokens";
+import { GRID_DECORATION as D, type TokenMap } from "../ui/tokens/tokens";
 import { cellTooltip, ellipsis, gridCell } from "./cells";
 import { copySelection } from "./copy";
 import { clamp, columnLayout, rowToScroll, rowWindow, scrollExtent, scrollToRow } from "./geometry";
@@ -70,10 +71,11 @@ export function DataGrid(props: DataGridProps) {
   const gesture = useRef<{ col: number; start: number; width: number; resize: boolean; moved: boolean } | undefined>(undefined);
   const visible = useMemo(() => props.columns.filter(c => c.visible || c.key === "Row").sort((a, b) =>
     a.key === "Row" ? -1 : b.key === "Row" ? 1 : Number(b.pinned) - Number(a.pinned)), [props.columns]);
+  const markerColumn = visible.some(c => c.key === "Row") ? "Row" : "Address";
   const metadata = useMemo(() => new Map(source.columns.map((c, index) => [c.key, { column: c, index }])), [source]);
   const { capacity, maxFirst } = rowWindow(source.total, size.height, rowHeight);
   const first = clamp(position.row, maxFirst);
-  const headerHeight = rowHeight + 4;
+  const headerHeight = gridHeaderHeight(rowHeight);
   const count = Math.min(source.total - first, Math.max(0, Math.ceil((size.height - headerHeight) / rowHeight)));
   const totalWidth = visible.reduce((n, c) => n + c.width, 0);
   const extent = scrollExtent(source.total, size.height, rowHeight);
@@ -217,9 +219,22 @@ export function DataGrid(props: DataGridProps) {
         const value = header ? { text: props.headerTitle?.(c.key) ?? (props.columnTitles?.[c.key] ?? c.key) + (c.sort ? ` ${c.sort === "asc" ? "↑" : "↓"} ${visible.filter(c => c.sort).findIndex(s => s.key === c.key) + 1}` : ""), color: t.text, align: "left" as const } : cell(c.index, row);
         const background = (value as { background?: string }).background;
         if (background) { ctx.fillStyle = background; ctx.fillRect(c.x, y, c.width, h); }
-        ctx.fillStyle = value.color; ctx.textAlign = value.align;
-        const x = c.x + (value.align === "right" ? c.width - 8 : value.align === "center" ? c.width / 2 : 8);
-        ctx.fillText(ellipsis(measure, value.text, c.width - (header ? 30 : 16)), x, y + h / 2);
+        const badge = header || background ? null : cellBadge(c.key, value.text, t);
+        if (badge) {
+          const badgeWidth = Math.min(c.width - D.badgeInset * 2, measure(value.text) + D.badgePadding * 2);
+          const badgeX = c.x + (value.align === "right" ? c.width - badgeWidth - D.badgeInset : value.align === "center" ? (c.width - badgeWidth) / 2 : D.badgeInset);
+          ctx.fillStyle = badge.background;
+          ctx.beginPath(); ctx.roundRect(badgeX, y + (h - D.badgeHeight) / 2, badgeWidth, D.badgeHeight, D.badgeRadius); ctx.fill();
+        }
+        if (!header && c.key === markerColumn) {
+          ctx.strokeStyle = key !== undefined && selection.has(key) ? t.accent : t["border.strong"];
+          ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(c.x + D.checkboxInset, y + (h - D.checkboxSize) / 2, D.checkboxSize, D.checkboxSize, D.checkboxRadius); ctx.stroke();
+          if (key !== undefined && selection.has(key)) { ctx.fillStyle = t.accent; ctx.fillRect(c.x + D.checkboxInset + D.checkboxSize / 4, y + h / 2 - D.checkboxSize / 4, D.checkboxSize / 2, D.checkboxSize / 2); }
+        }
+        ctx.fillStyle = badge?.text ?? value.color; ctx.textAlign = value.align;
+        const x = c.x + (value.align === "right" ? c.width - 8 : value.align === "center" ? c.width / 2 : c.key === "Address" && markerColumn === "Address" ? D.addressPadding : D.labelInset);
+        ctx.fillText(ellipsis(measure, value.text, c.width - (c.key === "Address" ? (markerColumn === "Address" ? D.addressReserved : D.labelInset + D.addressAction) : header ? 30 : 16)), x, y + h / 2);
+        if (!header && c.key === "Address") { ctx.textAlign = "right"; ctx.fillStyle = t["text.muted"]; ctx.fillText("⋮", c.x + c.width - D.labelInset, y + h / 2); }
         if (header) { ctx.textAlign = "right"; ctx.fillText("⋮", c.x + c.width - 8, y + h / 2); }
         ctx.strokeStyle = t.border; ctx.lineWidth = 1; ctx.strokeRect(c.x - 0.5, y - 0.5, c.width, h);
         if (focus.col === c.index && focus.row === (header ? -1 : row)) { ctx.strokeStyle = t.accent; ctx.lineWidth = 2; ctx.strokeRect(c.x + 1, y + 1, c.width - 2, h - 2); }
@@ -323,7 +338,8 @@ export function DataGrid(props: DataGridProps) {
         if (h.row === -1) {
           gesture.current = { col: h.column.index, start: event.clientX, width: h.column.width, resize: h.column.x + h.column.width - h.x < 6, moved: false };
           event.currentTarget.setPointerCapture(event.pointerId);
-        } else void selectRow(h.row, h.column.index, event.shiftKey, event.ctrlKey || event.metaKey).catch(props.onError);
+        } else if (h.column.key === "Address" && h.column.x + h.column.width - h.x < D.addressAction) contextMenu(h.column.index, h.row, event.clientX, event.clientY);
+        else void selectRow(h.row, h.column.index, event.shiftKey, event.ctrlKey || event.metaKey || (h.column.key === markerColumn && h.x - h.column.x < D.addressAction)).catch(props.onError);
       }}
       onPointerMove={event => {
         const g = gesture.current;
@@ -364,7 +380,7 @@ export function DataGrid(props: DataGridProps) {
           let width = metrics.current.width(h.column.key) + 40;
           for (let row = first; row < first + count; row++) width = Math.max(width, metrics.current.width(cell(h.column.index, row).text) + 16);
           resizeColumn(h.column.index, Math.min(800, width));
-        } else if (h.row >= 0) { const key = source.rowKey(h.row); if (key !== undefined) props.onActivate(key, h.column.key); }
+        } else if (h.row >= 0 && !(h.column.key === markerColumn && h.x - h.column.x < D.addressAction) && !(h.column.key === "Address" && h.column.x + h.column.width - h.x < D.addressAction)) { const key = source.rowKey(h.row); if (key !== undefined) props.onActivate(key, h.column.key); }
       }}
       onContextMenu={event => { event.preventDefault(); const h = hit(event.clientX, event.clientY); if (h) contextMenu(h.column.index, h.row, event.clientX, event.clientY); }} />
     <span ref={measuring} className="os-grid-measure" aria-hidden="true" />

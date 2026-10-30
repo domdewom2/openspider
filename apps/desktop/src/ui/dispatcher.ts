@@ -82,11 +82,27 @@ export function isInTable(target: EventTarget | null): boolean {
   return target instanceof Element && target.closest('[data-region="table"], [role="grid"]') !== null;
 }
 
+const MODAL_SELECTOR = '[aria-modal="true"], dialog[open], .os-modal, .os-popover';
+const modalSnapshots = new WeakMap<Document, { observer: MutationObserver; dirty: boolean; open: boolean }>();
+
 export function isModalOpen(doc: Document = document): boolean {
-  // `.os-modal`: modale Dialoge der Primitive (React Aria setzt kein aria-modal), sonst schluckt ein globales Esc-Kürzel
-  // (search.clear) die Esc-Taste, bevor der Dialog sie erhält. `.os-popover`: offene Menüs und Auswahllisten (Überlaufmenü der
-  // Tab-Leisten, M2-U34) schließen mit Esc.
-  return doc.querySelector('[aria-modal="true"], dialog[open], .os-modal, .os-popover') !== null;
+  // Menus check many actions against the same DOM. Invalidate on mutations,
+  // including records not delivered yet so a same-turn action sees the new modal.
+  const Observer = doc.defaultView?.MutationObserver;
+  if (!Observer) return doc.querySelector(MODAL_SELECTOR) !== null;
+  let snapshot = modalSnapshots.get(doc);
+  if (!snapshot) {
+    const entry = { observer: new Observer(() => { entry.dirty = true; }), dirty: true, open: false };
+    entry.observer.observe(doc, { subtree: true, childList: true, attributes: true, attributeFilter: ["aria-modal", "open", "class"] });
+    modalSnapshots.set(doc, entry);
+    snapshot = entry;
+  }
+  if (snapshot.observer.takeRecords().length) snapshot.dirty = true;
+  if (snapshot.dirty) {
+    snapshot.open = doc.querySelector(MODAL_SELECTOR) !== null;
+    snapshot.dirty = false;
+  }
+  return snapshot.open;
 }
 
 export interface DispatcherOptions {

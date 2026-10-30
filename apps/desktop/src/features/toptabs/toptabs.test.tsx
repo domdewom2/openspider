@@ -182,3 +182,26 @@ it("keeps group navigation and Overview selected while an earlier preferences re
     read.mockRestore();
   }
 });
+
+// spec: UI-004
+it.each(["overview", "tab"] as const)("keeps a %s navigation made while an older UI-state load is in flight", async destination => {
+  await useTabs.getState().load();
+  if (destination === "tab") useTabs.getState().showOverview();
+  await flushUiState();
+  const original = uistate.load.bind(uistate);
+  const stale = await original();
+  let release!: () => void;
+  let started!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const reading = new Promise<void>(resolve => { started = resolve; });
+  vi.spyOn(uistate, "load").mockImplementationOnce(async () => { started(); await gate; return stale; });
+  const slow = useTabs.getState().load();
+  await reading;
+  if (destination === "overview") useTabs.getState().showOverview();
+  else useTabs.getState().select("Images");
+  release(); await slow;
+  expect(useTabs.getState().view).toBe(destination === "overview" ? "overview" : "tabs");
+  if (destination === "tab") expect(useTabs.getState().active).toBe("Images");
+  await flushUiState();
+  expect((await original()).state).toMatchObject({ topTabs: { view: destination === "overview" ? "overview" : "tabs" } });
+});

@@ -5,8 +5,10 @@ import { contrast, mix, readableOn, withAlpha } from "./color";
 
 export type ThemeName = "light" | "dark";
 
-/** Voreingestellte Akzentfarbe in `settings.toml` (os-model: `appearance.accent`); steht für „OpenSpider-Grün“. */
+/** Voreingestellte Akzentfarbe in `settings.toml` (os-model: `appearance.accent`); bleibt als gespeicherter Default kompatibel; visuell Akzentblau (K2-77). */
 export const DEFAULT_ACCENT_SETTING = "#2f855a";
+/** Visible preset for the legacy stored default; no settings migration/write is needed. */
+export const DEFAULT_ACCENT_DISPLAY = "#3C79CE";
 
 export const TOKEN_NAMES = [
   "bg.app",
@@ -37,6 +39,14 @@ export const TOKEN_NAMES = [
   "issue.prio.high",
   "issue.prio.medium",
   "issue.prio.low",
+  "badge.success",
+  "badge.successBg",
+  "badge.warning",
+  "badge.warningBg",
+  "badge.danger",
+  "badge.dangerBg",
+  "badge.neutral",
+  "badge.neutralBg",
   "diff.add",
   "diff.del",
   "diff.addBg",
@@ -49,8 +59,8 @@ const LIGHT: TokenMap = {
   "bg.app": "#EEF0F3",
   "bg.surface": "#FFFFFF",
   "bg.zebra": "#F6F7F9",
-  "bg.selection": "#D3EBDD",
-  "bg.selectionInactive": "#E3EFE8",
+  "bg.selection": "#DFEBFF",
+  "bg.selectionInactive": "#EAF0FA",
   "bg.hover": "#E6E9ED",
   "bg.overlay": "#FFFFFF",
   border: "#D5D9DF",
@@ -59,8 +69,8 @@ const LIGHT: TokenMap = {
   "text.muted": "#59626D",
   "text.disabled": "#8B939C",
   "text.onAccent": "#FFFFFF",
-  accent: "#17784A",
-  "accent.hover": "#125F3B",
+  accent: "#0964DC",
+  "accent.hover": "#0752B6",
   focus: "#1F62C4",
   link: "#1F5FBF",
   "status.2xx": "#1B1F24",
@@ -74,6 +84,14 @@ const LIGHT: TokenMap = {
   "issue.prio.high": "#C42B2B",
   "issue.prio.medium": "#B8530F",
   "issue.prio.low": "#666E78",
+  "badge.success": "#14652F",
+  "badge.successBg": "#DCF5E3",
+  "badge.warning": "#744900",
+  "badge.warningBg": "#FFF0CC",
+  "badge.danger": "#A82027",
+  "badge.dangerBg": "#FFE4E5",
+  "badge.neutral": "#45515F",
+  "badge.neutralBg": "#E9EDF2",
   "diff.add": "#1C7C3A",
   "diff.del": "#C42B2B",
   "diff.addBg": withAlpha("#1C7C3A", 0.12),
@@ -84,8 +102,8 @@ const DARK: TokenMap = {
   "bg.app": "#131416",
   "bg.surface": "#1B1D20",
   "bg.zebra": "#212429",
-  "bg.selection": "#1F4A35",
-  "bg.selectionInactive": "#27362F",
+  "bg.selection": "#173859",
+  "bg.selectionInactive": "#233241",
   "bg.hover": "#2A2E34",
   "bg.overlay": "#24272C",
   border: "#33373D",
@@ -93,9 +111,9 @@ const DARK: TokenMap = {
   text: "#E7E9EC",
   "text.muted": "#A3ABB5",
   "text.disabled": "#6C747E",
-  "text.onAccent": "#0B1A12",
-  accent: "#4CC38A",
-  "accent.hover": "#6FD3A3",
+  "text.onAccent": "#081A30",
+  accent: "#58A6FF",
+  "accent.hover": "#80BCFF",
   focus: "#6AA8FF",
   link: "#7DB3FF",
   "status.2xx": "#E7E9EC",
@@ -109,6 +127,14 @@ const DARK: TokenMap = {
   "issue.prio.high": "#F2716B",
   "issue.prio.medium": "#F08F4A",
   "issue.prio.low": "#9AA2AC",
+  "badge.success": "#A2E8B7",
+  "badge.successBg": "#163C2B",
+  "badge.warning": "#FFDA8B",
+  "badge.warningBg": "#463719",
+  "badge.danger": "#FFB1B5",
+  "badge.dangerBg": "#4A232A",
+  "badge.neutral": "#D0DAE5",
+  "badge.neutralBg": "#303943",
   "diff.add": "#56C773",
   "diff.del": "#F2716B",
   "diff.addBg": withAlpha("#56C773", 0.12),
@@ -119,8 +145,8 @@ export const THEME_TOKENS: Record<ThemeName, Readonly<TokenMap>> = { light: LIGH
 
 /** Acht vorgeprüfte Akzentfarben (≥ 3:1 gegen `bg.app` und `bg.surface` in beiden Themes); die erste ist der Standard. */
 export const ACCENT_PALETTE: readonly { id: string; hex: string }[] = [
-  { id: "green", hex: "#2F855A" },
-  { id: "blue", hex: "#3C79CE" },
+  { id: "blue", hex: DEFAULT_ACCENT_DISPLAY },
+  { id: "green", hex: "#2C8557" },
   { id: "teal", hex: "#218683" },
   { id: "violet", hex: "#915FD7" },
   { id: "pink", hex: "#D04289" },
@@ -164,7 +190,12 @@ export function accentInfo(accent: string, theme: ThemeName): AccentInfo {
 }
 
 function isDefaultAccent(accent: string | undefined): boolean {
-  return accent === undefined || accent === "" || accent.toLowerCase() === DEFAULT_ACCENT_SETTING;
+  return accent === undefined || accent === "" || (accent.toLowerCase() === DEFAULT_ACCENT_SETTING || accent.toLowerCase() === DEFAULT_ACCENT_DISPLAY.toLowerCase());
+}
+
+/** UI-120/K2-77: show the effective blue preset, retaining the stored legacy alias. */
+export function displayAccent(accent: string): string {
+  return isDefaultAccent(accent) ? DEFAULT_ACCENT_DISPLAY : accent;
 }
 
 /** Selektionsfarbe aus der Akzentfarbe: Anteil so wählen, dass `text` ≥ 4,5:1 bleibt. */
@@ -214,8 +245,8 @@ export type Density = "compact" | "normal";
 
 export const SIZES = {
   space: [2, 4, 6, 8, 12, 16, 24, 32] as const,
-  rowHeight: { compact: 22, normal: 26 } as const,
-  headerHeight: { compact: 26, normal: 30 } as const,
+  rowHeight: { compact: 28, normal: 44 } as const,
+  headerHeight: { compact: 32, normal: 44 } as const,
   cellPaddingX: 6,
   toolbarHeight: 32,
   toolbarControl: 24,
@@ -228,7 +259,7 @@ export const SIZES = {
   radiusDialog: 8,
   fontUi: 13,
   lineUi: 18,
-  fontTable: { compact: 12, normal: 13 } as const,
+  fontTable: { compact: 13, normal: 14 } as const,
   fontSmall: 11,
   lineSmall: 14,
   fontMono: 12,
@@ -346,3 +377,11 @@ export function forcedColorsCanvasTheme(
     },
   };
 }
+
+/** K2-77 Canvas decorations share the design-system spacing/radii. */
+export const GRID_DECORATION = {
+  badgeHeight: 20, badgeRadius: 8, badgePadding: 8, badgeInset: 4,
+  checkboxSize: 12, checkboxInset: 8, checkboxRadius: 4,
+  addressPadding: 28, addressAction: 24, addressReserved: 52,
+  labelInset: 8,
+} as const;

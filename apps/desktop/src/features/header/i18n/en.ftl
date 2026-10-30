@@ -28,3 +28,5 @@ header-list-invalid = The list contains { $count } invalid entries. At least one
 header-source = Source
 header-sitemap = Sitemap URL
 header-sitemap-hint = Enter an HTTP(S) sitemap address ending in .xml or .xml.gz.
+
+u35-header-settings = Settings

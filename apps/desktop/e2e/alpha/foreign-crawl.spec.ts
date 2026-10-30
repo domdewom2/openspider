@@ -44,7 +44,8 @@ test("a crawl started by the CLI appears live in the app and cannot be controlle
     await expect(status(page)).toContainText(/Threads: 1/);
 
     // nur lesend: alle Steuerelemente gesperrt, Hinweis auf den fremden Prozess, Befehle werden vom Kern abgelehnt
-    await expect(page.getByRole("button", { name: "Start", exact: true })).toBeDisabled();
+    // K2-63/K2-77: primary control is Pause for a running crawl.
+    await expect(page.getByRole("button", { name: "Start", exact: true })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Pause", exact: true })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Clear", exact: true })).toBeDisabled();
     await expect(page.getByText("This crawl is controlled by another process.")).toBeVisible();

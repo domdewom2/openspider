@@ -1,5 +1,5 @@
-.os-sidebar-segment-label { display: inline-block; max-width: 18ch; padding: 1px 6px; border-radius: var(--os-radius, 4px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
-.os-sidebar-segment-none { background: transparent; border: 1px dashed var(--os-border-strong); color: var(--os-text-muted); }
-.os-sidebar-empty { padding: 12px 8px; display: grid; gap: 6px; justify-items: start; }
-.os-sidebar-table th button { max-width: 100%; }
-@media (forced-colors: active) { .os-sidebar-segment-label { border: 1px solid ButtonText; } }
+.os-sidebar-segment-label { display:inline-block; max-width:18ch; padding:var(--os-size-4) var(--os-size-8); border-radius:var(--os-radius, var(--os-size-4)); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:bottom; }
+.os-sidebar-segment-none { background:transparent; border:var(--os-line) dashed var(--os-border-strong); color:var(--os-text-muted); }
+.os-sidebar-empty { padding:var(--os-size-12) var(--os-size-8); display:grid; gap:var(--os-size-8); justify-items:start; }
+.os-sidebar-table th button { max-width:100%; }
+@media (forced-colors: active) { .os-sidebar-segment-label { border:var(--os-line) solid ButtonText; } }

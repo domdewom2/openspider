@@ -14,16 +14,16 @@ export function classesOf(view: SiteStructureView): readonly string[] {
 
 /** UI-007 status colours; blocked/no-response are both neutral grey, told apart by a hatch pattern in CSS. */
 export const CLASS_COLOR: Record<string, string> = {
-  Indexable: "var(--os-status-2xx, #1b1f24)",
-  "Non-Indexable": "var(--os-status-4xx, #c42b2b)",
-  "2xx": "var(--os-status-2xx, #1b1f24)",
-  "3xx": "var(--os-status-3xx, #a86a00)",
-  "4xx": "var(--os-status-4xx, #c42b2b)",
-  "5xx": "var(--os-status-5xx, #c42b2b)",
-  "Blocked by robots.txt": "var(--os-status-none, #7b848e)",
-  "No Response": "var(--os-status-none, #7b848e)",
+  Indexable: "var(--os-status-2xx)",
+  "Non-Indexable": "var(--os-status-4xx)",
+  "2xx": "var(--os-status-2xx)",
+  "3xx": "var(--os-status-3xx)",
+  "4xx": "var(--os-status-4xx)",
+  "5xx": "var(--os-status-5xx)",
+  "Blocked by robots.txt": "var(--os-status-none)",
+  "No Response": "var(--os-status-none)",
 };
-export const DEFAULT_COLOR = "var(--os-accent, #17784a)";
+export const DEFAULT_COLOR = "var(--os-accent)";
 
 /** `% of Total` with one decimal; the shares of a table sum to 100 % ± 0.1 (UI-066). */
 export function pct(count: number, total: number): number {
