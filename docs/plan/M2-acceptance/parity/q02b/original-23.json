@@ -1,0 +1,224 @@
+[
+  {
+    "site": "parity-m2-links",
+    "file": "crawl_overview.csv",
+    "before": [
+      "Zellübereinstimmung 98.605 % liegt unter 100.000 %"
+    ],
+    "after": [
+      "Zellübereinstimmung 99.531 % liegt unter 100.000 %"
+    ],
+    "passed": false
+  },
+  {
+    "site": "parity-m2-links",
+    "file": "links_pages_with_high_external_outlinks.csv",
+    "before": [
+      "URL-Menge nicht identisch: 1 fehlen in OpenSpider, 0 zusätzlich"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-m2-links",
+    "file": "bulk_links_internal_nofollow_outlinks.csv",
+    "before": [
+      "Zellübereinstimmung 91.667 % liegt unter 97.000 %"
+    ],
+    "after": [
+      "Zellübereinstimmung 95.652 % liegt unter 97.000 %"
+    ],
+    "passed": false
+  },
+  {
+    "site": "parity-m2-links",
+    "file": "bulk_links_outlinks_to_localhost.csv",
+    "before": [
+      "URL-Menge nicht identisch: 2392 fehlen in OpenSpider, 0 zusätzlich"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-m2-list",
+    "file": "internal_all.csv",
+    "before": [
+      "Zeilenfolge weicht von der Upload-Reihenfolge ab (OUT-015)",
+      "URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-m2-list",
+    "file": "crawl_overview.csv",
+    "before": [
+      "Zellübereinstimmung 99.061 % liegt unter 100.000 %"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-m2-onpage",
+    "file": "crawl_overview.csv",
+    "before": [
+      "Zellübereinstimmung 99.533 % liegt unter 100.000 %"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-m2-onpage",
+    "file": "content_soft_404_pages.csv",
+    "before": [
+      "Zellübereinstimmung 90.000 % liegt unter 99.000 %",
+      "URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-m2-onpage",
+    "file": "bulk_images_images_missing_size_attributes.csv",
+    "before": [
+      "Zellübereinstimmung 77.778 % liegt unter 97.000 %"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-m2-onpage",
+    "file": "serp_summary.csv",
+    "before": [
+      "Zellübereinstimmung 88.000 % liegt unter 97.000 %",
+      "URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich"
+    ],
+    "after": [
+      "URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich"
+    ],
+    "passed": false
+  },
+  {
+    "site": "parity-m2-security",
+    "file": "crawl_overview.csv",
+    "before": [
+      "Zellübereinstimmung 99.528 % liegt unter 100.000 %"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-m2-technical",
+    "file": "crawl_overview.csv",
+    "before": [
+      "Zellübereinstimmung 99.052 % liegt unter 100.000 %"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-m2-technical",
+    "file": "redirects_redirect_canonical_chains.csv",
+    "before": [
+      "URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-m2-technical",
+    "file": "canonicals_non_indexable_canonicals.csv",
+    "before": [
+      "URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich"
+    ],
+    "after": [
+      "URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich"
+    ],
+    "passed": false
+  },
+  {
+    "site": "parity-m2-technical",
+    "file": "report_hreflang_non_200_hreflang_urls.csv",
+    "before": [
+      "URL-Menge nicht identisch: 1 fehlen in OpenSpider, 0 zusätzlich"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-m2-technical",
+    "file": "report_hreflang_missing_return_links.csv",
+    "before": [
+      "Zellübereinstimmung 66.667 % liegt unter 97.000 %"
+    ],
+    "after": [
+      "Zellübereinstimmung 66.667 % liegt unter 97.000 %"
+    ],
+    "passed": false
+  },
+  {
+    "site": "parity-m2-technical",
+    "file": "report_hreflang_inconsistent_language_region_return_links.csv",
+    "before": [
+      "Zellübereinstimmung 0.000 % liegt unter 97.000 %",
+      "URL-Menge nicht identisch: 2 fehlen in OpenSpider, 2 zusätzlich"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-m2-technical",
+    "file": "report_hreflang_non_canonical_return_links.csv",
+    "before": [
+      "Zellübereinstimmung 0.000 % liegt unter 97.000 %",
+      "URL-Menge nicht identisch: 1 fehlen in OpenSpider, 1 zusätzlich"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-m2-technical",
+    "file": "bulk_canonicals_missing_inlinks.csv",
+    "before": [
+      "URL-Menge nicht identisch: 11 fehlen in OpenSpider, 11 zusätzlich"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-onpage",
+    "file": "crawl_overview.csv",
+    "before": [
+      "Zellübereinstimmung 99.034 % liegt unter 100.000 %"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-response",
+    "file": "redirects_to_error.csv",
+    "before": [
+      "URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-response",
+    "file": "crawl_overview.csv",
+    "before": [
+      "Zellübereinstimmung 99.519 % liegt unter 100.000 %"
+    ],
+    "after": [],
+    "passed": true
+  },
+  {
+    "site": "parity-technical",
+    "file": "crawl_overview.csv",
+    "before": [
+      "Zellübereinstimmung 98.571 % liegt unter 100.000 %"
+    ],
+    "after": [],
+    "passed": true
+  }
+]

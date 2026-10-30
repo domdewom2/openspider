@@ -1,0 +1,264 @@
+{
+  "parity-m2-list": [
+    {
+      "Address": "http://127.0.0.1:8910/redirect",
+      "Original Url": "http://127.0.0.1:8910/redirect",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8910/chain",
+      "Original Url": "http://127.0.0.1:8910/chain",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "",
+      "Original Url": "http://",
+      "Content": "",
+      "Status Code": "",
+      "Status": "Invalid"
+    },
+    {
+      "Address": "",
+      "Original Url": "://invalid",
+      "Content": "",
+      "Status Code": "",
+      "Status": "Invalid"
+    }
+  ],
+  "parity-m2-technical": [
+    {
+      "Address": "http://127.0.0.1:8907/redirect-canonical",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8907/tail",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "302",
+      "Status": "Found"
+    },
+    {
+      "Address": "http://127.0.0.1:8907/loop-a",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "302",
+      "Status": "Found"
+    },
+    {
+      "Address": "http://127.0.0.1:8907/loop-b",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "302",
+      "Status": "Found"
+    }
+  ],
+  "parity-response": [
+    {
+      "Address": "http://127.0.0.1:8904/s204",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "204",
+      "Status": "No Content"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/r301",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/r302",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "302",
+      "Status": "Found"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/r303",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "303",
+      "Status": "See Other"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/r307",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "307",
+      "Status": "Temporary Redirect"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/r308",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "308",
+      "Status": "Permanent Redirect"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/r304",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "304",
+      "Status": "Not Modified"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/r301-noloc",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/chain1",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/long1",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/loop1",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "302",
+      "Status": "Found"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/r-to-404",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/r-to-blocked",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "302",
+      "Status": "Found"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/r-chain-500",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/r-to-dead",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/blocked/a.html",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "0",
+      "Status": "Blocked by Robots.txt"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/blocked/b.html",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "0",
+      "Status": "Blocked by Robots.txt"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/chain2",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/loop2",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "302",
+      "Status": "Found"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/long2",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/r-chain-500b",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/long3",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/long4",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/long5",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    }
+  ],
+  "parity-onpage": [
+    {
+      "Address": "http://127.0.0.1:8902/ctype/t-invalid",
+      "Original Url": "",
+      "Content": "foo",
+      "Status Code": "200",
+      "Status": "OK"
+    }
+  ],
+  "parity-technical": [
+    {
+      "Address": "http://127.0.0.1:8903/hl/es-old/",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8903/blocked/page.html",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "0",
+      "Status": "Blocked by Robots.txt"
+    },
+    {
+      "Address": "http://127.0.0.1:8903/canon/moved-301",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    }
+  ]
+}
