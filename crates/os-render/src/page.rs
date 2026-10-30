@@ -15,14 +15,14 @@ use chromiumoxide::{
             SetExtraHttpHeadersParams,
         },
         page::{
-            CaptureScreenshotFormat, CaptureScreenshotParams, EventLoadEventFired, NavigateParams,
-            StopLoadingParams,
+            CaptureScreenshotFormat, CaptureScreenshotParams, EventFrameNavigated,
+            EventLoadEventFired, NavigateParams, StopLoadingParams,
         },
         target::{CreateBrowserContextParams, CreateTargetParams},
     },
     Browser, Page,
 };
-use futures_util::StreamExt;
+use futures_util::{FutureExt, StreamExt};
 use os_model::{ImageRenderFacts, RenderTimings, ScreenshotTile};
 use serde_json::{json, Value};
 use std::{
@@ -352,6 +352,10 @@ async fn run(
         .event_listener::<EventLoadEventFired>()
         .await
         .map_err(protocol)?;
+    let mut committed = page
+        .event_listener::<EventFrameNavigated>()
+        .await
+        .map_err(protocol)?;
     let intercept = Intercept::start(ws, page, url, opts, launch, capture.data.clone()).await?;
     capture.begin_navigation();
     let start = Instant::now();
@@ -390,6 +394,14 @@ async fn run(
         }
         Err(_) => false,
     };
+    // CRAWL-095/CRAWL-080: Ohne Antwort innerhalb des Antwort-Timeouts gibt es noch
+    // kein Dokument dieser URL. StopLoading ließe sonst about:blank als Ergebnis zurück.
+    if !loaded
+        && !std::iter::from_fn(|| committed.next().now_or_never().flatten())
+            .any(|event| event.frame.parent_id.is_none() && !event.frame.url.starts_with("about:"))
+    {
+        return Err(RenderError::Timeout(url.into()));
+    }
     let load_ms = start.elapsed().as_millis() as u32;
     let deadline = Instant::now() + Duration::from_millis(opts.ajax_timeout_ms.into());
     capture.data.lock().expect("capture").console_until_ms =

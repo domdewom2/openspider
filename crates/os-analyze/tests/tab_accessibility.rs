@@ -5,6 +5,10 @@ use os_analyze::{
     views::{query_view, ColumnSelection, ViewQuery},
 };
 use os_model::{CrawlConfig, RenderingMode, UrlId, Value};
+// K2-82: Beide Chromium-Crawls starten sonst gleichzeitig je einen Browser; auf langsamen
+// CI-Runnern (macOS x64) überschreitet die Startprüfung dann ihre Zeitgrenze.
+static CHROMIUM: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
 fn fixture() -> (tempfile::TempDir, os_store::CrawlFile, CrawlConfig) {
     let dir = tempfile::tempdir().unwrap();
     let (_, file) = common::create(dir.path(), "a11y.ospider", 21);
@@ -141,6 +145,7 @@ fn ui_parameters_and_stable_node_keys_survive_sorting_and_paging() {
 // spec: UI-064 [P1]
 #[tokio::test]
 async fn requires_chromium_engine_persists_audit_in_the_crawl_file() {
+    let _chromium = CHROMIUM.lock().await;
     let mut cfg = CrawlConfig::default();
     cfg.rendering.mode = RenderingMode::JavaScript;
     cfg.rendering.ajax_timeout_s = 0.0;
@@ -232,6 +237,7 @@ async fn requires_chromium_engine_persists_audit_in_the_crawl_file() {
 // spec: UI-064 [P1]
 #[tokio::test]
 async fn requires_chromium_group_fixtures_drive_rule_filters_and_counters() {
+    let _chromium = CHROMIUM.lock().await;
     let cases: &[(&str, &str, &[&str])] = &[
         (
             "best-practice",
