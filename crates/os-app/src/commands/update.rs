@@ -1,22 +1,20 @@
 //! Update check commands and app-local state; download/install are owned by U02.
 use crate::{
-    dto::CmdError,
     registry::{CmdResult, CommandMeta, Handler, Registry},
     runtime::{App, CallCtx},
 };
 use futures_util::future::BoxFuture;
 use serde_json::Value;
 
-macro_rules! stub {
-    ($handler:ident, $command:literal, $owner:literal) => {
-        fn $handler<'a>(_app: &'a App, _ctx: CallCtx, _args: Value) -> BoxFuture<'a, CmdResult> {
-            Box::pin(async { Err(CmdError::unsupported($command, $owner)) })
-        }
-    };
+fn download<'a>(app: &'a App, _: CallCtx, _: Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move { crate::runtime::error::to_json(&crate::update::download::download(app)) })
 }
-
-stub!(download, "update.download", "M3-U02");
-stub!(install, "update.install", "M3-U02");
+fn install<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let args: crate::dto::update::UpdateInstallArgs = crate::runtime::error::parse_args(args)?;
+        crate::runtime::error::to_json(&crate::update::install::install(app, args.when).await)
+    })
+}
 
 pub fn register(r: &mut Registry) {
     for (name, args, ret, handler) in [
@@ -91,7 +89,13 @@ fn set_auto<'a>(app: &'a App, _: CallCtx, args: Value) -> BoxFuture<'a, CmdResul
         let _guard = service.gate.lock().await;
         app.settings()
             .apply_patch(&serde_json::json!({"updates":{"check":args.check}}))?;
-        if !args.check {
+        if !args.check
+            && !matches!(
+                *service.state.lock().unwrap_or_else(|p| p.into_inner()),
+                crate::update::UpdateState::Ready(_)
+                    | crate::update::UpdateState::Downloading { .. }
+            )
+        {
             *service.state.lock().unwrap_or_else(|p| p.into_inner()) =
                 crate::update::UpdateState::Disabled(crate::update::DisableReason::Settings);
             *service.manifest.lock().unwrap_or_else(|p| p.into_inner()) = None;
@@ -120,6 +124,12 @@ pub async fn run_check_with_context(
         .lock()
         .unwrap_or_else(|p| p.into_inner())
         .clone();
+    if matches!(
+        previous,
+        UpdateState::Downloading { .. } | UpdateState::Ready(_)
+    ) {
+        return previous;
+    }
     context.settings = app.settings_snapshot().updates;
     context.now = app.config().clock.now().0;
     context.last_attempt = std::sync::Mutex::new(
@@ -199,6 +209,7 @@ pub async fn run_check_with_context(
     state
 }
 pub fn on_startup(app: &App) {
+    crate::update::install::init(app);
     if !app.config().check_updates_on_startup {
         return;
     }

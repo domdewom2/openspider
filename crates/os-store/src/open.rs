@@ -435,6 +435,16 @@ impl CrawlFile {
         &self.path
     }
 
+    /// Flushes the WAL into the crawl file after writers have stopped.
+    /// Returns false when a reader still holds a snapshot; callers must not install
+    /// an update until the checkpoint succeeds. Execute on the storage worker thread.
+    pub fn checkpoint_and_truncate(&self) -> Result<bool, StoreError> {
+        let busy: i64 = self
+            .conn
+            .query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |row| row.get(0))?;
+        Ok(busy == 0)
+    }
+
     /// Die SQLite-Verbindung (für `os-analyze`, `os-export`, `os-mcp`).
     pub fn conn(&self) -> &Connection {
         &self.conn
