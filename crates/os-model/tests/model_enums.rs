@@ -215,6 +215,7 @@ fn indexability_status_order_and_labels() {
             "Server Error",
             "Self Referencing Meta Refresh",
             "noindex",
+            "Unavailable After",
             "Canonicalised"
         ]
     );
