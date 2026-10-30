@@ -210,3 +210,39 @@ async fn no_response_keeps_transport_failure_separate_from_robots_blocking() {
         .iter()
         .any(|r| r.path_and_query == "/blocked/a"));
 }
+
+// spec: ONPAGE-057 [P1]
+#[tokio::test]
+async fn external_javascript_filter_requires_rendering_and_stays_empty() {
+    use os_analyze::views::filter_counts;
+    use os_model::{FilterState, RenderingMode};
+
+    let mut cfg = CrawlConfig::default();
+    let fx = crawl_fixture_from(
+        "onpage-m2-rc",
+        "http://site.test/external-root",
+        cfg.clone(),
+    )
+    .await;
+    // Stored redirect facts must not classify external URLs as rendered internal HTML.
+    fx.file
+        .conn()
+        .execute(
+            "UPDATE urls SET redirect_type = 'javascript' WHERE is_internal = 0",
+            [],
+        )
+        .unwrap();
+    let count = |cfg: &CrawlConfig| {
+        filter_counts(&fx.file, cfg)
+            .unwrap()
+            .into_iter()
+            .find(|c| c.tab == "Response Codes" && c.filter == "External Redirection (JavaScript)")
+            .expect("external JavaScript filter registered")
+    };
+    assert_eq!(count(&cfg).state, FilterState::NeedsRendering);
+    cfg.rendering.mode = RenderingMode::JavaScript;
+    let rendered = count(&cfg);
+    assert_eq!(rendered.state, FilterState::Ready);
+    assert_eq!(rendered.count, Some(0));
+    assert!(addresses(&fx.file, &cfg, "External Redirection (JavaScript)").is_empty());
+}
