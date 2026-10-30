@@ -27,6 +27,15 @@ env:
   OPENSPIDER_SECRET_STORE: memory
 
 jobs:
+  # TODO(L01): Sobald licenses.yml mit workflow_call integriert ist, diesen Gate-Job
+  # aktivieren und licenses zu needs von linux-core und assemble hinzufügen.
+  # Bis dahin fehlen third-party-notices: Downloads scheitern absichtlich,
+  # damit keine CLI-Archive ohne vollständige Lizenzhinweise entstehen.
+  # licenses:
+  #   needs: prepare
+  #   uses: ./.github/workflows/licenses.yml
+  #   secrets: inherit
+
   prepare:
     runs-on: ubuntu-latest
     outputs:
@@ -96,6 +105,13 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
+      - name: Vollständige Lizenzhinweise aus L01 laden (Pflicht)
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: third-party-notices
+          path: third-party-notices
+      - name: L01-Artefakt prüfen
+        run: test -s third-party-notices/THIRD_PARTY_NOTICES.txt
       - name: Rust-Toolchain aus rust-toolchain.toml
         run: rustup show active-toolchain
       - name: Linux-CLI mit bestehendem linux-core-Build bauen
@@ -108,7 +124,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release-artifacts "$RUNNER_TEMP/linux-cli"
-          tar -czf "release-artifacts/openspider_${VERSION}_linux-x86_64.tar.gz" -C target/linux-core openspider -C "$GITHUB_WORKSPACE" LICENSE NOTICE
+          tar -czf "release-artifacts/openspider_${VERSION}_linux-x86_64.tar.gz" -C target/linux-core openspider -C "$GITHUB_WORKSPACE" LICENSE NOTICE -C "$GITHUB_WORKSPACE/third-party-notices" THIRD_PARTY_NOTICES.txt
           tar -xzf "release-artifacts/openspider_${VERSION}_linux-x86_64.tar.gz" -C "$RUNNER_TEMP/linux-cli"
           "$RUNNER_TEMP/linux-cli/openspider" --version
           "$RUNNER_TEMP/linux-cli/openspider" --help > /dev/null
@@ -131,7 +147,14 @@ jobs:
         with:
           pattern: openspider-*
           path: incoming
-      - name: Distributable Assets sammeln und Windows-CLI archivieren
+      - name: Vollständige Lizenzhinweise aus L01 laden (Pflicht)
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: third-party-notices
+          path: third-party-notices
+      - name: L01-Artefakt prüfen
+        run: test -s third-party-notices/THIRD_PARTY_NOTICES.txt
+      - name: Distributable Assets sammeln und CLI-Archive vervollständigen
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
         run: |
@@ -140,8 +163,17 @@ jobs:
           test -s release-assets/openspider.exe
           mkdir -p "$RUNNER_TEMP/windows-cli"
           mv release-assets/openspider.exe "$RUNNER_TEMP/windows-cli/"
-          cp LICENSE NOTICE "$RUNNER_TEMP/windows-cli/"
-          (cd "$RUNNER_TEMP/windows-cli" && zip "$GITHUB_WORKSPACE/release-assets/openspider_${VERSION}_windows-x86_64.zip" openspider.exe LICENSE NOTICE)
+          cp LICENSE NOTICE third-party-notices/THIRD_PARTY_NOTICES.txt "$RUNNER_TEMP/windows-cli/"
+          (cd "$RUNNER_TEMP/windows-cli" && zip "$GITHUB_WORKSPACE/release-assets/openspider_${VERSION}_windows-x86_64.zip" openspider.exe LICENSE NOTICE THIRD_PARTY_NOTICES.txt)
+          # Nur eigenständige CLI-Archive umpacken, niemals signierte .app.tar.gz.
+          shopt -s nullglob
+          for archive in release-assets/openspider_"${VERSION}"_darwin-*.tar.gz; do
+            cli_dir="$(mktemp -d "$RUNNER_TEMP/macos-cli.XXXXXX")"
+            tar -xzf "$archive" -C "$cli_dir"
+            test -s "$cli_dir/openspider"
+            cp LICENSE NOTICE third-party-notices/THIRD_PARTY_NOTICES.txt "$cli_dir/"
+            tar -czf "$archive" -C "$cli_dir" openspider LICENSE NOTICE THIRD_PARTY_NOTICES.txt
+          done
       - name: 'STUB/TODO(R03): Smoke gegen die gesammelten Artefakte'
         run: |
           mkdir -p release-reports
@@ -154,8 +186,8 @@ jobs:
         run: |
           set -euo pipefail
           node scripts/release/notes.mjs "$VERSION" release-reports/release-notes.md
-          node scripts/release/manifest.mjs release-assets "$VERSION" "$GITHUB_REPOSITORY" release-reports/release-notes.md "$RELEASE_DATE" --allow-unsigned
-          cat release-assets/updater-status.txt >> "$GITHUB_STEP_SUMMARY"
+          node scripts/release/manifest.mjs release-assets "$VERSION" "$GITHUB_REPOSITORY" release-reports/release-notes.md "$RELEASE_DATE" --allow-unsigned > release-reports/updater-status.txt
+          cat release-reports/updater-status.txt >> "$GITHUB_STEP_SUMMARY"
           if [[ ! -f release-assets/latest.json ]]; then
             echo 'unsigniert: keine vollständigen signierten Updater-Artefakte; keine Update-Manifeste.' >> release-reports/release-notes.md
           fi

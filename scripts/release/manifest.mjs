@@ -47,5 +47,4 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const [directory, version, repository, notesFile, date, mode] = process.argv.slice(2);
   const result = manifests({ directory, version, repository, notes: readFileSync(notesFile, 'utf8'), date, allowUnsigned: mode === '--allow-unsigned' });
   console.log(JSON.stringify(result));
-  writeFileSync(join(directory, 'updater-status.txt'), `${JSON.stringify(result, null, 2)}\n`);
 }

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, readFileSync, readdirSync, mkdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, readdirSync, mkdirSync, rmSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -163,12 +163,66 @@ test('Trockenlauf v1.0.0-beta.0: Skript-CLIs erzeugen beide Manifeste, Notes und
   const outsideNotes = join(options.directory, '..', `${options.directory.split('/').at(-1)}-notes.md`);
   t.after(() => rmSync(outsideNotes, { force: true }));
   writeFileSync(outsideNotes, expected);
-  run('manifest', options.directory, options.version, options.repository, outsideNotes, options.date);
+  const status = run('manifest', options.directory, options.version, options.repository, outsideNotes, options.date);
+  assert.match(status.stdout, /signierte Updater-Artefakte/);
+  assert.ok(!readdirSync(options.directory).includes('updater-status.txt'));
   run('checksums', options.directory);
   assert.equal(JSON.parse(readFileSync(join(options.directory, 'latest-beta.json'))).notes, expected);
   assert.equal(JSON.parse(readFileSync(join(options.directory, 'latest.json'))).version, '1.0.0-beta.0');
-  assert.match(readFileSync(join(options.directory, 'updater-status.txt'), 'utf8'), /signierte Updater-Artefakte/);
   const verification = spawnSync('sha256sum', ['-c', 'SHA256SUMS'], { cwd: options.directory, encoding: 'utf8' });
   assert.equal(verification.status, 0, verification.stderr);
-  assert.equal(verification.stdout.trim().split('\n').length, 11);
+  assert.equal(verification.stdout.trim().split('\n').length, 10);
+});
+
+// spec: OUT-273 [M3]
+test('Workflow packt L01-Hinweise in Linux-, Windows- und alle macOS-CLI-Archive', t => {
+  const { directory, version } = fixture(t);
+  const workflow = readFileSync(join(root, '.github/workflows/release.yml'), 'utf8');
+  const step = name => workflow.split(`      - name: ${name}\n`)[1]
+    .split('        run: |\n')[1].split('      - ')[0]
+    .split('\n').map(line => line.startsWith('          ') ? line.slice(10) : line).join('\n');
+  const notices = 'fixture: vollständige Drittlizenztexte';
+  for (const path of ['incoming', 'third-party-notices', 'target/linux-core', 'scripts/release', 'temp']) {
+    mkdirSync(join(directory, path), { recursive: true });
+  }
+  for (const name of ['LICENSE', 'NOTICE']) writeFileSync(join(directory, name), `fixture:${name}`);
+  writeFileSync(join(directory, 'third-party-notices/THIRD_PARTY_NOTICES.txt'), notices);
+  writeFileSync(join(directory, 'target/linux-core/openspider'), '#!/bin/sh\necho openspider\n', { mode: 0o755 });
+  writeFileSync(join(directory, 'incoming/openspider.exe'), 'fixture:Windows CLI');
+  copyFileSync(join(root, 'scripts/release/assets.mjs'), join(directory, 'scripts/release/assets.mjs'));
+  for (const arch of ['aarch64', 'x86_64', 'universal']) {
+    assert.equal(spawnSync('tar', ['-czf', join(directory, `incoming/openspider_${version}_darwin-${arch}.tar.gz`),
+      '-C', join(directory, 'target/linux-core'), 'openspider']).status, 0);
+  }
+  writeFileSync(join(directory, 'incoming/OpenSpider_aarch64.app.tar.gz'), 'signed updater bytes');
+  const run = name => spawnSync('bash', ['-c', step(name)], { cwd: directory, encoding: 'utf8',
+    env: { ...process.env, VERSION: version, GITHUB_WORKSPACE: directory, RUNNER_TEMP: join(directory, 'temp') } });
+  let result = run('CLI-Archiv packen und extrahiert prüfen');
+  assert.equal(result.status, 0, result.stderr);
+  const linuxArchive = `openspider_${version}_linux-x86_64.tar.gz`;
+  copyFileSync(join(directory, 'release-artifacts', linuxArchive), join(directory, 'incoming', linuxArchive));
+  result = run('Distributable Assets sammeln und CLI-Archive vervollständigen');
+  assert.equal(result.status, 0, result.stderr);
+  const out = join(directory, 'release-assets');
+  for (const platform of ['linux-x86_64', 'darwin-aarch64', 'darwin-x86_64', 'darwin-universal']) {
+    const archive = join(out, `openspider_${version}_${platform}.tar.gz`);
+    const contents = spawnSync('tar', ['-tzf', archive], { encoding: 'utf8' });
+    assert.equal(contents.status, 0, contents.stderr);
+    assert.deepEqual(contents.stdout.trim().split('\n').sort(), ['LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.txt', 'openspider']);
+    assert.equal(spawnSync('tar', ['-xOzf', archive, 'THIRD_PARTY_NOTICES.txt'], { encoding: 'utf8' }).stdout, notices);
+  }
+  const zip = join(out, `openspider_${version}_windows-x86_64.zip`);
+  assert.equal(spawnSync('unzip', ['-p', zip, 'THIRD_PARTY_NOTICES.txt'], { encoding: 'utf8' }).stdout, notices);
+  assert.equal(readFileSync(join(out, 'OpenSpider_aarch64.app.tar.gz'), 'utf8'), 'signed updater bytes');
+});
+
+test('Orchestrierung übergibt Beta-Kanal an R01/R02 mit einheitlicher Build-Variable', () => {
+  const workflow = readFileSync(join(root, '.github/workflows/release.yml'), 'utf8');
+  for (const platform of ['macos', 'windows']) {
+    const job = workflow.split(`  ${platform}:\n`)[1].split(/\n  [a-z][a-z-]*:/)[0];
+    assert.match(job, /channel: \$\{\{ needs.prepare.outputs.channel \}\}/);
+    const child = readFileSync(join(root, `.github/workflows/release-${platform}.yml`), 'utf8');
+    assert.match(child, /OPENSPIDER_UPDATE_BETA: \$\{\{ inputs.channel == 'beta' && '1' \|\| '0' \}\}/);
+    assert.doesNotMatch(child, /OPENSPIDER_UPDATE_CHANNEL_BETA/);
+  }
 });
