@@ -141,12 +141,30 @@ async fn synthetic_5000_live_details_filter_pause_resume_and_reopen() {
         }
         call(&first, "view.close", json!({"viewId":handle["viewId"]})).await;
     }
+    let session = first.sessions().current(&window()).unwrap();
+    os_app::session::feed::invalidate(&first, &session.key);
+    tokio::time::timeout(
+        Duration::from_secs(1),
+        os_app::session::feed::refresh(&first, &session),
+    )
+    .await
+    .expect("session progress blocked by aggregate readers")
+    .unwrap();
+    tokio::time::timeout(
+        Duration::from_secs(1),
+        call(&first, "analysis.status", json!(null)),
+    )
+    .await
+    .expect("analysis metadata blocked by aggregate readers");
+    for command in ["crawl.pause", "crawl.resume"] {
+        tokio::time::timeout(Duration::from_secs(5), call(&first, command, json!(null)))
+            .await
+            .unwrap_or_else(|_| panic!("{command} blocked by aggregate readers"));
+    }
     drop(release.take());
     for blocker in blockers.drain(..) {
         blocker.await.unwrap();
     }
-    call(&first, "crawl.pause", json!(null)).await;
-    call(&first, "crawl.resume", json!(null)).await;
     tokio::time::timeout(Duration::from_secs(600), async {
         loop {
             os_app::session::poll(&first).await.unwrap();

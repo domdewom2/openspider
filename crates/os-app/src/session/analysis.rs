@@ -35,19 +35,24 @@ pub async fn status(app: &App, s: &SessionInfo) -> Result<AnalysisStatus, CmdErr
     }
     let cfg = s.config.clone();
     app.read_pool()
-        .run(s.key.clone(), move |f, _| {
-            let data = os_analyze::aggregates::status::analysis_status(f, &cfg);
-            // UI-082/ONPAGE-140: stale and needsRecrawl come from the K03 status, not from the freshness alone.
-            let steps = crate::commands::sidebar_ext::step_statuses(&data)
-                .map_err(|e| os_store::StoreError::InvalidInput(e.message_key.to_string()))?;
-            let state = f.get_meta("analysis_state")?;
-            Ok(AnalysisStatus {
-                steps,
-                running: state.as_deref() == Some("running"),
-                current: None,
-                percent: (state.as_deref() == Some("completed")).then_some(100),
-            })
-        })
+        .run_cached(
+            s.key.clone(),
+            "session-meta",
+            crate::runtime::current_cancel(),
+            move |f, _| {
+                let data = os_analyze::aggregates::status::analysis_status(f, &cfg);
+                // UI-082/ONPAGE-140: stale and needsRecrawl come from the K03 status, not from the freshness alone.
+                let steps = crate::commands::sidebar_ext::step_statuses(&data)
+                    .map_err(|e| os_store::StoreError::InvalidInput(e.message_key.to_string()))?;
+                let state = f.get_meta("analysis_state")?;
+                Ok(AnalysisStatus {
+                    steps,
+                    running: state.as_deref() == Some("running"),
+                    current: None,
+                    percent: (state.as_deref() == Some("completed")).then_some(100),
+                })
+            },
+        )
         .await
 }
 fn publish(app: &App, key: &CrawlKey, status: AnalysisStatus) {
@@ -184,9 +189,13 @@ async fn execute(
         return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
     }
     super::control::ensure_idle(app, s).await?;
+    // This operation holds the lifecycle guard: queuing behind catalog readers
+    // would also prevent the final crawl status from reaching the window.
     let cfg = app
         .read_pool()
-        .run(s.key.clone(), |f, _| f.config())
+        .run_cached(s.key.clone(), "session-meta", cancel.clone(), |f, _| {
+            f.config()
+        })
         .await?;
     let a = app.clone();
     let key = s.key.clone();

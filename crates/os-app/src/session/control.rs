@@ -341,14 +341,19 @@ pub async fn resume(app: &App, ctx: CallCtx) -> Result<(), CmdError> {
     }
     let cfg = app
         .read_pool()
-        .run(s.key.clone(), |f, _| {
-            if f.meta()?.end_reason == Some(os_model::EndReason::Stopped) {
-                return Err(os_store::StoreError::InvalidInput(
-                    "stopped crawl cannot resume".into(),
-                ));
-            }
-            f.config()
-        })
+        .run_cached(
+            s.key.clone(),
+            "session-meta",
+            crate::runtime::current_cancel(),
+            |f, _| {
+                if f.meta()?.end_reason == Some(os_model::EndReason::Stopped) {
+                    return Err(os_store::StoreError::InvalidInput(
+                        "stopped crawl cannot resume".into(),
+                    ));
+                }
+                f.config()
+            },
+        )
         .await?;
     let runtime = app.handle();
     let saved = app

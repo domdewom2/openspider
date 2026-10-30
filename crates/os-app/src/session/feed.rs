@@ -99,58 +99,63 @@ pub fn from_progress(id: String, m: CrawlModeDto, owner: CrawlOwner, p: &Progres
     }
 }
 
-/// Read metadata through the pool; never opens a writing connection for foreign crawls.
+/// Read metadata on a fixed lane, independent of aggregate readers; never opens a writing connection for foreign crawls.
 pub async fn snapshot(
     app: &App,
     key: CrawlKey,
 ) -> Result<(CrawlSummaryDto, os_model::CrawlConfig, CrawlState), CmdError> {
     let clock = app.config().clock.clone();
     app.read_pool()
-        .run(key, move |f, _| {
-            let m = f.meta()?;
-            let state = f.effective_state(clock.as_ref())?;
-            let pid = f.get_meta("owner_pid")?.and_then(|s| s.parse().ok());
-            let live = state == CrawlState::Running;
-            let owner = CrawlOwner {
-                kind: match f.get_meta("owner_kind")?.as_deref() {
-                    Some("cli") => OwnerKind::Cli,
-                    Some("mcp-stdio") => OwnerKind::Mcp,
-                    Some("scheduler") => OwnerKind::Scheduler,
-                    _ => OwnerKind::App,
-                },
-                pid,
-                live,
-                controllable: !live || pid == Some(std::process::id()),
-            };
-            let urls = os_store::queries::session_counts(f.conn())?.discovered;
-            let file_bytes = std::fs::metadata(f.path())
-                .map_err(|e| os_store::StoreError::Io {
-                    path: f.path().to_path_buf(),
-                    source: e,
-                })?
-                .len();
-            Ok((
-                CrawlSummaryDto {
-                    crawl_id: m.crawl_id.to_string(),
-                    file: f.path().to_string_lossy().into_owned(),
-                    name: m.name,
-                    phase: phase(state),
-                    mode: if f.get_meta("source_mode")?.as_deref() == Some("apis") {
-                        CrawlModeDto::Apis
-                    } else {
-                        mode(m.mode)
+        .run_cached(
+            key,
+            "session-meta",
+            crate::runtime::current_cancel(),
+            move |f, _| {
+                let m = f.meta()?;
+                let state = f.effective_state(clock.as_ref())?;
+                let pid = f.get_meta("owner_pid")?.and_then(|s| s.parse().ok());
+                let live = state == CrawlState::Running;
+                let owner = CrawlOwner {
+                    kind: match f.get_meta("owner_kind")?.as_deref() {
+                        Some("cli") => OwnerKind::Cli,
+                        Some("mcp-stdio") => OwnerKind::Mcp,
+                        Some("scheduler") => OwnerKind::Scheduler,
+                        _ => OwnerKind::App,
                     },
-                    started_at: m.started_at.unwrap_or_default().to_db(),
-                    finished_at: m.ended_at.map(|t| t.to_db()),
-                    urls,
-                    file_bytes,
-                    schema_version: m.schema_version,
-                    owner,
-                },
-                f.config()?,
-                state,
-            ))
-        })
+                    pid,
+                    live,
+                    controllable: !live || pid == Some(std::process::id()),
+                };
+                let urls = os_store::queries::session_counts(f.conn())?.discovered;
+                let file_bytes = std::fs::metadata(f.path())
+                    .map_err(|e| os_store::StoreError::Io {
+                        path: f.path().to_path_buf(),
+                        source: e,
+                    })?
+                    .len();
+                Ok((
+                    CrawlSummaryDto {
+                        crawl_id: m.crawl_id.to_string(),
+                        file: f.path().to_string_lossy().into_owned(),
+                        name: m.name,
+                        phase: phase(state),
+                        mode: if f.get_meta("source_mode")?.as_deref() == Some("apis") {
+                            CrawlModeDto::Apis
+                        } else {
+                            mode(m.mode)
+                        },
+                        started_at: m.started_at.unwrap_or_default().to_db(),
+                        finished_at: m.ended_at.map(|t| t.to_db()),
+                        urls,
+                        file_bytes,
+                        schema_version: m.schema_version,
+                        owner,
+                    },
+                    f.config()?,
+                    state,
+                ))
+            },
+        )
         .await
 }
 
@@ -194,118 +199,129 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
             .as_ref()
             .map(|h| h.progress())
     });
+    // A saturated catalog/count pool must not freeze progress or lifecycle delivery.
+    // The fixed lane also retains the connection-local incremental aggregate cache.
     let (seq, reset, ids, mut status) = app
         .read_pool()
-        .run(s.key.clone(), move |f, _| {
-            let tx = f.conn().unchecked_transaction()?;
-            let seq = os_store::queries::change_seq(&tx)?;
-            let reset = f
-                .get_meta("reset_seq")?
-                .and_then(|v| v.parse().ok())
-                .unwrap_or(0);
-            let ids = if seq != before.seq {
-                os_store::queries::changed_since(&tx, before.seq, CHANGE_LIMIT + 1)?
-            } else {
-                Vec::new()
-            };
-            let m = f.meta()?;
-            // Resume returns before its first metadata batch is committed. The
-            // local handle is authoritative until its durable completion is joined.
-            let local = progress.is_some();
-            let state = match &progress {
-                Some(p) => p.state,
-                None => f.effective_state(clock.as_ref())?,
-            };
-            let end_reason = match &progress {
-                Some(p) => p.end_reason,
-                None => m.end_reason,
-            };
-            let pid = if local {
-                Some(std::process::id())
-            } else {
-                f.get_meta("owner_pid")?.and_then(|v| v.parse().ok())
-            };
-            let owner = CrawlOwner {
-                kind: match f.get_meta("owner_kind")?.as_deref() {
-                    Some("cli") => OwnerKind::Cli,
-                    Some("mcp-stdio") => OwnerKind::Mcp,
-                    Some("scheduler") => OwnerKind::Scheduler,
-                    _ => OwnerKind::App,
-                },
-                pid,
-                live: state == CrawlState::Running,
-                controllable: state != CrawlState::Running || pid == Some(std::process::id()),
-            };
-            let p = progress.or(f
-                .get_meta("progress_snapshot")?
-                .and_then(|v| serde_json::from_str::<Progress>(&v).ok()));
-            let mut status = if let Some(p) = p {
-                from_progress(m.crawl_id.to_string(), mode(m.mode), owner, &p)
-            } else {
-                let mut st = before.status.unwrap_or(CrawlStatus {
-                    crawl_id: m.crawl_id.to_string(),
-                    phase: phase(state),
-                    mode: if f.get_meta("source_mode")?.as_deref() == Some("apis") {
-                        CrawlModeDto::Apis
-                    } else {
-                        mode(m.mode)
+        .run_cached(
+            s.key.clone(),
+            "session-feed",
+            crate::runtime::current_cancel(),
+            move |f, _| {
+                let tx = f.conn().unchecked_transaction()?;
+                let seq = os_store::queries::change_seq(&tx)?;
+                let reset = f
+                    .get_meta("reset_seq")?
+                    .and_then(|v| v.parse().ok())
+                    .unwrap_or(0);
+                let ids = if seq != before.seq {
+                    os_store::queries::changed_since(&tx, before.seq, CHANGE_LIMIT + 1)?
+                } else {
+                    Vec::new()
+                };
+                let m = f.meta()?;
+                // Resume returns before its first metadata batch is committed. The
+                // local handle is authoritative until its durable completion is joined.
+                let local = progress.is_some();
+                let state = match &progress {
+                    Some(p) => p.state,
+                    None => f.effective_state(clock.as_ref())?,
+                };
+                let end_reason = match &progress {
+                    Some(p) => p.end_reason,
+                    None => m.end_reason,
+                };
+                let pid = if local {
+                    Some(std::process::id())
+                } else {
+                    f.get_meta("owner_pid")?.and_then(|v| v.parse().ok())
+                };
+                let owner = CrawlOwner {
+                    kind: match f.get_meta("owner_kind")?.as_deref() {
+                        Some("cli") => OwnerKind::Cli,
+                        Some("mcp-stdio") => OwnerKind::Mcp,
+                        Some("scheduler") => OwnerKind::Scheduler,
+                        _ => OwnerKind::App,
                     },
-                    end_reason: None,
-                    crawled: 0,
-                    queued: 0,
-                    discovered: 0,
-                    percent: 0,
-                    rate: 0.0,
-                    avg_rate: 0.0,
-                    avg_response_time: None,
-                    elapsed_s: 0,
-                    paused_s: 0,
-                    eta_s: None,
-                    active_threads: 0,
-                    memory_stage: None,
-                    file_bytes: None,
-                    owner: owner.clone(),
-                    memory_used_bytes: None,
-                    memory_limit_bytes: None,
-                });
-                if before.last.is_none() || seq != before.seq {
+                    pid,
+                    live: state == CrawlState::Running,
+                    controllable: state != CrawlState::Running || pid == Some(std::process::id()),
+                };
+                let p = progress.or(f
+                    .get_meta("progress_snapshot")?
+                    .and_then(|v| serde_json::from_str::<Progress>(&v).ok()));
+                let mut status = if let Some(p) = p {
+                    from_progress(m.crawl_id.to_string(), mode(m.mode), owner, &p)
+                } else {
+                    let mut st = before.status.unwrap_or(CrawlStatus {
+                        crawl_id: m.crawl_id.to_string(),
+                        phase: phase(state),
+                        mode: if f.get_meta("source_mode")?.as_deref() == Some("apis") {
+                            CrawlModeDto::Apis
+                        } else {
+                            mode(m.mode)
+                        },
+                        end_reason: None,
+                        crawled: 0,
+                        queued: 0,
+                        discovered: 0,
+                        percent: 0,
+                        rate: 0.0,
+                        avg_rate: 0.0,
+                        avg_response_time: None,
+                        elapsed_s: 0,
+                        paused_s: 0,
+                        eta_s: None,
+                        active_threads: 0,
+                        memory_stage: None,
+                        file_bytes: None,
+                        owner: owner.clone(),
+                        memory_used_bytes: None,
+                        memory_limit_bytes: None,
+                    });
+                    if before.last.is_none() || seq != before.seq {
+                        let counts = os_store::queries::session_counts(&tx)?;
+                        st.discovered = counts.discovered;
+                        st.queued = counts.queued;
+                        st.crawled = counts.crawled;
+                    }
+                    st.owner = owner;
+                    st
+                };
+                if state != CrawlState::Running && status.phase == CrawlPhase::Running {
                     let counts = os_store::queries::session_counts(&tx)?;
-                    st.discovered = counts.discovered;
-                    st.queued = counts.queued;
-                    st.crawled = counts.crawled;
+                    status.discovered = counts.discovered;
+                    status.queued = counts.queued;
+                    status.crawled = counts.crawled;
                 }
-                st.owner = owner;
-                st
-            };
-            if state != CrawlState::Running && status.phase == CrawlPhase::Running {
-                let counts = os_store::queries::session_counts(&tx)?;
-                status.discovered = counts.discovered;
-                status.queued = counts.queued;
-                status.crawled = counts.crawled;
-            }
-            if state == CrawlState::Completed {
-                status.percent =
-                    completed_percent(status.percent, end_reason, status.crawled, status.queued);
-            }
-            if f.get_meta("source_mode")?.as_deref() == Some("apis") {
-                status.mode = CrawlModeDto::Apis;
-            }
-            status.phase = phase(state);
-            status.end_reason = end_reason.map(|r| r.as_str().into());
-            if state != CrawlState::Running {
-                status.active_threads = 0;
-                status.rate = 0.0;
-            }
-            tx.commit()?;
-            if seq != before.seq && ids.len() <= CHANGE_LIMIT as usize {
-                // K03 maintains its read-side aggregate cache with its own transaction,
-                // directly after the snapshot read above has been closed (nested
-                // transactions are not possible on one connection).
-                os_analyze::aggregates::live::apply_changes(f, &cfg, &ids)
-                    .map_err(|e| os_store::StoreError::InvalidInput(e.to_string()))?;
-            }
-            Ok((seq, reset, ids, status))
-        })
+                if state == CrawlState::Completed {
+                    status.percent = completed_percent(
+                        status.percent,
+                        end_reason,
+                        status.crawled,
+                        status.queued,
+                    );
+                }
+                if f.get_meta("source_mode")?.as_deref() == Some("apis") {
+                    status.mode = CrawlModeDto::Apis;
+                }
+                status.phase = phase(state);
+                status.end_reason = end_reason.map(|r| r.as_str().into());
+                if state != CrawlState::Running {
+                    status.active_threads = 0;
+                    status.rate = 0.0;
+                }
+                tx.commit()?;
+                if seq != before.seq && ids.len() <= CHANGE_LIMIT as usize {
+                    // K03 maintains its read-side aggregate cache with its own transaction,
+                    // directly after the snapshot read above has been closed (nested
+                    // transactions are not possible on one connection).
+                    os_analyze::aggregates::live::apply_changes(f, &cfg, &ids)
+                        .map_err(|e| os_store::StoreError::InvalidInput(e.to_string()))?;
+                }
+                Ok((seq, reset, ids, status))
+            },
+        )
         .await?;
     status.owner.controllable &= s.writable;
     let state = match status.phase {
@@ -321,9 +337,12 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
         let token = os_fetch::user_agents::resolve(&s.config.user_agent).robots_token;
         let bodies = app
             .read_pool()
-            .run(s.key.clone(), |f, _| {
-                os_analyze::aggregates::status::robots_bodies(f)
-            })
+            .run_cached(
+                s.key.clone(),
+                "session-feed",
+                crate::runtime::current_cancel(),
+                |f, _| os_analyze::aggregates::status::robots_bodies(f),
+            )
             .await?;
         for (origin, body) in bodies {
             let Some(seconds) = os_fetch::robots::parse(&body).crawl_delay(&token) else {
