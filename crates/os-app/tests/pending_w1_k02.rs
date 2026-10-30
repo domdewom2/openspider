@@ -40,7 +40,7 @@ async fn parsed_rules_reach_the_app_view_and_invalid_regex_preserves_it() {
     app.sessions().set_current(
         WindowId("main".into()),
         SessionInfo {
-            key,
+            key: key.clone(),
             path,
             config: Arc::new(cfg),
             state: CrawlState::Completed,
@@ -57,6 +57,8 @@ async fn parsed_rules_reach_the_app_view_and_invalid_regex_preserves_it() {
         .await
         .unwrap();
     let spec = json!({"kind":"tab","tab":"Internal","filter":"All","search":{"kind":"rules","tree":tree,"caseSensitive":false},"sort":[],"segment":null,"compare":null});
+    // A slow build returns a Building handle; selections require its Ready result.
+    let readers = app.read_pool().exclusive(&key).await;
     let handle = app
         .dispatch(
             CallCtx::for_window("main"),
@@ -65,6 +67,16 @@ async fn parsed_rules_reach_the_app_view_and_invalid_regex_preserves_it() {
         )
         .await
         .unwrap();
+    assert_eq!(handle["state"], "building");
+    drop(readers);
+    let build = app
+        .ops()
+        .wait(handle["op"]["opId"].as_str().unwrap())
+        .await
+        .unwrap();
+    assert_eq!(build.state, os_app::dto::OpState::Done, "{build:?}");
+    let handle = build.result.unwrap();
+    assert_eq!(handle["state"], "ready");
     let rows_args = json!({"viewId":handle["viewId"],"version":handle["version"],"offset":0,"limit":50,"columns":["Address"]});
     let before = app
         .dispatch(CallCtx::for_window("main"), "view.rows", rows_args.clone())
