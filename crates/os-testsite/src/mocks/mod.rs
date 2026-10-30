@@ -25,6 +25,7 @@ pub mod moz;
 pub mod oauth;
 pub mod psi;
 pub mod smtp;
+pub mod update;
 
 /// Ein HTTP-Mock einer API-Quelle.
 pub trait MockApi: Send + Sync {
@@ -56,6 +57,7 @@ pub fn registry() -> Vec<Arc<dyn MockApi>> {
         ahrefs::mock(),
         moz::mock(),
         drive::mock(),
+        update::mock(),
     ]
     .into_iter()
     .flatten()
