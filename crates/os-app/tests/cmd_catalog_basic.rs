@@ -56,7 +56,7 @@ async fn configured_columns_include_extraction_gates_and_parity_filters() {
         .iter()
         .find(|t| t["id"] == "Internal")
         .unwrap();
-    assert!(!internal["filters"]
+    assert!(internal["filters"]
         .as_array()
         .unwrap()
         .iter()

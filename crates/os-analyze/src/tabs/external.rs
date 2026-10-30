@@ -8,8 +8,8 @@
 //! Paritätsspalten in der Reihenfolge der Spec; `Response Time`, `Redirect URL` und `Redirect Type` sind
 //! `[OS-Erweiterung]` (ausgeblendet, im Export „alle Spalten“ hinter den Referenzspalten).
 //!
-//! Klassenfilter: Parität (ONPAGE-023, A-49): `Flash` = Klasse `Plugins`; `Other` führt zusätzlich Medien,
-//! Schriften und XML.
+//! Klassenfilter nach ONPAGE-023/026: Plugins, Media, Fonts und XML sind eigene Klassen;
+//! Other enthält ausschließlich die Klasse Other (SQ-07).
 
 use crate::defs::{ColumnKind, FilterDef, FilterKind, TabDef};
 use crate::tabs::internal::{class_filters, col, ext_col, unknown_filter, REDIRECT_TYPE};
@@ -51,11 +51,11 @@ pub fn tab() -> TabDef {
 
     let mut filters = vec![filter("All", "1")];
     filters.extend(class_filters());
-    filters.push(filter("Flash", "u.content_class = 'Plugins'"));
-    filters.push(filter(
-        "Other",
-        "u.content_class IN ('Other', 'Media', 'Fonts', 'XML')",
-    ));
+    filters.push(filter("Plugins", "u.content_class = 'Plugins'"));
+    filters.push(filter("Media", "u.content_class = 'Media'"));
+    filters.push(filter("Fonts", "u.content_class = 'Fonts'"));
+    filters.push(filter("XML", "u.content_class = 'XML'"));
+    filters.push(filter("Other", "u.content_class = 'Other'"));
     filters.push(unknown_filter());
 
     TabDef {

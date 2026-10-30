@@ -134,7 +134,7 @@ pub fn tab() -> TabDef {
                 img_instance!("COALESCE(i.alt_len, 0) > :image_alt_max_chars"),
             ),
             post_filter("Background Images", "EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id=u.id AND f.flag='image_background')", vec![Requirement::RenderingOrConfig("images.parse_inline_css_backgrounds")]),
-            post_filter("Missing Size Attributes", img_instance!("(i.width_attr IS NULL OR trim(i.width_attr) = '' OR i.height_attr IS NULL OR trim(i.height_attr) = '')"), vec![Requirement::RenderingOrConfig("images.parse_inline_css_backgrounds")]),
+            filter("Missing Size Attributes", img_instance!("(i.width_attr IS NULL OR trim(i.width_attr) = '' OR i.height_attr IS NULL OR trim(i.height_attr) = '')")),
             post_filter("Incorrectly Sized Images", INCORRECT, vec![Requirement::Rendering]),
         ],
         default_sort: vec![SortKey {

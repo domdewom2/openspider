@@ -5,7 +5,7 @@ use os_analyze::views::{query_view, ViewQuery};
 use os_model::CrawlConfig;
 // spec: ONPAGE-023
 #[test]
-fn class_filters_partition_both_modes_and_flash_is_public_name() {
+fn class_filters_partition_both_modes_and_plugins_is_public_name() {
     let dir = tempfile::tempdir().unwrap();
     let (_, file) = create(dir.path(), "types.ospider", 3);
     for (n, class) in ["Plugins", "Other", "Media", "Fonts", "XML", "Unknown"]
@@ -22,14 +22,14 @@ fn class_filters_partition_both_modes_and_flash_is_public_name() {
         cfg.ui.parity_filters = parity;
         let tabs = os_analyze::tabs::configured(&cfg);
         let tab = tabs.iter().find(|t| t.id == "Internal").unwrap();
-        assert_eq!(tab.filters.iter().any(|f| f.id == "Media"), !parity);
+        assert!(tab.filters.iter().any(|f| f.id == "Media"));
         let count = |filter| {
             query_view(&file, &cfg, &ViewQuery::new("Internal", filter))
                 .unwrap()
                 .total
         };
-        assert_eq!(count("Flash"), 1);
-        assert_eq!(count("Other"), if parity { 4 } else { 1 });
+        assert_eq!(count("Plugins"), 1);
+        assert_eq!(count("Other"), 1);
         let sum: u64 = tab
             .filters
             .iter()
