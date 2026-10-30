@@ -361,6 +361,7 @@ fn command_line_for_openspider_follows_the_cli_spec() {
         list_source: None,
         config: Default::default(),
         sitemap: None,
+        crawl_path: None,
         site: "s".into(),
         base_url: "http://127.0.0.1:8902/".into(),
         profile: Some(PathBuf::from("p.osconfig")),
@@ -452,6 +453,7 @@ fn command_exporter_reports_nonzero_exit() {
         list_source: None,
         config: Default::default(),
         sitemap: None,
+        crawl_path: None,
         site: "s".into(),
         base_url: "http://x/".into(),
         profile: None,
@@ -826,4 +828,27 @@ fn unknown_report_does_not_break_other_exports() {
     assert!(matches!(exports[0].outcome, Outcome::Compared { .. }));
     assert!(matches!(exports[3].outcome, Outcome::Compared { .. }));
     assert!(matches!(exports[4].outcome, Outcome::Error { .. }));
+}
+
+// spec: OUT-023
+#[test]
+fn crawl_path_uses_selection_flag_without_report_menu() {
+    let req = ExportRequest {
+        list_source: None,
+        config: Default::default(),
+        sitemap: None,
+        site: "fixture".into(),
+        base_url: "http://127.0.0.1:12345/".into(),
+        profile: None,
+        out_dir: PathBuf::from("out"),
+        tabs: vec![],
+        bulk: vec![],
+        reports: vec![],
+        crawl_path: Some("http://127.0.0.1:12345/deep/8.html".into()),
+    };
+    let args = CommandExporter::args(&req);
+    assert!(args
+        .windows(2)
+        .any(|pair| pair == ["--export-crawl-path", "http://127.0.0.1:12345/deep/8.html"]));
+    assert!(!args.iter().any(|arg| arg == "--save-report"));
 }
