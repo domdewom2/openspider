@@ -1,0 +1,15 @@
+# Summary
+
+- [Introduction](introduction.md)
+- [Getting started](getting-started.md)
+- [Architecture](architecture/overview.md)
+  - [Workspace crates](architecture/crates.md)
+  - [Crawl file](architecture/crawl-file.md)
+  - [Desktop application](architecture/desktop-app.md)
+- [Decisions](decisions/index.md)
+  - [Architecture and storage](decisions/architecture.md)
+  - [Contributions and integration](decisions/process.md)
+- [Testing](testing.md)
+- [CI and release](ci-and-release.md)
+- [Glossary](glossary.md)
+- [Contributing process](contributing-process.md)
