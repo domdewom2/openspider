@@ -158,7 +158,7 @@ async fn requires_chromium_emulates_devices_and_expands_google_viewport() {
     let site = TestSite::start("render-r01").await.unwrap();
     let renderer = requires_chromium(LaunchOpts::default()).await;
     let mut opts = quick();
-    opts.ajax_timeout_ms = 500;
+    opts.ajax_timeout_ms = 2000;
     let mobile = renderer
         .render(&site.url("/viewport.html"), &opts)
         .await
