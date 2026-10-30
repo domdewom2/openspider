@@ -111,9 +111,7 @@
   "version": "0.1.0",
   "plugins": {
     "updater": {
-      "endpoints": [
-        "https://github.com/domdewom2/openspider/releases/latest/download/latest.json"
-      ],
+      "endpoints": [],
       "pubkey": ""
     }
   }

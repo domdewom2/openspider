@@ -17,6 +17,8 @@ use std::path::{Path, PathBuf};
 
 use tauri_build::{Attributes, InlinedPlugin};
 
+mod build_update;
+
 const COMMANDS_JSON: &str = "../src/ipc/commands.json";
 
 // gemeinsame Regel für Plugin-Namen (`plugin_name`, `TAURI_CORE_PLUGINS`)
@@ -82,22 +84,38 @@ fn main() {
 
     // M3-F01: Tauri does not expand environment variables in JSON configuration.
     // Preserve CLI/platform overrides, then inject the public release configuration.
-    println!("cargo:rerun-if-env-changed=OPENSPIDER_UPDATER_PUBKEY");
-    println!("cargo:rerun-if-env-changed=OPENSPIDER_UPDATE_BETA");
+    for name in [
+        "OPENSPIDER_UPDATER_PUBKEY",
+        "OPENSPIDER_UPDATE_BETA",
+        "OPENSPIDER_UPDATE_REPO",
+        "TAURI_CONFIG",
+    ] {
+        println!("cargo:rerun-if-env-changed={name}");
+    }
+    println!("cargo:rerun-if-changed=build_update.rs");
     let mut config: serde_json::Value = std::env::var("TAURI_CONFIG")
         .ok()
         .map(|s| serde_json::from_str(&s).expect("TAURI_CONFIG invalid"))
         .unwrap_or_else(|| serde_json::json!({}));
-    let key = std::env::var("OPENSPIDER_UPDATER_PUBKEY").unwrap_or_default();
-    let manifest = match std::env::var("OPENSPIDER_UPDATE_BETA").as_deref() {
-        Ok("1") => "latest-beta.json",
-        Ok("0") | Err(_) => "latest.json",
-        _ => panic!("OPENSPIDER_UPDATE_BETA must be 0 or 1"),
-    };
-    config["plugins"]["updater"] = serde_json::json!({
-        "pubkey": key,
-        "endpoints": [format!("https://github.com/domdewom2/openspider/releases/latest/download/{manifest}")]
-    });
+    let base: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(manifest_dir.join("tauri.conf.json"))
+            .expect("tauri.conf.json not readable"),
+    )
+    .expect("tauri.conf.json invalid");
+    let key = std::env::var("OPENSPIDER_UPDATER_PUBKEY").ok();
+    let beta = std::env::var("OPENSPIDER_UPDATE_BETA").ok();
+    let repo = std::env::var("OPENSPIDER_UPDATE_REPO").ok();
+    let missing_key = build_update::configure(
+        &mut config,
+        &base,
+        key.as_deref(),
+        beta.as_deref(),
+        repo.as_deref(),
+    )
+    .unwrap_or_else(|message| panic!("{message}"));
+    if build_update::warn_missing_key(std::env::var("PROFILE").as_deref().ok(), missing_key) {
+        println!("cargo:warning=Release build has no updater public key; automatic updates remain disabled");
+    }
     // cargo check/test do not stage the release sidecar; release builds require it.
     let triple = std::env::var("TARGET").expect("TARGET");
     let suffix = if triple.contains("windows") {

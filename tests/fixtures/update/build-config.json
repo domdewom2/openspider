@@ -1,0 +1,11 @@
+{
+  "plugins": {
+    "updater": {
+      "pubkey": "invalid-fixture-key",
+      "endpoints": ["https://updates.example.test/custom.json"],
+      "windows": {"installMode": "passive"}
+    },
+    "other": {"enabled": true}
+  },
+  "bundle": {"active": false}
+}

@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Berechtigungen der OpenSpider-Fenster: eigene Command-Dom\u00e4nen (aus commands.json, build.rs) und die Plugins der H\u00fclle",
+  "description": "Berechtigungen der OpenSpider-Fenster: eigene Command-Domänen (aus commands.json, build.rs) und die Plugins der Hülle",
   "windows": [
     "main",
     "settings",
