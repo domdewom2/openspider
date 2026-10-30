@@ -96,8 +96,17 @@ async fn requires_chromium_renders_and_reuses_engine_response() {
         .network
         .iter()
         .any(|r| r.url.ends_with("/reuse.html") && r.status == 200));
+    // K2-82: Berechtigungsabfragen und Worker-Registrierung laufen über den Browserprozess
+    // und lösen ihr Promise erst nach `load` auf; 100 ms reichen auf belasteten CI-Runnern
+    // nicht sicher. Geprüft wird das Ergebnis, nicht die Zeit (CRAWL-078 nennt keine).
     let security = renderer
-        .render(&site.url("/security.html"), &quick())
+        .render(
+            &site.url("/security.html"),
+            &RenderOpts {
+                ajax_timeout_ms: 2000,
+                ..quick()
+            },
+        )
         .await
         .unwrap();
     assert!(
@@ -530,7 +539,8 @@ async fn requires_chromium_limits_tabs_and_recovers_from_cancellation() {
     let r = renderer.clone();
     let url = site.url("/hang.html");
     let task = tokio::spawn(async move { r.render(&url, &quick()).await });
-    tokio::time::timeout(Duration::from_secs(5), async {
+    // K2-82: Fehlerschranke, kein Zeitkriterium; gewartet wird auf den eingegangenen Request.
+    tokio::time::timeout(Duration::from_secs(30), async {
         while !site
             .requests()
             .iter()
@@ -592,7 +602,11 @@ async fn requires_chromium_screenshot_wait_captures_late_paint_pixels() {
         ..RenderOpts::fixed_viewport(800, 600)
     };
     opts.screenshot.size = Some((200, 200));
-    for (wait, color) in [(0, "0,0,255,255"), (300, "255,0,0,255")] {
+    // K2-82: Die Zeiten 200/300/0 ms gibt CRAWL-082 vor. Der 0-ms-Fall läuft nicht mehr als
+    // erste Aufnahme des frisch gestarteten Browsers, damit einmalige Anlaufkosten der
+    // Bildaufnahme (Software-Compositor ohne GPU auf CI-Runnern) nicht in das
+    // 200-ms-Fenster fallen. Beide Fälle werden unverändert geprüft.
+    for (wait, color) in [(300, "255,0,0,255"), (0, "0,0,255,255")] {
         opts.screenshot.resize_wait_ms = wait;
         let rendered = renderer
             .render(&site.url("/late-paint.html"), &opts)
@@ -616,7 +630,8 @@ async fn requires_chromium_screenshot_wait_captures_late_paint_pixels() {
             .unwrap();
         assert!(
             page.dom_html.contains(&format!("data-pixel=\"{color}\"")),
-            "{}",
+            "Wartezeit {wait} ms, erwartet {color}, Screenshot-Phase {} ms: {}",
+            rendered.timings.screenshot_ms,
             page.dom_html.chars().take(200).collect::<String>()
         );
     }
