@@ -101,11 +101,14 @@ def main():
                                  cumulative_bytes_per_url=size/n,
                                  section_bytes_per_url=(size-prev_bytes)/(n-prev_n)))
             prev_n, prev_bytes = n, size
-        report.update(million_sections=millions, crawled=growing[-1][1], crawl_seconds=growing[-1][0],
-                      urls_per_s=growing[-1][1]/max(growing[-1][0], 1e-9),
+        phase_end = next((sample['wall_s'] for sample in samples if sample['phase'] == 'analysis'), growing[-1][0])
+        report.update(million_sections=millions, crawled=growing[-1][1], crawl_seconds=phase_end,
+                      fetch_progress_seconds=growing[-1][0],
+                      final_commit_tail_s=max(0, phase_end-growing[-1][0]),
+                      urls_per_s=growing[-1][1]/max(phase_end, 1e-9),
                       max_progress_gap_s=max((b[0]-a[0] for a,b in zip(growing,growing[1:])), default=0),
                       stalls_over_30s=stalls, windows_100k=windows,
-                      post_crawl_tail_s=seconds-growing[-1][0], final_progress=samples[-1])
+                      post_crawl_tail_s=seconds-phase_end, final_progress=samples[-1])
     (out / (args.name + '.json')).write_text(json.dumps(report, indent=2) + '\n')
     print(f'{args.name}: exit={child.returncode}, {seconds:.2f}s, peak={peak} bytes', flush=True)
     return child.returncode

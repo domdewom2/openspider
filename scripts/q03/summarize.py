@@ -11,6 +11,8 @@ diagnostics = {}
 for path in sorted(out.glob('perf*.json')):
     destination = diagnostics if '-errors' in path.stem or '-invalid-' in path.stem else blocks
     destination[path.stem] = json.loads(path.read_text())
+for path in sorted(out.glob('cli-*-invalid-*.json')):
+    diagnostics[path.stem] = json.loads(path.read_text())
 cli = out / 'cli-5m.json'
 if cli.exists():
     value = json.loads(cli.read_text())

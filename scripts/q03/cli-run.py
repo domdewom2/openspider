@@ -22,15 +22,19 @@ with tempfile.TemporaryDirectory(prefix='q03-cli-', dir=out) as tmp:
         url = site.stdout.readline().strip().split(' -> ')[1]
         command = [sys.executable, 'scripts/q03/measure.py', '--crawl-dir', str(work),
                    'cli-5m', '--', 'target/release/openspider', '--headless',
-                   '--crawl', url, '--save-crawl', '--output-folder', str(work / 'export'),
-                   '--progress', 'json']
+                   '--crawl', url, '--progress', 'json']
         result = subprocess.run(command, env=env)
         report = json.loads((out / 'cli-5m.json').read_text())
-        file = work / 'export/crawl.ospider'
+        candidates = list((work / 'home/crawls').glob('*.ospider'))
+        file = candidates[0] if len(candidates) == 1 else work / 'missing.ospider'
+        report['native_crawl_files'] = [str(p.relative_to(work)) for p in candidates]
         report['site_pages'] = size
         report['synthetic_site'] = f'synthetic:n={size},links=30'
         report['compression'] = []
-        if file.exists():
+        if result.returncode == 0 and not file.exists():
+            report['artifact_error'] = 'Expected exactly one native crawl file'
+            result = subprocess.CompletedProcess(command, 2)
+        if result.returncode == 0 and file.exists():
             report['crawl_file_bytes'] = file.stat().st_size
             for level in (3, 19):
                 dest = work / f'crawl-{level}.zst'

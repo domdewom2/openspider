@@ -18,7 +18,7 @@ PY
 failures=0
 start_at=${Q03_FROM:-perf001}
 case "$start_at" in
-  perf001|perf003|perf005|perf006-recycle|perf006-tabs|perf006-engine|perf007-cancel-links|perf007-cancel-near|perf007-near|perf007-links|perf008|cli-5m) ;;
+  perf001|perf003|perf005|perf006-recycle|perf006-tabs|perf006-engine|perf006-real-engine|perf007-cancel-links|perf007-cancel-near|perf007-near|perf007-links|perf008|cli-5m) ;;
   *) echo "Unknown Q03_FROM=$start_at" >&2; exit 2 ;;
 esac
 started=false
@@ -40,6 +40,7 @@ export OPENSPIDER_CHROMIUM="${OPENSPIDER_CHROMIUM:-$HOME/.cache/ms-playwright/ch
 run perf006-recycle -- python3 scripts/q03/test-bin.py os-render/render_chromium requires_chromium_recycles_and_recovers_after_hanging_js --nocapture --test-threads=1
 run perf006-tabs -- python3 scripts/q03/test-bin.py os-render/render_chromium requires_chromium_limits_tabs_and_recovers_from_cancellation --nocapture --test-threads=1
 run perf006-engine -- python3 scripts/q03/test-bin.py render_integration --nocapture --test-threads=1
+run perf006-real-engine -- python3 scripts/q03/test-bin.py os-engine/render_chromium headless_engine_reuses_response_and_stores_browser_facts --nocapture --test-threads=1
 run perf007-cancel-links -- python3 scripts/q03/test-bin.py link_score_m2 cancellation_during_iterations_keeps_the_previous_complete_result --nocapture --test-threads=1
 run perf007-cancel-near -- python3 scripts/q03/test-bin.py near_dup_d02 analysis_is_deterministic_excludes_exact_pairs_and_can_cancel --nocapture --test-threads=1
 run perf007-near -- python3 scripts/q03/test-bin.py near_dup_scale --ignored --nocapture --test-threads=1
