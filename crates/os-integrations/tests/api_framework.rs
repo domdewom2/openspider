@@ -600,7 +600,14 @@ async fn sliding_window_and_retry_limit_are_observed_by_mock() {
         retries: 0,
         ..Default::default()
     };
-    let transport = Transport::new(&Default::default(), limits).unwrap();
+    let attempts = Arc::new(std::sync::Mutex::new(Vec::new()));
+    let rate_clock = attempts.clone();
+    let transport = Transport::with_rate_clock(&Default::default(), limits, move || {
+        let now = tokio::time::Instant::now();
+        rate_clock.lock().unwrap().push(now);
+        now
+    })
+    .unwrap();
     // Keep the runtime runnable so loopback I/O cannot auto-advance paused time
     // to a rate-limit or HTTP timeout. Only this test advances the clock.
     tokio::time::pause();
@@ -632,6 +639,12 @@ async fn sliding_window_and_retry_limit_are_observed_by_mock() {
         // Tokio rounds timer deadlines up to its millisecond tick.
         tokio::time::advance(Duration::from_millis(2)).await;
         next.await.unwrap();
+        // A socket-pending future alone is no proof of throttling: the limiter
+        // must actually recheck its clock when this request leaves the window.
+        assert_eq!(
+            attempts.lock().unwrap().last().copied(),
+            Some(tokio::time::Instant::now())
+        );
         if seed == 2 {
             request(3).await.unwrap();
         }

@@ -49,6 +49,7 @@ pub struct Transport {
     limits: ApiLimitsConfig,
     semaphore: Semaphore,
     sent: Mutex<VecDeque<tokio::time::Instant>>,
+    rate_clock: Arc<dyn Fn() -> tokio::time::Instant + Send + Sync>,
     cooldown: Mutex<Option<tokio::time::Instant>>,
 }
 impl Transport {
@@ -58,9 +59,24 @@ impl Transport {
     pub fn for_ctx(ctx: &crate::ApiCtx, limits: ApiLimitsConfig) -> Result<Arc<Self>, ApiError> {
         Self::with_client(client_for(ctx)?, limits)
     }
+    /// Injects the monotonic rate-limit clock; normal clients use Tokio's clock.
+    pub fn with_rate_clock(
+        network: &NetworkSettings,
+        limits: ApiLimitsConfig,
+        clock: impl Fn() -> tokio::time::Instant + Send + Sync + 'static,
+    ) -> Result<Arc<Self>, ApiError> {
+        Self::with_client_and_clock(client(network)?, limits, Arc::new(clock))
+    }
     fn with_client(
         client: reqwest::Client,
         limits: ApiLimitsConfig,
+    ) -> Result<Arc<Self>, ApiError> {
+        Self::with_client_and_clock(client, limits, Arc::new(tokio::time::Instant::now))
+    }
+    fn with_client_and_clock(
+        client: reqwest::Client,
+        limits: ApiLimitsConfig,
+        rate_clock: Arc<dyn Fn() -> tokio::time::Instant + Send + Sync>,
     ) -> Result<Arc<Self>, ApiError> {
         if !(1..=50).contains(&limits.concurrency)
             || limits.window_s == 0
@@ -74,12 +90,13 @@ impl Transport {
             semaphore: Semaphore::new(limits.concurrency as usize),
             limits,
             sent: Mutex::default(),
+            rate_clock,
             cooldown: Mutex::default(),
         }))
     }
     async fn acquire_rate(&self) {
         loop {
-            let now = tokio::time::Instant::now();
+            let now = (self.rate_clock)();
             let cooldown = *self.cooldown.lock().await;
             if let Some(until) = cooldown.filter(|until| *until > now) {
                 tokio::time::sleep_until(until).await;
