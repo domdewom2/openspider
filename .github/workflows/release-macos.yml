@@ -7,7 +7,7 @@
 # Secrets:   APPLE_CERTIFICATE (base64 der .p12), APPLE_CERTIFICATE_PASSWORD, APPLE_ID, APPLE_PASSWORD
 #            (App-spezifisches Passwort), KEYCHAIN_PASSWORD (frei gewählt, nur für den temporären Schlüsselbund)
 # Variablen: APPLE_SIGNING_IDENTITY ("Developer ID Application: Name (TEAMID)"), APPLE_TEAM_ID
-# Fehlt eines davon, beendet sich der Lauf nach dem ersten Schritt mit einer klaren Meldung und Erfolg (exit 0).
+# Fehlt eines davon, endet der Signierjob grün mit Hinweis; unabhängige Plattformtests laufen weiterhin.
 
 name: Release macOS
 

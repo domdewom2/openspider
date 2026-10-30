@@ -77,13 +77,15 @@ if [[ "$mode" == --smoke ]]; then
   translated="$(sysctl -in sysctl.proc_translated 2>/dev/null || true)"
   [[ "$translated" == 0 || ( -z "$translated" && "$(uname -m)" == x86_64 ) ]]
   echo "ok: OUT-260 sysctl.proc_translated=0 (Intel: key absent = native)"
-  "$app/Contents/MacOS/openspider" --version
-  python3 - "$app" <<'PY'
+  native_arch="$(uname -m)"
+  /usr/bin/arch "-$native_arch" "$app/Contents/MacOS/openspider" --version
+  python3 - "$app" "$native_arch" <<'PY'
 import pathlib, plistlib, subprocess, sys, time
 app = pathlib.Path(sys.argv[1]).resolve()
 with (app / 'Contents/Info.plist').open('rb') as f:
     executable = plistlib.load(f)['CFBundleExecutable']
-process = subprocess.Popen([str(app / 'Contents/MacOS' / executable)])
+process = subprocess.Popen(['/usr/bin/arch', '-' + sys.argv[2],
+                            str(app / 'Contents/MacOS' / executable)])
 try:
     time.sleep(10)
     assert process.poll() is None, 'App exited during native launch smoke'
