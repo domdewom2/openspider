@@ -11,7 +11,13 @@ fn update_hook_is_explicit_and_not_a_successful_check() {
             .check_update
     );
     assert_eq!(main_entry(["openspider", "--check-update"]), 2);
-    assert_eq!(main_entry(["openspider", "--uninstall-cleanup"]), 2);
+    // The installer hook is implemented by R02; never run real OS cleanup in this contract test.
+    assert!(
+        Cli::try_parse_from(["openspider", "--uninstall-cleanup"])
+            .unwrap()
+            .run
+            .uninstall_cleanup
+    );
     let help = Cli::command().render_long_help().to_string();
     assert!(help.contains("--check-update"));
     assert!(!help.contains("--uninstall-cleanup"));
