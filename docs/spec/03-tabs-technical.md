@@ -511,7 +511,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Ausgabe (Spalten/Filter/Export):** Filter „Contains Fragment URL“; Einstufung: Fehler / Hoch.
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: Ein Rohwert enthält `#` (auch leeres Fragment `…/a#`).
-  - [ ] Die Spalte zeigt die URL inklusive Fragment (Anzeige ungekürzt), Vergleiche ignorieren es (TECH-002).
+  - [ ] Die Spalte zeigt die URL ohne Fragment; der Rohwert bleibt für diesen Filter erhalten. Vergleiche ignorieren das Fragment (TECH-002). (K2-93)
 - **Testfixture:** `canonical-basic/fragment.html` (`#top`), `/fragment-empty` (`#`).
 
 ### TECH-023 Filter „Outside \<head>“ (Canonical)
@@ -672,7 +672,7 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Akzeptanzkriterien:**
   - [ ] Bedingung (a): A hat `next = B`, B ist gecrawlt (HTML, 200) und B hat kein `prev` oder `prev` ≠ A → A gelistet.
   - [ ] Bedingung (b): A hat `prev = Z`, Z ist gecrawlt (HTML, 200) und Z hat kein `next` oder `next` ≠ A → A gelistet.
-  - [ ] Nicht gecrawlte oder Nicht-200-Ziele lösen keinen Sequence Error aus (die gehören zu TECH-036).
+  - [ ] Nicht gecrawlte Ziele lösen keinen Sequence Error aus. Gecrawlte Ziele ohne 2xx lösen zusätzlich zu TECH-036 einen Sequence Error aus. (K2-93)
   - [ ] Vergleich nach TECH-002.
 - **Testfixture:** `pagination/seq?page=1..3`, wobei `page=2` als prev auf `page=0` statt `page=1` zeigt.
 
@@ -834,11 +834,11 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Priorität:** P0
 - **Beschreibung:** Seiten mit Meta Refresh bzw. `Refresh`-Header (zeitgesteuerte Weiterleitung).
 - **Eingaben/Konfiguration:** „Crawl Meta Refresh“ (Standard an): Ziel wird in die Frontier aufgenommen.
-- **Ausgabe (Spalten/Filter/Export):** Filter „Refresh“ (Information); Spalte `Meta Refresh n` = Rohwert. Details der Weiterleitung im Response-Codes-Bereich.
+- **Ausgabe (Spalten/Filter/Export):** Filter „Refresh“ (Information); Spalte `Meta Refresh n` = Rohwert ausschließlich der Meta-Elemente, nicht der HTTP-Header. (K2-93) Details der Weiterleitung im Response-Codes-Bereich.
 - **Akzeptanzkriterien:**
-  - [ ] Bedingung: mindestens ein Meta-Refresh-Element (Head oder Body) oder ein `Refresh`-Header.
+  - [ ] Bedingung: mindestens ein gültiges Meta-Refresh-Element (Head oder Body). HTTP-Refresh wird ausschließlich im Response-Codes-Filter TECH-050 gelistet, nicht in diesem Filter. (K2-93)
   - [ ] Refresh mit Ziel ≠ eigener URL → Indexierbarkeit `Redirected` (TECH-001); Ziel-URL wird gecrawlt.
-  - [ ] Refresh auf sich selbst oder ohne Ziel → im Filter, kein neuer Abruf. Weiterleitung auf sich selbst nach CRAWL-015 (Meta Refresh ohne Ziel oder auf sich selbst, `Refresh`-Header auf sich selbst); ein `Refresh`-Header ohne Ziel ist keine Weiterleitung (K-57, K-69). Indexierbarkeit nach TECH-068: bei Standard (Option aus) indexierbar, sofern kein anderer Grund vorliegt; mit Option an `Non-Indexable` / `Self Referencing Meta Refresh`.
+  - [ ] Meta-Refresh auf sich selbst oder ohne Ziel → im Filter, kein neuer Abruf. HTTP-Refresh zählt hier nicht, auch nicht bei eigener Ziel-URL. (K2-93) Indexierbarkeit: Header mit eigener Ziel-URL → `Redirected` (SQ-05). Meta-Selbst-Refresh nach TECH-068 bleibt bei Standard (Option aus) indexierbar, sofern kein anderer Grund vorliegt; mit Option an `Non-Indexable` / `Self Referencing Meta Refresh`. Ein Header ohne Ziel ist keine Weiterleitung (K-69). (K2-93)
 - **Testfixture:** `directives/refresh-0.html` (`0; url=/target` → Redirected), `/refresh-5-self.html` (→ Self Referencing Meta Refresh), `/refresh-bare.html` (`content="10"` → Self Referencing Meta Refresh), `/refresh-header` (Header `Refresh: 0; url=/target`).
 
 ### TECH-065 Filter „Outside \<head>“ (Meta Robots)
@@ -990,7 +990,7 @@ Begriffe: Eine **Annotation** ist ein Paar (Code, URL) auf Seite P. Die **Annota
 - **Eingaben/Konfiguration:** Live, inkrementell (TECH-005).
 - **Ausgabe (Spalten/Filter/Export):** Filter „Non-Canonical Return Links“; Einstufung: Fehler / Hoch.
 - **Akzeptanzkriterien:**
-  - [ ] Bedingung: Seite P hat ein Alternate Q (gecrawlt, 200, HTML), und Q ist `Canonicalised` (Canonical von Q ≠ Q). P wird gelistet, weil seine Annotation (und der Rücklink-Kontext) auf eine nicht-kanonische Version zeigt (Festlegung zur Interpretation der Referenzbeschreibung; Paritätsprüfung nötig).
+  - [ ] Bedingung: Eine interne HTML-2xx-Seite P hat ein Alternate Q (gecrawlt, 200, HTML), und Q hat einen Canonical auf eine andere URL. Gelistet wird die Alternate-URL Q; Beziehungsreports behalten die Richtung P → Q. (K2-93)
   - [ ] Q mit Self-Canonical → nicht gelistet.
 - **Testfixture:** `hreflang/noncanon/en/` → `de` `/de/?ref=1`, das Canonical `/de/` hat.
 
@@ -2130,7 +2130,7 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 - **Ausgabe (Spalten/Filter/Export):** Filter „\<head> Not First In \<html> Element“; Einstufung: Warnung / Hoch.
 - **Akzeptanzkriterien:**
   - [ ] Bedingung: Es gibt ein `<head>`-Start-Tag, und vor ihm (nach `<html>` bzw. ab Dokumentbeginn, falls `<html>` fehlt) steht ein anderes Element-Start-Tag oder Nicht-Whitespace-Text. Doctype, Kommentare und Whitespace zählen nicht.
-  - [ ] Fehlt `<head>` ganz → nur TECH-284, nicht dieser Filter.
+  - [ ] Fehlt `<head>` ganz → zusätzlich zu TECH-284 auch dieser Filter. (K2-93)
 - **Testfixture:** `validation/p-before-head.html`, `/img-before-head.html`.
 
 ### TECH-284 Filter „Missing \<head> Tag“
@@ -2352,7 +2352,7 @@ Legende: **F** = OpenSpider-Festlegung (Referenzverhalten unbekannt, gegen Golde
 4. **F – Standardliste nichtssagender Ankertexte (TECH-144):** Referenzliste nicht öffentlich; eigene Liste (de/en), exakter Abgleich nach Normalisierung.
 5. **F – „Contains JavaScript Content“ (TECH-104):** Schwelle „gerenderte Wortzahl > Original-Wortzahl“.
 6. **F – `JS Word Count %` und `% of Total` (TECH-101/145):** Formeln nicht dokumentiert.
-7. **F – „Non-Canonical Return Links“ (TECH-078):** Interpretation „Alternate ist canonicalisiert“.
+7. **F – „Non-Canonical Return Links“ (TECH-078):** Alternate Q ist canonicalisiert; im Tab wird Q gelistet. (K2-93)
 8. **K – Orphan-Definition (TECH-214):** Korrigiert nach Tab-Doku und Sitemap-Tutorial: Orphans sind URLs nur aus Sitemaps **und** URLs, die nur über solche Sitemap-URLs entdeckt wurden (Folge-Orphans). **F:** Welche Kantentypen (Canonical, hreflang, Redirect, Pagination) als „im Crawl gefunden“ gelten, ist nicht dokumentiert; Festlegung: alle außer „XML Sitemap“.
 9. **PA – Sitemap-hreflang-Spalten (TECH-071):** Referenz füllt sie laut Doku nur im Listenmodus; OpenSpider füllt sie immer.
 10. **F – Accessibility-Zählweise (TECH-251):** Anzahl verletzter Regeln statt Anzahl Knoten.
