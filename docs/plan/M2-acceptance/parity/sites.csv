@@ -1,0 +1,11 @@
+Site,Exporte,Verglichen,Bestanden,Verfehlt,Fehler,Uebersprungen
+out-basic-site,7,7,5,2,0,0
+parity-m2-links,23,13,6,7,10,0
+parity-m2-list,5,5,1,4,0,0
+parity-m2-onpage,42,37,6,31,3,2
+parity-m2-security,22,19,16,3,2,1
+parity-m2-technical,90,82,50,32,8,0
+parity-onpage,12,12,11,1,0,0
+parity-response,8,7,6,1,0,1
+parity-synthetic,4,4,2,2,0,0
+parity-technical,8,8,6,2,0,0

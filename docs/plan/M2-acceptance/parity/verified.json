@@ -1,0 +1,1475 @@
+{
+  "denominator": 160,
+  "referencable_ids": [
+    "CRAWL-012",
+    "ONPAGE-001",
+    "ONPAGE-009",
+    "ONPAGE-021",
+    "ONPAGE-022",
+    "ONPAGE-023",
+    "ONPAGE-024",
+    "ONPAGE-025",
+    "ONPAGE-026",
+    "ONPAGE-031",
+    "ONPAGE-032",
+    "ONPAGE-033",
+    "ONPAGE-034",
+    "ONPAGE-035",
+    "ONPAGE-036",
+    "ONPAGE-037",
+    "ONPAGE-038",
+    "ONPAGE-039",
+    "ONPAGE-040",
+    "ONPAGE-041",
+    "ONPAGE-042",
+    "ONPAGE-043",
+    "ONPAGE-051",
+    "ONPAGE-052",
+    "ONPAGE-054",
+    "ONPAGE-055",
+    "ONPAGE-056",
+    "ONPAGE-058",
+    "ONPAGE-059",
+    "ONPAGE-060",
+    "ONPAGE-061",
+    "ONPAGE-062",
+    "ONPAGE-063",
+    "ONPAGE-070",
+    "ONPAGE-071",
+    "ONPAGE-072",
+    "ONPAGE-073",
+    "ONPAGE-074",
+    "ONPAGE-075",
+    "ONPAGE-076",
+    "ONPAGE-077",
+    "ONPAGE-078",
+    "ONPAGE-079",
+    "ONPAGE-080",
+    "ONPAGE-081",
+    "ONPAGE-091",
+    "ONPAGE-092",
+    "ONPAGE-093",
+    "ONPAGE-094",
+    "ONPAGE-095",
+    "ONPAGE-096",
+    "ONPAGE-097",
+    "ONPAGE-098",
+    "ONPAGE-101",
+    "ONPAGE-102",
+    "ONPAGE-103",
+    "ONPAGE-104",
+    "ONPAGE-105",
+    "ONPAGE-106",
+    "ONPAGE-107",
+    "ONPAGE-110",
+    "ONPAGE-111",
+    "ONPAGE-112",
+    "ONPAGE-113",
+    "ONPAGE-121",
+    "ONPAGE-122",
+    "ONPAGE-123",
+    "ONPAGE-124",
+    "ONPAGE-125",
+    "ONPAGE-126",
+    "ONPAGE-131",
+    "ONPAGE-132",
+    "ONPAGE-133",
+    "ONPAGE-134",
+    "ONPAGE-135",
+    "ONPAGE-142",
+    "ONPAGE-143",
+    "ONPAGE-144",
+    "ONPAGE-146",
+    "ONPAGE-147",
+    "ONPAGE-148",
+    "ONPAGE-150",
+    "ONPAGE-151",
+    "ONPAGE-171",
+    "ONPAGE-174",
+    "ONPAGE-175",
+    "ONPAGE-176",
+    "ONPAGE-177",
+    "ONPAGE-179",
+    "TECH-011",
+    "TECH-012",
+    "TECH-013",
+    "TECH-014",
+    "TECH-015",
+    "TECH-016",
+    "TECH-017",
+    "TECH-018",
+    "TECH-019",
+    "TECH-020",
+    "TECH-021",
+    "TECH-022",
+    "TECH-031",
+    "TECH-032",
+    "TECH-033",
+    "TECH-034",
+    "TECH-035",
+    "TECH-036",
+    "TECH-037",
+    "TECH-038",
+    "TECH-039",
+    "TECH-040",
+    "TECH-041",
+    "TECH-051",
+    "TECH-052",
+    "TECH-053",
+    "TECH-054",
+    "TECH-055",
+    "TECH-056",
+    "TECH-057",
+    "TECH-058",
+    "TECH-059",
+    "TECH-061",
+    "TECH-062",
+    "TECH-063",
+    "TECH-064",
+    "TECH-071",
+    "TECH-073",
+    "TECH-074",
+    "TECH-075",
+    "TECH-076",
+    "TECH-077",
+    "TECH-078",
+    "TECH-079",
+    "TECH-080",
+    "TECH-081",
+    "TECH-082",
+    "TECH-083",
+    "TECH-084",
+    "TECH-085",
+    "TECH-130",
+    "TECH-132",
+    "TECH-133",
+    "TECH-134",
+    "TECH-135",
+    "TECH-136",
+    "TECH-137",
+    "TECH-138",
+    "TECH-139",
+    "TECH-140",
+    "TECH-141",
+    "TECH-142",
+    "TECH-143",
+    "TECH-281",
+    "TECH-289",
+    "TECH-290",
+    "TECH-301",
+    "TECH-302",
+    "TECH-303",
+    "TECH-304",
+    "TECH-305"
+  ],
+  "verified_ids": [],
+  "verified": 0,
+  "pct": 0.0,
+  "target_pct": 60,
+  "excluded_ids": {
+    "INTEG-031": [
+      "Custom Search:All"
+    ],
+    "INTEG-053": [
+      "Custom Extraction:All"
+    ],
+    "INTEG-071": [
+      "Custom JavaScript:All"
+    ],
+    "INTEG-097": [
+      "Analytics:All"
+    ],
+    "INTEG-098": [
+      "Analytics:Bounce Rate Above 70%",
+      "Analytics:No GA Data",
+      "Analytics:Non-Indexable with GA Data",
+      "Analytics:Orphan URLs",
+      "Analytics:Sessions Above 0"
+    ],
+    "INTEG-115": [
+      "Search Console:All"
+    ],
+    "INTEG-116": [
+      "Search Console:Clicks Above 0",
+      "Search Console:No Search Analytics Data",
+      "Search Console:Non-Indexable with Search Analytics Data",
+      "Search Console:Orphan URLs"
+    ],
+    "INTEG-125": [
+      "Search Console:AMP URL Is Invalid",
+      "Search Console:Indexable URL Not Indexed",
+      "Search Console:Page Is Not Mobile Friendly",
+      "Search Console:Rich Result Invalid",
+      "Search Console:URL Is Not on Google",
+      "Search Console:URL is on Google, But Has Issues",
+      "Search Console:User-Declared Canonical Not Selected"
+    ],
+    "INTEG-134": [
+      "PageSpeed:All"
+    ],
+    "INTEG-139": [
+      "PageSpeed:Avoid Enormous Network Payloads",
+      "PageSpeed:Document Request Latency",
+      "PageSpeed:Duplicated JavaScript",
+      "PageSpeed:Font Display",
+      "PageSpeed:Forced Reflow",
+      "PageSpeed:Improve Image Delivery",
+      "PageSpeed:LCP Request Discovery",
+      "PageSpeed:Layout Shift Culprits",
+      "PageSpeed:Legacy JavaScript",
+      "PageSpeed:Minify CSS",
+      "PageSpeed:Minify JavaScript",
+      "PageSpeed:Minimize Main-Thread Work",
+      "PageSpeed:Network Dependency Tree",
+      "PageSpeed:Optimize DOM Size",
+      "PageSpeed:Reduce JavaScript Execution Time",
+      "PageSpeed:Reduce Unused CSS",
+      "PageSpeed:Reduce Unused JavaScript",
+      "PageSpeed:Render Blocking Requests",
+      "PageSpeed:Use Efficient Cache Lifetimes"
+    ],
+    "INTEG-151": [
+      "Link Metrics:All"
+    ],
+    "ONPAGE-053": [
+      "Response Codes:Blocked Resource",
+      "Response Codes:External Blocked Resource",
+      "Response Codes:Internal Blocked Resource"
+    ],
+    "ONPAGE-057": [
+      "Response Codes:External Redirection (JavaScript)",
+      "Response Codes:Internal Redirection (JavaScript)",
+      "Response Codes:Redirection (JavaScript)"
+    ],
+    "ONPAGE-155": [
+      "Content:Spelling Errors"
+    ],
+    "ONPAGE-156": [
+      "Content:Grammar Errors"
+    ],
+    "ONPAGE-178": [
+      "Images:Background Images"
+    ],
+    "ONPAGE-180": [
+      "Images:Incorrectly Sized Images"
+    ],
+    "TECH-101": [
+      "JavaScript:All"
+    ],
+    "TECH-102": [
+      "JavaScript:Pages With Blocked Resources"
+    ],
+    "TECH-103": [
+      "JavaScript:Contains JavaScript Links"
+    ],
+    "TECH-104": [
+      "JavaScript:Contains JavaScript Content"
+    ],
+    "TECH-105": [
+      "JavaScript:Noindex Only In Original HTML"
+    ],
+    "TECH-106": [
+      "JavaScript:Nofollow Only In Original HTML"
+    ],
+    "TECH-107": [
+      "JavaScript:Canonical Only In Rendered HTML"
+    ],
+    "TECH-108": [
+      "JavaScript:Canonical Mismatch"
+    ],
+    "TECH-109": [
+      "JavaScript:Page Title Only In Rendered HTML",
+      "JavaScript:Page Title Updated By JavaScript"
+    ],
+    "TECH-110": [
+      "JavaScript:Meta Description Only In Rendered HTML",
+      "JavaScript:Meta Description Updated By JavaScript"
+    ],
+    "TECH-111": [
+      "JavaScript:H1 Only In Rendered HTML",
+      "JavaScript:H1 Updated By JavaScript"
+    ],
+    "TECH-114": [
+      "JavaScript:Pages With JavaScript Errors"
+    ],
+    "TECH-183": [
+      "Structured Data:All"
+    ],
+    "TECH-184": [
+      "Structured Data:Contains Structured Data",
+      "Structured Data:Missing Structured Data"
+    ],
+    "TECH-185": [
+      "Structured Data:JSON-LD URLs",
+      "Structured Data:Microdata URLs",
+      "Structured Data:RDFa URLs"
+    ],
+    "TECH-186": [
+      "Structured Data:Parse Errors"
+    ],
+    "TECH-187": [
+      "Structured Data:Validation Errors",
+      "Structured Data:Validation Warnings"
+    ],
+    "TECH-188": [
+      "Structured Data:Rich Result Validation Errors",
+      "Structured Data:Rich Result Validation Warnings"
+    ],
+    "TECH-211": [
+      "Sitemaps:All"
+    ],
+    "TECH-212": [
+      "Sitemaps:URLs In Sitemap"
+    ],
+    "TECH-213": [
+      "Sitemaps:URLs Not In Sitemap"
+    ],
+    "TECH-214": [
+      "Sitemaps:Orphan URLs"
+    ],
+    "TECH-215": [
+      "Sitemaps:Non-Indexable URLs In Sitemap"
+    ],
+    "TECH-216": [
+      "Sitemaps:URLs In Multiple Sitemaps"
+    ],
+    "TECH-217": [
+      "Sitemaps:XML Sitemap With Over 50k URLs"
+    ],
+    "TECH-218": [
+      "Sitemaps:XML Sitemap With Over 50MB"
+    ],
+    "TECH-231": [
+      "Mobile:All"
+    ],
+    "TECH-232": [
+      "Mobile:Viewport Not Set"
+    ],
+    "TECH-233": [
+      "Mobile:Target Size"
+    ],
+    "TECH-234": [
+      "Mobile:Content Not Sized Correctly"
+    ],
+    "TECH-235": [
+      "Mobile:Illegible Font Size"
+    ],
+    "TECH-236": [
+      "Mobile:Unsupported Plugins"
+    ],
+    "TECH-237": [
+      "Mobile:Mobile Alternate Link"
+    ],
+    "TECH-251": [
+      "Accessibility:All"
+    ]
+  },
+  "checks": {
+    "TECH-011": [
+      {
+        "tab": "Canonicals",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-012": [
+      {
+        "tab": "Canonicals",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-013": [
+      {
+        "tab": "Canonicals",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-014": [
+      {
+        "tab": "Canonicals",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-015": [
+      {
+        "tab": "Canonicals",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-016": [
+      {
+        "tab": "Canonicals",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-017": [
+      {
+        "tab": "Canonicals",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-018": [
+      {
+        "tab": "Canonicals",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-019": [
+      {
+        "tab": "Canonicals",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-020": [
+      {
+        "tab": "Canonicals",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-021": [
+      {
+        "tab": "Canonicals",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-022": [
+      {
+        "tab": "Canonicals",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-142": [
+      {
+        "tab": "Content",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-143": [
+      {
+        "tab": "Content",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-144": [
+      {
+        "tab": "Content",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-146": [
+      {
+        "tab": "Content",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-147": [
+      {
+        "tab": "Content",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-148": [
+      {
+        "tab": "Content",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-150": [
+      {
+        "tab": "Content",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-151": [
+      {
+        "tab": "Content",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-051": [
+      {
+        "tab": "Directives",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-052": [
+      {
+        "tab": "Directives",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-053": [
+      {
+        "tab": "Directives",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-054": [
+      {
+        "tab": "Directives",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-055": [
+      {
+        "tab": "Directives",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-056": [
+      {
+        "tab": "Directives",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-057": [
+      {
+        "tab": "Directives",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-058": [
+      {
+        "tab": "Directives",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-059": [
+      {
+        "tab": "Directives",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-061": [
+      {
+        "tab": "Directives",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-062": [
+      {
+        "tab": "Directives",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-063": [
+      {
+        "tab": "Directives",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-064": [
+      {
+        "tab": "Directives",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-025": [
+      {
+        "tab": "External",
+        "passed": false,
+        "reason": "out-basic-site/external_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-026": [
+      {
+        "tab": "External",
+        "passed": false,
+        "reason": "out-basic-site/external_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-009": [
+      {
+        "tab": "H1",
+        "passed": false,
+        "reason": "parity-m2-onpage/h1_all.csv: Zellfehler"
+      },
+      {
+        "tab": "H2",
+        "passed": false,
+        "reason": "parity-m2-onpage/h2_all.csv: Zellfehler"
+      },
+      {
+        "tab": "Meta Description",
+        "passed": false,
+        "reason": "parity-m2-onpage/meta_description_all.csv: Zellfehler"
+      },
+      {
+        "tab": "Page Titles",
+        "passed": false,
+        "reason": "parity-m2-onpage/page_titles_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-121": [
+      {
+        "tab": "H1",
+        "passed": false,
+        "reason": "parity-m2-onpage/h1_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-122": [
+      {
+        "tab": "H1",
+        "passed": false,
+        "reason": "parity-m2-onpage/h1_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-123": [
+      {
+        "tab": "H1",
+        "passed": false,
+        "reason": "parity-m2-onpage/h1_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-124": [
+      {
+        "tab": "H1",
+        "passed": false,
+        "reason": "parity-m2-onpage/h1_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-125": [
+      {
+        "tab": "H1",
+        "passed": false,
+        "reason": "parity-m2-onpage/h1_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-126": [
+      {
+        "tab": "H1",
+        "passed": false,
+        "reason": "parity-m2-onpage/h1_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-131": [
+      {
+        "tab": "H2",
+        "passed": false,
+        "reason": "parity-m2-onpage/h2_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-132": [
+      {
+        "tab": "H2",
+        "passed": false,
+        "reason": "parity-m2-onpage/h2_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-133": [
+      {
+        "tab": "H2",
+        "passed": false,
+        "reason": "parity-m2-onpage/h2_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-134": [
+      {
+        "tab": "H2",
+        "passed": false,
+        "reason": "parity-m2-onpage/h2_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-135": [
+      {
+        "tab": "H2",
+        "passed": false,
+        "reason": "parity-m2-onpage/h2_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-071": [
+      {
+        "tab": "Hreflang",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-073": [
+      {
+        "tab": "Hreflang",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-074": [
+      {
+        "tab": "Hreflang",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-075": [
+      {
+        "tab": "Hreflang",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-076": [
+      {
+        "tab": "Hreflang",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-077": [
+      {
+        "tab": "Hreflang",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-078": [
+      {
+        "tab": "Hreflang",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-079": [
+      {
+        "tab": "Hreflang",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-080": [
+      {
+        "tab": "Hreflang",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-081": [
+      {
+        "tab": "Hreflang",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-082": [
+      {
+        "tab": "Hreflang",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-083": [
+      {
+        "tab": "Hreflang",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-084": [
+      {
+        "tab": "Hreflang",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-085": [
+      {
+        "tab": "Hreflang",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-171": [
+      {
+        "tab": "Images",
+        "passed": false,
+        "reason": "parity-m2-onpage/images_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-174": [
+      {
+        "tab": "Images",
+        "passed": false,
+        "reason": "parity-m2-onpage/images_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-175": [
+      {
+        "tab": "Images",
+        "passed": false,
+        "reason": "parity-m2-onpage/images_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-176": [
+      {
+        "tab": "Images",
+        "passed": false,
+        "reason": "parity-m2-onpage/images_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-177": [
+      {
+        "tab": "Images",
+        "passed": false,
+        "reason": "parity-m2-onpage/images_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-179": [
+      {
+        "tab": "Images",
+        "passed": false,
+        "reason": "parity-m2-onpage/images_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-001": [
+      {
+        "tab": "Internal",
+        "passed": false,
+        "reason": "out-basic-site/internal_all.csv: Spaltenabdeckung unvollstaendig"
+      },
+      {
+        "tab": "Security",
+        "passed": false,
+        "reason": "parity-m2-security/security_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-021": [
+      {
+        "tab": "Internal",
+        "passed": false,
+        "reason": "out-basic-site/internal_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-022": [
+      {
+        "tab": "Internal",
+        "passed": false,
+        "reason": "out-basic-site/internal_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-023": [
+      {
+        "tab": "Internal",
+        "passed": false,
+        "reason": "out-basic-site/internal_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-024": [
+      {
+        "tab": "Internal",
+        "passed": false,
+        "reason": "out-basic-site/internal_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "TECH-130": [
+      {
+        "tab": "Links",
+        "passed": false,
+        "reason": "out-basic-site/links_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-132": [
+      {
+        "tab": "Links",
+        "passed": false,
+        "reason": "out-basic-site/links_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-133": [
+      {
+        "tab": "Links",
+        "passed": false,
+        "reason": "out-basic-site/links_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-134": [
+      {
+        "tab": "Links",
+        "passed": false,
+        "reason": "out-basic-site/links_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-135": [
+      {
+        "tab": "Links",
+        "passed": false,
+        "reason": "out-basic-site/links_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-136": [
+      {
+        "tab": "Links",
+        "passed": false,
+        "reason": "out-basic-site/links_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-137": [
+      {
+        "tab": "Links",
+        "passed": false,
+        "reason": "out-basic-site/links_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-138": [
+      {
+        "tab": "Links",
+        "passed": false,
+        "reason": "out-basic-site/links_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-139": [
+      {
+        "tab": "Links",
+        "passed": false,
+        "reason": "out-basic-site/links_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-140": [
+      {
+        "tab": "Links",
+        "passed": false,
+        "reason": "out-basic-site/links_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-141": [
+      {
+        "tab": "Links",
+        "passed": false,
+        "reason": "out-basic-site/links_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-142": [
+      {
+        "tab": "Links",
+        "passed": false,
+        "reason": "out-basic-site/links_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-143": [
+      {
+        "tab": "Links",
+        "passed": false,
+        "reason": "out-basic-site/links_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-101": [
+      {
+        "tab": "Meta Description",
+        "passed": false,
+        "reason": "parity-m2-onpage/meta_description_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-102": [
+      {
+        "tab": "Meta Description",
+        "passed": false,
+        "reason": "parity-m2-onpage/meta_description_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-103": [
+      {
+        "tab": "Meta Description",
+        "passed": false,
+        "reason": "parity-m2-onpage/meta_description_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-104": [
+      {
+        "tab": "Meta Description",
+        "passed": false,
+        "reason": "parity-m2-onpage/meta_description_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-105": [
+      {
+        "tab": "Meta Description",
+        "passed": false,
+        "reason": "parity-m2-onpage/meta_description_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-106": [
+      {
+        "tab": "Meta Description",
+        "passed": false,
+        "reason": "parity-m2-onpage/meta_description_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-107": [
+      {
+        "tab": "Meta Description",
+        "passed": false,
+        "reason": "parity-m2-onpage/meta_description_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-110": [
+      {
+        "tab": "Meta Keywords",
+        "passed": false,
+        "reason": "parity-m2-onpage/meta_keywords_missing.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-111": [
+      {
+        "tab": "Meta Keywords",
+        "passed": false,
+        "reason": "parity-m2-onpage/meta_keywords_missing.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-112": [
+      {
+        "tab": "Meta Keywords",
+        "passed": false,
+        "reason": "parity-m2-onpage/meta_keywords_missing.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-113": [
+      {
+        "tab": "Meta Keywords",
+        "passed": false,
+        "reason": "parity-m2-onpage/meta_keywords_missing.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-091": [
+      {
+        "tab": "Page Titles",
+        "passed": false,
+        "reason": "parity-m2-onpage/page_titles_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-092": [
+      {
+        "tab": "Page Titles",
+        "passed": false,
+        "reason": "parity-m2-onpage/page_titles_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-093": [
+      {
+        "tab": "Page Titles",
+        "passed": false,
+        "reason": "parity-m2-onpage/page_titles_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-094": [
+      {
+        "tab": "Page Titles",
+        "passed": false,
+        "reason": "parity-m2-onpage/page_titles_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-095": [
+      {
+        "tab": "Page Titles",
+        "passed": false,
+        "reason": "parity-m2-onpage/page_titles_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-096": [
+      {
+        "tab": "Page Titles",
+        "passed": false,
+        "reason": "parity-m2-onpage/page_titles_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-097": [
+      {
+        "tab": "Page Titles",
+        "passed": false,
+        "reason": "parity-m2-onpage/page_titles_all.csv: Zellfehler"
+      }
+    ],
+    "ONPAGE-098": [
+      {
+        "tab": "Page Titles",
+        "passed": false,
+        "reason": "parity-m2-onpage/page_titles_all.csv: Zellfehler"
+      }
+    ],
+    "TECH-031": [
+      {
+        "tab": "Pagination",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-032": [
+      {
+        "tab": "Pagination",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-033": [
+      {
+        "tab": "Pagination",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-034": [
+      {
+        "tab": "Pagination",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-035": [
+      {
+        "tab": "Pagination",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-036": [
+      {
+        "tab": "Pagination",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-037": [
+      {
+        "tab": "Pagination",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-038": [
+      {
+        "tab": "Pagination",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-039": [
+      {
+        "tab": "Pagination",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-040": [
+      {
+        "tab": "Pagination",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-041": [
+      {
+        "tab": "Pagination",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all.csv: URL-Menge"
+      }
+    ],
+    "CRAWL-012": [
+      {
+        "tab": "Response Codes",
+        "passed": false,
+        "reason": "parity-m2-onpage/response_codes_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-051": [
+      {
+        "tab": "Response Codes",
+        "passed": false,
+        "reason": "parity-m2-onpage/response_codes_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-052": [
+      {
+        "tab": "Response Codes",
+        "passed": false,
+        "reason": "parity-m2-onpage/response_codes_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-054": [
+      {
+        "tab": "Response Codes",
+        "passed": false,
+        "reason": "parity-m2-onpage/response_codes_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-055": [
+      {
+        "tab": "Response Codes",
+        "passed": false,
+        "reason": "parity-m2-onpage/response_codes_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-056": [
+      {
+        "tab": "Response Codes",
+        "passed": false,
+        "reason": "parity-m2-onpage/response_codes_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-058": [
+      {
+        "tab": "Response Codes",
+        "passed": false,
+        "reason": "parity-m2-onpage/response_codes_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-059": [
+      {
+        "tab": "Response Codes",
+        "passed": false,
+        "reason": "parity-m2-onpage/response_codes_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-060": [
+      {
+        "tab": "Response Codes",
+        "passed": false,
+        "reason": "parity-m2-onpage/response_codes_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-061": [
+      {
+        "tab": "Response Codes",
+        "passed": false,
+        "reason": "parity-m2-onpage/response_codes_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-062": [
+      {
+        "tab": "Response Codes",
+        "passed": false,
+        "reason": "parity-m2-onpage/response_codes_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-063": [
+      {
+        "tab": "Response Codes",
+        "passed": false,
+        "reason": "parity-m2-onpage/response_codes_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-031": [
+      {
+        "tab": "Security",
+        "passed": false,
+        "reason": "parity-m2-security/security_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-032": [
+      {
+        "tab": "Security",
+        "passed": false,
+        "reason": "parity-m2-security/security_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-033": [
+      {
+        "tab": "Security",
+        "passed": false,
+        "reason": "parity-m2-security/security_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-034": [
+      {
+        "tab": "Security",
+        "passed": false,
+        "reason": "parity-m2-security/security_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-035": [
+      {
+        "tab": "Security",
+        "passed": false,
+        "reason": "parity-m2-security/security_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-036": [
+      {
+        "tab": "Security",
+        "passed": false,
+        "reason": "parity-m2-security/security_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-037": [
+      {
+        "tab": "Security",
+        "passed": false,
+        "reason": "parity-m2-security/security_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-038": [
+      {
+        "tab": "Security",
+        "passed": false,
+        "reason": "parity-m2-security/security_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-039": [
+      {
+        "tab": "Security",
+        "passed": false,
+        "reason": "parity-m2-security/security_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-040": [
+      {
+        "tab": "Security",
+        "passed": false,
+        "reason": "parity-m2-security/security_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-041": [
+      {
+        "tab": "Security",
+        "passed": false,
+        "reason": "parity-m2-security/security_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-042": [
+      {
+        "tab": "Security",
+        "passed": false,
+        "reason": "parity-m2-security/security_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-043": [
+      {
+        "tab": "Security",
+        "passed": false,
+        "reason": "parity-m2-security/security_all.csv: Spaltenabdeckung unvollstaendig"
+      }
+    ],
+    "ONPAGE-070": [
+      {
+        "tab": "URL",
+        "passed": false,
+        "reason": "parity-m2-onpage/url_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-071": [
+      {
+        "tab": "URL",
+        "passed": false,
+        "reason": "parity-m2-onpage/url_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-072": [
+      {
+        "tab": "URL",
+        "passed": false,
+        "reason": "parity-m2-onpage/url_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-073": [
+      {
+        "tab": "URL",
+        "passed": false,
+        "reason": "parity-m2-onpage/url_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-074": [
+      {
+        "tab": "URL",
+        "passed": false,
+        "reason": "parity-m2-onpage/url_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-075": [
+      {
+        "tab": "URL",
+        "passed": false,
+        "reason": "parity-m2-onpage/url_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-076": [
+      {
+        "tab": "URL",
+        "passed": false,
+        "reason": "parity-m2-onpage/url_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-077": [
+      {
+        "tab": "URL",
+        "passed": false,
+        "reason": "parity-m2-onpage/url_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-078": [
+      {
+        "tab": "URL",
+        "passed": false,
+        "reason": "parity-m2-onpage/url_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-079": [
+      {
+        "tab": "URL",
+        "passed": false,
+        "reason": "parity-m2-onpage/url_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-080": [
+      {
+        "tab": "URL",
+        "passed": false,
+        "reason": "parity-m2-onpage/url_all.csv: URL-Menge"
+      }
+    ],
+    "ONPAGE-081": [
+      {
+        "tab": "URL",
+        "passed": false,
+        "reason": "parity-m2-onpage/url_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-281": [
+      {
+        "tab": "Validation",
+        "passed": false,
+        "reason": "parity-m2-technical/validation_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-289": [
+      {
+        "tab": "Validation",
+        "passed": false,
+        "reason": "parity-m2-technical/validation_all.csv: URL-Menge"
+      }
+    ],
+    "TECH-290": [
+      {
+        "tab": "Validation",
+        "passed": false,
+        "reason": "parity-m2-technical/validation_all.csv: URL-Menge"
+      }
+    ]
+  },
+  "definition": "Eindeutige Spec-IDs der M1+M2-Filterkataloge, ohne Erweiterungen, dynamische Filter und K2-14-Funktionsgruppen; keine Verkleinerung wegen roter Exporte."
+}

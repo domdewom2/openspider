@@ -1,0 +1,843 @@
+{
+  "export": "q02-chain-probe",
+  "site": null,
+  "ref_rows": 6,
+  "os_rows": 4,
+  "matched": 3,
+  "missing_in_os": [
+    "{BASE}/loop-a"
+  ],
+  "extra_in_os": [
+    "{BASE}/refresh-self.html"
+  ],
+  "cells_compared": 150,
+  "cells_equal": 82,
+  "agreement_pct": 54.667,
+  "columns": [
+    {
+      "ref_column": "Chain Type",
+      "os_column": "Chain Type",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "HTTP Redirect",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "Mixed",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "Canonical",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Number of Redirects/Canonicals",
+      "os_column": "Number of Redirects",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "3",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "3",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Loop",
+      "os_column": "Redirect Loop",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "true",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "false",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "false",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Temp Redirect in Chain",
+      "os_column": "Temp Redirect in Chain",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "true",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "false",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "false",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Final Address",
+      "os_column": "Final Address",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "{BASE}/loop-a",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "{BASE}/canonical-target.html",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "{BASE}/canonical-target.html",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Final Indexability",
+      "os_column": "Final Indexability",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "Non-Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Final Indexability Status",
+      "os_column": "Final Indexability Status",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "Redirected",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Final Content",
+      "os_column": "Final Content Type",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "text/html; charset=utf-8",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "text/html; charset=utf-8",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Final Status Code",
+      "os_column": "Final Status Code",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "302",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "200",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "200",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Final Status",
+      "os_column": "Final Status",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "Found",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "OK",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "OK",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Status Code 1",
+      "os_column": "Status Code 1",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "302",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "301",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "200",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Status 1",
+      "os_column": "Status 1",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "Found",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "Moved Permanently",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "OK",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Redirect Type 1",
+      "os_column": "Redirect Type 1",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "HTTP Redirect",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "HTTP Redirect",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "Canonical",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Redirect URL 1",
+      "os_column": "Redirect URL 1",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "{BASE}/loop-a",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "{BASE}/canonical-chain-a.html",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "{BASE}/canonical-chain-b.html",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Status Code 2",
+      "os_column": "Status Code 2",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "302",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "200",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "200",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Status 2",
+      "os_column": "Status 2",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "Found",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "OK",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "OK",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Redirect Type 2",
+      "os_column": "Redirect Type 2",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "HTTP Redirect",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "Canonical",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "Canonical",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Redirect URL 2",
+      "os_column": "Redirect URL 2",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "{BASE}/loop-b",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "{BASE}/canonical-chain-b.html",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "{BASE}/canonical-target.html",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Status Code 3",
+      "os_column": "Status Code 3",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "302",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "200",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "200",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Status 3",
+      "os_column": "Status 3",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "Found",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "OK",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "OK",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Redirect Type 3",
+      "os_column": "Redirect Type 3",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "HTTP Redirect",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "Canonical",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Redirect URL 3",
+      "os_column": "Redirect URL 3",
+      "compared": 3,
+      "errors": 3,
+      "examples": [
+        {
+          "key": "{BASE}/tail",
+          "ref": "{BASE}/loop-a",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "{BASE}/canonical-target.html",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/canonical-chain-a.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Status Code 4",
+      "os_column": "Status Code 4",
+      "compared": 3,
+      "errors": 1,
+      "examples": [
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "200",
+          "os": ""
+        }
+      ]
+    },
+    {
+      "ref_column": "Status 4",
+      "os_column": "Status 4",
+      "compared": 3,
+      "errors": 1,
+      "examples": [
+        {
+          "key": "{BASE}/redirect-canonical",
+          "ref": "OK",
+          "os": ""
+        }
+      ]
+    },
+    {
+      "ref_column": "Redirect Type 4",
+      "os_column": "Redirect Type 4",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 4",
+      "os_column": "Redirect URL 4",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code 5",
+      "os_column": "Status Code 5",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 5",
+      "os_column": "Status 5",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect Type 5",
+      "os_column": "Redirect Type 5",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 5",
+      "os_column": "Redirect URL 5",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code 6",
+      "os_column": "Status Code 6",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 6",
+      "os_column": "Status 6",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect Type 6",
+      "os_column": "Redirect Type 6",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 6",
+      "os_column": "Redirect URL 6",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code 7",
+      "os_column": "Status Code 7",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 7",
+      "os_column": "Status 7",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect Type 7",
+      "os_column": "Redirect Type 7",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 7",
+      "os_column": "Redirect URL 7",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code 8",
+      "os_column": "Status Code 8",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 8",
+      "os_column": "Status 8",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect Type 8",
+      "os_column": "Redirect Type 8",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 8",
+      "os_column": "Redirect URL 8",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code 9",
+      "os_column": "Status Code 9",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 9",
+      "os_column": "Status 9",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect Type 9",
+      "os_column": "Redirect Type 9",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 9",
+      "os_column": "Redirect URL 9",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code 10",
+      "os_column": "Status Code 10",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status 10",
+      "os_column": "Status 10",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect Type 10",
+      "os_column": "Redirect Type 10",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Redirect URL 10",
+      "os_column": "Redirect URL 10",
+      "compared": 3,
+      "errors": 0,
+      "examples": []
+    }
+  ],
+  "applied_deviations": [],
+  "dropped_ref_columns": [],
+  "ignored_columns": [
+    {
+      "column": "Source",
+      "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle; OpenSpider nennt `Sample Source`"
+    },
+    {
+      "column": "Alt Text",
+      "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+    },
+    {
+      "column": "Anchor Text",
+      "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+    },
+    {
+      "column": "Link Path",
+      "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+    },
+    {
+      "column": "Link Position",
+      "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+    },
+    {
+      "column": "Content 1",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 2",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 3",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 4",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 5",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 6",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 7",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 8",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 9",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    },
+    {
+      "column": "Content 10",
+      "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+    }
+  ],
+  "unmapped_ref_columns": [],
+  "unmapped_os_columns": [
+    "Inlinks",
+    "Sample Source"
+  ],
+  "missing_ref_columns": [
+    "Number of Redirects"
+  ],
+  "missing_os_columns": [
+    "Status Code 4",
+    "Status 4",
+    "Redirect Type 4",
+    "Redirect URL 4",
+    "Status Code 5",
+    "Status 5",
+    "Redirect Type 5",
+    "Redirect URL 5",
+    "Status Code 6",
+    "Status 6",
+    "Redirect Type 6",
+    "Redirect URL 6",
+    "Status Code 7",
+    "Status 7",
+    "Redirect Type 7",
+    "Redirect URL 7",
+    "Status Code 8",
+    "Status 8",
+    "Redirect Type 8",
+    "Redirect URL 8",
+    "Status Code 9",
+    "Status 9",
+    "Redirect Type 9",
+    "Redirect URL 9",
+    "Status Code 10",
+    "Status 10",
+    "Redirect Type 10",
+    "Redirect URL 10"
+  ],
+  "ignored_ref_rows": [],
+  "os_only_rows": [],
+  "threshold_pct": 97.0,
+  "url_set_identical": false,
+  "passed": false,
+  "failures": [
+    "Zellübereinstimmung 54.667 % liegt unter 97.000 %",
+    "URL-Menge nicht identisch: 1 fehlen in OpenSpider, 1 zusätzlich"
+  ]
+}

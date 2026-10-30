@@ -1,0 +1,53 @@
+Spec-ID,Belegquelle (spec-abgeleitete Tests; Q02 fuehrt diese nicht vollstaendig aus),Grund
+INTEG-031,crates/os-export/src/catalog/bulk_custom_search.rs:199; crates/os-analyze/tests/tab_custom_search.rs:18; crates/os-analyze/tests/tab_custom_search.rs:106; crates/os-analyze/tests/tab_custom_search.rs:195,M2.md 6.1 / K2-14: nicht fuer verified
+INTEG-053,crates/os-export/src/catalog/bulk_custom_extraction.rs:193; crates/os-analyze/tests/tab_custom_extraction.rs:62; crates/os-analyze/tests/tab_custom_extraction.rs:87,M2.md 6.1 / K2-14: nicht fuer verified
+INTEG-071,crates/os-analyze/tests/tab_custom_js.rs:12; crates/os-analyze/tests/tab_custom_js.rs:103; crates/os-analyze/tests/tab_custom_js.rs:310,M2.md 6.1 / K2-14: nicht fuer verified
+INTEG-097,crates/os-integrations/tests/ga4_api.rs:1041; crates/os-analyze/tests/tab_analytics.rs:101,M2.md 6.1 / K2-14: nicht fuer verified
+INTEG-098,crates/os-analyze/tests/tab_analytics.rs:148,M2.md 6.1 / K2-14: nicht fuer verified
+INTEG-115,crates/os-analyze/tests/tab_search_console.rs:229,M2.md 6.1 / K2-14: nicht fuer verified
+INTEG-116,crates/os-analyze/tests/tab_search_console.rs:301; crates/os-analyze/tests/tab_search_console.rs:439,M2.md 6.1 / K2-14: nicht fuer verified
+INTEG-125,crates/os-analyze/tests/tab_search_console.rs:381,M2.md 6.1 / K2-14: nicht fuer verified
+INTEG-134,crates/os-integrations/tests/psi_parse.rs:30; crates/os-integrations/tests/psi_parse.rs:64; crates/os-analyze/tests/tab_pagespeed.rs:153,M2.md 6.1 / K2-14: nicht fuer verified
+INTEG-139,crates/os-integrations/tests/psi_parse.rs:254; crates/os-analyze/tests/tab_pagespeed.rs:190,M2.md 6.1 / K2-14: nicht fuer verified
+INTEG-151,crates/os-app/tests/cmd_api_linkmetrics.rs:15; crates/os-analyze/tests/tab_link_metrics.rs:7,M2.md 6.1 / K2-14: nicht fuer verified
+ONPAGE-053,crates/os-analyze/tests/tab_javascript.rs:182; crates/os-analyze/tests/tab_javascript.rs:267,M2.md 6.1 / K2-14: nicht fuer verified
+ONPAGE-057,crates/os-analyze/tests/tab_javascript.rs:183,M2.md 6.1 / K2-14: nicht fuer verified
+ONPAGE-155,crates/os-app/src/commands/detail_spelling.rs:218; crates/os-analyze/tests/tab_content_spelling_dictionary.rs:34; crates/os-analyze/tests/tab_content_spelling.rs:137,M2.md 6.1 / K2-14: nicht fuer verified
+ONPAGE-156,crates/os-analyze/tests/tab_content_spelling.rs:138,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-101,crates/os-analyze/tests/tab_javascript.rs:57; crates/os-analyze/tests/tab_javascript.rs:169,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-102,crates/os-export/src/catalog/bulk_javascript.rs:331; crates/os-analyze/tests/tab_javascript.rs:86; crates/os-analyze/tests/tab_javascript.rs:170; crates/os-analyze/tests/tab_javascript.rs:266,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-103,crates/os-export/src/catalog/bulk_javascript.rs:332; crates/os-analyze/tests/tab_javascript.rs:92; crates/os-analyze/tests/tab_javascript.rs:171,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-104,crates/os-analyze/tests/tab_javascript.rs:101; crates/os-analyze/tests/tab_javascript.rs:172,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-105,crates/os-analyze/tests/tab_javascript.rs:107; crates/os-analyze/tests/tab_javascript.rs:173,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-106,crates/os-analyze/tests/tab_javascript.rs:108; crates/os-analyze/tests/tab_javascript.rs:174,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-107,crates/os-analyze/tests/tab_javascript.rs:119; crates/os-analyze/tests/tab_javascript.rs:175,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-108,crates/os-analyze/tests/tab_javascript.rs:120; crates/os-analyze/tests/tab_javascript.rs:176,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-109,crates/os-analyze/tests/tab_javascript.rs:130; crates/os-analyze/tests/tab_javascript.rs:177,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-110,crates/os-analyze/tests/tab_javascript.rs:131; crates/os-analyze/tests/tab_javascript.rs:178,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-111,crates/os-analyze/tests/tab_javascript.rs:132; crates/os-analyze/tests/tab_javascript.rs:179,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-114,crates/os-export/src/catalog/bulk_javascript.rs:282; crates/os-analyze/tests/tab_javascript.rs:147; crates/os-analyze/tests/tab_javascript.rs:180; apps/desktop/src/features/detail/console/console.test.tsx:17,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-183,crates/os-analyze/tests/tab_structured_data_validation.rs:96; crates/os-analyze/tests/tab_structured_data_validation.rs:143; crates/os-analyze/tests/tab_structured_data.rs:30; crates/os-analyze/tests/tab_structured_data.rs:132,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-184,crates/os-parse/tests/sd_extraction.rs:130; crates/os-analyze/tests/tab_structured_data.rs:83,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-185,crates/os-parse/tests/sd_extraction.rs:131; crates/os-analyze/tests/tab_structured_data.rs:84; crates/os-analyze/tests/tab_structured_data.rs:133,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-186,crates/os-parse/tests/sd_extraction.rs:103; crates/os-export/src/catalog/bulk_sd.rs:514; crates/os-analyze/tests/tab_structured_data.rs:85; crates/os-analyze/tests/tab_structured_data.rs:157,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-187,crates/os-parse/src/sd/validate/tests.rs:61; crates/os-parse/src/sd/validate/tests.rs:84; crates/os-parse/src/sd/validate/tests.rs:100; crates/os-parse/src/sd/validate/tests.rs:115,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-188,crates/os-parse/src/sd/validate/tests.rs:219; crates/os-parse/src/sd/validate/tests.rs:326; crates/os-parse/src/sd/validate/tests.rs:348; crates/os-parse/src/sd/validate/tests.rs:371,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-211,crates/os-analyze/tests/tab_sitemaps.rs:130; crates/os-analyze/tests/tab_sitemaps.rs:174; crates/os-analyze/tests/tab_sitemaps.rs:294; crates/os-analyze/tests/tab_sitemaps_m2.rs:237,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-212,crates/os-analyze/tests/tab_sitemaps.rs:174,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-213,crates/os-analyze/tests/tab_sitemaps.rs:271; crates/os-analyze/tests/tab_sitemaps.rs:294,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-214,crates/os-analyze/tests/tab_sitemaps.rs:319; crates/os-analyze/tests/tab_sitemaps.rs:374; crates/os-analyze/tests/tab_sitemaps.rs:449; crates/os-analyze/tests/tab_sitemaps.rs:655,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-215,crates/os-analyze/tests/tab_sitemaps.rs:402,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-216,crates/os-analyze/tests/tab_sitemaps_m2.rs:50; crates/os-analyze/tests/tab_sitemaps_m2.rs:191; crates/os-analyze/tests/tab_sitemaps_m2.rs:238,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-217,crates/os-analyze/tests/tab_sitemaps_m2.rs:80; crates/os-analyze/tests/tab_sitemaps_m2.rs:111,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-218,crates/os-parse/tests/sitemap_m2.rs:60; crates/os-parse/tests/sitemap_m2.rs:93; crates/os-analyze/tests/tab_sitemaps_m2.rs:143,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-231,crates/os-analyze/tests/tab_mobile.rs:74,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-232,crates/os-analyze/tests/tab_mobile.rs:143,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-233,crates/os-integrations/src/psi/mobile.rs:189; crates/os-analyze/tests/tab_mobile.rs:148,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-234,crates/os-analyze/tests/tab_mobile.rs:157,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-235,crates/os-integrations/src/psi/mobile.rs:190; crates/os-analyze/tests/tab_mobile.rs:177,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-236,crates/os-analyze/tests/tab_mobile.rs:190; crates/os-analyze/tests/tab_mobile.rs:350,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-237,crates/os-analyze/tests/tab_mobile.rs:210,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-251,crates/os-analyze/tests/issues_catalog.rs:64; crates/os-analyze/tests/tab_accessibility.rs:21; crates/os-analyze/tests/tab_accessibility.rs:139; crates/os-analyze/tests/filters_registry.rs:104,M2.md 6.1 / K2-14: nicht fuer verified
+TECH-252,crates/os-analyze/tests/issue_catalog_accessibility.rs:7; crates/os-analyze/tests/tab_accessibility.rs:226; crates/os-analyze/tests/filters_registry.rs:104; crates/os-render/src/axe/mod.rs:136,M2.md 6.1 / K2-14: nicht fuer verified
+ONPAGE-178,crates/os-analyze/tests/tab_images_m2.rs; crates/os-parse/tests/images_m2.rs,M2.md 6.1: Rendering nicht referenzfaehig
+ONPAGE-180,crates/os-analyze/tests/tab_images_m2.rs; crates/os-parse/tests/images_m2.rs,M2.md 6.1: Rendering nicht referenzfaehig
