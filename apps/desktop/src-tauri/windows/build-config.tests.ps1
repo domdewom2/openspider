@@ -7,7 +7,7 @@ Push-Location $root
 try {
     $previous = -1
     foreach ($case in @(
-        @('1.0.0-beta.1', '1.0.1', 1), @('1.0.0-beta.499', '1.0.499', 499),
+        @('1.0.0-beta.0', '1.0.0', 0), @('1.0.0-beta.1', '1.0.1', 1), @('1.0.0-beta.499', '1.0.499', 499),
         @('1.0.0-rc.1', '1.0.500', 500), @('1.0.0-rc.499', '1.0.998', 998),
         @('1.0.0', '1.0.999', 999), @('1.0.1-beta.1', '1.0.1001', 1001)
     )) {
@@ -20,7 +20,7 @@ try {
         if ($config.plugins.updater.endpoints[0] -notlike '*/latest-beta.json') { throw 'Beta-URL falsch' }
         $previous = $case[2]
     }
-    foreach ($version in @('256.0.0', '1.256.0', '1.0.65', '1.0.0-beta.0', '1.0.0-beta.500', '1.0.0-rc.500', '1.0.0-other.1')) {
+    foreach ($version in @('256.0.0', '1.256.0', '1.0.65', '1.0.0-rc.0', '1.0.0-beta.500', '1.0.0-rc.500', '1.0.0-other.1')) {
         @{ version = $version } | ConvertTo-Json | Set-Content apps/desktop/src-tauri/tauri.conf.json
         $rejected = $false
         try { & $script -Output config.json } catch { $rejected = $true }
