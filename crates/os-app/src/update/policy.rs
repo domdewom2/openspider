@@ -39,7 +39,7 @@ pub struct UpdateContext {
 }
 impl Default for UpdateContext {
     fn default() -> Self {
-        let beta = option_env!("OPENSPIDER_UPDATE_CHANNEL") == Some("beta");
+        let beta = option_env!("OPENSPIDER_UPDATE_BETA") == Some("1");
         Self {
             endpoint: if beta { BETA_ENDPOINT } else { STABLE_ENDPOINT }.into(),
             beta,
@@ -50,9 +50,7 @@ impl Default for UpdateContext {
             }
             .into(),
             arch: std::env::consts::ARCH.into(),
-            installer: option_env!("OPENSPIDER_UPDATE_INSTALLER")
-                .map(str::to_owned)
-                .or_else(|| cfg!(windows).then(|| "nsis".into())),
+            installer: cfg!(windows).then(|| "nsis".into()),
             pubkey: option_env!("OPENSPIDER_UPDATER_PUBKEY")
                 .unwrap_or("")
                 .into(),

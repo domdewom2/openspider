@@ -36,6 +36,18 @@ pub async fn remember(app: &App) -> Result<(), String> {
         .map_err(|_| "Update-Wiederherstellung fehlgeschlagen")?
         .map_err(str::to_owned)
 }
+pub async fn forget(app: &App) {
+    let file = ticket(app);
+    let result = app
+        .handle()
+        .spawn_blocking(move || std::fs::remove_file(file))
+        .await;
+    match result {
+        Ok(Ok(())) => {}
+        Ok(Err(error)) if error.kind() == std::io::ErrorKind::NotFound => {}
+        _ => tracing::warn!("Update-Wiederöffnungs-Ticket konnte nicht entfernt werden"),
+    }
+}
 pub async fn reopen(app: &App) {
     let file = ticket(app);
     let path = app

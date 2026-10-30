@@ -52,7 +52,21 @@ pub async fn on_quit(app: &App) -> bool {
     if when != Some(InstallWhen::OnQuit) {
         return true;
     }
-    matches!(execute(app, false).await, UpdateState::Idle)
+    match execute(app, false).await {
+        UpdateState::Failed(_) => {
+            app.ext::<Pending>()
+                .when
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .take();
+            tracing::warn!(
+                "Update-Installation beim Beenden fehlgeschlagen; Anwendung wird beendet"
+            );
+            true
+        }
+        UpdateState::Idle => true,
+        _ => false,
+    }
 }
 pub async fn execute(app: &App, restart: bool) -> UpdateState {
     let service = app.ext::<crate::commands::update::UpdateService>();
@@ -86,6 +100,7 @@ pub async fn execute(app: &App, restart: bool) -> UpdateState {
         .unwrap_or_else(|p| p.into_inner())
         .clone();
     let (Some((manifest, bytes)), Some(backend)) = (artifact, backend) else {
+        super::pending::forget(app).await;
         return state(
             app,
             UpdateState::Failed("Kein vollständiges Update vorhanden".into()),
@@ -137,10 +152,13 @@ pub async fn execute(app: &App, restart: bool) -> UpdateState {
                 .take();
             state(app, UpdateState::Idle)
         }
-        Err(_) => state(
-            app,
-            UpdateState::Failed("Update-Installation fehlgeschlagen".into()),
-        ),
+        Err(_) => {
+            super::pending::forget(app).await;
+            state(
+                app,
+                UpdateState::Failed("Update-Installation fehlgeschlagen".into()),
+            )
+        }
     }
 }
 pub fn init(app: &App) {

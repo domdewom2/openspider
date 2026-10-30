@@ -13,6 +13,7 @@ use std::sync::{
 };
 struct Backend {
     interrupted: bool,
+    install_fails: bool,
     installs: Arc<AtomicUsize>,
 }
 impl UpdateBackend for Backend {
@@ -39,10 +40,15 @@ impl UpdateBackend for Backend {
         _: bool,
     ) -> futures_util::future::BoxFuture<'static, Result<(), String>> {
         let installs = self.installs.clone();
+        let install_fails = self.install_fails;
         Box::pin(async move {
             assert_eq!(bytes, b"verified mock artifact");
             installs.fetch_add(1, Ordering::SeqCst);
-            Ok(())
+            if install_fails {
+                Err("mock install failure".into())
+            } else {
+                Ok(())
+            }
         })
     }
 }
@@ -54,6 +60,7 @@ fn setup(interrupted: bool) -> (tempfile::TempDir, App, Arc<AtomicUsize>) {
         &app,
         Arc::new(Backend {
             interrupted,
+            install_fails: false,
             installs: installs.clone(),
         }),
     );
@@ -270,4 +277,51 @@ async fn install_now_waits_for_active_writers_without_losing_the_request() {
     .await
     .unwrap();
     assert_eq!(installs.load(Ordering::SeqCst), 1);
+}
+
+// spec: OUT-251
+#[tokio::test]
+async fn install_error_does_not_block_quit_or_leave_reopen_ticket() {
+    let (temp, app, installs) = setup(false);
+    let path = temp.path().join("failed-update.ospider");
+    drop(common::create(&path, common::cfg()));
+    common::open(&app, &path).await;
+    app.sessions()
+        .update_state(&common::key(&app), os_model::CrawlState::Paused);
+    update::download::set_backend(
+        &app,
+        Arc::new(Backend {
+            interrupted: false,
+            install_fails: true,
+            installs: installs.clone(),
+        }),
+    );
+    update::download::download(&app);
+    assert!(matches!(finish(&app).await, UpdateState::Ready(_)));
+    update::install::install(&app, InstallWhen::OnQuit).await;
+    assert!(
+        update::install::on_quit(&app).await,
+        "Install-Fehler blockiert Quit nicht"
+    );
+    assert!(app
+        .ext::<update::pending::Pending>()
+        .when
+        .lock()
+        .unwrap()
+        .is_none());
+    assert_eq!(installs.load(Ordering::SeqCst), 1);
+    let state = app.ext::<UpdateService>().state.lock().unwrap().clone();
+    assert!(matches!(state, UpdateState::Failed(_)), "{state:?}");
+    assert!(!app
+        .config()
+        .paths
+        .settings
+        .join("update-reopen.json")
+        .exists());
+    assert!(update::install::on_quit(&app).await);
+    assert_eq!(installs.load(Ordering::SeqCst), 1);
+    drop(app);
+    let restarted = App::new(AppConfig::new(temp.path())).unwrap();
+    update::pending::reopen(&restarted).await;
+    assert!(restarted.sessions().current(&common::window()).is_none());
 }
