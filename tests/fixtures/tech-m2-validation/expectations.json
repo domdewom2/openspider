@@ -79,6 +79,7 @@
   {
     "file": "no-head.html",
     "codes": [
+      "head-not-first",
       "missing-head"
     ],
     "html": 1,
@@ -198,6 +199,7 @@
   {
     "file": "no-head-or-body.html",
     "codes": [
+      "head-not-first",
       "missing-body",
       "missing-head"
     ],

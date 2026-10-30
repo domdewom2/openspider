@@ -123,7 +123,9 @@ pub(crate) fn multi_column(
 pub(crate) fn canonical_link_element_column() -> ColumnDef {
     multi_column(
         "Canonical Link Element",
-        "SELECT COALESCE(c.resolved, c.raw) FROM canonicals c \
+        "SELECT CASE WHEN instr(COALESCE(c.resolved, c.raw), '#') > 0 \
+         THEN substr(COALESCE(c.resolved, c.raw), 1, instr(COALESCE(c.resolved, c.raw), '#') - 1) \
+         ELSE COALESCE(c.resolved, c.raw) END FROM canonicals c \
          WHERE c.url_id = ?1 AND c.source = 'html' ORDER BY c.position",
         ColumnKind::Url,
     )
@@ -133,7 +135,9 @@ pub(crate) fn canonical_link_element_column() -> ColumnDef {
 pub(crate) fn http_canonical_column() -> ColumnDef {
     multi_column(
         "HTTP Canonical",
-        "SELECT COALESCE(c.resolved, c.raw) FROM canonicals c \
+        "SELECT CASE WHEN instr(COALESCE(c.resolved, c.raw), '#') > 0 \
+         THEN substr(COALESCE(c.resolved, c.raw), 1, instr(COALESCE(c.resolved, c.raw), '#') - 1) \
+         ELSE COALESCE(c.resolved, c.raw) END FROM canonicals c \
          WHERE c.url_id = ?1 AND c.source = 'http' ORDER BY c.position",
         ColumnKind::Url,
     )
@@ -219,7 +223,11 @@ pub fn tab() -> TabDef {
                 true,
             ),
             // [OS-Erweiterung]: die maßgebliche Canonical-URL nach TECH-017.
-            extension_column("Canonical URL", "u.canonical_url", ColumnKind::Url),
+            extension_column(
+                "Canonical URL",
+                "CASE WHEN instr(u.canonical_url, '#') > 0 THEN substr(u.canonical_url, 1, instr(u.canonical_url, '#') - 1) ELSE u.canonical_url END",
+                ColumnKind::Url,
+            ),
         ],
         filters: vec![
             filter("All", "1", false),
@@ -284,8 +292,8 @@ pub fn tab() -> TabDef {
                 }],
                 ..filter(
                     "Outside <head>",
-                    "EXISTS (SELECT 1 FROM canonicals c WHERE c.url_id = u.id
-                    AND c.source = 'html' AND c.in_head = 0)",
+                    "EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id
+                    AND e.key = 'canonical.outside_head' AND e.v_int = 1)",
                     false,
                 )
             },

@@ -8,8 +8,7 @@
 //!
 //! # Grundmenge (TECH-071)
 //!
-//! Interne HTML-Seiten mit Status 2xx (K-56, vorher 200), interne URLs mit HTTP- oder Sitemap-hreflang und
-//! gecrawlte interne hreflang-Ziele. Der Filter „Non-200 Hreflang URLs“ behält seine wörtliche Bedingung. Ist „hreflang speichern“ aus (`spider.hreflang.store`), ist der Tab leer (OS-Verhalten:
+//! Interne HTML-Seiten mit Status 2xx (SQ-03). Andere Ziele werden nur über TECH-074 bewertet. Der Filter „Non-200 Hreflang URLs“ behält seine wörtliche Bedingung. Ist „hreflang speichern“ aus (`spider.hreflang.store`), ist der Tab leer (OS-Verhalten:
 //! „Store an, Crawl aus“ befüllt ihn bereits; „Store aus“ lässt ihn und alle Filter bei 0).
 //!
 //! # Live-Filter (TECH-005)
@@ -35,11 +34,7 @@ use crate::defs::{
 };
 
 /// Grundmenge: interne Seiten mit hreflang-Bezug; `:store` ist `spider.hreflang.store`.
-const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 AND :store = 1 AND (:skip = 0 OR NOT EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key IN ('hreflang.truncated', 'hreflang.truncated_sitemap') AND e.v_int > 0)) AND (\
-    (u.content_class = 'HTML' AND u.status_code BETWEEN 200 AND 299) \
-    OR EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id AND h.source <> 'html') \
-    OR (u.state = 'done' AND EXISTS \
-        (SELECT 1 FROM hreflang h WHERE h.target_id = u.id AND h.url_id <> u.id)))";
+const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 AND :store = 1 AND (:skip = 0 OR NOT EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key IN ('hreflang.truncated', 'hreflang.truncated_sitemap') AND e.v_int > 0)) AND u.status_code BETWEEN 200 AND 299 AND (u.content_class = 'HTML' OR EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id AND h.source = 'http'))";
 
 /// Die Seite hat mindestens eine Annotation (aus beliebiger Quelle).
 const HAS_ANNOTATION: &str = "EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id)";
@@ -52,12 +47,11 @@ const NON_200: &str = "q.id <> u.id AND q.state = 'done' AND COALESCE(q.status_c
 const MISSING_RETURN: &str =
     "NOT EXISTS (SELECT 1 FROM hreflang r WHERE r.url_id = q.id AND r.target_id = u.id)";
 const INCONSISTENT: &str = "EXISTS (SELECT 1 FROM hreflang self JOIN hreflang r ON r.url_id = q.id AND r.target_id = u.id \
-    WHERE self.url_id = u.id AND self.target_id = u.id AND self.code_norm <> r.code_norm)";
+    WHERE self.url_id = u.id AND self.target_id = u.id AND self.code_norm <> 'x-default' AND r.code_norm <> 'x-default' AND self.code_norm <> r.code_norm)";
 const NON_CANONICAL: &str =
     "q.id <> u.id AND q.state = 'done' AND q.status_code = 200 AND q.content_class = 'HTML' \
     AND q.canonical_count > 0 AND q.canonical_self = 0";
-const NOINDEX: &str =
-    "q.id <> u.id AND q.state = 'done' AND q.status_code = 200 AND q.effective_index = 0";
+const NOINDEX: &str = "q.state = 'done' AND q.status_code = 200 AND q.effective_index = 0";
 pub(crate) const FLAG_UNLINKED: &str = "hreflang_unlinked";
 const UNLINKED: &str = "q.id <> u.id AND EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = q.id AND f.flag = 'hreflang_unlinked')";
 
@@ -74,6 +68,14 @@ fn relationship_predicate(filter: &str) -> String {
 }
 
 fn relationship_filter(id: &'static str) -> FilterDef {
+    // K2-93/TECH-078: the tab lists the canonicalised alternate Q. Reports retain P -> Q.
+    if id == "Non-Canonical Return Links" {
+        return filter(id, "u.state = 'done' AND u.status_code = 200 AND u.content_class = 'HTML' \
+            AND u.canonical_count > 0 AND u.canonical_self = 0 \
+            AND EXISTS (SELECT 1 FROM hreflang h JOIN urls p ON p.id = h.url_id \
+                WHERE h.target_id = u.id AND p.id <> u.id AND p.is_internal = 1 \
+                AND p.in_tables = 1 AND p.status_code BETWEEN 200 AND 299 AND p.content_class = 'HTML')");
+    }
     let mut def = filter(id, intern(&format!(
         "EXISTS (SELECT 1 FROM hreflang h JOIN urls q ON q.id = h.target_id WHERE h.url_id = u.id AND ({}))",
         relationship_predicate(id)
@@ -251,7 +253,7 @@ pub fn tab() -> TabDef {
 }
 
 fn outside_filter() -> FilterDef {
-    let mut def = filter("Outside <head>", "EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id AND h.source = 'html' AND h.in_head = 0) AND EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key = 'validation.checked' AND e.v_int = 1)");
+    let mut def = filter("Outside <head>", "EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key = 'hreflang.outside_head' AND e.v_int = 1) AND EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key = 'validation.checked' AND e.v_int = 1)");
     def.requires.push(Requirement::Coverage {
         config: "advanced.html_validation",
         marker: "validation.checked",

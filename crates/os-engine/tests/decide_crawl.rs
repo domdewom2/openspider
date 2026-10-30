@@ -462,7 +462,6 @@ async fn canonical_targets_are_fetched_by_default() {
         "/nur-header-canonical",
         "/nur-canonical-a",
         "/nur-canonical-b",
-        "/nur-body-canonical",
         "/nur-canonical-gross",
         "/nur-canonical-multi",
     ] {
@@ -489,15 +488,18 @@ async fn canonical_targets_are_fetched_by_default() {
     assert_eq!(canon("/c3"), 2);
     assert_eq!(canon("/c5"), 1, "rel=\"Canonical\" in Großbuchstaben");
     assert_eq!(canon("/c6"), 1, "rel=\"canonical nofollow\"");
+    // SQ-04: Body-Canonicals hinterlassen nur den Problembeleg.
+    assert_eq!(hits(&fx, "/nur-body-canonical"), 0);
+    assert_eq!(canon("/c4"), 0);
     assert_eq!(
         count(
             &fx,
             &format!(
-                "SELECT in_head FROM canonicals WHERE url_id = {}",
+                "SELECT v_int FROM url_ext WHERE url_id = {} AND key = 'canonical.outside_head'",
                 id("/c4")
             )
         ),
-        0
+        1
     );
 }
 
@@ -513,7 +515,6 @@ async fn canonical_crawl_off_keeps_the_column_but_requests_nothing() {
         "/nur-canonical",
         "/nur-header-canonical",
         "/nur-canonical-a",
-        "/nur-body-canonical",
     ] {
         assert_eq!(hits(&fx, path), 0, "{path}");
         let row = url_row(&fx, &fx.site.url(path)).expect("Canonical-Ziel bleibt gespeichert");

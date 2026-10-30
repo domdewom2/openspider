@@ -249,6 +249,17 @@ pub fn extract(doc: &Document, tokens: &[String]) -> Vec<Directive> {
     out
 }
 
+/// Frühestes Ablaufdatum eines gespeicherten, wirksamen Direktiven-Rohwerts (TECH-063).
+/// Der Aufrufer prüft `applies`; Kommas innerhalb von Datumsangaben bleiben erhalten.
+pub fn unavailable_after(raw: &str) -> Option<os_model::Timestamp> {
+    parse_value(raw, true)
+        .iter()
+        .flat_map(|g| &g.tokens)
+        .filter(|t| t.starts_with("unavailable_after:"))
+        .filter_map(|t| parse_unavailable_after(t))
+        .min()
+}
+
 /// Datum einer `unavailable_after`-Angabe (TECH-063), ohne zeitabhängige Wirkung.
 /// Akzeptiert ISO 8601 sowie RFC 822/1123 und RFC 850. Ungültige Angaben bleiben
 /// als Rohwert erhalten; der Aufrufer bekommt dann `None`.

@@ -59,8 +59,8 @@ async fn population_columns_and_live_filters_match_source_fixture() {
             "Indexability Status"
         ]
     );
-    assert_eq!(all.total, 27);
-    for excluded in [
+    assert_eq!(all.total, 34);
+    for included in [
         "/created.html",
         "/error.html",
         "/big.png",
@@ -68,8 +68,8 @@ async fn population_columns_and_live_filters_match_source_fixture() {
         "/big.css",
     ] {
         assert!(
-            !paths(&fx.file, &cfg, "All").contains(&excluded.to_owned()),
-            "{excluded}"
+            paths(&fx.file, &cfg, "All").contains(&included.to_owned()),
+            "{included}"
         );
     }
     let golden: serde_json::Value = serde_json::from_str(include_str!(
@@ -154,7 +154,7 @@ async fn disabled_then_enabled_validation_needs_recrawl_and_keeps_metadata() {
         FilterState::NeedsRecrawl
     );
     assert_eq!(view(&fx.file, &config(true), "Missing <head> Tag").total, 0);
-    assert_eq!(view(&fx.file, &cfg, "All").total, 27);
+    assert_eq!(view(&fx.file, &cfg, "All").total, 34);
     let on = crawl(true).await;
     let metadata = |file: &os_store::CrawlFile| {
         file.conn().prepare("SELECT address,title_1,effective_index,effective_follow,canonical_count,hreflang_count,indexability,indexability_status FROM urls WHERE content_class='HTML' ORDER BY address").unwrap()

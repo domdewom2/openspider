@@ -152,11 +152,11 @@ fn invalid_head_elements_and_noscript_details_are_recorded() {
 
 // spec: TECH-283
 #[test]
-fn content_before_head_excludes_missing_head() {
+fn content_before_head_includes_missing_head() {
     assert!(has("p-before-head.html", "head-not-first"));
     assert!(has("img-before-head.html", "head-not-first"));
     assert!(has("text-before-head.html", "head-not-first"));
-    assert!(!has("no-head.html", "head-not-first"));
+    assert!(has("no-head.html", "head-not-first"));
 }
 // spec: TECH-284
 #[test]

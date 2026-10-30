@@ -61,7 +61,7 @@ async fn directive_filters_match_fixture_goldens_including_invalid_and_agent_val
             |r| r.get(0),
         )
         .unwrap();
-    assert_eq!(status, "Indexable");
+    assert_eq!(status, "Non-Indexable");
 }
 
 // spec: TECH-008 [M2]

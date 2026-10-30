@@ -1208,9 +1208,11 @@ fn synth_link_at(
 }
 
 /// Maßgebliche Canonical-URL (TECH-017): erster gültiger HTTP-Header-Eintrag, sonst erstes gültiges
-/// HTML-Element im Head, sonst erstes gültiges HTML-Element außerhalb des Heads.
+/// HTML-Element im Head; problematische Annotationen bleiben unberücksichtigt.
 pub(crate) fn pick_canonical(canonicals: &[os_model::CanonicalRef]) -> Option<usize> {
-    let valid = |c: &os_model::CanonicalRef| c.resolved.is_some();
+    let valid = |c: &os_model::CanonicalRef| {
+        c.resolved.is_some() && !c.invalid_attribute && (c.source != HintSource::Html || c.in_head)
+    };
     canonicals
         .iter()
         .position(|c| c.source == HintSource::Http && valid(c))
@@ -1218,11 +1220,6 @@ pub(crate) fn pick_canonical(canonicals: &[os_model::CanonicalRef]) -> Option<us
             canonicals
                 .iter()
                 .position(|c| c.source == HintSource::Html && c.in_head && valid(c))
-        })
-        .or_else(|| {
-            canonicals
-                .iter()
-                .position(|c| c.source == HintSource::Html && !c.in_head && valid(c))
         })
 }
 
@@ -1366,7 +1363,7 @@ async fn assemble<F: Fetch>(
         map.links.push(i);
     }
     // Canonical, hreflang, Paginierung (Dokument und Header)
-    let (canonicals, hreflang, pagination, directives) = match (&parsed, &hints) {
+    let (mut canonicals, mut hreflang, pagination, directives) = match (&parsed, &hints) {
         (Some(p), _) => (
             p.canonicals.clone(),
             p.hreflang.clone(),
@@ -1381,6 +1378,13 @@ async fn assemble<F: Fetch>(
         ),
         (None, None) => Default::default(),
     };
+    // SQ-04: Problembelege bleiben erhalten, wirksame Annotationen und Links nicht.
+    let canonical_problems = os_parse::canonical::annotation_facts(&canonicals);
+    let hreflang_outside = hreflang
+        .iter()
+        .any(|h| h.source == HintSource::Html && !h.in_head);
+    canonicals.retain(|c| !c.invalid_attribute && (c.source != HintSource::Html || c.in_head));
+    hreflang.retain(|h| h.source != HintSource::Html || h.in_head);
     for c in &canonicals {
         let lt = match c.source {
             HintSource::Http => LinkType::HttpCanonical,
@@ -1657,6 +1661,24 @@ async fn assemble<F: Fetch>(
         facts.redirect_target = redirect_id;
     }
     let mut batch = extra;
+    if cfg.spider.canonicals.store {
+        batch.ext.extend(
+            canonical_problems
+                .into_iter()
+                .map(|(key, value)| os_model::ExtWrite {
+                    url: item.id,
+                    key,
+                    value,
+                }),
+        );
+    }
+    if cfg.spider.hreflang.store && hreflang_outside {
+        batch.ext.push(os_model::ExtWrite {
+            url: item.id,
+            key: os_model::ExtKey::from_static("hreflang.outside_head"),
+            value: os_model::Value::Bool(true),
+        });
+    }
     let own = item.url.as_ref();
     let mut links: Vec<LinkRow> = Vec::new();
     let mut position = 0u32;
@@ -1933,14 +1955,22 @@ async fn assemble<F: Fetch>(
         }
         _ => None,
     };
-    let (indexability, indexability_status) = os_model::evaluate(&IndexabilityInput {
-        fetch: &facts,
-        page: page_facts.as_ref(),
-        page_url: own,
-        refresh: &refresh,
-        cfg,
-        same_url: os_url::eq_for_compare,
-    });
+    let unavailable_after = directives
+        .iter()
+        .filter(|d| d.applies)
+        .filter_map(|d| os_parse::directives::unavailable_after(&d.raw))
+        .min();
+    let (indexability, indexability_status) = os_model::indexability::evaluate_with_expiration(
+        &IndexabilityInput {
+            fetch: &facts,
+            page: page_facts.as_ref(),
+            page_url: own,
+            refresh: &refresh,
+            cfg,
+            same_url: os_url::eq_for_compare,
+        },
+        unavailable_after,
+    );
     let hidden = if cfg.advanced.respect_noindex && !eff_index {
         Some("noindex")
     } else if cfg.advanced.respect_canonical
@@ -2389,7 +2419,7 @@ mod tests {
 
     // spec: TECH-017
     #[test]
-    fn authoritative_canonical_prefers_header_then_head_then_body() {
+    fn authoritative_canonical_prefers_header_then_head_and_ignores_body() {
         let c = vec![
             canon(HintSource::Html, false, Some("https://s.test/body")),
             canon(HintSource::Html, true, Some("https://s.test/head")),
@@ -2397,7 +2427,7 @@ mod tests {
         ];
         assert_eq!(pick_canonical(&c), Some(2));
         assert_eq!(pick_canonical(&c[..2]), Some(1));
-        assert_eq!(pick_canonical(&c[..1]), Some(0));
+        assert_eq!(pick_canonical(&c[..1]), None);
         let invalid = vec![
             canon(HintSource::Http, true, None),
             canon(HintSource::Html, true, Some("https://s.test/ok")),

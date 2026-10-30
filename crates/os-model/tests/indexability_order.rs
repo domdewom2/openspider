@@ -241,7 +241,7 @@ fn the_header_refresh_is_the_one_that_counts() {
     // Wie beim Abruf: zuerst der Header, sonst das erste Meta-Element.
     let meta_other = refresh(RefreshSource::Meta, Some("https://site.test/x"));
     let header_self = refresh(RefreshSource::Header, Some(PAGE));
-    // der Selbst-Refresh wirkt nur mit der Option (K-57: Standard aus)
+    // SQ-05: Header-Selbst-Refresh ist unabhängig von der Meta-Option eine Weiterleitung.
     let mut cfg = CrawlConfig::default();
     cfg.advanced.respect_self_ref_meta_refresh = true;
     assert_eq!(
@@ -252,7 +252,7 @@ fn the_header_refresh_is_the_one_that_counts() {
             &cfg
         )
         .1,
-        Some(SelfReferencingMetaRefresh)
+        Some(Redirected)
     );
     let meta_self = refresh(RefreshSource::Meta, None);
     assert_eq!(

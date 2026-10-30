@@ -3,6 +3,7 @@
     "blocked-source",
     "broken",
     "canonicalised",
+    "created",
     "first",
     "first-unknown",
     "last",
@@ -28,6 +29,7 @@
   "First Page": [
     "blocked-source",
     "broken",
+    "created",
     "first",
     "first-unknown",
     "lead",
@@ -83,7 +85,10 @@
     "self"
   ],
   "Sequence Error": [
+    "blocked-source",
+    "broken",
     "canonicalised",
+    "created",
     "first-unknown",
     "lead",
     "loop-a",
@@ -94,8 +99,10 @@
     "orphan-source",
     "prev-a",
     "prev-b",
+    "redirect-source",
     "self",
     "seq-a",
-    "seq-b"
+    "seq-b",
+    "to-external"
   ]
 }

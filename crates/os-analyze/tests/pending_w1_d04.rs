@@ -18,15 +18,16 @@ fn paths(file: &os_store::CrawlFile, cfg: &CrawlConfig, base: &str, filter: &str
 }
 // spec: TECH-011 [M2]
 #[tokio::test]
-async fn respect_canonical_hides_sources_but_preserves_crawling_and_the_canonicalised_filter() {
+async fn invalid_attribute_does_not_hide_sources_with_respect_canonical() {
     let mut cfg = CrawlConfig::default();
     cfg.advanced.respect_canonical = true;
     let crawl = os_engine::testing::crawl_fixture("tech-m2-canonicals", cfg.clone()).await;
     let all = paths(&crawl.file, &cfg, &crawl.site.base_url(), "All");
-    assert!(!all.contains(&"/source".into()));
+    // SQ-04: /source carries media=""; it has no effective canonical.
+    assert!(all.contains(&"/source".into()));
     assert!(all.contains(&"/child".into()));
     assert!(
-        paths(&crawl.file, &cfg, &crawl.site.base_url(), "Canonicalised")
+        !paths(&crawl.file, &cfg, &crawl.site.base_url(), "Canonicalised")
             .contains(&"/source".into())
     );
     assert!(crawl
