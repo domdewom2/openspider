@@ -64,9 +64,9 @@ class BundleTests(unittest.TestCase):
         tools = pathlib.Path(self.temp.name) / 'tools'
         tools.mkdir()
         commands = {
-            'uname': 'echo Darwin',
+            'uname': 'case "$1" in -s) echo Darwin;; -m) echo "$TEST_HOST_ARCH";; *) exit 2;; esac',
             'file': 'case "$*" in *MacOS*|*helper.bin*) echo Mach-O;; *) echo data;; esac',
-            'lipo': 'echo "x86_64 arm64"',
+            'lipo': 'echo "$TEST_BINARY_ARCHS"',
             'codesign': r"""
 case "$*" in
   *--entitlements*)
@@ -92,18 +92,41 @@ esac
             path.chmod(0o755)
         env = dict(os.environ, PATH=str(tools) + os.pathsep + os.environ['PATH'],
                    MACOS_EXPECTED_ARCH='universal')
-        result = subprocess.run(['bash', str(CHECK), str(self.app)], env=env,
-                                capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        for broken in ('unsigned', 'adhoc', 'runtime', 'timestamp', 'entitlements'):
-            with self.subTest(broken=broken):
-                result = subprocess.run(['bash', str(CHECK), str(self.app)],
-                                        env=dict(env, BROKEN=broken), capture_output=True, text=True)
-                self.assertNotEqual(result.returncode, 0, result.stdout)
-        (tools / 'lipo').write_text('#!/bin/sh\necho arm64\n')
-        result = subprocess.run(['bash', str(CHECK), str(self.app)], env=env,
-                                capture_output=True, text=True)
-        self.assertNotEqual(result.returncode, 0, 'Universal must reject a missing Intel slice')
+        # The host never determines the slices required by MACOS_EXPECTED_ARCH.
+        # Run the same cases with Intel/Apple Silicon hosts and both lipo orders.
+        for host in ('arm64', 'x86_64'):
+            env.update(TEST_HOST_ARCH=host, TEST_BINARY_ARCHS='x86_64 arm64')
+            for broken in ('', 'unsigned', 'adhoc', 'runtime', 'timestamp', 'entitlements'):
+                with self.subTest(host=host, broken=broken):
+                    result = subprocess.run(['bash', str(CHECK), str(self.app)],
+                                            env=dict(env, BROKEN=broken), capture_output=True, text=True)
+                    if broken:
+                        self.assertNotEqual(result.returncode, 0, result.stdout)
+                    else:
+                        self.assertEqual(result.returncode, 0, result.stderr)
+            for expected, slices, valid in (
+                    ('universal', 'x86_64 arm64', True),
+                    ('universal', 'arm64 x86_64', True),
+                    ('universal', 'arm64', False),
+                    ('universal', 'x86_64', False),
+                    ('universal', '', False),
+                    ('universal', 'arm64 x86_64 i386', False),
+                    ('aarch64', 'arm64', True),
+                    ('aarch64', 'x86_64', False),
+                    ('aarch64', 'x86_64 arm64', False),
+                    ('x86_64', 'x86_64', True),
+                    ('x86_64', 'arm64', False),
+                    ('x86_64', 'x86_64 arm64', False)):
+                with self.subTest(host=host, expected=expected, slices=slices):
+                    result = subprocess.run(
+                        ['bash', str(CHECK), str(self.app)],
+                        env=dict(env, MACOS_EXPECTED_ARCH=expected, TEST_BINARY_ARCHS=slices,
+                                 BROKEN=''), capture_output=True, text=True)
+                    if valid:
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                    else:
+                        self.assertNotEqual(result.returncode, 0, result.stdout)
+                        self.assertIn('Architecture mismatch:', result.stderr)
 
 
 if __name__ == '__main__':
