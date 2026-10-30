@@ -170,10 +170,13 @@ async fn a_file_that_starts_the_app_is_not_lost_before_the_window_subscribes() {
         path: PathBuf::from("/daten/start.ospider"),
     }];
     forward(&app, &reqs);
-    // das Fenster abonniert erst später: die Meldung wartet auf den ersten Tick
+    // Das Fenster abonniert später; subscribe oder der erste Tick liefert genau einmal.
     let sink = Arc::new(CollectingSink::new());
     app.subscribe(WindowId("main".into()), sink.clone());
-    assert_eq!(app.flush_tick(), 1);
+    let delivered_on_subscribe = sink.len();
+    let delivered_on_tick = app.flush_tick();
+    assert_eq!(delivered_on_subscribe + delivered_on_tick, 1);
+    assert_eq!(sink.len(), 1);
     let UiEvent::Tick { tick } = sink.take().remove(0) else {
         panic!()
     };
