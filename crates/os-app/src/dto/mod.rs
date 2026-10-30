@@ -69,6 +69,7 @@ fn export_all_with(cfg: &ts_rs::Config) -> Result<(), ts_rs::ExportError> {
         }};
     }
     export_list!(
+        UpdateSettingsDto,
         DisableReason,
         AvailableUpdate,
         PendingInstall,
@@ -444,6 +445,7 @@ fn remove_generated(dir: &Path) -> std::io::Result<()> {
 
 /// Namen aller exportierten Wurzeltypen in Deklarationsreihenfolge der Module (Test `dto_exports`).
 pub const TYPE_NAMES: &[&str] = &[
+    "UpdateSettingsDto",
     "DisableReason",
     "AvailableUpdate",
     "PendingInstall",

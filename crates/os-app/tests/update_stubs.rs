@@ -45,5 +45,8 @@ async fn update_scaffold_is_fail_closed() {
             .await
             .unwrap_err();
         assert_eq!(error.code, ErrorCode::Unsupported, "{name}");
+        assert_eq!(error.message_key, "err-not-implemented");
+        assert_eq!(error.args["command"], name);
+        assert!(error.args["owner"].as_str().unwrap().starts_with("M3-U0"));
     }
 }

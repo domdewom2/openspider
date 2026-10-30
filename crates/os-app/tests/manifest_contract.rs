@@ -284,7 +284,7 @@ fn domains_are_the_documented_ones() {
     let allowed: BTreeSet<&str> = [
         "app", "events", "settings", "uistate", "diag", "crawl", "analysis", "catalog", "view",
         "search", "op", "detail", "sidebar", "config", "crawls", "projects", "export", "compare",
-        "viz", "mcp", "api", "tasks", "segment", "auth", "profile", "mail",
+        "viz", "mcp", "api", "tasks", "segment", "auth", "profile", "mail", "update",
     ]
     .into_iter()
     .collect();

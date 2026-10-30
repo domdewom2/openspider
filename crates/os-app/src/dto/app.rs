@@ -202,6 +202,8 @@ pub struct AppSettingsDto {
     pub restart_required: Vec<String>,
     /// Einstellungen für die Protokollierung.
     pub logging: LoggingSettingsDto,
+    /// App-weite Update-Einstellungen (OUT-250).
+    pub updates: super::update::UpdateSettingsDto,
 }
 
 /// Argument von `settings.set`: JSON-Merge-Patch (RFC 7396) über `AppSettingsDto` in camelCase; `null` setzt einen

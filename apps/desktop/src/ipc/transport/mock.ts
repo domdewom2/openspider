@@ -19,6 +19,7 @@ export const DEFAULT_MOCK_SETTINGS: AppSettingsDto = {
   },
   accounts: { mailAccounts: [], notifyAccount: null, autoConnect: [] },
   mcp: { autostart: false },
+  updates: { check: true, lastCheck: null },
   logging: { level: "info", retentionDays: 30 },
   restartRequired: [],
 } as unknown as AppSettingsDto;

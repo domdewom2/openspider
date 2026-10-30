@@ -52,3 +52,11 @@ pub struct UpdateInstallArgs {
 pub struct UpdateSetAutoArgs {
     pub check: bool,
 }
+
+/// App-wide settings wire format; follows AppSettings.updates field for field.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateSettingsDto {
+    pub check: bool,
+    pub last_check: Option<String>,
+}

@@ -8,6 +8,7 @@ import type { McpSettingsDto } from "./McpSettingsDto";
 import type { NetworkSettingsDto } from "./NetworkSettingsDto";
 import type { RetentionSettingsDto } from "./RetentionSettingsDto";
 import type { StorageSettingsDto } from "./StorageSettingsDto";
+import type { UpdateSettingsDto } from "./UpdateSettingsDto";
 
 /**
  * Antwort von `settings.get` / `settings.set`: App-Einstellungen (`settings.toml`, OUT-222).
@@ -52,4 +53,8 @@ restartRequired: Array<string>,
 /**
  * Einstellungen für die Protokollierung.
  */
-logging: LoggingSettingsDto, };
+logging: LoggingSettingsDto, 
+/**
+ * App-weite Update-Einstellungen (OUT-250).
+ */
+updates: UpdateSettingsDto, };
