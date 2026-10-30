@@ -169,6 +169,7 @@ async fn target_without_fetch_is_not_crawled_and_has_no_status_code() {
             .unwrap_or_else(|| panic!("{ty} {dest}"));
         assert_eq!(r[6], "", "Status Code von {dest}");
         assert_eq!(r[7], "Not Crawled", "Status von {dest}");
+        assert_eq!(r[3], "0", "Ungecrawltes internes Ziel: Größe von {dest}");
     }
     // Fehlerziele behalten ihren Code und Text
     let r = find(&all, HOME, &u("/missing.html"), "Hyperlink");

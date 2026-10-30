@@ -108,7 +108,7 @@ const STATUS_CODE_SQL: &str =
 
 fn select_sql(where_sql: &str, order: LinkOrder) -> String {
     format!(
-        "SELECT l.link_type, s.address, COALESCE(t.address, l.target_raw), t.size_bytes, l.alt_text, \
+        "SELECT l.link_type, s.address, COALESCE(t.address, l.target_raw), CASE WHEN t.is_internal = 1 AND t.state <> 'done' THEN COALESCE(t.size_bytes, 0) ELSE t.size_bytes END, l.alt_text, \
                 l.anchor, {STATUS_CODE_SQL}, {STATUS_SQL}, \
                 CASE WHEN l.follow <> 0 THEN 'True' ELSE 'False' END, \
                 l.target_attr, l.rel, l.path_type, l.link_path, l.link_position, l.link_origin, l.uncrawlable_reason \
