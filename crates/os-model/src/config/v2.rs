@@ -296,7 +296,8 @@ impl Default for LinkPositionsConfig {
             rules: vec![
                 rule("Navigation", &["nav", "menu"]),
                 rule("Header", &["header"]),
-                rule("Sidebar", &["aside", "sidebar"]),
+                rule("Aside", &["aside"]),
+                rule("Sidebar", &["sidebar"]),
                 rule("Footer", &["footer"]),
                 rule("Content", &[]),
             ],

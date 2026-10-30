@@ -255,7 +255,7 @@ async fn link_position_follows_the_enclosing_element() {
     let pos = |dest: &str| find(&all, HOME, &u(dest), "Hyperlink")[13].clone();
     assert_eq!(pos("/nav.html"), "Navigation");
     assert_eq!(pos("/header.html"), "Header");
-    assert_eq!(pos("/aside.html"), "Sidebar");
+    assert_eq!(pos("/aside.html"), "Aside");
     assert_eq!(pos("/footer.html"), "Footer");
     assert_eq!(pos("/dup.html"), "Content");
     // Link Path: absoluter XPath mit Positionsindizes in jedem Schritt

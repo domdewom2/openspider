@@ -164,20 +164,20 @@ describe("Fachseiten against the configuration fixture", () => {
     expect(within(content).getByRole("button", { name: "Move up" })).toBeDisabled();
     fireEvent.click(within(d).getByRole("button", { name: "Add position rule" }));
     fireEvent.click(within(d).getByRole("button", { name: "Reset to defaults" }));
-    expect(within(d).getAllByRole("group")).toHaveLength(5);
+    expect(within(d).getAllByRole("group")).toHaveLength(6);
   });
   // spec: INTEG-080
   // spec: INTEG-082
   it("inserts a custom link position before Content and saves rule priority", async () => {
     const d = await open("link_positions"); fireEvent.click(within(d).getByRole("button", { name: "Add position rule" }));
-    const group = within(d).getAllByRole("group")[4]!;
+    const group = within(d).getAllByRole("group")[5]!;
     change(within(group).getByRole("textbox", { name: "Position" }), "Breadcrumb");
     change(within(group).getByRole("textbox", { name: "Substrings (one per line)" }), "breadcrumb");
     fireEvent.click(within(group).getByRole("button", { name: "Move up" })); await checked();
     await act(async () => { fireEvent.click(within(d).getByRole("button", { name: "OK" })); });
     expect(fake.setCalls).toHaveLength(1);
     const rules = getPath(fake.config, "link_positions.rules") as typeof DEFAULT_RULES;
-    expect(rules[3]).toEqual({ position: "Breadcrumb", contains: ["breadcrumb"] }); expect(rules.at(-1)?.position).toBe("Content");
+    expect(rules[4]).toEqual({ position: "Breadcrumb", contains: ["breadcrumb"] }); expect(rules.at(-1)?.position).toBe("Content");
   });
   // spec: CRAWL-134
   it("round trips config segments with all operators and converts inclusive numeric rules for previews", () => {

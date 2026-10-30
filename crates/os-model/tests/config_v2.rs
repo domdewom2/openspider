@@ -97,16 +97,24 @@ fn http_defaults_follow_the_spec() {
 
 // spec: INTEG-081
 #[test]
-fn link_position_defaults_are_the_five_standard_rules_in_order() {
+fn link_position_defaults_are_the_six_standard_rules_in_order() {
     let rules = LinkPositionsConfig::default().rules;
     let names: Vec<_> = rules.iter().map(|r| r.position.as_str()).collect();
     assert_eq!(
         names,
-        ["Navigation", "Header", "Sidebar", "Footer", "Content"]
+        [
+            "Navigation",
+            "Header",
+            "Aside",
+            "Sidebar",
+            "Footer",
+            "Content"
+        ]
     );
     assert_eq!(rules[0].contains, ["nav", "menu"]);
-    assert_eq!(rules[2].contains, ["aside", "sidebar"]);
-    assert!(rules[4].contains.is_empty(), "Content ist die Auffangregel");
+    assert_eq!(rules[2].contains, ["aside"]);
+    assert_eq!(rules[3].contains, ["sidebar"]);
+    assert!(rules[5].contains.is_empty(), "Content ist die Auffangregel");
 }
 
 // spec: OUT-121, OUT-123, OUT-124, OUT-125, OUT-126, OUT-128

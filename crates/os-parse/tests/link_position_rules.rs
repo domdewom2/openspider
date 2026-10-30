@@ -111,7 +111,8 @@ fn defaults_and_config_validation_enforce_the_final_content_rule() {
         vec![
             ("Navigation", vec!["nav", "menu"]),
             ("Header", vec!["header"]),
-            ("Sidebar", vec!["aside", "sidebar"]),
+            ("Aside", vec!["aside"]),
+            ("Sidebar", vec!["sidebar"]),
             ("Footer", vec!["footer"]),
             ("Content", vec![]),
         ]

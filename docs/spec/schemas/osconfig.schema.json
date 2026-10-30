@@ -1839,7 +1839,12 @@
             },
             {
               "contains": [
-                "aside",
+                "aside"
+              ],
+              "position": "Aside"
+            },
+            {
+              "contains": [
                 "sidebar"
               ],
               "position": "Sidebar"
@@ -3024,6 +3029,11 @@
           },
           "description": "CSS."
         },
+        "css_style_attributes": {
+          "default": false,
+          "description": "Style-Attribute ohne Rendering nach CSS-Verweisen durchsuchen (CRAWL-040).",
+          "type": "boolean"
+        },
         "external": {
           "$ref": "#/$defs/StoreCrawl",
           "default": {
@@ -3213,7 +3223,6 @@
       "properties": {
         "internal_search_params": {
           "default": [
-            "s",
             "q",
             "query",
             "search",
@@ -3839,7 +3848,12 @@
           },
           {
             "contains": [
-              "aside",
+              "aside"
+            ],
+            "position": "Aside"
+          },
+          {
+            "contains": [
               "sidebar"
             ],
             "position": "Sidebar"
@@ -4145,6 +4159,7 @@
           "crawl": true,
           "store": true
         },
+        "css_style_attributes": false,
         "external": {
           "crawl": true,
           "store": true
@@ -4213,7 +4228,6 @@
       "$ref": "#/$defs/UrlLimits",
       "default": {
         "internal_search_params": [
-          "s",
           "q",
           "query",
           "search",
