@@ -26,7 +26,7 @@ it("captures metadata into the draft, populates guard rules, and cancels a pendi
   core.handlers.set("op.cancel", () => undefined);
   render(<ConfigHost />); act(() => openConfig({ anchor: "auth.form" }));
   const dialog = await screen.findByRole("dialog", { name: "Crawl configuration" });
-  fireEvent.change(within(dialog).getByRole("textbox", { name: "Login URL" }), { target: { value: "https://FIXTURE.test/login" } });
+  fireEvent.change(await within(dialog).findByRole("textbox", { name: "Login URL" }), { target: { value: "https://FIXTURE.test/login" } });
   fireEvent.click(within(dialog).getByRole("button", { name: "Add and open browser" }));
   const login = await screen.findByRole("dialog", { name: "Form authentication" });
   fireEvent.click(within(login).getByRole("button", { name: "Capture session" }));
