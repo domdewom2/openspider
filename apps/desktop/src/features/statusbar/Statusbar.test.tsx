@@ -115,3 +115,20 @@ it("shows opening progress and a concrete failure reason from the real command n
   expect(screen.queryByTestId("crawl-opening")).toBeNull();
   expect(screen.getByTestId("crawl-open-error")).toHaveTextContent("file is not a database");
 });
+
+// spec: UI-124
+// spec: CRAWL-126 [M2]
+it("keeps structured opening reasons inspectable when no free-text detail exists", () => {
+  render(<Statusbar />);
+  act(() => {
+    useSession.getState().pushNotice({ level: "error", code: "crawl-open-failed", args: {
+      code: "Store", messageKey: "err-crawl-newer-version", args: { found: 99, supported: 1 }, detail: null,
+    } });
+    vi.advanceTimersByTime(250);
+  });
+  const error = screen.getByTestId("crawl-open-error");
+  expect(error).toHaveTextContent("err-crawl-newer-version");
+  expect(error).toHaveTextContent('"found":99');
+  expect(error).toHaveTextContent('"supported":1');
+  expect(screen.getByText("Technical details")).toBeInTheDocument();
+});

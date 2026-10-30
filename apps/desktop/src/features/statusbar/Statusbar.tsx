@@ -45,7 +45,10 @@ export function Statusbar() {
   const memory = (bytes: number | null | undefined) => bytes == null ? unknown : f.bytes(bytes);
   return <div className="os-crawl-status" data-testid="crawl-status">
     {openingCrawl && <span role="status" data-testid="crawl-opening">{t("shortcut-crawl-open")}<ProgressBar label={t("shortcut-crawl-open")} /></span>}
-    {openError && <span role="alert" data-testid="crawl-open-error">{t(`err-code-${String(openError.args.code ?? "internal").toLowerCase()}`)}{typeof openError.args.detail === "string" ? `: ${openError.args.detail}` : ""}</span>}
+    {openError && <div role="alert" data-testid="crawl-open-error">
+      {t(`err-code-${String(openError.args.code ?? "internal").toLowerCase()}`)}{typeof openError.args.detail === "string" ? `: ${openError.args.detail}` : ""}
+      <details><summary>{t("notify-details")}</summary><pre>{JSON.stringify(openError.args)}</pre></details>
+    </div>}
     <span>{t("status-mode", { mode: t(`header-${c?.mode ?? chosenMode}`) })}</span>
     {sessionLost && <span role="status" className="os-status-warning">{t("form-login-session-lost")}</span>}
     <span data-testid="crawl-phase">{phase}{c?.endReason === "limit_reached" && ` (${t("status-limit")})`}</span>
