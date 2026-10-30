@@ -86,7 +86,10 @@ export async function nativeCases({ browser, evaluate, check, until, output, bin
     assert.ok(Math.abs(result.native - expected) < 0.01);
     assert.ok(Math.abs(result.dom - expected) < 0.01);
     assert.ok(result.canvases.length > 0, "Select a table with canvas before checking HiDPI");
-    for (const canvas of result.canvases) assert.ok(Math.abs(canvas.backing - canvas.css * expected) <= 1);
+    for (const canvas of result.canvases) {
+      assert.ok(Math.abs(canvas.backing - canvas.css * expected) <= 1, "Canvas backing-store width matches the actual OS scale");
+      assert.ok(Math.abs(canvas.backingHeight - canvas.cssHeight * expected) <= 1, "Canvas backing-store height matches the actual OS scale");
+    }
     return result;
   });
 }

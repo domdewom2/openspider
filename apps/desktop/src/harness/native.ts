@@ -6,5 +6,5 @@ export { copyDesktopText, sendDesktopNotification };
 export const notificationPermission = () => client.invoke<boolean | null>("notification.is_permission_granted");
 export async function dpi() {
   return { native: await getCurrentWindow().scaleFactor(), dom: devicePixelRatio,
-    canvases: [...document.querySelectorAll("canvas")].filter(c => c.clientWidth > 0).map(c => ({ backing: c.width, css: c.clientWidth })) };
+    canvases: [...document.querySelectorAll("canvas")].filter(c => c.clientWidth > 0 && c.clientHeight > 0).map(c => ({ backing: c.width, css: c.clientWidth, backingHeight: c.height, cssHeight: c.clientHeight })) };
 }
