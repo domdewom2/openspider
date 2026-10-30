@@ -11,7 +11,7 @@ fn crawl_file_can_be_saved_and_reopened_beyond_max_path() {
         dir.push("long-crawl-fixture");
     }
     std::fs::create_dir_all(&dir).unwrap();
-    let source = root.path().join("fixture.ospider");
+    let source = dir.join("fixture.ospider");
     store_common::build_paused_crawl(&source);
     let target = dir.join("saved.ospider");
     let file = CrawlFile::open(&source, OpenMode::ReadOnly).unwrap();

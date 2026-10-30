@@ -12,6 +12,45 @@ use crate::error::StoreError;
 use crate::profile::{self, StorageProfile};
 use crate::schema::{self, Migration, APPLICATION_ID, MIGRATIONS};
 
+/// SQLite uses Win32 APIs directly, bypassing Rust's long-path normalization.
+/// Use the bundled long-path VFS and an extended absolute path on Windows.
+pub(crate) fn open_sqlite(
+    path: impl AsRef<Path>,
+    flags: OpenFlags,
+) -> rusqlite::Result<Connection> {
+    #[cfg(windows)]
+    {
+        Connection::open_with_flags_and_vfs(sqlite_path(path.as_ref()), flags, "win32-longpath")
+    }
+    #[cfg(not(windows))]
+    {
+        Connection::open_with_flags(path, flags)
+    }
+}
+
+/// Normalize an existing file or its existing parent, including new VACUUM targets.
+pub(crate) fn sqlite_path(path: &Path) -> PathBuf {
+    #[cfg(windows)]
+    {
+        std::fs::canonicalize(path)
+            .or_else(|_| {
+                let parent = path
+                    .parent()
+                    .filter(|p| !p.as_os_str().is_empty())
+                    .unwrap_or_else(|| Path::new("."));
+                std::fs::canonicalize(parent).map(|p| {
+                    path.file_name()
+                        .map_or_else(|| p.clone(), |name| p.join(name))
+                })
+            })
+            .unwrap_or_else(|_| path.to_path_buf())
+    }
+    #[cfg(not(windows))]
+    {
+        path.to_path_buf()
+    }
+}
+
 /// Öffnungsmodus.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OpenMode {
@@ -171,7 +210,7 @@ impl CrawlFile {
         init: &CrawlInit,
         profile: StorageProfile,
     ) -> Result<Self, StoreError> {
-        let mut conn = Connection::open_with_flags(
+        let mut conn = open_sqlite(
             path,
             OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_CREATE,
         )?;
@@ -272,7 +311,7 @@ impl CrawlFile {
             std::fs::create_dir_all(parent).map_err(|e| StoreError::io(parent, e))?;
         }
         let copy = (|| -> Result<(), StoreError> {
-            let probe = Connection::open_with_flags(
+            let probe = open_sqlite(
                 src,
                 OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
             )
@@ -339,7 +378,7 @@ impl CrawlFile {
 
         // Prüfen, ohne die Datei zu verändern.
         let (found, generator) = {
-            let probe = Connection::open_with_flags(
+            let probe = open_sqlite(
                 path,
                 OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
             )
@@ -392,7 +431,7 @@ impl CrawlFile {
             OpenMode::ReadOnly => OpenFlags::SQLITE_OPEN_READ_ONLY,
             OpenMode::ReadWrite => OpenFlags::SQLITE_OPEN_READ_WRITE,
         };
-        let mut conn = Connection::open_with_flags(path, flags).map_err(|e| classify(path, e))?;
+        let mut conn = open_sqlite(path, flags).map_err(|e| classify(path, e))?;
         collation::ensure(&conn)?;
         if mode == OpenMode::ReadWrite {
             profile::apply(&conn, StorageProfile::default())?;

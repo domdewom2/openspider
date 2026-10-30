@@ -12,7 +12,8 @@ impl MetadataIndex {
     /// Öffnet bzw. erstellt den Index im Verwaltungsordner.
     pub fn open(root: &Path) -> Result<Self, StoreError> {
         std::fs::create_dir_all(root).map_err(|e| StoreError::io(root, e))?;
-        let conn = Connection::open(root.join(".index.sqlite"))?;
+        let conn =
+            crate::open::open_sqlite(root.join(".index.sqlite"), rusqlite::OpenFlags::default())?;
         conn.busy_timeout(std::time::Duration::from_secs(5))?;
         conn.execute_batch("PRAGMA journal_mode=WAL;
             CREATE TABLE IF NOT EXISTS entries(path TEXT PRIMARY KEY, fingerprint TEXT, payload TEXT NOT NULL);

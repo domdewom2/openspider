@@ -35,9 +35,10 @@ impl CrawlFile {
         }
         let tmp = sibling(dest, ".saving");
         remove_with_companions(&tmp);
+        let sqlite_tmp = crate::open::sqlite_path(&tmp);
         let result = self
             .conn()
-            .execute("VACUUM INTO ?1", [tmp.to_string_lossy().as_ref()])
+            .execute("VACUUM INTO ?1", [sqlite_tmp.to_string_lossy().as_ref()])
             .map_err(StoreError::from)
             .and_then(|_| std::fs::rename(&tmp, dest).map_err(|e| StoreError::io(dest, e)));
         if result.is_err() {
@@ -184,7 +185,7 @@ pub(crate) fn open_raw_readonly(path: &Path) -> Result<Connection, StoreError> {
         return Err(StoreError::NotFound(path.to_path_buf()));
     }
     probe_header(path)?;
-    let conn = Connection::open_with_flags(
+    let conn = crate::open::open_sqlite(
         path,
         OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
     )
@@ -203,7 +204,7 @@ pub(crate) fn open_raw_metadata(path: &Path) -> Result<Connection, StoreError> {
         return Err(StoreError::NotFound(path.to_path_buf()));
     }
     probe_header(path)?;
-    match Connection::open_with_flags(
+    match crate::open::open_sqlite(
         path,
         OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NO_MUTEX,
     ) {
@@ -331,7 +332,7 @@ pub fn repair_copy(src: &Path) -> Result<RepairReport, StoreError> {
 }
 
 fn repair_into(source: &Connection, dest: &Path) -> Result<RepairReport, StoreError> {
-    let mut target = Connection::open(dest)?;
+    let mut target = crate::open::open_sqlite(dest, OpenFlags::default())?;
     crate::profile::apply(&target, crate::profile::StorageProfile::Balanced)?;
     target.pragma_update(None, "application_id", APPLICATION_ID)?;
     schema::migrate(&mut target, 0, MIGRATIONS)?;
