@@ -73,3 +73,18 @@ node --test apps/desktop/e2e-b/measurement.test.mjs apps/desktop/e2e-b/readiness
 
 A Windows run of the corrected runner and an unlocked macOS GUI run are still
 required. Actual evidence and outstanding gates live in `docs/plan/M2-spikes/`.
+
+## M2-U32
+
+Mode `u32` adds real OS clipboard, file-dialog cancellation and positive file selection,
+singleton/independent settings close, notification permission/plugin acceptance,
+OS/DOM/canvas HiDPI, and the existing running-crawl quit smoke plus cancellation.
+`U32_EXPECT_DSF` is mandatory and must match the actual display scale. Mode `menu`
+uses the macOS AX helper in `e2e-c/menu.swift` for native menu snapshots and Help smoke.
+These modes have not been run on Linux; exact platform commands and remaining
+OS observations are in `docs/plan/M2-acceptance/e2e/ausfuehrung.md`.
+
+```sh
+npx tsc -p apps/desktop/e2e-b/tsconfig.u32.json
+node --check apps/desktop/e2e-b/run.mjs
+```

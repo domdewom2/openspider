@@ -17,7 +17,11 @@ export async function nativeCases({ browser, evaluate, check, until, output, bin
       await evaluate("import('/src/harness/native.ts').then(m => m.copyDesktopText('u32-native-clipboard'))");
       const actual = process.platform === "darwin" ? execFileSync("/usr/bin/pbpaste", { encoding: "utf8" }) : execFileSync("powershell.exe", ["-NoProfile", "-Command", "Get-Clipboard -Raw"], { encoding: "utf8" }).trimEnd();
       assert.equal(actual, "u32-native-clipboard");
-    } finally { await evaluate(`import('/src/harness/native.ts').then(m => m.copyDesktopText(${JSON.stringify(original)}))`); }
+    } finally {
+      // Restore through stdin so an evaluator timeout cannot put the user's clipboard in an error label.
+      if (process.platform === "darwin") execFileSync("/usr/bin/pbcopy", { input: original, encoding: "utf8" });
+      else execFileSync("powershell.exe", ["-NoProfile", "-Command", "Set-Clipboard -Value ([Console]::In.ReadToEnd())"], { input: original, encoding: "utf8" });
+    }
   });
   // spec: UI-001
   await check("U32 multiple windows: singleton settings and independent close", async () => {
