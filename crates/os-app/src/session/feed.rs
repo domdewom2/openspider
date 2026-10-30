@@ -333,7 +333,9 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
         CrawlPhase::Failed => CrawlState::Failed,
         _ => CrawlState::Incomplete,
     };
-    super::state(app, &s.key, state);
+    if !app.sessions().refresh_state(&s.key, state) {
+        return Ok(());
+    }
     let changed = old.last.is_none() || old.seq != seq || old.reset != reset;
     if changed {
         let token = os_fetch::user_agents::resolve(&s.config.user_agent).robots_token;
