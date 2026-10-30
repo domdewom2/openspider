@@ -117,7 +117,7 @@ fn defaults_and_config_validation_enforce_the_final_content_rule() {
             ("Content", vec![]),
         ]
     );
-    cfg.link_positions.rules.swap(0, 4);
+    cfg.link_positions.rules.swap(0, 5);
     assert!(!cfg.validate().errors.is_empty());
     cfg.link_positions = LinkPositionsConfig::default();
     assert_eq!(

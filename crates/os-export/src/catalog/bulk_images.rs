@@ -329,7 +329,13 @@ mod tests {
                         "xlsx"
                     }));
                     let info = catalog::export_table(entry, &job, &path, format).unwrap();
-                    assert_eq!(info.rows, 0);
+                    let expected_rows =
+                        if entry.name == "Images:Images Missing Size Attributes Inlinks" {
+                            3
+                        } else {
+                            0
+                        };
+                    assert_eq!(info.rows, expected_rows);
                     if mode == RenderingMode::Text
                         && entry.requires.contains(&ReportRequirement::Rendering)
                     {
@@ -350,11 +356,11 @@ mod tests {
                             reader.headers().unwrap().iter().collect::<Vec<_>>(),
                             catalog::IMAGE_HEADER
                         );
-                        assert_eq!(reader.records().count(), 0);
+                        assert_eq!(reader.records().count() as u64, expected_rows);
                     } else {
                         let mut workbook: Xlsx<_> = calamine::open_workbook(path).unwrap();
                         let range = workbook.worksheet_range_at(0).unwrap().unwrap();
-                        assert_eq!(range.height(), 1);
+                        assert_eq!(range.height() as u64, expected_rows + 1);
                         assert_eq!(range.width(), 12);
                     }
                 }
