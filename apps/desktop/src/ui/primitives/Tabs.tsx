@@ -1,3 +1,4 @@
+import "./contrast.css";
 import type { ReactNode } from "react";
 import { Tab, TabList, TabPanel, Tabs as RacTabs, type Key } from "react-aria-components";
 import { cx } from "./cx";

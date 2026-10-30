@@ -207,7 +207,6 @@ html[data-accent-warn="on"] .os-btn-primary { outline:var(--os-line) solid var(-
 /* --- Kontrastmodus (Windows) --------------------------------------------------------------------------------------- */
 @media (forced-colors: active) {
   .os-btn, .os-input, .os-select-button, .os-popover, .os-modal { border:var(--os-line) solid CanvasText; }
-  .os-tab[data-selected], .os-listbox-item[data-focused], .os-menu-item[data-focused] { background:Highlight; color:HighlightText; forced-color-adjust:none; }
 }
 
 /* Shared tab primitives: moved from features/shell (U34 requirement). */
