@@ -1,5 +1,7 @@
 name: Release Windows
 on:
+  push:
+    branches: [m3/r02-test]  # nur Testzweig, vor Merge entfernen
   workflow_dispatch:
     inputs:
       channel:
