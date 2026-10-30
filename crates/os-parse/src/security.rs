@@ -210,20 +210,23 @@ pub fn response_facts(input: &ResponseInput<'_>) -> Vec<(ExtKey, Value)> {
         .rsplit_once('.')
         .map(|(_, e)| e.to_ascii_lowercase());
     let expected = extension.as_deref().and_then(expected_types);
-    let sniffed = sniff(input.body);
-    let bad = content_types.len() != 1
-        || !valid_mime(&declared)
-        || expected.is_some_and(|types| {
-            !extension_matches(extension.as_deref().unwrap_or_default(), &declared, types)
-        })
-        || sniffed.is_some_and(|types| !types.contains(&declared.as_str()))
-        || input
-            .cfg
-            .crawl
-            .security
-            .obsolete_mime_types
-            .iter()
-            .any(|m| m.eq_ignore_ascii_case(&declared));
+    let sniffed = (declared != "application/octet-stream")
+        .then(|| sniff(input.body))
+        .flatten();
+    let bad = !content_types.is_empty()
+        && (content_types.len() != 1
+            || !valid_mime(&declared)
+            || expected.is_some_and(|types| {
+                !extension_matches(extension.as_deref().unwrap_or_default(), &declared, types)
+            })
+            || sniffed.is_some_and(|types| !types.contains(&declared.as_str()))
+            || input
+                .cfg
+                .crawl
+                .security
+                .obsolete_mime_types
+                .iter()
+                .any(|m| m.eq_ignore_ascii_case(&declared)));
     let expected_text = sniffed
         .or(expected)
         .map(|types| types[0])

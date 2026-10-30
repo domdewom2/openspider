@@ -1,0 +1,10 @@
+[
+ {"path":"/old-page", "mime":null, "body":"", "bad":false},
+ {"path":"/missing.html", "mime":null, "body":"<!doctype html>", "bad":false},
+ {"path":"/submit", "mime":"application/octet-stream", "body":"<!doctype html>", "bad":false},
+ {"path":"/image.jpg", "mime":"application/octet-stream", "body":"raw", "bad":true},
+ {"path":"/logo", "mime":"text/html", "body":"PNG", "bad":true},
+ {"path":"/invalid", "mime":"html", "body":"plain", "bad":true},
+ {"path":"/empty", "mime":"", "body":"plain", "bad":true},
+ {"path":"/script.js", "mime":"text/javascript", "body":"let x=1", "bad":true}
+]
