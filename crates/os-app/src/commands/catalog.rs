@@ -258,7 +258,12 @@ pub(crate) fn column(c: &defs::ColumnDef, name: &str, cfg: &CrawlConfig) -> Colu
     ColumnMeta {
         key: name.into(),
         kind: kind(c.kind),
-        default_visible: c.default_visible,
+        default_visible: c.default_visible
+            && match c.needs {
+                Some(defs::Needs::Config(key)) => config_on(cfg, key),
+                Some(defs::Needs::AnyConfig(keys)) => keys.iter().any(|key| config_on(cfg, key)),
+                _ => true,
+            },
         default_width: c.default_width,
         align: match c.align {
             defs::Align::Left => Align::Left,
