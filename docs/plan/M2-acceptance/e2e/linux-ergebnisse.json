@@ -1,0 +1,57 @@
+{
+  "platform": "linux",
+  "base": "27f92ff1",
+  "playwright": "1.64.1",
+  "suites": {
+    "visual": {
+      "stats": {
+        "startTime": "2026-10-30T14:25:36.953Z",
+        "duration": 235643.453,
+        "expected": 173,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "projects": {
+        "chromium-1": {
+          "passed": 27,
+          "expected_failure": 13
+        },
+        "chromium-1.25": {
+          "passed": 18,
+          "expected_failure": 13
+        },
+        "chromium-1.5": {
+          "passed": 18,
+          "expected_failure": 13
+        },
+        "chromium-2": {
+          "passed": 18,
+          "expected_failure": 13
+        },
+        "webkit-2": {
+          "passed": 27,
+          "expected_failure": 13
+        }
+      }
+    },
+    "keyboard": {
+      "stats": {
+        "startTime": "2026-10-30T13:59:23.331Z",
+        "duration": 182672.701,
+        "expected": 178,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "projects": {
+        "chromium": {
+          "passed": 89
+        },
+        "webkit": {
+          "passed": 89
+        }
+      }
+    }
+  }
+}
