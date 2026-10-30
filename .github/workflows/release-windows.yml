@@ -1,0 +1,183 @@
+name: Release Windows
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: Update-Manifest
+        type: choice
+        options: [stable, beta]
+        default: beta
+      offline_webview:
+        description: WebView2 Offline-Installer einbetten
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      channel:
+        type: string
+        default: stable
+      offline_webview:
+        type: boolean
+        default: false
+    secrets:
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      ARTIFACT_SIGNING_ENDPOINT:
+        required: false
+      ARTIFACT_SIGNING_ACCOUNT:
+        required: false
+      ARTIFACT_SIGNING_PROFILE:
+        required: false
+      TAURI_SIGNING_PRIVATE_KEY:
+        required: false
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD:
+        required: false
+permissions:
+  contents: read
+concurrency:
+  group: release-windows-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  windows:
+    if: github.event_name != 'pull_request'
+    runs-on: windows-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      CARGO_BUILD_JOBS: 4
+      CARGO_INCREMENTAL: 0
+      OPENSPIDER_SECRET_STORE: memory
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_CLIENT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_SUBSCRIPTION_ID }}
+      ARTIFACT_SIGNING_ENDPOINT: ${{ vars.ARTIFACT_SIGNING_ENDPOINT || secrets.ARTIFACT_SIGNING_ENDPOINT }}
+      ARTIFACT_SIGNING_ACCOUNT: ${{ vars.ARTIFACT_SIGNING_ACCOUNT || secrets.ARTIFACT_SIGNING_ACCOUNT }}
+      ARTIFACT_SIGNING_PROFILE: ${{ vars.ARTIFACT_SIGNING_PROFILE || secrets.ARTIFACT_SIGNING_PROFILE }}
+      OPENSPIDER_UPDATER_PUBKEY: ${{ vars.OPENSPIDER_UPDATER_PUBKEY }}
+      BUNDLE_DIR: target/x86_64-pc-windows-msvc/release/bundle
+    steps:
+      - uses: actions/checkout@v4
+      - name: Signierbereitschaft prüfen
+        id: signing
+        env:
+          UPDATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          $names = @('AZURE_TENANT_ID', 'AZURE_CLIENT_ID', 'AZURE_SUBSCRIPTION_ID',
+            'ARTIFACT_SIGNING_ENDPOINT', 'ARTIFACT_SIGNING_ACCOUNT', 'ARTIFACT_SIGNING_PROFILE')
+          $missing = @($names | Where-Object { -not [Environment]::GetEnvironmentVariable($_) })
+          $ready = $missing.Count -eq 0
+          "ready=$($ready.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          if (-not $ready) {
+            Write-Output '::warning::Windows-Build unsigniert: Azure-Konfiguration unvollständig.'
+            'Windows-Build: **unsigniert**. Azure-Konfiguration unvollständig.' >> $env:GITHUB_STEP_SUMMARY
+          } else {
+            'Windows-Build: Authenticode mit Azure Artifact Signing / OIDC.' >> $env:GITHUB_STEP_SUMMARY
+          }
+          $updater = [bool]($env:UPDATE_KEY -and $env:OPENSPIDER_UPDATER_PUBKEY)
+          "updater=$($updater.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          if (-not $updater) {
+            Write-Output '::warning::Updater-Artefakte übersprungen: privater oder öffentlicher Schlüssel fehlt.'
+            'Updater-Artefakte übersprungen: Schlüssel fehlen.' >> $env:GITHUB_STEP_SUMMARY
+          }
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-dotnet@v4
+        if: steps.signing.outputs.ready == 'true'
+        with:
+          dotnet-version: '8.0.x'
+      - uses: azure/login@v2
+        if: steps.signing.outputs.ready == 'true'
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: false
+      - name: Artifact Signing Werkzeuge
+        if: steps.signing.outputs.ready == 'true'
+        run: ./apps/desktop/src-tauri/windows/initialize-signing.ps1
+      - name: Abhängigkeiten und Versionsgleichstand
+        run: |
+          npm ci
+          if ($LASTEXITCODE -ne 0) { throw 'npm ci fehlgeschlagen' }
+          node scripts/release/check-version.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Versionsgleichstand fehlgeschlagen' }
+      - name: Windows-Vertrag und lange Pfade
+        run: |
+          ./apps/desktop/src-tauri/windows/build-config.tests.ps1
+          cargo test -p os-cli --test uninstall_cleanup -j 4 --locked
+          if ($LASTEXITCODE -ne 0) { throw 'Cleanup-Tests fehlgeschlagen' }
+          cargo test -p os-export --test long_path_windows -j 4 --locked
+          if ($LASTEXITCODE -ne 0) { throw 'Export mit langem Pfad fehlgeschlagen' }
+          cargo test -p os-store --test long_path_windows -j 4 --locked
+          if ($LASTEXITCODE -ne 0) { throw 'Crawl-Datei mit langem Pfad fehlgeschlagen' }
+      - name: CLI bauen und für das Bundle bereitstellen
+        run: |
+          cargo build -p os-cli --release --target x86_64-pc-windows-msvc -j 4 --locked
+          if ($LASTEXITCODE -ne 0) { throw 'CLI-Build fehlgeschlagen' }
+          New-Item -ItemType Directory -Force apps/desktop/src-tauri/binaries | Out-Null
+          Copy-Item target/x86_64-pc-windows-msvc/release/openspider.exe apps/desktop/src-tauri/binaries/openspider-x86_64-pc-windows-msvc.exe
+          if ('${{ steps.signing.outputs.ready }}' -eq 'true') {
+            ./scripts/release/sign-windows.ps1 apps/desktop/src-tauri/binaries/openspider-x86_64-pc-windows-msvc.exe
+          }
+      - name: NSIS und MSI bauen
+        timeout-minutes: 60
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          BUILD_CHANNEL: ${{ inputs.channel }}
+          OFFLINE_WEBVIEW: ${{ inputs.offline_webview }}
+        run: |
+          $config = Join-Path $env:RUNNER_TEMP 'windows-build.json'
+          $sign = '${{ steps.signing.outputs.ready }}' -eq 'true'
+          $updater = '${{ steps.signing.outputs.updater }}' -eq 'true'
+          ./apps/desktop/src-tauri/windows/build-config.ps1 -Output $config -Channel $env:BUILD_CHANNEL -Sign:$sign -Updater:$updater -OfflineWebView:($env:OFFLINE_WEBVIEW -eq 'true')
+          npm run -w apps/desktop tauri -- build --target x86_64-pc-windows-msvc --bundles nsis,msi --config tauri.windows.conf.json --config $config -- --locked -j 4
+          if ($LASTEXITCODE -ne 0) { throw 'Tauri-Build fehlgeschlagen' }
+      - name: Authenticode prüfen
+        run: |
+          $unsigned = '${{ steps.signing.outputs.ready }}' -ne 'true'
+          ./scripts/release/verify-windows.ps1 -Path @($env:BUNDLE_DIR, 'apps/desktop/src-tauri/binaries') -AllowUnsigned:$unsigned
+      - name: Stille Installation und Deinstallation beider Installer
+        run: |
+          $signed = '${{ steps.signing.outputs.ready }}' -eq 'true'
+          ./apps/desktop/src-tauri/windows/smoke.ps1 -BundleDir $env:BUNDLE_DIR -Signed:$signed
+          'NSIS + MSI: stille Installation/Deinstallation, PATH, Startmenü, Dateizuordnung, Aufgaben und Benutzerdaten OK.' >> $env:GITHUB_STEP_SUMMARY
+      - name: Artefakte sammeln
+        run: |
+          New-Item -ItemType Directory -Force release-artifacts | Out-Null
+          $installers = @(Get-ChildItem "$env:BUNDLE_DIR/nsis" -Filter '*-setup.exe') + @(Get-ChildItem "$env:BUNDLE_DIR/msi" -Filter '*.msi')
+          if ($installers.Count -ne 2) { throw 'Installer fehlen' }
+          foreach ($file in $installers) {
+            Copy-Item -LiteralPath $file.FullName release-artifacts/
+            if ('${{ steps.signing.outputs.updater }}' -eq 'true') {
+              $sig = "$($file.FullName).sig"
+              if (-not (Test-Path -LiteralPath $sig)) { throw 'Updater-Signatur fehlt' }
+              Copy-Item -LiteralPath $sig release-artifacts/
+            }
+          }
+          Copy-Item apps/desktop/src-tauri/binaries/openspider-x86_64-pc-windows-msvc.exe release-artifacts/openspider.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openspider-windows-x86_64
+          path: release-artifacts/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Signiermetadaten löschen
+        if: always()
+        run: |
+          $metadata = Join-Path $env:RUNNER_TEMP 'artifact-signing/metadata.json'
+          Remove-Item -LiteralPath $metadata -Force -ErrorAction SilentlyContinue
