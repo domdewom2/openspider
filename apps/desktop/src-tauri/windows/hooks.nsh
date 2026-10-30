@@ -15,6 +15,10 @@
   ${If} $UpdateMode != 1
     StrCpy $1 "0"
     ${GetOptions} $CMDLINE "/REMOVEUSERDATA=" $1
+    ClearErrors
+    ${If} $1 != "1"
+      StrCpy $1 "0"
+    ${EndIf}
     IfSilent r02_cleanup
     MessageBox MB_YESNO|MB_DEFBUTTON2 "Benutzerdaten entfernen? Crawls und Einstellungen werden dauerhaft gelöscht." IDNO r02_cleanup
     StrCpy $1 "1"
