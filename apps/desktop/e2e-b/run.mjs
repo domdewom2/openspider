@@ -293,6 +293,25 @@ try {
       await until(() => browser.execute("return !!document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')"), "quit confirmation");
       return await browser.execute("return document.querySelector('[role=alertdialog], [role=dialog], dialog[open]').textContent");
     });
+    if (mode === "u32") {
+      // spec: UI-001
+      await check("U32 cancel quit confirmation keeps the main window and crawl", async () => {
+        const before = await browser.getWindowHandles();
+        const clicked = await browser.execute(() => {
+          const dialog = document.querySelector('[role=alertdialog], [role=dialog], dialog[open]');
+          const cancel = [...(dialog?.querySelectorAll("button") ?? [])].find(button => /^(Cancel|Abbrechen)$/.test(button.textContent.trim()));
+          cancel?.click();
+          return !!cancel;
+        });
+        assert.equal(clicked, true, "Quit confirmation must offer Cancel");
+        await until(() => browser.execute("return !document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')"), "cancelled quit dialog");
+        assert.deepEqual(await browser.getWindowHandles(), before);
+        const state = await evaluate("window.s02.snapshot()");
+        assert.equal(state.shell.visible, true);
+        assert.ok(state.ticks.some(t => t.phase === "running"));
+        return { cancelled: true, mainAlive: true };
+      });
+    }
   }
 } catch (e) { report.errors.push(String(e)); }
 finally {
