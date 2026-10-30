@@ -4,7 +4,7 @@ use url::Url;
 
 // spec: ONPAGE-043
 #[test]
-fn missing_mime_and_generic_mime_respect_sq13c_without_disabling_other_rules() {
+fn bad_content_type_respects_k294_status_and_header_population() {
     let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
         "../../../tests/fixtures/n10-security/cases.json"
     ))
@@ -25,7 +25,7 @@ fn missing_mime_and_generic_mime_respect_sq13c_without_disabling_other_rules() {
             url: &url,
             internal: true,
             purpose: FetchPurpose::Page,
-            status: 200,
+            status: c["status"].as_u64().unwrap_or(200) as u16,
             headers: &headers,
             body,
             content_length: None,

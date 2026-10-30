@@ -239,7 +239,7 @@
     "mime": "html",
     "body": "text",
     "expect": {
-      "bad_content_type": true
+      "bad_content_type": false
     }
   },
   {

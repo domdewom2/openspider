@@ -213,13 +213,12 @@ pub fn response_facts(input: &ResponseInput<'_>) -> Vec<(ExtKey, Value)> {
     let sniffed = (declared != "application/octet-stream")
         .then(|| sniff(input.body))
         .flatten();
-    let bad = !content_types.is_empty()
-        && (content_types.len() != 1
-            || !valid_mime(&declared)
-            || expected.is_some_and(|types| {
-                !extension_matches(extension.as_deref().unwrap_or_default(), &declared, types)
-            })
-            || sniffed.is_some_and(|types| !types.contains(&declared.as_str()))
+    // ONPAGE-043 (K2-94): only 2xx with a nonempty declaration; no syntax rule.
+    let bad = (200..300).contains(&input.status)
+        && !declared.is_empty()
+        && (expected.is_some_and(|types| {
+            !extension_matches(extension.as_deref().unwrap_or_default(), &declared, types)
+        }) || sniffed.is_some_and(|types| !types.contains(&declared.as_str()))
             || input
                 .cfg
                 .crawl
@@ -249,16 +248,6 @@ pub fn response_facts(input: &ResponseInput<'_>) -> Vec<(ExtKey, Value)> {
         fact("security.bad_content_type", bad),
         fact("security.expected_content_type", expected_text),
     ]
-}
-
-fn valid_mime(mime: &str) -> bool {
-    fn token(s: &str) -> bool {
-        !s.is_empty()
-            && s.bytes()
-                .all(|c| c.is_ascii_alphanumeric() || b"!#$%&'*+-.^_`|~".contains(&c))
-    }
-    mime.split_once('/')
-        .is_some_and(|(a, b)| token(a) && token(b))
 }
 
 fn expected_types(ext: &str) -> Option<&'static [&'static str]> {

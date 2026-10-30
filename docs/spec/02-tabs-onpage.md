@@ -780,8 +780,7 @@ Grundmenge („All“): alle internen URLs (alle Inhaltstypen). Die seitenbasier
 
 ### ONPAGE-043 Security-Filter Bad Content Type
 - **Priorität:** P1
-- **Beschreibung:** Interne URLs, deren deklarierter Content-Type nicht zum tatsächlichen Inhalt passt oder ungültig/veraltet ist. Regeln:
-  1. MIME-Typ syntaktisch ungültig (kein `type/subtype`) → Treffer. Ein fehlender `Content-Type`-Header ist kein Treffer (Klarstellung K2-87, z. B. Weiterleitung ohne Header).
+- **Beschreibung:** Interne URLs mit 2xx-Antwort, deren deklarierter Content-Type nicht zum tatsächlichen Inhalt passt oder veraltet ist. Ein fehlender oder explizit leerer `Content-Type`-Header ist kein Treffer; die MIME-Syntax allein wird nicht geprüft. Die bisherigen Regeln 2–4 gelten ausschließlich für 2xx-Antworten (K2-94). Regeln:
   2. Die URL hat eine **bekannte** Dateiendung (`.html/.htm`, `.css`, `.js/.mjs`, `.png`, `.jpg/.jpeg`, `.gif`, `.webp`, `.avif`, `.svg`, `.ico`, `.pdf`, `.xml`, `.json`, `.woff/.woff2/.ttf/.otf`, `.mp4/.webm/.mp3`) und der deklarierte Typ gehört nicht zur erwarteten Klasse (ONPAGE-020) → Treffer. URLs ohne oder mit unbekannter Endung werden nach Regel 2 nicht geprüft.
   3. Inhalts-Sniffing: Magic Bytes widersprechen dem deklarierten Typ (z. B. PNG-Signatur bei `text/html`, HTML-Markup bei `image/jpeg`) → Treffer. Beim generischen Typ `application/octet-stream` findet kein Sniffing statt (K2-87, SQ-13c; Beleg Referenz `parity-m2-security` `/submit`).
   4. Veraltete Typen aus einer konfigurierbaren Liste → Treffer. Default-Liste für Parität: `text/javascript`, `application/x-javascript` (Referenz empfiehlt `application/javascript`). Hinweis: RFC 9239 hat `text/javascript` wieder zum Standard erklärt; die Liste ist daher abschaltbar.
@@ -793,7 +792,7 @@ Grundmenge („All“): alle internen URLs (alle Inhaltstypen). Die seitenbasier
   - [ ] `/script.js` mit `application/javascript` → kein Treffer.
   - [ ] `/page` (ohne Endung) mit `text/plain` und Text-Body → kein Treffer.
   - [ ] `/logo` (ohne Endung) mit `text/html`, Body beginnt mit PNG-Signatur → Treffer (Regel 3).
-  - [ ] Content-Type `html` → Treffer (Regel 1).
+  - [ ] Content-Type `html` ohne Endungs- oder Inhaltswiderspruch → kein Treffer; explizit leerer Header → kein Treffer; 404 mit PNG-Endung und `text/plain` → kein Treffer (K2-94).
   - [ ] `/submit` (ohne Endung) mit `application/octet-stream` und HTML-Body → kein Treffer; 301 ohne `Content-Type` → kein Treffer (K2-87).
 - **Testfixture:** `onpage-security-http/` Routen `/image.jpg` (JS-Typ), `/script.js` (zwei Varianten), `/page`, `/logo` (PNG-Bytes, html-Typ), `/bad-syntax`.
 
