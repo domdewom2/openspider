@@ -1,1 +1,44 @@
-{}
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "bundle": {
+    "targets": [
+      "nsis",
+      "msi"
+    ],
+    "resources": {
+      "windows/installer-maintenance.ps1": "installer-maintenance.ps1"
+    },
+    "windows": {
+      "allowDowngrades": false,
+      "digestAlgorithm": "sha256",
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      },
+      "nsis": {
+        "installMode": "currentUser",
+        "startMenuFolder": "OpenSpider",
+        "installerHooks": "windows/hooks.nsh",
+        "languages": [
+          "German",
+          "English"
+        ]
+      },
+      "wix": {
+        "upgradeCode": "34a0f93f-c438-5f6c-9b5b-bc1824270470",
+        "fragmentPaths": [
+          "windows/maintenance.wxs"
+        ],
+        "componentGroupRefs": [
+          "OpenSpiderMaintenance"
+        ],
+        "enableElevatedUpdateTask": false
+      }
+    }
+  },
+  "build": {
+    "windows": {
+      "staticVCRuntime": true
+    }
+  }
+}

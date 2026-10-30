@@ -34,7 +34,10 @@ impl Manager {
     pub fn open(root: &Path) -> Result<Self, StoreError> {
         let root = absolute(root)?;
         let index = MetadataIndex::open(&root)?;
-        let state = Connection::open(root.join(".registry.sqlite"))?;
+        let state = crate::open::open_sqlite(
+            root.join(".registry.sqlite"),
+            rusqlite::OpenFlags::default(),
+        )?;
         state.busy_timeout(std::time::Duration::from_secs(5))?;
         state.execute_batch("PRAGMA journal_mode=WAL;
             CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY, name TEXT NOT NULL UNIQUE, locked INTEGER NOT NULL DEFAULT 0);

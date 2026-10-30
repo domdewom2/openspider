@@ -162,7 +162,7 @@ impl Prefetch {
     /// Wie [`start`](Self::start) mit eigener Thread-Zahl und Mindestgröße (Tests).
     pub fn start_with(path: &std::path::Path, threads: usize, min_id: i64) -> Option<Self> {
         let open = || -> Option<Connection> {
-            let conn = Connection::open_with_flags(
+            let conn = crate::open::open_sqlite(
                 path,
                 rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY
                     | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX,

@@ -43,7 +43,7 @@ pub struct RunArgs {
     /// Prüft manuell auf Updates (STUB M3-U01).
     #[arg(long, conflicts_with_all = ["run_task", "uninstall_cleanup", "crawl", "crawl_list", "load_crawl"])]
     pub check_update: bool,
-    /// Installer-Hook (STUB M3-R02).
+    /// Installer-Hook: entfernt OS-Aufgabenregistrierungen, erhält Benutzerdaten.
     #[arg(long, hide = true, conflicts_with_all = ["run_task", "crawl", "crawl_list", "load_crawl"])]
     pub uninstall_cleanup: bool,
 

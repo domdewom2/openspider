@@ -83,7 +83,7 @@ fn err(e: impl std::fmt::Display) -> String {
 }
 
 fn open(path: &Path) -> Result<Connection, String> {
-    let conn = Connection::open_with_flags(
+    let conn = crate::open::open_sqlite(
         path,
         OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
     )

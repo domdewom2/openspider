@@ -72,7 +72,7 @@ impl Checkpointer {
         synchronous: &'static str,
         bounds: (i64, i64),
     ) -> Result<Self, StoreError> {
-        let conn = Connection::open_with_flags(
+        let conn = crate::open::open_sqlite(
             path,
             OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NO_MUTEX,
         )?;

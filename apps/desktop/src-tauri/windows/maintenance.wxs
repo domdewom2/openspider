@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <Property Id="ADDTOPATH" Secure="yes">
+      <RegistrySearch Id="OpenSpiderPreviousPath" Root="HKLM" Key="Software\OpenSpider\Installer" Name="Path" Type="raw" Win64="yes"/>
+    </Property>
+    <Property Id="REMOVEUSERDATA" Secure="yes"/>
+    <DirectoryRef Id="INSTALLDIR">
+      <Component Id="OpenSpiderMachinePath" Guid="b255268f-a99f-48bf-b60a-af11605d903d" Win64="yes">
+        <Condition>ADDTOPATH = "1"</Condition>
+        <RegistryValue Root="HKLM" Key="Software\OpenSpider\Installer" Name="Path" Type="string" Value="1" KeyPath="yes"/>
+        <Environment Id="OpenSpiderPath" Name="PATH" Value="[INSTALLDIR]" Part="last" Action="set" System="yes" Permanent="no"/>
+      </Component>
+    </DirectoryRef>
+    <ComponentGroup Id="OpenSpiderMaintenance">
+      <ComponentRef Id="OpenSpiderMachinePath"/>
+    </ComponentGroup>
+    <!-- Immediate, impersonated action: current user's registrations and profile, before RemoveFiles.
+         On major upgrade this must not unregister tasks or delete data. -->
+    <CustomAction Id="OpenSpiderCleanup" Directory="INSTALLDIR" Execute="immediate" Impersonate="yes" Return="check"
+      ExeCommand="&quot;[System64Folder]WindowsPowerShell\v1.0\powershell.exe&quot; -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;[INSTALLDIR]installer-maintenance.ps1&quot; -Mode Uninstall -InstallDir &quot;[INSTALLDIR].&quot; -Machine -RemoveUserData &quot;[REMOVEUSERDATA]&quot;"/>
+    <InstallExecuteSequence>
+      <Custom Action="OpenSpiderCleanup" Before="RemoveFiles">REMOVE="ALL" AND NOT UPGRADINGPRODUCTCODE</Custom>
+    </InstallExecuteSequence>
+    <UI>
+      <Dialog Id="OpenSpiderRemoveDataDlg" Width="370" Height="270" Title="OpenSpider">
+        <Control Id="Description" Type="Text" X="20" Y="30" Width="330" Height="40" Text="Benutzerdaten beim Entfernen dieser Installation löschen?"/>
+        <Control Id="RemoveData" Type="CheckBox" X="20" Y="80" Width="330" Height="20" Property="REMOVEUSERDATA" CheckBoxValue="1" Text="Benutzerdaten entfernen"/>
+        <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="Zurück">
+          <Publish Event="NewDialog" Value="MaintenanceWelcomeDlg">1</Publish>
+        </Control>
+        <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="Weiter">
+          <Publish Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish>
+        </Control>
+        <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="Abbrechen">
+          <Publish Event="SpawnDialog" Value="CancelDlg">1</Publish>
+        </Control>
+      </Dialog>
+      <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="OpenSpiderRemoveDataDlg" Order="3">1</Publish>
+    </UI>
+  </Fragment>
+</Wix>
