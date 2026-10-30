@@ -800,8 +800,62 @@ fn compare_one(
         os_bases,
         deviations: &devs,
     })?;
+    // OUT-015/085: upload order is normative for list exports. Reference
+    // reports can be emitted in completion order, unlike their tab exports.
+    if p.mapping.ordered
+        && p.mapping.key.iter().any(|k| k == "Address")
+        && p.mapping.key.iter().all(|k| k == "Address" || k == "#")
+    {
+        let manifest = Manifest::load(&opts.golden_dir(site).join("manifest.toml"))?;
+        if let Some(source) = manifest.list_source {
+            report.row_order_identical = Some(upload_order_matches(
+                &opts.fixture_dir(site).join(source),
+                &reference,
+                &os,
+                ref_bases,
+                os_bases,
+            )?);
+        }
+    }
     evaluate(&mut report, thresholds);
     Ok(report)
+}
+
+/// Compare complete, unique upload order, independently of reference row order.
+/// Every reference address must occur in the input; missing, extra or duplicate
+/// output rows still fail. Unsupported list encodings fail closed.
+fn upload_order_matches(
+    source: &Path,
+    reference: &Table,
+    os: &Table,
+    ref_bases: &BaseUrls,
+    os_bases: &BaseUrls,
+) -> Result<bool, ParityError> {
+    let ref_column = reference
+        .index_of("Address")
+        .ok_or_else(|| ParityError::Invalid("Address fehlt in der Listenreferenz".into()))?;
+    let os_column = os
+        .index_of("Address")
+        .ok_or_else(|| ParityError::Invalid("Address fehlt im Listenexport".into()))?;
+    let addresses: std::collections::BTreeSet<_> = reference
+        .rows
+        .iter()
+        .map(|r| ref_bases.normalize(r[ref_column].trim()))
+        .collect();
+    let text = std::fs::read_to_string(source)?;
+    let mut seen = std::collections::BTreeSet::new();
+    let expected: Vec<_> = text
+        .trim_start_matches('\u{feff}')
+        .lines()
+        .map(|line| ref_bases.normalize(line.trim()))
+        .filter(|address| addresses.contains(address) && seen.insert(address.clone()))
+        .collect();
+    let actual: Vec<_> = os
+        .rows
+        .iter()
+        .map(|r| os_bases.normalize(r[os_column].trim()))
+        .collect();
+    Ok(expected.len() == addresses.len() && expected == actual)
 }
 
 fn write_summary(out: &Path, s: &RunSummary) -> Result<(), ParityError> {
@@ -1045,5 +1099,43 @@ mod filename_format_tests {
             find_file(dir.path(), "security_unsafe_cross_origin_links.csv", 3),
             None
         );
+    }
+}
+
+#[cfg(test)]
+mod n11_list_order_tests {
+    use super::*;
+
+    // spec: OUT-085 [M2]
+    // spec: OUT-015 [P1]
+    #[test]
+    fn upload_order_is_checked_even_when_reference_report_is_shuffled() {
+        let dir = tempfile::tempdir().unwrap();
+        let input = dir.path().join("list.txt");
+        std::fs::write(
+            &input,
+            "https://site.test/b\nhttps://site.test/a\nhttps://site.test/b\ninvalid\n",
+        )
+        .unwrap();
+        let table = |urls: &[&str]| Table {
+            columns: vec!["Address".into()],
+            rows: urls
+                .iter()
+                .map(|u| vec![format!("https://site.test/{u}")])
+                .collect(),
+            dropped: vec![],
+        };
+        let reference = table(&["a", "b"]);
+        let bases = BaseUrls::default();
+        let matches = |output: Table| {
+            upload_order_matches(&input, &reference, &output, &bases, &bases).unwrap()
+        };
+        assert!(matches(table(&["b", "a"])));
+        assert!(!matches(table(&["a", "b"])));
+        assert!(!matches(table(&["b"])));
+        assert!(!matches(table(&["b", "a", "b"])));
+        assert!(!matches(table(&["b", "a", "extra"])));
+        std::fs::write(&input, "https://site.test/b\n").unwrap();
+        assert!(!matches(table(&["b", "a"])));
     }
 }
