@@ -311,18 +311,24 @@ fn columns<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture
             .unwrap_or_default();
         if let Some(s) = current {
             app.read_pool()
-                .run_snapshot(s.key, move |file, _| {
-                    let registry = tabs::configured_for_file(&cfg, file);
-                    let mut q = views::ViewQuery::new(&args.tab, "All");
-                    q.columns = views::ColumnSelection::All;
-                    Ok(views::column_names_in(&registry, file, &cfg, &q)
-                        .map_err(view_error)
-                        .and_then(|names| {
-                            let t =
-                                names::find_tab(&registry, &args.tab).expect("query resolved tab");
-                            to_json(&expanded_columns(t, &names, &cfg))
-                        }))
-                })
+                .run_cached(
+                    s.key,
+                    "catalog-columns",
+                    crate::runtime::current_cancel(),
+                    move |file, _| {
+                        let _snapshot = file.conn().unchecked_transaction()?;
+                        let registry = tabs::configured_for_file(&cfg, file);
+                        let mut q = views::ViewQuery::new(&args.tab, "All");
+                        q.columns = views::ColumnSelection::All;
+                        Ok(views::column_names_in(&registry, file, &cfg, &q)
+                            .map_err(view_error)
+                            .and_then(|names| {
+                                let t = names::find_tab(&registry, &args.tab)
+                                    .expect("query resolved tab");
+                                to_json(&expanded_columns(t, &names, &cfg))
+                            }))
+                    },
+                )
                 .await?
         } else {
             let registry = tabs::configured(&cfg);

@@ -440,3 +440,15 @@ it("coalesces ticks while a filter-count snapshot is still in flight", async () 
   expect(controller.counts.version).toBe(2);
   controller.dispose();
 });
+
+// spec: UI-018
+// spec: UI-016
+it("shows loading feedback instead of the no-data instruction while a filter opens", async () => {
+  render(<UpperTable />); await screen.findByTestId("grid");
+  let resolve!: (value: ViewHandle) => void;
+  vi.spyOn(view, "open").mockImplementation(() => new Promise(r => { resolve = r; }));
+  act(() => useTabs.getState().query({ filter: "HTML" }));
+  await waitFor(() => expect(resolve).toBeTypeOf("function"));
+  expect(screen.queryByText(/No data yet/)).toBeNull();
+  expect(screen.getByRole("progressbar")).toBeInTheDocument();
+});

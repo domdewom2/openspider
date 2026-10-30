@@ -21,3 +21,7 @@
 .os-mcp-table th:nth-child(3) { width: 12%; }
 .os-mcp-table th:nth-child(4) { width: 36%; }
 .os-mcp-table pre { max-width: 100%; overflow: auto; }
+
+/* N04: keep catalogue headings and tool identifiers readable while scrolling. */
+.os-mcp-tools-table th { white-space: nowrap; overflow-wrap: normal; }
+.os-mcp-tools-table td:nth-child(2) code { white-space: nowrap; }

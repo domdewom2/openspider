@@ -21,7 +21,7 @@ import { currentPlatform } from "../../ui/platform";
 import { Button, IconButton } from "../../ui/primitives/Button";
 import { Dialog, DialogFooter } from "../../ui/primitives/Dialog";
 import { ComboBox } from "../../ui/primitives/ComboBox";
-import { Badge } from "../../ui/primitives/Feedback";
+import { Badge, ProgressBar } from "../../ui/primitives/Feedback";
 import { Checkbox, SearchField } from "../../ui/primitives/fields";
 import { EmptyState } from "../../ui/primitives/EmptyState";
 import { Menu, MenuBody, type MenuEntry } from "../../ui/primitives/Menu";
@@ -317,7 +317,7 @@ function RegularUpperTable() {
           rowHeight={SIZES.rowHeight[appearance.density]} locale={locale} ariaLabel={t("u10-table")}
           theme={{ tokens: resolveTokens(resolveTheme(appearance.theme, systemPrefersDark()), appearance.accent),
             fontFamily: FONT_STACKS[currentPlatform()].ui, fontSize: SIZES.fontTable[appearance.density], zebra: appearance.zebra }} /> :
-        <EmptyState state={{ code: controller.pending ? "NO_DATA_YET" : "NO_MATCH" }} />}
+        controller.pending ? <ProgressBar label={t("u04-loading")} /> : <EmptyState state={{ code: "NO_MATCH" }} />}
     </div>
     <div className="u10-counter" role="status">{t("u10-count", { shown: empty ? 0 : source?.total ?? 0, total: total == null ? "–" : Math.max(total, empty ? 0 : source?.total ?? 0) })}
       {(query.search || query.rules) && ` · ${t("u10-search-active")}`}{count > 0 && ` · ${t("u10-selected", { count })}`}</div>

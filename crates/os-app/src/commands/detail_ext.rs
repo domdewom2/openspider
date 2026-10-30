@@ -281,114 +281,124 @@ fn dispatch<'a>(
             "detail.duplicates" => {
                 let a: DuplicatesArgs = parse_args(args)?;
                 app.read_pool()
-                    .run_snapshot(s.key, move |file, cancel| {
-                        Ok((|| {
-                            ensure_url!(file, a.url_id);
-                            if a.kind == DupKind::Near {
-                                if !s.config.duplicates.near_enabled
-                                    || !s.config.analysis.near_duplicates
-                                {
-                                    return Err(source::unavailable("duplicates.near_enabled"));
-                                }
-                                if os_analyze::views::state_of(
-                                    file,
-                                    &s.config,
-                                    "Content",
-                                    "Near Duplicates",
-                                )
-                                .map_err(view_error)?
-                                    != os_model::FilterState::Ready
-                                {
-                                    return Err(CmdError::new(
-                                        ErrorCode::Unsupported,
-                                        "err-detail-unavailable",
+                    .run_cached(
+                        s.key,
+                        "detail-duplicates",
+                        crate::runtime::current_cancel(),
+                        move |file, cancel| {
+                            let _snapshot = file.conn().unchecked_transaction()?;
+                            Ok((|| {
+                                ensure_url!(file, a.url_id);
+                                if a.kind == DupKind::Near {
+                                    if !s.config.duplicates.near_enabled
+                                        || !s.config.analysis.near_duplicates
+                                    {
+                                        return Err(source::unavailable("duplicates.near_enabled"));
+                                    }
+                                    if os_analyze::views::state_of(
+                                        file,
+                                        &s.config,
+                                        "Content",
+                                        "Near Duplicates",
                                     )
-                                    .with_arg(
-                                        "state",
-                                        serde_json::json!({"code":"NEEDS_CRAWL_ANALYSIS"}),
+                                    .map_err(view_error)?
+                                        != os_model::FilterState::Ready
+                                    {
+                                        return Err(CmdError::new(
+                                            ErrorCode::Unsupported,
+                                            "err-detail-unavailable",
+                                        )
+                                        .with_arg(
+                                            "state",
+                                            serde_json::json!({"code":"NEEDS_CRAWL_ANALYSIS"}),
+                                        ));
+                                    }
+                                } else if !s.config.extraction.hash
+                                    || !s.config.duplicates.exact_enabled
+                                {
+                                    return Err(source::unavailable("duplicates.exact_enabled"));
+                                }
+                                let mode = match a.kind {
+                                    DupKind::Exact => "Exact",
+                                    DupKind::Near => "Near",
+                                };
+                                let params = serde_json::json!({"filter":mode});
+                                let ids = [UrlId(a.url_id)];
+                                let offset = a.offset.unwrap_or(0);
+                                let limit = a.limit.unwrap_or(100).clamp(1, 500);
+                                if cancel.is_cancelled() {
+                                    return Err(CmdError::new(
+                                        ErrorCode::Cancelled,
+                                        "err-cancelled",
                                     ));
                                 }
-                            } else if !s.config.extraction.hash
-                                || !s.config.duplicates.exact_enabled
-                            {
-                                return Err(source::unavailable("duplicates.exact_enabled"));
-                            }
-                            let mode = match a.kind {
-                                DupKind::Exact => "Exact",
-                                DupKind::Near => "Near",
-                            };
-                            let params = serde_json::json!({"filter":mode});
-                            let ids = [UrlId(a.url_id)];
-                            let offset = a.offset.unwrap_or(0);
-                            let limit = a.limit.unwrap_or(100).clamp(1, 500);
-                            if cancel.is_cancelled() {
-                                return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
-                            }
-                            let rows = os_analyze::tabs::duplicates::detail_rows(
-                                file,
-                                &s.config,
-                                &os_analyze::details::DetailReq {
-                                    url_ids: &ids,
-                                    params: &params,
-                                    sort: &[],
-                                    offset,
-                                    limit: u64::from(limit),
-                                },
-                            )
-                            .map_err(view_error)?;
-                            let total = rows.total;
-                            let mut partners = Vec::with_capacity(rows.rows.len());
-                            for row in rows.rows {
-                                let Value::Text(address) = &row[0] else {
-                                    continue;
-                                };
-                                let id = storage::url_id_by_address(file.conn(), address)
-                                    .map_err(|e| store_error(&e))?
-                                    .ok_or_else(|| {
-                                        CmdError::new(ErrorCode::NotFound, "err-url-not-found")
-                                    })?;
-                                partners.push(DupPartner {
-                                    url_id: id,
-                                    address: address.clone(),
-                                    similarity: match row[1] {
-                                        Value::Int(n) => Some(n as f64),
-                                        _ => None,
+                                let rows = os_analyze::tabs::duplicates::detail_rows(
+                                    file,
+                                    &s.config,
+                                    &os_analyze::details::DetailReq {
+                                        url_ids: &ids,
+                                        params: &params,
+                                        sort: &[],
+                                        offset,
+                                        limit: u64::from(limit),
                                     },
-                                    match_type: Some(mode.into()),
-                                    text: None,
-                                    diff: None,
-                                });
-                            }
-                            let focus = storage::content_text(file.conn(), a.url_id)
-                                .map_err(|e| store_error(&e))?;
-                            if let Some(id) = a.partner_id {
-                                let partner = partners
-                                    .iter_mut()
-                                    .find(|p| p.url_id == id)
-                                    .ok_or_else(|| {
-                                        CmdError::invalid_input(
-                                            "err-duplicate-partner",
-                                            "partnerId",
-                                        )
-                                    })?;
-                                partner.text = storage::content_text(file.conn(), id)
+                                )
+                                .map_err(view_error)?;
+                                let total = rows.total;
+                                let mut partners = Vec::with_capacity(rows.rows.len());
+                                for row in rows.rows {
+                                    let Value::Text(address) = &row[0] else {
+                                        continue;
+                                    };
+                                    let id = storage::url_id_by_address(file.conn(), address)
+                                        .map_err(|e| store_error(&e))?
+                                        .ok_or_else(|| {
+                                            CmdError::new(ErrorCode::NotFound, "err-url-not-found")
+                                        })?;
+                                    partners.push(DupPartner {
+                                        url_id: id,
+                                        address: address.clone(),
+                                        similarity: match row[1] {
+                                            Value::Int(n) => Some(n as f64),
+                                            _ => None,
+                                        },
+                                        match_type: Some(mode.into()),
+                                        text: None,
+                                        diff: None,
+                                    });
+                                }
+                                let focus = storage::content_text(file.conn(), a.url_id)
                                     .map_err(|e| store_error(&e))?;
-                                partner.diff = match (&focus, &partner.text) {
-                                    (Some(f), Some(o)) => {
-                                        Some(source::diff(f, o, DiffMode::Words, cancel)?)
-                                    }
-                                    _ => None,
-                                };
-                            }
-                            let end = offset.saturating_add(partners.len() as u64);
-                            to_json(&DuplicatesResult {
-                                total: Some(total),
-                                next_offset: (end < total && !partners.is_empty()).then_some(end),
-                                partners,
-                                text: focus,
-                            })
-                        })())
-                    })
+                                if let Some(id) = a.partner_id {
+                                    let partner = partners
+                                        .iter_mut()
+                                        .find(|p| p.url_id == id)
+                                        .ok_or_else(|| {
+                                            CmdError::invalid_input(
+                                                "err-duplicate-partner",
+                                                "partnerId",
+                                            )
+                                        })?;
+                                    partner.text = storage::content_text(file.conn(), id)
+                                        .map_err(|e| store_error(&e))?;
+                                    partner.diff = match (&focus, &partner.text) {
+                                        (Some(f), Some(o)) => {
+                                            Some(source::diff(f, o, DiffMode::Words, cancel)?)
+                                        }
+                                        _ => None,
+                                    };
+                                }
+                                let end = offset.saturating_add(partners.len() as u64);
+                                to_json(&DuplicatesResult {
+                                    total: Some(total),
+                                    next_offset: (end < total && !partners.is_empty())
+                                        .then_some(end),
+                                    partners,
+                                    text: focus,
+                                })
+                            })())
+                        },
+                    )
                     .await?
             }
             "crawl.path" => {

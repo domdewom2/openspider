@@ -103,3 +103,54 @@ it("publishes the analysis phase and final stopped counters in the same status s
   expect(screen.getByTestId("crawl-phase")).toHaveTextContent("Stopped");
   expect(screen.getByText("Done 8 of 27 (29 %)")).toBeVisible();
 });
+
+// spec: UI-018
+// spec: CRAWL-129
+it("retains memory throttling after notice dismissal and clears it on recovery", () => {
+  render(<Statusbar />);
+  act(() => {
+    useSession.getState().pushNotice({ level: "warning", code: "memory-throttled", args: {} });
+    useSession.getState().clearNotices(); vi.advanceTimersByTime(250);
+  });
+  expect(screen.getByText("Throttled")).toBeVisible();
+  act(() => {
+    useSession.getState().pushNotice({ level: "info", code: "memory-throttle-cleared", args: {} });
+    vi.advanceTimersByTime(250);
+  });
+  expect(screen.queryByText("Throttled")).toBeNull();
+});
+
+// spec: UI-124
+// spec: CRAWL-126 [M2]
+it("shows opening progress and a concrete failure reason from the real command notices", () => {
+  render(<Statusbar />);
+  act(() => {
+    useSession.getState().pushNotice({ level: "info", code: "crawl-open-started", args: {} });
+    vi.advanceTimersByTime(250);
+  });
+  expect(screen.getByTestId("crawl-opening")).toBeVisible();
+  expect(screen.getByRole("progressbar")).toBeInTheDocument();
+  act(() => {
+    useSession.getState().pushNotice({ level: "error", code: "crawl-open-failed", args: { code: "Store", detail: "file is not a database" } });
+    useSession.getState().clearNotices(); vi.advanceTimersByTime(250);
+  });
+  expect(screen.queryByTestId("crawl-opening")).toBeNull();
+  expect(screen.getByTestId("crawl-open-error")).toHaveTextContent("file is not a database");
+});
+
+// spec: UI-124
+// spec: CRAWL-126 [M2]
+it("keeps structured opening reasons inspectable when no free-text detail exists", () => {
+  render(<Statusbar />);
+  act(() => {
+    useSession.getState().pushNotice({ level: "error", code: "crawl-open-failed", args: {
+      code: "Store", messageKey: "err-crawl-newer-version", args: { found: 99, supported: 1 }, detail: null,
+    } });
+    vi.advanceTimersByTime(250);
+  });
+  const error = screen.getByTestId("crawl-open-error");
+  expect(error).toHaveTextContent("err-crawl-newer-version");
+  expect(error).toHaveTextContent('"found":99');
+  expect(error).toHaveTextContent('"supported":1');
+  expect(screen.getByText("Technical details")).toBeInTheDocument();
+});

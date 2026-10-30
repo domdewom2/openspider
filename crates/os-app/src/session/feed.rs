@@ -16,6 +16,7 @@ pub(crate) struct Cursor {
     rows_at: Option<Duration>,
     pending: Option<ChangeSet>,
     pub(super) status: Option<CrawlStatus>,
+    memory_throttled: bool,
     delays: std::collections::HashMap<String, (f64, bool)>,
 }
 #[derive(Clone, Debug)]
@@ -98,58 +99,63 @@ pub fn from_progress(id: String, m: CrawlModeDto, owner: CrawlOwner, p: &Progres
     }
 }
 
-/// Read metadata through the pool; never opens a writing connection for foreign crawls.
+/// Read metadata on a fixed lane, independent of aggregate readers; never opens a writing connection for foreign crawls.
 pub async fn snapshot(
     app: &App,
     key: CrawlKey,
 ) -> Result<(CrawlSummaryDto, os_model::CrawlConfig, CrawlState), CmdError> {
     let clock = app.config().clock.clone();
     app.read_pool()
-        .run(key, move |f, _| {
-            let m = f.meta()?;
-            let state = f.effective_state(clock.as_ref())?;
-            let pid = f.get_meta("owner_pid")?.and_then(|s| s.parse().ok());
-            let live = state == CrawlState::Running;
-            let owner = CrawlOwner {
-                kind: match f.get_meta("owner_kind")?.as_deref() {
-                    Some("cli") => OwnerKind::Cli,
-                    Some("mcp-stdio") => OwnerKind::Mcp,
-                    Some("scheduler") => OwnerKind::Scheduler,
-                    _ => OwnerKind::App,
-                },
-                pid,
-                live,
-                controllable: !live || pid == Some(std::process::id()),
-            };
-            let urls = os_store::queries::session_counts(f.conn())?.discovered;
-            let file_bytes = std::fs::metadata(f.path())
-                .map_err(|e| os_store::StoreError::Io {
-                    path: f.path().to_path_buf(),
-                    source: e,
-                })?
-                .len();
-            Ok((
-                CrawlSummaryDto {
-                    crawl_id: m.crawl_id.to_string(),
-                    file: f.path().to_string_lossy().into_owned(),
-                    name: m.name,
-                    phase: phase(state),
-                    mode: if f.get_meta("source_mode")?.as_deref() == Some("apis") {
-                        CrawlModeDto::Apis
-                    } else {
-                        mode(m.mode)
+        .run_cached(
+            key,
+            "session-meta",
+            crate::runtime::current_cancel(),
+            move |f, _| {
+                let m = f.meta()?;
+                let state = f.effective_state(clock.as_ref())?;
+                let pid = f.get_meta("owner_pid")?.and_then(|s| s.parse().ok());
+                let live = state == CrawlState::Running;
+                let owner = CrawlOwner {
+                    kind: match f.get_meta("owner_kind")?.as_deref() {
+                        Some("cli") => OwnerKind::Cli,
+                        Some("mcp-stdio") => OwnerKind::Mcp,
+                        Some("scheduler") => OwnerKind::Scheduler,
+                        _ => OwnerKind::App,
                     },
-                    started_at: m.started_at.unwrap_or_default().to_db(),
-                    finished_at: m.ended_at.map(|t| t.to_db()),
-                    urls,
-                    file_bytes,
-                    schema_version: m.schema_version,
-                    owner,
-                },
-                f.config()?,
-                state,
-            ))
-        })
+                    pid,
+                    live,
+                    controllable: !live || pid == Some(std::process::id()),
+                };
+                let urls = os_store::queries::session_counts(f.conn())?.discovered;
+                let file_bytes = std::fs::metadata(f.path())
+                    .map_err(|e| os_store::StoreError::Io {
+                        path: f.path().to_path_buf(),
+                        source: e,
+                    })?
+                    .len();
+                Ok((
+                    CrawlSummaryDto {
+                        crawl_id: m.crawl_id.to_string(),
+                        file: f.path().to_string_lossy().into_owned(),
+                        name: m.name,
+                        phase: phase(state),
+                        mode: if f.get_meta("source_mode")?.as_deref() == Some("apis") {
+                            CrawlModeDto::Apis
+                        } else {
+                            mode(m.mode)
+                        },
+                        started_at: m.started_at.unwrap_or_default().to_db(),
+                        finished_at: m.ended_at.map(|t| t.to_db()),
+                        urls,
+                        file_bytes,
+                        schema_version: m.schema_version,
+                        owner,
+                    },
+                    f.config()?,
+                    state,
+                ))
+            },
+        )
         .await
 }
 
@@ -169,6 +175,20 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
     {
         return Ok(());
     }
+    let memory_throttled = s.engine.is_some() && os_engine::memory::sample().low_available();
+    if old.memory_throttled != memory_throttled {
+        app.push_notice(Notice {
+            level: NoticeLevel::Info,
+            code: if memory_throttled {
+                "memory-throttled"
+            } else {
+                "memory-throttle-cleared"
+            }
+            .into(),
+            args: Default::default(),
+        });
+        old.memory_throttled = memory_throttled;
+    }
     let before = old.clone();
     let clock = app.config().clock.clone();
     let cfg = s.config.clone();
@@ -179,10 +199,10 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
             .as_ref()
             .map(|h| h.progress())
     });
+    // A saturated catalog/count pool must not freeze progress or lifecycle delivery.
+    // The fixed lane also retains the connection-local incremental aggregate cache.
     let (seq, reset, ids, mut status) = app
         .read_pool()
-        // Keep status polling independent of table/count reads. This connection
-        // also retains the incremental aggregate cache across feed refreshes.
         .run_cached(
             s.key.clone(),
             "session-feed",

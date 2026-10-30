@@ -186,11 +186,12 @@ describe("paged tables", () => {
     expect(fixture.fixture.anchors.map(row => row["Anchor Text"])).toEqual(["Produkte", "produkte"]);
   });
   // spec: UI-145
-  it("loads a bounded first window for one million links and closes the view on tab change", async () => {
+  it("loads a bounded first window for one million links and retains it until unmount", async () => {
     fixture.options.total = 1_000_000; render(<DetailFrame selection={selection} actions={actions} />); await settle(); await selectTab("Inlinks");
     const reads = fixture.core.calls.filter(c => c.cmd === "view.rows").map(c => c.args as { offset: number; limit: number });
     expect(reads.length).toBeGreaterThan(0); expect(reads.every(read => read.limit <= 200 && read.offset < 1000)).toBe(true);
-    await selectTab("URL Details"); expect(fixture.views.size).toBe(0); expect(fixture.core.calls.some(c => c.cmd === "view.close")).toBe(true);
+    await selectTab("URL Details"); expect(fixture.views.size).toBe(1);
+    cleanup(); await settle(0); expect(fixture.views.size).toBe(0); expect(fixture.core.calls.some(c => c.cmd === "view.close")).toBe(true);
   });
   // spec: TECH-089
   it("shows annotation confirmation statuses and Address for a multi-selection in Hreflang", async () => {
@@ -279,12 +280,13 @@ describe("view lifecycle and preferences", () => {
     expect(screen.getByText("Mehr")).toBeInTheDocument();
   });
   // spec: UI-145
-  it("closes a late view handle even if the visible tab changed while it opened", async () => {
+  it("closes a late retained view handle when the selection is removed", async () => {
     const open = fixture.core.handlers.get("view.open")!;
     let complete!: () => void;
     fixture.core.handlers.set("view.open", (args, ctx) => new Promise(resolve => { complete = () => resolve(open(args, ctx)); }));
     render(<DetailFrame selection={selection} actions={actions} />); await settle(); await selectTab("Inlinks");
     await selectTab("URL Details");
+    cleanup();
     await act(async () => complete()); await settle(0);
     expect(fixture.views.size).toBe(0); expect(fixture.core.calls.filter(c => c.cmd === "view.close")).toHaveLength(1);
   });
@@ -410,3 +412,91 @@ describe("headers and images", () => {
     } finally { document.removeEventListener(DETAIL_OPEN_BROWSER_EVENT, listener); }
   });
 });
+
+// spec: UI-030
+// spec: UI-032
+// spec: UI-033
+// spec: UI-145
+it("retains loaded link rows immediately when returning to a detail tab", async () => {
+  render(<DetailFrame selection={selection} actions={actions} />); await settle();
+  await selectTab("Inlinks"); await settle();
+  const count = opens().length;
+  await selectTab("Outlinks"); await settle();
+  fireEvent.click(screen.getByRole("tab", { name: "Inlinks", hidden: true }));
+  expect(screen.getByRole("table", { name: "Inlinks" })).toBeInTheDocument();
+  expect(opens()).toHaveLength(count + 1);
+});
+
+// spec: UI-018
+// spec: UI-030
+// spec: UI-032
+it("refreshes retained links after the final crawl tick happened while the tab was hidden", async () => {
+  render(<DetailFrame selection={selection} actions={actions} />); await settle();
+  await selectTab("Inlinks"); await settle();
+  const incoming = [...fixture.views.keys()][0];
+  await selectTab("Outlinks"); await settle();
+  act(() => useSession.setState({ countsVersion: 123, sidebarVersion: 123 }));
+  await selectTab("Inlinks"); await settle(500);
+  expect(fixture.core.calls.some(call => call.cmd === "view.update" && (call.args as { viewId: string }).viewId === incoming)).toBe(true);
+});
+
+// spec: UI-030
+// spec: UI-145
+it("defers a retained tab's debounced request until that tab is visible again", async () => {
+  render(<DetailFrame selection={selection} actions={actions} />); await settle();
+  fireEvent.click(screen.getByRole("tab", { name: "Inlinks", hidden: true }));
+  fireEvent.click(screen.getByRole("tab", { name: "Outlinks", hidden: true }));
+  await settle(200);
+  expect(opens().map(call => (call.args as { spec: ViewSpec }).spec.kind)).toEqual(["outlinks"]);
+  await selectTab("Inlinks"); await settle(100);
+  expect(opens().map(call => (call.args as { spec: ViewSpec }).spec.kind)).toEqual(["outlinks", "inlinks"]);
+});
+
+// spec: UI-030
+// spec: UI-145
+it("retains a late hidden handle but waits until return before reading its rows", async () => {
+  const original = fixture.core.handlers.get("view.open")!;
+  let complete!: () => void;
+  fixture.core.handlers.set("view.open", (args, ctx) => (args as { spec: ViewSpec }).spec.kind === "inlinks"
+    ? new Promise(resolve => { complete = () => resolve(original(args, ctx)); }) : original(args, ctx));
+  render(<DetailFrame selection={selection} actions={actions} />); await settle(); await selectTab("Inlinks");
+  await selectTab("Outlinks");
+  await act(async () => complete()); await settle(0);
+  const incoming = [...fixture.views.keys()].find(id => id !== [...fixture.views.keys()][0])!;
+  const incomingReads = () => fixture.core.calls.filter(call => call.cmd === "view.rows" && (call.args as { viewId: string }).viewId === incoming);
+  expect(incomingReads()).toHaveLength(0);
+  await selectTab("Inlinks"); await settle(100);
+  expect(incomingReads().length).toBeGreaterThan(0);
+});
+
+// spec: UI-018
+// spec: UI-030
+// spec: UI-032
+it("retries a final revision discarded when a pending update's tab becomes hidden", async () => {
+  render(<DetailFrame selection={selection} actions={actions} />); await settle();
+  await selectTab("Inlinks"); await settle();
+  const incoming = [...fixture.views.keys()][0];
+  const record = fixture.views.get(incoming)!;
+  const originalRow = record.rows[0];
+  const updatedAddress = "https://site.test/final-crawl-tick";
+  let complete!: () => void;
+  let updates = 0;
+  fixture.core.handlers.set("view.update", raw => {
+    const { viewId } = raw as { viewId: string };
+    const handle = { viewId, version: 2, total: record.rows.length, state: "ready" };
+    if (viewId !== incoming) return handle;
+    updates++;
+    if (updates === 1) return new Promise(resolve => { complete = () => resolve(handle); });
+    return handle;
+  });
+  act(() => useSession.setState(state => ({ countsVersion: state.countsVersion + 1 })));
+  await settle(500);
+  expect(updates).toBe(1);
+  await selectTab("Outlinks");
+  record.rows = [{ ...originalRow, From: updatedAddress }, ...record.rows.slice(1)];
+  await act(async () => complete()); await settle(0);
+  // No further count/sidebar revision arrives after the last crawl tick.
+  await selectTab("Inlinks"); await settle(1000);
+  expect(updates).toBe(2);
+  expect(within(screen.getByRole("table", { name: "Inlinks" })).getByText(updatedAddress)).toBeInTheDocument();
+}, 5000);

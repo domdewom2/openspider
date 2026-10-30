@@ -77,3 +77,13 @@ it("U04 und die U16-Katalogbeiträge ergeben je genau ein Untermenü und einen S
     }
   }
 });
+
+// spec: UI-124
+it("uses index metadata for a recent label and retains the path-based action", () => {
+  const recent = [{ path: "/fixture/uuid.ospider", label: "http://127.0.0.1:1234/fixture · 2026-10-29" }];
+  const model = buildMenuModel(mainMenuContributions({ ...fixture, recent }), { platform: "mac", lang: "de", t: makeT("de"), ctx: {}, native: true });
+  const entry = flattenItems(model.menus.flatMap(menu => menu.items)).find(entry => entry.id === "recent.0");
+  expect(entry?.label).toBe(recent[0].label);
+  expect(entry?.action).toBe("recent.0");
+  expect(recent[0].path).toBe("/fixture/uuid.ospider");
+});

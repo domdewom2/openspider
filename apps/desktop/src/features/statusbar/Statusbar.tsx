@@ -24,7 +24,7 @@ export function useStatusSnapshot(): SessionState {
 export function Statusbar() {
   const t = useT();
   const f = useFormat();
-  const { crawl: c, mcp, throttled, crawlDelays, analysis: storedAnalysis, analysisStarting, analysisResult } = useStatusSnapshot();
+  const { crawl: c, mcp, throttled, crawlDelays, openingCrawl, openError, analysis: storedAnalysis, analysisStarting, analysisResult } = useStatusSnapshot();
   const analysis = analysisStarting ? { steps: [], running: true, current: null, percent: 0 } : storedAnalysis;
   const [sessionLost, setSessionLost] = useState(false);
   useEffect(() => {
@@ -41,6 +41,11 @@ export function Statusbar() {
   const index = current ? analysis!.steps.indexOf(current) + 1 : null;
   const memory = (bytes: number | null | undefined) => bytes == null ? unknown : f.bytes(bytes);
   return <div className="os-crawl-status" data-testid="crawl-status">
+    {openingCrawl && <span role="status" data-testid="crawl-opening">{t("shortcut-crawl-open")}<ProgressBar label={t("shortcut-crawl-open")} /></span>}
+    {openError && <div role="alert" data-testid="crawl-open-error">
+      {t(`err-code-${String(openError.args.code ?? "internal").toLowerCase()}`)}{typeof openError.args.detail === "string" ? `: ${openError.args.detail}` : ""}
+      <details><summary>{t("notify-details")}</summary><pre>{JSON.stringify(openError.args)}</pre></details>
+    </div>}
     <div className="os-status-scroll" role="group" aria-label={t("status-details")} tabIndex={0}>
     <span>{t("status-mode", { mode: t(`header-${c?.mode ?? chosenMode}`) })}</span>
     {sessionLost && <span role="status" className="os-status-warning">{t("form-login-session-lost")}</span>}

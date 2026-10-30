@@ -290,9 +290,11 @@ impl TabView {
             ViewSpec::Tab { tab, filter, .. } => (tab.clone(), filter.clone()),
             _ => return Err(CmdError::invalid_input("err-tab-required", "spec")),
         };
-        let work = app
-            .read_pool()
-            .run_with(session.key.clone(), token.clone(), move |file, _| {
+        let work = app.read_pool().run_cached(
+            session.key.clone(),
+            "table-build",
+            token.clone(),
+            move |file, _| {
                 let mut guard = lock(&slot);
                 let result = (|| {
                     match guard.as_mut() {
@@ -330,7 +332,8 @@ impl TabView {
                     ))
                 })();
                 Ok(result)
-            });
+            },
+        );
         let (snapshot, core, version, total, meta, state) =
             until_cancelled(&token, work).await??.map_err(view_error)?;
         let built = Built {
@@ -471,25 +474,31 @@ impl TabView {
         };
         let slot = self.session.clone();
         app.read_pool()
-            .run(self.key.clone(), move |file, _| {
-                if touch {
-                    // Keeps the core's idle clock in step with reads served from the snapshot; skipped while a
-                    // build holds the session.
-                    if let Ok(session) = slot.try_lock() {
-                        if let Some(s) = session.as_ref() {
-                            let _ = s.snapshot(file);
+            .run_cached(
+                self.key.clone(),
+                "table-window",
+                crate::runtime::current_cancel(),
+                move |file, _| {
+                    if touch {
+                        // Keeps the core's idle clock in step with reads served from the snapshot; skipped while a
+                        // build holds the session.
+                        if let Ok(session) = slot.try_lock() {
+                            if let Some(s) = session.as_ref() {
+                                let _ = s.snapshot(file);
+                            }
                         }
                     }
-                }
-                Ok(snapshot.rows(
-                    file,
-                    RowsReq {
-                        version: core,
-                        offset,
-                        limit,
-                    },
-                ))
-            })
+                    let _snapshot = file.conn().unchecked_transaction()?;
+                    Ok(snapshot.rows(
+                        file,
+                        RowsReq {
+                            version: core,
+                            offset,
+                            limit,
+                        },
+                    ))
+                },
+            )
             .await?
             .map(|r| Window {
                 meta,
@@ -708,9 +717,18 @@ impl LinkView {
         }
         let ids = app
             .read_pool()
-            .run(self.key.clone(), move |file, _| {
-                os_store::queries::app_support::selected_link_ids(file.conn(), &selection, &page)
-            })
+            .run_cached(
+                self.key.clone(),
+                "detail-link-ids",
+                crate::runtime::current_cancel(),
+                move |file, _| {
+                    os_store::queries::app_support::selected_link_ids(
+                        file.conn(),
+                        &selection,
+                        &page,
+                    )
+                },
+            )
             .await?;
         let ids = Arc::new(ids);
         *lock(&self.ids) = Some((ids.clone(), now));

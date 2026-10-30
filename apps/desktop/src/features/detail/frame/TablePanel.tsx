@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { Popover } from "react-aria-components";
 import { view } from "../../../ipc/view";
 import { toCmdError } from "../../../ipc/errors";
@@ -19,7 +19,7 @@ import { Button } from "../../../ui/primitives/Button";
 import { copySelection } from "../../../grid/copy";
 import { DetailEmpty, DetailError, DetailLoading } from "./Feedback";
 import { useDetailColumns } from "./columns";
-import { useDetailRequest } from "./request";
+import { DetailVisible, useDetailRequest } from "./request";
 import { displayValue } from "../url-details/UrlDetails";
 import type { DetailPanelProps } from "./types";
 
@@ -44,8 +44,21 @@ export interface TablePanelProps extends DetailPanelProps {
 type Target = { column: string; row?: number; x: number; y: number };
 const NO_HIDDEN: readonly string[] = [];
 
+/** Retain the cache and viewport while preventing hidden grids from requesting rows. */
+class DetailDataSource extends ViewDataSource {
+  active = true;
+  private requestedWindow: [number, number] = [0, 29];
+  override async ensureRange(first: number, last: number): Promise<void> {
+    if (!this.active) return;
+    this.requestedWindow = [first, last];
+    await super.ensureRange(first, last);
+  }
+  resumeRange() { return this.ensureRange(...this.requestedWindow); }
+}
+
 export function TablePanel(props: TablePanelProps) {
   const { spec, title, actions, onSort, hiddenColumns = NO_HIDDEN } = props;
+  const visible = useContext(DetailVisible);
   const t = useT(); const appearance = usePrefs(s => s.appearance); const locale = useLanguageStore(s => s.lang);
   const [selection, setSelection] = useState(SelectionModel.empty);
   const layoutId = spec.kind === "detail" ? spec.detail : spec.kind === "inlinks" || spec.kind === "outlinks" ? `${spec.kind}:${spec.filter.mode ?? "links"}` : spec.kind;
@@ -67,11 +80,12 @@ export function TablePanel(props: TablePanelProps) {
       if (!props.fallbackColumns || toCmdError(error).messageKey !== "err-unknown-column") throw error;
       handle = await view.open({ spec, columns: [...props.fallbackColumns] });
     }
-    const source = new ViewDataSource(handle);
+    const source = new DetailDataSource(handle);
     source.setSorted(spec.sort.length > 0);
     return { handle, source };
   }, value => { void value.source.dispose().catch(actions.reportError); });
   const source = result.value?.source;
+  if (source) source.active = visible;
   // A schema switch (Links → Anchors) must never render old keys against new metadata.
   const defaults = source ? defaultColumns(source.columns).map(c => ({ ...c,
     pinned: c.key === "Address" && props.pinAddress === false ? false : c.pinned,
@@ -83,39 +97,46 @@ export function TablePanel(props: TablePanelProps) {
   ];
   const changed = useSession(s => source ? s.views[source.viewId] : undefined);
   const revision = useSession(s => `${s.countsVersion}:${s.sidebarVersion}`);
+  const appliedRevision = useRef<{ source: ViewDataSource; revision: string } | undefined>(undefined);
   const latestRevision = useRef(revision);
   latestRevision.current = revision;
   useEffect(() => {
-    if (!source) return;
+    if (!source || !visible) return;
     let live = true;
-    let requested = latestRevision.current;
+    if (appliedRevision.current?.source !== source) appliedRevision.current = { source, revision: latestRevision.current };
+    let applied = appliedRevision.current.revision;
     let pending = false;
     let stale = false;
     source.onStale = () => { stale = true; };
     const timer = setInterval(() => {
-      if (pending || (!stale && requested === latestRevision.current)) return;
+      if (pending || (!stale && applied === latestRevision.current)) return;
       stale = false;
-      requested = latestRevision.current;
+      const updating = latestRevision.current;
       pending = true;
-      void view.update({ viewId: source.viewId, spec }).then(handle => {
-        if (live) return source.onViewChanged(handle.version, handle.total ?? 0);
-      }).catch(error => { if (live) setError(error); }).finally(() => { pending = false; });
+      void view.update({ viewId: source.viewId, spec }).then(async handle => {
+        if (!live) return;
+        await source.onViewChanged(handle.version, handle.total ?? 0);
+        // Only acknowledge data actually adopted by this visible effect.
+        if (!live || source.version < handle.version) return;
+        applied = updating;
+        appliedRevision.current = { source, revision: updating };
+      }).catch(error => { if (live) { stale = true; setError(error); } }).finally(() => { pending = false; });
     }, 500);
     return () => { live = false; source.onStale = undefined; clearInterval(timer); };
     // The source belongs to key (including spec); ticks only queue another refresh.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source]);
+  }, [source, visible]);
   useEffect(() => {
     if (!source) return;
     setSelection(SelectionModel.empty()); setTarget(undefined); setError(undefined);
     source.onError = setError;
     const unsubscribe = source.subscribe(() => refresh(n => n + 1));
-    void source.ensureRange(0, 29);
     return unsubscribe;
   }, [source, hiddenColumns]);
+  useEffect(() => { if (source && visible) void source.resumeRange().catch(setError); }, [source, visible]);
   useEffect(() => {
-    if (source && changed) void source.onViewChanged(changed.version, changed.total ?? source.total).catch(setError);
-  }, [source, changed]);
+    if (source && changed && visible) void source.onViewChanged(changed.version, changed.total ?? source.total).catch(setError);
+  }, [source, changed, visible]);
   useEffect(() => () => { copyPending.current?.(false); }, []);
   const exporting = () => actions.export(spec, { kind: "ids", ids: "urlIds" in spec ? spec.urlIds : props.selection.urlIds });
   if (result.error) return <DetailError error={result.error} />;

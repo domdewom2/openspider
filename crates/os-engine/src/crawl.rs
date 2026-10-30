@@ -682,6 +682,7 @@ pub(crate) fn make_shared<F: Fetch>(mut init: SharedInit<F>) -> (Arc<Shared<F>>,
         add_urls,
         notify: tokio::sync::Notify::new(),
         threads: AtomicU32::new(init.cfg.speed.threads),
+        memory_threads: AtomicU32::new(u32::MAX),
         stop: AtomicU8::new(STOP_NONE),
         reason: Mutex::new(None),
     });
@@ -942,7 +943,10 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
         }
         sh.lock_core().wake_deferred(clock.monotonic());
         // freie Plätze mit Arbeit füllen
-        let target = ctl.threads.load(Ordering::SeqCst) as usize;
+        let target = ctl
+            .threads
+            .load(Ordering::SeqCst)
+            .min(ctl.memory_threads.load(Ordering::SeqCst)) as usize;
         loop {
             let popped = {
                 let mut core = sh.core.lock().unwrap_or_else(|p| p.into_inner());
@@ -1008,7 +1012,7 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
                     let snapshot = progress_tx.borrow().clone();
                     match crate::memory::tick(&crate::memory::MemoryInputs { progress: &snapshot, config: &sh.cfg }) {
                         crate::memory::MemoryAction::None => {},
-                        crate::memory::MemoryAction::Throttle(n) => { ctl.threads.store(n.max(1), Ordering::SeqCst); },
+                        crate::memory::MemoryAction::Throttle(n) => { ctl.memory_threads.store(n.max(1), Ordering::SeqCst); },
                         crate::memory::MemoryAction::Pause(reason) => {
                             *ctl.reason.lock().unwrap_or_else(|p| p.into_inner()) = Some(("memory", reason));
                             ctl.stop.store(STOP_PAUSE, Ordering::SeqCst);

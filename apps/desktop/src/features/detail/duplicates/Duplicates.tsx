@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useContext, useMemo, useRef, useState } from "react";
 import { Label, Radio, RadioGroup } from "react-aria-components";
 import { detail } from "../../../ipc/detail";
 import type { DupPartner } from "../../../ipc/gen/DupPartner";
@@ -8,7 +8,7 @@ import { useSession } from "../../../state/session";
 import { Button } from "../../../ui/primitives/Button";
 import { Banner } from "../../../ui/primitives/Feedback";
 import { DetailError, DetailLoading } from "../frame/Feedback";
-import { useDetailRequest } from "../frame/request";
+import { DetailVisible, useDetailRequest } from "../frame/request";
 import type { DetailPanelProps } from "../frame/types";
 import { FachEmpty, featureDisabled, focusOf, gate, useFachConfig } from "../rendered/common";
 import { diffWords, tokenize, type Token } from "./diff";
@@ -55,6 +55,8 @@ export function Duplicates(props: DetailPanelProps) {
   const t = useT(); const lang = useLanguageStore(s => s.lang); const cfg = useFachConfig(props.selection.crawlId);
   const { actions } = props; const focus = focusOf(props.selection);
   const analysis = useSession(s => s.analysis);
+  const visible = useContext(DetailVisible);
+  const counters = useSession(s => `${s.countsVersion}:${s.sidebarVersion}`);
   const [filter, setFilter] = useState<DupFilter>("exact"); const [selected, setSelected] = useState<{ key: string; partner: DupPartner }>();
   const left = useRef<HTMLDivElement>(null); const right = useRef<HTMLDivElement>(null); const syncing = useRef(false);
   const step = analysis?.steps.find(s => s.step === NEAR_STEP);
@@ -63,7 +65,10 @@ export function Duplicates(props: DetailPanelProps) {
     ? gate(!cfg.nearDuplicates && featureDisabled("duplicates.near_enabled"), cfg.nearDuplicates && nearStale && { code: "NEEDS_CRAWL_ANALYSIS", arg: NEAR_STEP, action: { kind: "startAnalysis" } })
     : filter === "exact" ? gate(!cfg.exactDuplicates && featureDisabled("duplicates.exact_enabled")) : gate(featureDisabled("embeddings"));
   const crawl = props.selection.crawlId; const listKey = `dup:${crawl}:${focus}:${filter}`;
-  const list = useDetailRequest(listKey, signal => empty || filter === "semantic" ? Promise.resolve(undefined) : detail.duplicates({ urlId: focus, kind: filter }, signal));
+  const revision = `${counters}:${cfg.loaded}:${JSON.stringify(empty)}`;
+  const visibleRevision = useRef(revision);
+  if (visible) visibleRevision.current = revision;
+  const list = useDetailRequest(listKey, signal => empty || filter === "semantic" ? Promise.resolve(undefined) : detail.duplicates({ urlId: focus, kind: filter }, signal), undefined, visibleRevision.current);
   const key = `${listKey}:${selected?.partner.urlId}`;
   const partner = selected?.key.startsWith(listKey) ? selected.partner : undefined;
   const other = useDetailRequest(`dup-text:${key}`, signal => partner && !empty ? detail.duplicates({ urlId: partner.urlId, kind: filter === "near" ? "near" : "exact" }, signal) : Promise.resolve(undefined));
@@ -98,7 +103,7 @@ export function Duplicates(props: DetailPanelProps) {
       </RadioGroup>
       <Button isDisabled={!!empty || filter === "semantic"} onPress={() => actions.export({ kind: "detail", detail: "duplicates", urlIds: [focus], params: { kind: filter }, sort: [] }, { kind: "ids", ids: [focus] })}>{t("detail-export")}</Button>
     </div>
-    {empty ? <FachEmpty state={empty} onError={actions.reportError} /> : list.error ? <DetailError error={list.error} /> : list.loading || !list.value ? <DetailLoading /> :
+    {empty ? <FachEmpty state={empty} onError={actions.reportError} /> : list.error ? <DetailError error={list.error} /> : !list.value ? <DetailLoading /> :
       partners.length === 0 ? <FachEmpty state={{ code: "NO_MATCH" }} /> : <>
         <div className="os-fach-pane os-dup-list">
           <table className="os-fach-table" role="grid" aria-label={t("dup-list")} aria-rowcount={partners.length + 1}>

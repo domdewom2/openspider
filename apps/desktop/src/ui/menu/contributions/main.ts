@@ -13,7 +13,7 @@ const item = (id: string, labelKey: string, enabled?: MenuItemSpec["enabled"]): 
 });
 const action = (id: string, enabled?: MenuItemSpec["enabled"]) => item(id, shortcutById(id)?.labelKey ?? `u04-${id.replaceAll(".", "-")}`, enabled);
 const group = (menu: TopMenuId, name: string, order: number, items: MenuItemSpec[]): MenuContribution => ({ menu, group: name, order, items });
-export interface RecentEntry { path: string }
+export interface RecentEntry { path: string; label?: string }
 export interface MainMenuState {
   catalog?: ExportCatalog;
   recent: readonly RecentEntry[];
@@ -31,7 +31,7 @@ export function mainMenuContributions(state: MainMenuState): MenuContribution[] 
     group("file", "crawl", 11, [
       { ...action("crawl.new", idle), id: "file.new" },
       { ...action("crawl.open", idle), id: "file.open" },
-      { id: "file.recent", labelKey: "u04-recent", items: state.recent.length ? state.recent.map((entry, i) => ({ ...item(`recent.${i}`, "", idle), labelKey: undefined, label: entry.path })) : [{ id: "recent.empty", labelKey: "u04-recent-empty", enabled: () => false }] },
+      { id: "file.recent", labelKey: "u04-recent", items: state.recent.length ? state.recent.map((entry, i) => ({ ...item(`recent.${i}`, "", idle), labelKey: undefined, label: entry.label ?? entry.path })) : [{ id: "recent.empty", labelKey: "u04-recent-empty", enabled: () => false }] },
       { ...action("crawl.saveAs", ready), id: "file.saveAs" },
       item("crawls.manage", "u04-crawls-manage"),
       item("crawl.import", "u04-crawl-import", idle),

@@ -32,7 +32,7 @@ export function ToolsPanel({ controller, download }: { controller: McpController
     <p>{t("mcp-classes-help")}</p>
     {loadFailed && tools !== null && <p role="status">{t("mcp-load-failed")}</p>}
     {tools === null ? <p role="status">{t(loadFailed ? "mcp-load-failed" : "mcp-loading")}</p> : tools.length === 0 ? <p>{t("n03-mcp-no-tools")}</p> :
-      <div className="os-mcp-scroll"><table className="os-mcp-table"><caption>{t("mcp-tools")}</caption>
+      <div className="os-mcp-scroll"><table className="os-mcp-table os-mcp-tools-table"><caption>{t("mcp-tools")}</caption>
         <thead><tr><th>{t("mcp-enabled")}</th><th>{t("mcp-tool")}</th><th>{t("mcp-class")}</th><th>{t("mcp-description")}</th><th>{t("mcp-schema")}</th></tr></thead>
         <tbody>{tools.map(tool => <tr key={tool.name}>
           <td><Checkbox isSelected={tool.enabled} isDisabled={busy || !available || !classes.includes(tool.class)} onChange={enabled => void perform(async () => {

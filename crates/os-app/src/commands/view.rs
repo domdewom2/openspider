@@ -621,280 +621,294 @@ async fn page_query(
         return Err(CmdError::invalid_input("err-invalid-limit", "limit"));
     }
     let cfg = s.config.clone();
+    let lane = if matches!(spec, ViewSpec::Tab { .. }) {
+        "table-window"
+    } else {
+        "detail-window"
+    };
     app.read_pool()
-        .run_snapshot(s.key.clone(), move |file, _| {
-            let version = os_store::queries::change_seq(file.conn())?;
-            Ok((|| {
-                // Offset-based detail pages must use the same database generation.
-                // Pin on the first row read (not open), so an active crawl cannot
-                // starve the first page. A changed snapshot requires view.update
-                // and a full reload; never combine offsets from different orders.
-                if let Some(seq) = &detail_seq {
-                    let mut pinned = seq.lock().unwrap_or_else(|p| p.into_inner());
-                    if pinned.is_some_and(|v| v != version) {
+        .run_cached(
+            s.key.clone(),
+            lane,
+            crate::runtime::current_cancel(),
+            move |file, _| {
+                let _snapshot = file.conn().unchecked_transaction()?;
+                let version = os_store::queries::change_seq(file.conn())?;
+                Ok((|| {
+                    // Offset-based detail pages must use the same database generation.
+                    // Pin on the first row read (not open), so an active crawl cannot
+                    // starve the first page. A changed snapshot requires view.update
+                    // and a full reload; never combine offsets from different orders.
+                    if let Some(seq) = &detail_seq {
+                        let mut pinned = seq.lock().unwrap_or_else(|p| p.into_inner());
+                        if pinned.is_some_and(|v| v != version) {
+                            return Err(stale());
+                        }
+                        *pinned = Some(version);
+                    }
+                    // Tab projections pin database versions. Detail handles instead identify
+                    // a selection/query generation: unrelated crawl writes must not make
+                    // their first row request permanently stale. Every page still uses a
+                    // single read snapshot; explicit outdated handles are rejected by rows().
+                    if matches!(spec, ViewSpec::Tab { .. })
+                        && expected.is_some_and(|v| v != version)
+                    {
                         return Err(stale());
                     }
-                    *pinned = Some(version);
-                }
-                // Tab projections pin database versions. Detail handles instead identify
-                // a selection/query generation: unrelated crawl writes must not make
-                // their first row request permanently stale. Every page still uses a
-                // single read snapshot; explicit outdated handles are rejected by rows().
-                if matches!(spec, ViewSpec::Tab { .. }) && expected.is_some_and(|v| v != version) {
-                    return Err(stale());
-                }
-                let version = expected.unwrap_or(version);
-                if let ViewSpec::Tab {
-                    tab,
-                    filter,
-                    search,
-                    ..
-                } = &spec
-                {
-                    let mut q = tab_query(&spec, &columns, offset, limit)?;
-                    if columns.is_empty() {
-                        q.columns = views::ColumnSelection::Default;
-                    }
-                    let registry = os_analyze::tabs::configured_for_file(&cfg, file);
-                    let p = if let Some(ids) = &selected_ids {
-                        views::query_url_ids_in(
-                            &registry,
-                            file,
-                            &cfg,
-                            &q,
-                            &ids.iter().copied().map(UrlId).collect::<Vec<_>>(),
-                            false,
-                        )
-                    } else {
-                        views::query_view_in(&registry, file, &cfg, &q)
-                    }
-                    .map_err(view_error)?;
-                    let t = os_analyze::names::find_tab(&registry, tab).expect("resolved");
-                    let meta = catalog::expanded_columns(t, &p.columns, &cfg);
-                    let state = views::state_of_in(&registry, file, &cfg, tab, filter)
-                        .map_err(view_error)?;
-                    let empty = tab_empty(state, p.total, search.is_some());
-                    let cells = cells(p.rows, &meta);
-                    return Ok(DataPage {
-                        keys: p.row_keys.iter().map(|id| id.0).collect(),
-                        columns: meta,
-                        cells,
-                        total: p.total,
-                        version,
-                        empty,
-                    });
-                }
-                let (names, kinds, rows, keys, total, mut empty) =
-                    if let Some((kind, ids, params, sort)) = detail_spec(&spec) {
-                        let gate = if ids.is_empty() {
-                            Some(catalog::empty(EmptyCode::NoSelection, None))
-                        } else {
-                            detail_gate(kind, &cfg)
-                        };
-                        if gate.is_some() {
-                            return Ok(DataPage {
-                                keys: vec![],
-                                columns: vec![],
-                                cells: vec![],
-                                total: 0,
-                                version,
-                                empty: gate,
-                            });
+                    let version = expected.unwrap_or(version);
+                    if let ViewSpec::Tab {
+                        tab,
+                        filter,
+                        search,
+                        ..
+                    } = &spec
+                    {
+                        let mut q = tab_query(&spec, &columns, offset, limit)?;
+                        if columns.is_empty() {
+                            q.columns = views::ColumnSelection::Default;
                         }
-                        let req = DetailReq {
-                            url_ids: &ids,
-                            params: &params,
-                            sort: &sort,
-                            offset,
-                            limit: u64::from(limit),
-                        };
-                        let (_, source) = os_analyze::details::app_detail_source(kind);
-                        let p = source(file, &cfg, &req).map_err(view_error)?;
-                        let context_keys =
-                            os_analyze::details::app_detail_keys(file, &cfg, kind, &req, &p)
-                                .map_err(view_error)?;
-                        let (names, kinds): (Vec<_>, Vec<_>) = p.columns.into_iter().unzip();
-                        let keys = (0..p.rows.len())
-                            .map(|i| {
-                                offset
-                                    .saturating_add(i as u64)
-                                    .saturating_add(1)
-                                    .min(i64::MAX as u64) as i64
-                            })
-                            .collect();
-                        let keys = context_keys.unwrap_or(keys);
-                        let keys = if kind == DetailKind::A11yNodes {
-                            os_analyze::tabs::accessibility::node_keys(file, &req)
-                                .map_err(view_error)?
-                        } else {
-                            keys
-                        };
-                        (names, kinds, p.rows, keys, p.total, None)
-                    } else {
-                        let (mut selection, req) = link_selection(&spec, &cfg, offset, limit)?;
-                        let p = match selected_ids {
-                            Some(ids) if ordered => {
-                                os_store::queries::app_support::selected_links_by_ids(
-                                    file.conn(),
-                                    &selection,
-                                    &ids,
-                                )
-                            }
-                            ids => {
-                                selection.row_ids = ids;
-                                os_store::queries::app_support::selected_links(
-                                    file.conn(),
-                                    &selection,
-                                    &req,
-                                )
-                            }
-                        }
-                        .map_err(|e| crate::runtime::error::store_error(&e))?;
-                        let mut p = p;
-                        // UI-036: the Resources list adds Content Type, Size and Blocked By to the link columns.
-                        let resource_list = matches!(spec, ViewSpec::Resources { .. });
-                        if resource_list {
-                            let extras = os_store::queries::app_support::resource_extras(
-                                file.conn(),
-                                &p.keys,
+                        let registry = os_analyze::tabs::configured_for_file(&cfg, file);
+                        let p = if let Some(ids) = &selected_ids {
+                            views::query_url_ids_in(
+                                &registry,
+                                file,
+                                &cfg,
+                                &q,
+                                &ids.iter().copied().map(UrlId).collect::<Vec<_>>(),
+                                false,
                             )
+                        } else {
+                            views::query_view_in(&registry, file, &cfg, &q)
+                        }
+                        .map_err(view_error)?;
+                        let t = os_analyze::names::find_tab(&registry, tab).expect("resolved");
+                        let meta = catalog::expanded_columns(t, &p.columns, &cfg);
+                        let state = views::state_of_in(&registry, file, &cfg, tab, filter)
+                            .map_err(view_error)?;
+                        let empty = tab_empty(state, p.total, search.is_some());
+                        let cells = cells(p.rows, &meta);
+                        return Ok(DataPage {
+                            keys: p.row_keys.iter().map(|id| id.0).collect(),
+                            columns: meta,
+                            cells,
+                            total: p.total,
+                            version,
+                            empty,
+                        });
+                    }
+                    let (names, kinds, rows, keys, total, mut empty) =
+                        if let Some((kind, ids, params, sort)) = detail_spec(&spec) {
+                            let gate = if ids.is_empty() {
+                                Some(catalog::empty(EmptyCode::NoSelection, None))
+                            } else {
+                                detail_gate(kind, &cfg)
+                            };
+                            if gate.is_some() {
+                                return Ok(DataPage {
+                                    keys: vec![],
+                                    columns: vec![],
+                                    cells: vec![],
+                                    total: 0,
+                                    version,
+                                    empty: gate,
+                                });
+                            }
+                            let req = DetailReq {
+                                url_ids: &ids,
+                                params: &params,
+                                sort: &sort,
+                                offset,
+                                limit: u64::from(limit),
+                            };
+                            let (_, source) = os_analyze::details::app_detail_source(kind);
+                            let p = source(file, &cfg, &req).map_err(view_error)?;
+                            let context_keys =
+                                os_analyze::details::app_detail_keys(file, &cfg, kind, &req, &p)
+                                    .map_err(view_error)?;
+                            let (names, kinds): (Vec<_>, Vec<_>) = p.columns.into_iter().unzip();
+                            let keys = (0..p.rows.len())
+                                .map(|i| {
+                                    offset
+                                        .saturating_add(i as u64)
+                                        .saturating_add(1)
+                                        .min(i64::MAX as u64)
+                                        as i64
+                                })
+                                .collect();
+                            let keys = context_keys.unwrap_or(keys);
+                            let keys = if kind == DetailKind::A11yNodes {
+                                os_analyze::tabs::accessibility::node_keys(file, &req)
+                                    .map_err(view_error)?
+                            } else {
+                                keys
+                            };
+                            (names, kinds, p.rows, keys, p.total, None)
+                        } else {
+                            let (mut selection, req) = link_selection(&spec, &cfg, offset, limit)?;
+                            let p = match selected_ids {
+                                Some(ids) if ordered => {
+                                    os_store::queries::app_support::selected_links_by_ids(
+                                        file.conn(),
+                                        &selection,
+                                        &ids,
+                                    )
+                                }
+                                ids => {
+                                    selection.row_ids = ids;
+                                    os_store::queries::app_support::selected_links(
+                                        file.conn(),
+                                        &selection,
+                                        &req,
+                                    )
+                                }
+                            }
                             .map_err(|e| crate::runtime::error::store_error(&e))?;
-                            for (row, values) in p.rows.iter_mut().zip(extras) {
-                                row.extend(values);
+                            let mut p = p;
+                            // UI-036: the Resources list adds Content Type, Size and Blocked By to the link columns.
+                            let resource_list = matches!(spec, ViewSpec::Resources { .. });
+                            if resource_list {
+                                let extras = os_store::queries::app_support::resource_extras(
+                                    file.conn(),
+                                    &p.keys,
+                                )
+                                .map_err(|e| crate::runtime::error::store_error(&e))?;
+                                for (row, values) in p.rows.iter_mut().zip(extras) {
+                                    row.extend(values);
+                                }
                             }
-                        }
-                        let names = [
-                            "Type",
-                            "From",
-                            "To",
-                            "Size (Bytes)",
-                            "Alt Text",
-                            "Anchor Text",
-                            "Status Code",
-                            "Status",
-                            "Follow",
-                            "Target",
-                            "Rel",
-                            "Path Type",
-                            "Link Path",
-                            "Link Position",
-                            "Link Origin",
-                            "Link Crawlability",
-                            "Uncrawlable Reason",
-                            "Original URL",
-                            "PDF Page",
-                        ]
+                            let names = [
+                                "Type",
+                                "From",
+                                "To",
+                                "Size (Bytes)",
+                                "Alt Text",
+                                "Anchor Text",
+                                "Status Code",
+                                "Status",
+                                "Follow",
+                                "Target",
+                                "Rel",
+                                "Path Type",
+                                "Link Path",
+                                "Link Position",
+                                "Link Origin",
+                                "Link Crawlability",
+                                "Uncrawlable Reason",
+                                "Original URL",
+                                "PDF Page",
+                            ]
+                            .iter()
+                            .map(|n| n.to_string())
+                            .chain(
+                                resource_list
+                                    .then(|| RESOURCE_EXTRA.map(String::from))
+                                    .into_iter()
+                                    .flatten(),
+                            )
+                            .collect::<Vec<_>>();
+                            let kinds = (0..names.len())
+                                .map(|i| match i {
+                                    1 | 2 | 17 => defs::ColumnKind::Url,
+                                    3 | 6 | 18 | 20 => defs::ColumnKind::Int,
+                                    8 => defs::ColumnKind::Bool,
+                                    _ => defs::ColumnKind::Text,
+                                })
+                                .collect();
+                            let empty = selection
+                                .url_ids
+                                .is_empty()
+                                .then(|| catalog::empty(EmptyCode::NoSelection, None));
+                            (names, kinds, p.rows, p.keys, p.total, empty)
+                        };
+                    let meta = names
                         .iter()
-                        .map(|n| n.to_string())
-                        .chain(
-                            resource_list
-                                .then(|| RESOURCE_EXTRA.map(String::from))
-                                .into_iter()
-                                .flatten(),
-                        )
-                        .collect::<Vec<_>>();
-                        let kinds = (0..names.len())
-                            .map(|i| match i {
-                                1 | 2 | 17 => defs::ColumnKind::Url,
-                                3 | 6 | 18 | 20 => defs::ColumnKind::Int,
-                                8 => defs::ColumnKind::Bool,
-                                _ => defs::ColumnKind::Text,
-                            })
-                            .collect();
-                        let empty = selection
-                            .url_ids
-                            .is_empty()
-                            .then(|| catalog::empty(EmptyCode::NoSelection, None));
-                        (names, kinds, p.rows, p.keys, p.total, empty)
-                    };
-                let meta = names
-                    .iter()
-                    .zip(kinds)
-                    .enumerate()
-                    .map(|(i, (n, k))| {
-                        let mut c = defs::ColumnDef::dynamic(n, "NULL", k, true);
-                        defs::apply_meta_defaults(std::slice::from_mut(&mut c));
-                        if (i >= 16
-                            && !RESOURCE_EXTRA.contains(&n.as_str())
-                            && matches!(
-                                spec,
-                                ViewSpec::Inlinks { .. }
-                                    | ViewSpec::Outlinks { .. }
-                                    | ViewSpec::Resources { .. }
-                            ))
-                            || (n == "Link Crawlability"
-                                && matches!(spec, ViewSpec::Inlinks { .. }))
-                        {
-                            c.extension = true;
-                            c.default_visible = false;
-                        }
-                        // M2-D19 (ONPAGE-157): `Page Section` und `Rule ID` erst nach Einblenden.
-                        if matches!(
-                            spec,
-                            ViewSpec::Detail {
-                                detail: DetailTable::Spelling,
-                                ..
-                            }
-                        ) && os_analyze::tabs::content::SPELLING_DETAIL_EXTENSIONS
-                            .contains(&n.as_str())
-                        {
-                            c.extension = true;
-                            c.default_visible = false;
-                        }
-                        if matches!(spec, ViewSpec::Images { .. }) {
-                            if matches!(n.as_str(), "Alt Text Length" | "Source") {
+                        .zip(kinds)
+                        .enumerate()
+                        .map(|(i, (n, k))| {
+                            let mut c = defs::ColumnDef::dynamic(n, "NULL", k, true);
+                            defs::apply_meta_defaults(std::slice::from_mut(&mut c));
+                            if (i >= 16
+                                && !RESOURCE_EXTRA.contains(&n.as_str())
+                                && matches!(
+                                    spec,
+                                    ViewSpec::Inlinks { .. }
+                                        | ViewSpec::Outlinks { .. }
+                                        | ViewSpec::Resources { .. }
+                                ))
+                                || (n == "Link Crawlability"
+                                    && matches!(spec, ViewSpec::Inlinks { .. }))
+                            {
                                 c.extension = true;
                                 c.default_visible = false;
                             }
-                            if n == "Display Dimensions (WxH)"
-                                || (n == "Real Dimensions (WxH)"
-                                    && !cfg.images.real_dimensions_from_header)
+                            // M2-D19 (ONPAGE-157): `Page Section` und `Rule ID` erst nach Einblenden.
+                            if matches!(
+                                spec,
+                                ViewSpec::Detail {
+                                    detail: DetailTable::Spelling,
+                                    ..
+                                }
+                            ) && os_analyze::tabs::content::SPELLING_DETAIL_EXTENSIONS
+                                .contains(&n.as_str())
                             {
-                                c.needs = Some(defs::Needs::Rendering);
+                                c.extension = true;
+                                c.default_visible = false;
                             }
-                        }
-                        catalog::column(&c, n, &cfg)
-                    })
-                    .collect::<Vec<_>>();
-                let selected = if columns.is_empty() {
-                    meta.iter()
-                        .enumerate()
-                        .filter(|(_, c)| c.default_visible)
-                        .map(|(i, _)| i)
-                        .collect::<Vec<_>>()
-                } else {
-                    columns
-                        .iter()
-                        .map(|name| {
-                            names.iter().position(|n| n == name).ok_or_else(|| {
-                                CmdError::invalid_input("err-unknown-column", "columns")
-                                    .with_arg("column", name.clone())
-                            })
+                            if matches!(spec, ViewSpec::Images { .. }) {
+                                if matches!(n.as_str(), "Alt Text Length" | "Source") {
+                                    c.extension = true;
+                                    c.default_visible = false;
+                                }
+                                if n == "Display Dimensions (WxH)"
+                                    || (n == "Real Dimensions (WxH)"
+                                        && !cfg.images.real_dimensions_from_header)
+                                {
+                                    c.needs = Some(defs::Needs::Rendering);
+                                }
+                            }
+                            catalog::column(&c, n, &cfg)
                         })
-                        .collect::<Result<Vec<_>, _>>()?
-                };
-                let cells = rows
-                    .iter()
-                    .map(|row| {
-                        selected
+                        .collect::<Vec<_>>();
+                    let selected = if columns.is_empty() {
+                        meta.iter()
+                            .enumerate()
+                            .filter(|(_, c)| c.default_visible)
+                            .map(|(i, _)| i)
+                            .collect::<Vec<_>>()
+                    } else {
+                        columns
                             .iter()
-                            .map(|i| serde_json::to_value(&row[*i]).unwrap_or_default())
-                            .collect()
+                            .map(|name| {
+                                names.iter().position(|n| n == name).ok_or_else(|| {
+                                    CmdError::invalid_input("err-unknown-column", "columns")
+                                        .with_arg("column", name.clone())
+                                })
+                            })
+                            .collect::<Result<Vec<_>, _>>()?
+                    };
+                    let cells = rows
+                        .iter()
+                        .map(|row| {
+                            selected
+                                .iter()
+                                .map(|i| serde_json::to_value(&row[*i]).unwrap_or_default())
+                                .collect()
+                        })
+                        .collect();
+                    if empty.is_none() && total == 0 {
+                        empty = Some(catalog::empty(EmptyCode::NoDataYet, None));
+                    }
+                    Ok(DataPage {
+                        keys,
+                        columns: selected.iter().map(|i| meta[*i].clone()).collect(),
+                        cells,
+                        total,
+                        version,
+                        empty,
                     })
-                    .collect();
-                if empty.is_none() && total == 0 {
-                    empty = Some(catalog::empty(EmptyCode::NoDataYet, None));
-                }
-                Ok(DataPage {
-                    keys,
-                    columns: selected.iter().map(|i| meta[*i].clone()).collect(),
-                    cells,
-                    total,
-                    version,
-                    empty,
-                })
-            })())
-        })
+                })())
+            },
+        )
         .await?
 }
 fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {

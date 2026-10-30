@@ -133,8 +133,19 @@ impl Sample {
                 .0
             })
     }
+    /// Reserve for the OS and other apps: 10% of physical RAM (1.6 GiB on 16 GiB).
+    /// This only reduces concurrency; the process RSS limit controls pausing.
+    pub fn low_available(self) -> bool {
+        self.physical_bytes > 0
+            && u128::from(self.available_bytes) * 10 < u128::from(self.physical_bytes)
+    }
     pub fn stage(self) -> MemoryStage {
-        stage(self.used(), self.limit())
+        let process = stage(self.used(), self.limit());
+        if process == MemoryStage::Normal && self.low_available() {
+            MemoryStage::Warning
+        } else {
+            process
+        }
     }
 }
 pub fn stage(used: u64, limit: u64) -> MemoryStage {
@@ -156,7 +167,7 @@ pub fn sample() -> Sample {
         return probe();
     }
     if let Some(probe) = SYSTEM_PROBE.get() {
-        return probe();
+        return platform_available(probe());
     }
     static SYSTEM: OnceLock<Mutex<(sysinfo::System, Option<Instant>, Sample)>> = OnceLock::new();
     let mut state = SYSTEM
@@ -198,7 +209,7 @@ pub fn sample() -> Sample {
             .map(|(_, p)| p.memory())
             .sum(),
         physical_bytes: sys.total_memory(),
-        available_bytes: sys.available_memory(),
+        available_bytes: available_memory(sys),
         injected_limit: None,
     };
     state.1 = Some(Instant::now());
@@ -206,9 +217,40 @@ pub fn sample() -> Sample {
     result
 }
 
+// sysinfo 0.37 subtracts compressor pages from free+inactive on macOS. Use
+// physical minus resident active/wired/compressor/speculative pages instead: the
+// compressor is charged once, and reclaimable inactive pages remain available.
+fn available_memory(sys: &sysinfo::System) -> u64 {
+    if cfg!(target_os = "macos") {
+        sys.total_memory().saturating_sub(sys.used_memory())
+    } else {
+        sys.available_memory()
+    }
+}
+#[allow(unused_mut)]
+fn platform_available(mut measured: Sample) -> Sample {
+    #[cfg(target_os = "macos")]
+    {
+        static MEMORY: OnceLock<Mutex<(sysinfo::System, Option<Instant>)>> = OnceLock::new();
+        let mut state = MEMORY
+            .get_or_init(|| Mutex::new((sysinfo::System::new(), None)))
+            .lock()
+            .unwrap_or_else(|p| p.into_inner());
+        if state
+            .1
+            .is_none_or(|at| at.elapsed() >= Duration::from_secs(1))
+        {
+            state.0.refresh_memory();
+            state.1 = Some(Instant::now());
+        }
+        measured.available_bytes = available_memory(&state.0);
+    }
+    measured
+}
+
 pub(crate) fn guard_start<F: os_fetch::Fetch>(sh: &crate::worker::Shared<F>) {
     let measured = sample();
-    if measured.stage() == MemoryStage::Paused {
+    if stage(measured.used(), measured.limit()) == MemoryStage::Paused {
         *sh.ctl.reason.lock().unwrap_or_else(|p| p.into_inner()) = Some(("memory", "Wenig Arbeitsspeicher – Crawl pausiert; Threads reduzieren, Rendering oder HTML-Speicherung abschalten".into()));
         sh.ctl.stop.store(
             crate::worker::STOP_PAUSE,
@@ -226,18 +268,50 @@ pub fn tick(input: &MemoryInputs<'_>) -> MemoryAction {
         .progress
         .memory_limit_bytes
         .unwrap_or(measured.limit());
-    if stage(used, limit) == MemoryStage::Paused {
+    let current = if stage(used, limit) == MemoryStage::Paused {
+        2
+    } else if measured.low_available() {
+        1
+    } else {
+        0
+    };
+    let previous = transition(input.progress.started_at.to_db(), current);
+    if current == 2 {
         let message = format!("Wenig Arbeitsspeicher – Crawl pausiert ({used}/{limit} Bytes). Threads reduzieren; Rendering abschalten; HTML-Speicherung abschalten.");
-        tracing::warn!(used, limit, "{message}");
+        if previous != Some(current) {
+            tracing::warn!(used, limit, "{message}");
+        }
         MemoryAction::Pause(message)
-    } else if measured.physical_bytes > 0
-        && u128::from(measured.available_bytes) * 10 < u128::from(measured.physical_bytes)
-    {
-        tracing::warn!("Wenig verfügbarer RAM – Crawl gedrosselt");
+    } else if current == 1 {
+        if previous != Some(current) {
+            tracing::warn!(
+                available = measured.available_bytes,
+                physical = measured.physical_bytes,
+                "Wenig verfügbarer RAM – Crawl gedrosselt"
+            );
+        }
         MemoryAction::Throttle((input.config.speed.threads / 2).max(1))
     } else {
-        MemoryAction::None
+        if previous.is_some_and(|previous| previous != 0) {
+            tracing::info!("Speicherengpass beendet – Crawl-Drosselung aufgehoben");
+            MemoryAction::Throttle(u32::MAX)
+        } else {
+            MemoryAction::None
+        }
     }
+}
+
+// Bounded per-crawl transition history; repeated samples never produce repeated warnings.
+fn transition(key: String, current: u8) -> Option<u8> {
+    static STATES: OnceLock<Mutex<std::collections::HashMap<String, u8>>> = OnceLock::new();
+    let mut states = STATES
+        .get_or_init(Default::default)
+        .lock()
+        .unwrap_or_else(|p| p.into_inner());
+    if states.len() >= 128 && !states.contains_key(&key) {
+        states.clear();
+    }
+    states.insert(key, current)
 }
 
 /// Pausiert lange App-Operationen an ihren vorhandenen Checkpoints, ohne sie abzubrechen.
@@ -248,7 +322,8 @@ pub fn watch_operation(token: os_model::CancelToken) -> OperationGuard {
             if token.is_cancelled() {
                 break;
             }
-            match sample().stage() {
+            let measured = sample();
+            match stage(measured.used(), measured.limit()) {
                 MemoryStage::Paused => {
                     token.pause();
                     paused = true;
@@ -373,5 +448,247 @@ mod tests {
         }
         handle.stop();
         handle.wait().await.unwrap();
+    }
+}
+
+#[cfg(test)]
+mod n04_tests {
+    use super::*;
+    struct CountEvents(Arc<std::sync::atomic::AtomicUsize>);
+    impl tracing::Subscriber for CountEvents {
+        fn enabled(&self, _: &tracing::Metadata<'_>) -> bool {
+            true
+        }
+        fn new_span(&self, _: &tracing::span::Attributes<'_>) -> tracing::span::Id {
+            tracing::span::Id::from_u64(1)
+        }
+        fn record(&self, _: &tracing::span::Id, _: &tracing::span::Record<'_>) {}
+        fn record_follows_from(&self, _: &tracing::span::Id, _: &tracing::span::Id) {}
+        fn event(&self, event: &tracing::Event<'_>) {
+            if event.metadata().target() == module_path!().trim_end_matches("::n04_tests") {
+                self.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            }
+        }
+        fn enter(&self, _: &tracing::span::Id) {}
+        fn exit(&self, _: &tracing::span::Id) {}
+    }
+    // spec: CRAWL-129
+    #[tokio::test(start_paused = true)]
+    async fn sixty_low_memory_ticks_log_once_then_recovery_preserves_live_threads() {
+        struct Reset;
+        impl Drop for Reset {
+            fn drop(&mut self) {
+                set_probe(None);
+            }
+        }
+        let _reset = Reset;
+        let available = Arc::new(std::sync::atomic::AtomicU64::new(128 << 20));
+        let injected = available.clone();
+        set_probe(Some(Arc::new(move || Sample {
+            engine_bytes: 128 << 20,
+            physical_bytes: 16 << 30,
+            available_bytes: injected.load(std::sync::atomic::Ordering::SeqCst),
+            injected_limit: Some(8 << 30),
+            ..Default::default()
+        })));
+        let progress = os_model::Progress {
+            memory_used_bytes: None,
+            memory_limit_bytes: None,
+            state: os_model::CrawlState::Running,
+            end_reason: None,
+            crawled: 200,
+            queued: 4800,
+            percent: 4,
+            rate: 100.0,
+            avg_response_time: None,
+            elapsed_s: 2,
+            eta_s: None,
+            active_threads: 4,
+            started_at: os_model::Timestamp::from_unix_millis(1_800_123_456_789),
+            avg_rate: 100.0,
+            paused_s: 0,
+            discovered: 5000,
+            memory_stage: None,
+            file_bytes: None,
+        };
+        let mut config = os_model::CrawlConfig::default();
+        config.speed.threads = 4;
+        let input = MemoryInputs {
+            progress: &progress,
+            config: &config,
+        };
+        let events = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        tracing::subscriber::with_default(CountEvents(events.clone()), || {
+            for _ in 0..60 {
+                assert_eq!(tick(&input), MemoryAction::Throttle(2));
+            }
+            assert_eq!(events.load(std::sync::atomic::Ordering::SeqCst), 1);
+            available.store(8 << 30, std::sync::atomic::Ordering::SeqCst);
+            assert_eq!(tick(&input), MemoryAction::Throttle(u32::MAX));
+            assert_eq!(tick(&input), MemoryAction::None);
+            assert_eq!(events.load(std::sync::atomic::Ordering::SeqCst), 2);
+        });
+        live_threads_memory_fixture().await;
+    }
+
+    // spec: CRAWL-112, CRAWL-126, CRAWL-129
+    async fn live_threads_memory_fixture() {
+        use crate::testing::{test_deps, SimFetcher, SimSite};
+        use os_fetch::{Fetch, FetchPurpose, FetchRequest, FetchResult};
+        use os_model::{ManualClock, Timestamp};
+        use std::sync::atomic::{AtomicU64, Ordering};
+        use tokio::sync::{mpsc, oneshot};
+        let available = Arc::new(AtomicU64::new(8 << 30));
+        let injected = available.clone();
+        set_probe(Some(Arc::new(move || Sample {
+            engine_bytes: 128 << 20,
+            physical_bytes: 16 << 30,
+            available_bytes: injected.load(Ordering::SeqCst),
+            injected_limit: Some(8 << 30),
+            ..Default::default()
+        })));
+        let dir = tempfile::tempdir().unwrap();
+        // Only the root and robots may finish freely. Every other fetch stays
+        // at an explicit barrier until the test releases that scheduling phase.
+        struct HeldFetcher {
+            inner: Arc<SimFetcher>,
+            entered: mpsc::UnboundedSender<oneshot::Sender<()>>,
+            phase: std::sync::atomic::AtomicUsize,
+            admissions: Mutex<Vec<usize>>,
+        }
+        impl Fetch for HeldFetcher {
+            fn fetch(
+                &self,
+                req: FetchRequest,
+            ) -> std::pin::Pin<Box<dyn std::future::Future<Output = FetchResult> + Send + '_>>
+            {
+                Box::pin(async move {
+                    if req.purpose != FetchPurpose::RobotsTxt && req.url.path() != "/" {
+                        let phase = self.phase.load(Ordering::SeqCst);
+                        self.admissions.lock().unwrap()[phase] += 1;
+                        let (release, held) = oneshot::channel();
+                        self.entered.send(release).unwrap();
+                        let _ = held.await;
+                    }
+                    self.inner.fetch(req).await
+                })
+            }
+        }
+        async fn barrier(
+            entered: &mut mpsc::UnboundedReceiver<oneshot::Sender<()>>,
+            count: usize,
+        ) -> Vec<oneshot::Sender<()>> {
+            let mut held = Vec::new();
+            // Wall time is only a deadlock watchdog, never a phase trigger.
+            let deadline = Instant::now() + Duration::from_secs(45);
+            while held.len() < count {
+                assert!(
+                    Instant::now() < deadline,
+                    "fetch barrier stalled at {}/{count}",
+                    held.len()
+                );
+                match entered.try_recv() {
+                    Ok(release) => held.push(release),
+                    Err(mpsc::error::TryRecvError::Empty) => tokio::task::yield_now().await,
+                    Err(error) => panic!("fetch barrier closed: {error}"),
+                }
+            }
+            held
+        }
+        async fn memory_tick(clock: &ManualClock) {
+            let before = TICKS.with(|ticks| ticks.borrow().len());
+            clock.advance(Duration::from_secs(1));
+            tokio::time::advance(Duration::from_millis(100)).await;
+            // tick() and applying its action have no await between them in the
+            // current-thread control loop. Observing TICKS confirms both.
+            let deadline = Instant::now() + Duration::from_secs(45);
+            while TICKS.with(|ticks| ticks.borrow().len()) == before {
+                assert!(Instant::now() < deadline, "memory action was not confirmed");
+                tokio::task::yield_now().await;
+            }
+        }
+        let (entered, mut arrivals) = mpsc::unbounded_channel();
+        // Discover the whole queue before blocking any child; a tree alone
+        // would expose only three children at the initial barrier.
+        let links = (1..1000)
+            .map(|n| format!("<a href=\"/page-{n}.html\">fixture</a>"))
+            .collect::<String>();
+        let site = SimSite::tree("site.test", 1000).page("https://site.test/", &links);
+        let fetcher = Arc::new(HeldFetcher {
+            inner: SimFetcher::new(site),
+            entered,
+            phase: std::sync::atomic::AtomicUsize::new(0),
+            admissions: Mutex::new(vec![0; 6]),
+        });
+        let mut config = os_model::CrawlConfig::default();
+        config.speed.threads = 20;
+        let mut deps = test_deps();
+        let clock = Arc::new(ManualClock::new(Timestamp::UNIX_EPOCH));
+        deps.clock = clock.clone();
+        let handle = crate::start_crawl(
+            fetcher.clone(),
+            crate::CrawlRequest {
+                config,
+                source: crate::CrawlSource::Spider {
+                    start_url: "https://site.test/".into(),
+                },
+                file: dir.path().join("live-memory.ospider"),
+                project: "fixture".into(),
+                name: "live-memory".into(),
+            },
+            deps,
+        )
+        .await
+        .unwrap();
+        let mut held = barrier(&mut arrivals, 20).await;
+        handle.set_threads(2);
+        // Each phase confirms a memory action, releases all old fetches, then
+        // holds the newly scheduled requests. No request can end while counted.
+        for (phase, (free, desired, expected)) in [
+            (8 << 30, None, 2),
+            (128 << 20, None, 2),
+            (8 << 30, None, 2),
+            (128 << 20, Some(16), 10),
+            (8 << 30, None, 16),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            // Recovery can admit additional requests immediately in the same
+            // control-loop turn as the confirmed action, before old ones end.
+            fetcher.phase.store(phase + 1, Ordering::SeqCst);
+            available.store(free, Ordering::SeqCst);
+            memory_tick(&clock).await;
+            if let Some(desired) = desired {
+                handle.set_threads(desired);
+            }
+            for release in held.drain(..) {
+                release.send(()).unwrap();
+            }
+            held = barrier(&mut arrivals, expected).await;
+        }
+        handle.stop();
+        // Stop prevents further scheduling; let the final held workers finish.
+        for release in held {
+            release.send(()).unwrap();
+        }
+        handle.wait().await.unwrap();
+        assert_eq!(
+            *fetcher.admissions.lock().unwrap(),
+            vec![20, 2, 2, 2, 10, 16],
+            "start, live reduction, pressure, recovery, live raise under pressure, recovery"
+        );
+    }
+    // spec: CRAWL-129
+    #[test]
+    fn system_pressure_is_visible_in_progress_stage() {
+        let sample = Sample {
+            engine_bytes: 128 << 20,
+            physical_bytes: 16 << 30,
+            available_bytes: 128 << 20,
+            injected_limit: Some(8 << 30),
+            ..Default::default()
+        };
+        assert_eq!(sample.stage(), MemoryStage::Warning);
     }
 }
