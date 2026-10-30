@@ -1,6 +1,6 @@
-# macOS: Signieren und Notarisieren (M2-Z01)
+# macOS: Signieren, Notarisieren und Updater-Artefakte (M3-R01)
 
-Der Workflow `.github/workflows/release-macos.yml` baut die Desktop-App, signiert sie mit einer **Developer ID Application**, notarisiert sie bei Apple, heftet das Ticket und liefert ein signiertes, notarisiertes **DMG als Actions-Artefakt** (14 Tage). Er veröffentlicht nichts: kein GitHub Release, kein Upload außerhalb von GitHub Actions.
+Der Workflow `.github/workflows/release-macos.yml` baut die Desktop-App, signiert sie mit einer **Developer ID Application**, notarisiert sie bei Apple, heftet das Ticket und liefert **DMGs für arm64, x64 und Universal als Actions-Artefakte** (14 Tage). App und CLI sind nativ; Chromium wird für die Beta nicht gebündelt (vorläufige Entscheidung K3-01 vom 30.10.2026). Er veröffentlicht nichts: kein GitHub Release, kein Upload außerhalb von GitHub Actions.
 
 ## Voraussetzungen (einmalig, beim Apple-Developer-Konto)
 
@@ -39,27 +39,52 @@ gh variable set APPLE_SIGNING_IDENTITY --body 'Developer ID Application: Vorname
 gh variable set APPLE_TEAM_ID --body 'ABCDE12345'
 ```
 
-Fehlt eines dieser Elemente, endet der Lauf nach dem ersten Schritt mit grünem Status, einer Warnung (`::warning`) und einer Zusammenfassung, welche Namen fehlen. Es wird dann nichts gebaut.
+Fehlt eines dieser Apple-Elemente, endet der Signierjob mit grünem Status, einer Warnung (`::warning`) und einer Zusammenfassung, welche Namen fehlen. Es entstehen dann keine Release-Artefakte. Die unabhängigen Plattformtests laufen trotzdem; deren echte Fehler bleiben rot.
 
-## Auslösen
+## Updater-Schlüssel und Kanal
 
-- Manuell: Actions → *Release macOS* → *Run workflow*, Eingabe `arch` = `universal` (Standard, ein Binary für Apple Silicon und Intel), `aarch64` oder `x86_64`. Per CLI: `gh workflow run release-macos.yml -f arch=aarch64`.
-- Automatisch bei jedem Tag `v*` (immer `universal`). Auch dann entsteht nur das Artefakt, kein Release.
-- Laufzeit: etwa 20 bis 40 Minuten, davon meist 2 bis 15 Minuten Wartezeit auf Apples Notarisierungsdienst.
+| Name | Art | Zweck |
+|---|---|---|
+| `TAURI_SIGNING_PRIVATE_KEY` | Secret | privater Tauri/minisign-Schlüssel für `.app.tar.gz.sig` |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Secret | Passwort des privaten Schlüssels; leer bei unverschlüsseltem Schlüssel |
+| `OPENSPIDER_UPDATER_PUBKEY` | Variable | öffentlicher Schlüssel, wird beim Build eingebettet |
 
-Das Artefakt `openspider-macos-<arch>` enthält das DMG und die Prüfprotokolle `verify-app.log` und `verify-dmg.log`.
+Fehlt der private oder öffentliche Schlüssel, werden Updater-Artefakte ausdrücklich übersprungen; signierte DMGs entstehen weiterhin. Ein falscher Schlüssel oder ein falsches Passwort ist dagegen ein Buildfehler. Schlüssel werden weder gedruckt noch in Artefakte geschrieben. Die temporäre Build-Konfiguration enthält nur den öffentlichen Schlüssel und den Endpunkt.
+
+`channel=stable` verwendet `https://github.com/domdewom2/openspider/releases/latest/download/latest.json`, `channel=beta` verwendet dort `latest-beta.json` (K3-03/K3-04). Der Workflow erzeugt keine Update-Manifeste und veröffentlicht nichts. R04 ordnet die architekturspezifischen Archive den Schlüsseln `darwin-aarch64` und `darwin-x86_64` zu; das Universal-Archiv bleibt optionales Zusatzasset. Die URL- und Signaturprüfung zur Laufzeit liegt bei U01/U02.
+
+## Auslösen und Schnittstelle für R04
+
+- `workflow_dispatch`: `arch=all` (Standard), `aarch64`, `x86_64` oder `universal`; `channel=beta` (Standard) oder `stable`; `version` optional.
+- `workflow_call`: `version` (String, optional) und `channel` (String, Standard `stable`); erzeugt immer alle drei Architekturen. Secrets ausdrücklich übergeben oder `secrets: inherit` verwenden.
+- `version` muss der bereits vorbereiteten Workspace-Version entsprechen. Version und Lockfile setzt der Aufrufer vor dem Build; der Workflow prüft den Gleichstand, ohne Abhängigkeiten zu verändern.
+- Ausgabe `artifact_names`: JSON-Liste der tatsächlich hochgeladenen `openspider-macos-aarch64`, `openspider-macos-x86_64`, `openspider-macos-universal`; bei fehlender Apple-Konfiguration `[]`. Der Aufrufer benötigt `contents: read` und `actions: read`.
+- Kein Tag-Auslöser: Release-Tags verarbeitet künftig ausschließlich R04 (`release.yml`).
+- Jeder Branch-Push prüft Rust-Workspace und Frontend auf `macos-14` (arm64). Nächtlich und vor jedem manuellen/aufgerufenen Release zusätzlich `macos-15-intel` (K2-67, vorgeschlagener K3-06-Prüfweg; macOS 13 bleibt die Mindestplattform).
+
+```sh
+gh workflow run release-macos.yml --ref m3/r01 -f arch=all -f channel=beta
+# Mit vorbereiteter Version:
+gh workflow run release-macos.yml --ref m3/r01 -f arch=all -f channel=beta -f version=1.0.0-beta.1
+```
+
+Jedes Artefakt enthält ein DMG, `verify-app.log`, `verify-dmg.log` und bei vorhandenen Updater-Schlüsseln genau ein `OpenSpider_<arch>.app.tar.gz` mit zugehörigem `.sig`. Die Architekturnamen verhindern Namenskollisionen beim Zusammenführen der Release-Assets. Die drei Archive kommen aus getrennten Tauri-Zielverzeichnissen und bleiben zusammen mit ihrer Signatur unverändert.
 
 ## Ablauf im Workflow
 
-1. Prüfung, ob alle Secrets/Variablen gesetzt sind (sonst Meldung und Ende mit Erfolg).
-2. Checkout, Rust (Ziele `aarch64-apple-darwin` und `x86_64-apple-darwin`), Node 22, `npm ci`.
-3. Temporärer Schlüsselbund (`KEYCHAIN_PASSWORD`), Import der .p12, Partition-Liste für `codesign`, Prüfung, dass `APPLE_SIGNING_IDENTITY` darin vorkommt.
-4. `npm run -w apps/desktop tauri -- build --target <ziel> --bundles app,dmg`: Tauri signiert mit Hardened Runtime und `entitlements.plist`, notarisiert die App (`notarytool`, wartet), heftet das Ticket und baut danach das DMG.
-5. Das DMG wird zusätzlich signiert, notarisiert und geheftet (Tauri notarisiert nur die App darin; ein DMG ohne eigenes Ticket würde `stapler validate` nicht bestehen).
-6. `scripts/release/verify-macos.sh` prüft App und DMG; die Ausgabe steht im Job-Log und in der Job-Zusammenfassung.
-7. Upload des Artefakts; danach (`always()`) wird der Schlüsselbund gelöscht.
+1. Native Tests (Rust fmt/Clippy/Workspace-Tests, Frontend-Typen/Tests/statische Prüfungen mit Lizenzprüfung, Chromium/WebKit als Testwerkzeuge). Für die Tauri-Testkonfiguration wird zuerst die CLI als Sidecar gebaut. Tests lesen nur den Memory-SecretStore.
+2. Apple-Konfiguration prüfen, Checkout, Rust mit beiden Darwin-Zielen, Node 22 und `npm ci`.
+3. Workspace-Version prüfen und Kanal/öffentlichen Updater-Schlüssel über eine temporäre Tauri-Konfiguration setzen; ohne Schlüssel `createUpdaterArtifacts=false`.
+4. CLI `openspider` mit `cargo build -p os-cli --bin openspider --release --target … -j 4 --locked` bauen. Sidecar-Dateinamen tragen den Ziel-Triple-Suffix. Für Universal erzeugt `lipo -create` zusätzlich `openspider-universal-apple-darwin` aus beiden CLI-Binaries. Tauri baut die Universal-App selbst aus beiden Zielen.
+5. Temporären Schlüsselbund anlegen, .p12 importieren, Codesign-Zugriff erlauben. Kein zweiter Zertifikatsimport durch Tauri.
+6. Tauri baut `app,dmg`, signiert die App einschließlich Sidecar mit Hardened Runtime, notarisiert und heftet das App-Ticket. Tauri erzeugt und signiert auch die Updater-Archive, sofern aktiviert. `MACOSX_DEPLOYMENT_TARGET=13.0`; Builds bleiben `--locked`, Parallelität vier.
+7. DMG separat signieren, notarisieren und heften; zeitweilige Fehler beim Stapeln werden begrenzt wiederholt.
+8. Bundleprüfung und nativer Starttest der App sowie `openspider --version`; danach `verify-macos.sh` für App und DMG einschließlich der App im schreibgeschützt eingehängten DMG.
+9. Actions-Artefakte hochladen, Schlüsselbund immer löschen. Der Universal-DMG-Starttest läuft zusätzlich auf beiden Runnern (arm64 und Intel). Fehlende Artefakte werden nur bei unvollständiger Apple-Konfiguration grün übersprungen.
 
-Keine Werte werden ausgegeben: Secrets sind in GitHub maskiert, die Schritte schreiben nur Namen fehlender Einträge ins Log. `APPLE_CERTIFICATE` wird bewusst nicht an Tauri übergeben (sonst importierte Tauri das Zertifikat ein zweites Mal in einen eigenen Schlüsselbund); der Workflow hat es bereits importiert.
+Kein Schritt gibt geheime Werte aus; kein Shell-Tracing. Die verwendeten Werkzeuge bleiben die vorhandenen Rust-/Tauri-/Apple-Werkzeuge; keine zusätzliche Produktabhängigkeit.
+
+Die Tauri-Verfahren für [Sidecars](https://v2.tauri.app/develop/sidecar/), [macOS-Signierung](https://v2.tauri.app/distribute/sign/macos/) und [Updater-Artefakte](https://v2.tauri.app/plugin/updater/) bilden die Grundlage.
 
 ## Prüfen
 
@@ -73,7 +98,10 @@ scripts/release/verify-macos.sh /Applications/OpenSpider.app
 Geprüft wird:
 
 - `codesign --verify --deep --strict --verbose=2` (App) bzw. `--strict` (DMG)
-- Hardened Runtime aktiv (Flag `runtime` in `codesign -dvv`)
+- `check-macos-bundle.sh` sucht nach Dateiinhalt jede Mach-O-Datei, unabhängig von Name und Ausführungsrechten. Für jede Architektur: strikte Signaturprüfung, kein Ad-hoc-Signer, Hardened Runtime, sicherer Zeitstempel und leere Entitlements.
+- Bei `MACOS_EXPECTED_ARCH=universal` müssen alle Mach-O-Dateien genau `x86_64 arm64` enthalten; bei `aarch64` bzw. `x86_64` genau das jeweilige Ziel.
+- `Info.plist`: Bundle-ID, `LSMinimumSystemVersion=13.0`, CLI vorhanden, App-Icon und Editor-Zuordnungen für alle fünf OpenSpider-Dateitypen (OUT-272 [M3]).
+- `--smoke` prüft native Runner-Ausführung (`sysctl.proc_translated=0`, Intel ohne diesen Schlüssel), CLI-Version und zehn Sekunden laufende App. Universal wird auf beiden Runnern gestartet. Manuelle Aktivitätsanzeige/Gatekeeper-Erststart und echter Dateidoppelklick bleiben Teil von Q03.
 - `spctl -a -t exec -vv` für die App bzw. `spctl -a -t open --context context:primary-signature -vv` für das DMG; erwartet wird `accepted` mit `source=Notarized Developer ID`
 - `xcrun stapler validate`
 - beim DMG zusätzlich: Einhängen (schreibgeschützt) und dieselbe App-Prüfung für die enthaltene App
@@ -88,9 +116,11 @@ xcrun notarytool history --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID"   # f
 xcrun notarytool log <submission-id> --apple-id … --team-id …                 # Begründung bei „Invalid"
 ```
 
+Die Fixtures laufen auf Linux/macOS über `cargo test -p os-cli --test macos_bundle -j 4 --locked` oder direkt `python3 -m unittest discover -s tests/release -p 'test_macos_*.py' -v`. Die Signierwerkzeuge sind dort kontrollierte Testdoubles; echte Signatur-/Notarisierungsbelege liefert erst der macOS-Lauf. `--plist-only` erlaubt die reine Plist-Prüfung ohne Apple-Werkzeuge.
+
 ## Entitlements
 
-`apps/desktop/src-tauri/entitlements.plist` ist bewusst leer (nur ein leeres `<dict/>`); sie wird in `tauri.conf.json` unter `bundle.macOS.entitlements` eingebunden, zusammen mit `hardenedRuntime: true` und `minimumSystemVersion: "13.0"` (Mindestplattform laut `docs/ARCHITECTURE.md`).
+`apps/desktop/src-tauri/entitlements.plist` ist bewusst leer (nur ein leeres `<dict/>`); sie wird in `tauri.macos.conf.json` unter `bundle.macOS.entitlements` eingebunden, zusammen mit `hardenedRuntime: true` und `minimumSystemVersion: "13.0"` (Mindestplattform laut `docs/ARCHITECTURE.md`).
 
 Begründung, warum keine Ausnahmen nötig sind:
 
