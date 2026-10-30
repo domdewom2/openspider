@@ -1,6 +1,6 @@
 ## Einstellungen: Oberfläche
 
-settings-appearance-theme = Theme
+settings-appearance-theme = Farbschema
 settings-appearance-theme-light = Hell
 settings-appearance-theme-dark = Dunkel
 settings-appearance-theme-system = System

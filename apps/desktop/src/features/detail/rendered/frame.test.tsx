@@ -16,7 +16,7 @@ describe("detail frame with the technical tabs", () => {
   // spec: ONPAGE-192 [M2]
   it("serves SERP Snippet, Rendered Page, View Source, Duplicate Details and Spelling & Grammar Details for any row of a content tab", async () => {
     render(<DetailFrame selection={{ ...selection, topTab: "Page Titles" }} actions={ctx.actions} />); await settle(300);
-    for (const name of ["SERP Snippet", "Rendered Page", "View Source", "Duplicate Details", "Spelling & Grammar Details"]) {
+    for (const name of ["SERP-Snippet", "Rendered Page", "View Source", "Duplicate Details", "Spelling & Grammar Details"]) {
       await select(name);
       expect(document.querySelector('[data-empty-state="NO_DATA_YET"]'), name).toBeNull();
       expect(screen.getByRole("tabpanel", { name }).textContent?.length, name).toBeGreaterThan(10);

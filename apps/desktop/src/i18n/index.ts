@@ -11,9 +11,9 @@ export { makeFormatters, type Formatters } from "./format";
 
 const raw = import.meta.glob<string>("/src/**/i18n/*.ftl", { query: "?raw", import: "default", eager: true });
 
-export function loadFtlFiles(): FtlFile[] {
+export function loadFtlFiles(resources: Record<string, string> = raw): FtlFile[] {
   const files: FtlFile[] = [];
-  for (const [path, source] of Object.entries(raw)) {
+  for (const [path, source] of Object.entries(resources)) {
     const parsed = parseFtlPath(path);
     if (!parsed) continue;
     if (parsed.lang === "n03") {

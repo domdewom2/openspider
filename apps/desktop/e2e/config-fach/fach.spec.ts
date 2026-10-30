@@ -108,7 +108,7 @@ test("German Fachseiten fit a small window, retain ordered defaults and have no 
     const result = await new AxeBuilder({ page }).include('[role="dialog"]').analyze();
     expect(result.violations.filter(v => v.impact === "critical" || v.impact === "serious")).toEqual([]);
   }
-  await expect(d.getByRole("checkbox", { name: "Content", exact: true })).toBeDisabled();
+  await expect(d.getByRole("checkbox", { name: "Inhalt", exact: true })).toBeDisabled();
 });
 
 // spec: TECH-300

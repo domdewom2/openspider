@@ -1,6 +1,7 @@
 // i18n-Kern (UI-121, M2-ui-concept 2.7): Fluent-Bundles je Sprache aus den .ftl-Dateien der Features.
 // Reine Logik ohne React und ohne Vite – die Dateien werden hineingereicht, damit sie sich testen lässt.
 import { FluentBundle, FluentResource, type FluentVariable } from "@fluent/bundle";
+import { exportDisplayName } from "./exportNames";
 import { negotiateLanguages } from "@fluent/langneg";
 
 export const DEFAULT_LANGUAGE = "en";
@@ -54,6 +55,7 @@ export function humanizeKey(key: string): string {
 export interface I18n {
   /** Verfügbare Sprachen (Dateien), `en` immer zuerst. */
   languages(): string[];
+  completeness(lang: string): number;
   has(lang: string, key: string): boolean;
   /** Schlüssel in der Sprache, dann in Englisch, dann Kanon-Fallback, dann abgeleiteter Name. */
   translate(lang: string, key: string, args?: TArgs, opts?: TOptions): string;
@@ -66,14 +68,23 @@ export interface I18n {
 export function createI18n(files: readonly FtlFile[], onWarn: (msg: string) => void = () => undefined): I18n {
   const byLang = new Map<string, FluentBundle>();
   const problems: string[] = [];
+  const keys = new Map<string, Set<string>>();
   const bundleFor = (lang: string): FluentBundle | undefined => byLang.get(lang);
 
   const langs = new Set<string>([DEFAULT_LANGUAGE]);
   for (const f of files) langs.add(f.lang);
   for (const lang of langs) {
     const bundle = new FluentBundle(lang, { useIsolating: false });
+    const translated = new Set<string>();
+    keys.set(lang, translated);
     for (const f of files.filter((x) => x.lang === lang)) {
-      const errs = bundle.addResource(new FluentResource(f.source), { allowOverrides: false });
+      const resource = new FluentResource(f.source);
+      for (const entry of resource.body) {
+        if (entry.id.startsWith("-")) continue;
+        if (entry.value !== null) translated.add(entry.id);
+        for (const attr of Object.keys(entry.attributes)) translated.add(`${entry.id}.${attr}`);
+      }
+      const errs = bundle.addResource(resource, { allowOverrides: false });
       for (const e of errs) problems.push(`${f.path}: ${e.message}`);
     }
     byLang.set(lang, bundle);
@@ -103,15 +114,27 @@ export function createI18n(files: readonly FtlFile[], onWarn: (msg: string) => v
 
   return {
     languages: () => [...ordered],
-    has: (lang, key) => lookup(lang, key) !== null,
+    completeness(lang) {
+      const reference = keys.get(DEFAULT_LANGUAGE)!;
+      const translated = keys.get(lang);
+      const count = [...reference].filter(key => translated?.has(key)).length;
+      return count === reference.size ? 100 : Math.min(99, Math.round(100 * count / reference.size));
+    },
+    has: (lang, key) => lookup(lang, key) !== null || exportDisplayName(key, (id, args) => format(lang, id, args), lang === "en" ? ":" : ": ") !== null,
     translate(lang, key, args, opts) {
-      const own = format(lang, key, args);
+      const own = format(lang, key, args) ?? exportDisplayName(key, (id, values) => format(lang, id, values), lang === "en" ? ":" : ": ");
       if (own !== null) return own;
       if (lang !== DEFAULT_LANGUAGE) {
-        const en = format(DEFAULT_LANGUAGE, key, args);
+        const en = format(DEFAULT_LANGUAGE, key, args) ?? exportDisplayName(key, (id, values) => format(DEFAULT_LANGUAGE, id, values), ":");
         if (en !== null) return en;
       }
       if (opts?.fallback) return opts.fallback;
+      // Older frontends may receive a new backend error key. Keep its main text in the UI language;
+      // structured callers still choose a more specific ErrorCode fallback through has().
+      if (key.startsWith("err-")) {
+        const error = format(lang, "err-fallback") ?? format(DEFAULT_LANGUAGE, "err-fallback");
+        if (error !== null) return error;
+      }
       onWarn(`i18n: Schlüssel ohne Übersetzung: ${key}`);
       return humanizeKey(key);
     },

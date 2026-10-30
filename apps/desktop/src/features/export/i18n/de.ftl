@@ -34,9 +34,9 @@ export-sitemap-options = Sitemapoptionen
 export-sitemap-pages = XML-Sitemap erstellen…
 export-sitemap-images = Bild-Sitemap erstellen…
 export-pages = Seiten
-export-lastmod = Last Modified aufnehmen
-export-priority = Priority aufnehmen
-export-changefreq = Change Frequency aufnehmen
+export-lastmod = Änderungsdatum aufnehmen
+export-priority = Priorität aufnehmen
+export-changefreq = Änderungshäufigkeit aufnehmen
 export-images = Bilder aufnehmen
 export-hreflang = hreflang aufnehmen
 export-source = Quelle
@@ -46,11 +46,11 @@ export-date = Datum
 export-exclusions = URL-Ausschlüsse (Regex)
 export-depth = Tiefe { $depth }
 export-depth-basis = Crawl-Tiefe
-export-list-depth = Im Listenmodus haben alle URLs Tiefe 0; der erste Priority-Wert gilt für alle.
-export-sitemap-invalid = Bitte Sitemapwerte prüfen: Priority 0,0 bis 1,0 in Schritten von 0,1; gültiges Datum und ganze Bild-Inlink-Grenze.
+export-list-depth = Im Listenmodus haben alle URLs Tiefe 0; die erste Priorität gilt für alle.
+export-sitemap-invalid = Bitte Sitemapwerte prüfen: Priorität 0,0 bis 1,0 in Schritten von 0,1; gültiges Datum und ganze Bildlink-Grenze.
 export-date-invalid = Bitte ein gültiges Datum eingeben.
 export-image-regex = Externe Bilder einschließen (Regex)
-export-image-inlinks = Maximale IMG-Inlinks (leer = unbegrenzt)
+export-image-inlinks = Maximale eingehende Bildlinks (leer = unbegrenzt)
 export-hreflang-required = hreflang-Extraktion im Crawl aktivieren.
 export-valid-hreflang = Nur indexierbare hreflang-Ziele mit Status 200
 export-include-noindex = Noindex-Seiten einschließen
@@ -74,7 +74,7 @@ export-run = Exportieren…
 export-available = Verfügbare Exporte
 export-loading = Exporte werden geladen…
 export-tabs-failed = Die Tabs konnten nicht geladen werden.
-export-catalog-failed = Bulk-Exporte und Berichte konnten nicht geladen werden.
+export-catalog-failed = Sammelexporte und Berichte konnten nicht geladen werden.
 export-group-count = { $count } von { $total }
 export-group-all = Alle in { $group } auswählen
 export-group-all-short = Alle wählen
@@ -83,7 +83,7 @@ export-selected = Ausgewählt ({ $count })
 export-remove-all = Alle entfernen
 export-remove = { $name } entfernen
 export-move-up = { $name } nach oben
-export-selected-empty = Links Tabs mit Filtern, Bulk-Exporte oder Berichte anhaken; sie erscheinen hier in der Reihenfolge des Exports.
+export-selected-empty = Links Tabs mit Filtern, Sammelexporte oder Berichte anhaken; sie erscheinen hier in der Reihenfolge des Exports.
 export-missing = { $count ->
     [one] 1 Pflichtangabe fehlt
    *[other] { $count } Pflichtangaben fehlen

@@ -13,7 +13,7 @@ status-average = Durchschnitt: { $value } URL/s
 status-count = Erledigt { $done } von { $total } ({ $percent } %)
 status-queued = Verbleibend: { $value }
 status-eta = Restzeit: { $value }
-status-threads = Threads: { $value }
+status-threads = Arbeits-Threads: { $value }
 status-memory = Speicher: { $used } / { $limit }
 status-memory-warning = Arbeitsspeicher knapp
 status-memory-paused = Wegen Arbeitsspeicher pausiert
@@ -26,7 +26,7 @@ status-details = Statistik
 status-elapsed = Verstrichen: { $value }
 status-response = Mittlere Antwortzeit: { $value } s
 status-end-reason = Abschlussgrund: { $value }
-status-step-link_score = Link Score
+status-step-link_score = Link-Score
 status-step-canonicals = Kanonisierungen
 status-mcp-settings = MCP-Einstellungen
 

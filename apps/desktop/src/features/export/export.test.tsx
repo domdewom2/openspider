@@ -293,8 +293,8 @@ it("remembers XLSX after selection and recovers a failed name lookup", async () 
 // spec: UI-002
 // spec: UI-121
 it("labels catalog entries without a translation by their name and keeps translated keys (A01-22)", () => {
-  expect(menuLabel("Accessibility:WCAG 2.0 A", "Accessibility:")).toEqual({ label: "WCAG 2.0 A" });
-  expect(menuLabel("Links:All Inlinks")).toEqual({ label: "Links:All Inlinks" });
+  expect(menuLabel("Accessibility:WCAG 2.0 A", "Accessibility:")).toEqual({ labelKey: "Accessibility:WCAG 2.0 A" });
+  expect(menuLabel("Links:All Inlinks")).toEqual({ labelKey: "Links:All Inlinks" });
   expect(menuLabel("export-multi")).toEqual({ labelKey: "export-multi" });
 });
 

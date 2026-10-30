@@ -118,7 +118,8 @@ test("classes and individual tools use the service contract and canceling a Mark
   await expect(page.getByRole("checkbox", { name: "crawl_start", exact: true })).toBeDisabled();
   await page.getByText("Crawl", { exact: true }).click();
   await expect(page.getByRole("checkbox", { name: "crawl_start", exact: true })).toBeEnabled();
-  await page.getByText("query_urls", { exact: true }).first().click();
+  await page.getByRole("checkbox", { name: "query_urls", exact: true }).focus();
+  await page.getByRole("checkbox", { name: "query_urls", exact: true }).press("Space");
   await expect(page.getByRole("checkbox", { name: "query_urls", exact: true })).not.toBeChecked();
   await page.evaluate(() => window.mcpFixture.setDestination(null));
   await page.getByRole("button", { name: "Download API description (Markdown)…", exact: true }).click();

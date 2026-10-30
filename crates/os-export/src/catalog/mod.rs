@@ -394,9 +394,28 @@ pub type HeaderFn = fn(&TableJob<'_>) -> Result<Vec<String>, ExportError>;
 /// Dynamischer Tabellenexport einer konfigurierten Suche oder Extraktion.
 pub struct DynamicEntry {
     pub name: String,
+    /// Display metadata; canonical command/file names remain unchanged.
+    pub label_key: Option<String>,
     pub file_stem: String,
     pub header: Vec<String>,
     pub run: Box<DynamicRun>,
+}
+/// Structured UI label; user text is never inspected for translated words or suffixes.
+pub(crate) fn custom_label_key(
+    group: &str,
+    name: &str,
+    inlinks: bool,
+    generated_index: Option<usize>,
+) -> String {
+    format!(
+        "custom-export:{}",
+        serde_json::json!({
+            "group": group,
+            "name": name,
+            "inlinks": inlinks,
+            "generatedIndex": generated_index,
+        })
+    )
 }
 /// Schreibt Daten eines dynamischen Exports.
 pub type DynamicRun =

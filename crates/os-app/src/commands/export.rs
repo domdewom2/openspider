@@ -252,6 +252,16 @@ fn catalog_command<'a>(
                     } else {
                         os_export::reports::report_tables()
                     };
+                    let mut labels: BTreeMap<String, std::collections::VecDeque<String>> =
+                        BTreeMap::new();
+                    if kind == ExportKind::Bulk {
+                        for entry in core::dynamic_entries(&s.config) {
+                            labels
+                                .entry(entry.name.clone())
+                                .or_default()
+                                .push_back(entry.label_key.unwrap_or(entry.name));
+                        }
+                    }
                     let mut out: BTreeMap<String, Vec<ExportItem>> = BTreeMap::new();
                     for name in core::list_with(kind, &s.config) {
                         let availability = os_export::reports::prereq::availability_with_pending(
@@ -264,7 +274,10 @@ fn catalog_command<'a>(
                         let group = name.split(':').next().unwrap_or("Exports").to_owned();
                         out.entry(group).or_default().push(ExportItem {
                             name: name.clone(),
-                            label_key: name,
+                            label_key: labels
+                                .get_mut(&name)
+                                .and_then(|queue| queue.pop_front())
+                                .unwrap_or(name),
                             enabled: availability.enabled,
                             disabled_reason: availability.reason,
                         });
@@ -1170,3 +1183,110 @@ pub fn register(r: &mut Registry) {
 #[cfg(test)]
 #[path = "../../../../tests/fixtures/tech-m2-javascript/app_screenshots.rs"]
 mod screenshot_tests;
+
+#[cfg(test)]
+mod label_metadata_tests {
+    use super::*;
+    use crate::{pool::CrawlKey, runtime::sessions::SessionInfo, AppConfig, WindowId};
+    use os_model::CrawlState;
+    use std::sync::Arc;
+
+    // spec: UI-121
+    // spec: OUT-271
+    #[tokio::test]
+    async fn catalog_carries_label_origin_in_order_without_changing_canonical_names() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut cfg = CrawlConfig::default();
+        cfg.custom_extraction.extractors = serde_json::from_str(
+            r#"[{"name":"h2","expression":"//h2"},{"expression":"//comment()"}]"#,
+        )
+        .unwrap();
+        cfg.custom_search = serde_json::from_str(include_str!(
+            "../../../../tests/fixtures/integ-custom-search/filters.json"
+        ))
+        .unwrap();
+        for (filter, name) in cfg.custom_search.filters.iter_mut().zip([
+            "Stock",
+            "Stock Inlinks",
+            "Screenshots",
+            "Extractor 2",
+        ]) {
+            filter.name = name.into();
+        }
+        let mut named_extractor = cfg.custom_extraction.extractors[1].clone();
+        named_extractor.name = "Extractor 2".into();
+        cfg.custom_extraction.extractors.push(named_extractor);
+        let fixture = os_engine::testing::crawl_fixture("integ-custom-search", cfg.clone()).await;
+        let path = fixture.dir.path().join("crawl.ospider");
+        let app = App::new(AppConfig::new(dir.path())).unwrap();
+        let key = CrawlKey("labels".into());
+        app.register_crawl(key.clone(), path.clone());
+        app.sessions().set_current(
+            WindowId("main".into()),
+            SessionInfo {
+                key,
+                path,
+                config: Arc::new(cfg.clone()),
+                state: CrawlState::Completed,
+                writable: true,
+                engine: None,
+            },
+        );
+        let catalog: ExportCatalog = serde_json::from_value(
+            app.dispatch(
+                CallCtx::for_window("main"),
+                "export.catalog",
+                serde_json::Value::Null,
+            )
+            .await
+            .unwrap(),
+        )
+        .unwrap();
+        let items: Vec<_> = catalog.bulk.iter().flat_map(|g| &g.items).collect();
+        let mut names: Vec<_> = items.iter().map(|item| item.name.clone()).collect();
+        let mut canonical = core::list_with(ExportKind::Bulk, &cfg);
+        names.sort();
+        canonical.sort();
+        assert_eq!(names, canonical);
+        let metadata = |name: &str| -> Vec<serde_json::Value> {
+            items
+                .iter()
+                .filter(|item| item.name == name)
+                .map(|item| {
+                    serde_json::from_str(item.label_key.strip_prefix("custom-export:").unwrap())
+                        .unwrap()
+                })
+                .collect()
+        };
+        assert_eq!(
+            metadata("Custom Search:Stock Inlinks"),
+            vec![
+                serde_json::json!({"group":"search", "name":"Stock", "inlinks":true, "generatedIndex":null}),
+                serde_json::json!({"group":"search", "name":"Stock Inlinks", "inlinks":false, "generatedIndex":null}),
+            ]
+        );
+        for name in ["Screenshots", "Extractor 2"] {
+            assert_eq!(
+                metadata(&format!("Custom Search:{name}")),
+                vec![
+                    serde_json::json!({"group":"search", "name":name, "inlinks":false, "generatedIndex":null}),
+                ]
+            );
+        }
+        assert_eq!(
+            metadata("Custom Extraction:Extractor 2 Inlinks"),
+            vec![
+                serde_json::json!({"group":"extraction", "name":"Extractor 2", "inlinks":true, "generatedIndex":2}),
+                serde_json::json!({"group":"extraction", "name":"Extractor 2", "inlinks":true, "generatedIndex":null}),
+            ]
+        );
+        assert!(items
+            .iter()
+            .any(|item| item.name.starts_with("Images:") && item.label_key == item.name));
+        assert!(catalog
+            .reports
+            .iter()
+            .flat_map(|g| &g.items)
+            .all(|item| item.label_key == item.name));
+    }
+}

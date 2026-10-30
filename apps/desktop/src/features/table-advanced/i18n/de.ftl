@@ -109,5 +109,5 @@ u20-viz-directoryTree = Verzeichnisbaum
 u20-viz-directoryGraph = Kraftgerichteter Verzeichnisgraph
 u20-viz-crawlGraph3d = 3D-Crawl-Graph
 u20-viz-directoryGraph3d = 3D-Verzeichnisgraph
-u20-viz-anchorWords = Wortwolke Inlink-Ankertexte
+u20-viz-anchorWords = Wortwolke eingehender Ankertexte
 u20-viz-bodyWords = Wortwolke Body-Text

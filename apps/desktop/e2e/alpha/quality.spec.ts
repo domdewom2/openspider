@@ -45,7 +45,7 @@ test("a tour through the main window produces no console errors and axe finds no
     else { await page.getByRole("button", { name: "More sidebar tabs" }).press("Enter"); await page.getByRole("menuitem", { name, exact: true }).press("Enter"); }
     await expect(tab).toHaveAttribute("aria-selected", "true");
   }
-  for (const name of ["Inlinks", "Outlinks", "Image Details", "Resources", "SERP Snippet", "HTTP Headers", "Cookies", "URL Details"]) {
+  for (const name of ["Inlinks", "Outlinks", "Image Details", "Resources", "SERP-Snippet", "HTTP Headers", "Cookies", "URL Details"]) {
     const tab = page.getByRole("region", { name: "Details" }).getByRole("tab", { name, exact: true });
     if (await tab.count()) await tab.click();
     else { await page.getByRole("button", { name: "More detail tabs" }).click(); await page.getByRole("menuitem", { name, exact: true }).click(); }

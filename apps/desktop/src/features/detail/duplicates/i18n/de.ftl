@@ -1,10 +1,10 @@
 dup-filter = Anzeige
-dup-filter-exact = Exact
-dup-filter-near = Near
-dup-filter-semantic = Semantic
+dup-filter-exact = Exakt
+dup-filter-near = Ähnlich
+dup-filter-semantic = Semantisch
 dup-semantic-unavailable = Semantische Ähnlichkeit braucht Embeddings, die in dieser Version nicht erhoben werden.
-dup-match-exact = Exact
-dup-match-near = Near
+dup-match-exact = Exakt
+dup-match-near = Ähnlich
 dup-list = Duplikat-Partner
 dup-pick = Wähle einen Partner, um den analysierten Inhalt beider Seiten zu vergleichen.
 dup-text-this = Diese Seite

@@ -38,7 +38,7 @@ const grid = (page: Page, name: string) => page.getByRole("grid", { name, exact:
 // spec: ONPAGE-194
 test("SERP: device limits, bold terms, prefix, edit and reset with core measurements", async ({ page }) => {
   await open(page, { url: "3" });
-  await tab(page, "serp", "SERP Snippet");
+  await tab(page, "serp", "SERP-Snippet");
   await expect(page.locator(".os-serp-title")).toHaveAttribute("data-truncated", "true");
   await expect(page.locator(".os-serp-title")).toContainText(" …");
   await expect(page.getByRole("row", { name: /^Description/ })).toContainText("985");
@@ -63,7 +63,7 @@ test("SERP: device limits, bold terms, prefix, edit and reset with core measurem
 // spec: ONPAGE-194
 test("SERP: a page without meta description gets a hint and German date format", async ({ page }) => {
   await open(page, { url: "4", lang: "de" });
-  await tab(page, "serp", "SERP Snippet");
+  await tab(page, "serp", "SERP-Snippet");
   await expect(page.getByText("Diese Seite hat keine Meta Description.")).toBeVisible();
   await pick(page, "radio", "Datum");
   await expect(page.locator(".os-serp-prefix")).toHaveText("13.10.2026 — ");
@@ -74,7 +74,7 @@ test("SERP: a page without meta description gets a hint and German date format",
 // spec: ONPAGE-192 [M2]
 test("Page Titles row: the SERP lower tab shows Title 1 and Meta Description 1 of the selected page", async ({ page }) => {
   await open(page, { url: "1", top: "Page Titles" });
-  await tab(page, "serp", "SERP Snippet");
+  await tab(page, "serp", "SERP-Snippet");
   await expect(page.getByRole("textbox", { name: "Title" })).toHaveValue("Start");
   await expect(page.getByRole("textbox", { name: "Description" })).toHaveValue("A short description of the start page.");
 });
@@ -262,7 +262,7 @@ test("Accessibility details: rank-ordered prerequisite states", async ({ page })
 // spec: UI-126
 test("the technical tabs have no serious axe violations in the dark theme", async ({ page }) => {
   await open(page, { url: "1", dark: "1" });
-  for (const [id, name] of [["serp", "SERP Snippet"], ["source", "View Source"], ["structuredData", "Structured Data Details"]] as const) {
+  for (const [id, name] of [["serp", "SERP-Snippet"], ["source", "View Source"], ["structuredData", "Structured Data Details"]] as const) {
     await tab(page, id, name);
     await expect(page.getByRole("tabpanel", { name })).toBeVisible();
     await noSeriousViolations(page, '[role="tabpanel"]');

@@ -1,8 +1,8 @@
 rendered-zoom = Zoom
 rendered-zoom-fit = An Breite anpassen
 rendered-save = Screenshot speichern unter…
-rendered-screenshot = Screenshot
-rendered-screenshot-size = Screenshot, { $width } × { $height } px
+rendered-screenshot = Bildschirmaufnahme
+rendered-screenshot-size = Bildschirmaufnahme, { $width } × { $height } px
 rendered-tile = Screenshot-Teil { $n } von { $total }
 rendered-resources = Beim Rendern geladene Ressourcen
 rendered-filter = Ressourcen

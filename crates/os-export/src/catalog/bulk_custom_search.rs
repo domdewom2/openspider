@@ -84,12 +84,19 @@ pub fn dynamic_entries(cfg: &CrawlConfig) -> Vec<DynamicEntry> {
     let mut entries = Vec::new();
     for (i, filter) in cfg.custom_search.filters.iter().enumerate() {
         let name = filter_name(filter, i);
+        let generated_index = filter.name.trim().is_empty().then_some(i + 1);
         let contains = filter.contains;
         let export_name = format!("Custom Search:{name}");
         let url_name = name.clone();
         entries.push(DynamicEntry {
             file_stem: export_name.clone(),
             name: export_name,
+            label_key: Some(super::custom_label_key(
+                "search",
+                &name,
+                false,
+                generated_index,
+            )),
             header: HEADER.iter().map(|s| (*s).to_owned()).collect(),
             run: Box::new(move |job, writer| write_filter(job, writer, i, &url_name, contains)),
         });
@@ -97,6 +104,12 @@ pub fn dynamic_entries(cfg: &CrawlConfig) -> Vec<DynamicEntry> {
         entries.push(DynamicEntry {
             file_stem: export_name.clone(),
             name: export_name,
+            label_key: Some(super::custom_label_key(
+                "search",
+                &name,
+                true,
+                generated_index,
+            )),
             header: links_export::link_header(),
             run: Box::new(move |job, writer| {
                 let condition = format!(
@@ -123,6 +136,63 @@ mod tests {
     use crate::{pipeline, types::Format};
     use os_analyze::views::ViewQuery;
     use os_engine::testing::crawl_fixture;
+
+    // spec: UI-121
+    // spec: OUT-060
+    #[test]
+    fn display_metadata_preserves_user_names_and_marks_generated_filter_indices() {
+        let mut cfg = CrawlConfig {
+            custom_search: serde_json::from_str(include_str!(
+                "../../../../tests/fixtures/integ-custom-search/filters.json"
+            ))
+            .unwrap(),
+            ..Default::default()
+        };
+        let names = ["Screenshots", "Extractor 2", "Stock Inlinks", "  "];
+        for (filter, name) in cfg.custom_search.filters.iter_mut().zip(names) {
+            filter.name = name.into();
+        }
+        let entries = dynamic_entries(&cfg);
+        assert_eq!(entries.len(), 8);
+        for (i, name) in ["Screenshots", "Extractor 2", "Stock Inlinks", "Filter 4"]
+            .iter()
+            .enumerate()
+        {
+            for (offset, inlinks) in [(0, false), (1, true)] {
+                let entry = &entries[i * 2 + offset];
+                let canonical = format!(
+                    "Custom Search:{name}{}",
+                    if inlinks { " Inlinks" } else { "" }
+                );
+                assert_eq!(entry.name, canonical);
+                assert_eq!(entry.file_stem, canonical);
+                assert_eq!(
+                    entry.header,
+                    if inlinks {
+                        links_export::link_header()
+                    } else {
+                        HEADER.iter().map(|s| (*s).to_owned()).collect()
+                    }
+                );
+                let metadata: serde_json::Value = serde_json::from_str(
+                    entry
+                        .label_key
+                        .as_ref()
+                        .unwrap()
+                        .strip_prefix("custom-export:")
+                        .unwrap(),
+                )
+                .unwrap();
+                assert_eq!(
+                    metadata,
+                    serde_json::json!({
+                        "group": "search", "name": name, "inlinks": inlinks,
+                        "generatedIndex": if i == 3 { Some(4) } else { None },
+                    })
+                );
+            }
+        }
+    }
 
     // spec: OUT-060
     // spec: INTEG-034
