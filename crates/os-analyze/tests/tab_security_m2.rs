@@ -98,7 +98,7 @@ async fn stored_page_facts_and_individual_links_drive_the_live_filters() {
 
 // spec: ONPAGE-038, ONPAGE-039, ONPAGE-040, ONPAGE-041, ONPAGE-042, ONPAGE-043
 #[tokio::test]
-async fn headers_include_redirects_and_non_html_and_exclude_external_or_unanswered_urls() {
+async fn header_populations_distinguish_hsts_from_the_four_2xx_filters() {
     let fx = fixture("https").await;
     for filter in [
         "Missing HSTS Header",
@@ -108,8 +108,9 @@ async fn headers_include_redirects_and_non_html_and_exclude_external_or_unanswer
         "Missing Secure Referrer-Policy Header",
     ] {
         let got = addresses(&fx, filter);
-        assert!(
+        assert_eq!(
             got.contains(&"https://site.test/redirect".into()),
+            filter == "Missing HSTS Header",
             "{filter} {got:?}"
         );
         assert!(
