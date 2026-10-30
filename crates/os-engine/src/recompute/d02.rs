@@ -34,9 +34,10 @@ pub fn run(
             let (text, _) = os_parse::charset::decode(&html.bytes, ct.as_deref(), &[]);
             let doc = os_parse::dom::Document::parse(&text);
             let area = os_parse::content::area_text(&doc, &new.content.area);
+            let word_count = os_parse::content::word_count(&doc, &new.content.area);
             updates.word_count.push((
                 os_model::UrlId(id),
-                Some(os_parse::content::word_count(&doc, &new.content.area)),
+                new.extraction.word_count.then_some(word_count),
             ));
             let address: String = file
                 .conn()
@@ -62,7 +63,7 @@ pub fn run(
                     value,
                 }));
             let facts = if new.extraction.readability {
-                os_parse::readability::facts(&area)
+                os_parse::readability::facts_with_words(&area, Some(word_count))
             } else {
                 Vec::new()
             };

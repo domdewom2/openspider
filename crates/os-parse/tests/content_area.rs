@@ -78,21 +78,21 @@ fn word_count_unicode_whitespace_and_cjk() {
 
 // spec: ONPAGE-141
 #[test]
-fn area_html_default_counts_163_words() {
-    // 5 + 100 + 15 + 30 + 10 + 3 = 163 (nur nav/footer ausgeschlossen)
-    assert_eq!(count(&area_html()), 163);
+fn area_html_default_counts_148_words() {
+    // 100 + 15 + 30 + 3 = 148 (nav/footer/header/aside ausgeschlossen)
+    assert_eq!(count(&area_html()), 148);
 }
 
 // spec: ONPAGE-140
 #[test]
-fn default_excludes_nav_and_footer_but_keeps_header_aside_main() {
+fn default_excludes_navigation_and_page_chrome() {
     let html = "<body><header>h1 h2</header><nav>n1 n2 n3</nav><main>m1</main>\
                 <aside>a1 a2</aside><footer>f1 f2 f3 f4</footer></body>";
-    assert_eq!(count(html), 2 + 1 + 2);
+    assert_eq!(count(html), 1);
     // Auch tief verschachtelt: nav in header, footer in article.
     let html =
         "<body><header>h <nav>n1 n2</nav></header><article>t <footer>f1</footer></article></body>";
-    assert_eq!(count(html), 2);
+    assert_eq!(count(html), 1);
     // nav/footer zählen aber zum Text Ratio (A-7), siehe unten.
 }
 
@@ -101,13 +101,13 @@ fn default_excludes_nav_and_footer_but_keeps_header_aside_main() {
 fn exclude_class_matches_tokens_not_substrings() {
     let html = area_html();
     let a = area(|a| a.exclude_classes = vec!["mobile-menu".into()]);
-    assert_eq!(count_with(&html, &a), 163 - 15);
+    assert_eq!(count_with(&html, &a), 148 - 15);
     // Token „menu“ trifft ebenfalls (Klasse „menu mobile-menu“ enthält das Token „menu“).
     let a = area(|a| a.exclude_classes = vec!["menu".into()]);
-    assert_eq!(count_with(&html, &a), 163 - 15);
+    assert_eq!(count_with(&html, &a), 148 - 15);
     // „mobile“ ist nur Teilstring von „mobile-menu“, kein Token.
     let a = area(|a| a.exclude_classes = vec!["mobile".into()]);
-    assert_eq!(count_with(&html, &a), 163);
+    assert_eq!(count_with(&html, &a), 148);
     // Reihenfolge und Mehrfach-Leerraum im class-Attribut sind egal.
     let html = "<body><div class=\"  a   mobile-menu\t b \">x y</div><p>z</p></body>";
     let a = area(|a| a.exclude_classes = vec!["mobile-menu".into()]);
@@ -118,10 +118,10 @@ fn exclude_class_matches_tokens_not_substrings() {
 #[test]
 fn exclude_id_removes_comments_section() {
     let a = area(|a| a.exclude_ids = vec!["comments".into()]);
-    assert_eq!(count_with(&area_html(), &a), 163 - 30);
+    assert_eq!(count_with(&area_html(), &a), 148 - 30);
     // IDs sind exakt (Groß-/Kleinschreibung zählt).
     let a = area(|a| a.exclude_ids = vec!["Comments".into()]);
-    assert_eq!(count_with(&area_html(), &a), 163);
+    assert_eq!(count_with(&area_html(), &a), 148);
 }
 
 // spec: ONPAGE-140
@@ -193,8 +193,8 @@ fn block_boundaries_create_whitespace_inline_elements_do_not() {
     assert_eq!(count("<body><h2>a</h2><h3>b</h3></body>"), 2);
     // Inline-Elemente trennen nicht.
     assert_eq!(count("<body>a<b>b</b>c <em>d</em><span>e</span></body>"), 2);
-    // Links in Absätzen zählen nicht extra (nur Listenpunkte, A-35b)
-    assert_eq!(count("<body><a href=\"/x\">link</a>text</body>"), 1);
+    // Ankergrenzen trennen Wörter; zusätzliche Wörter entstehen nur je Listenpunkt (A-35b).
+    assert_eq!(count("<body><a href=\"/x\">link</a>text</body>"), 2);
 }
 
 // spec: ONPAGE-141
@@ -347,11 +347,11 @@ fn text_ratio_uses_whole_body_over_source_chars() {
 
 // spec: ONPAGE-141
 #[test]
-fn text_ratio_rounds_to_one_decimal_and_stays_in_range() {
+fn text_ratio_rounds_to_three_decimals_and_stays_in_range() {
     let doc = Document::parse("<body>abc</body>");
-    // 3 / 7 = 42,857… → 42,9
+    // 3 / 7 = 42,857… → 42,857
     let stats = analyze_with_source(&doc, &ContentAreaConfig::default(), 7);
-    assert_eq!(stats.text_ratio, 42.9);
+    assert_eq!(stats.text_ratio, 42.857);
     // Quelltext kürzer als der Text (nur bei fehlerhafter Angabe möglich): auf 100 begrenzt.
     let stats = analyze_with_source(&doc, &ContentAreaConfig::default(), 2);
     assert_eq!(stats.text_ratio, 100.0);

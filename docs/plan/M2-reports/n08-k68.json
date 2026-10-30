@@ -1,0 +1,425 @@
+{
+  "baseline": "b4aebd7c1f9cb552ae74ff8f6c7431bd439c0fed",
+  "candidate_commit": "c2676cf5a0efbde8ba36b6e8e9655c79bcf57f76",
+  "run": "target/n08-correction",
+  "passed": 38,
+  "total": 38,
+  "checks": [
+    {
+      "site": "out-basic-site",
+      "file": "internal_all.csv",
+      "passed": true,
+      "ref_rows": 18,
+      "os_rows": 18,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": {
+        "ref_column": "Word Count",
+        "os_column": "Word Count",
+        "compared": 12,
+        "errors": 0,
+        "examples": []
+      }
+    },
+    {
+      "site": "out-basic-site",
+      "file": "external_all.csv",
+      "passed": true,
+      "ref_rows": 1,
+      "os_rows": 1,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "out-basic-site",
+      "file": "response_codes_all.csv",
+      "passed": true,
+      "ref_rows": 19,
+      "os_rows": 19,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "out-basic-site",
+      "file": "links_all.csv",
+      "passed": true,
+      "ref_rows": 12,
+      "os_rows": 12,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "out-basic-site",
+      "file": "all_inlinks.csv",
+      "passed": true,
+      "ref_rows": 90,
+      "os_rows": 90,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "out-basic-site",
+      "file": "redirect_chains.csv",
+      "passed": true,
+      "ref_rows": 0,
+      "os_rows": 0,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "out-basic-site",
+      "file": "crawl_overview.csv",
+      "passed": true,
+      "ref_rows": 466,
+      "os_rows": 485,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-onpage",
+      "file": "internal_all.csv",
+      "passed": true,
+      "ref_rows": 105,
+      "os_rows": 105,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": {
+        "ref_column": "Word Count",
+        "os_column": "Word Count",
+        "compared": 84,
+        "errors": 0,
+        "examples": []
+      }
+    },
+    {
+      "site": "parity-onpage",
+      "file": "external_all.csv",
+      "passed": true,
+      "ref_rows": 9,
+      "os_rows": 9,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-onpage",
+      "file": "response_codes_all.csv",
+      "passed": true,
+      "ref_rows": 114,
+      "os_rows": 114,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-onpage",
+      "file": "url_all.csv",
+      "passed": true,
+      "ref_rows": 105,
+      "os_rows": 105,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-onpage",
+      "file": "page_titles_all.csv",
+      "passed": true,
+      "ref_rows": 84,
+      "os_rows": 84,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-onpage",
+      "file": "meta_description_all.csv",
+      "passed": true,
+      "ref_rows": 84,
+      "os_rows": 84,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-onpage",
+      "file": "h1_all.csv",
+      "passed": true,
+      "ref_rows": 84,
+      "os_rows": 84,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-onpage",
+      "file": "h2_all.csv",
+      "passed": true,
+      "ref_rows": 84,
+      "os_rows": 84,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-onpage",
+      "file": "content_all.csv",
+      "passed": true,
+      "ref_rows": 85,
+      "os_rows": 84,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": {
+        "ref_column": "Word Count",
+        "os_column": "Word Count",
+        "compared": 84,
+        "errors": 0,
+        "examples": []
+      }
+    },
+    {
+      "site": "parity-onpage",
+      "file": "images_all.csv",
+      "passed": true,
+      "ref_rows": 12,
+      "os_rows": 13,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-onpage",
+      "file": "all_inlinks.csv",
+      "passed": true,
+      "ref_rows": 277,
+      "os_rows": 277,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-onpage",
+      "file": "crawl_overview.csv",
+      "passed": true,
+      "ref_rows": 474,
+      "os_rows": 485,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-response",
+      "file": "internal_all.csv",
+      "passed": true,
+      "ref_rows": 46,
+      "os_rows": 46,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": {
+        "ref_column": "Word Count",
+        "os_column": "Word Count",
+        "compared": 14,
+        "errors": 0,
+        "examples": []
+      }
+    },
+    {
+      "site": "parity-response",
+      "file": "external_all.csv",
+      "passed": true,
+      "ref_rows": 5,
+      "os_rows": 5,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-response",
+      "file": "response_codes_all.csv",
+      "passed": true,
+      "ref_rows": 51,
+      "os_rows": 51,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-response",
+      "file": "all_inlinks.csv",
+      "passed": true,
+      "ref_rows": 91,
+      "os_rows": 91,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-response",
+      "file": "all_error_(4xx_5xx_no_response)_inlinks.csv",
+      "passed": true,
+      "ref_rows": 18,
+      "os_rows": 18,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-response",
+      "file": "redirect_chains.csv",
+      "passed": true,
+      "ref_rows": 8,
+      "os_rows": 6,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-response",
+      "file": "crawl_overview.csv",
+      "passed": true,
+      "ref_rows": 468,
+      "os_rows": 485,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-synthetic",
+      "file": "internal_all.csv",
+      "passed": true,
+      "ref_rows": 400,
+      "os_rows": 400,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": {
+        "ref_column": "Word Count",
+        "os_column": "Word Count",
+        "compared": 379,
+        "errors": 0,
+        "examples": []
+      }
+    },
+    {
+      "site": "parity-synthetic",
+      "file": "links_all.csv",
+      "passed": true,
+      "ref_rows": 379,
+      "os_rows": 379,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-synthetic",
+      "file": "all_inlinks.csv",
+      "passed": true,
+      "ref_rows": 4176,
+      "os_rows": 4176,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-synthetic",
+      "file": "crawl_overview.csv",
+      "passed": true,
+      "ref_rows": 474,
+      "os_rows": 485,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-technical",
+      "file": "internal_all.csv",
+      "passed": true,
+      "ref_rows": 111,
+      "os_rows": 111,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": {
+        "ref_column": "Word Count",
+        "os_column": "Word Count",
+        "compared": 106,
+        "errors": 0,
+        "examples": []
+      }
+    },
+    {
+      "site": "parity-technical",
+      "file": "canonicals_all.csv",
+      "passed": true,
+      "ref_rows": 106,
+      "os_rows": 106,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-technical",
+      "file": "directives_all.csv",
+      "passed": true,
+      "ref_rows": 107,
+      "os_rows": 110,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-technical",
+      "file": "hreflang_all.csv",
+      "passed": true,
+      "ref_rows": 106,
+      "os_rows": 107,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-technical",
+      "file": "links_all.csv",
+      "passed": true,
+      "ref_rows": 106,
+      "os_rows": 106,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-technical",
+      "file": "sitemaps_all.csv",
+      "passed": true,
+      "ref_rows": 110,
+      "os_rows": 0,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-technical",
+      "file": "all_inlinks.csv",
+      "passed": true,
+      "ref_rows": 405,
+      "os_rows": 405,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    },
+    {
+      "site": "parity-technical",
+      "file": "crawl_overview.csv",
+      "passed": true,
+      "ref_rows": 474,
+      "os_rows": 485,
+      "url_set_identical": true,
+      "cell_errors": 0,
+      "word_count": null
+    }
+  ]
+}

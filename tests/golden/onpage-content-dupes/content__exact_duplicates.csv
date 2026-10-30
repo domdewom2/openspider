@@ -1,6 +1,6 @@
-﻿Address,Word Count,Sentence Count,Average Words Per Sentence,Flesch Reading Ease Score,Readability,Closest Similarity Match,No. Near Duplicates,Closest Semantically Similar Address,Semantic Similarity Score,No. Semantically Similar,Semantic Relevance Score,Total Language Errors,Spelling Errors,Grammar Errors,Language,Hash,Indexability,Indexability Status,Matched Phrase
-{BASE}/a.html,42,2,21,100,Very Easy,,,,,,,,,,,4061f6a97e80d8fd980c13a496cc515d,Indexable,,
-{BASE}/a.html?ref=x,42,2,21,100,Very Easy,,,,,,,,,,,4061f6a97e80d8fd980c13a496cc515d,Indexable,,
-{BASE}/b.html,42,2,21,100,Very Easy,,,,,,,,,,,4061f6a97e80d8fd980c13a496cc515d,Indexable,,
-{BASE}/short-a.html,3,1,3,100,Very Easy,,,,,,,,,,,5bfaa7f3baf15e7150848a116fbf8004,Indexable,,
-{BASE}/short-b.html,3,1,3,100,Very Easy,,,,,,,,,,,5bfaa7f3baf15e7150848a116fbf8004,Indexable,,
+﻿Address,Word Count,Sentence Count,Average Words Per Sentence,Flesch Reading Ease Score,Readability,Closest Similarity Match,No. Near Duplicates,Closest Semantically Similar Address,Semantic Similarity Score,No. Semantically Similar,Semantic Relevance Score,Total Language Errors,Spelling Errors,Grammar Errors,Language,Hash,Indexability,Indexability Status,Title 1,Title 1 Length,Title 1 Pixel Width,H1-1,H1-1 Length,H2-1,H2-1 Length,Occurrences,Matched Phrase
+{BASE}/a.html,42,5,8.4,33.138,Hard,,,,,,,,,,,4061f6a97e80d8fd980c13a496cc515d,Indexable,,Duplikat A,10,91,Gleiche Seite,13,,0,0,
+{BASE}/a.html?ref=x,42,5,8.4,33.138,Hard,,,,,,,,,,,4061f6a97e80d8fd980c13a496cc515d,Indexable,,Duplikat A,10,91,Gleiche Seite,13,,0,0,
+{BASE}/b.html,42,5,8.4,33.138,Hard,,,,,,,,,,,4061f6a97e80d8fd980c13a496cc515d,Indexable,,Duplikat A,10,91,Gleiche Seite,13,,0,0,
+{BASE}/short-a.html,3,1,3,100,Very Easy,,,,,,,,,,,5bfaa7f3baf15e7150848a116fbf8004,Indexable,,Kurz,4,41,,0,,0,0,
+{BASE}/short-b.html,3,1,3,100,Very Easy,,,,,,,,,,,5bfaa7f3baf15e7150848a116fbf8004,Indexable,,Kurz,4,41,,0,,0,0,

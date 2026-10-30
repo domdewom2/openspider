@@ -2,9 +2,9 @@
 //!
 //! **Inhaltsbereich (ONPAGE-140):** Textinhalt des `<body>`. Immer ausgeschlossen sind `script`, `style`,
 //! `noscript`, `template`, `svg` und Kommentare. Dazu kommen die konfigurierten Exclude-Regeln (Elementnamen,
-//! Klassen tokenweise, IDs; Default `nav`, `footer`). Ist mindestens eine Include-Regel gesetzt, zählt nur
+//! Klassen tokenweise, IDs; Default `nav`, `footer`, `header`, `aside`). Ist mindestens eine Include-Regel gesetzt, zählt nur
 //! Text innerhalb passender Elemente; Exclude gewinnt bei Verschachtelung. Blockgrenzen und `<br>` erzeugen
-//! Leerraum (`<p>a</p><p>b</p>` → zwei Wörter), Inline-Elemente nicht (`a<b>b</b>` → ein Wort). Versteckter
+//! Leerraum (`<p>a</p><p>b</p>` → zwei Wörter), Ankergrenzen ebenfalls; sonstige Inline-Elemente nicht (`a<b>b</b>` → ein Wort). Versteckter
 //! Text (`hidden`, `display:none`) bleibt enthalten.
 //!
 //! **Wortzahl (ONPAGE-141, A-35, A-35b):** Anzahl der durch Unicode-Leerraum (inkl. U+00A0) getrennten nicht
@@ -17,7 +17,7 @@
 //!
 //! **Text Ratio (A-7):** Zeichen des sichtbaren Textes im gesamten `<body>` (ohne `script`, `style`,
 //! `noscript`, `template`; Leerraum zusammengefasst und getrennt durch genau ein Leerzeichen) geteilt durch
-//! die Zeichen des gesamten HTML-Quelltextes × 100, eine Nachkommastelle, begrenzt auf 0 … 100.
+//! die Zeichen des gesamten HTML-Quelltextes × 100, drei Nachkommastellen, begrenzt auf 0 … 100.
 //! Der Quelltext steht in [`Document`] nicht zur Verfügung; [`analyze`] nähert die Länge deshalb über die
 //! Serialisierung des Baums an, [`analyze_with_source`] nimmt die echte Zeichenzahl des dekodierten Quelltexts.
 
@@ -79,6 +79,15 @@ impl TokenCounter {
         }
     }
 
+    fn inline_boundary(&mut self) {
+        if let Some(out) = &mut self.text {
+            if !out.ends_with([' ', '\n']) {
+                out.push(' ');
+            }
+        }
+        self.in_token = false;
+    }
+
     fn boundary(&mut self) {
         if let Some(out) = &mut self.text {
             if !self.keep_breaks {
@@ -108,6 +117,8 @@ struct Rules {
     drop_svg: bool,
     /// Je `<li>` ein Wort mehr zählen (Wortzahl, A-35b); die Text Ratio zählt keine Listenpunkte.
     count_list_items: bool,
+    /// Ankergrenzen als Wortgrenzen behandeln (SQ-09), unabhängig von Listenpunkten.
+    separate_anchors: bool,
 }
 
 fn lower_list(list: &[String]) -> Vec<String> {
@@ -135,6 +146,7 @@ impl Rules {
             exclude_ids: token_list(&area.exclude_ids),
             drop_svg: true,
             count_list_items: true,
+            separate_anchors: true,
         }
     }
 
@@ -149,6 +161,7 @@ impl Rules {
             exclude_ids: Vec::new(),
             drop_svg: false,
             count_list_items: false,
+            separate_anchors: false,
         }
     }
 
@@ -248,6 +261,9 @@ fn walk_into(body: ElementRef, rules: &Rules, mut counter: TokenCounter) -> Toke
                     }
                     let name = el.name();
                     let block = is_block(name);
+                    if rules.separate_anchors && name == "a" {
+                        counter.inline_boundary();
+                    }
                     if rules.always_dropped(name) || rules.excluded(el) {
                         skip_depth = 1;
                         if block {
@@ -288,6 +304,9 @@ fn walk_into(body: ElementRef, rules: &Rules, mut counter: TokenCounter) -> Toke
                     if include_marks.pop() == Some(true) {
                         include_depth -= 1;
                     }
+                    if rules.separate_anchors && el.name() == "a" {
+                        counter.inline_boundary();
+                    }
                     if is_block(el.name()) {
                         counter.boundary();
                     }
@@ -324,7 +343,7 @@ pub fn word_count(doc: &Document, area: &ContentAreaConfig) -> u32 {
     u32::try_from(counter.tokens + counter.list_items).unwrap_or(u32::MAX)
 }
 
-/// Text Ratio in Prozent (eine Nachkommastelle) aus der Zeichenzahl des gesamten Quelltexts (A-7).
+/// Text Ratio in Prozent (drei Nachkommastellen) aus der Zeichenzahl des gesamten Quelltexts (A-7).
 fn text_ratio(doc: &Document, source_chars: usize) -> f32 {
     let Some(body) = body_of(doc) else {
         return 0.0;
@@ -334,7 +353,7 @@ fn text_ratio(doc: &Document, source_chars: usize) -> f32 {
     }
     let text_chars = walk(body, &Rules::whole_body()).normalized_chars();
     let ratio = (text_chars as f64 / source_chars as f64 * 100.0).clamp(0.0, 100.0);
-    ((ratio * 10.0).round() / 10.0) as f32
+    ((ratio * 1000.0).round() / 1000.0) as f32
 }
 
 /// Berechnet Wortzahl und Textanteil. Die Länge des HTML-Quelltexts wird aus der Serialisierung des Baums
@@ -453,11 +472,13 @@ pub fn run(ctx: &crate::PageCtx<'_>, page: &mut os_model::ParsedPage) {
         body
     ))
     .to_lowercase()
-    .contains("lorem ipsum");
+    .matches("lorem ipsum")
+    .count();
     for (key, value) in [
         ("content.text", Value::Text(area)),
         ("content.soft404_text", Value::Text(soft)),
-        ("content.lorem", Value::Bool(lorem)),
+        ("content.lorem", Value::Bool(lorem > 0)),
+        ("content.lorem_occurrences", Value::Int(lorem as i64)),
     ] {
         page.ext.push((ExtKey::from_static(key), value));
     }

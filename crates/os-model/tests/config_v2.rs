@@ -617,6 +617,7 @@ fn v1_files_load_unchanged_with_defaults_for_the_new_sections() {
     let mut expected = CrawlConfig::default();
     expected.scope.crawl_outside_start_folder = false;
     expected.extraction.http_headers = true;
+    expected.content.area.exclude_elements = vec!["nav".into(), "footer".into()];
     assert_eq!(l.config, expected);
     assert_eq!(
         fs::read_to_string(fixture("config/v1/default.osconfig")).unwrap(),
@@ -724,12 +725,13 @@ fn newer_files_are_never_touched_by_migration() {
 
 // spec: OUT-226
 #[test]
-fn migrated_v1_fixture_equals_the_v2_default_file() {
+fn migrated_v1_fixture_preserves_legacy_settings_against_v2_defaults() {
     let (text, _) =
         migrate_toml(&fs::read_to_string(fixture("config/v1/default.osconfig")).unwrap()).unwrap();
     let mut expected = CrawlConfig::default();
     expected.scope.crawl_outside_start_folder = false;
     expected.extraction.http_headers = true;
+    expected.content.area.exclude_elements = vec!["nav".into(), "footer".into()];
     assert_eq!(text, expected.to_osconfig_string().unwrap());
 }
 

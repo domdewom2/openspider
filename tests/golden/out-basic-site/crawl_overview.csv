@@ -1,15 +1,127 @@
 Section,Item,URLs,% of Total
+Accessibility,All,,
+Accessibility,accesskeys,,
+Accessibility,area-alt,,
+Accessibility,aria-allowed-attr,,
+Accessibility,aria-allowed-role,,
+Accessibility,aria-braille-equivalent,,
+Accessibility,aria-command-name,,
+Accessibility,aria-conditional-attr,,
+Accessibility,aria-deprecated-role,,
+Accessibility,aria-dialog-name,,
+Accessibility,aria-hidden-body,,
+Accessibility,aria-hidden-focus,,
+Accessibility,aria-input-field-name,,
+Accessibility,aria-meter-name,,
+Accessibility,aria-progressbar-name,,
+Accessibility,aria-prohibited-attr,,
+Accessibility,aria-required-attr,,
+Accessibility,aria-required-children,,
+Accessibility,aria-required-parent,,
+Accessibility,aria-roles,,
+Accessibility,aria-text,,
+Accessibility,aria-toggle-field-name,,
+Accessibility,aria-tooltip-name,,
+Accessibility,aria-treeitem-name,,
+Accessibility,aria-valid-attr,,
+Accessibility,aria-valid-attr-value,,
+Accessibility,autocomplete-valid,,
+Accessibility,avoid-inline-spacing,,
+Accessibility,blink,,
+Accessibility,button-name,,
+Accessibility,bypass,,
+Accessibility,color-contrast,,
+Accessibility,color-contrast-enhanced,,
+Accessibility,definition-list,,
+Accessibility,dlitem,,
+Accessibility,document-title,,
+Accessibility,duplicate-id-aria,,
+Accessibility,empty-heading,,
+Accessibility,empty-table-header,,
+Accessibility,form-field-multiple-labels,,
+Accessibility,frame-focusable-content,,
+Accessibility,frame-tested,,
+Accessibility,frame-title,,
+Accessibility,frame-title-unique,,
+Accessibility,heading-order,,
+Accessibility,html-has-lang,,
+Accessibility,html-lang-valid,,
+Accessibility,html-xml-lang-mismatch,,
+Accessibility,identical-links-same-purpose,,
+Accessibility,image-alt,,
+Accessibility,image-redundant-alt,,
+Accessibility,input-button-name,,
+Accessibility,input-image-alt,,
+Accessibility,label,,
+Accessibility,label-title-only,,
+Accessibility,landmark-banner-is-top-level,,
+Accessibility,landmark-complementary-is-top-level,,
+Accessibility,landmark-contentinfo-is-top-level,,
+Accessibility,landmark-main-is-top-level,,
+Accessibility,landmark-no-duplicate-banner,,
+Accessibility,landmark-no-duplicate-contentinfo,,
+Accessibility,landmark-no-duplicate-main,,
+Accessibility,landmark-one-main,,
+Accessibility,landmark-unique,,
+Accessibility,link-in-text-block,,
+Accessibility,link-name,,
+Accessibility,list,,
+Accessibility,listitem,,
+Accessibility,marquee,,
+Accessibility,meta-refresh,,
+Accessibility,meta-refresh-no-exceptions,,
+Accessibility,meta-viewport,,
+Accessibility,meta-viewport-large,,
+Accessibility,nested-interactive,,
+Accessibility,no-autoplay-audio,,
+Accessibility,object-alt,,
+Accessibility,page-has-heading-one,,
+Accessibility,presentation-role-conflict,,
+Accessibility,region,,
+Accessibility,role-img-alt,,
+Accessibility,scope-attr-valid,,
+Accessibility,scrollable-region-focusable,,
+Accessibility,select-name,,
+Accessibility,server-side-image-map,,
+Accessibility,skip-link,,
+Accessibility,summary-name,,
+Accessibility,svg-img-alt,,
+Accessibility,tabindex,,
+Accessibility,table-duplicate-name,,
+Accessibility,target-size,,
+Accessibility,td-headers-attr,,
+Accessibility,th-has-data-cells,,
+Accessibility,valid-lang,,
+Accessibility,video-caption,,
+Analytics,All,13,100.00
+Analytics,Bounce Rate Above 70%,,
+Analytics,No GA Data,,
+Analytics,Non-Indexable with GA Data,,
+Analytics,Orphan URLs,,
+Analytics,Sessions Above 0,,
 Canonicals,All,12,100.00
+Canonicals,Canonical Is Relative,0,0.00
 Canonicals,Canonicalised,0,0.00
 Canonicals,Contains Canonical,3,25.00
+Canonicals,Contains Fragment URL,0,0.00
+Canonicals,Invalid Attribute In Annotation,0,0.00
 Canonicals,Missing,9,75.00
 Canonicals,Multiple,0,0.00
 Canonicals,Multiple Conflicting,0,0.00
 Canonicals,Non-Indexable Canonical,0,0.00
+Canonicals,Outside <head>,0,0.00
 Canonicals,Self Referencing,3,25.00
+Canonicals,Unlinked,0,0.00
 Content,All,12,100.00
 Content,Exact Duplicates,0,0.00
+Content,Grammar Errors,,
+Content,Lorem Ipsum Placeholder,0,0.00
 Content,Low Content Pages,12,100.00
+Content,Near Duplicates,,
+Content,Readability Difficult,1,8.33
+Content,Readability Very Difficult,1,8.33
+Content,Soft 404 Pages,0,0.00
+Content,Spelling Errors,,
 Crawl Data – External,All,0,
 Crawl Data – External,CSS,0,
 Crawl Data – External,Fonts,0,
@@ -46,13 +158,25 @@ Crawl Depth,6,0,0.00
 Crawl Depth,7,0,0.00
 Crawl Depth,8,0,0.00
 Crawl Depth,9,0,0.00
-Directives,All,18,100.00
+Custom Extraction,All,12,100.00
+Custom JavaScript,All,,
+Custom Search,All,0,
+Directives,All,16,100.00
 Directives,Follow,0,0.00
 Directives,Index,0,0.00
+Directives,Max-Image-Preview,0,0.00
+Directives,Max-Snippet,0,0.00
+Directives,Max-Video-Preview,0,0.00
+Directives,NoArchive,0,0.00
+Directives,NoImageIndex,0,0.00
+Directives,NoSnippet,0,0.00
+Directives,NoTranslate,0,0.00
 Directives,Nofollow,0,0.00
 Directives,Noindex,0,0.00
 Directives,None,0,0.00
+Directives,Outside <head>,0,0.00
 Directives,Refresh,0,0.00
+Directives,Unavailable_After,0,0.00
 External,All,0,
 External,CSS,0,
 External,Fonts,0,
@@ -66,63 +190,158 @@ External,Plugins,0,
 External,Unknown,0,
 External,XML,0,
 H1,All,12,100.00
+H1,Alt Text in h1,0,0.00
 H1,Duplicate,0,0.00
 H1,Missing,0,0.00
 H1,Multiple,0,0.00
+H1,Non-sequential,0,0.00
 H1,Over 70 Characters,0,0.00
 H2,All,12,100.00
 H2,Duplicate,0,0.00
 H2,Missing,12,100.00
 H2,Multiple,0,0.00
+H2,Non-sequential,0,0.00
 H2,Over 70 Characters,0,0.00
 Hreflang,All,12,100.00
 Hreflang,Contains Hreflang,0,0.00
+Hreflang,Inconsistent Language & Region Return Links,0,0.00
 Hreflang,Incorrect Language & Region Codes,0,0.00
 Hreflang,Missing,12,100.00
 Hreflang,Missing Return Links,0,0.00
+Hreflang,Missing Self Reference,0,0.00
+Hreflang,Missing X-Default,0,0.00
+Hreflang,Multiple Entries,0,0.00
+Hreflang,Noindex Return Links,0,0.00
 Hreflang,Non-200 Hreflang URLs,0,0.00
+Hreflang,Non-Canonical Return Links,0,0.00
+Hreflang,Not Using Canonical,0,0.00
+Hreflang,Outside <head>,0,0.00
+Hreflang,Unlinked Hreflang URLs,0,0.00
 Images,All,2,100.00
 Images,Alt Text Over 100 Characters,0,0.00
+Images,Background Images,,
+Images,Incorrectly Sized Images,,
 Images,Missing Alt Attribute,0,0.00
 Images,Missing Alt Text,0,0.00
+Images,Missing Size Attributes,0,0.00
 Images,Over 100 KB,0,0.00
 Internal,All,18,100.00
 Internal,CSS,1,5.56
+Internal,Fonts,0,0.00
 Internal,HTML,13,72.22
 Internal,Images,2,11.11
 Internal,JavaScript,1,5.56
+Internal,Media,0,0.00
+Internal,Other,0,0.00
 Internal,PDF,0,0.00
+Internal,Plugins,0,0.00
 Internal,Unknown,1,5.56
-Issues,Issues (High),2,
+Internal,XML,0,0.00
+Issues,Issues (High),3,
 Issues,Issues (Low),0,
 Issues,Issues (Medium),0,
 Issues,Opportunities (High),0,
-Issues,Opportunities (Low),1,
+Issues,Opportunities (Low),4,
 Issues,Opportunities (Medium),2,
 Issues,Warnings (High),0,
-Issues,Warnings (Low),2,
+Issues,Warnings (Low),6,
 Issues,Warnings (Medium),1,
+JavaScript,All,,
+JavaScript,Canonical Mismatch,,
+JavaScript,Canonical Only In Rendered HTML,,
+JavaScript,Contains JavaScript Content,,
+JavaScript,Contains JavaScript Links,,
+JavaScript,H1 Only In Rendered HTML,,
+JavaScript,H1 Updated By JavaScript,,
+JavaScript,Meta Description Only In Rendered HTML,,
+JavaScript,Meta Description Updated By JavaScript,,
+JavaScript,Nofollow Only In Original HTML,,
+JavaScript,Noindex Only In Original HTML,,
+JavaScript,Page Title Only In Rendered HTML,,
+JavaScript,Page Title Updated By JavaScript,,
+JavaScript,Pages With Blocked Resources,,
+JavaScript,Pages With JavaScript Errors,,
+Link Metrics,All,13,100.00
 Links,All,12,100.00
+Links,Follow & Nofollow Internal Inlinks To Page,0,0.00
+Links,Internal Nofollow Inlinks Only,0,0.00
 Links,Internal Nofollow Outlinks,0,0.00
 Links,Internal Outlinks With No Anchor Text,0,0.00
+Links,Non-Descriptive Anchor Text In Internal Outlinks,0,0.00
+Links,Non-Indexable Page Inlinks Only,0,0.00
+Links,Outlinks To Localhost,1,8.33
 Links,Pages With High Crawl Depth,0,0.00
+Links,Pages With High External Outlinks,0,0.00
+Links,Pages With High Internal Outlinks,0,0.00
+Links,Pages With Uncrawlable Internal Outlinks,0,0.00
 Links,Pages Without Internal Outlinks,0,0.00
 Meta Description,All,12,100.00
+Meta Description,Below 400 Pixels,12,100.00
 Meta Description,Below 70 Characters,12,100.00
 Meta Description,Duplicate,0,0.00
 Meta Description,Missing,0,0.00
 Meta Description,Multiple,0,0.00
+Meta Description,Outside <head>,0,0.00
 Meta Description,Over 155 Characters,0,0.00
+Meta Description,Over 985 Pixels,0,0.00
+Meta Keywords,All,12,100.00
+Meta Keywords,Duplicate,0,0.00
+Meta Keywords,Missing,12,100.00
+Meta Keywords,Multiple,0,0.00
+Mobile,All,0,
+Mobile,Content Not Sized Correctly,,
+Mobile,Illegible Font Size,,
+Mobile,Mobile Alternate Link,0,
+Mobile,Target Size,,
+Mobile,Unsupported Plugins,,
+Mobile,Viewport Not Set,,
 Page Titles,All,12,100.00
+Page Titles,Below 200 Pixels,11,91.67
 Page Titles,Below 30 Characters,12,100.00
 Page Titles,Duplicate,0,0.00
 Page Titles,Missing,0,0.00
 Page Titles,Multiple,0,0.00
+Page Titles,Outside <head>,0,0.00
+Page Titles,Over 561 Pixels,0,0.00
 Page Titles,Over 60 Characters,0,0.00
+Page Titles,Same as H1,0,0.00
+PageSpeed,All,12,100.00
+PageSpeed,Avoid Enormous Network Payloads,,
+PageSpeed,Document Request Latency,,
+PageSpeed,Duplicated JavaScript,,
+PageSpeed,Font Display,,
+PageSpeed,Forced Reflow,,
+PageSpeed,Improve Image Delivery,,
+PageSpeed,LCP Request Discovery,,
+PageSpeed,Layout Shift Culprits,,
+PageSpeed,Legacy JavaScript,,
+PageSpeed,Minify CSS,,
+PageSpeed,Minify JavaScript,,
+PageSpeed,Minimize Main-Thread Work,,
+PageSpeed,Network Dependency Tree,,
+PageSpeed,Optimize DOM Size,,
+PageSpeed,Reduce JavaScript Execution Time,,
+PageSpeed,Reduce Unused CSS,,
+PageSpeed,Reduce Unused JavaScript,,
+PageSpeed,Render Blocking Requests,,
+PageSpeed,Use Efficient Cache Lifetimes,,
+Pagination,All,12,100.00
+Pagination,Contains Pagination,0,0.00
+Pagination,First Page,0,0.00
+Pagination,Multiple Pagination URLs,0,0.00
+Pagination,Non-200 Pagination URLs,0,0.00
+Pagination,Non-Indexable,0,0.00
+Pagination,Paginated 2+ Pages,0,0.00
+Pagination,Pagination Loop,0,0.00
+Pagination,Pagination URL Not In Anchor Tag,0,0.00
+Pagination,Sequence Error,0,0.00
+Pagination,Unlinked Pagination URLs,0,0.00
 Response Codes,All,18,100.00
+Response Codes,Blocked Resource,,
 Response Codes,Blocked by Robots.txt,0,0.00
 Response Codes,Client Error (4XX),1,5.56
 Response Codes,External All,0,0.00
+Response Codes,External Blocked Resource,,
 Response Codes,External Blocked by Robots.txt,0,0.00
 Response Codes,External Client Error (4XX),0,0.00
 Response Codes,External No Response,0,0.00
@@ -130,10 +349,13 @@ Response Codes,External Other,0,0.00
 Response Codes,External Redirect Chain,0,0.00
 Response Codes,External Redirect Loop,0,0.00
 Response Codes,External Redirection (3XX),0,0.00
+Response Codes,External Redirection (HTTP Refresh),0,0.00
+Response Codes,External Redirection (JavaScript),,
 Response Codes,External Redirection (Meta Refresh),0,0.00
 Response Codes,External Server Error (5XX),0,0.00
 Response Codes,External Success (2XX),0,0.00
 Response Codes,Internal All,18,100.00
+Response Codes,Internal Blocked Resource,,
 Response Codes,Internal Blocked by Robots.txt,0,0.00
 Response Codes,Internal Client Error (4XX),1,5.56
 Response Codes,Internal No Response,0,0.00
@@ -141,6 +363,8 @@ Response Codes,Internal Other,0,0.00
 Response Codes,Internal Redirect Chain,0,0.00
 Response Codes,Internal Redirect Loop,0,0.00
 Response Codes,Internal Redirection (3XX),1,5.56
+Response Codes,Internal Redirection (HTTP Refresh),0,0.00
+Response Codes,Internal Redirection (JavaScript),,
 Response Codes,Internal Redirection (Meta Refresh),0,0.00
 Response Codes,Internal Server Error (5XX),0,0.00
 Response Codes,Internal Success (2XX),16,88.89
@@ -149,6 +373,8 @@ Response Codes,Other,0,0.00
 Response Codes,Redirect Chain,0,0.00
 Response Codes,Redirect Loop,0,0.00
 Response Codes,Redirection (3XX),1,5.56
+Response Codes,Redirection (HTTP Refresh),0,0.00
+Response Codes,Redirection (JavaScript),,
 Response Codes,Redirection (Meta Refresh),0,0.00
 Response Codes,Server Error (5XX),0,0.00
 Response Codes,Success (2XX),16,88.89
@@ -178,14 +404,51 @@ Response Codes – Internal,Redirection (JavaScript),,
 Response Codes – Internal,Redirection (Meta Refresh),0,0.00
 Response Codes – Internal,Server Error (5xx),0,0.00
 Response Codes – Internal,Success (2xx),16,88.89
+Search Console,AMP URL Is Invalid,,
+Search Console,All,18,100.00
+Search Console,Clicks Above 0,,
+Search Console,Indexable URL Not Indexed,,
+Search Console,No Search Analytics Data,,
+Search Console,Non-Indexable with Search Analytics Data,,
+Search Console,Orphan URLs,,
+Search Console,Page Is Not Mobile Friendly,,
+Search Console,Rich Result Invalid,,
+Search Console,URL Is Not on Google,,
+Search Console,"URL is on Google, But Has Issues",,
+Search Console,User-Declared Canonical Not Selected,,
 Security,All,18,100.00
+Security,Bad Content Type,0,0.00
+Security,Form URL Insecure,0,0.00
+Security,Form on HTTP URL,0,0.00
 Security,HTTP URLs,18,100.00
 Security,HTTPS URLs,0,0.00
+Security,Missing Content-Security-Policy Header,16,88.89
+Security,Missing HSTS Header,0,0.00
+Security,Missing Secure Referrer-Policy Header,16,88.89
+Security,Missing X-Content-Type-Options Header,16,88.89
+Security,Missing X-Frame-Options Header,16,88.89
+Security,Mixed Content,0,0.00
+Security,Protocol-Relative Resource Links,0,0.00
+Security,Unsafe Cross-Origin Links,0,0.00
 Sitemaps,All,0,
 Sitemaps,Non-Indexable URLs In Sitemap,0,
 Sitemaps,Orphan URLs,0,
+Sitemaps,URLs In Multiple Sitemaps,0,
 Sitemaps,URLs In Sitemap,0,
 Sitemaps,URLs Not In Sitemap,0,
+Sitemaps,XML Sitemap With Over 50MB,0,
+Sitemaps,XML Sitemap With Over 50k URLs,0,
+Structured Data,All,,
+Structured Data,Contains Structured Data,,
+Structured Data,JSON-LD URLs,,
+Structured Data,Microdata URLs,,
+Structured Data,Missing Structured Data,,
+Structured Data,Parse Errors,,
+Structured Data,RDFa URLs,,
+Structured Data,Rich Result Validation Errors,,
+Structured Data,Rich Result Validation Warnings,,
+Structured Data,Validation Errors,,
+Structured Data,Validation Warnings,,
 Summary,Average Response Time (ms),<VAR>,
 Summary,Average URLs/s,<VAR>,
 Summary,Crawl End,<VAR>,
@@ -195,7 +458,10 @@ Summary,Mode,Spider,
 Summary,OpenSpider Version,0.1.0,
 Summary,Skipped By Depth Limit,0,
 Summary,Skipped By Exclude,0,
+Summary,Skipped By Folder Depth,0,
+Summary,Skipped By Query Parameters,0,
 Summary,Skipped By Redirect Limit,0,
+Summary,Skipped By URL Length,0,
 Summary,Skipped Not In Include,0,
 Summary,Start URL,{BASE}/,
 Summary,Total External Blocked by robots.txt,0,
@@ -204,10 +470,24 @@ Summary,Total URLs Crawled,18,
 Summary,Total URLs Encountered,18,
 Summary,URLs Remaining In Queue,0,
 URL,All,18,100.00
+URL,Broken Bookmark,,
 URL,Contains A Space,0,0.00
+URL,GA Tracking Parameters,0,0.00
+URL,Internal Search,0,0.00
 URL,Multiple Slashes,0,0.00
 URL,Non ASCII Characters,0,0.00
 URL,Over 115 Characters,0,0.00
 URL,Parameters,0,0.00
+URL,Repetitive Path,0,0.00
 URL,Underscores,0,0.00
 URL,Uppercase,0,0.00
+Validation,<body> Element Preceding <html>,0,0.00
+Validation,<head> Not First In <html> Element,0,0.00
+Validation,All,18,100.00
+Validation,HTML Document Over 2MB,0,0.00
+Validation,Invalid HTML Elements In <head>,0,0.00
+Validation,Missing <body> Tag,0,0.00
+Validation,Missing <head> Tag,0,0.00
+Validation,Multiple <body> Tags,0,0.00
+Validation,Multiple <head> Tags,0,0.00
+Validation,Resource Over 2MB,0,0.00

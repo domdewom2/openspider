@@ -702,7 +702,12 @@ impl Default for ContentAreaConfig {
             include_elements: Vec::new(),
             include_classes: Vec::new(),
             include_ids: Vec::new(),
-            exclude_elements: vec!["nav".to_string(), "footer".to_string()],
+            exclude_elements: vec![
+                "nav".to_string(),
+                "footer".to_string(),
+                "header".to_string(),
+                "aside".to_string(),
+            ],
             exclude_classes: Vec::new(),
             exclude_ids: Vec::new(),
         }

@@ -24,8 +24,11 @@ fn assert_golden(path: impl AsRef<std::path::Path>, actual: &str) {
 }
 
 fn golden(name: &str) -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../tests/golden/out-basic-site")
+    std::env::var_os("OPENSPIDER_CLI_GOLDEN_OUT")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| {
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../tests/golden/out-basic-site")
+        })
         .join(name)
 }
 

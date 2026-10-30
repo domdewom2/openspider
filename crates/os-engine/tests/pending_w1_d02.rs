@@ -23,7 +23,8 @@ async fn changed_area_recomputes_word_count_from_stored_html_without_requests() 
     let changed =
         os_engine::recompute::d02::run(&mut fx.file, &old, &new, &CancelToken::new()).unwrap();
     assert!(!changed.is_empty());
-    assert!(count(&fx.file) < previous);
+    // SQ-09: header/aside sind schon im Standardbereich ausgeschlossen.
+    assert_eq!(count(&fx.file), previous);
     assert_eq!(fx.site.total_requests(), before);
     let cancel = CancelToken::new();
     cancel.cancel();

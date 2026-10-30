@@ -1,2 +1,2 @@
-﻿Address,Word Count,Hash,Indexability,Indexability Status
-{BASE}/,1,<VAR>,Indexable,
+﻿Address,Word Count,Sentence Count,Average Words Per Sentence,Flesch Reading Ease Score,Readability,Closest Similarity Match,No. Near Duplicates,Hash,Indexability,Indexability Status
+{BASE}/,1,1,1.000,0.000,Very Hard,,,<VAR>,Indexable,

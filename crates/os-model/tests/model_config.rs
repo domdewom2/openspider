@@ -103,7 +103,10 @@ fn defaults_match_table_3_4() {
     assert!(x.hash && x.response_time && x.last_modified && !x.http_headers);
     assert!(!x.store_html);
 
-    assert_eq!(c.content.area.exclude_elements, ["nav", "footer"]);
+    assert_eq!(
+        c.content.area.exclude_elements,
+        ["nav", "footer", "header", "aside"]
+    );
     assert!(c.content.area.include_elements.is_empty());
     assert!(c.content.area.include_classes.is_empty() && c.content.area.include_ids.is_empty());
     assert!(c.content.area.exclude_classes.is_empty() && c.content.area.exclude_ids.is_empty());

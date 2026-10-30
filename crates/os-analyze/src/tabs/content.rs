@@ -174,7 +174,7 @@ fn p1_column(key: &'static str, kind: ColumnKind) -> ColumnDef {
         ),
         "Total Language Errors" => (
             "(SELECT SUM(v_int) FROM url_ext WHERE url_id=u.id AND ((key='spelling.spelling_errors' AND :spelling_enabled=1) OR (key='spelling.grammar_errors' AND :grammar_enabled=1)))",
-            None,
+            Some(crate::defs::Needs::AnyConfig(&["spelling.enabled", "grammar.enabled"])),
         ),
         "Spelling Errors" => (
             "CASE WHEN :spelling_enabled=1 THEN (SELECT v_int FROM url_ext WHERE url_id=u.id AND key='spelling.spelling_errors') END",
@@ -186,7 +186,7 @@ fn p1_column(key: &'static str, kind: ColumnKind) -> ColumnDef {
         ),
         "Language" => (
             "CASE WHEN :spelling_enabled=1 OR :grammar_enabled=1 THEN (SELECT v_text FROM url_ext WHERE url_id=u.id AND key='spelling.language') END",
-            None,
+            Some(crate::defs::Needs::AnyConfig(&["spelling.enabled", "grammar.enabled"])),
         ),
         _ => ("NULL", None),
     };
@@ -199,7 +199,7 @@ fn p1_column(key: &'static str, kind: ColumnKind) -> ColumnDef {
         }
         _ => sql,
     };
-    let mut out = column(key, sql, kind, false);
+    let mut out = column(key, sql, kind, needs.is_some());
     out.needs = needs;
     out
 }
@@ -215,11 +215,11 @@ pub fn tab() -> TabDef {
             p1_column("Sentence Count", ColumnKind::Int),
             p1_column(
                 "Average Words Per Sentence",
-                ColumnKind::Float { decimals: 1 },
+                ColumnKind::Float { decimals: 3 },
             ),
             p1_column(
                 "Flesch Reading Ease Score",
-                ColumnKind::Float { decimals: 1 },
+                ColumnKind::Float { decimals: 3 },
             ),
             p1_column("Readability", ColumnKind::Text),
             p1_column(
@@ -255,6 +255,14 @@ pub fn tab() -> TabDef {
                 ColumnKind::Text,
                 true,
             ),
+            column("Title 1", "u.title_1", ColumnKind::Text, false).into_extension(),
+            column("Title 1 Length", "u.title_1_len", ColumnKind::Int, false).into_extension(),
+            column("Title 1 Pixel Width", "u.title_1_px", ColumnKind::Int, false).into_extension(),
+            column("H1-1", "u.h1_1", ColumnKind::Text, false).into_extension(),
+            column("H1-1 Length", "COALESCE(u.h1_1_len,0)", ColumnKind::Int, false).into_extension(),
+            column("H2-1", "u.h2_1", ColumnKind::Text, false).into_extension(),
+            column("H2-1 Length", "COALESCE(u.h2_1_len,0)", ColumnKind::Int, false).into_extension(),
+            column("Occurrences", "(SELECT v_int FROM url_ext WHERE url_id=u.id AND key='content.lorem_occurrences')", ColumnKind::Int, false).into_extension(),
             column("Matched Phrase", MATCHED_PHRASE, ColumnKind::Text, false).into_extension(),
         ],
         filters: vec![
@@ -286,8 +294,8 @@ pub fn tab() -> TabDef {
                 default_columns: &[],
             },
             near_filter(),
-            content_filter("Soft 404 Pages", SOFT404, &[], &["Matched Phrase"]),
-            content_filter("Lorem Ipsum Placeholder", "u.content_class='HTML' AND EXISTS (SELECT 1 FROM url_ext WHERE url_id=u.id AND key='content.lorem' AND v_int=1)", &[], &[]),
+            content_filter("Soft 404 Pages", SOFT404, &[], &["Address", "Title 1", "Title 1 Length", "Title 1 Pixel Width", "H1-1", "H1-1 Length", "H2-1", "H2-1 Length", "Word Count", "Indexability", "Indexability Status", "Matched Phrase"]),
+            content_filter("Lorem Ipsum Placeholder", "u.content_class='HTML' AND EXISTS (SELECT 1 FROM url_ext WHERE url_id=u.id AND key='content.lorem' AND v_int=1)", &[], &["Address", "Occurrences", "Indexability", "Indexability Status"]),
             content_filter("Readability Difficult", "(SELECT v_real FROM url_ext WHERE url_id=u.id AND key='readability.flesch') >= 30 AND (SELECT v_real FROM url_ext WHERE url_id=u.id AND key='readability.flesch') < 50", &["extraction.readability"], &[]),
             content_filter("Readability Very Difficult", "(SELECT v_real FROM url_ext WHERE url_id=u.id AND key='readability.flesch') < 30", &["extraction.readability"], &[]),
             content_filter("Spelling Errors", SPELLING_ERRORS, &["spelling.enabled"], &["Address", "Spelling Errors", "Language", "Indexability", "Indexability Status"]),
