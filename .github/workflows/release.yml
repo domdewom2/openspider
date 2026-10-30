@@ -1,0 +1,221 @@
+name: Release orchestration
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Vorbereiteter Tag; muss zur Workspace-Version passen (z.B. v1.0.0-beta.0)'
+        required: true
+        type: string
+      dry_run:
+        description: 'Nur Actions-Artefakte; keinen GitHub-Entwurf anlegen'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-orchestration-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_BUILD_JOBS: 4
+  CARGO_INCREMENTAL: '0'
+  OPENSPIDER_SECRET_STORE: memory
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      channel: ${{ steps.version.outputs.channel }}
+      tag: ${{ steps.version.outputs.tag }}
+      date: ${{ steps.version.outputs.date }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Versionsgleichstand, Tag und Release-Notes prüfen
+        id: version
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          node scripts/release/check-version.mjs
+          node --input-type=module - <<'JS'
+          import { appendFileSync, readFileSync } from 'node:fs';
+          import { checkVersion } from './scripts/release/check-version.mjs';
+          import { releaseNotes } from './scripts/release/notes.mjs';
+          const version = checkVersion(process.cwd());
+          if (process.env.RELEASE_TAG !== `v${version}`) throw new Error('Tag und Workspace-Version unterscheiden sich');
+          releaseNotes(readFileSync('CHANGELOG.md', 'utf8'), version);
+          appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\nchannel=${version.includes('-') ? 'beta' : 'stable'}\ntag=v${version}\n`);
+          JS
+          if [[ "$DRY_RUN" != true ]]; then
+            test "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")" = "$(git rev-parse HEAD)"
+          fi
+          echo "date=$(git show -s --format=%cI HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Release-Vertragstests
+        run: node --test scripts/release/*.test.mjs tests/release/orchestration.test.mjs
+
+  macos:
+    needs: prepare
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/release-macos.yml
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      channel: ${{ needs.prepare.outputs.channel }}
+      run_tests: true
+    secrets: inherit
+
+  windows:
+    needs: prepare
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/release-windows.yml
+    with:
+      channel: ${{ needs.prepare.outputs.channel }}
+    secrets: inherit
+
+  linux-core:
+    needs: prepare
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Rust-Toolchain aus rust-toolchain.toml
+        run: rustup show active-toolchain
+      - name: Linux-CLI mit bestehendem linux-core-Build bauen
+        run: timeout 3600s nice -n 10 bash scripts/ci/linux-core.sh release
+      - name: CLI-Golden-Smoke (OUT-273)
+        run: timeout 3600s nice -n 10 bash scripts/ci/linux-core.sh golden
+      - name: CLI-Archiv packen und extrahiert prüfen
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p release-artifacts "$RUNNER_TEMP/linux-cli"
+          tar -czf "release-artifacts/openspider_${VERSION}_linux-x86_64.tar.gz" -C target/linux-core openspider -C "$GITHUB_WORKSPACE" LICENSE NOTICE
+          tar -xzf "release-artifacts/openspider_${VERSION}_linux-x86_64.tar.gz" -C "$RUNNER_TEMP/linux-cli"
+          "$RUNNER_TEMP/linux-cli/openspider" --version
+          "$RUNNER_TEMP/linux-cli/openspider" --help > /dev/null
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: openspider-linux-x86_64
+          path: release-artifacts/
+          if-no-files-found: error
+
+  assemble:
+    needs: [prepare, macos, windows, linux-core]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: openspider-*
+          path: incoming
+      - name: Distributable Assets sammeln und Windows-CLI archivieren
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          node scripts/release/assets.mjs incoming release-assets "$VERSION"
+          test -s release-assets/openspider.exe
+          mkdir -p "$RUNNER_TEMP/windows-cli"
+          mv release-assets/openspider.exe "$RUNNER_TEMP/windows-cli/"
+          cp LICENSE NOTICE "$RUNNER_TEMP/windows-cli/"
+          (cd "$RUNNER_TEMP/windows-cli" && zip "$GITHUB_WORKSPACE/release-assets/openspider_${VERSION}_windows-x86_64.zip" openspider.exe LICENSE NOTICE)
+      - name: 'STUB/TODO(R03): Smoke gegen die gesammelten Artefakte'
+        run: |
+          mkdir -p release-reports
+          echo 'STUB/TODO(R03): Plattform-Smoke einschließlich Windows ARM fehlt; R01/R02 und Linux-Smoke ersetzen diese Abnahme nicht.' | tee release-reports/R03.txt
+          cat release-reports/R03.txt >> "$GITHUB_STEP_SUMMARY"
+      - name: Release-Notes und Update-Manifeste
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_DATE: ${{ needs.prepare.outputs.date }}
+        run: |
+          set -euo pipefail
+          node scripts/release/notes.mjs "$VERSION" release-reports/release-notes.md
+          node scripts/release/manifest.mjs release-assets "$VERSION" "$GITHUB_REPOSITORY" release-reports/release-notes.md "$RELEASE_DATE" --allow-unsigned
+          cat release-assets/updater-status.txt >> "$GITHUB_STEP_SUMMARY"
+          if [[ ! -f release-assets/latest.json ]]; then
+            echo 'unsigniert: keine vollständigen signierten Updater-Artefakte; keine Update-Manifeste.' >> release-reports/release-notes.md
+          fi
+          cat release-reports/R03.txt >> release-reports/release-notes.md
+      - name: SHA256SUMS über alle Release-Assets
+        run: node scripts/release/checksums.mjs release-assets
+      - name: Archiv-Kompatibilitäts-Fixture (D01)
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ -f scripts/release/archive-compat-fixture.mjs ]]; then
+            # Schnittstelle mit D01 beim Merge abgleichen; Fehler werden nicht verschluckt.
+            node scripts/release/archive-compat-fixture.mjs --version "$VERSION" --out release-reports/compat
+          else
+            echo 'STUB/TODO(D01): archive-compat-fixture.mjs fehlt; keine Archiv-Kompatibilität nachgewiesen.' | tee release-reports/D01.txt
+            cat release-reports/D01.txt >> "$GITHUB_STEP_SUMMARY"
+            cat release-reports/D01.txt >> release-reports/release-notes.md
+          fi
+          echo 'TODO: Offene M2-Paritätspakete vor einer Freigabe prüfen.' >> release-reports/release-notes.md
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-assets
+          path: release-assets/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-reports
+          path: release-reports/
+          if-no-files-found: error
+
+  draft:
+    if: github.event_name == 'push' || !inputs.dry_run
+    needs: [prepare, assemble]
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-assets
+          path: release-assets
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-reports
+          path: release-reports
+      - name: Ausschließlich neuen Entwurfs-Release anlegen (D12, K3-04)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # Never edit an existing release, especially a published one. API errors also fail closed.
+          gh api --paginate "repos/$GH_REPO/releases" --jq '.[].tag_name' > existing-tags.txt
+          if grep -Fxq "$RELEASE_TAG" existing-tags.txt; then
+            echo '::error::Release existiert bereits; manuell prüfen, niemals automatisch überschreiben.'
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" release-assets/* --verify-tag --draft --prerelease=false --latest=false \
+            --title "OpenSpider $RELEASE_TAG" --notes-file release-reports/release-notes.md
+          echo 'Nur Entwurf. Veröffentlichung und Setzen als Latest ausschließlich nach Go des Nutzers.' >> "$GITHUB_STEP_SUMMARY"
