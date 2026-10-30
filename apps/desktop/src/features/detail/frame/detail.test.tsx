@@ -468,3 +468,35 @@ it("retains a late hidden handle but waits until return before reading its rows"
   await selectTab("Inlinks"); await settle(100);
   expect(incomingReads().length).toBeGreaterThan(0);
 });
+
+// spec: UI-018
+// spec: UI-030
+// spec: UI-032
+it("retries a final revision discarded when a pending update's tab becomes hidden", async () => {
+  render(<DetailFrame selection={selection} actions={actions} />); await settle();
+  await selectTab("Inlinks"); await settle();
+  const incoming = [...fixture.views.keys()][0];
+  const record = fixture.views.get(incoming)!;
+  const originalRow = record.rows[0];
+  const updatedAddress = "https://site.test/final-crawl-tick";
+  let complete!: () => void;
+  let updates = 0;
+  fixture.core.handlers.set("view.update", raw => {
+    const { viewId } = raw as { viewId: string };
+    const handle = { viewId, version: 2, total: record.rows.length, state: "ready" };
+    if (viewId !== incoming) return handle;
+    updates++;
+    if (updates === 1) return new Promise(resolve => { complete = () => resolve(handle); });
+    return handle;
+  });
+  act(() => useSession.setState(state => ({ countsVersion: state.countsVersion + 1 })));
+  await settle(500);
+  expect(updates).toBe(1);
+  await selectTab("Outlinks");
+  record.rows = [{ ...originalRow, From: updatedAddress }, ...record.rows.slice(1)];
+  await act(async () => complete()); await settle(0);
+  // No further count/sidebar revision arrives after the last crawl tick.
+  await selectTab("Inlinks"); await settle(1000);
+  expect(updates).toBe(2);
+  expect(within(screen.getByRole("table", { name: "Inlinks" })).getByText(updatedAddress)).toBeInTheDocument();
+}, 5000);

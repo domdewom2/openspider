@@ -97,26 +97,30 @@ export function TablePanel(props: TablePanelProps) {
   ];
   const changed = useSession(s => source ? s.views[source.viewId] : undefined);
   const revision = useSession(s => `${s.countsVersion}:${s.sidebarVersion}`);
-  const requestedRevision = useRef<{ source: ViewDataSource; revision: string } | undefined>(undefined);
+  const appliedRevision = useRef<{ source: ViewDataSource; revision: string } | undefined>(undefined);
   const latestRevision = useRef(revision);
   latestRevision.current = revision;
   useEffect(() => {
     if (!source || !visible) return;
     let live = true;
-    if (requestedRevision.current?.source !== source) requestedRevision.current = { source, revision: latestRevision.current };
-    let requested = requestedRevision.current.revision;
+    if (appliedRevision.current?.source !== source) appliedRevision.current = { source, revision: latestRevision.current };
+    let applied = appliedRevision.current.revision;
     let pending = false;
     let stale = false;
     source.onStale = () => { stale = true; };
     const timer = setInterval(() => {
-      if (pending || (!stale && requested === latestRevision.current)) return;
+      if (pending || (!stale && applied === latestRevision.current)) return;
       stale = false;
-      requested = latestRevision.current;
-      requestedRevision.current = { source, revision: requested };
+      const updating = latestRevision.current;
       pending = true;
-      void view.update({ viewId: source.viewId, spec }).then(handle => {
-        if (live) return source.onViewChanged(handle.version, handle.total ?? 0);
-      }).catch(error => { if (live) setError(error); }).finally(() => { pending = false; });
+      void view.update({ viewId: source.viewId, spec }).then(async handle => {
+        if (!live) return;
+        await source.onViewChanged(handle.version, handle.total ?? 0);
+        // Only acknowledge data actually adopted by this visible effect.
+        if (!live || source.version < handle.version) return;
+        applied = updating;
+        appliedRevision.current = { source, revision: updating };
+      }).catch(error => { if (live) { stale = true; setError(error); } }).finally(() => { pending = false; });
     }, 500);
     return () => { live = false; source.onStale = undefined; clearInterval(timer); };
     // The source belongs to key (including spec); ticks only queue another refresh.
