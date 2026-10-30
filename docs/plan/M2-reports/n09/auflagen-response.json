@@ -1,0 +1,3107 @@
+{
+  "sites": [
+    {
+      "site": "parity-response",
+      "present": true,
+      "error": null,
+      "exports": [
+        {
+          "ref_file": "internal_all.csv",
+          "mapping": "internal_all",
+          "os": "tab:Internal:All",
+          "status": "present",
+          "outcome": "compared",
+          "report": {
+            "export": "internal_all",
+            "site": "parity-response",
+            "ref_rows": 46,
+            "os_rows": 46,
+            "matched": 46,
+            "missing_in_os": [],
+            "extra_in_os": [],
+            "cells_compared": 2158,
+            "cells_equal": 2158,
+            "agreement_pct": 100.0,
+            "columns": [
+              {
+                "ref_column": "Content Type",
+                "os_column": "Content",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code",
+                "os_column": "Status Code",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status",
+                "os_column": "Status",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Indexability",
+                "os_column": "Indexability",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Indexability Status",
+                "os_column": "Indexability Status",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Title 1",
+                "os_column": "Title 1",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Title 1 Length",
+                "os_column": "Title 1 Length",
+                "compared": 14,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Title 1 Pixel Width",
+                "os_column": "Title 1 Pixel Width",
+                "compared": 14,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Meta Description 1",
+                "os_column": "Meta Description 1",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Meta Description 1 Length",
+                "os_column": "Meta Description 1 Length",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Meta Description 1 Pixel Width",
+                "os_column": "Meta Description 1 Pixel Width",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Meta Keywords 1",
+                "os_column": "Meta Keywords 1",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Meta Keywords 1 Length",
+                "os_column": "Meta Keywords 1 Length",
+                "compared": 0,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "H1-1",
+                "os_column": "H1-1",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "H1-1 Length",
+                "os_column": "H1-1 Length",
+                "compared": 14,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "H2-1",
+                "os_column": "H2-1",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "H2-1 Length",
+                "os_column": "H2-1 Length",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Meta Robots 1",
+                "os_column": "Meta Robots 1",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "X-Robots-Tag 1",
+                "os_column": "X-Robots-Tag 1",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Meta Refresh 1",
+                "os_column": "Meta Refresh 1",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Canonical Link Element 1",
+                "os_column": "Canonical Link Element 1",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "rel=\"next\" 1",
+                "os_column": "rel=\"next\" 1",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "rel=\"prev\" 1",
+                "os_column": "rel=\"prev\" 1",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "HTTP rel=\"next\" 1",
+                "os_column": "HTTP rel=\"next\" 1",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "HTTP rel=\"prev\" 1",
+                "os_column": "HTTP rel=\"prev\" 1",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Size (Bytes)",
+                "os_column": "Size (bytes)",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Transferred (Bytes)",
+                "os_column": "Transferred (bytes)",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Total Transferred (Bytes)",
+                "os_column": "Total Transferred (bytes)",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Word Count",
+                "os_column": "Word Count",
+                "compared": 14,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Text Ratio",
+                "os_column": "Text Ratio",
+                "compared": 14,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Crawl Depth",
+                "os_column": "Crawl Depth",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Folder Depth",
+                "os_column": "Folder Depth",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Inlinks",
+                "os_column": "Inlinks",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Unique Inlinks",
+                "os_column": "Unique Inlinks",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "% of Total",
+                "os_column": "% of Total",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Outlinks",
+                "os_column": "Outlinks",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Unique Outlinks",
+                "os_column": "Unique Outlinks",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "External Outlinks",
+                "os_column": "External Outlinks",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Unique External Outlinks",
+                "os_column": "Unique External Outlinks",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Hash",
+                "os_column": "Hash",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Last Modified",
+                "os_column": "Last-Modified",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL",
+                "os_column": "Redirect URL",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type",
+                "os_column": "Redirect Type",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "URL Encoded Address",
+                "os_column": "URL Encoded Address",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "H1-2",
+                "os_column": "H1-2",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "H1-2 Length",
+                "os_column": "H1-2 Length",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "H2-2",
+                "os_column": "H2-2",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "H2-2 Length",
+                "os_column": "H2-2 Length",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Meta Description 2",
+                "os_column": "Meta Description 2",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Meta Description 2 Length",
+                "os_column": "Meta Description 2 Length",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Meta Description 2 Pixel Width",
+                "os_column": "Meta Description 2 Pixel Width",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Title 2",
+                "os_column": "Title 2",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Title 2 Length",
+                "os_column": "Title 2 Length",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Title 2 Pixel Width",
+                "os_column": "Title 2 Pixel Width",
+                "compared": 46,
+                "errors": 0,
+                "examples": []
+              }
+            ],
+            "applied_deviations": [
+              {
+                "id": "DEV-003",
+                "spec": "ONPAGE-011",
+                "kind": "OS-Festlegung",
+                "note": "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs ohne Antwort haben leere Element-, Laengen- und Pixelspalten, auch wenn ihr Koerper <title>/<h1> enthaelt (ONPAGE-011, A-5, K-60, Befund N-01), und eine Seite ohne Element leere Wertspalten (ONPAGE-008); die Referenz schreibt 0.",
+                "scope": "cell",
+                "count": 294,
+                "keys": [
+                  "{BASE}/",
+                  "{BASE}/blocked/a.html",
+                  "{BASE}/blocked/a.html",
+                  "{BASE}/blocked/a.html",
+                  "{BASE}/blocked/a.html",
+                  "{BASE}/blocked/a.html",
+                  "{BASE}/blocked/a.html",
+                  "{BASE}/blocked/a.html",
+                  "{BASE}/blocked/a.html",
+                  "{BASE}/blocked/b.html",
+                  "{BASE}/blocked/b.html",
+                  "{BASE}/blocked/b.html",
+                  "{BASE}/blocked/b.html",
+                  "{BASE}/blocked/b.html",
+                  "{BASE}/blocked/b.html",
+                  "{BASE}/blocked/b.html",
+                  "{BASE}/blocked/b.html",
+                  "{BASE}/chain1",
+                  "{BASE}/chain1",
+                  "{BASE}/chain1",
+                  "{BASE}/chain1",
+                  "{BASE}/chain1",
+                  "{BASE}/chain1",
+                  "{BASE}/chain1",
+                  "{BASE}/chain1",
+                  "{BASE}/chain2",
+                  "{BASE}/chain2",
+                  "{BASE}/chain2",
+                  "{BASE}/chain2",
+                  "{BASE}/chain2",
+                  "{BASE}/chain2",
+                  "{BASE}/chain2",
+                  "{BASE}/chain2",
+                  "{BASE}/e400",
+                  "{BASE}/e400",
+                  "{BASE}/e400",
+                  "{BASE}/e400",
+                  "{BASE}/e400",
+                  "{BASE}/e400",
+                  "{BASE}/e400",
+                  "{BASE}/e400",
+                  "{BASE}/e403",
+                  "{BASE}/e403",
+                  "{BASE}/e403",
+                  "{BASE}/e403",
+                  "{BASE}/e403",
+                  "{BASE}/e403",
+                  "{BASE}/e403",
+                  "{BASE}/e403",
+                  "{BASE}/e404",
+                  "{BASE}/e404",
+                  "{BASE}/e404",
+                  "{BASE}/e404",
+                  "{BASE}/e404",
+                  "{BASE}/e404",
+                  "{BASE}/e404",
+                  "{BASE}/e404",
+                  "{BASE}/e410",
+                  "{BASE}/e410",
+                  "{BASE}/e410",
+                  "{BASE}/e410",
+                  "{BASE}/e410",
+                  "{BASE}/e410",
+                  "{BASE}/e410",
+                  "{BASE}/e410",
+                  "{BASE}/e429",
+                  "{BASE}/e429",
+                  "{BASE}/e429",
+                  "{BASE}/e429",
+                  "{BASE}/e429",
+                  "{BASE}/e429",
+                  "{BASE}/e429",
+                  "{BASE}/e429",
+                  "{BASE}/e500",
+                  "{BASE}/e500",
+                  "{BASE}/e500",
+                  "{BASE}/e500",
+                  "{BASE}/e500",
+                  "{BASE}/e500",
+                  "{BASE}/e500",
+                  "{BASE}/e500",
+                  "{BASE}/e503",
+                  "{BASE}/e503",
+                  "{BASE}/e503",
+                  "{BASE}/e503",
+                  "{BASE}/e503",
+                  "{BASE}/e503",
+                  "{BASE}/e503",
+                  "{BASE}/e503",
+                  "{BASE}/http-refresh-nourl.html",
+                  "{BASE}/http-refresh-nourl.html",
+                  "{BASE}/http-refresh-nourl.html",
+                  "{BASE}/http-refresh-nourl.html",
+                  "{BASE}/http-refresh.html",
+                  "{BASE}/http-refresh.html",
+                  "{BASE}/http-refresh.html",
+                  "{BASE}/http-refresh.html",
+                  "{BASE}/long1",
+                  "{BASE}/long1",
+                  "{BASE}/long1",
+                  "{BASE}/long1",
+                  "{BASE}/long1",
+                  "{BASE}/long1",
+                  "{BASE}/long1",
+                  "{BASE}/long1",
+                  "{BASE}/long2",
+                  "{BASE}/long2",
+                  "{BASE}/long2",
+                  "{BASE}/long2",
+                  "{BASE}/long2",
+                  "{BASE}/long2",
+                  "{BASE}/long2",
+                  "{BASE}/long2",
+                  "{BASE}/long3",
+                  "{BASE}/long3",
+                  "{BASE}/long3",
+                  "{BASE}/long3",
+                  "{BASE}/long3",
+                  "{BASE}/long3",
+                  "{BASE}/long3",
+                  "{BASE}/long3",
+                  "{BASE}/long4",
+                  "{BASE}/long4",
+                  "{BASE}/long4",
+                  "{BASE}/long4",
+                  "{BASE}/long4",
+                  "{BASE}/long4",
+                  "{BASE}/long4",
+                  "{BASE}/long4",
+                  "{BASE}/long5",
+                  "{BASE}/long5",
+                  "{BASE}/long5",
+                  "{BASE}/long5",
+                  "{BASE}/long5",
+                  "{BASE}/long5",
+                  "{BASE}/long5",
+                  "{BASE}/long5",
+                  "{BASE}/loop1",
+                  "{BASE}/loop1",
+                  "{BASE}/loop1",
+                  "{BASE}/loop1",
+                  "{BASE}/loop1",
+                  "{BASE}/loop1",
+                  "{BASE}/loop1",
+                  "{BASE}/loop1",
+                  "{BASE}/loop2",
+                  "{BASE}/loop2",
+                  "{BASE}/loop2",
+                  "{BASE}/loop2",
+                  "{BASE}/loop2",
+                  "{BASE}/loop2",
+                  "{BASE}/loop2",
+                  "{BASE}/loop2",
+                  "{BASE}/meta-refresh-5.html",
+                  "{BASE}/meta-refresh-5.html",
+                  "{BASE}/meta-refresh-5.html",
+                  "{BASE}/meta-refresh-5.html",
+                  "{BASE}/meta-refresh-self.html",
+                  "{BASE}/meta-refresh-self.html",
+                  "{BASE}/meta-refresh-self.html",
+                  "{BASE}/meta-refresh-self.html",
+                  "{BASE}/meta-refresh.html",
+                  "{BASE}/meta-refresh.html",
+                  "{BASE}/meta-refresh.html",
+                  "{BASE}/meta-refresh.html",
+                  "{BASE}/mixed-chain.html",
+                  "{BASE}/mixed-chain.html",
+                  "{BASE}/mixed-chain.html",
+                  "{BASE}/mixed-chain.html",
+                  "{BASE}/ok.html",
+                  "{BASE}/pages/p1.html",
+                  "{BASE}/pages/p2.html",
+                  "{BASE}/pages/p3.html",
+                  "{BASE}/pages/p4.html",
+                  "{BASE}/r-chain-500",
+                  "{BASE}/r-chain-500",
+                  "{BASE}/r-chain-500",
+                  "{BASE}/r-chain-500",
+                  "{BASE}/r-chain-500",
+                  "{BASE}/r-chain-500",
+                  "{BASE}/r-chain-500",
+                  "{BASE}/r-chain-500",
+                  "{BASE}/r-chain-500b",
+                  "{BASE}/r-chain-500b",
+                  "{BASE}/r-chain-500b",
+                  "{BASE}/r-chain-500b",
+                  "{BASE}/r-chain-500b",
+                  "{BASE}/r-chain-500b",
+                  "{BASE}/r-chain-500b",
+                  "{BASE}/r-chain-500b",
+                  "{BASE}/r-meta-to-404.html",
+                  "{BASE}/r-meta-to-404.html",
+                  "{BASE}/r-meta-to-404.html",
+                  "{BASE}/r-meta-to-404.html",
+                  "{BASE}/r-to-404",
+                  "{BASE}/r-to-404",
+                  "{BASE}/r-to-404",
+                  "{BASE}/r-to-404",
+                  "{BASE}/r-to-404",
+                  "{BASE}/r-to-404",
+                  "{BASE}/r-to-404",
+                  "{BASE}/r-to-404",
+                  "{BASE}/r-to-blocked",
+                  "{BASE}/r-to-blocked",
+                  "{BASE}/r-to-blocked",
+                  "{BASE}/r-to-blocked",
+                  "{BASE}/r-to-blocked",
+                  "{BASE}/r-to-blocked",
+                  "{BASE}/r-to-blocked",
+                  "{BASE}/r-to-blocked",
+                  "{BASE}/r-to-dead",
+                  "{BASE}/r-to-dead",
+                  "{BASE}/r-to-dead",
+                  "{BASE}/r-to-dead",
+                  "{BASE}/r-to-dead",
+                  "{BASE}/r-to-dead",
+                  "{BASE}/r-to-dead",
+                  "{BASE}/r-to-dead",
+                  "{BASE}/r301",
+                  "{BASE}/r301",
+                  "{BASE}/r301",
+                  "{BASE}/r301",
+                  "{BASE}/r301",
+                  "{BASE}/r301",
+                  "{BASE}/r301",
+                  "{BASE}/r301",
+                  "{BASE}/r301-noloc",
+                  "{BASE}/r301-noloc",
+                  "{BASE}/r301-noloc",
+                  "{BASE}/r301-noloc",
+                  "{BASE}/r301-noloc",
+                  "{BASE}/r301-noloc",
+                  "{BASE}/r301-noloc",
+                  "{BASE}/r301-noloc",
+                  "{BASE}/r302",
+                  "{BASE}/r302",
+                  "{BASE}/r302",
+                  "{BASE}/r302",
+                  "{BASE}/r302",
+                  "{BASE}/r302",
+                  "{BASE}/r302",
+                  "{BASE}/r302",
+                  "{BASE}/r303",
+                  "{BASE}/r303",
+                  "{BASE}/r303",
+                  "{BASE}/r303",
+                  "{BASE}/r303",
+                  "{BASE}/r303",
+                  "{BASE}/r303",
+                  "{BASE}/r303",
+                  "{BASE}/r304",
+                  "{BASE}/r304",
+                  "{BASE}/r304",
+                  "{BASE}/r304",
+                  "{BASE}/r304",
+                  "{BASE}/r304",
+                  "{BASE}/r304",
+                  "{BASE}/r304",
+                  "{BASE}/r307",
+                  "{BASE}/r307",
+                  "{BASE}/r307",
+                  "{BASE}/r307",
+                  "{BASE}/r307",
+                  "{BASE}/r307",
+                  "{BASE}/r307",
+                  "{BASE}/r307",
+                  "{BASE}/r308",
+                  "{BASE}/r308",
+                  "{BASE}/r308",
+                  "{BASE}/r308",
+                  "{BASE}/r308",
+                  "{BASE}/r308",
+                  "{BASE}/r308",
+                  "{BASE}/r308",
+                  "{BASE}/s201",
+                  "{BASE}/s201",
+                  "{BASE}/s201",
+                  "{BASE}/s201",
+                  "{BASE}/s204",
+                  "{BASE}/s204",
+                  "{BASE}/s204",
+                  "{BASE}/s204",
+                  "{BASE}/s204",
+                  "{BASE}/s204",
+                  "{BASE}/s204",
+                  "{BASE}/s204",
+                  "{BASE}/s999",
+                  "{BASE}/s999",
+                  "{BASE}/s999",
+                  "{BASE}/s999",
+                  "{BASE}/s999",
+                  "{BASE}/s999",
+                  "{BASE}/s999",
+                  "{BASE}/s999"
+                ]
+              },
+              {
+                "id": "DEV-004",
+                "spec": "ONPAGE-013",
+                "kind": "OS-Festlegung",
+                "note": "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs ohne Antwort: Word Count und Text Ratio leer (ONPAGE-013, K-60, Befund N-01); die Referenz schreibt 0.",
+                "scope": "cell",
+                "count": 32,
+                "keys": [
+                  "{BASE}/blocked/a.html",
+                  "{BASE}/blocked/b.html",
+                  "{BASE}/chain1",
+                  "{BASE}/chain2",
+                  "{BASE}/e400",
+                  "{BASE}/e403",
+                  "{BASE}/e404",
+                  "{BASE}/e410",
+                  "{BASE}/e429",
+                  "{BASE}/e500",
+                  "{BASE}/e503",
+                  "{BASE}/long1",
+                  "{BASE}/long2",
+                  "{BASE}/long3",
+                  "{BASE}/long4",
+                  "{BASE}/long5",
+                  "{BASE}/loop1",
+                  "{BASE}/loop2",
+                  "{BASE}/r-chain-500",
+                  "{BASE}/r-chain-500b",
+                  "{BASE}/r-to-404",
+                  "{BASE}/r-to-blocked",
+                  "{BASE}/r-to-dead",
+                  "{BASE}/r301",
+                  "{BASE}/r301-noloc",
+                  "{BASE}/r302",
+                  "{BASE}/r303",
+                  "{BASE}/r304",
+                  "{BASE}/r307",
+                  "{BASE}/r308",
+                  "{BASE}/s204",
+                  "{BASE}/s999"
+                ]
+              }
+            ],
+            "dropped_ref_columns": [],
+            "ignored_columns": [
+              {
+                "column": "amphtml Link Element",
+                "reason": "AMP erst mit M2 (M1.md 7.2)"
+              },
+              {
+                "column": "CO2 (mg)",
+                "reason": "nicht in M1 (P1/P2, M1.md 7.2): Nachhaltigkeitsspalten"
+              },
+              {
+                "column": "Carbon Rating",
+                "reason": "nicht in M1 (P1/P2, M1.md 7.2): Nachhaltigkeitsspalten"
+              },
+              {
+                "column": "Sentence Count",
+                "reason": "nicht in M1 (P1/P2, M1.md 7.2) (ONPAGE-149)"
+              },
+              {
+                "column": "Average Words Per Sentence",
+                "reason": "nicht in M1 (P1/P2, M1.md 7.2) (ONPAGE-149)"
+              },
+              {
+                "column": "Flesch Reading Ease Score",
+                "reason": "nicht in M1 (P1/P2, M1.md 7.2) (ONPAGE-149)"
+              },
+              {
+                "column": "Readability",
+                "reason": "nicht in M1 (P1/P2, M1.md 7.2) (ONPAGE-149)"
+              },
+              {
+                "column": "Link Score",
+                "reason": "SQ-10 / DEV-037: TECH-145 OS-Festlegung, Kalibrierung M3; keine verified-Gutschrift für Links/Internal"
+              },
+              {
+                "column": "Unique JS Inlinks",
+                "reason": "nur mit JavaScript-Rendering (M2)"
+              },
+              {
+                "column": "Unique JS Outlinks",
+                "reason": "nur mit JavaScript-Rendering (M2)"
+              },
+              {
+                "column": "Unique External JS Outlinks",
+                "reason": "nur mit JavaScript-Rendering (M2)"
+              },
+              {
+                "column": "Closest Near Duplicate Match",
+                "reason": "nicht in M1 (P1/P2, M1.md 7.2): Near Duplicates (ONPAGE-144 ff.)"
+              },
+              {
+                "column": "No. Near Duplicates",
+                "reason": "nicht in M1 (P1/P2, M1.md 7.2): Near Duplicates (ONPAGE-144 ff.)"
+              },
+              {
+                "column": "Spelling Errors",
+                "reason": "nicht in M1 (P1/P2, M1.md 7.2): Rechtschreibung/Grammatik"
+              },
+              {
+                "column": "Grammar Errors",
+                "reason": "nicht in M1 (P1/P2, M1.md 7.2): Rechtschreibung/Grammatik"
+              },
+              {
+                "column": "Response Time",
+                "reason": "nicht deterministisch"
+              },
+              {
+                "column": "Cookies",
+                "reason": "Cookie-Zusammenfassung erst mit M2 (OUT-112, M1.md 7.3)"
+              },
+              {
+                "column": "Language",
+                "reason": "nicht in M1 (P1/P2, M1.md 7.2): Sprache (ONPAGE-153)"
+              },
+              {
+                "column": "HTTP Version",
+                "reason": "Transportdetail, nicht Teil der Parität (HTTP-Versionen erst M2, CRAWL-025)"
+              },
+              {
+                "column": "Mobile Alternate Link",
+                "reason": "Mobile erst mit M2 (M1.md 7.2)"
+              },
+              {
+                "column": "Closest Semantically Similar Address",
+                "reason": "KI-Funktion, M4"
+              },
+              {
+                "column": "Semantic Similarity Score",
+                "reason": "KI-Funktion, M4"
+              },
+              {
+                "column": "No. Semantically Similar",
+                "reason": "KI-Funktion, M4"
+              },
+              {
+                "column": "Semantic Relevance Score",
+                "reason": "KI-Funktion, M4"
+              },
+              {
+                "column": "Crawl Timestamp",
+                "reason": "nicht deterministisch"
+              }
+            ],
+            "unmapped_ref_columns": [],
+            "unmapped_os_columns": [
+              "Meta Keywords 2",
+              "Meta Keywords 2 Length"
+            ],
+            "missing_ref_columns": [],
+            "missing_os_columns": [],
+            "ignored_ref_rows": [],
+            "os_only_rows": [],
+            "threshold_pct": 99.0,
+            "url_set_identical": true,
+            "passed": true,
+            "failures": []
+          }
+        },
+        {
+          "ref_file": "external_all.csv",
+          "mapping": "external_all",
+          "os": "tab:External:All",
+          "status": "present",
+          "outcome": "compared",
+          "report": {
+            "export": "external_all",
+            "site": "parity-response",
+            "ref_rows": 5,
+            "os_rows": 5,
+            "matched": 5,
+            "missing_in_os": [],
+            "extra_in_os": [],
+            "cells_compared": 24,
+            "cells_equal": 24,
+            "agreement_pct": 100.0,
+            "columns": [
+              {
+                "ref_column": "Content Type",
+                "os_column": "Content",
+                "compared": 5,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code",
+                "os_column": "Status Code",
+                "compared": 5,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status",
+                "os_column": "Status",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Crawl Depth",
+                "os_column": "Crawl Depth",
+                "compared": 5,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Inlinks",
+                "os_column": "Inlinks",
+                "compared": 5,
+                "errors": 0,
+                "examples": []
+              }
+            ],
+            "applied_deviations": [
+              {
+                "id": "DEV-005",
+                "spec": "ONPAGE-065",
+                "kind": "OS-Festlegung",
+                "note": "ONPAGE-065 (K-67): OpenSpider meldet die tatsaechliche Ursache, Connection Refused bei abgelehntem Verbindungsaufbau und Connection Timeout bei ausbleibender Antwort; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
+                "scope": "cell",
+                "count": 1,
+                "keys": [
+                  "http://localhost:1/"
+                ]
+              }
+            ],
+            "dropped_ref_columns": [],
+            "ignored_columns": [],
+            "unmapped_ref_columns": [],
+            "unmapped_os_columns": [],
+            "missing_ref_columns": [],
+            "missing_os_columns": [],
+            "ignored_ref_rows": [],
+            "os_only_rows": [],
+            "threshold_pct": 97.0,
+            "url_set_identical": true,
+            "passed": true,
+            "failures": []
+          }
+        },
+        {
+          "ref_file": "response_codes_all.csv",
+          "mapping": "response_codes_all",
+          "os": "tab:Response Codes:All",
+          "status": "present",
+          "outcome": "compared",
+          "report": {
+            "export": "response_codes_all",
+            "site": "parity-response",
+            "ref_rows": 51,
+            "os_rows": 51,
+            "matched": 51,
+            "missing_in_os": [],
+            "extra_in_os": [],
+            "cells_compared": 407,
+            "cells_equal": 407,
+            "agreement_pct": 100.0,
+            "columns": [
+              {
+                "ref_column": "Content Type",
+                "os_column": "Content",
+                "compared": 51,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code",
+                "os_column": "Status Code",
+                "compared": 51,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status",
+                "os_column": "Status",
+                "compared": 50,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Indexability",
+                "os_column": "Indexability",
+                "compared": 51,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Indexability Status",
+                "os_column": "Indexability Status",
+                "compared": 51,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Inlinks",
+                "os_column": "Inlinks",
+                "compared": 51,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL",
+                "os_column": "Redirect URL",
+                "compared": 51,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type",
+                "os_column": "Redirect Type",
+                "compared": 51,
+                "errors": 0,
+                "examples": []
+              }
+            ],
+            "applied_deviations": [
+              {
+                "id": "DEV-005",
+                "spec": "ONPAGE-065",
+                "kind": "OS-Festlegung",
+                "note": "ONPAGE-065 (K-67): OpenSpider meldet die tatsaechliche Ursache, Connection Refused bei abgelehntem Verbindungsaufbau und Connection Timeout bei ausbleibender Antwort; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
+                "scope": "cell",
+                "count": 1,
+                "keys": [
+                  "http://localhost:1/"
+                ]
+              }
+            ],
+            "dropped_ref_columns": [],
+            "ignored_columns": [
+              {
+                "column": "Response Time",
+                "reason": "nicht deterministisch"
+              }
+            ],
+            "unmapped_ref_columns": [],
+            "unmapped_os_columns": [],
+            "missing_ref_columns": [],
+            "missing_os_columns": [],
+            "ignored_ref_rows": [],
+            "os_only_rows": [],
+            "threshold_pct": 99.0,
+            "url_set_identical": true,
+            "passed": true,
+            "failures": []
+          }
+        },
+        {
+          "ref_file": "all_inlinks.csv",
+          "mapping": "all_inlinks",
+          "os": "bulk:Links:All Inlinks",
+          "status": "present",
+          "outcome": "compared",
+          "report": {
+            "export": "all_inlinks",
+            "site": "parity-response",
+            "ref_rows": 91,
+            "os_rows": 91,
+            "matched": 91,
+            "missing_in_os": [],
+            "extra_in_os": [],
+            "cells_compared": 1064,
+            "cells_equal": 1064,
+            "agreement_pct": 100.0,
+            "columns": [
+              {
+                "ref_column": "Size (Bytes)",
+                "os_column": "Size (Bytes)",
+                "compared": 91,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Alt Text",
+                "os_column": "Alt Text",
+                "compared": 91,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Anchor",
+                "os_column": "Anchor",
+                "compared": 91,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code",
+                "os_column": "Status Code",
+                "compared": 86,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status",
+                "os_column": "Status",
+                "compared": 89,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Follow",
+                "os_column": "Follow",
+                "compared": 91,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Target",
+                "os_column": "Target",
+                "compared": 91,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Rel",
+                "os_column": "Rel",
+                "compared": 91,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Path Type",
+                "os_column": "Path Type",
+                "compared": 91,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Link Path",
+                "os_column": "Link Path",
+                "compared": 91,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Link Position",
+                "os_column": "Link Position",
+                "compared": 91,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Link Origin",
+                "os_column": "Link Origin",
+                "compared": 70,
+                "errors": 0,
+                "examples": []
+              }
+            ],
+            "applied_deviations": [
+              {
+                "id": "DEV-005",
+                "spec": "ONPAGE-065",
+                "kind": "OS-Festlegung",
+                "note": "ONPAGE-065 (K-67): OpenSpider meldet die tatsaechliche Ursache, Connection Refused bei abgelehntem Verbindungsaufbau und Connection Timeout bei ausbleibender Antwort; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
+                "scope": "cell",
+                "count": 2,
+                "keys": [
+                  "HTTP Redirect | {BASE}/r-to-dead | http://localhost:1/ | #1",
+                  "Hyperlink | {BASE}/ | http://localhost:1/ | #1"
+                ]
+              },
+              {
+                "id": "DEV-006",
+                "spec": "OUT-031",
+                "kind": "Paritaetsabweichung",
+                "note": "Status Code ist in den Link-Exporten leer, wenn das Ziel nicht abgerufen wurde (OUT-031, Not Crawled); die Referenz schreibt 0 fuer robots.txt-blockierte Ziele.",
+                "scope": "cell",
+                "count": 5,
+                "keys": [
+                  "HTTP Redirect | {BASE}/r-to-blocked | {BASE}/blocked/a.html | #1",
+                  "HTTP Redirect | {BASE}/r-to-dead | http://localhost:1/ | #1",
+                  "Hyperlink | {BASE}/ | http://localhost:1/ | #1",
+                  "Hyperlink | {BASE}/ | {BASE}/blocked/a.html | #1",
+                  "Hyperlink | {BASE}/ | {BASE}/blocked/b.html | #1"
+                ]
+              },
+              {
+                "id": "DEV-009",
+                "spec": "OUT-031",
+                "kind": "Paritaetsabweichung",
+                "note": "Die Spec kennt Link Origin nur HTML/Rendered HTML (OUT-031); die Referenz schreibt HTTP fuer Links aus Antwort-Headern und Weiterleitungen.",
+                "scope": "cell",
+                "count": 21,
+                "keys": [
+                  "HTTP Redirect | {BASE}/chain1 | {BASE}/chain2 | #1",
+                  "HTTP Redirect | {BASE}/chain2 | {BASE}/ok.html | #1",
+                  "HTTP Redirect | {BASE}/long1 | {BASE}/long2 | #1",
+                  "HTTP Redirect | {BASE}/long2 | {BASE}/long3 | #1",
+                  "HTTP Redirect | {BASE}/long3 | {BASE}/long4 | #1",
+                  "HTTP Redirect | {BASE}/long4 | {BASE}/long5 | #1",
+                  "HTTP Redirect | {BASE}/long5 | {BASE}/ok.html | #1",
+                  "HTTP Redirect | {BASE}/loop1 | {BASE}/loop2 | #1",
+                  "HTTP Redirect | {BASE}/loop2 | {BASE}/loop1 | #1",
+                  "HTTP Redirect | {BASE}/r-chain-500 | {BASE}/r-chain-500b | #1",
+                  "HTTP Redirect | {BASE}/r-chain-500b | {BASE}/e500 | #1",
+                  "HTTP Redirect | {BASE}/r-to-404 | {BASE}/e404 | #1",
+                  "HTTP Redirect | {BASE}/r-to-blocked | {BASE}/blocked/a.html | #1",
+                  "HTTP Redirect | {BASE}/r-to-dead | http://localhost:1/ | #1",
+                  "HTTP Redirect | {BASE}/r301 | {BASE}/ok.html | #1",
+                  "HTTP Redirect | {BASE}/r302 | {BASE}/ok.html | #1",
+                  "HTTP Redirect | {BASE}/r303 | {BASE}/ok.html | #1",
+                  "HTTP Redirect | {BASE}/r307 | {BASE}/ok.html | #1",
+                  "HTTP Redirect | {BASE}/r308 | {BASE}/ok.html | #1",
+                  "HTTP Redirect | {EXT}/r301 | {EXT}/ok.html | #1",
+                  "HTTP Refresh | {BASE}/http-refresh.html | {BASE}/ok.html | #1"
+                ]
+              }
+            ],
+            "dropped_ref_columns": [],
+            "ignored_columns": [
+              {
+                "column": "Crawlability",
+                "reason": "OpenSpider fuehrt die Spalte `Crawlability` nicht (OUT-023 liefert 15 Spalten ohne sie); `Follow` deckt nofollow ab"
+              }
+            ],
+            "unmapped_ref_columns": [],
+            "unmapped_os_columns": [],
+            "missing_ref_columns": [],
+            "missing_os_columns": [],
+            "ignored_ref_rows": [],
+            "os_only_rows": [],
+            "threshold_pct": 97.0,
+            "url_set_identical": true,
+            "passed": true,
+            "failures": []
+          }
+        },
+        {
+          "ref_file": "all_error_(4xx_5xx_no_response)_inlinks.csv",
+          "mapping": "all_error_inlinks",
+          "os": "bulk:Response Codes:Internal & External:All Error Inlinks",
+          "status": "present",
+          "outcome": "compared",
+          "report": {
+            "export": "all_error_inlinks",
+            "site": "parity-response",
+            "ref_rows": 18,
+            "os_rows": 18,
+            "matched": 18,
+            "missing_in_os": [],
+            "extra_in_os": [],
+            "cells_compared": 209,
+            "cells_equal": 209,
+            "agreement_pct": 100.0,
+            "columns": [
+              {
+                "ref_column": "Size (Bytes)",
+                "os_column": "Size (Bytes)",
+                "compared": 18,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Alt Text",
+                "os_column": "Alt Text",
+                "compared": 18,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Anchor",
+                "os_column": "Anchor",
+                "compared": 18,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code",
+                "os_column": "Status Code",
+                "compared": 16,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status",
+                "os_column": "Status",
+                "compared": 16,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Follow",
+                "os_column": "Follow",
+                "compared": 18,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Target",
+                "os_column": "Target",
+                "compared": 18,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Rel",
+                "os_column": "Rel",
+                "compared": 18,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Path Type",
+                "os_column": "Path Type",
+                "compared": 18,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Link Path",
+                "os_column": "Link Path",
+                "compared": 18,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Link Position",
+                "os_column": "Link Position",
+                "compared": 18,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Link Origin",
+                "os_column": "Link Origin",
+                "compared": 15,
+                "errors": 0,
+                "examples": []
+              }
+            ],
+            "applied_deviations": [
+              {
+                "id": "DEV-005",
+                "spec": "ONPAGE-065",
+                "kind": "OS-Festlegung",
+                "note": "ONPAGE-065 (K-67): OpenSpider meldet die tatsaechliche Ursache, Connection Refused bei abgelehntem Verbindungsaufbau und Connection Timeout bei ausbleibender Antwort; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout.",
+                "scope": "cell",
+                "count": 2,
+                "keys": [
+                  "HTTP Redirect | {BASE}/r-to-dead | http://localhost:1/ | #1",
+                  "Hyperlink | {BASE}/ | http://localhost:1/ | #1"
+                ]
+              },
+              {
+                "id": "DEV-006b",
+                "spec": "OUT-031",
+                "kind": "Paritaetsabweichung",
+                "note": "wie DEV-006 (Fehler-Inlinks auf nicht abgerufene Ziele).",
+                "scope": "cell",
+                "count": 2,
+                "keys": [
+                  "HTTP Redirect | {BASE}/r-to-dead | http://localhost:1/ | #1",
+                  "Hyperlink | {BASE}/ | http://localhost:1/ | #1"
+                ]
+              },
+              {
+                "id": "DEV-009",
+                "spec": "OUT-031",
+                "kind": "Paritaetsabweichung",
+                "note": "Die Spec kennt Link Origin nur HTML/Rendered HTML (OUT-031); die Referenz schreibt HTTP fuer Links aus Antwort-Headern und Weiterleitungen.",
+                "scope": "cell",
+                "count": 3,
+                "keys": [
+                  "HTTP Redirect | {BASE}/r-chain-500b | {BASE}/e500 | #1",
+                  "HTTP Redirect | {BASE}/r-to-404 | {BASE}/e404 | #1",
+                  "HTTP Redirect | {BASE}/r-to-dead | http://localhost:1/ | #1"
+                ]
+              }
+            ],
+            "dropped_ref_columns": [],
+            "ignored_columns": [
+              {
+                "column": "Crawlability",
+                "reason": "OpenSpider fuehrt die Spalte `Crawlability` nicht (OUT-023 liefert 15 Spalten ohne sie); `Follow` deckt nofollow ab"
+              }
+            ],
+            "unmapped_ref_columns": [],
+            "unmapped_os_columns": [],
+            "missing_ref_columns": [],
+            "missing_os_columns": [],
+            "ignored_ref_rows": [],
+            "os_only_rows": [],
+            "threshold_pct": 97.0,
+            "url_set_identical": true,
+            "passed": true,
+            "failures": []
+          }
+        },
+        {
+          "ref_file": "redirect_chains.csv",
+          "mapping": "redirect_chains",
+          "os": "report:Redirects:Redirect Chains",
+          "status": "present",
+          "outcome": "compared",
+          "report": {
+            "export": "redirect_chains",
+            "site": "parity-response",
+            "ref_rows": 8,
+            "os_rows": 6,
+            "matched": 6,
+            "missing_in_os": [],
+            "extra_in_os": [],
+            "cells_compared": 289,
+            "cells_equal": 287,
+            "agreement_pct": 99.308,
+            "columns": [
+              {
+                "ref_column": "Chain Type",
+                "os_column": "Chain Type",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Number of Redirects",
+                "os_column": "Number of Redirects",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Loop",
+                "os_column": "Redirect Loop",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Temp Redirect in Chain",
+                "os_column": "Temp Redirect in Chain",
+                "compared": 5,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Final Address",
+                "os_column": "Final Address",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Final Indexability",
+                "os_column": "Final Indexability",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Final Indexability Status",
+                "os_column": "Final Indexability Status",
+                "compared": 5,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Final Content",
+                "os_column": "Final Content Type",
+                "compared": 5,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Final Status Code",
+                "os_column": "Final Status Code",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Final Status",
+                "os_column": "Final Status",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 1",
+                "os_column": "Status Code 1",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 1",
+                "os_column": "Status 1",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 1",
+                "os_column": "Redirect Type 1",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 1",
+                "os_column": "Redirect URL 1",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 2",
+                "os_column": "Status Code 2",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 2",
+                "os_column": "Status 2",
+                "compared": 6,
+                "errors": 1,
+                "examples": [
+                  {
+                    "key": "{BASE}/meta-refresh-self.html",
+                    "ref": "",
+                    "os": "Redirect Loop"
+                  }
+                ]
+              },
+              {
+                "ref_column": "Redirect Type 2",
+                "os_column": "Redirect Type 2",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 2",
+                "os_column": "Redirect URL 2",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 3",
+                "os_column": "Status Code 3",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 3",
+                "os_column": "Status 3",
+                "compared": 6,
+                "errors": 1,
+                "examples": [
+                  {
+                    "key": "{BASE}/loop1",
+                    "ref": "",
+                    "os": "Redirect Loop"
+                  }
+                ]
+              },
+              {
+                "ref_column": "Redirect Type 3",
+                "os_column": "Redirect Type 3",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 3",
+                "os_column": "Redirect URL 3",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 4",
+                "os_column": "Status Code 4",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 4",
+                "os_column": "Status 4",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 4",
+                "os_column": "Redirect Type 4",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 4",
+                "os_column": "Redirect URL 4",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 5",
+                "os_column": "Status Code 5",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 5",
+                "os_column": "Status 5",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 5",
+                "os_column": "Redirect Type 5",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 5",
+                "os_column": "Redirect URL 5",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 6",
+                "os_column": "Status Code 6",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 6",
+                "os_column": "Status 6",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 6",
+                "os_column": "Redirect Type 6",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 6",
+                "os_column": "Redirect URL 6",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 7",
+                "os_column": "Status Code 7",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 7",
+                "os_column": "Status 7",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 7",
+                "os_column": "Redirect Type 7",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 7",
+                "os_column": "Redirect URL 7",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 8",
+                "os_column": "Status Code 8",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 8",
+                "os_column": "Status 8",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 8",
+                "os_column": "Redirect Type 8",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 8",
+                "os_column": "Redirect URL 8",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 9",
+                "os_column": "Status Code 9",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 9",
+                "os_column": "Status 9",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 9",
+                "os_column": "Redirect Type 9",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 9",
+                "os_column": "Redirect URL 9",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 10",
+                "os_column": "Status Code 10",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 10",
+                "os_column": "Status 10",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 10",
+                "os_column": "Redirect Type 10",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 10",
+                "os_column": "Redirect URL 10",
+                "compared": 6,
+                "errors": 0,
+                "examples": []
+              }
+            ],
+            "applied_deviations": [
+              {
+                "id": "DEV-030",
+                "spec": "OUT-081",
+                "kind": "OS-Festlegung",
+                "note": "Bei einer Weiterleitungsschleife ist Final Address leer und Final Status = Redirect Loop (OUT-081); die Referenz nennt die letzte Station der Schleife samt ihrem Status. Das gilt auch fuer den Selbst-Refresh (Weiterleitung auf sich selbst, K-57): die Referenz nennt die Seite selbst mit 200/OK.",
+                "scope": "cell",
+                "count": 10,
+                "keys": [
+                  "{BASE}/loop1",
+                  "{BASE}/loop1",
+                  "{BASE}/loop1",
+                  "{BASE}/loop1",
+                  "{BASE}/loop1",
+                  "{BASE}/meta-refresh-self.html",
+                  "{BASE}/meta-refresh-self.html",
+                  "{BASE}/meta-refresh-self.html",
+                  "{BASE}/meta-refresh-self.html",
+                  "{BASE}/meta-refresh-self.html"
+                ]
+              },
+              {
+                "id": "DEV-031",
+                "spec": "OUT-081",
+                "kind": "OS-Festlegung",
+                "note": "Meta Refresh und Refresh-Header gelten nur mit Verzoegerung > 0 als temporaer (OUT-081); die Referenz wertet den Meta Refresh ohne Verzoegerung als temporaer.",
+                "scope": "cell",
+                "count": 1,
+                "keys": [
+                  "{BASE}/mixed-chain.html"
+                ]
+              }
+            ],
+            "dropped_ref_columns": [],
+            "ignored_columns": [
+              {
+                "column": "Source",
+                "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle; OpenSpider nennt `Sample Source`"
+              },
+              {
+                "column": "Alt Text",
+                "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+              },
+              {
+                "column": "Anchor Text",
+                "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+              },
+              {
+                "column": "Link Path",
+                "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+              },
+              {
+                "column": "Link Position",
+                "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+              },
+              {
+                "column": "Content 1",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 2",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 3",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 4",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 5",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 6",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 7",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 8",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 9",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 10",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              }
+            ],
+            "unmapped_ref_columns": [],
+            "unmapped_os_columns": [
+              "Inlinks",
+              "Sample Source"
+            ],
+            "missing_ref_columns": [],
+            "missing_os_columns": [],
+            "ignored_ref_rows": [],
+            "os_only_rows": [],
+            "threshold_pct": 97.0,
+            "url_set_identical": true,
+            "passed": true,
+            "failures": []
+          }
+        },
+        {
+          "ref_file": "redirects_to_error.csv",
+          "mapping": "redirects_to_errors",
+          "os": "report:Redirects:Redirects to Errors",
+          "status": "present",
+          "outcome": "compared",
+          "report": {
+            "export": "redirects_to_errors",
+            "site": "parity-response",
+            "ref_rows": 4,
+            "os_rows": 5,
+            "matched": 4,
+            "missing_in_os": [],
+            "extra_in_os": [
+              "{BASE}/r-to-blocked"
+            ],
+            "cells_compared": 200,
+            "cells_equal": 197,
+            "agreement_pct": 98.5,
+            "columns": [
+              {
+                "ref_column": "Chain Type",
+                "os_column": "Chain Type",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Number of Redirects",
+                "os_column": "Number of Redirects",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Loop",
+                "os_column": "Redirect Loop",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Temp Redirect in Chain",
+                "os_column": "Temp Redirect in Chain",
+                "compared": 4,
+                "errors": 1,
+                "examples": [
+                  {
+                    "key": "{BASE}/r-meta-to-404.html",
+                    "ref": "true",
+                    "os": "False"
+                  }
+                ]
+              },
+              {
+                "ref_column": "Final Address",
+                "os_column": "Final Address",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Final Indexability",
+                "os_column": "Final Indexability",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Final Indexability Status",
+                "os_column": "Final Indexability Status",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Final Content",
+                "os_column": "Final Content Type",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Final Status Code",
+                "os_column": "Final Status Code",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Final Status",
+                "os_column": "Final Status",
+                "compared": 4,
+                "errors": 1,
+                "examples": [
+                  {
+                    "key": "{BASE}/r-to-dead",
+                    "ref": "Connection Timeout",
+                    "os": "Connection Refused"
+                  }
+                ]
+              },
+              {
+                "ref_column": "Status Code 1",
+                "os_column": "Status Code 1",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 1",
+                "os_column": "Status 1",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 1",
+                "os_column": "Redirect Type 1",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 1",
+                "os_column": "Redirect URL 1",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 2",
+                "os_column": "Status Code 2",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 2",
+                "os_column": "Status 2",
+                "compared": 4,
+                "errors": 1,
+                "examples": [
+                  {
+                    "key": "{BASE}/r-to-dead",
+                    "ref": "Connection Timeout",
+                    "os": "Connection Refused"
+                  }
+                ]
+              },
+              {
+                "ref_column": "Redirect Type 2",
+                "os_column": "Redirect Type 2",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 2",
+                "os_column": "Redirect URL 2",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 3",
+                "os_column": "Status Code 3",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 3",
+                "os_column": "Status 3",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 3",
+                "os_column": "Redirect Type 3",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 3",
+                "os_column": "Redirect URL 3",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 4",
+                "os_column": "Status Code 4",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 4",
+                "os_column": "Status 4",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 4",
+                "os_column": "Redirect Type 4",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 4",
+                "os_column": "Redirect URL 4",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 5",
+                "os_column": "Status Code 5",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 5",
+                "os_column": "Status 5",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 5",
+                "os_column": "Redirect Type 5",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 5",
+                "os_column": "Redirect URL 5",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 6",
+                "os_column": "Status Code 6",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 6",
+                "os_column": "Status 6",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 6",
+                "os_column": "Redirect Type 6",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 6",
+                "os_column": "Redirect URL 6",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 7",
+                "os_column": "Status Code 7",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 7",
+                "os_column": "Status 7",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 7",
+                "os_column": "Redirect Type 7",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 7",
+                "os_column": "Redirect URL 7",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 8",
+                "os_column": "Status Code 8",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 8",
+                "os_column": "Status 8",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 8",
+                "os_column": "Redirect Type 8",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 8",
+                "os_column": "Redirect URL 8",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 9",
+                "os_column": "Status Code 9",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 9",
+                "os_column": "Status 9",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 9",
+                "os_column": "Redirect Type 9",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 9",
+                "os_column": "Redirect URL 9",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status Code 10",
+                "os_column": "Status Code 10",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Status 10",
+                "os_column": "Status 10",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect Type 10",
+                "os_column": "Redirect Type 10",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              },
+              {
+                "ref_column": "Redirect URL 10",
+                "os_column": "Redirect URL 10",
+                "compared": 4,
+                "errors": 0,
+                "examples": []
+              }
+            ],
+            "applied_deviations": [],
+            "dropped_ref_columns": [],
+            "ignored_columns": [
+              {
+                "column": "Source",
+                "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle; OpenSpider nennt `Sample Source`"
+              },
+              {
+                "column": "Alt Text",
+                "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+              },
+              {
+                "column": "Anchor Text",
+                "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+              },
+              {
+                "column": "Link Path",
+                "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+              },
+              {
+                "column": "Link Position",
+                "reason": "OS-Festlegung (OUT-081): eine Zeile je Start-URL statt je verlinkender Quelle"
+              },
+              {
+                "column": "Content 1",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 2",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 3",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 4",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 5",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 6",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 7",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 8",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 9",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              },
+              {
+                "column": "Content 10",
+                "reason": "Content-Type je Sprung steht in OpenSpider nicht im Report (OUT-081)"
+              }
+            ],
+            "unmapped_ref_columns": [],
+            "unmapped_os_columns": [
+              "Inlinks",
+              "Sample Source"
+            ],
+            "missing_ref_columns": [],
+            "missing_os_columns": [],
+            "ignored_ref_rows": [],
+            "os_only_rows": [],
+            "threshold_pct": 97.0,
+            "url_set_identical": false,
+            "passed": false,
+            "failures": [
+              "URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich"
+            ]
+          }
+        },
+        {
+          "ref_file": "crawl_overview.csv",
+          "mapping": "crawl_overview",
+          "os": "report:Crawl Overview",
+          "status": "present",
+          "outcome": "compared",
+          "report": {
+            "export": "crawl_overview",
+            "site": "parity-response",
+            "ref_rows": 468,
+            "os_rows": 486,
+            "matched": 287,
+            "missing_in_os": [],
+            "extra_in_os": [],
+            "cells_compared": 200,
+            "cells_equal": 191,
+            "agreement_pct": 95.5,
+            "columns": [
+              {
+                "ref_column": "URLs",
+                "os_column": "URLs",
+                "compared": 200,
+                "errors": 9,
+                "examples": [
+                  {
+                    "key": "internal | other",
+                    "ref": "22",
+                    "os": "0"
+                  },
+                  {
+                    "key": "security | missing content-security-policy header",
+                    "ref": "15",
+                    "os": "44"
+                  },
+                  {
+                    "key": "security | missing x-content-type-options header",
+                    "ref": "15",
+                    "os": "44"
+                  },
+                  {
+                    "key": "security | missing x-frame-options header",
+                    "ref": "15",
+                    "os": "44"
+                  },
+                  {
+                    "key": "security | missing secure referrer-policy header",
+                    "ref": "15",
+                    "os": "44"
+                  },
+                  {
+                    "key": "security | bad content type",
+                    "ref": "0",
+                    "os": "22"
+                  },
+                  {
+                    "key": "content | readability difficult",
+                    "ref": "4",
+                    "os": "8"
+                  },
+                  {
+                    "key": "content | readability very difficult",
+                    "ref": "0",
+                    "os": "1"
+                  },
+                  {
+                    "key": "images | missing size attributes",
+                    "ref": "0",
+                    "os": ""
+                  }
+                ]
+              }
+            ],
+            "applied_deviations": [
+              {
+                "id": "DEV-014",
+                "spec": "ONPAGE-024",
+                "kind": "OS-Festlegung",
+                "note": "Klassifizierung ONPAGE-024: fehlender Content-Type, keine Antwort und robots.txt-Sperre sind Unknown; die Referenz fuehrt Antworten ohne Content-Type (z. B. Weiterleitungen) unter Other. Der Filter Other ist P1 (M1.md 7.2).",
+                "scope": "cell",
+                "count": 3,
+                "keys": [
+                  "external | other",
+                  "external | unknown",
+                  "internal | unknown"
+                ]
+              },
+              {
+                "id": "REF-FREE-02",
+                "spec": "TECH-210",
+                "kind": "Annahme",
+                "note": "Referenz-Free-Einschraenkung (Spider-Konfiguration gesperrt): ohne Sitemap-Crawl zaehlt die Referenz alle URLs im Abschnitt Sitemaps, OpenSpider 0 (TECH-211).",
+                "scope": "cell",
+                "count": 1,
+                "keys": [
+                  "sitemaps | all"
+                ]
+              },
+              {
+                "id": "REF-FREE-03",
+                "spec": "TECH-101",
+                "kind": "Annahme",
+                "note": "M2.md 6.1 / K2-14: JavaScript hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: TECH-101, TECH-102, TECH-103, TECH-104, TECH-105, TECH-106, TECH-107, TECH-108, TECH-109, TECH-110, TECH-111, TECH-114.",
+                "scope": "cell",
+                "count": 15,
+                "keys": [
+                  "javascript | all",
+                  "javascript | canonical mismatch",
+                  "javascript | canonical only in rendered html",
+                  "javascript | contains javascript content",
+                  "javascript | contains javascript links",
+                  "javascript | h1 only in rendered html",
+                  "javascript | h1 updated by javascript",
+                  "javascript | meta description only in rendered html",
+                  "javascript | meta description updated by javascript",
+                  "javascript | nofollow only in original html",
+                  "javascript | noindex only in original html",
+                  "javascript | page title only in rendered html",
+                  "javascript | page title updated by javascript",
+                  "javascript | pages with blocked resources",
+                  "javascript | pages with javascript errors"
+                ]
+              },
+              {
+                "id": "REF-FREE-04",
+                "spec": "TECH-183",
+                "kind": "Annahme",
+                "note": "M2.md 6.1 / K2-14: Structured Data hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: TECH-183, TECH-184, TECH-185, TECH-186, TECH-187, TECH-188.",
+                "scope": "cell",
+                "count": 10,
+                "keys": [
+                  "structured data | all",
+                  "structured data | contains structured data",
+                  "structured data | json-ld urls",
+                  "structured data | microdata urls",
+                  "structured data | parse errors",
+                  "structured data | rdfa urls",
+                  "structured data | rich result validation errors",
+                  "structured data | rich result validation warnings",
+                  "structured data | validation errors",
+                  "structured data | validation warnings"
+                ]
+              },
+              {
+                "id": "REF-FREE-05",
+                "spec": "INTEG-134",
+                "kind": "Annahme",
+                "note": "M2.md 6.1 / K2-14: PageSpeed hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-134, INTEG-139.",
+                "scope": "cell",
+                "count": 20,
+                "keys": [
+                  "pagespeed | all",
+                  "pagespeed | avoid enormous network payloads",
+                  "pagespeed | document request latency",
+                  "pagespeed | duplicated javascript",
+                  "pagespeed | font display",
+                  "pagespeed | forced reflow",
+                  "pagespeed | improve image delivery",
+                  "pagespeed | layout shift culprits",
+                  "pagespeed | lcp request discovery",
+                  "pagespeed | legacy javascript",
+                  "pagespeed | minify css",
+                  "pagespeed | minify javascript",
+                  "pagespeed | minimize main-thread work",
+                  "pagespeed | network dependency tree",
+                  "pagespeed | optimize dom size",
+                  "pagespeed | reduce javascript execution time",
+                  "pagespeed | reduce unused css",
+                  "pagespeed | reduce unused javascript",
+                  "pagespeed | render blocking requests",
+                  "pagespeed | use efficient cache lifetimes"
+                ]
+              },
+              {
+                "id": "REF-FREE-06",
+                "spec": "TECH-231",
+                "kind": "Annahme",
+                "note": "M2.md 6.1 / K2-14: Mobile hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: TECH-231, TECH-232, TECH-233, TECH-234, TECH-235, TECH-236, TECH-237.",
+                "scope": "cell",
+                "count": 5,
+                "keys": [
+                  "mobile | all",
+                  "mobile | content not sized correctly",
+                  "mobile | illegible font size",
+                  "mobile | target size",
+                  "mobile | viewport not set"
+                ]
+              },
+              {
+                "id": "REF-FREE-07",
+                "spec": "TECH-251",
+                "kind": "Annahme",
+                "note": "M2.md 6.1 / K2-14: Accessibility hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: TECH-251, TECH-252.",
+                "scope": "cell",
+                "count": 1,
+                "keys": [
+                  "accessibility | all"
+                ]
+              },
+              {
+                "id": "REF-FREE-08",
+                "spec": "INTEG-031",
+                "kind": "Annahme",
+                "note": "M2.md 6.1 / K2-14: Custom Search hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-031.",
+                "scope": "cell",
+                "count": 1,
+                "keys": [
+                  "custom search | all"
+                ]
+              },
+              {
+                "id": "REF-FREE-10",
+                "spec": "INTEG-071",
+                "kind": "Annahme",
+                "note": "M2.md 6.1 / K2-14: Custom JavaScript hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-071.",
+                "scope": "cell",
+                "count": 1,
+                "keys": [
+                  "custom javascript | all"
+                ]
+              },
+              {
+                "id": "REF-FREE-11",
+                "spec": "INTEG-097",
+                "kind": "Annahme",
+                "note": "M2.md 6.1 / K2-14: Analytics hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-097, INTEG-098.",
+                "scope": "cell",
+                "count": 6,
+                "keys": [
+                  "analytics | all",
+                  "analytics | bounce rate above 70%",
+                  "analytics | no ga data",
+                  "analytics | non-indexable with ga data",
+                  "analytics | orphan urls",
+                  "analytics | sessions above 0"
+                ]
+              },
+              {
+                "id": "REF-FREE-12",
+                "spec": "INTEG-115",
+                "kind": "Annahme",
+                "note": "M2.md 6.1 / K2-14: Search Console hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-115, INTEG-116, INTEG-125.",
+                "scope": "cell",
+                "count": 10,
+                "keys": [
+                  "search console | all",
+                  "search console | clicks above 0",
+                  "search console | indexable url not indexed",
+                  "search console | no search analytics data",
+                  "search console | non-indexable with search analytics data",
+                  "search console | orphan urls",
+                  "search console | page is not mobile friendly",
+                  "search console | rich result invalid",
+                  "search console | url is not on google",
+                  "search console | user-declared canonical not selected"
+                ]
+              },
+              {
+                "id": "REF-FREE-13",
+                "spec": "INTEG-151",
+                "kind": "Annahme",
+                "note": "M2.md 6.1 / K2-14: Link Metrics hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-151.",
+                "scope": "cell",
+                "count": 1,
+                "keys": [
+                  "link metrics | all"
+                ]
+              },
+              {
+                "id": "REF-FREE-14",
+                "spec": "ONPAGE-155",
+                "kind": "Annahme",
+                "note": "M2.md 6.1 / K2-14: Rechtschreibung/Grammatik hat keinen aktivierten Referenzbeleg; ein Nullzaehler bei deaktivierter Analyse belegt die Funktion nicht. Kein verified; Beleg ueber spec-abgeleitete Fixtures in B2.",
+                "scope": "cell",
+                "count": 1,
+                "keys": [
+                  "content | spelling errors"
+                ]
+              },
+              {
+                "id": "REF-FREE-15",
+                "spec": "ONPAGE-156",
+                "kind": "Annahme",
+                "note": "M2.md 6.1 / K2-14: Rechtschreibung/Grammatik hat keinen aktivierten Referenzbeleg; ein Nullzaehler bei deaktivierter Analyse belegt die Funktion nicht. Kein verified; Beleg ueber spec-abgeleitete Fixtures in B2.",
+                "scope": "cell",
+                "count": 1,
+                "keys": [
+                  "content | grammar errors"
+                ]
+              },
+              {
+                "id": "REF-FREE-16",
+                "spec": "ONPAGE-053",
+                "kind": "Annahme",
+                "note": "M2.md 6.1 / K2-14: rendering.mode=javascript ist im Referenzprofil nicht aktiv; die Rendering-Zaehler haben keinen Referenzbeleg. Nur vorhandene Overview-Zellen ausgenommen; fehlende bzw. falsch benannte Zeilen bleiben Mapping-Befund. Kein verified.",
+                "scope": "cell",
+                "count": 3,
+                "keys": [
+                  "response codes | blocked resource",
+                  "response codes | external blocked resource",
+                  "response codes | internal blocked resource"
+                ]
+              },
+              {
+                "id": "REF-FREE-17",
+                "spec": "ONPAGE-057",
+                "kind": "Annahme",
+                "note": "M2.md 6.1 / K2-14: rendering.mode=javascript ist im Referenzprofil nicht aktiv; die Rendering-Zaehler haben keinen Referenzbeleg. Nur vorhandene Overview-Zellen ausgenommen; fehlende bzw. falsch benannte Zeilen bleiben Mapping-Befund. Kein verified.",
+                "scope": "cell",
+                "count": 3,
+                "keys": [
+                  "response codes | external redirection (javascript)",
+                  "response codes | internal redirection (javascript)",
+                  "response codes | redirection (javascript)"
+                ]
+              },
+              {
+                "id": "DEV-038",
+                "spec": "OUT-080",
+                "kind": "OS-Festlegung",
+                "note": "OUT-080: needs_config/needs_rendering liefert einen leeren Zähler, keine aktivierte Analyse. Nur Nullwerte der Referenz werden entschuldigt.",
+                "scope": "cell",
+                "count": 4,
+                "keys": [
+                  "content | near duplicates",
+                  "images | background images",
+                  "images | incorrectly sized images",
+                  "url | broken bookmark"
+                ]
+              },
+              {
+                "id": "DEV-039-overview",
+                "spec": "TECH-141",
+                "kind": "OS-Festlegung",
+                "note": "TECH-141: Der eigene Start-Host und Port ist ausgenommen.",
+                "scope": "cell",
+                "count": 1,
+                "keys": [
+                  "links | outlinks to localhost"
+                ]
+              }
+            ],
+            "dropped_ref_columns": [
+              "Total URLs",
+              "Total URLs Description"
+            ],
+            "ignored_columns": [
+              {
+                "column": "% of Total",
+                "reason": "abgeleitet aus URLs und Grundgesamtheit des Abschnitts; verglichen werden die Zaehler (URLs, A3). Die Grundgesamtheit unterscheidet sich ueber die robots.txt-Zeile (K-40) und die Crawl-Depth-Population"
+              }
+            ],
+            "unmapped_ref_columns": [],
+            "unmapped_os_columns": [],
+            "missing_ref_columns": [],
+            "missing_os_columns": [],
+            "ignored_ref_rows": [
+              "summary | total urls encountered",
+              "summary | total urls crawled",
+              "summary | total internal blocked by robots.txt",
+              "summary | total external blocked by robots.txt",
+              "summary | urls displayed",
+              "summary | total internal urls",
+              "summary | total external urls",
+              "summary | total internal indexable urls",
+              "summary | total internal non-indexable urls",
+              "internal | media",
+              "internal | fonts",
+              "internal | xml",
+              "internal | plugins",
+              "external | media",
+              "external | fonts",
+              "external | xml",
+              "external | plugins",
+              "url | contains space",
+              "content | semantically similar",
+              "content | low relevance content",
+              "directives | noodp",
+              "directives | noydir",
+              "javascript | uses old ajax crawling scheme urls",
+              "javascript | uses old ajax crawling scheme meta fragment tag",
+              "javascript | pages with javascript warnings",
+              "javascript | pages with chrome issues",
+              "amp | all",
+              "amp | non-200 response",
+              "amp | missing non-amp return link",
+              "amp | missing canonical to non-amp",
+              "amp | non-indexable canonical",
+              "amp | indexable",
+              "amp | non-indexable",
+              "amp | missing <html amp> tag",
+              "amp | missing/invalid <!doctype html> tag",
+              "amp | missing <head> tag",
+              "amp | missing <body> tag",
+              "amp | missing canonical",
+              "amp | missing/invalid <meta charset> tag",
+              "amp | missing/invalid <meta viewport> tag",
+              "amp | missing/invalid amp script",
+              "amp | missing/invalid amp boilerplate",
+              "amp | contains disallowed html",
+              "amp | other validation errors",
+              "structured data | missing",
+              "structured data | rich result feature detected",
+              "sitemaps | xml sitemap over 50mb",
+              "pagespeed | request errors",
+              "mobile | contains unsupported plugins",
+              "accessibility | accessibility score poor",
+              "accessibility | accessibility score needs improvement",
+              "accessibility | accessibility score good",
+              "accessibility | wcag 2.0 a violation",
+              "accessibility | wcag 2.0 aa violation",
+              "accessibility | wcag 2.0 aaa violation",
+              "accessibility | wcag 2.1 aa violation",
+              "accessibility | wcag 2.2 aa violation",
+              "accessibility | best practice violation",
+              "accessibility | accesskey attribute value must be unique",
+              "accessibility | ensure elements marked presentational are ignored",
+              "accessibility | elements must not have tabindex greater than zero",
+              "accessibility | scrollable region requires keyboard access",
+              "accessibility | skip-link target should exist & be focusable",
+              "accessibility | required aria attributes must be provided",
+              "accessibility | role=text should have no focusable descendants",
+              "accessibility | aria attribute must be used as specified for role",
+              "accessibility | aria attributes require valid values",
+              "accessibility | aria attributes require valid names",
+              "accessibility | aria commands require accessible name",
+              "accessibility | aria dialog & alertdialog require accessible name",
+              "accessibility | aria input fields require accessible name",
+              "accessibility | aria meter nodes require accessible name",
+              "accessibility | aria progressbar nodes require accessible name",
+              "accessibility | aria role should be appropriate for element",
+              "accessibility | aria roles must be contained by required parent",
+              "accessibility | aria roles require valid values",
+              "accessibility | aria toggle fields require accessible name",
+              "accessibility | aria tooltip nodes require accessible name",
+              "accessibility | aria treeitem nodes require accessible name",
+              "accessibility | certain aria roles must contain specific children",
+              "accessibility | deprecated aria roles must not be used",
+              "accessibility | aria-braille require non-braille equivalent",
+              "accessibility | aria-hidden elements contains focusable elements",
+              "accessibility | aria-hidden=true must not be used in <body>",
+              "accessibility | elements must only use permitted aria attributes",
+              "accessibility | elements must use allowed aria attributes",
+              "accessibility | ids used in aria & labels must be unique",
+              "accessibility | page requires means to bypass repeated blocks",
+              "accessibility | all page content must be contained by landmarks",
+              "accessibility | page requires one main landmark",
+              "accessibility | page must not have more than one banner landmark",
+              "accessibility | banner landmark must not be in another landmark",
+              "accessibility | page must not have multiple contentinfo landmarks",
+              "accessibility | page requires at most one main landmark",
+              "accessibility | complementary landmarks & asides must be top level",
+              "accessibility | contentinfo landmark must be top level landmark",
+              "accessibility | main landmark must not be in another landmark",
+              "accessibility | landmarks require unique role or accessible name",
+              "accessibility | form field must not have multiple label elements",
+              "accessibility | form <input> elements require labels",
+              "accessibility | form elements should have visible label",
+              "accessibility | autocomplete attribute must be used correctly",
+              "accessibility | frames require title attribute",
+              "accessibility | frames require unique title attribute",
+              "accessibility | frames should be tested with axe-core",
+              "accessibility | frames with focusable content must not use tabindex=-1",
+              "accessibility | page must contain <title>",
+              "accessibility | page must contain <h1>",
+              "accessibility | heading levels should only increase by one",
+              "accessibility | headings should not be empty",
+              "accessibility | meta viewport should allow zoom & scale up to 500%",
+              "accessibility | meta viewport zoom & scaling disabled",
+              "accessibility | html element lang attribute value must be valid",
+              "accessibility | html element requires lang attribute",
+              "accessibility | html lang & xml lang value should match",
+              "accessibility | lang attribute requires valid value",
+              "accessibility | delayed meta refresh must not be used",
+              "accessibility | timed meta refresh must not exist",
+              "accessibility | image button requires alternate text",
+              "accessibility | images require alternate text",
+              "accessibility | <object> elements require alternate text",
+              "accessibility | active <area> elements require alternate text",
+              "accessibility | alt text should not be repeated as text",
+              "accessibility | elements marked role=img require alternate text",
+              "accessibility | svg images & graphics require accessible text",
+              "accessibility | server-side image maps must not be used",
+              "accessibility | <video> elements require <track> for captions",
+              "accessibility | <video> or <audio> elements must not auto-play",
+              "accessibility | buttons require discernible text",
+              "accessibility | input buttons require discernible text",
+              "accessibility | inline text spacing must be adjustable",
+              "accessibility | links must be distinguishable",
+              "accessibility | links require discernible text",
+              "accessibility | links with same accessible name",
+              "accessibility | select element requires accessible name",
+              "accessibility | summary elements require discernible text",
+              "accessibility | deprecated <marquee> element must not be used",
+              "accessibility | <blink> elements deprecated & must not be used",
+              "accessibility | text requires higher color contrast ratio",
+              "accessibility | text requires higher color contrast to background",
+              "accessibility | touch targets require sufficient size & spacing",
+              "accessibility | interactive controls must not be nested",
+              "accessibility | list items must be contained in list elements",
+              "accessibility | lists must only contain <li> content elements",
+              "accessibility | <dl> must only have ordered <dt> & <dd> groups",
+              "accessibility | <dt> & <dd> elements must be contained by <dl>",
+              "accessibility | <th> element requires associated data cells",
+              "accessibility | table header attr must refer to cell in same table",
+              "accessibility | table headers require discernible text",
+              "accessibility | table with identical summary & caption text",
+              "accessibility | scope attribute should be used correctly on tables",
+              "search console | url is on google but has issues",
+              "search console | amp url invalid",
+              "validation | high carbon rating",
+              "ai | all",
+              "crawl depth | 0",
+              "crawl depth | 1",
+              "crawl depth | 2",
+              "crawl depth | 3",
+              "crawl depth | 4",
+              "crawl depth | 5",
+              "crawl depth | 6",
+              "crawl depth | 7",
+              "crawl depth | 8",
+              "crawl depth | 9",
+              "crawl depth | 10+",
+              "inlinks (top 20 urls) | {base}/ok.html",
+              "inlinks (top 20 urls) | {base}/",
+              "inlinks (top 20 urls) | {base}/http-refresh.html",
+              "inlinks (top 20 urls) | {base}/s201",
+              "inlinks (top 20 urls) | {base}/meta-refresh.html",
+              "inlinks (top 20 urls) | {base}/pages/p2.html",
+              "inlinks (top 20 urls) | {base}/r-meta-to-404.html",
+              "inlinks (top 20 urls) | {base}/mixed-chain.html",
+              "inlinks (top 20 urls) | {base}/pages/p3.html",
+              "inlinks (top 20 urls) | {base}/pages/p4.html",
+              "inlinks (top 20 urls) | {base}/http-refresh-nourl.html",
+              "inlinks (top 20 urls) | {base}/pages/p1.html",
+              "inlinks (top 20 urls) | {base}/meta-refresh-5.html",
+              "inlinks (top 20 urls) | {base}/meta-refresh-self.html",
+              "response time (seconds) | 1"
+            ],
+            "os_only_rows": [
+              "accessibility | accesskeys",
+              "accessibility | area-alt",
+              "accessibility | aria-allowed-attr",
+              "accessibility | aria-allowed-role",
+              "accessibility | aria-braille-equivalent",
+              "accessibility | aria-command-name",
+              "accessibility | aria-conditional-attr",
+              "accessibility | aria-deprecated-role",
+              "accessibility | aria-dialog-name",
+              "accessibility | aria-hidden-body",
+              "accessibility | aria-hidden-focus",
+              "accessibility | aria-input-field-name",
+              "accessibility | aria-meter-name",
+              "accessibility | aria-progressbar-name",
+              "accessibility | aria-prohibited-attr",
+              "accessibility | aria-required-attr",
+              "accessibility | aria-required-children",
+              "accessibility | aria-required-parent",
+              "accessibility | aria-roles",
+              "accessibility | aria-text",
+              "accessibility | aria-toggle-field-name",
+              "accessibility | aria-tooltip-name",
+              "accessibility | aria-treeitem-name",
+              "accessibility | aria-valid-attr",
+              "accessibility | aria-valid-attr-value",
+              "accessibility | autocomplete-valid",
+              "accessibility | avoid-inline-spacing",
+              "accessibility | blink",
+              "accessibility | button-name",
+              "accessibility | bypass",
+              "accessibility | color-contrast",
+              "accessibility | color-contrast-enhanced",
+              "accessibility | definition-list",
+              "accessibility | dlitem",
+              "accessibility | document-title",
+              "accessibility | duplicate-id-aria",
+              "accessibility | empty-heading",
+              "accessibility | empty-table-header",
+              "accessibility | form-field-multiple-labels",
+              "accessibility | frame-focusable-content",
+              "accessibility | frame-tested",
+              "accessibility | frame-title",
+              "accessibility | frame-title-unique",
+              "accessibility | heading-order",
+              "accessibility | html-has-lang",
+              "accessibility | html-lang-valid",
+              "accessibility | html-xml-lang-mismatch",
+              "accessibility | identical-links-same-purpose",
+              "accessibility | image-alt",
+              "accessibility | image-redundant-alt",
+              "accessibility | input-button-name",
+              "accessibility | input-image-alt",
+              "accessibility | label",
+              "accessibility | label-title-only",
+              "accessibility | landmark-banner-is-top-level",
+              "accessibility | landmark-complementary-is-top-level",
+              "accessibility | landmark-contentinfo-is-top-level",
+              "accessibility | landmark-main-is-top-level",
+              "accessibility | landmark-no-duplicate-banner",
+              "accessibility | landmark-no-duplicate-contentinfo",
+              "accessibility | landmark-no-duplicate-main",
+              "accessibility | landmark-one-main",
+              "accessibility | landmark-unique",
+              "accessibility | link-in-text-block",
+              "accessibility | link-name",
+              "accessibility | list",
+              "accessibility | listitem",
+              "accessibility | marquee",
+              "accessibility | meta-refresh",
+              "accessibility | meta-refresh-no-exceptions",
+              "accessibility | meta-viewport",
+              "accessibility | meta-viewport-large",
+              "accessibility | nested-interactive",
+              "accessibility | no-autoplay-audio",
+              "accessibility | object-alt",
+              "accessibility | page-has-heading-one",
+              "accessibility | presentation-role-conflict",
+              "accessibility | region",
+              "accessibility | role-img-alt",
+              "accessibility | scope-attr-valid",
+              "accessibility | scrollable-region-focusable",
+              "accessibility | select-name",
+              "accessibility | server-side-image-map",
+              "accessibility | skip-link",
+              "accessibility | summary-name",
+              "accessibility | svg-img-alt",
+              "accessibility | tabindex",
+              "accessibility | table-duplicate-name",
+              "accessibility | target-size",
+              "accessibility | td-headers-attr",
+              "accessibility | th-has-data-cells",
+              "accessibility | valid-lang",
+              "accessibility | video-caption",
+              "crawl data – external | all",
+              "crawl data – external | css",
+              "crawl data – external | fonts",
+              "crawl data – external | html",
+              "crawl data – external | images",
+              "crawl data – external | javascript",
+              "crawl data – external | media",
+              "crawl data – external | other",
+              "crawl data – external | pdf",
+              "crawl data – external | plugins",
+              "crawl data – external | unknown",
+              "crawl data – external | xml",
+              "crawl data – internal | all",
+              "crawl data – internal | css",
+              "crawl data – internal | fonts",
+              "crawl data – internal | html",
+              "crawl data – internal | images",
+              "crawl data – internal | javascript",
+              "crawl data – internal | media",
+              "crawl data – internal | other",
+              "crawl data – internal | pdf",
+              "crawl data – internal | plugins",
+              "crawl data – internal | unknown",
+              "crawl data – internal | xml",
+              "crawl depth | 10",
+              "external | flash",
+              "internal | flash",
+              "issues | issues (high)",
+              "issues | issues (low)",
+              "issues | issues (medium)",
+              "issues | opportunities (high)",
+              "issues | opportunities (low)",
+              "issues | opportunities (medium)",
+              "issues | warnings (high)",
+              "issues | warnings (low)",
+              "issues | warnings (medium)",
+              "mobile | unsupported plugins",
+              "response codes | external other",
+              "response codes | external redirect chain",
+              "response codes | external redirect loop",
+              "response codes | internal other",
+              "response codes | other",
+              "response codes | redirect chain",
+              "response codes | redirect loop",
+              "response codes – external | all errors",
+              "response codes – external | blocked by robots.txt",
+              "response codes – external | blocked resource",
+              "response codes – external | client error (4xx)",
+              "response codes – external | no response",
+              "response codes – external | redirect chain",
+              "response codes – external | redirect loop",
+              "response codes – external | redirection (3xx)",
+              "response codes – external | redirection (http refresh)",
+              "response codes – external | redirection (javascript)",
+              "response codes – external | redirection (meta refresh)",
+              "response codes – external | server error (5xx)",
+              "response codes – external | success (2xx)",
+              "response codes – internal | all errors",
+              "response codes – internal | blocked by robots.txt",
+              "response codes – internal | blocked resource",
+              "response codes – internal | client error (4xx)",
+              "response codes – internal | no response",
+              "response codes – internal | redirect chain",
+              "response codes – internal | redirect loop",
+              "response codes – internal | redirection (3xx)",
+              "response codes – internal | redirection (http refresh)",
+              "response codes – internal | redirection (javascript)",
+              "response codes – internal | redirection (meta refresh)",
+              "response codes – internal | server error (5xx)",
+              "response codes – internal | success (2xx)",
+              "search console | amp url is invalid",
+              "search console | url is on google, but has issues",
+              "sitemaps | xml sitemap with over 50mb",
+              "structured data | missing structured data",
+              "summary | average response time (ms)",
+              "summary | average urls/s",
+              "summary | crawl end",
+              "summary | crawl start",
+              "summary | elapsed time",
+              "summary | mode",
+              "summary | openspider version",
+              "summary | skipped by depth limit",
+              "summary | skipped by exclude",
+              "summary | skipped by folder depth",
+              "summary | skipped by query parameters",
+              "summary | skipped by redirect limit",
+              "summary | skipped by url length",
+              "summary | skipped not in include",
+              "summary | start url",
+              "summary | urls remaining in queue",
+              "url | contains a space"
+            ],
+            "threshold_pct": 100.0,
+            "url_set_identical": true,
+            "passed": false,
+            "failures": [
+              "Zellübereinstimmung 95.500 % liegt unter 100.000 %"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "sites_present": 1,
+  "min_sites_present": null,
+  "passed": false,
+  "failures": [
+    "parity-response/redirects_to_error.csv: URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich",
+    "parity-response/crawl_overview.csv: Zellübereinstimmung 95.500 % liegt unter 100.000 %"
+  ],
+  "warnings": []
+}
