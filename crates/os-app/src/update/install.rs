@@ -158,11 +158,15 @@ pub fn init(app: &App) {
                 .lock()
                 .unwrap_or_else(|p| p.into_inner())
                 .clone();
-            if when == Some(InstallWhen::AfterCrawl)
-                && !unfinished(&app)
-                && app.ops().active_statuses().is_empty()
-            {
-                install(&app, InstallWhen::AfterCrawl).await;
+            let eligible = match when {
+                Some(InstallWhen::AfterCrawl) => !unfinished(&app),
+                Some(InstallWhen::Now) => !running(&app),
+                _ => false,
+            };
+            if eligible && app.ops().active_statuses().is_empty() {
+                if let Some(when) = when {
+                    install(&app, when).await;
+                }
             }
         }
     });

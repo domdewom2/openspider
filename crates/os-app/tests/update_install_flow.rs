@@ -241,3 +241,33 @@ async fn concurrent_completion_and_quit_callbacks_never_install_twice() {
     assert!(matches!(second, UpdateState::Idle));
     assert_eq!(installs.load(Ordering::SeqCst), 1);
 }
+
+// spec: OUT-251
+#[tokio::test]
+async fn install_now_waits_for_active_writers_without_losing_the_request() {
+    let (_temp, app, installs) = setup(false);
+    update::download::download(&app);
+    finish(&app).await;
+    let (done, wait) = tokio::sync::oneshot::channel::<()>();
+    let operation = app.ops().spawn("op-export", false, |_, _| {
+        Box::pin(async move {
+            wait.await.unwrap();
+            Ok(serde_json::Value::Null)
+        })
+    });
+    assert!(matches!(
+        update::install::install(&app, InstallWhen::Now).await,
+        UpdateState::Ready(_)
+    ));
+    assert_eq!(installs.load(Ordering::SeqCst), 0);
+    done.send(()).unwrap();
+    app.ops().wait(&operation.op_id).await.unwrap();
+    tokio::time::timeout(std::time::Duration::from_secs(5), async {
+        while installs.load(Ordering::SeqCst) == 0 {
+            tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+        }
+    })
+    .await
+    .unwrap();
+    assert_eq!(installs.load(Ordering::SeqCst), 1);
+}

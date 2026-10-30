@@ -19,3 +19,4 @@ update-queued-quit = The update will be installed on quit.
 update-queued-crawl = The update will be installed after the crawl ends.
 update-close = Close
 update-privacy = The check sends only version, operating system and architecture to GitHub. GitHub also sees your IP address.
+update-queued-now = Preparing installation after active operations finish …

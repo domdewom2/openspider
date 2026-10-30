@@ -44,7 +44,7 @@ export function UpdateHost() {
       {object && "failed" in object && <p role="alert">{t("update-failed")}</p>}
       {release && <><h3>{t("update-version", { version: release.version })}</h3><h4>{t("update-notes")}</h4><p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{release.notes || t("update-no-notes")}</p></>}
       {downloading && <><p>{t("update-downloading", { done: downloading.done, total: downloading.total ?? "?" })}</p><progress aria-label={t("update-progress")} value={downloading.total ? downloading.done : undefined} max={downloading.total ?? undefined} /></>}
-      {queued && <p role="status">{t(queued === "onQuit" ? "update-queued-quit" : "update-queued-crawl")}</p>}
+      {queued && <p role="status">{t(queued === "now" ? "update-queued-now" : queued === "onQuit" ? "update-queued-quit" : "update-queued-crawl")}</p>}
     </div>
     <div className="os-dialog-footer-actions">
       {object && ("available" in object || "failed" in object && release) && <Button onPress={() => void downloadUpdate()}>{t("update-download")}</Button>}
