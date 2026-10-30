@@ -4,28 +4,54 @@ use os_model::{ExtKey, ParsedPage, Value};
 
 /// Silbengruppen nach ONPAGE-149, ohne sprachabhängige Wörterbücher.
 pub fn syllables(word: &str) -> u32 {
-    let letters: Vec<char> = word
-        .to_lowercase()
-        .chars()
-        .filter(|c| c.is_alphabetic())
-        .collect();
-    let vowel = |c| "aeiouyäöü".contains(c);
-    let mut count = 0;
+    syllable_groups(word).max(1)
+}
+
+// Preserve separators: merging letters across '-' or '&' changes vowel groups in URLs.
+// The calibrated score uses the raw group count (silent "the" contributes zero).
+fn syllable_groups(word: &str) -> u32 {
+    let lower = word.to_lowercase();
+    let mut stem = lower.as_str();
+    let vowel = |c: char| "aeiouy".contains(c);
+    let mut silent_e = false;
+    if stem.ends_with("ed")
+        || (stem.ends_with("es")
+            && stem
+                .chars()
+                .rev()
+                .nth(2)
+                .is_some_and(|c| !vowel(c) && !matches!(c, 'c' | 'g' | 's' | 'x' | 'z'))
+            && !stem.ends_with("ches")
+            && !stem.ends_with("shes"))
+    {
+        stem = &stem[..stem.len() - 2];
+    } else if stem.ends_with('e') {
+        let consonant_le =
+            stem.ends_with("le") && stem.chars().rev().nth(2).is_some_and(|c| !vowel(c));
+        if !consonant_le && !stem.ends_with("ee") {
+            silent_e = true;
+        }
+    }
+    let mut count = 0u32;
     let mut previous = false;
-    for &c in &letters {
+    for c in stem.chars() {
         let current = vowel(c);
         if current && !previous {
             count += 1;
         }
         previous = current;
     }
-    let consonant_le = letters.len() >= 3
-        && letters[letters.len() - 2] == 'l'
-        && !vowel(letters[letters.len() - 3]);
-    if letters.last() == Some(&'e') && !consonant_le && count > 1 {
-        count -= 1;
+    let chars: Vec<char> = stem.chars().collect();
+    for (i, pair) in chars.windows(2).enumerate() {
+        if matches!(pair, ['i', 'a' | 'o']) && (i == 0 || !matches!(chars[i - 1], 'c' | 's' | 't'))
+        {
+            count += 1;
+        }
     }
-    count.max(1)
+    if silent_e {
+        count = count.saturating_sub(1);
+    }
+    count
 }
 
 /// Labels aus der versionierten Banddatei (A-54).
@@ -36,41 +62,27 @@ pub fn label(score: f64) -> &'static str {
         .find_map(|(minimum, label)| {
             (score >= minimum.trim().parse::<f64>().ok()?).then(|| label.trim().trim_matches('"'))
         })
-        .unwrap_or("Very Difficult")
+        .unwrap_or("Very Hard")
 }
 
-/// Satzgrenzen sind Interpunktion vor Leerraum/Textende und Blockgrenzen (`\\n`).
+/// Satzgrenzen: Interpunktion, Blockgrenzen und Wortumbruch vor 80 Unicode-Zeichen (Q02).
 pub fn facts(text: &str) -> Vec<(ExtKey, Value)> {
-    let mut words = 0u32;
-    let mut syllable_count = 0u32;
-    let mut sentences = 0u32;
-    let mut pending = false;
-    for block in text.split('\n') {
-        for token in block.split_whitespace() {
-            if token.chars().any(char::is_alphabetic) {
-                words += 1;
-                syllable_count += syllables(token);
-                pending = true;
-            }
-            if token.ends_with(['.', '!', '?', '…']) && pending {
-                sentences += 1;
-                pending = false;
-            }
-        }
-        if pending {
-            sentences += 1;
-            pending = false;
-        }
-    }
-    if words == 0 {
+    facts_with_words(text, None)
+}
+
+fn facts_with_words(text: &str, word_count: Option<u32>) -> Vec<(ExtKey, Value)> {
+    if !text.chars().any(char::is_alphabetic) {
         return Vec::new();
     }
+    let syllable_count: u32 = text.split_whitespace().map(syllable_groups).sum();
+    let sentences: u32 = text.lines().map(sentence_segments).sum();
+    let words = word_count.unwrap_or_else(|| text.split_whitespace().count() as u32);
     let average = f64::from(words) / f64::from(sentences.max(1));
     let score = ((206.835 - 1.015 * average - 84.6 * f64::from(syllable_count) / f64::from(words))
         .clamp(0.0, 100.0)
-        * 10.0)
+        * 1000.0)
         .round()
-        / 10.0;
+        / 1000.0;
     vec![
         (
             ExtKey::from_static("readability.sentences"),
@@ -78,7 +90,7 @@ pub fn facts(text: &str) -> Vec<(ExtKey, Value)> {
         ),
         (
             ExtKey::from_static("readability.average"),
-            Value::Float((average * 10.0).round() / 10.0),
+            Value::Float((average * 1000.0).round() / 1000.0),
         ),
         (
             ExtKey::from_static("readability.flesch"),
@@ -91,10 +103,52 @@ pub fn facts(text: &str) -> Vec<(ExtKey, Value)> {
     ]
 }
 
+// Nonempty sentence fragments, including URL fragments; decimal points stay in their number.
+fn sentence_segments(line: &str) -> u32 {
+    let chars: Vec<char> = line.chars().collect();
+    let mut count = 0;
+    let mut fragment = String::new();
+    for (i, &c) in chars.iter().enumerate() {
+        let decimal = c == '.'
+            && i > 0
+            && chars[i - 1].is_ascii_digit()
+            && chars.get(i + 1).is_some_and(char::is_ascii_digit);
+        let initialism = c == '.'
+            && i > 0
+            && chars[i - 1].is_alphabetic()
+            && (i == 1 || chars[i - 2].is_whitespace() || chars[i - 2] == '.')
+            && chars.get(i + 1).is_some_and(|c| c.is_alphabetic());
+        if matches!(c, '.' | '!' | '?' | '…' | ':') && !decimal && !initialism {
+            count += wrapped_lines(&fragment);
+            fragment.clear();
+        } else {
+            fragment.push(c);
+        }
+    }
+    count + wrapped_lines(&fragment)
+}
+
+// Sentence fragments wrap before reaching 80 Unicode characters; punctuation is already removed.
+fn wrapped_lines(fragment: &str) -> u32 {
+    let mut count = 0;
+    let mut width = 0;
+    for token in fragment.split_whitespace() {
+        let size = token.chars().count();
+        if width > 0 && width + 1 + size >= 80 {
+            width = 0;
+        }
+        if width == 0 {
+            count += 1;
+        }
+        width += size + usize::from(width > 0);
+    }
+    count
+}
+
 pub fn run(ctx: &PageCtx<'_>, page: &mut ParsedPage) {
     let text = crate::content::area_text(ctx.doc, &ctx.cfg.content_area);
     if ctx.cfg.readability {
-        page.ext.extend(facts(&text));
+        page.ext.extend(facts_with_words(&text, page.word_count));
     }
     if ctx.cfg.minhash {
         page.minhash = Some(minhash(&text));

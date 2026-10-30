@@ -198,6 +198,8 @@ include_ids = []
 exclude_elements = [
     "nav",
     "footer",
+    "header",
+    "aside",
 ]
 exclude_classes = []
 exclude_ids = []
