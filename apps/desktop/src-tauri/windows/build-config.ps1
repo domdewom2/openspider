@@ -2,12 +2,16 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string]$Output,
-    [ValidateSet('stable', 'beta')][string]$Channel = 'stable',
+    [AllowEmptyString()][ValidateSet('', 'stable', 'beta')][string]$Channel = 'beta',
     [switch]$Sign,
     [switch]$Updater,
     [switch]$OfflineWebView
 )
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrEmpty($Channel)) {
+    Write-Warning 'Kein Build-Kanal angegeben; verwende beta.'
+    $Channel = 'beta'
+}
 $version = (Get-Content apps/desktop/src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
 if ($version -notmatch '^(\d+)\.(\d+)\.(\d+)(?:-(beta|rc)\.(\d+))?$') { throw 'Nicht unterstützte Release-Version' }
 $major = [int]$Matches[1]; $minor = [int]$Matches[2]; $patch = [int]$Matches[3]
