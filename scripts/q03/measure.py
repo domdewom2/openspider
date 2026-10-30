@@ -10,6 +10,15 @@ import threading
 import time
 
 
+def last_crawl_advance(samples):
+    """Last rising crawl report, excluding the terminal analysis-phase count."""
+    previous, at = -1, 0.0
+    for sample in samples:
+        if sample['phase'] == 'crawl' and sample['crawled'] > previous:
+            previous, at = sample['crawled'], sample['wall_s']
+    return at, max(previous, 0)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('name')
@@ -102,9 +111,11 @@ def main():
                                  section_bytes_per_url=(size-prev_bytes)/(n-prev_n)))
             prev_n, prev_bytes = n, size
         phase_end = next((sample['wall_s'] for sample in samples if sample['phase'] == 'analysis'), growing[-1][0])
+        fetch_at, fetch_n = last_crawl_advance(samples)
         report.update(million_sections=millions, crawled=growing[-1][1], crawl_seconds=phase_end,
-                      fetch_progress_seconds=growing[-1][0],
-                      final_commit_tail_s=max(0, phase_end-growing[-1][0]),
+                      fetch_progress_seconds=fetch_at,
+                      last_crawl_advance_urls=fetch_n,
+                      final_report_gap_s=max(0, phase_end-fetch_at),
                       urls_per_s=growing[-1][1]/max(phase_end, 1e-9),
                       max_progress_gap_s=max((b[0]-a[0] for a,b in zip(growing,growing[1:])), default=0),
                       stalls_over_30s=stalls, windows_100k=windows,

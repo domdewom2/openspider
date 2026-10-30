@@ -46,7 +46,7 @@ and runs `openspider --headless --crawl … --progress json` without
 configuration overrides (five threads). It records 100k progress windows, all
 progress samples including crawl-file/WAL bytes, RSS, errors and gaps >30 s.
 The first `analysis` phase supplies the final crawl count because the CLI emits
-no final `crawl` progress event. Crawl duration ends at the first analysis phase; the report separately records the last increasing fetch counter, final commit tail and post-crawl work. The native registry crawl file is used directly, avoiding an additional save-copy. The final file is compressed with zstd levels 3
+no final `crawl` progress event. Crawl duration ends at the first analysis phase; the report separately records the last increasing fetch counter, observed final report gap and post-crawl work. The final report gap includes any commit/index work and progress-reader delay; it is not an isolated SQL commit timer. The native registry crawl file is used directly, avoiding an additional save-copy. The final file is compressed with zstd levels 3
 and 19, twelve threads each. Each compressed copy is deleted immediately; the
 temporary crawl/home directory is deleted when the block exits.
 `Q03_PAGES=1000` is a setup smoke test, **not** a full-run result; it uses the same
