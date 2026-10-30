@@ -45,6 +45,19 @@ fn pdf_readability_and_language_totals_are_in_the_enabled_default_export() {
         let index = page.columns.iter().position(|c| c == key).unwrap();
         assert_eq!(page.rows[0][index], expected, "{key}");
     }
+    for (spelling, grammar) in [(true, false), (false, true)] {
+        cfg.spelling.enabled = spelling;
+        cfg.grammar.enabled = grammar;
+        let page = query_view(&file, &cfg, &query).unwrap();
+        for key in ["Total Language Errors", "Language"] {
+            assert!(page.columns.iter().any(|c| c == key));
+        }
+        assert_eq!(
+            page.columns.iter().any(|c| c == "Spelling Errors"),
+            spelling
+        );
+        assert_eq!(page.columns.iter().any(|c| c == "Grammar Errors"), grammar);
+    }
     cfg.extraction.readability = false;
     let page = query_view(&file, &cfg, &query).unwrap();
     assert!(!page.columns.iter().any(|c| c == "Sentence Count"));

@@ -213,6 +213,9 @@ pub(crate) fn column(c: &defs::ColumnDef, name: &str, cfg: &CrawlConfig) -> Colu
             Some(defs::Needs::Config(k)) if !config_on(cfg, k) => {
                 Some(empty(EmptyCode::FeatureDisabled, Some(k.into())))
             }
+            Some(defs::Needs::AnyConfig(keys)) if !keys.iter().any(|k| config_on(cfg, k)) => {
+                Some(empty(EmptyCode::FeatureDisabled, Some(keys.join(" | "))))
+            }
             Some(defs::Needs::Rendering)
                 if cfg.rendering.mode != os_model::RenderingMode::JavaScript =>
             {

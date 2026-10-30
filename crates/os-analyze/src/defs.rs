@@ -178,6 +178,8 @@ impl SearchOps {
 pub enum Needs {
     /// Konfigurationsschlüssel, der `true` sein muss.
     Config(&'static str),
+    /// Mindestens einer der Konfigurationsschlüssel muss `true` sein.
+    AnyConfig(&'static [&'static str]),
     /// JavaScript-Rendering.
     Rendering,
     /// Ein Teilschritt der Crawl-Analyse (CRAWL-141).

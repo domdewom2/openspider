@@ -174,7 +174,7 @@ fn p1_column(key: &'static str, kind: ColumnKind) -> ColumnDef {
         ),
         "Total Language Errors" => (
             "(SELECT SUM(v_int) FROM url_ext WHERE url_id=u.id AND ((key='spelling.spelling_errors' AND :spelling_enabled=1) OR (key='spelling.grammar_errors' AND :grammar_enabled=1)))",
-            None,
+            Some(crate::defs::Needs::AnyConfig(&["spelling.enabled", "grammar.enabled"])),
         ),
         "Spelling Errors" => (
             "CASE WHEN :spelling_enabled=1 THEN (SELECT v_int FROM url_ext WHERE url_id=u.id AND key='spelling.spelling_errors') END",
@@ -186,7 +186,7 @@ fn p1_column(key: &'static str, kind: ColumnKind) -> ColumnDef {
         ),
         "Language" => (
             "CASE WHEN :spelling_enabled=1 OR :grammar_enabled=1 THEN (SELECT v_text FROM url_ext WHERE url_id=u.id AND key='spelling.language') END",
-            None,
+            Some(crate::defs::Needs::AnyConfig(&["spelling.enabled", "grammar.enabled"])),
         ),
         _ => ("NULL", None),
     };
@@ -199,12 +199,7 @@ fn p1_column(key: &'static str, kind: ColumnKind) -> ColumnDef {
         }
         _ => sql,
     };
-    let mut out = column(
-        key,
-        sql,
-        kind,
-        needs.is_some() || matches!(key, "Total Language Errors" | "Language"),
-    );
+    let mut out = column(key, sql, kind, needs.is_some());
     out.needs = needs;
     out
 }
