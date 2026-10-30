@@ -2,7 +2,6 @@ use os_engine::testing::crawl_fixture_from;
 use os_export::{export_bulk, Format};
 use os_model::CrawlConfig;
 
-// spec: OUT-033
 // spec: CRAWL-056
 #[tokio::test]
 async fn anchor_export_omits_nofollow_only_targets_but_source_details_keep_the_relation() {
