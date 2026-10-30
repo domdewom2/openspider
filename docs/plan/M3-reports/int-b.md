@@ -4,6 +4,9 @@ Stand: 30.10.2026; Branch `m3/int-b`, Basis `c107e900` (int-a plus
 R02-Korrektur `84535dc6` und R01-Korrektur `c107e900`). Kein Push, kein Dispatch,
 kein Tag und keine Veröffentlichung durch diese Integration.
 
+Die Ergebnisse des ersten Durchlaufs sind historisch; maßgeblich sind die
+Korrekturrunde und ihre abschließenden Prüfergebnisse am Ende dieses Berichts.
+
 ## Merges und Konfliktlösungen
 
 | Reihenfolge | Paket | Merge-Commit | Auflösung |
@@ -188,7 +191,7 @@ Dependency-Paket; dieser Lauf liefert keinen vollständigen Desktop-Kompiliernac
    vor einer Veröffentlichung separat abnehmen. Eine Veröffentlichung bleibt
    an das Nutzer-Go gebunden.
 
-## Abschluss und nächster Schritt
+## Abschluss des ersten Durchlaufs (historisch)
 
 Alle drei freigegebenen Pakete sind lokal gemergt; die Integrationsauflagen an
 Release-/Lizenz-Gate, Kanal, Artefakte, Permissions und Environment sind umgesetzt.
@@ -199,4 +202,215 @@ wieder öffnen und die M2-Port-/RSS-Fixtures im zuständigen Paket stabilisieren
 Danach vollständigen Pflichtlauf ohne Plattenkonkurrenz wiederholen (einschließlich
 der nicht erreichten Pakete und Scheduler-Regression). Erst mit grünem Ergebnis
 die oben beschriebenen nativen Dispatches und den R04-Trockenlauf durchführen.
+Der bekannte Linux-Desktop-Dependencyfehler bleibt separat zu beheben.
+
+
+## Korrekturrunde des Orchestrators vom 30.10.2026
+
+Dieser Abschnitt ersetzt den historischen Abschluss oben. Der erste Durchlauf
+bleibt zur Nachvollziehbarkeit vollständig dokumentiert.
+
+### Übernommene Fixpakete und Runner
+
+- `703f2529` per Cherry-pick als `ab076369`: geprüfte RSS-Kindprozess-Fixture.
+  Modify/Delete-Konflikt in `docs/plan/M2-reports/n08.md`: den vollständigen
+  mitgelieferten Paketbericht einschließlich Korrekturabschnitt übernommen;
+  der Testfix selbst war konfliktfrei. RSS-Messlogik und Grenzen unverändert.
+- `3ccf7bed` per Cherry-pick als `f3962a9c`: Runnerwechsel in `ci.yml`,
+  `parity.yml`, `perf-diag.yml`; vorhandenen Co-Author erhalten, Codex ergänzt.
+- `ee44addf`: alle vier `macos-14`-Einträge in `release-macos.yml` durch
+  `macos-15` ersetzt (Test-, DMG- und Universal-Smoke-Matrix).
+- Das Portrennen in `os-parity/tests/run_site.rs` bleibt unverändert und geht
+  gemäß Nachtrag an M2-N13.
+
+### Nachgewiesene Ursache der beiden U02-Fehler
+
+Ein Quellvergleich von `m3/u02` mit dem Stand vor dieser Korrekturrunde
+(`3d2d3a2b`) ergibt **0 Diff-Zeilen** für `crates/os-app/src`,
+`update_install_flow.rs`, `session_common.rs`, `crates/os-model/src` und
+`Cargo.lock`. Die Store-Unterschiede führen auf Linux weiterhin unmittelbar
+`Connection::open_with_flags` aus; sie ergänzen die Windows-Long-Path-Behandlung.
+Ein durch F01/R01/R02 veränderter UpdateContext oder Checkpoint ist damit nicht
+belegt. Die Integration exponiert einen bereits vorhandenen zeitabhängigen
+Produktfehler; ein bestimmter Merge als Urheber wäre eine falsche Zuschreibung.
+
+Die gemeinsame Fixture legt eine Datei im Zustand `Running` mit
+`created_at=1800000000000` an, also **15.01.2027 08:00 UTC**, rund 76 Tage nach
+dem Prüfdatum. Ohne Heartbeat verwendet `effective_state_at()` diese Anlegezeit.
+Die bisherige Bedingung `now - reference <= 10000` akzeptiert auch beliebig
+negative Alterswerte. So meldet der 100-ms-Session-Poll die verlassene Datei als
+lebend und überschreibt die nur im Register gesetzten Zustände `Paused` oder
+`Completed` wieder mit `Running`. Die sichere Update-Crawl-Sperre verhindert
+daraufhin den Installeraufruf. Je nach Timing wird die Installationsvormerkung
+bereits vor `on_quit()` gar nicht erst gesetzt oder `execute()` kehrt mit `Ready` zurück;
+das erklärt beide beobachteten Quit-Assertions und den AfterCrawl-Timeout.
+
+Nach frischem Build bestanden die unveränderten Tests zunächst **7/7** (1,34 s),
+mit sichtbaren Diagnosen erneut **7/7** (1,71 s). Der kontrollierte Reproduzierer
+verzögert ausschließlich vorübergehend den Produktpfad: 200 ms nach dem
+Backend-Download und 200 ms vor Eintritt in die Session-Mutationssperre. Er
+simuliert einen längeren Download bzw. Lock-/Scheduling-Wartezeit; keine
+Testdatei, Erwartung oder Testfrist wurde dafür geändert. Ergebnis **5/7** mit
+exakt beiden gemeldeten Testnamen. Die Diagnose protokolliert ausdrücklich
+`Paused -> Running`, `Completed -> Running` und danach
+`execute sessions=[(..., Running, false, false)] ops=[]`. Der Fehler liegt vor
+Checkpoint und Backend-Installation, nicht im Mock-Installer oder Secret-Store.
+
+Die Produktkorrektur trennt explizite lokale Lifecycle-Übergänge von beobachteten
+Datenbank-Snapshots. Das Sessionregister merkt den zuletzt publizierten lokalen
+Zustand, bis der Feed einen übereinstimmenden Snapshot bestätigt. Abweichende
+ältere Snapshots dürfen weder den Registerzustand noch die zugehörigen
+Status-/Zählerupdates publizieren. Weitere Fenster desselben Crawls übernehmen
+den lokalen Zustand; nach dem Schließen der letzten Sitzung wird die Vormerkung
+entfernt. Sobald der Snapshot den Übergang bestätigt, werden spätere externe
+Zustandsänderungen wieder normal übernommen. Die Installationssperre selbst und
+die Store-Liveness-Semantik bleiben unverändert.
+
+Ein deterministischer Regressionstest prüft Pausieren und Abschluss gegen alte
+Running-Snapshots, Snapshot-Bestätigung, anschließende externe Änderungen,
+mehrere Fenster und Schließen/Wiederöffnen. Die bestehenden U02-Tests und ihre
+Wartezeiten bleiben unverändert. Ein vorläufiger Store-Ansatz mit begrenzter
+zukünftiger Uhrabweichung wurde verworfen: Unter dem kontrollierten Timing
+überschrieb der Poll damit das simulierte `Running` mit `Incomplete` und die
+AfterCrawl-Installation startete zu früh (6/7). Das bestätigt, dass die
+Zustandsübergabe selbst geschützt werden muss. Dieser Ansatz ist nicht im Diff.
+
+Mit der endgültigen Registerkorrektur derselbe belastete Reproduzierer:
+**7/7 grün** (1,65 s), während die Diagnose weiterhin alte Running-Snapshots
+nachweist. Commit **`99f00973`** enthält ausschließlich die Register-/Feed-
+Korrektur und den neuen Regressionstest. Sämtliche temporären Diagnoseausgaben
+und beide künstlichen 200-ms-Verzögerungen wurden danach entfernt.
+
+Der erste vollständige Vorlauf deckte zusätzlich den Laufwechsel beim Resume
+auf: Eine noch nicht bestätigte `Completed`-Vormerkung des vorherigen Laufs
+wurde beim Anhängen der neuen Engine erneut übernommen; dadurch konnte das
+Warten auf Abschluss zu früh zurückkehren (`Busy` statt `InvalidInput` im
+bestehenden `crawl_cmd_lifecycle`-Test). **`28c3e1da`** trennt das Hinzufügen eines
+Fensters (`set_current`) vom Beginn eines neuen Engine-Laufs (`start_current`).
+Der neue Lauf ersetzt die alte Vormerkung und schützt seinen Running-Zustand
+vor alten Abschluss-Snapshots. Ein zweiter deterministischer Regressionstest
+prüft genau diesen Ablauf. Keine bestehenden Tests oder Testfristen geändert.
+
+
+### Prüfung der Korrekturrunde
+
+Alle schweren Befehle erneut mit `timeout 3600s nice -n 10`, Cargo mit
+`CARGO_INCREMENTAL=0`, `-j 6 --locked`; Debug-Infos wie zuvor abgeschaltet.
+Für den ersten Diagnose-Vollauf zusätzlich
+`CARGO_PROFILE_DEV_STRIP=symbols` und `CARGO_PROFILE_TEST_STRIP=symbols`, damit
+Testprogramme unter paralleler Plattenlast weniger Platz benötigen. Dafür das
+eigene Diagnose-Target vor dem Pflichtlauf entfernt und frisch gebaut.
+Logs: `/tmp/int-b-round2/`. Der neue Disk-Monitor misst alle zehn Sekunden
+und entfernt bei weniger als 25 GiB zuerst das eigene
+`target/debug/incremental`. Keine fremden Build-Artefakte oder Prozesse angefasst.
+
+- Frontend ohne `OPENSPIDER_REQUIRE_NOTICES`: Typecheck, **91 Dateien / 858
+  Tests** (608,97 s), Lint mit zusätzlich **2 Dateien / 29 Tests**, Build
+  vollständig grün. Vite meldet weiterhin lediglich große Chunks.
+- Release-Node-Tests inklusive SHA-Pins: **23/23** grün. Python: **3/3** grün
+  (47,565 s). Actionlint und YAML: **18/18** Workflows grün. Neutralitätscheck grün.
+- Update-E2E mit beiden Engines und `--workers=2`: erster Lauf unter parallelem
+  Frontend-/Rust-Build **8/14**, zweiter Lauf ohne Frontend-Tests **12/14**.
+  Verbleibend zwei WebKit-30-s-Timeouts in wiederholten Dialog-/Axe-Prüfungen;
+  keine Budgetänderung. Die abschließenden Ergebnisse stehen unten.
+
+
+Der erste `--no-fail-fast`-Vollauf wurde ohne Plattenabbruch bis einschließlich
+aller Doctests beendet: **3.955 bestanden / 3 fehlgeschlagen / 43 ignoriert,
+536 Testprogramme**, Exit 101. Die ausgeführten App-Testprogramme waren vor
+`28c3e1da` gebaut. Fehler: der oben korrigierte Resume-Laufwechsel sowie
+`os-app/logging_rotation` und `os-cli/logging_cli`, deren Backtrace-Assertions
+Funktionsnamen benötigen. `strip=symbols` war dafür ungeeignet und wurde für den
+abschließenden Pflichtlauf aufgehoben; keine Assertion wurde angepasst.
+Beide U02-Problemtests und die neue Snapshot-Regression bestanden. Die gesamte
+RSS-Suite war **8/8 grün** (17,68 s). Das Parity-Portrennen trat nicht auf.
+Parser, Render, Scheduler (einschließlich `reregister_update`) und Store wurden
+in diesem Vorlauf vollständig ausgeführt. Der endgültige Nachweis umfasst
+den gezielten Resume-/Update-/Backtrace-Check und den unten dokumentierten
+vollständigen Lauf mit erhaltenen Funktionssymbolen.
+
+
+Auf dem endgültigen Quellstand `28c3e1da`:
+
+- Clippy mit Linux-Ausnahme `--exclude openspider-desktop`, Workspace,
+  `--all-targets -j 6 --locked -- -D warnings`: **grün**, Exit 0, 3m07s.
+- Separater `cargo check -p openspider-desktop -j 6 --locked`: erneut
+  **Exit 101, E0063** in `tauri-plugin-deep-link 2.6.2/src/lib.rs:539` gegen
+  `rust-ini 0.21.3`, unverändert fehlende `ParseOption`-Felder. Kein Patch an
+  Registry, Abhängigkeiten oder Lockdatei. Kein vollständiger nativer
+  Linux-Desktop-Kompiliernachweis.
+- Ein dritter E2E-Lauf während Rust-Buildlast reproduzierte **12/14**, erneut
+  ausschließlich die zwei WebKit-30-s-Timeouts. Nach Beendigung aller eigenen
+  Rust-Befehle derselbe unveränderte Befehl mit Chromium + WebKit und
+  `--workers=2`: **14/14 grün**, Exit 0, **43,3 s**, einschließlich axe ohne
+  critical/serious. Keine Konfigurations-, Scheduling-, Budget- oder
+  Assertionsänderung. Log: `e2e-no-build.log`.
+- Abschließender Neutralitätscheck und `git diff --check`: grün.
+
+Der abschließende Rust-Lauf verwendet weiterhin `CARGO_INCREMENTAL=0`,
+Debug-Level 0 und zusätzlich `CARGO_PROFILE_DEV_STRIP=debuginfo` sowie
+`CARGO_PROFILE_TEST_STRIP=debuginfo`. Damit werden nur Debug-Informationen
+entfernt; die für Backtrace-Tests benötigten Funktionssymbole bleiben erhalten.
+Die gezielten Tests bestanden vor dem vollständigen Lauf. Der alte
+Diagnose-/Clippy-/Desktopcheck-Targetbaum wurde vor diesem Neubau vollständig
+entfernt. Die Ergebnisse des endgültigen Laufs stehen unten.
+
+
+Gezielte Freigabe des endgültigen Builds mit erhaltenen Funktionssymbolen:
+`runtime::sessions::tests` **2/2 grün** (34 übrige Lib-Tests gefiltert);
+`crawl_cmd_lifecycle` **4/4**, `logging_rotation` **9/9**,
+`update_install_flow` **7/7** grün, zusammen **20/20**, jeweils Exit 0.
+Der zuvor fehlgeschlagene Resume-Fall und der App-Backtrace-Test bestehen
+unverändert. Neuer Lib-Build 2m55s, anschließender Suite-Build 38,68 s;
+Testlaufzeiten 2,05 s / 0,06 s / 1,26 s. Danach automatisch der vollständige
+Workspace-Lauf mit `--no-fail-fast`, ohne Source-/Teständerung dazwischen.
+
+
+Ein erster anschließender Workspace-Build wurde während der Kompilierung mit
+**SIGTERM / Exit 143** beendet, ohne Compiler-/Testdiagnose und vor dem Start
+von Testprogrammen. Die Signalquelle ist unbekannt; Log und Status wurden als
+`workspace-sigterm.log` / `.exit` gesichert. Derselbe vollständige Befehl wurde
+ohne Source-, Test- oder Budgetänderung erneut gestartet.
+
+### Abschließende Prüfergebnisse der Korrekturrunde
+
+| Prüfung | Abschließendes Ergebnis |
+|---|---|
+| `cargo fmt --all --check` | Grün, Exit 0. |
+| Clippy: Workspace, `--exclude openspider-desktop --all-targets -j 6 --locked -- -D warnings` | Grün, Exit 0; 3m07s. Linux-Ausnahme ausdrücklich verwendet. |
+| `cargo test --workspace --exclude openspider-desktop -j 6 --locked --no-fail-fast` | **3.959 bestanden, 0 fehlgeschlagen, 43 ignoriert; 536 abgeschlossene Testprogramme einschließlich Doctests, Exit 0.** Build 4m32s; gesamter Befehl ca. 27m42s. |
+| Kritische Rust-Regressionsfälle | Beide U02-Problemtests, beide neuen Registertests, Resume-Lifecycle sowie App-/CLI-Backtrace vollständig grün. RSS-Suite erneut **8/8**; Parity, Parser, Render, Scheduler einschließlich `reregister_update` und Store vollständig ausgeführt. |
+| Desktop `typecheck && test && lint && build`, ohne Notices-Pflicht | Grün: **91 Dateien / 858 Tests**, zusätzlich Lint **2 Dateien / 29 Tests**, Build Exit 0. |
+| Update-E2E Chromium + WebKit, `--workers=2` | **14/14 grün**, je 7 pro Engine, 43,3 s; unveränderte Budgets/Assertions, axe ohne critical/serious. |
+| Release-Node-/Python-Tests | **23/23 + 3/3 grün**, einschließlich SHA-Pins und tatsächlicher Archiv-Fixtures. |
+| actionlint / YAML | **18/18 Workflows grün**, optionale ShellCheck-Integration wie oben deaktiviert. |
+| Neutralitätscheck / `git diff --check` | Grün. |
+| Optionaler Linux-Desktopcheck | Bekannter Fremdfehler E0063, Exit 101; siehe oben. Kein vollständiger Desktop-Kompiliernachweis. |
+
+Das Portrennen in `os-parity/run_site` trat in den beiden vollständigen
+Durchläufen dieser Korrekturrunde nicht auf. Es wurde hier nicht geändert und
+bleibt gemäß Orchestrator an M2-N13 übergeben. Die bestehenden Testdateien für
+Update, Resume und Backtraces sowie deren Fristen sind unverändert.
+
+### Ressourcen und Abschluss
+
+Minimum im abschließenden Disk-Monitor: **18.39 GiB frei**.
+Unter 25 GiB wurde zuerst das eigene Incremental-Verzeichnis geprüft/entfernt
+(bei `CARGO_INCREMENTAL=0` kein nennenswerter Inhalt). Anschließend ausschließlich
+bereits abgeschlossene eigene Testprogramme entfernt: **237 Dateien /
+30.72 GiB Summe ihrer Dateigrößen**. Laufende und künftig benötigte
+Programme, Bibliotheken und fremde Worktrees blieben erhalten. Der zusätzliche
+Notfallwächter musste Cargo nicht anhalten; keine Testfrist wurde verlängert.
+Alle Disk-Wächter sind beendet.
+
+`target/` und die eigenen E2E-Ergebnisse wurden nach dem grünen Pflichtlauf
+vollständig gelöscht. Gemessen am 2026-10-30T23:24:23 UTC:
+**124.52 GiB frei**. Logs und Ressourcenstatistik
+bleiben unter `/tmp/int-b-round2/`. Alle Änderungen lokal mit Codex-Trailer
+committet; kein Push, Dispatch, Tag oder Release.
+
+**PAKET FERTIG:** Die lokale Korrekturrunde und alle hier ausführbaren
+Pflichtprüfungen sind abgeschlossen. Nächster Schritt beim Orchestrator:
+macOS-/Windows-Dispatch und `release.yml`-Trockenlauf gemäß dem Abschnitt
+„Offene native Nachweise / Übergabe“; dort Run-IDs/URLs/Head-SHAs ergänzen.
 Der bekannte Linux-Desktop-Dependencyfehler bleibt separat zu beheben.
