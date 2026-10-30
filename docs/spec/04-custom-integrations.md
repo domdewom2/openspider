@@ -1017,13 +1017,14 @@ Summe: 154 Funktionen (P0: 28, P1: 102, P2: 24). Davon sind 6 Einträge Verweis-
 
 ### INTEG-081 Standardregeln
 - **Priorität:** P1
-- **Beschreibung:** OpenSpider liefert eine Standard-Regelliste in folgender Reihenfolge: `Navigation` (`nav`, `menu`), `Header` (`header`), `Sidebar` (`aside`, `sidebar`), `Footer` (`footer`), `Content` (leerer Teilstring = passt immer). `Content` muss als Auffangregel immer letzte Position sein.
+- **Beschreibung:** OpenSpider liefert eine Standard-Regelliste in folgender Reihenfolge: `Navigation` (`nav`, `menu`), `Header` (`header`), `Aside` (`aside`), `Sidebar` (`sidebar`), `Footer` (`footer`), `Content` (leerer Teilstring = passt immer). `aside` ergibt wie in der Referenz die Position `Aside` (K2-87, SQ-13d; vorher `Sidebar`; Beleg Referenz `parity-m2-links` `positions.html`). `Content` muss als Auffangregel immer letzte Position sein.
 - **Eingaben/Konfiguration:** „Auf Standard zurücksetzen".
 - **Ausgabe:** —
 - **Akzeptanzkriterien:**
   - [ ] Frische Installation zeigt genau diese Regeln in dieser Reihenfolge.
   - [ ] `Content` kann nicht über eine andere Regel verschoben werden (Schaltfläche deaktiviert bzw. Hinweis).
   - [ ] „Zurücksetzen" stellt die Standardliste wieder her.
+  - [ ] Link in `<aside>` → Position `Aside` (Werteliste OUT-031).
 - **Testfixture:** UI-Test; Fixture aus INTEG-080.
 
 ### INTEG-082 Eigene Regeln und Reihenfolge
