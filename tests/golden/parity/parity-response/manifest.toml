@@ -49,7 +49,6 @@ ref_file = "redirects_to_error.csv"
 os = "report:Redirects:Redirects to Errors"
 mapping = "redirects_to_errors"
 status = "present"               # pending | present | unavailable
-skip = "Report Redirects to Errors (OUT-084) ist P1 und kein M1-Umfang (M1.md 7.2); OpenSpider hat in M1 nur Redirects:All Redirects und Redirects:Redirect Chains"
 
 [[export]]
 ref_file = "crawl_overview.csv"

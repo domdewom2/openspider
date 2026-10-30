@@ -9,8 +9,8 @@ drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Refer
 "Indexability" = "Indexability"
 "Indexability Status" = { os = "Indexability Status", transform = ["ignore_case"] }
 "Crawl Depth" = "Crawl Depth"
-"Link Score" = { ignore = true, reason = "K2-66: bis Q02 nicht verglichen (Link-Score-Werte weichen ab, Arbeitsliste docs/plan/M2-reports/parity-deviations-q02.md); nicht in M1 (P1/P2, M1.md 7.2) (TECH-145)" }
-"Inlinks" = { ignore = true, reason = "K2-66: bis Q02 nicht verglichen (Selbstlink-Zaehlung weicht ab, Arbeitsliste docs/plan/M2-reports/parity-deviations-q02.md); TECH-130: Zusatzspalte der Referenz" }
+"Link Score" = { ignore = true, reason = "SQ-10 / DEV-037: TECH-145 OS-Festlegung, Kalibrierung M3; keine verified-Gutschrift für Links/Internal" }
+"Inlinks" = "Inlinks"
 "Unique Inlinks" = "Unique Inlinks"
 "Unique JS Inlinks" = { ignore = true, reason = "nur mit JavaScript-Rendering (M2)" }
 "% of Total" = { os = "% of Total", transform = ["decimal_comma"] }

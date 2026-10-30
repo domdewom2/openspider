@@ -1,24 +1,24 @@
-# M2-P01: Spec-abgeleitete Spalten; keine Referenzwerte oder Beschreibungstexte.
-key = ["From", "To", "#"]
+# N06: Spaltensatz nach Referenzkopfzeile; Soll und Ignoriergründe aus der Spec.
+key = ["Source", "Destination", "#"]
 drop_ref_columns = ["Description", "How To Fix"]
 
 [columns]
-"From" = "From"
-"To" = "To"
+"Type" = { ignore = true, reason = "ONPAGE-179 / OUT-031: spezialisierter Bildgrößenreport liefert in OS keinen Linktyp" }
+"Source" = "From"
+"Destination" = "To"
 "Alt Text" = "Alt Text"
-"Size" = "Size"
-"Real Dimensions (WxH)" = "Real Dimensions (WxH)"
-"Dimensions in Attributes (WxH)" = "Dimensions in Attributes (WxH)"
-"Display Dimensions (WxH)" = "Display Dimensions (WxH)"
-"Potential Savings" = "Potential Savings"
+"Length" = "Size"
 "Path Type" = "Path Type"
 "Link Path" = "Link Path"
 "Link Position" = "Link Position"
 "Link Origin" = "Link Origin"
+"Real Dimensions" = "Real Dimensions (WxH)"
+"Dimensions in Attributes" = "Dimensions in Attributes (WxH)"
+"Display Dimensions" = "Display Dimensions (WxH)"
 
 [normalize]
+bool = "case-insensitive"
 base_url = true
 trim = true
-bool = "case-insensitive"
 number_decimals = 3
 empty_equals_null = true

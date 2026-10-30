@@ -639,8 +639,8 @@ fn run_site(
                     && r.sitemap == sitemap
                     && match &p.os {
                         OsExport::Tab { .. } => !r.tabs.is_empty(),
-                        OsExport::Bulk(_) => r.bulk == [p.os.cli_value()],
-                        OsExport::Report(_) => r.reports == [p.os.cli_value()],
+                        OsExport::Bulk(_) => !r.bulk.is_empty(),
+                        OsExport::Report(_) => !r.reports.is_empty(),
                         OsExport::Sitemap(_) => r.sitemap.is_some(),
                     }
             })
@@ -679,10 +679,32 @@ fn run_site(
             }
         }
     }
-    let errors: Vec<_> = requests
+    let mut errors: Vec<_> = requests
         .iter()
         .map(|req| exporter.export(req).err())
         .collect();
+    // Nur fehlgeschlagene Namensgruppen einzeln wiederholen. Erfolgreiche Gruppen
+    // brauchen keinen weiteren Crawl; jeder Fehler bleibt seinem Export zugeordnet.
+    for (item, (p, destination)) in prepared.iter().zip(&mut destinations).enumerate() {
+        let req = &requests[*destination];
+        if errors[*destination].is_none() || req.bulk.len() + req.reports.len() <= 1 {
+            continue;
+        }
+        let mut retry = req.clone();
+        match &p.os {
+            OsExport::Bulk(_) => retry.bulk = vec![p.os.cli_value()],
+            OsExport::Report(_) => retry.reports = vec![p.os.cli_value()],
+            _ => continue,
+        }
+        retry.out_dir = req.out_dir.join(format!("fallback-{item}"));
+        *destination = requests.len();
+        errors.push(exporter.export(&retry).err());
+        requests.push(retry);
+    }
+    let site_failure = destinations
+        .iter()
+        .find_map(|i| errors[*i].as_ref())
+        .map(|e| format!("OpenSpider-Export fehlgeschlagen: {e}"));
     drop(test_site);
 
     let ref_bases = BaseUrls::from_base(&ref_base);
@@ -724,11 +746,7 @@ fn run_site(
     Ok(SiteResult {
         site: site.to_string(),
         present,
-        error: errors
-            .iter()
-            .flatten()
-            .next()
-            .map(|e| format!("OpenSpider-Export fehlgeschlagen: {e}")),
+        error: site_failure,
         exports: in_manifest_order(results, &manifest),
     })
 }

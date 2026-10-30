@@ -1,0 +1,23 @@
+# N06: Spaltensatz nach Referenzkopfzeile; Soll und Ignoriergründe aus der Spec.
+key = ["Type", "Source", "Destination", "#"]
+drop_ref_columns = ["Description", "How To Fix"]
+
+[columns]
+"Type" = { os = "Type", map = { "HTML Canonical" = "Canonical", "HTML Hreflang" = "Hreflang", "Meta Refresh Redirect" = "Meta Refresh", "HTTP Refresh Redirect" = "HTTP Refresh" } }
+"Source" = "Source"
+"Destination" = "Destination"
+"Crawlability" = { ignore = true, reason = "OpenSpider fuehrt die Spalte `Crawlability` nicht (OUT-023 liefert 15 Spalten ohne sie); `Follow` deckt nofollow ab" }
+"Follow" = "Follow"
+"Target" = "Target"
+"Rel" = "Rel"
+"Path Type" = "Path Type"
+"Link Path" = { os = "Link Path", transform = ["xpath_tags"] }
+"Link Position" = "Link Position"
+"Link Origin" = "Link Origin"
+
+[normalize]
+bool = "case-insensitive"
+base_url = true
+trim = true
+number_decimals = 3
+empty_equals_null = true

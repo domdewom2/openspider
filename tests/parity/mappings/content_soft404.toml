@@ -1,0 +1,23 @@
+# N06: Spaltensatz nach Referenzkopfzeile; Soll und Ignoriergründe aus der Spec.
+key = ["Address"]
+drop_ref_columns = ["Description", "How To Fix"]
+
+[columns]
+"Address" = "Address"
+"Title 1" = "Title 1"
+"Title 1 Length" = "Title 1 Length"
+"Title 1 Pixel Width" = "Title 1 Pixel Width"
+"H1-1" = "H1-1"
+"H1-1 Length" = "H1-1 Length"
+"H2-1" = "H2-1"
+"H2-1 Length" = "H2-1 Length"
+"Word Count" = "Word Count"
+"Indexability" = "Indexability"
+"Indexability Status" = "Indexability Status"
+
+[normalize]
+bool = "case-insensitive"
+base_url = true
+trim = true
+number_decimals = 3
+empty_equals_null = true

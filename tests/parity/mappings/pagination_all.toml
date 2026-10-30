@@ -3,15 +3,18 @@ key = ["Address"]
 drop_ref_columns = ["Description", "How To Fix"]
 
 [columns]
+"HTTP rel=\"prev\" 1" = { ignore = true, reason = "SQ-13f / TECH-031: HTTP-rel-Zusatzspalte der Referenz" }
+"HTTP rel=\"next\" 1" = { ignore = true, reason = "SQ-13f / TECH-031: HTTP-rel-Zusatzspalte der Referenz" }
 "Address" = "Address"
-"Occurrences" = "Occurrences"
+"Occurrences" = { os = "Occurrences", optional_ref = true }
 "Indexability" = "Indexability"
 "Indexability Status" = "Indexability Status"
 "rel=\"next\" 1" = "rel=\"next\" 1"
 "rel=\"next\" 2" = "rel=\"next\" 2"
 "rel=\"prev\" 1" = "rel=\"prev\" 1"
 "Canonical Link Element 1" = "Canonical Link Element 1"
-"HTTP Canonical 1" = "HTTP Canonical 1"
+"HTTP Canonical" = { os = "HTTP Canonical 1", optional_ref = true }
+"HTTP Canonical 1" = { os = "HTTP Canonical 1", optional_ref = true }
 "Meta Robots 1" = "Meta Robots 1"
 "X-Robots-Tag 1" = "X-Robots-Tag 1"
 

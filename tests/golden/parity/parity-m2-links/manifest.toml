@@ -3,7 +3,7 @@ site = "parity-m2-links"
 port = 8908
 ref_version = "referenz-2026-10"
 exported_at = "2026-10-30"
-ref_settings = "Free, macOS, English (UK), Standardkonfiguration; Crawl Analysis ausgeführt. Hreflang/Pagination speichern, nicht crawlen. Always-Follow aus (Not Followed). Kein JavaScript, kein TLS. Gesperrte/leere Exporte als unavailable mit Grund dokumentieren. Erzeugt am 2026-10-30 mit der lizenzierten Referenzversion (nicht Free; alle Sites unter 500 URLs), Oberflaeche English (UK), Standardkonfiguration; einzige Aenderung: automatische Crawl-Analyse am Crawl-Ende (gleichwertig zu Crawl Analysis > Start). Exporte per Kommandozeile (headless) aus einem gespeicherten Crawl je Site; Tab-, Bulk- und Report-Exporte getrennt erzeugt. Per Oberflaeche erzeugt: parity-m2-list internal_all (Listenmodus-Export in Upload-Reihenfolge, mit Spalte Original Url), parity-m2-links crawl_path_deep8, parity-m2-onpage sitemap_options. XML-Dateien: Generator-Kommentar entfernt (Neutralitaet)."
+ref_settings = "Hreflang/Pagination speichern, nicht crawlen. Always-Follow aus (Not Followed). Kein JavaScript, kein TLS. Erzeugt am 2026-10-30 mit der lizenzierten Referenzversion (nicht Free; alle Sites unter 500 URLs), Oberflaeche English (UK), Standardkonfiguration; einzige Aenderung: automatische Crawl-Analyse am Crawl-Ende (gleichwertig zu Crawl Analysis > Start). Exporte per Kommandozeile (headless) aus einem gespeicherten Crawl je Site; Tab-, Bulk- und Report-Exporte getrennt erzeugt. Per Oberflaeche erzeugt: parity-m2-list internal_all (Listenmodus-Export in Upload-Reihenfolge, mit Spalte Original Url), parity-m2-links crawl_path_deep8, parity-m2-onpage sitemap_options. XML-Dateien: Generator-Kommentar entfernt (Neutralitaet)."
 
 [[export]]
 ref_file = "internal_all.csv"
@@ -94,53 +94,62 @@ ref_file = "bulk_links_internal_nofollow_outlinks.csv"
 os = "bulk:Links:Internal Nofollow Outlinks"
 mapping = "all_inlinks"
 status = "present"
+os_file = "links_internal_nofollow_outlinks_bulk.csv"
 
 [[export]]
 ref_file = "bulk_links_internal_outlinks_with_no_anchor_text.csv"
 os = "bulk:Links:Internal Outlinks With No Anchor Text"
 mapping = "all_inlinks"
 status = "present"
+os_file = "links_internal_outlinks_with_no_anchor_text_bulk.csv"
 
 [[export]]
 ref_file = "bulk_links_non_descriptive_anchor_text_in_internal_outlinks.csv"
 os = "bulk:Links:Non-Descriptive Anchor Text In Internal Outlinks"
 mapping = "all_inlinks"
 status = "present"
+os_file = "links_non-descriptive_anchor_text_in_internal_outlinks_bulk.csv"
 
 [[export]]
 ref_file = "bulk_links_follow_nofollow_internal_inlinks_to_page.csv"
 os = "bulk:Links:Follow & Nofollow Internal Inlinks To Page"
 mapping = "all_inlinks"
 status = "present"
+os_file = "links_follow_nofollow_internal_inlinks_to_page_bulk.csv"
 
 [[export]]
 ref_file = "bulk_links_internal_nofollow_inlinks_only.csv"
 os = "bulk:Links:Internal Nofollow Inlinks Only"
 mapping = "all_inlinks"
 status = "present"
+os_file = "links_internal_nofollow_inlinks_only_bulk.csv"
 
 [[export]]
 ref_file = "bulk_links_outlinks_to_localhost.csv"
 os = "bulk:Links:Outlinks To Localhost"
 mapping = "all_inlinks"
 status = "present"
+os_file = "links_outlinks_to_localhost_bulk.csv"
 
 [[export]]
 ref_file = "bulk_links_pages_with_uncrawlable_internal_outlinks.csv"
 os = "bulk:Links:Pages With Uncrawlable Internal Outlinks"
-mapping = "all_inlinks"
+mapping = "links_uncrawlable"
 status = "present"
+os_file = "links_pages_with_uncrawlable_internal_outlinks_bulk.csv"
 
 [[export]]
 ref_file = "bulk_links_non_indexable_page_inlinks_only.csv"
 os = "bulk:Links:Non-Indexable Page Inlinks Only"
 mapping = "all_inlinks"
 status = "present"
+os_file = "links_non-indexable_page_inlinks_only_bulk.csv"
 
 [[export]]
 ref_file = "crawl_path_deep8.csv"
 os = "report:Crawl Path Report"
 mapping = "crawl_path"
 status = "present"
+skip = "SQ-14 / OUT-023: CLI-Export folgt in N11; Detail-Export separat durch Fixture-Tests belegt"
 [export.select]
 "Target Address" = "/deep/8.html"

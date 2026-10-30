@@ -3,7 +3,7 @@ site = "parity-m2-technical"
 port = 8907
 ref_version = "referenz-2026-10"
 exported_at = "2026-10-30"
-ref_settings = "Free, macOS, English (UK), Standardkonfiguration; Crawl Analysis ausgeführt. Hreflang/Pagination speichern, nicht crawlen. Always-Follow aus (Not Followed). Kein JavaScript, kein TLS. Gesperrte/leere Exporte als unavailable mit Grund dokumentieren. Erzeugt am 2026-10-30 mit der lizenzierten Referenzversion (nicht Free; alle Sites unter 500 URLs), Oberflaeche English (UK), Standardkonfiguration; einzige Aenderung: automatische Crawl-Analyse am Crawl-Ende (gleichwertig zu Crawl Analysis > Start). Exporte per Kommandozeile (headless) aus einem gespeicherten Crawl je Site; Tab-, Bulk- und Report-Exporte getrennt erzeugt. Per Oberflaeche erzeugt: parity-m2-list internal_all (Listenmodus-Export in Upload-Reihenfolge, mit Spalte Original Url), parity-m2-links crawl_path_deep8, parity-m2-onpage sitemap_options. XML-Dateien: Generator-Kommentar entfernt (Neutralitaet)."
+ref_settings = "Hreflang/Pagination speichern, nicht crawlen. Always-Follow aus (Not Followed). Kein JavaScript, kein TLS. Erzeugt am 2026-10-30 mit der lizenzierten Referenzversion (nicht Free; alle Sites unter 500 URLs), Oberflaeche English (UK), Standardkonfiguration; einzige Aenderung: automatische Crawl-Analyse am Crawl-Ende (gleichwertig zu Crawl Analysis > Start). Exporte per Kommandozeile (headless) aus einem gespeicherten Crawl je Site; Tab-, Bulk- und Report-Exporte getrennt erzeugt. Per Oberflaeche erzeugt: parity-m2-list internal_all (Listenmodus-Export in Upload-Reihenfolge, mit Spalte Original Url), parity-m2-links crawl_path_deep8, parity-m2-onpage sitemap_options. XML-Dateien: Generator-Kommentar entfernt (Neutralitaet)."
 
 [[export]]
 ref_file = "internal_all.csv"
@@ -338,26 +338,30 @@ status = "present"
 [[export]]
 ref_file = "report_hreflang_non_200_hreflang_urls.csv"
 os = "report:Hreflang:Non-200 Hreflang URLs"
-mapping = "hreflang_urls"
+mapping = "hreflang_targets"
 status = "present"
+os_file = "hreflang_non-200_hreflang_urls_report.csv"
 
 [[export]]
 ref_file = "report_hreflang_unlinked_hreflang_urls.csv"
 os = "report:Hreflang:Unlinked Hreflang URLs"
-mapping = "hreflang_urls"
+mapping = "hreflang_targets"
 status = "present"
+os_file = "hreflang_unlinked_hreflang_urls_report.csv"
 
 [[export]]
 ref_file = "report_hreflang_missing_return_links.csv"
 os = "report:Hreflang:Missing Return Links"
 mapping = "hreflang_missing_returns"
 status = "present"
+os_file = "hreflang_missing_return_links_report.csv"
 
 [[export]]
 ref_file = "report_hreflang_inconsistent_language_region_return_links.csv"
 os = "report:Hreflang:Inconsistent Language & Region Return Links"
 mapping = "hreflang_inconsistent_returns"
 status = "present"
+os_file = "hreflang_inconsistent_language_region_return_links_report.csv"
 
 [[export]]
 ref_file = "report_hreflang_non_canonical_return_links.csv"
@@ -370,6 +374,7 @@ ref_file = "report_hreflang_noindex_return_links.csv"
 os = "report:Hreflang:Noindex Return Links"
 mapping = "hreflang_noindex_returns"
 status = "present"
+os_file = "hreflang_noindex_return_links_report.csv"
 
 [[export]]
 ref_file = "bulk_canonicals_contains_canonical_inlinks.csv"

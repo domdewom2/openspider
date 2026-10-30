@@ -3,7 +3,7 @@ site = "parity-m2-onpage"
 port = 8906
 ref_version = "referenz-2026-10"
 exported_at = "2026-10-30"
-ref_settings = "Free, macOS, English (UK), Standardkonfiguration; Crawl Analysis ausgeführt. Hreflang/Pagination speichern, nicht crawlen. Always-Follow aus (Not Followed). Kein JavaScript, kein TLS. Gesperrte/leere Exporte als unavailable mit Grund dokumentieren. Erzeugt am 2026-10-30 mit der lizenzierten Referenzversion (nicht Free; alle Sites unter 500 URLs), Oberflaeche English (UK), Standardkonfiguration; einzige Aenderung: automatische Crawl-Analyse am Crawl-Ende (gleichwertig zu Crawl Analysis > Start). Exporte per Kommandozeile (headless) aus einem gespeicherten Crawl je Site; Tab-, Bulk- und Report-Exporte getrennt erzeugt. Per Oberflaeche erzeugt: parity-m2-list internal_all (Listenmodus-Export in Upload-Reihenfolge, mit Spalte Original Url), parity-m2-links crawl_path_deep8, parity-m2-onpage sitemap_options. XML-Dateien: Generator-Kommentar entfernt (Neutralitaet)."
+ref_settings = "Hreflang/Pagination speichern, nicht crawlen. Always-Follow aus (Not Followed). Kein JavaScript, kein TLS. Erzeugt am 2026-10-30 mit der lizenzierten Referenzversion (nicht Free; alle Sites unter 500 URLs), Oberflaeche English (UK), Standardkonfiguration; einzige Aenderung: automatische Crawl-Analyse am Crawl-Ende (gleichwertig zu Crawl Analysis > Start). Exporte per Kommandozeile (headless) aus einem gespeicherten Crawl je Site; Tab-, Bulk- und Report-Exporte getrennt erzeugt. Per Oberflaeche erzeugt: parity-m2-list internal_all (Listenmodus-Export in Upload-Reihenfolge, mit Spalte Original Url), parity-m2-links crawl_path_deep8, parity-m2-onpage sitemap_options. XML-Dateien: Generator-Kommentar entfernt (Neutralitaet)."
 
 [[export]]
 ref_file = "internal_all.csv"
@@ -176,25 +176,25 @@ status = "unavailable" # Near-Duplicate-Erkennung ist in der Standardkonfigurati
 [[export]]
 ref_file = "content_soft_404_pages.csv"
 os = "tab:Content:Soft 404 Pages"
-mapping = "content_m2"
+mapping = "content_soft404"
 status = "present"
 
 [[export]]
 ref_file = "content_lorem_ipsum_placeholder.csv"
 os = "tab:Content:Lorem Ipsum Placeholder"
-mapping = "content_m2"
+mapping = "content_lorem"
 status = "present"
 
 [[export]]
 ref_file = "content_readability_difficult.csv"
 os = "tab:Content:Readability Difficult"
-mapping = "content_m2"
+mapping = "content_readability"
 status = "present"
 
 [[export]]
 ref_file = "content_readability_very_difficult.csv"
 os = "tab:Content:Readability Very Difficult"
-mapping = "content_m2"
+mapping = "content_readability"
 status = "present"
 
 [[export]]

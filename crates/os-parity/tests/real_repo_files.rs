@@ -172,10 +172,9 @@ fn m2_filters(root: &Path) -> std::collections::BTreeSet<(String, String)> {
 }
 
 // spec: OUT-080
-// K2-66: Die M2-Filter und -Spalten sind vorbereitet (Listen, Mappings, Sites), werden aber erst in Q02 scharf
-// geschaltet: das Overview-Mapping vergleicht nur M1-Filter, links_all ignoriert Link Score und Inlinks.
+// Q02-P01 / SQ-10: M2 ist scharf; nur Link Score bleibt als begründeter DEV ausgenommen.
 #[test]
-fn m2_filters_are_prepared_but_not_compared_before_q02() {
+fn m2_filters_and_inlinks_are_compared_after_q02() {
     let root = repo();
     let overview = Mapping::load(&root.join("tests/parity/mappings/crawl_overview.toml")).unwrap();
     let compared = overview.blocks.m1_filters.unwrap();
@@ -189,15 +188,11 @@ fn m2_filters_are_prepared_but_not_compared_before_q02() {
     ] {
         let key = (tab.to_string(), filter.to_string());
         assert!(m2.contains(&key), "M2-Liste: {tab}:{filter}");
-        assert!(
-            !compared.contains(&key),
-            "noch nicht verglichen: {tab}:{filter}"
-        );
+        assert!(compared.contains(&key), "wird verglichen: {tab}:{filter}");
     }
-    for column in ["Inlinks", "Link Score"] {
-        let mapping = Mapping::load(&root.join("tests/parity/mappings/links_all.toml")).unwrap();
-        assert!(mapping.column(column).unwrap().ignore, "links_all:{column}");
-    }
+    let links = Mapping::load(&root.join("tests/parity/mappings/links_all.toml")).unwrap();
+    assert!(!links.column("Inlinks").unwrap().ignore);
+    assert!(links.column("Link Score").unwrap().ignore);
     // Indexability-Spalten sind bereits scharf (TECH-051/-071, K2-04).
     for name in ["directives_all", "hreflang_all"] {
         let mapping =
@@ -245,6 +240,9 @@ fn new_manifests_preserve_list_source_sitemap_variants_and_crawl_path_target() {
         .chain(links.export.iter())
         .chain(listed.export.iter())
     {
-        assert_eq!(e.status, os_parity::manifest::ExportStatus::Pending);
+        // K2-63 / Q02-P03: neue Referenzen sind vorhanden; dokumentierte unavailable bleiben erlaubt.
+        if e.status != os_parity::manifest::ExportStatus::Unavailable {
+            assert_eq!(e.status, os_parity::manifest::ExportStatus::Present);
+        }
     }
 }

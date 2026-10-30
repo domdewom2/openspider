@@ -30,7 +30,7 @@
 id = "DEV-003"
 spec = "ONPAGE-011"
 kind = "OS-Festlegung"
-export = "internal_all"
+export = "internal_all|internal_m2|list_internal"
 site = "*"
 column = "Title 1 Length|Title 1 Pixel Width|Title 2 Length|Title 2 Pixel Width|Meta Description 1 Length|Meta Description 1 Pixel Width|Meta Description 2 Length|Meta Description 2 Pixel Width|Meta Keywords 1 Length|H1-1 Length|H1-2 Length|H2-1 Length|H2-2 Length|Word Count"
 ref = "0"
@@ -41,7 +41,7 @@ reason = "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs
 id = "DEV-004"
 spec = "ONPAGE-013"
 kind = "OS-Festlegung"
-export = "internal_all"
+export = "internal_all|internal_m2|list_internal"
 site = "*"
 column = "Text Ratio"
 ref = "0.000"
@@ -135,26 +135,6 @@ key_prefixes = ["{BASE}/contact.html", "{BASE}/products.html", "{BASE}/"]
 reason = "K-07 (wie DEV-010), Seiten mit Selbstlink in out-basic-site."
 
 [[deviation]]
-id = "DEV-012"
-spec = "TECH-051"
-kind = "OS-Festlegung"
-export = "directives_all"
-site = "*"
-key_prefixes = ["{BASE}/hl/es-old/", "{BASE}/canon/gone-404.html", "{BASE}/canon/moved-301"]
-scope = "extra_in_os"
-reason = "Population des Directives-Tabs: alle internen URLs mit HTTP-Antwort, jeder Status (TECH-051); die Referenz fuehrt Weiterleitungen und Fehlerseiten nicht."
-
-[[deviation]]
-id = "DEV-013"
-spec = "TECH-051"
-kind = "OS-Festlegung"
-export = "crawl_overview"
-site = "*"
-column = "URLs"
-key_prefixes = ["directives | all"]
-reason = "wie DEV-012: Zaehler des Abschnitts Directives (Population aller internen URLs mit Antwort)."
-
-[[deviation]]
 id = "DEV-014"
 spec = "ONPAGE-024"
 kind = "OS-Festlegung"
@@ -169,11 +149,13 @@ id = "DEV-016"
 spec = "ONPAGE-166"
 kind = "OS-Festlegung"
 export = "content_all"
-site = "*"
+site = "out-basic-site|parity-onpage|parity-technical|parity-response|parity-synthetic"
 key_prefix = "{BASE}/ctype/t-pdf.pdf"
 scope = "missing_in_os"
 reason = "PDF-Inhalte (Word Count, Content-Tab-Zeile) sind P1 (ONPAGE-166, M1.md 7.2); in M1 nur Titel und Keywords aus den PDF-Eigenschaften."
 
+
+# Q02-P06: historischer M1-Beleg, keine M2-Gutschrift; DEV-022 existiert nicht mehr.
 [[deviation]]
 id = "DEV-017"
 spec = "OUT-081"
@@ -196,26 +178,18 @@ os = "1"
 reason = "IMG Inlinks (OpenSpider-Erweiterung) zaehlt auch Hyperlinks auf Bilder (ONPAGE-170 Nr. 2); die Referenz zaehlt nur eingebettete Bilder."
 
 [[deviation]]
-id = "DEV-023"
-spec = "TECH-064"
-kind = "OS-Festlegung"
-export = "crawl_overview"
-site = "*"
-column = "URLs"
-key_prefixes = ["directives | refresh"]
-reason = "Der Filter Refresh umfasst Meta Refresh und den Refresh-Header (TECH-064); die Referenz zaehlt den Refresh-Header im Response-Codes-Filter Redirection (HTTP Refresh)."
-
-[[deviation]]
 id = "DEV-024"
 spec = "ONPAGE-166"
 kind = "OS-Festlegung"
 export = "crawl_overview"
-site = "*"
+site = "out-basic-site|parity-onpage|parity-technical|parity-response|parity-synthetic"
 column = "URLs"
 key_prefixes = ["content | all"]
 delta = -1
 reason = "PDF-Inhalte (Content-Tab-Zeile) sind P1 (ONPAGE-166, M1.md 7.2), siehe DEV-016."
 
+
+# Q02-P06: historischer M1-Beleg, keine M2-Gutschrift; DEV-022 existiert nicht mehr.
 [[deviation]]
 id = "DEV-025"
 spec = "TECH-001"
@@ -226,26 +200,6 @@ column = "Indexability Status"
 ref = "Canonicalised,noindex"
 os = "noindex"
 reason = "Indexability Status nennt genau den ersten zutreffenden Grund in der Pruefreihenfolge (TECH-001); die Referenz nennt bei noindex und fremdem Canonical beide, kommagetrennt."
-
-[[deviation]]
-id = "DEV-026"
-spec = "TECH-064"
-kind = "OS-Festlegung"
-export = "directives_all"
-site = "*"
-column = "Meta Refresh 1"
-ref = ""
-reason = "Die Spalte Meta Refresh im Directives-Tab zeigt auch den Wert des Refresh-Headers (TECH-064: Refresh umfasst Meta und Header); die Referenz laesst sie bei reinem Header-Refresh leer."
-
-[[deviation]]
-id = "DEV-027"
-spec = "TECH-071"
-kind = "OS-Festlegung"
-export = "hreflang_all"
-site = "*"
-key_prefix = "{BASE}/hl/es-old/"
-scope = "extra_in_os"
-reason = "Population des Hreflang-Tabs: auch gecrawlte hreflang-Ziele (TECH-071); die Referenz fuehrt das umgeleitete Ziel (301) nicht."
 
 [[deviation]]
 id = "DEV-028"
@@ -289,17 +243,6 @@ key_prefix = "{BASE}/mixed-chain.html"
 ref = "true"
 os = "False"
 reason = "Meta Refresh und Refresh-Header gelten nur mit Verzoegerung > 0 als temporaer (OUT-081); die Referenz wertet den Meta Refresh ohne Verzoegerung als temporaer."
-
-[[deviation]]
-id = "DEV-034"
-spec = "TECH-071"
-kind = "OS-Festlegung"
-export = "crawl_overview"
-site = "parity-technical"
-column = "URLs"
-key_prefixes = ["hreflang | all"]
-delta = 1
-reason = "wie DEV-027: Die Population des Hreflang-Tabs enthaelt auch gecrawlte hreflang-Ziele (TECH-071), hier das umgeleitete Ziel /hl/es-old/ (301); die Referenz zaehlt nur interne Seiten mit 2xx."
 
 [[deviation]]
 id = "DEV-036"
@@ -489,3 +432,148 @@ site = "*"
 column = "URLs"
 key_prefixes = ["response codes | redirection (javascript)", "response codes | internal redirection (javascript)", "response codes | external redirection (javascript)"]
 reason = "M2.md 6.1 / K2-14: rendering.mode=javascript ist im Referenzprofil nicht aktiv; die Rendering-Zaehler haben keinen Referenzbeleg. Nur vorhandene Overview-Zellen ausgenommen; fehlende bzw. falsch benannte Zeilen bleiben Mapping-Befund. Kein verified."
+
+[[deviation]]
+id = "DEV-037"
+spec = "TECH-145"
+kind = "OS-Festlegung"
+export = "links_all|internal_all|internal_m2|list_internal"
+reason = "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3; Link Score bleibt über Mapping mit Grund ausgenommen; Links/Internal erhalten keine verified-Gutschrift."
+column = "Link Score"
+
+[[deviation]]
+id = "DEV-038"
+spec = "OUT-080"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+reason = "OUT-080: needs_config/needs_rendering liefert einen leeren Zähler, keine aktivierte Analyse. Nur Nullwerte der Referenz werden entschuldigt."
+column = "URLs"
+key_prefixes = ["content | near duplicates", "images | background images", "images | incorrectly sized images", "url | broken bookmark"]
+ref = "0"
+os = ""
+
+[[deviation]]
+id = "DEV-039-missing_in_os"
+spec = "TECH-141"
+kind = "OS-Festlegung"
+export = "links_all"
+reason = "TECH-141: Eigener Start-Host und Port sind ausgenommen; Ausnahme ausschließlich für den eigenen Localhost-Filterexport, nie Links:All."
+file = "links_outlinks_to_localhost.csv"
+scope = "missing_in_os"
+
+[[deviation]]
+id = "DEV-039-extra_in_os"
+spec = "TECH-141"
+kind = "OS-Festlegung"
+export = "links_all"
+reason = "TECH-141: Eigener Start-Host und Port sind ausgenommen; Ausnahme ausschließlich für den eigenen Localhost-Filterexport, nie Links:All."
+file = "links_outlinks_to_localhost.csv"
+scope = "extra_in_os"
+
+[[deviation]]
+id = "DEV-039-overview"
+spec = "TECH-141"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+reason = "TECH-141: Der eigene Start-Host und Port ist ausgenommen."
+column = "URLs"
+address = "links | outlinks to localhost"
+
+[[deviation]]
+id = "DEV-040"
+spec = "OUT-015"
+kind = "OS-Festlegung"
+export = "list_internal"
+reason = "OUT-015: ungültige Uploadzeilen bleiben als eigene Zeilen erhalten; Referenz verwirft sie."
+site = "parity-m2-list"
+scope = "extra_in_os"
+key_prefixes = ["://invalid", "http:// |"]
+
+[[deviation]]
+id = "DEV-041"
+spec = "TECH-211"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+reason = "TECH-211: Ohne verarbeitete Sitemap bleibt der Tab leer. Referenz zählt hier interne HTML-/XML-URLs ohne Sitemap."
+column = "URLs"
+address = "sitemaps | all"
+os = "0"
+site = "parity-m2-onpage|parity-m2-links|parity-m2-security|parity-m2-list|parity-m2-technical"
+
+[[deviation]]
+id = "REF-ART-01"
+spec = "OUT-080"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+reason = "SQ-15: Referenzartefakt m2-security: Overview CSP 17 widerspricht der eigenen Filterdatei mit 13 Zeilen; OS folgt Filterdatei. Kein REF-FREE."
+site = "parity-m2-security"
+column = "URLs"
+address = "security | missing content-security-policy header"
+ref = "17"
+os = "13"
+
+[[deviation]]
+id = "DEV-042"
+spec = "OUT-083"
+kind = "OS-Festlegung"
+export = "m2_redirects_redirect_canonical_chains|list_chains"
+reason = "SQ-13e: Chain Type Redirect & Canonical ist nach OUT-083 eine bewusste OS-Festlegung."
+column = "Chain Type"
+ref = "Mixed"
+os = "Redirect & Canonical"
+
+[[deviation]]
+id = "DEV-043"
+spec = "OUT-081"
+kind = "OS-Festlegung"
+export = "m2_redirects_redirect_canonical_chains|redirect_chains"
+reason = "OUT-081: Zwischenglied erhält keine eigene Startzeile."
+site = "parity-m2-technical"
+scope = "missing_in_os"
+address = "{BASE}/loop-a"
+
+[[deviation]]
+id = "DEV-044"
+spec = "OUT-081"
+kind = "OS-Festlegung"
+export = "m2_redirects_redirect_canonical_chains|redirect_chains"
+reason = "OUT-081 / DEV-030: Schleifen haben keine Final Address und Final Status Redirect Loop; Referenz zeigt letzte Station."
+site = "parity-m2-technical"
+column = "Final Address|Final Status Code|Final Status|Final Indexability|Final Indexability Status|Final Content"
+address = "{BASE}/tail"
+
+[[deviation]]
+id = "DEV-014b"
+spec = "ONPAGE-024"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "out-basic-site|parity-onpage|parity-response|parity-technical|parity-synthetic"
+column = "URLs"
+address = "internal | other"
+ref = "1"
+os = "0"
+reason = "ONPAGE-024 / DEV-014: Antwort ohne Content-Type ist Unknown statt Other; exakt der einzelne historische Zähler, keine Entschuldigung der Media-/Fonts-/XML-Population (G12)."
+
+[[deviation]]
+id = "DEV-044-hop"
+spec = "OUT-081"
+kind = "OS-Festlegung"
+export = "m2_redirects_redirect_canonical_chains"
+site = "parity-m2-technical"
+column = "Status 4"
+address = "{BASE}/tail"
+ref = ""
+os = "Redirect Loop"
+reason = "OUT-081 / DEV-030: zusätzliche Endzielstation der Referenz bei einer Schleife; OS meldet Redirect Loop als Final Status."
+
+[[deviation]]
+id = "DEV-045"
+spec = "TECH-130"
+kind = "OS-Festlegung"
+export = "links_all"
+site = "out-basic-site"
+column = "Inlinks"
+key_prefixes = ["{BASE}/contact.html", "{BASE}/products.html"]
+ref = "14"
+os = "13"
+reason = "TECH-130 / K-07: Selbstlinks werden nicht als Inlinks gezählt; adressgenaue Ergänzung zu DEV-011 für die nun aktiv verglichene Spalte."
