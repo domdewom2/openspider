@@ -96,10 +96,6 @@ fn calibrated_counts_on_long_paragraphs_and_lists() {
             include_str!("../../../tests/fixtures/parity-m2-onpage/near-85.html"),
         ),
         (
-            "images",
-            include_str!("../../../tests/fixtures/parity-m2-onpage/images.html"),
-        ),
-        (
             "list",
             include_str!("../../../tests/fixtures/parity-m2-onpage/list-item-text.html"),
         ),

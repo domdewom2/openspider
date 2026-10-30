@@ -193,7 +193,7 @@ fn block_boundaries_create_whitespace_inline_elements_do_not() {
     assert_eq!(count("<body><h2>a</h2><h3>b</h3></body>"), 2);
     // Inline-Elemente trennen nicht.
     assert_eq!(count("<body>a<b>b</b>c <em>d</em><span>e</span></body>"), 2);
-    // Links in Absätzen zählen nicht extra (nur Listenpunkte, A-35b)
+    // Ankergrenzen trennen Wörter; zusätzliche Wörter entstehen nur je Listenpunkt (A-35b).
     assert_eq!(count("<body><a href=\"/x\">link</a>text</body>"), 2);
 }
 

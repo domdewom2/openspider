@@ -717,7 +717,7 @@ fn newer_files_are_never_touched_by_migration() {
 
 // spec: OUT-226
 #[test]
-fn migrated_v1_fixture_equals_the_v2_default_file() {
+fn migrated_v1_fixture_preserves_legacy_settings_against_v2_defaults() {
     let (text, _) =
         migrate_toml(&fs::read_to_string(fixture("config/v1/default.osconfig")).unwrap()).unwrap();
     let mut expected = CrawlConfig::default();

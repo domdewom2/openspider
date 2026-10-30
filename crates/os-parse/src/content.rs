@@ -117,6 +117,8 @@ struct Rules {
     drop_svg: bool,
     /// Je `<li>` ein Wort mehr zählen (Wortzahl, A-35b); die Text Ratio zählt keine Listenpunkte.
     count_list_items: bool,
+    /// Ankergrenzen als Wortgrenzen behandeln (SQ-09), unabhängig von Listenpunkten.
+    separate_anchors: bool,
 }
 
 fn lower_list(list: &[String]) -> Vec<String> {
@@ -144,6 +146,7 @@ impl Rules {
             exclude_ids: token_list(&area.exclude_ids),
             drop_svg: true,
             count_list_items: true,
+            separate_anchors: true,
         }
     }
 
@@ -158,6 +161,7 @@ impl Rules {
             exclude_ids: Vec::new(),
             drop_svg: false,
             count_list_items: false,
+            separate_anchors: false,
         }
     }
 
@@ -257,7 +261,7 @@ fn walk_into(body: ElementRef, rules: &Rules, mut counter: TokenCounter) -> Toke
                     }
                     let name = el.name();
                     let block = is_block(name);
-                    if rules.count_list_items && name == "a" {
+                    if rules.separate_anchors && name == "a" {
                         counter.inline_boundary();
                     }
                     if rules.always_dropped(name) || rules.excluded(el) {
@@ -300,7 +304,7 @@ fn walk_into(body: ElementRef, rules: &Rules, mut counter: TokenCounter) -> Toke
                     if include_marks.pop() == Some(true) {
                         include_depth -= 1;
                     }
-                    if rules.count_list_items && el.name() == "a" {
+                    if rules.separate_anchors && el.name() == "a" {
                         counter.inline_boundary();
                     }
                     if is_block(el.name()) {
