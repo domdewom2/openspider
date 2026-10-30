@@ -10,7 +10,7 @@ if [[ $(uname -s) != Darwin ]]; then
   exit 2
 fi
 if [[ ${Q03_CAFFEINATED:-0} != 1 ]]; then
-  exec caffeinate -dims env Q03_CAFFEINATED=1 bash "$0" "$@"
+  exec caffeinate -dims env Q03_CAFFEINATED=1 bash "$PWD/scripts/q03/reference-run.sh" "$@"
 fi
 mkdir -p target/loadtest/tmp
 export TMPDIR="$PWD/target/loadtest/tmp"
