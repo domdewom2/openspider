@@ -1,0 +1,1955 @@
+{
+  "checks": {
+    "CRAWL-012": [
+      {
+        "exports_checked": 8,
+        "filter": "Other",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "Internal Other",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "External Other",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      }
+    ],
+    "ONPAGE-001": [
+      {
+        "exports_checked": 10,
+        "filter": "All",
+        "passed": false,
+        "reason": "parity-m2-links/internal_m2: URL-Menge nicht identisch",
+        "tab": "Internal"
+      },
+      {
+        "exports_checked": 1,
+        "filter": "All",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Security"
+      }
+    ],
+    "ONPAGE-009": [
+      {
+        "exports_checked": 2,
+        "filter": "All",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Page Titles"
+      },
+      {
+        "exports_checked": 2,
+        "filter": "All",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Meta Description"
+      },
+      {
+        "exports_checked": 2,
+        "filter": "All",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "H1"
+      },
+      {
+        "exports_checked": 2,
+        "filter": "All",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "H2"
+      }
+    ],
+    "ONPAGE-021": [
+      {
+        "exports_checked": 10,
+        "filter": "HTML",
+        "passed": false,
+        "reason": "parity-m2-links/internal_m2: URL-Menge nicht identisch",
+        "tab": "Internal"
+      }
+    ],
+    "ONPAGE-022": [
+      {
+        "exports_checked": 10,
+        "filter": "JavaScript",
+        "passed": false,
+        "reason": "parity-m2-links/internal_m2: URL-Menge nicht identisch",
+        "tab": "Internal"
+      },
+      {
+        "exports_checked": 10,
+        "filter": "CSS",
+        "passed": false,
+        "reason": "parity-m2-links/internal_m2: URL-Menge nicht identisch",
+        "tab": "Internal"
+      },
+      {
+        "exports_checked": 10,
+        "filter": "Images",
+        "passed": false,
+        "reason": "parity-m2-links/internal_m2: URL-Menge nicht identisch",
+        "tab": "Internal"
+      },
+      {
+        "exports_checked": 10,
+        "filter": "PDF",
+        "passed": false,
+        "reason": "parity-m2-links/internal_m2: URL-Menge nicht identisch",
+        "tab": "Internal"
+      }
+    ],
+    "ONPAGE-023": [
+      {
+        "exports_checked": 11,
+        "filter": "Plugins",
+        "passed": false,
+        "reason": "parity-m2-links/internal_m2: URL-Menge nicht identisch",
+        "tab": "Internal"
+      },
+      {
+        "exports_checked": 11,
+        "filter": "Other",
+        "passed": false,
+        "reason": "parity-m2-links/internal_m2: URL-Menge nicht identisch",
+        "tab": "Internal"
+      },
+      {
+        "exports_checked": 10,
+        "filter": "Media",
+        "passed": false,
+        "reason": "parity-m2-links/internal_m2: URL-Menge nicht identisch",
+        "tab": "Internal"
+      },
+      {
+        "exports_checked": 10,
+        "filter": "Fonts",
+        "passed": false,
+        "reason": "parity-m2-links/internal_m2: URL-Menge nicht identisch",
+        "tab": "Internal"
+      },
+      {
+        "exports_checked": 10,
+        "filter": "XML",
+        "passed": false,
+        "reason": "parity-m2-links/internal_m2: URL-Menge nicht identisch",
+        "tab": "Internal"
+      }
+    ],
+    "ONPAGE-024": [
+      {
+        "exports_checked": 10,
+        "filter": "Unknown",
+        "passed": false,
+        "reason": "parity-m2-links/internal_m2: URL-Menge nicht identisch",
+        "tab": "Internal"
+      }
+    ],
+    "ONPAGE-025": [
+      {
+        "exports_checked": 3,
+        "filter": "All",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "External"
+      }
+    ],
+    "ONPAGE-026": [
+      {
+        "exports_checked": 3,
+        "filter": "HTML",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "External"
+      },
+      {
+        "exports_checked": 3,
+        "filter": "JavaScript",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "External"
+      },
+      {
+        "exports_checked": 3,
+        "filter": "CSS",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "External"
+      },
+      {
+        "exports_checked": 3,
+        "filter": "Images",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "External"
+      },
+      {
+        "exports_checked": 3,
+        "filter": "PDF",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "External"
+      },
+      {
+        "exports_checked": 3,
+        "filter": "Plugins",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "External"
+      },
+      {
+        "exports_checked": 3,
+        "filter": "Media",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "External"
+      },
+      {
+        "exports_checked": 3,
+        "filter": "Fonts",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "External"
+      },
+      {
+        "exports_checked": 3,
+        "filter": "XML",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "External"
+      },
+      {
+        "exports_checked": 3,
+        "filter": "Other",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "External"
+      },
+      {
+        "exports_checked": 3,
+        "filter": "Unknown",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "External"
+      }
+    ],
+    "ONPAGE-031": [
+      {
+        "exports_checked": 1,
+        "filter": "HTTP URLs",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Security"
+      }
+    ],
+    "ONPAGE-032": [
+      {
+        "exports_checked": 1,
+        "filter": "HTTPS URLs",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Security"
+      }
+    ],
+    "ONPAGE-033": [
+      {
+        "exports_checked": 2,
+        "filter": "Mixed Content",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Security"
+      }
+    ],
+    "ONPAGE-034": [
+      {
+        "exports_checked": 2,
+        "filter": "Form URL Insecure",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Security"
+      }
+    ],
+    "ONPAGE-035": [
+      {
+        "exports_checked": 2,
+        "filter": "Form on HTTP URL",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Security"
+      }
+    ],
+    "ONPAGE-036": [
+      {
+        "exports_checked": 2,
+        "filter": "Unsafe Cross-Origin Links",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Security"
+      }
+    ],
+    "ONPAGE-037": [
+      {
+        "exports_checked": 2,
+        "filter": "Protocol-Relative Resource Links",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Security"
+      }
+    ],
+    "ONPAGE-038": [
+      {
+        "exports_checked": 2,
+        "filter": "Missing HSTS Header",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Security"
+      }
+    ],
+    "ONPAGE-039": [
+      {
+        "exports_checked": 2,
+        "filter": "Missing Content-Security-Policy Header",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Security"
+      }
+    ],
+    "ONPAGE-040": [
+      {
+        "exports_checked": 2,
+        "filter": "Missing X-Content-Type-Options Header",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Security"
+      }
+    ],
+    "ONPAGE-041": [
+      {
+        "exports_checked": 2,
+        "filter": "Missing X-Frame-Options Header",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Security"
+      }
+    ],
+    "ONPAGE-042": [
+      {
+        "exports_checked": 2,
+        "filter": "Missing Secure Referrer-Policy Header",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Security"
+      }
+    ],
+    "ONPAGE-043": [
+      {
+        "exports_checked": 2,
+        "filter": "Bad Content Type",
+        "passed": false,
+        "reason": "parity-m2-security/security_all: URL-Menge nicht identisch",
+        "tab": "Security"
+      }
+    ],
+    "ONPAGE-051": [
+      {
+        "exports_checked": 8,
+        "filter": "All",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "Internal All",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "External All",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      }
+    ],
+    "ONPAGE-052": [
+      {
+        "exports_checked": 8,
+        "filter": "Blocked by Robots.txt",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "Internal Blocked by Robots.txt",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "External Blocked by Robots.txt",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      }
+    ],
+    "ONPAGE-054": [
+      {
+        "exports_checked": 8,
+        "filter": "No Response",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "Internal No Response",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "External No Response",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      }
+    ],
+    "ONPAGE-055": [
+      {
+        "exports_checked": 8,
+        "filter": "Success (2XX)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "Internal Success (2XX)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "External Success (2XX)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      }
+    ],
+    "ONPAGE-056": [
+      {
+        "exports_checked": 8,
+        "filter": "Redirection (3XX)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "Internal Redirection (3XX)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "External Redirection (3XX)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      }
+    ],
+    "ONPAGE-058": [
+      {
+        "exports_checked": 8,
+        "filter": "Redirection (Meta Refresh)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "Internal Redirection (Meta Refresh)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "External Redirection (Meta Refresh)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      }
+    ],
+    "ONPAGE-059": [
+      {
+        "exports_checked": 8,
+        "filter": "Redirection (HTTP Refresh)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 9,
+        "filter": "Internal Redirection (HTTP Refresh)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "External Redirection (HTTP Refresh)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      }
+    ],
+    "ONPAGE-060": [
+      {
+        "exports_checked": 8,
+        "filter": "Redirect Chain",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "Internal Redirect Chain",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "External Redirect Chain",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      }
+    ],
+    "ONPAGE-061": [
+      {
+        "exports_checked": 8,
+        "filter": "Redirect Loop",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "Internal Redirect Loop",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "External Redirect Loop",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      }
+    ],
+    "ONPAGE-062": [
+      {
+        "exports_checked": 8,
+        "filter": "Client Error (4XX)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "Internal Client Error (4XX)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "External Client Error (4XX)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      }
+    ],
+    "ONPAGE-063": [
+      {
+        "exports_checked": 8,
+        "filter": "Server Error (5XX)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "Internal Server Error (5XX)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      },
+      {
+        "exports_checked": 8,
+        "filter": "External Server Error (5XX)",
+        "passed": false,
+        "reason": "parity-m2-technical/response_codes_all: Spalte Indexability mit 4 Abweichungen",
+        "tab": "Response Codes"
+      }
+    ],
+    "ONPAGE-070": [
+      {
+        "exports_checked": 2,
+        "filter": "All",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "URL"
+      }
+    ],
+    "ONPAGE-071": [
+      {
+        "exports_checked": 2,
+        "filter": "Non ASCII Characters",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "URL"
+      }
+    ],
+    "ONPAGE-072": [
+      {
+        "exports_checked": 2,
+        "filter": "Underscores",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "URL"
+      }
+    ],
+    "ONPAGE-073": [
+      {
+        "exports_checked": 2,
+        "filter": "Uppercase",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "URL"
+      }
+    ],
+    "ONPAGE-074": [
+      {
+        "exports_checked": 2,
+        "filter": "Multiple Slashes",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "URL"
+      }
+    ],
+    "ONPAGE-075": [
+      {
+        "exports_checked": 3,
+        "filter": "Repetitive Path",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "URL"
+      }
+    ],
+    "ONPAGE-076": [
+      {
+        "exports_checked": 2,
+        "filter": "Contains A Space",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "URL"
+      }
+    ],
+    "ONPAGE-077": [
+      {
+        "exports_checked": 3,
+        "filter": "Internal Search",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "URL"
+      }
+    ],
+    "ONPAGE-078": [
+      {
+        "exports_checked": 2,
+        "filter": "Parameters",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "URL"
+      }
+    ],
+    "ONPAGE-079": [
+      {
+        "exports_checked": 3,
+        "filter": "Broken Bookmark",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "URL"
+      }
+    ],
+    "ONPAGE-080": [
+      {
+        "exports_checked": 3,
+        "filter": "GA Tracking Parameters",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "URL"
+      }
+    ],
+    "ONPAGE-081": [
+      {
+        "exports_checked": 2,
+        "filter": "Over {url.max_chars} Characters",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "URL"
+      }
+    ],
+    "ONPAGE-091": [
+      {
+        "exports_checked": 2,
+        "filter": "Missing",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Page Titles"
+      }
+    ],
+    "ONPAGE-092": [
+      {
+        "exports_checked": 2,
+        "filter": "Duplicate",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Page Titles"
+      }
+    ],
+    "ONPAGE-093": [
+      {
+        "exports_checked": 2,
+        "filter": "Over {title.max_chars} Characters",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Page Titles"
+      }
+    ],
+    "ONPAGE-094": [
+      {
+        "exports_checked": 2,
+        "filter": "Below {title.min_chars} Characters",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Page Titles"
+      }
+    ],
+    "ONPAGE-095": [
+      {
+        "exports_checked": 2,
+        "filter": "Over {title.max_px} Pixels",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Page Titles"
+      }
+    ],
+    "ONPAGE-096": [
+      {
+        "exports_checked": 2,
+        "filter": "Below {title.min_px} Pixels",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Page Titles"
+      }
+    ],
+    "ONPAGE-097": [
+      {
+        "exports_checked": 3,
+        "filter": "Same as H1",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Page Titles"
+      }
+    ],
+    "ONPAGE-098": [
+      {
+        "exports_checked": 2,
+        "filter": "Multiple",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Page Titles"
+      }
+    ],
+    "ONPAGE-101": [
+      {
+        "exports_checked": 2,
+        "filter": "Missing",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Meta Description"
+      }
+    ],
+    "ONPAGE-102": [
+      {
+        "exports_checked": 2,
+        "filter": "Duplicate",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Meta Description"
+      }
+    ],
+    "ONPAGE-103": [
+      {
+        "exports_checked": 2,
+        "filter": "Over {meta_description.max_chars} Characters",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Meta Description"
+      }
+    ],
+    "ONPAGE-104": [
+      {
+        "exports_checked": 2,
+        "filter": "Below {meta_description.min_chars} Characters",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Meta Description"
+      }
+    ],
+    "ONPAGE-105": [
+      {
+        "exports_checked": 2,
+        "filter": "Over {meta_description.max_px} Pixels",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Meta Description"
+      }
+    ],
+    "ONPAGE-106": [
+      {
+        "exports_checked": 2,
+        "filter": "Below {meta_description.min_px} Pixels",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Meta Description"
+      }
+    ],
+    "ONPAGE-107": [
+      {
+        "exports_checked": 2,
+        "filter": "Multiple",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Meta Description"
+      }
+    ],
+    "ONPAGE-110": [
+      {
+        "exports_checked": 1,
+        "filter": "All",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Meta Keywords"
+      }
+    ],
+    "ONPAGE-111": [
+      {
+        "exports_checked": 2,
+        "filter": "Missing",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Meta Keywords"
+      }
+    ],
+    "ONPAGE-112": [
+      {
+        "exports_checked": 2,
+        "filter": "Duplicate",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Meta Keywords"
+      }
+    ],
+    "ONPAGE-113": [
+      {
+        "exports_checked": 2,
+        "filter": "Multiple",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Meta Keywords"
+      }
+    ],
+    "ONPAGE-121": [
+      {
+        "exports_checked": 2,
+        "filter": "Missing",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "H1"
+      }
+    ],
+    "ONPAGE-122": [
+      {
+        "exports_checked": 2,
+        "filter": "Duplicate",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "H1"
+      }
+    ],
+    "ONPAGE-123": [
+      {
+        "exports_checked": 2,
+        "filter": "Over {h1.max_chars} Characters",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "H1"
+      }
+    ],
+    "ONPAGE-124": [
+      {
+        "exports_checked": 2,
+        "filter": "Multiple",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "H1"
+      }
+    ],
+    "ONPAGE-125": [
+      {
+        "exports_checked": 3,
+        "filter": "Alt Text in h1",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "H1"
+      }
+    ],
+    "ONPAGE-126": [
+      {
+        "exports_checked": 3,
+        "filter": "Non-sequential",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "H1"
+      }
+    ],
+    "ONPAGE-131": [
+      {
+        "exports_checked": 2,
+        "filter": "Missing",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "H2"
+      }
+    ],
+    "ONPAGE-132": [
+      {
+        "exports_checked": 2,
+        "filter": "Duplicate",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "H2"
+      }
+    ],
+    "ONPAGE-133": [
+      {
+        "exports_checked": 2,
+        "filter": "Over {h2.max_chars} Characters",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "H2"
+      }
+    ],
+    "ONPAGE-134": [
+      {
+        "exports_checked": 2,
+        "filter": "Multiple",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "H2"
+      }
+    ],
+    "ONPAGE-135": [
+      {
+        "exports_checked": 3,
+        "filter": "Non-sequential",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "H2"
+      }
+    ],
+    "ONPAGE-142": [
+      {
+        "exports_checked": 2,
+        "filter": "All",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_m2: Spaltenabdeckung unvollständig (missing_os_columns)",
+        "tab": "Content"
+      }
+    ],
+    "ONPAGE-143": [
+      {
+        "exports_checked": 2,
+        "filter": "Exact Duplicates",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_m2: Spaltenabdeckung unvollständig (missing_os_columns)",
+        "tab": "Content"
+      }
+    ],
+    "ONPAGE-144": [
+      {
+        "exports_checked": 2,
+        "filter": "Near Duplicates",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_m2: Spaltenabdeckung unvollständig (missing_os_columns)",
+        "tab": "Content"
+      }
+    ],
+    "ONPAGE-146": [
+      {
+        "exports_checked": 2,
+        "filter": "Low Content Pages",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_m2: Spaltenabdeckung unvollständig (missing_os_columns)",
+        "tab": "Content"
+      }
+    ],
+    "ONPAGE-147": [
+      {
+        "exports_checked": 3,
+        "filter": "Soft 404 Pages",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_m2: Spaltenabdeckung unvollständig (missing_os_columns)",
+        "tab": "Content"
+      }
+    ],
+    "ONPAGE-148": [
+      {
+        "exports_checked": 3,
+        "filter": "Lorem Ipsum Placeholder",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_m2: Spaltenabdeckung unvollständig (missing_os_columns)",
+        "tab": "Content"
+      }
+    ],
+    "ONPAGE-150": [
+      {
+        "exports_checked": 3,
+        "filter": "Readability Difficult",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_m2: Spaltenabdeckung unvollständig (missing_os_columns)",
+        "tab": "Content"
+      }
+    ],
+    "ONPAGE-151": [
+      {
+        "exports_checked": 3,
+        "filter": "Readability Very Difficult",
+        "passed": false,
+        "reason": "parity-m2-onpage/content_m2: Spaltenabdeckung unvollständig (missing_os_columns)",
+        "tab": "Content"
+      }
+    ],
+    "ONPAGE-171": [
+      {
+        "exports_checked": 2,
+        "filter": "All",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Images"
+      }
+    ],
+    "ONPAGE-174": [
+      {
+        "exports_checked": 2,
+        "filter": "Over {image.max_kb} KB",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Images"
+      }
+    ],
+    "ONPAGE-175": [
+      {
+        "exports_checked": 2,
+        "filter": "Missing Alt Text",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Images"
+      }
+    ],
+    "ONPAGE-176": [
+      {
+        "exports_checked": 2,
+        "filter": "Missing Alt Attribute",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Images"
+      }
+    ],
+    "ONPAGE-177": [
+      {
+        "exports_checked": 2,
+        "filter": "Alt Text Over {image.alt_max_chars} Characters",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Images"
+      }
+    ],
+    "ONPAGE-179": [
+      {
+        "exports_checked": 3,
+        "filter": "Missing Size Attributes",
+        "passed": true,
+        "reason": "vollständig fehlerfrei verglichen",
+        "tab": "Images"
+      }
+    ],
+    "TECH-011": [
+      {
+        "exports_checked": 2,
+        "filter": "All",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all: Spalte Occurrences mit 2 Abweichungen",
+        "tab": "Canonicals"
+      }
+    ],
+    "TECH-012": [
+      {
+        "exports_checked": 2,
+        "filter": "Contains Canonical",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all: Spalte Occurrences mit 2 Abweichungen",
+        "tab": "Canonicals"
+      }
+    ],
+    "TECH-013": [
+      {
+        "exports_checked": 2,
+        "filter": "Self Referencing",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all: Spalte Occurrences mit 2 Abweichungen",
+        "tab": "Canonicals"
+      }
+    ],
+    "TECH-014": [
+      {
+        "exports_checked": 2,
+        "filter": "Canonicalised",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all: Spalte Occurrences mit 2 Abweichungen",
+        "tab": "Canonicals"
+      }
+    ],
+    "TECH-015": [
+      {
+        "exports_checked": 2,
+        "filter": "Missing",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all: Spalte Occurrences mit 2 Abweichungen",
+        "tab": "Canonicals"
+      }
+    ],
+    "TECH-016": [
+      {
+        "exports_checked": 2,
+        "filter": "Multiple",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all: Spalte Occurrences mit 2 Abweichungen",
+        "tab": "Canonicals"
+      }
+    ],
+    "TECH-017": [
+      {
+        "exports_checked": 2,
+        "filter": "Multiple Conflicting",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all: Spalte Occurrences mit 2 Abweichungen",
+        "tab": "Canonicals"
+      }
+    ],
+    "TECH-018": [
+      {
+        "exports_checked": 2,
+        "filter": "Non-Indexable Canonical",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all: Spalte Occurrences mit 2 Abweichungen",
+        "tab": "Canonicals"
+      }
+    ],
+    "TECH-019": [
+      {
+        "exports_checked": 3,
+        "filter": "Canonical Is Relative",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all: Spalte Occurrences mit 2 Abweichungen",
+        "tab": "Canonicals"
+      }
+    ],
+    "TECH-020": [
+      {
+        "exports_checked": 3,
+        "filter": "Unlinked",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all: Spalte Occurrences mit 2 Abweichungen",
+        "tab": "Canonicals"
+      }
+    ],
+    "TECH-021": [
+      {
+        "exports_checked": 3,
+        "filter": "Invalid Attribute In Annotation",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all: Spalte Occurrences mit 2 Abweichungen",
+        "tab": "Canonicals"
+      }
+    ],
+    "TECH-022": [
+      {
+        "exports_checked": 3,
+        "filter": "Contains Fragment URL",
+        "passed": false,
+        "reason": "parity-m2-technical/canonicals_all: Spalte Occurrences mit 2 Abweichungen",
+        "tab": "Canonicals"
+      }
+    ],
+    "TECH-031": [
+      {
+        "exports_checked": 1,
+        "filter": "All",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all: URL-Menge nicht identisch",
+        "tab": "Pagination"
+      }
+    ],
+    "TECH-032": [
+      {
+        "exports_checked": 2,
+        "filter": "Contains Pagination",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all: URL-Menge nicht identisch",
+        "tab": "Pagination"
+      }
+    ],
+    "TECH-033": [
+      {
+        "exports_checked": 2,
+        "filter": "First Page",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all: URL-Menge nicht identisch",
+        "tab": "Pagination"
+      }
+    ],
+    "TECH-034": [
+      {
+        "exports_checked": 2,
+        "filter": "Paginated 2+ Pages",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all: URL-Menge nicht identisch",
+        "tab": "Pagination"
+      }
+    ],
+    "TECH-035": [
+      {
+        "exports_checked": 2,
+        "filter": "Pagination URL Not In Anchor Tag",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all: URL-Menge nicht identisch",
+        "tab": "Pagination"
+      }
+    ],
+    "TECH-036": [
+      {
+        "exports_checked": 2,
+        "filter": "Non-200 Pagination URLs",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all: URL-Menge nicht identisch",
+        "tab": "Pagination"
+      }
+    ],
+    "TECH-037": [
+      {
+        "exports_checked": 2,
+        "filter": "Unlinked Pagination URLs",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all: URL-Menge nicht identisch",
+        "tab": "Pagination"
+      }
+    ],
+    "TECH-038": [
+      {
+        "exports_checked": 2,
+        "filter": "Non-Indexable",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all: URL-Menge nicht identisch",
+        "tab": "Pagination"
+      }
+    ],
+    "TECH-039": [
+      {
+        "exports_checked": 2,
+        "filter": "Multiple Pagination URLs",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all: URL-Menge nicht identisch",
+        "tab": "Pagination"
+      }
+    ],
+    "TECH-040": [
+      {
+        "exports_checked": 2,
+        "filter": "Pagination Loop",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all: URL-Menge nicht identisch",
+        "tab": "Pagination"
+      }
+    ],
+    "TECH-041": [
+      {
+        "exports_checked": 2,
+        "filter": "Sequence Error",
+        "passed": false,
+        "reason": "parity-m2-technical/pagination_all: URL-Menge nicht identisch",
+        "tab": "Pagination"
+      }
+    ],
+    "TECH-051": [
+      {
+        "exports_checked": 2,
+        "filter": "All",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all: URL-Menge nicht identisch",
+        "tab": "Directives"
+      }
+    ],
+    "TECH-052": [
+      {
+        "exports_checked": 2,
+        "filter": "Index",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all: URL-Menge nicht identisch",
+        "tab": "Directives"
+      }
+    ],
+    "TECH-053": [
+      {
+        "exports_checked": 2,
+        "filter": "Noindex",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all: URL-Menge nicht identisch",
+        "tab": "Directives"
+      }
+    ],
+    "TECH-054": [
+      {
+        "exports_checked": 2,
+        "filter": "Follow",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all: URL-Menge nicht identisch",
+        "tab": "Directives"
+      }
+    ],
+    "TECH-055": [
+      {
+        "exports_checked": 2,
+        "filter": "Nofollow",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all: URL-Menge nicht identisch",
+        "tab": "Directives"
+      }
+    ],
+    "TECH-056": [
+      {
+        "exports_checked": 2,
+        "filter": "None",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all: URL-Menge nicht identisch",
+        "tab": "Directives"
+      }
+    ],
+    "TECH-057": [
+      {
+        "exports_checked": 3,
+        "filter": "NoArchive",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all: URL-Menge nicht identisch",
+        "tab": "Directives"
+      }
+    ],
+    "TECH-058": [
+      {
+        "exports_checked": 3,
+        "filter": "NoSnippet",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all: URL-Menge nicht identisch",
+        "tab": "Directives"
+      }
+    ],
+    "TECH-059": [
+      {
+        "exports_checked": 3,
+        "filter": "Max-Snippet",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all: URL-Menge nicht identisch",
+        "tab": "Directives"
+      },
+      {
+        "exports_checked": 3,
+        "filter": "Max-Image-Preview",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all: URL-Menge nicht identisch",
+        "tab": "Directives"
+      },
+      {
+        "exports_checked": 3,
+        "filter": "Max-Video-Preview",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all: URL-Menge nicht identisch",
+        "tab": "Directives"
+      }
+    ],
+    "TECH-061": [
+      {
+        "exports_checked": 3,
+        "filter": "NoImageIndex",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all: URL-Menge nicht identisch",
+        "tab": "Directives"
+      }
+    ],
+    "TECH-062": [
+      {
+        "exports_checked": 3,
+        "filter": "NoTranslate",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all: URL-Menge nicht identisch",
+        "tab": "Directives"
+      }
+    ],
+    "TECH-063": [
+      {
+        "exports_checked": 3,
+        "filter": "Unavailable_After",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all: URL-Menge nicht identisch",
+        "tab": "Directives"
+      }
+    ],
+    "TECH-064": [
+      {
+        "exports_checked": 2,
+        "filter": "Refresh",
+        "passed": false,
+        "reason": "parity-m2-technical/directives_all: URL-Menge nicht identisch",
+        "tab": "Directives"
+      }
+    ],
+    "TECH-071": [
+      {
+        "exports_checked": 2,
+        "filter": "All",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all: URL-Menge nicht identisch",
+        "tab": "Hreflang"
+      }
+    ],
+    "TECH-073": [
+      {
+        "exports_checked": 2,
+        "filter": "Contains Hreflang",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all: URL-Menge nicht identisch",
+        "tab": "Hreflang"
+      }
+    ],
+    "TECH-074": [
+      {
+        "exports_checked": 2,
+        "filter": "Non-200 Hreflang URLs",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all: URL-Menge nicht identisch",
+        "tab": "Hreflang"
+      }
+    ],
+    "TECH-075": [
+      {
+        "exports_checked": 3,
+        "filter": "Unlinked Hreflang URLs",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all: URL-Menge nicht identisch",
+        "tab": "Hreflang"
+      }
+    ],
+    "TECH-076": [
+      {
+        "exports_checked": 2,
+        "filter": "Missing Return Links",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all: URL-Menge nicht identisch",
+        "tab": "Hreflang"
+      }
+    ],
+    "TECH-077": [
+      {
+        "exports_checked": 3,
+        "filter": "Inconsistent Language & Region Return Links",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all: URL-Menge nicht identisch",
+        "tab": "Hreflang"
+      }
+    ],
+    "TECH-078": [
+      {
+        "exports_checked": 3,
+        "filter": "Non-Canonical Return Links",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all: URL-Menge nicht identisch",
+        "tab": "Hreflang"
+      }
+    ],
+    "TECH-079": [
+      {
+        "exports_checked": 3,
+        "filter": "Noindex Return Links",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all: URL-Menge nicht identisch",
+        "tab": "Hreflang"
+      }
+    ],
+    "TECH-080": [
+      {
+        "exports_checked": 2,
+        "filter": "Incorrect Language & Region Codes",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all: URL-Menge nicht identisch",
+        "tab": "Hreflang"
+      }
+    ],
+    "TECH-081": [
+      {
+        "exports_checked": 3,
+        "filter": "Multiple Entries",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all: URL-Menge nicht identisch",
+        "tab": "Hreflang"
+      }
+    ],
+    "TECH-082": [
+      {
+        "exports_checked": 3,
+        "filter": "Missing Self Reference",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all: URL-Menge nicht identisch",
+        "tab": "Hreflang"
+      }
+    ],
+    "TECH-083": [
+      {
+        "exports_checked": 3,
+        "filter": "Not Using Canonical",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all: URL-Menge nicht identisch",
+        "tab": "Hreflang"
+      }
+    ],
+    "TECH-084": [
+      {
+        "exports_checked": 3,
+        "filter": "Missing X-Default",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all: URL-Menge nicht identisch",
+        "tab": "Hreflang"
+      }
+    ],
+    "TECH-085": [
+      {
+        "exports_checked": 2,
+        "filter": "Missing",
+        "passed": false,
+        "reason": "parity-m2-technical/hreflang_all: URL-Menge nicht identisch",
+        "tab": "Hreflang"
+      }
+    ],
+    "TECH-130": [
+      {
+        "exports_checked": 4,
+        "filter": "All",
+        "passed": false,
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
+        "tab": "Links"
+      }
+    ],
+    "TECH-132": [
+      {
+        "exports_checked": 4,
+        "filter": "Pages With High Crawl Depth",
+        "passed": false,
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
+        "tab": "Links"
+      }
+    ],
+    "TECH-133": [
+      {
+        "exports_checked": 4,
+        "filter": "Pages Without Internal Outlinks",
+        "passed": false,
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
+        "tab": "Links"
+      }
+    ],
+    "TECH-134": [
+      {
+        "exports_checked": 4,
+        "filter": "Internal Nofollow Outlinks",
+        "passed": false,
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
+        "tab": "Links"
+      }
+    ],
+    "TECH-135": [
+      {
+        "exports_checked": 4,
+        "filter": "Internal Outlinks With No Anchor Text",
+        "passed": false,
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
+        "tab": "Links"
+      }
+    ],
+    "TECH-136": [
+      {
+        "exports_checked": 5,
+        "filter": "Non-Descriptive Anchor Text In Internal Outlinks",
+        "passed": false,
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
+        "tab": "Links"
+      }
+    ],
+    "TECH-137": [
+      {
+        "exports_checked": 5,
+        "filter": "Pages With High External Outlinks",
+        "passed": false,
+        "reason": "parity-m2-links/links_all: URL-Menge nicht identisch",
+        "tab": "Links"
+      }
+    ],
+    "TECH-138": [
+      {
+        "exports_checked": 5,
+        "filter": "Pages With High Internal Outlinks",
+        "passed": false,
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
+        "tab": "Links"
+      }
+    ],
+    "TECH-139": [
+      {
+        "exports_checked": 5,
+        "filter": "Follow & Nofollow Internal Inlinks To Page",
+        "passed": false,
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
+        "tab": "Links"
+      }
+    ],
+    "TECH-140": [
+      {
+        "exports_checked": 5,
+        "filter": "Internal Nofollow Inlinks Only",
+        "passed": false,
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
+        "tab": "Links"
+      }
+    ],
+    "TECH-141": [
+      {
+        "exports_checked": 5,
+        "filter": "Outlinks To Localhost",
+        "passed": false,
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
+        "tab": "Links"
+      }
+    ],
+    "TECH-142": [
+      {
+        "exports_checked": 5,
+        "filter": "Non-Indexable Page Inlinks Only",
+        "passed": false,
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
+        "tab": "Links"
+      }
+    ],
+    "TECH-143": [
+      {
+        "exports_checked": 5,
+        "filter": "Pages With Uncrawlable Internal Outlinks",
+        "passed": false,
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
+        "tab": "Links"
+      }
+    ],
+    "TECH-281": [
+      {
+        "exports_checked": 1,
+        "filter": "All",
+        "passed": false,
+        "reason": "parity-m2-technical/validation_all: URL-Menge nicht identisch",
+        "tab": "Validation"
+      }
+    ],
+    "TECH-289": [
+      {
+        "exports_checked": 1,
+        "filter": "HTML Document Over {validation.html_doc_max_bytes}MB",
+        "passed": false,
+        "reason": "parity-m2-technical/validation_all: URL-Menge nicht identisch",
+        "tab": "Validation"
+      }
+    ],
+    "TECH-290": [
+      {
+        "exports_checked": 1,
+        "filter": "Resource Over {validation.resource_max_bytes}MB",
+        "passed": false,
+        "reason": "parity-m2-technical/validation_all: URL-Menge nicht identisch",
+        "tab": "Validation"
+      }
+    ]
+  },
+  "definition": "SQ-01: je Filter-ID, Tab-All auf allen Sites plus eigener Filterexport; URL-Menge, null Zellfehler, vollständige Spalten, DEV erlaubt, REF-FREE sperrt; ohne Change Detection",
+  "denominator": 155,
+  "pct": 40.645161290322584,
+  "referencable_ids": [
+    "CRAWL-012",
+    "ONPAGE-001",
+    "ONPAGE-009",
+    "ONPAGE-021",
+    "ONPAGE-022",
+    "ONPAGE-023",
+    "ONPAGE-024",
+    "ONPAGE-025",
+    "ONPAGE-026",
+    "ONPAGE-031",
+    "ONPAGE-032",
+    "ONPAGE-033",
+    "ONPAGE-034",
+    "ONPAGE-035",
+    "ONPAGE-036",
+    "ONPAGE-037",
+    "ONPAGE-038",
+    "ONPAGE-039",
+    "ONPAGE-040",
+    "ONPAGE-041",
+    "ONPAGE-042",
+    "ONPAGE-043",
+    "ONPAGE-051",
+    "ONPAGE-052",
+    "ONPAGE-054",
+    "ONPAGE-055",
+    "ONPAGE-056",
+    "ONPAGE-058",
+    "ONPAGE-059",
+    "ONPAGE-060",
+    "ONPAGE-061",
+    "ONPAGE-062",
+    "ONPAGE-063",
+    "ONPAGE-070",
+    "ONPAGE-071",
+    "ONPAGE-072",
+    "ONPAGE-073",
+    "ONPAGE-074",
+    "ONPAGE-075",
+    "ONPAGE-076",
+    "ONPAGE-077",
+    "ONPAGE-078",
+    "ONPAGE-079",
+    "ONPAGE-080",
+    "ONPAGE-081",
+    "ONPAGE-091",
+    "ONPAGE-092",
+    "ONPAGE-093",
+    "ONPAGE-094",
+    "ONPAGE-095",
+    "ONPAGE-096",
+    "ONPAGE-097",
+    "ONPAGE-098",
+    "ONPAGE-101",
+    "ONPAGE-102",
+    "ONPAGE-103",
+    "ONPAGE-104",
+    "ONPAGE-105",
+    "ONPAGE-106",
+    "ONPAGE-107",
+    "ONPAGE-110",
+    "ONPAGE-111",
+    "ONPAGE-112",
+    "ONPAGE-113",
+    "ONPAGE-121",
+    "ONPAGE-122",
+    "ONPAGE-123",
+    "ONPAGE-124",
+    "ONPAGE-125",
+    "ONPAGE-126",
+    "ONPAGE-131",
+    "ONPAGE-132",
+    "ONPAGE-133",
+    "ONPAGE-134",
+    "ONPAGE-135",
+    "ONPAGE-142",
+    "ONPAGE-143",
+    "ONPAGE-144",
+    "ONPAGE-146",
+    "ONPAGE-147",
+    "ONPAGE-148",
+    "ONPAGE-150",
+    "ONPAGE-151",
+    "ONPAGE-171",
+    "ONPAGE-174",
+    "ONPAGE-175",
+    "ONPAGE-176",
+    "ONPAGE-177",
+    "ONPAGE-179",
+    "TECH-011",
+    "TECH-012",
+    "TECH-013",
+    "TECH-014",
+    "TECH-015",
+    "TECH-016",
+    "TECH-017",
+    "TECH-018",
+    "TECH-019",
+    "TECH-020",
+    "TECH-021",
+    "TECH-022",
+    "TECH-031",
+    "TECH-032",
+    "TECH-033",
+    "TECH-034",
+    "TECH-035",
+    "TECH-036",
+    "TECH-037",
+    "TECH-038",
+    "TECH-039",
+    "TECH-040",
+    "TECH-041",
+    "TECH-051",
+    "TECH-052",
+    "TECH-053",
+    "TECH-054",
+    "TECH-055",
+    "TECH-056",
+    "TECH-057",
+    "TECH-058",
+    "TECH-059",
+    "TECH-061",
+    "TECH-062",
+    "TECH-063",
+    "TECH-064",
+    "TECH-071",
+    "TECH-073",
+    "TECH-074",
+    "TECH-075",
+    "TECH-076",
+    "TECH-077",
+    "TECH-078",
+    "TECH-079",
+    "TECH-080",
+    "TECH-081",
+    "TECH-082",
+    "TECH-083",
+    "TECH-084",
+    "TECH-085",
+    "TECH-130",
+    "TECH-132",
+    "TECH-133",
+    "TECH-134",
+    "TECH-135",
+    "TECH-136",
+    "TECH-137",
+    "TECH-138",
+    "TECH-139",
+    "TECH-140",
+    "TECH-141",
+    "TECH-142",
+    "TECH-143",
+    "TECH-281",
+    "TECH-289",
+    "TECH-290"
+  ],
+  "target_pct": 60,
+  "verified": 63,
+  "verified_ids": [
+    "ONPAGE-009",
+    "ONPAGE-025",
+    "ONPAGE-026",
+    "ONPAGE-031",
+    "ONPAGE-032",
+    "ONPAGE-033",
+    "ONPAGE-034",
+    "ONPAGE-035",
+    "ONPAGE-036",
+    "ONPAGE-037",
+    "ONPAGE-038",
+    "ONPAGE-039",
+    "ONPAGE-040",
+    "ONPAGE-041",
+    "ONPAGE-042",
+    "ONPAGE-070",
+    "ONPAGE-071",
+    "ONPAGE-072",
+    "ONPAGE-073",
+    "ONPAGE-074",
+    "ONPAGE-075",
+    "ONPAGE-076",
+    "ONPAGE-077",
+    "ONPAGE-078",
+    "ONPAGE-079",
+    "ONPAGE-080",
+    "ONPAGE-081",
+    "ONPAGE-091",
+    "ONPAGE-092",
+    "ONPAGE-093",
+    "ONPAGE-094",
+    "ONPAGE-095",
+    "ONPAGE-096",
+    "ONPAGE-097",
+    "ONPAGE-098",
+    "ONPAGE-101",
+    "ONPAGE-102",
+    "ONPAGE-103",
+    "ONPAGE-104",
+    "ONPAGE-105",
+    "ONPAGE-106",
+    "ONPAGE-107",
+    "ONPAGE-110",
+    "ONPAGE-111",
+    "ONPAGE-112",
+    "ONPAGE-113",
+    "ONPAGE-121",
+    "ONPAGE-122",
+    "ONPAGE-123",
+    "ONPAGE-124",
+    "ONPAGE-125",
+    "ONPAGE-126",
+    "ONPAGE-131",
+    "ONPAGE-132",
+    "ONPAGE-133",
+    "ONPAGE-134",
+    "ONPAGE-135",
+    "ONPAGE-171",
+    "ONPAGE-174",
+    "ONPAGE-175",
+    "ONPAGE-176",
+    "ONPAGE-177",
+    "ONPAGE-179"
+  ]
+}
