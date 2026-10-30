@@ -36,13 +36,13 @@ Einmalig neue Linux-Entwicklungsbilder: derselbe Visual-Befehl mit `--update-sna
 
 Playwright nutzt `baselines/{platform}/{projectName}/{testFilePath}/{arg}{ext}`: darwin/WebKit und win32/Chromium sind getrennt von linux. Baselines erst nach visueller Prüfung als Abnahme committen. Linux-Ordner nicht auf andere Plattformen kopieren.
 
-macOS (unlocked GUI ist erst für native Tests erforderlich):
+macOS (unlocked GUI ist erst für native Tests erforderlich; zuerst Werkzeugprüfung, N12 vor Baselines abschließen):
 
 ```sh
 cargo build --locked -p os-app --features e2e-bridge --bin os-app-bridge -j 6
-npx playwright test -c apps/desktop/e2e/visual/playwright.config.ts --project=webkit-2 --workers=4 --update-snapshots
-npx playwright test -c apps/desktop/e2e/visual/playwright.config.ts --project=webkit-2 --workers=4
-npx playwright test -c apps/desktop/e2e/keyboard-suite/playwright.config.ts --project=webkit --workers=4
+npx playwright test -c apps/desktop/e2e/visual/playwright.config.ts --project=webkit-2 --workers=1 --update-snapshots
+npx playwright test -c apps/desktop/e2e/visual/playwright.config.ts --project=webkit-2 --workers=1
+npx playwright test -c apps/desktop/e2e/keyboard-suite/playwright.config.ts --project=webkit --workers=1
 ```
 
 Windows (PowerShell):
