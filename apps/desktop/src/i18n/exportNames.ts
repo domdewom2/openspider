@@ -51,12 +51,8 @@ export function exportDisplayName(name: string, lookup: Lookup, separator = ": "
       return messages.every((value): value is string => value !== null) ? messages.join(" ") : null;
     }
   }
-  // Older catalogs lack provenance: preserve the entire custom name, including suffixes.
-  const custom = /^(Custom Search|Custom Extraction):(.+)$/.exec(name);
-  if (custom) {
-    const group = lookup(canonKey("tab", custom[1]!));
-    return group === null ? null : `${group}${separator}${custom[2]}`;
-  }
+  // Remaining keys are catalog-owned labels. User names arrive exclusively through
+  // custom-export metadata above, even when their text matches a static label.
   const part = (value: string): string | null => {
     const direct = lookup(exportNameKey(value)) ?? lookup(canonKey("tab", value)) ?? lookup(canonKey("filter", value));
     if (direct !== null) return direct;

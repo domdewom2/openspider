@@ -29,6 +29,41 @@ it("translates the shipped export and report catalog through the same resolver f
 });
 
 // spec: UI-121
+// spec: OUT-271
+it("fully translates static collective exports while preserving colliding user labels", () => {
+  const collective = [
+    ["Custom Search:All Filters", "Eigene Suche: Alle Filter"],
+    ["Custom Extraction:All Extractions", "Eigene Extraktion: Alle Extraktionen"],
+  ];
+  for (const [key, expected] of collective) {
+    expect(namesInCore()).toContain(key);
+    expect(i18n.translate("de", key!)).toBe(expected);
+    expect(i18n.translate("en", key!)).toBe(key);
+  }
+  for (const [group, title] of [["search", "Eigene Suche"], ["extraction", "Eigene Extraktion"]]) {
+    for (const name of ["All Filters", "All Extractions", "Screenshots", "Stock Inlinks"]) {
+      for (const inlinks of [false, true]) {
+        const key = `custom-export:${JSON.stringify({ group, name, inlinks })}`;
+        expect(i18n.translate("de", key)).toBe(`${title}: ${name}${inlinks ? " – eingehende Links" : ""}`);
+      }
+    }
+  }
+});
+
+// spec: UI-121
+// spec: OUT-271
+it("does not leak English catalog text in any static German export label", () => {
+  const leaks = namesInCore().filter(key => {
+    const german = i18n.translate("de", key);
+    // Technical names and German homographs are checked by the resource catalog tests.
+    const english = key.split(":").at(-1)!;
+    const invariant = /^(?:WCAG [\d.]+ A+|NoODP|NoYDIR)$/;
+    return !invariant.test(english) && german.includes(english);
+  });
+  expect(leaks).toEqual([]);
+});
+
+// spec: UI-121
 it("leaves unknown names to the caller's canonical fallback without partially translated names", () => {
   expect(exportDisplayName("Future:Unknown", () => null)).toBeNull();
   expect(i18n.translate("de", "future-key", undefined, { fallback: "Future" })).toBe("Future");
@@ -37,8 +72,8 @@ it("leaves unknown names to the caller's canonical fallback without partially tr
 // spec: UI-121
 it("translates numeric image limits and custom exports while preserving user names as data", () => {
   expect(i18n.translate("de", "Images:Images Over 100 KB Inlinks")).toBe("Bilder: Bilder über 100 KB – eingehende Links");
-  expect(i18n.translate("de", "Custom Search:Stock: EU Inlinks")).toBe("Eigene Suche: Stock: EU Inlinks");
-  expect(i18n.translate("de", "Custom Extraction:Extractor 2 Inlinks")).toBe("Eigene Extraktion: Extractor 2 Inlinks");
+  expect(i18n.translate("de", `custom-export:${JSON.stringify({ group: "search", name: "Stock: EU Inlinks", inlinks: false })}`)).toBe("Eigene Suche: Stock: EU Inlinks");
+  expect(i18n.translate("de", `custom-export:${JSON.stringify({ group: "extraction", name: "Extractor 2 Inlinks", inlinks: false })}`)).toBe("Eigene Extraktion: Extractor 2 Inlinks");
 });
 
 // spec: UI-121
@@ -65,8 +100,6 @@ it("uses catalog metadata to distinguish user names from generated Inlinks and d
   }
   expect(label("extraction", "Extractor 2", true, 2)).toBe("Eigene Extraktion: Extraktor 2 – eingehende Links");
   expect(label("search", "Filter 1", false, 1)).toBe("Eigene Suche: Filter 1");
-  expect(i18n.translate("de", "Custom Search:Screenshots")).toBe("Eigene Suche: Screenshots");
-  expect(i18n.translate("de", "Custom Search:Stock Inlinks")).toBe("Eigene Suche: Stock Inlinks");
 });
 
 // spec: UI-121 [P1]
