@@ -90,6 +90,29 @@ fn list_chains_include_zero_and_one_hop_starts_in_upload_order() {
     );
 }
 
+// spec: OUT-081 [M2]
+// spec: OUT-085 [M2]
+#[test]
+fn all_redirects_excludes_zero_hop_list_urls() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = file(dir.path(), CrawlMode::List);
+    let out = tempfile::tempdir().unwrap();
+    let result = save_report(
+        &file,
+        &CrawlConfig::default(),
+        "Redirects:All Redirects",
+        out.path(),
+        Format::Csv,
+    )
+    .unwrap();
+    let table = Table::read(&result.files[0].path);
+    assert_eq!(
+        table.column("Address"),
+        ["https://site.test/start", "https://site.test/middle"]
+    );
+    assert_eq!(table.column("Number of Redirects"), ["2", "1"]);
+}
+
 // spec: OUT-080
 // spec: ONPAGE-057
 #[test]

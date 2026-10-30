@@ -802,7 +802,8 @@ fn compare_one(
     })?;
     // OUT-015/085: upload order is normative for list exports. Reference
     // reports can be emitted in completion order, unlike their tab exports.
-    if p.mapping.ordered
+    if p.entry.os.starts_with("report:")
+        && p.mapping.ordered
         && p.mapping.key.iter().any(|k| k == "Address")
         && p.mapping.key.iter().all(|k| k == "Address" || k == "#")
     {

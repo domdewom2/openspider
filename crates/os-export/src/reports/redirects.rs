@@ -585,7 +585,7 @@ fn write_rows(
     ctx: &mut crate::types::ExportCtx<'_>,
     header: bool,
 ) -> Result<u64, ExportError> {
-    // OUT-085: Im Listenmodus bleibt jede Listen-URL sichtbar, auch ohne Sprung.
+    // OUT-085: Nur der Chains-Report enthält Listen-URLs ohne Sprung.
     let is_list: bool =
         db(file
             .conn()
@@ -596,7 +596,7 @@ fn write_rows(
     for id in start_ids(file)? {
         let chain = chain_for(file, id)?;
         let keep = match which {
-            RedirectReport::All => true,
+            RedirectReport::All => chain.edges() >= 1,
             RedirectReport::Errors => error_target(file, &chain)?,
             RedirectReport::Chains => {
                 is_list || chain.edges() >= 2 || chain.outcome == ChainOutcome::Loop
