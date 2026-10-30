@@ -388,7 +388,9 @@ jobs:
           if [[ "${{ steps.updater.outputs.enabled }}" == true ]]; then
             updates=("$BUNDLE_DIR"/macos/*.app.tar.gz)
             [[ ${#updates[@]} -eq 1 && -s "${updates[0]}.sig" ]]
-            cp "${updates[0]}" "${updates[0]}.sig" "$out/"
+            # Unique release-asset names; copying/renaming preserves the signed archive bytes.
+            cp "${updates[0]}" "$out/OpenSpider_${ARCH}.app.tar.gz"
+            cp "${updates[0]}.sig" "$out/OpenSpider_${ARCH}.app.tar.gz.sig"
           fi
           rc=0
           scripts/release/verify-macos.sh "${apps[0]}" 2>&1 | tee "$out/verify-app.log" || rc=1
