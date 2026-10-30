@@ -55,3 +55,18 @@ fn malformed_head_keeps_body_title_for_the_length_filter() {
     assert_eq!(sets.titles[0].len, 9);
     assert!(!sets.titles[0].in_head);
 }
+
+// spec: TECH-283
+// spec: TECH-284
+#[test]
+fn missing_head_is_also_not_first() {
+    let html = include_str!("../../../tests/fixtures/n09-technical/head-missing.html");
+    let facts = os_parse::validation::analyze(html);
+    for code in ["missing-head", "head-not-first"] {
+        assert!(facts.issues.iter().any(|i| i.code == code), "{code}");
+    }
+    let valid = os_parse::validation::analyze(
+        "<!doctype html><!-- comment --><html> \n<head></head><body></body></html>",
+    );
+    assert!(!valid.issues.iter().any(|i| i.code == "head-not-first"));
+}

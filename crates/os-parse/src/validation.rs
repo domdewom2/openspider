@@ -215,6 +215,7 @@ pub fn analyze(html: &str) -> ValidationFacts {
     let mut scan = tokenizer.sink.0.into_inner();
     if scan.facts.tokens.head_count == 0 {
         scan.issue("missing-head", None, true);
+        scan.issue("head-not-first", None, true);
     }
     if scan.facts.tokens.body_count == 0 {
         scan.issue("missing-body", None, false);
