@@ -111,9 +111,9 @@ fn apply(
         };
         unlinked = found;
         let Some(found) = collect(conn, "SELECT DISTINCT p.url_id FROM pagination p JOIN urls t ON t.id = p.target_id \
-            WHERE t.state = 'done' AND t.status_code = 200 AND t.content_class = 'HTML' \
-            AND NOT EXISTS (SELECT 1 FROM pagination r WHERE r.url_id = t.id AND r.target_id = p.url_id \
-                AND r.rel = CASE p.rel WHEN 'next' THEN 'prev' ELSE 'next' END)", cancel)? else {
+            WHERE t.state = 'done' AND (t.status_code NOT BETWEEN 200 AND 299 OR \
+            (t.status_code = 200 AND t.content_class = 'HTML' AND NOT EXISTS (SELECT 1 FROM pagination r WHERE r.url_id = t.id AND r.target_id = p.url_id \
+                AND r.rel = CASE p.rel WHEN 'next' THEN 'prev' ELSE 'next' END)))", cancel)? else {
             return Ok(StepState::Pending);
         };
         sequence = found;

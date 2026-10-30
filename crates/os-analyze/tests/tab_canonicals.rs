@@ -772,7 +772,7 @@ async fn canonical_variants_resolve_to_absolute_urls_and_compare_after_normalisa
     // In den Spalten steht die aufgelöste absolute URL (Fragment bleibt stehen), bei ungültiger URL der Rohwert.
     assert_eq!(value("/u/rel.html"), "/u/rel.html");
     assert_eq!(value("/u/dotdot.html"), "/u/dotdot.html");
-    assert_eq!(value("/u/fragment.html"), "/u/fragment.html#top");
+    assert_eq!(value("/u/fragment.html"), "/u/fragment.html");
     assert_eq!(
         value("/u/empty.html"),
         "/u/empty.html",

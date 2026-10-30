@@ -199,12 +199,12 @@ fn inconsistency_uses_source_selfcode_and_backlink_case_insensitively() {
 #[test]
 fn canonical_alternates_exclude_selfcanon_and_uncrawled() {
     let (_dir, file, cfg) = fixture();
-    assert!(has(&file, &cfg, "Non-Canonical Return Links", 1));
+    assert!(has(&file, &cfg, "Non-Canonical Return Links", 7));
     assert!(!has(&file, &cfg, "Non-Canonical Return Links", 2));
     file.conn()
         .execute("UPDATE urls SET state='queued' WHERE id IN (6,7)", [])
         .unwrap();
-    assert!(!has(&file, &cfg, "Non-Canonical Return Links", 1));
+    assert!(!has(&file, &cfg, "Non-Canonical Return Links", 7));
 }
 // spec: TECH-079
 #[test]

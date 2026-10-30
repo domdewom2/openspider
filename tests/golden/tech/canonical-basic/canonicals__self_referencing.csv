@@ -3,7 +3,7 @@ Address,Occurrences,Indexability Status,Canonical URL
 /case/A,1,,/case/A
 /case/a,1,,/case/a
 /excluded/noindex-target.html,1,noindex,/excluded/noindex-target.html
-/fragment.html,1,,/fragment.html#top
+/fragment.html,1,,/fragment.html
 /head-self-body-other.html,1,,/head-self-body-other.html
 /header-only.html,1,,/header-only.html
 /noindex-target.html,1,noindex,/noindex-target.html

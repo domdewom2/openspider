@@ -112,7 +112,7 @@ fn unlinked_ignores_annotation_redirect_and_external_inlinks_but_counts_noindex_
 // spec: TECH-021
 // spec: TECH-022
 #[test]
-fn live_attribute_and_fragment_filters_keep_the_display_fragment() {
+fn live_attribute_and_fragment_filters_strip_the_display_fragment() {
     let fx = fixture();
     assert_eq!(
         addresses(&fx, "Invalid Attribute In Annotation"),
@@ -124,7 +124,7 @@ fn live_attribute_and_fragment_filters_keep_the_display_fragment() {
     let result = query_view(&fx.file, &fx.cfg, &q).unwrap();
     assert_eq!(
         result.rows[0][0],
-        Value::Text("https://site.test/hidden#top".into())
+        Value::Text("https://site.test/hidden".into())
     );
 }
 

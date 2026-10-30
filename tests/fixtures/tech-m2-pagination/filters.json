@@ -85,6 +85,7 @@
     "self"
   ],
   "Sequence Error": [
+    "broken",
     "canonicalised",
     "created",
     "first-unknown",
@@ -97,8 +98,10 @@
     "orphan-source",
     "prev-a",
     "prev-b",
+    "redirect-source",
     "self",
     "seq-a",
-    "seq-b"
+    "seq-b",
+    "to-external"
   ]
 }

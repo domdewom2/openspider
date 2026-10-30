@@ -7,7 +7,7 @@ Address,Occurrences,Indexability Status,Canonical URL
 /u/dotdot.html,1,,/u/dotdot.html
 /u/empty.html,1,,/u/empty.html
 /u/explicit-slash.html,1,,/u/explicit-slash.html
-/u/fragment.html,1,,/u/fragment.html#top
+/u/fragment.html,1,,/u/fragment.html
 /u/pct-case.html,1,Canonicalised,/u/pct%c3%a4.html
 /u/query.html,1,Canonicalised,/u/query.html?x=1
 /u/query.html?x=1,1,,/u/query.html?x=1

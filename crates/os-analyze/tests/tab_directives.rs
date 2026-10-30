@@ -191,13 +191,11 @@ const REFRESH: &[&str] = &[
     "/refresh-0.html",
     "/refresh-5-self.html",
     "/refresh-bare.html",
-    "/refresh-header.html",
     "/refresh-query.html",
     "/refresh-query.html?x=1",
     "/refresh-self-0.html",
     "/refresh-self-300.html",
     "/refresh-self-fragment.html",
-    "/refresh-self-header.html",
 ];
 
 // ---------------------------------------------------------------------------------------------------------------

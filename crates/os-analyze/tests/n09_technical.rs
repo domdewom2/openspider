@@ -223,3 +223,101 @@ async fn noindex_return_links_also_checks_the_self_annotation() {
     actual.sort();
     assert_eq!(actual, ["/de.html", "/lang.html"]);
 }
+
+// spec: TECH-022
+// spec: TECH-018
+#[tokio::test]
+async fn fragment_is_retained_for_filtering_but_removed_from_both_canonical_columns() {
+    let cfg = CrawlConfig::default();
+    let fx = crawl_fixture_from("n09-technical", "http://site.test/", cfg.clone()).await;
+    fx.file
+        .conn()
+        .execute(
+            "UPDATE canonicals SET raw=raw || '#top', resolved=resolved || '#top'",
+            [],
+        )
+        .unwrap();
+    assert!(!paths(&fx.file, &cfg, "Canonicals", "Contains Fragment URL").is_empty());
+    for source in ["html", "http"] {
+        fx.file
+            .conn()
+            .execute("UPDATE canonicals SET source=?1", [source])
+            .unwrap();
+        let mut q = ViewQuery::new("Canonicals", "Contains Fragment URL");
+        q.columns = ColumnSelection::Named(vec![if source == "html" {
+            "Canonical Link Element"
+        } else {
+            "HTTP Canonical"
+        }
+        .into()]);
+        let rows = query_view(&fx.file, &cfg, &q).unwrap().rows;
+        assert!(!rows.is_empty());
+        assert!(rows
+            .iter()
+            .flatten()
+            .all(|v| !matches!(v, Value::Text(s) if s.contains('#'))));
+    }
+}
+
+// spec: TECH-041
+#[tokio::test]
+async fn fetched_error_pagination_target_is_also_a_sequence_error() {
+    use os_analyze::analysis::{runner::run_only, CancelToken};
+    let cfg = CrawlConfig::default();
+    let fx = crawl_fixture_from("n09-technical", "http://site.test/", cfg.clone()).await;
+    fx.file.conn().execute("INSERT INTO pagination(url_id,source,position,rel,raw,url,target_id,in_head) SELECT s.id,'html',0,'next','/gone.html',t.url,t.id,1 FROM urls s,urls t WHERE s.url='http://site.test/' AND t.url='http://site.test/gone.html'", []).unwrap();
+    let run = || {
+        run_only(
+            &fx.file,
+            &cfg,
+            &CancelToken::new(),
+            &|_, _| {},
+            &[os_model::AnalysisStep::Pagination],
+        )
+        .unwrap()
+    };
+    run();
+    assert_eq!(paths(&fx.file, &cfg, "Pagination", "Sequence Error"), ["/"]);
+    fx.file.conn().execute("UPDATE urls SET state='queued',status_code=NULL WHERE url='http://site.test/gone.html'", []).unwrap();
+    run();
+    assert!(paths(&fx.file, &cfg, "Pagination", "Sequence Error").is_empty());
+}
+
+// spec: TECH-078
+#[tokio::test]
+async fn noncanonical_return_filter_lists_the_alternate_target_and_updates_live() {
+    let cfg = CrawlConfig::default();
+    let fx = crawl_fixture_from("n09-technical", "http://site.test/", cfg.clone()).await;
+    fx.file.conn().execute("UPDATE urls SET canonical_count=1,canonical_self=0 WHERE url='http://site.test/de.html'", []).unwrap();
+    assert_eq!(
+        paths(&fx.file, &cfg, "Hreflang", "Non-Canonical Return Links"),
+        ["/de.html"]
+    );
+    fx.file
+        .conn()
+        .execute(
+            "UPDATE urls SET canonical_self=1 WHERE url='http://site.test/de.html'",
+            [],
+        )
+        .unwrap();
+    assert!(paths(&fx.file, &cfg, "Hreflang", "Non-Canonical Return Links").is_empty());
+}
+
+// spec: TECH-064
+#[tokio::test]
+async fn refresh_filter_and_meta_column_only_include_meta_elements() {
+    let cfg = CrawlConfig::default();
+    let fx = crawl_fixture_from("n09-technical", "http://site.test/", cfg.clone()).await;
+    let actual = paths(&fx.file, &cfg, "Directives", "Refresh");
+    assert!(!actual.contains(&"/header.html".into()));
+    assert!(actual.contains(&"/meta.html".into()));
+    assert!(!actual.contains(&"/header-bare.html".into()));
+    let mut q = ViewQuery::new("Directives", "All");
+    q.columns = ColumnSelection::Named(vec!["Address".into(), "Meta Refresh".into()]);
+    let rows = query_view(&fx.file, &cfg, &q).unwrap().rows;
+    let header = rows
+        .iter()
+        .find(|r| r[0] == Value::Text("http://site.test/header.html".into()))
+        .unwrap();
+    assert_eq!(header[1], Value::Text(String::new()));
+}

@@ -68,6 +68,14 @@ fn relationship_predicate(filter: &str) -> String {
 }
 
 fn relationship_filter(id: &'static str) -> FilterDef {
+    // K2-93/TECH-078: the tab lists the canonicalised alternate Q. Reports retain P -> Q.
+    if id == "Non-Canonical Return Links" {
+        return filter(id, "u.state = 'done' AND u.status_code = 200 AND u.content_class = 'HTML' \
+            AND u.canonical_count > 0 AND u.canonical_self = 0 \
+            AND EXISTS (SELECT 1 FROM hreflang h JOIN urls p ON p.id = h.url_id \
+                WHERE h.target_id = u.id AND p.id <> u.id AND p.is_internal = 1 \
+                AND p.in_tables = 1 AND p.status_code BETWEEN 200 AND 299 AND p.content_class = 'HTML')");
+    }
     let mut def = filter(id, intern(&format!(
         "EXISTS (SELECT 1 FROM hreflang h JOIN urls q ON q.id = h.target_id WHERE h.url_id = u.id AND ({}))",
         relationship_predicate(id)

@@ -46,12 +46,12 @@ fn filter(id: &'static str, predicate: &'static str) -> FilterDef {
     }
 }
 
-/// `Meta Refresh n`: Rohwert; Meta-Elemente zuerst (Quelltextreihenfolge), dann `Refresh`-Header.
+/// `Meta Refresh n`: Rohwert der Meta-Elemente in Quelltextreihenfolge (K2-93).
 fn meta_refresh_column() -> ColumnDef {
     multi_column(
         "Meta Refresh",
-        "SELECT r.raw FROM refresh r WHERE r.url_id = ?1 \
-         ORDER BY CASE r.source WHEN 'meta' THEN 0 ELSE 1 END, r.position",
+        "SELECT r.raw FROM refresh r WHERE r.url_id = ?1 AND r.source = 'meta' \
+         ORDER BY r.position",
         ColumnKind::Text,
     )
 }
@@ -101,7 +101,7 @@ pub fn tab() -> TabDef {
             filter("None", has_token!("none")),
             filter(
                 "Refresh",
-                "EXISTS (SELECT 1 FROM refresh r WHERE r.url_id = u.id)",
+                "EXISTS (SELECT 1 FROM refresh r WHERE r.url_id = u.id AND r.source = 'meta')",
             ),
             filter("NoArchive", has_token!("noarchive")),
             filter("NoSnippet", has_token!("nosnippet")),
