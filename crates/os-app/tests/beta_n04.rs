@@ -24,6 +24,7 @@ impl Drop for ReleaseReaders {
 // spec: UI-124
 #[tokio::test]
 async fn synthetic_5000_live_details_filter_pause_resume_and_reopen() {
+    tokio::time::timeout(Duration::from_secs(750), async {
     let site = os_testsite::TestSite::start_spec(
         "synthetic:n=5000,links=30,seed=7",
         os_testsite::SiteOptions::default(),
@@ -81,7 +82,8 @@ async fn synthetic_5000_live_details_filter_pause_resume_and_reopen() {
             pool.run(key, move |_, _| {
                 let _ = started.send(());
                 let guard = wake.0.lock().unwrap();
-                drop(wake.1.wait_while(guard, |released| !*released).unwrap());
+                let (_guard, timed) = wake.1.wait_timeout_while(guard, Duration::from_secs(30), |released| !*released).unwrap();
+                assert!(!timed.timed_out(), "fixture reader was not released within 30 seconds");
                 Ok(())
             })
             .await
@@ -200,123 +202,141 @@ async fn synthetic_5000_live_details_filter_pause_resume_and_reopen() {
     assert!(summary.urls >= 5000);
     assert_eq!(summary.phase, os_app::dto::CrawlPhase::Completed);
     assert!(before.elapsed() < Duration::from_secs(5));
+
+    }).await.expect("N04 fixture exceeded its internal deadline");
 }
 
 // spec: UI-129
 #[tokio::test]
 async fn stopped_mcp_catalog_contains_all_tools_without_starting_server() {
-    let dir = tempfile::tempdir().unwrap();
-    let app = app(dir.path());
-    let before = call(&app, "mcp.status", json!({})).await;
-    assert_eq!(before["kind"], "off");
-    let tools = call(&app, "mcp.tools", json!({})).await;
-    assert!(tools.as_array().unwrap().len() == os_mcp::tools::all().len());
-    assert!(tools
-        .as_array()
-        .unwrap()
-        .iter()
-        .any(|t| t["name"] == "query_urls"));
-    assert_eq!(call(&app, "mcp.status", json!({})).await, before);
+    tokio::time::timeout(Duration::from_secs(10), async {
+        let dir = tempfile::tempdir().unwrap();
+        let app = app(dir.path());
+        let before = call(&app, "mcp.status", json!({})).await;
+        assert_eq!(before["kind"], "off");
+        let tools = call(&app, "mcp.tools", json!({})).await;
+        assert!(tools.as_array().unwrap().len() == os_mcp::tools::all().len());
+        assert!(tools
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|t| t["name"] == "query_urls"));
+        assert_eq!(call(&app, "mcp.status", json!({})).await, before);
+    })
+    .await
+    .expect("N04 fixture exceeded its internal deadline");
 }
 
 // spec: CRAWL-126 [M2]
 // spec: UI-124
 #[tokio::test]
 async fn failed_open_reports_reason_as_well_as_returning_error() {
-    #[derive(Clone)]
-    struct Logs(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
-    impl std::io::Write for Logs {
-        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
-            self.0.lock().unwrap().extend_from_slice(bytes);
-            Ok(bytes.len())
+    tokio::time::timeout(Duration::from_secs(10), async {
+        #[derive(Clone)]
+        struct Logs(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
+        impl std::io::Write for Logs {
+            fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+                self.0.lock().unwrap().extend_from_slice(bytes);
+                Ok(bytes.len())
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
         }
-        fn flush(&mut self) -> std::io::Result<()> {
-            Ok(())
+        let bytes = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+        let logs = Logs(bytes.clone());
+        let _subscriber = tracing::subscriber::set_default(
+            tracing_subscriber::fmt()
+                .without_time()
+                .with_ansi(false)
+                .with_max_level(tracing::Level::INFO)
+                .with_writer(move || logs.clone())
+                .finish(),
+        );
+        let dir = tempfile::tempdir().unwrap();
+        let (app, _clock) = manual_app(dir.path());
+        let sink = std::sync::Arc::new(os_app::events::CollectingSink::new());
+        app.subscribe(window(), sink.clone());
+        let path = dir.path().join("broken.ospider");
+        std::fs::write(&path, b"invalid fixture").unwrap();
+        let error = app
+            .dispatch(ctx(), "crawl.open", json!({"kind":"path","path":path}))
+            .await
+            .unwrap_err();
+        let mut notices = app
+            .assemble_tick()
+            .map(|tick| tick.notices)
+            .unwrap_or_default();
+        for event in sink.take() {
+            if let os_app::dto::UiEvent::Tick { tick } = event {
+                notices.extend(tick.notices);
+            }
         }
-    }
-    let bytes = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
-    let logs = Logs(bytes.clone());
-    let _subscriber = tracing::subscriber::set_default(
-        tracing_subscriber::fmt()
-            .without_time()
-            .with_ansi(false)
-            .with_max_level(tracing::Level::INFO)
-            .with_writer(move || logs.clone())
-            .finish(),
-    );
-    let dir = tempfile::tempdir().unwrap();
-    let (app, _clock) = manual_app(dir.path());
-    let sink = std::sync::Arc::new(os_app::events::CollectingSink::new());
-    app.subscribe(window(), sink.clone());
-    let path = dir.path().join("broken.ospider");
-    std::fs::write(&path, b"invalid fixture").unwrap();
-    let error = app
-        .dispatch(ctx(), "crawl.open", json!({"kind":"path","path":path}))
-        .await
-        .unwrap_err();
-    let mut notices = app
-        .assemble_tick()
-        .map(|tick| tick.notices)
-        .unwrap_or_default();
-    for event in sink.take() {
-        if let os_app::dto::UiEvent::Tick { tick } = event {
-            notices.extend(tick.notices);
-        }
-    }
-    let failure = notices
-        .iter()
-        .find(|n| n.code == "crawl-open-failed")
-        .expect("opening failure is visible");
-    assert_eq!(failure.args["detail"], json!(error.detail));
-    assert!(notices.iter().any(|n| n.code == "crawl-open-started"));
-    let log = String::from_utf8(bytes.lock().unwrap().clone()).unwrap();
-    assert!(log.contains("Crawl-Datei öffnen: begonnen"), "{log}");
-    assert!(log.contains("Crawl-Datei öffnen: fehlgeschlagen"), "{log}");
-    assert!(log.contains("reason="), "{log}");
-    assert!(log.contains("detail="), "{log}");
+        let failure = notices
+            .iter()
+            .find(|n| n.code == "crawl-open-failed")
+            .expect("opening failure is visible");
+        assert_eq!(failure.args["detail"], json!(error.detail));
+        assert!(notices.iter().any(|n| n.code == "crawl-open-started"));
+        let log = String::from_utf8(bytes.lock().unwrap().clone()).unwrap();
+        assert!(log.contains("Crawl-Datei öffnen: begonnen"), "{log}");
+        assert!(log.contains("Crawl-Datei öffnen: fehlgeschlagen"), "{log}");
+        assert!(log.contains("reason="), "{log}");
+        assert!(log.contains("detail="), "{log}");
+    })
+    .await
+    .expect("N04 fixture exceeded its internal deadline");
 }
 
 // spec: UI-129
 #[tokio::test]
 async fn tool_catalogue_does_not_wait_for_server_lifecycle_lock() {
-    let dir = tempfile::tempdir().unwrap();
-    let app = app(dir.path());
-    let service = app.ext::<os_app::mcp::Service>();
-    let _lifecycle = service.state.lock().await;
-    let tools = tokio::time::timeout(
-        Duration::from_secs(1),
-        app.dispatch(ctx(), "mcp.tools", json!({})),
-    )
+    tokio::time::timeout(Duration::from_secs(10), async {
+        let dir = tempfile::tempdir().unwrap();
+        let app = app(dir.path());
+        let service = app.ext::<os_app::mcp::Service>();
+        let _lifecycle = service.state.lock().await;
+        let tools = tokio::time::timeout(
+            Duration::from_secs(1),
+            app.dispatch(ctx(), "mcp.tools", json!({})),
+        )
+        .await
+        .expect("local catalogue must not wait for a server transition")
+        .unwrap();
+        assert_eq!(tools.as_array().unwrap().len(), os_mcp::tools::all().len());
+    })
     .await
-    .expect("local catalogue must not wait for a server transition")
-    .unwrap();
-    assert_eq!(tools.as_array().unwrap().len(), os_mcp::tools::all().len());
+    .expect("N04 fixture exceeded its internal deadline");
 }
 
 // spec: UI-124
 #[tokio::test]
 async fn remembering_a_crawl_preserves_recent_display_metadata() {
-    let dir = tempfile::tempdir().unwrap();
-    let app = app(dir.path());
-    let path = dir.path().join("fixture.ospider");
-    drop(create(&path, cfg()));
-    let path = std::fs::canonicalize(path).unwrap();
-    app.uistate()
-        .update(|saved| {
-            saved.state = json!({ "recentCrawls": [
+    tokio::time::timeout(Duration::from_secs(10), async {
+        let dir = tempfile::tempdir().unwrap();
+        let app = app(dir.path());
+        let path = dir.path().join("fixture.ospider");
+        drop(create(&path, cfg()));
+        let path = std::fs::canonicalize(path).unwrap();
+        app.uistate()
+            .update(|saved| {
+                saved.state = json!({ "recentCrawls": [
         {"path":path,"label":"http://127.0.0.1/fixture · 2026-10-29"},
         {"path":"older.ospider","label":"http://127.0.0.1/older · 2026-10-28"}
     ] })
-        })
-        .unwrap();
-    open(&app, &path).await;
-    let saved = app.uistate().load();
-    assert_eq!(
-        saved.state["recentCrawls"][0]["label"],
-        "http://127.0.0.1/fixture · 2026-10-29"
-    );
-    assert_eq!(
-        saved.state["recentCrawls"][1]["label"],
-        "http://127.0.0.1/older · 2026-10-28"
-    );
+            })
+            .unwrap();
+        open(&app, &path).await;
+        let saved = app.uistate().load();
+        assert_eq!(
+            saved.state["recentCrawls"][0]["label"],
+            "http://127.0.0.1/fixture · 2026-10-29"
+        );
+        assert_eq!(
+            saved.state["recentCrawls"][1]["label"],
+            "http://127.0.0.1/older · 2026-10-28"
+        );
+    })
+    .await
+    .expect("N04 fixture exceeded its internal deadline");
 }
