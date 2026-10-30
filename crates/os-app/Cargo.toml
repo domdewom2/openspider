@@ -16,6 +16,9 @@ e2e-bridge = ["dep:tokio-tungstenite"]
 stub-views = []
 
 [dependencies]
+base64.workspace = true
+reqwest.workspace = true
+
 # M3-F01 release foundation.
 minisign-verify.workspace = true
 semver.workspace = true

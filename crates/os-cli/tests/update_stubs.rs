@@ -3,7 +3,7 @@ use os_cli::{args::Cli, main_entry};
 
 // spec: OUT-250 [M3]
 #[test]
-fn update_hook_is_explicit_and_not_a_successful_check() {
+fn update_hook_is_explicit_and_requires_a_public_key() {
     assert!(
         Cli::try_parse_from(["openspider", "--check-update"])
             .unwrap()

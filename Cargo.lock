@@ -5047,6 +5047,7 @@ name = "os-app"
 version = "0.1.0"
 dependencies = [
  "argon2",
+ "base64 0.23.1",
  "chacha20poly1305",
  "criterion",
  "dirs",
@@ -5066,6 +5067,7 @@ dependencies = [
  "os-store",
  "os-testsite",
  "os-url",
+ "reqwest",
  "roaring",
  "rusqlite",
  "semver",
@@ -5089,10 +5091,12 @@ dependencies = [
 name = "os-cli"
 version = "0.1.0"
 dependencies = [
+ "base64 0.23.1",
  "calamine",
  "clap",
  "csv",
  "libc",
+ "minisign-verify",
  "os-analyze",
  "os-engine",
  "os-export",
@@ -5105,6 +5109,9 @@ dependencies = [
  "os-store",
  "os-testsite",
  "os-url",
+ "reqwest",
+ "semver",
+ "serde",
  "serde_json",
  "sys-locale",
  "sysinfo",

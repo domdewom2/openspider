@@ -1,5 +1,22 @@
-use super::{DisableReason, UpdateContext, UpdateState};
-/// STUB(M3-U01): never performs network access or reports a successful check.
-pub async fn check(_ctx: &UpdateContext, _manual: bool) -> UpdateState {
-    UpdateState::Disabled(DisableReason::NotImplemented)
+use super::{
+    policy::{self, Disabled, Outcome},
+    AvailableUpdate, DisableReason, UpdateContext, UpdateState,
+};
+pub async fn check(ctx: &UpdateContext, manual: bool) -> UpdateState {
+    match policy::check(ctx, manual).await {
+        Ok(Outcome::Disabled(reason)) => UpdateState::Disabled(match reason {
+            Disabled::Settings => DisableReason::Settings,
+            Disabled::Environment => DisableReason::Environment,
+            Disabled::MissingPublicKey => DisableReason::MissingPublicKey,
+            Disabled::InvalidPublicKey => DisableReason::InvalidPublicKey,
+        }),
+        Ok(Outcome::Throttled) => UpdateState::Idle,
+        Ok(Outcome::Current) => UpdateState::UpToDate,
+        Ok(Outcome::Available(m)) => UpdateState::Available(AvailableUpdate {
+            version: m.version.to_string(),
+            notes: m.notes,
+            pub_date: m.pub_date,
+        }),
+        Err(e) => UpdateState::Failed(e),
+    }
 }

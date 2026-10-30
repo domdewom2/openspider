@@ -10,11 +10,7 @@ pub use crate::dto::update::{
 };
 pub use check::check;
 pub use manifest::{platform_key, PlatformEntry, UpdateManifest};
-pub use verify::{verify, VerifyError};
+pub use verify::{verify, verify_release, VerifyError};
 
-/// STUB(M3-U01): context will carry app-wide proxy, settings and update state.
-#[derive(Debug, Default)]
-pub struct UpdateContext;
-
-/// Fixed user agent: no machine, user or installation identifier (OUT-250).
-pub const USER_AGENT: &str = "OpenSpider-Updater";
+pub mod policy;
+pub use policy::{UpdateContext, USER_AGENT};
