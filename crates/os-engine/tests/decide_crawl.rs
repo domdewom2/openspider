@@ -232,9 +232,13 @@ async fn store_crawl_matrix_all_four_combinations_per_link_type() {
                 }
                 (true, false) => {
                     // Speichern an, Crawlen aus: in den Tabellen, ohne Statuscode, nicht angefragt. Ausnahme
-                    // hreflang (K-62): die URL hat eine Zeile, aber keine Tabellen-Sichtbarkeit.
+                    // hreflang (K-62) und Paginierung (SQ-12): keine Tabellen-Sichtbarkeit.
                     let row = url_row(&fx, &url).unwrap_or_else(|| panic!("{what}: Zeile fehlt"));
-                    assert_eq!(row.in_tables, case.name != "hreflang", "{what}");
+                    assert_eq!(
+                        row.in_tables,
+                        !matches!(case.name, "hreflang" | "rel=next"),
+                        "{what}"
+                    );
                     assert_ne!(row.state, "done", "{what}");
                     assert_eq!(row.status, None, "{what}");
                     let expected = if case.external {
@@ -719,7 +723,7 @@ async fn nofollow_links_are_stored_with_follow_false_but_not_requested() {
     for path in INTERNAL_NOFOLLOW {
         assert_eq!(hits(&fx, path), 0, "{path}");
         let row = url_row(&fx, &fx.site.url(path)).expect("nofollow-Ziel bleibt gespeichert");
-        assert!(row.in_tables, "{path}");
+        assert!(!row.in_tables, "{path}");
         assert_eq!(row.status, None, "{path}");
         assert_eq!(row.reason.as_deref(), Some("nofollow"), "{path}");
         assert_eq!(
