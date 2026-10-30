@@ -80,3 +80,9 @@ delay_ms = 300
 body = "window.loadedResources = (window.loadedResources || 0) + 1;"
 [route.headers]
 Set-Cookie = "resource4=present; Path=/; HttpOnly; SameSite=Lax"
+
+# K2-82: Hauptdokument antwortet erst lange nach dem Antwort-Timeout des Tests (CRAWL-095).
+[[route]]
+path = "/late-document.html"
+delay_ms = 5000
+body = '<!doctype html><link rel="icon" href="data:,"><title>late document</title>'
