@@ -45,3 +45,15 @@ it("filters by typing, restores the selection on Escape, and lets Tab leave the 
   await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
   expect(input).toHaveAttribute("aria-expanded", "false");
 });
+
+// spec: UI-126
+it("lets the popup trigger close suggestions after focus moves from the input to that trigger", async () => {
+  render(<Fixture />);
+  const input = screen.getByRole("combobox", { name: "Filter" });
+  const trigger = screen.getByRole("button", { name: "Filter" });
+  fireEvent.keyDown(input, { key: "ArrowDown" });
+  await screen.findByRole("listbox");
+  fireEvent.blur(input, { relatedTarget: trigger });
+  fireEvent.click(trigger);
+  await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull());
+});

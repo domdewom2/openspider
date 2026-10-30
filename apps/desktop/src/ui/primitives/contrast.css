@@ -57,3 +57,7 @@
   .os-colorpicker .os-swatch { border-color: CanvasText; box-shadow: none; forced-color-adjust: none; }
   .os-colorpicker .os-swatch[aria-pressed="true"] { outline: var(--os-focus-width) solid CanvasText; outline-offset: var(--os-size-4); }
 }
+
+/* UI-126 / K2-75: a whole 20 px line box fits Linux font ascenders/descenders within the 28 px tab.
+   The former 1.25 line height rounded below the glyph height and clipped even short labels. */
+.os-tabbar .os-tab .os-tab-label { line-height: var(--os-size-20); }

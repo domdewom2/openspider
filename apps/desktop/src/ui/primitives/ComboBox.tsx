@@ -86,7 +86,7 @@ export function ComboBox({ label, options, selected, onSelect, formatCount = (n)
           aria-expanded={open} aria-controls={open ? `${id}-list` : undefined} aria-activedescendant={open && activeId ? optionId(activeId) : undefined}
           value={query ?? (chosen ? text(chosen) : "")}
           onChange={event => { fromTrigger.current = false; setQuery(event.target.value); setActive(null); setOpen(true); }}
-          onKeyDown={onKeyDown} onBlur={() => close()} />
+          onKeyDown={onKeyDown} onBlur={event => { if (event.relatedTarget !== trigger.current) close(); }} />
         <RacButton ref={trigger} className="os-combobox-button" aria-label={label} aria-haspopup="listbox" aria-expanded={open}
           aria-controls={open ? `${id}-list` : undefined} onPress={() => {
             if (open) { close(); return; }

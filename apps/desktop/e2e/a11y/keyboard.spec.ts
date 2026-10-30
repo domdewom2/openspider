@@ -23,6 +23,7 @@ for (const theme of ["light", "dark"] as const) {
         await expect(tab).toHaveAttribute("aria-selected", "true");
         await expect(tab).toBeVisible();
         await visibleFocus(tab);
+        expect(await tab.locator(".os-tab-label").evaluate(el => el.scrollHeight <= el.clientHeight), "tab label must fit vertically").toBe(true);
         await page.keyboard.press("ArrowRight");
       }
       await page.keyboard.press("End");
@@ -95,6 +96,11 @@ test("grid total/index, keyboard selection, sorting, context action and filter s
   await page.keyboard.press("Home");
   await page.keyboard.press("Enter");
   await expect(filter).toBeFocused();
+  // Preserve pointer toggling as well: blur into the trigger must not close and immediately reopen the popup.
+  await filter.click();
+  await expect(page.getByRole("listbox")).toBeVisible();
+  await filter.click();
+  await expect(page.getByRole("listbox")).toHaveCount(0);
 });
 
 // spec: UI-126
