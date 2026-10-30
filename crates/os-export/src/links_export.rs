@@ -415,7 +415,9 @@ fn link_spec_condition(
     use os_analyze::tabs::links::{LOCALHOST_LINK, NON_DESCRIPTIVE_LINK};
     let mut params = Vec::new();
     let predicate = match spec {
-        "All Anchor Text" => "l.link_type = 'Hyperlink'".to_owned(),
+        // CRAWL-056: nofollow-only destinations have no exported table row.
+        // Keep their stored relation available in the source's link details.
+        "All Anchor Text" => "l.link_type = 'Hyperlink' AND (t.in_tables = 1 OR COALESCE(t.not_crawled_reason, '') <> 'nofollow')".to_owned(),
         "External Links" => "s.is_internal = 1 AND t.is_internal = 0".to_owned(),
         "Internal Nofollow Outlinks" => "s.is_internal = 1 AND t.is_internal = 1 AND l.link_type = 'Hyperlink' AND l.crawlable = 1 AND l.follow = 0".to_owned(),
         "Internal Outlinks With No Anchor Text" => "s.is_internal = 1 AND t.is_internal = 1 AND l.link_type = 'Hyperlink' AND l.crawlable = 1 AND COALESCE(l.anchor, '') COLLATE OS_ANCHOR = '' AND COALESCE(l.alt_text, '') COLLATE OS_ANCHOR = ''".to_owned(),
