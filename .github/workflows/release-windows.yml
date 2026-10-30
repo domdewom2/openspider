@@ -56,6 +56,7 @@ jobs:
       CARGO_BUILD_JOBS: 4
       CARGO_INCREMENTAL: 0
       OPENSPIDER_SECRET_STORE: memory
+      OPENSPIDER_UPDATE_BETA: ${{ inputs.channel == 'beta' && '1' || '0' }}
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID || secrets.AZURE_TENANT_ID }}
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID || secrets.AZURE_CLIENT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID || secrets.AZURE_SUBSCRIPTION_ID }}
@@ -139,7 +140,6 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           BUILD_CHANNEL: ${{ inputs.channel }}
-          OPENSPIDER_UPDATE_BETA: ${{ inputs.channel == 'beta' && '1' || '0' }}
           OFFLINE_WEBVIEW: ${{ inputs.offline_webview }}
         run: |
           $config = Join-Path $env:RUNNER_TEMP 'windows-build.json'
