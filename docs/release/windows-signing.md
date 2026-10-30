@@ -39,7 +39,9 @@ PATH-Bestandteil selbst. NSIS verwaltet ausschließlich den eigenen Benutzer-PAT
 Vor dem Entfernen ruft der Installer `openspider --uninstall-cleanup` auf. Die CLI
 liest die Aufgabenplanung direkt und entfernt ausschließlich Aufgaben unter `\OpenSpider\`,
 auch wenn lokale Planer-XML-Dateien fehlen. Fehler brechen die Bereinigung ab und werden an
-den Installer weitergereicht. Bei einem Versionswechsel bleiben die Aufgaben erhalten;
+den Installer weitergereicht. NSIS meldet im stillen Modus den Exit-Code als Warnung
+und setzt die Deinstallation fort; interaktiv bricht NSIS mit einer Fehlermeldung ab.
+Bei einem Versionswechsel bleiben die Aufgaben erhalten;
 die registrierte CLI am gleichbleibenden Installationspfad wird ersetzt.
 
 Standardmäßig bleiben sämtliche Benutzerdaten erhalten. Interaktiv fragt NSIS nach
@@ -78,10 +80,39 @@ Die Abbildung ist vor einer späteren Erweiterung des Versionsraums erneut zu pl
 
 ## Azure Artifact Signing mit OIDC
 
-Der Nutzer richtet eine Azure-App mit GitHub-OIDC-Verbund ein. Für den Paketbranch:
-Issuer `https://token.actions.githubusercontent.com`, Audience `api://AzureADTokenExchange`,
-Subject `repo:domdewom2/openspider:ref:refs/heads/m3/r02`.
-Für spätere Release-Branches/Tags sind passende Verbundberechtigungen separat einzurichten.
+Der Nutzer richtet eine Azure-App mit GitHub-OIDC-Verbund ein.
+Issuer: `https://token.actions.githubusercontent.com`, Audience: `api://AzureADTokenExchange`.
+Empfohlen und im Windows-Job mit `environment: release` eingestellt ist das
+GitHub-Environment **release** mit genau diesem Azure-Subject:
+`repo:domdewom2/openspider:environment:release`.
+Das Environment vor dem ersten Dispatch im Repository anlegen und seine zulässigen
+Deployment-Branches/Tags konfigurieren: für die Korrekturprüfung `m3/r02`, danach
+`main`, `release/*` und `v*`. Diese GitHub-Muster sind keine Azure-Subjects.
+Eventuelle Environment-Freigaberegeln gelten auch für `workflow_dispatch` und R04.
+Ohne Signierwerte bleibt der Build unsigniert; für OIDC mit vollständigen Werten
+muss das Environment-Subject eingerichtet sein.
+
+Alternativ sind bei Jobs **ohne** `environment` separate Federated Credentials je
+exaktem Ref nötig:
+
+| Auslöser | Subject |
+| --- | --- |
+| Hauptbranch | `repo:domdewom2/openspider:ref:refs/heads/main` |
+| Paketbranch | `repo:domdewom2/openspider:ref:refs/heads/m3/r02` |
+| Versionstags `v*` | Je konkretem Tag, z. B. `repo:domdewom2/openspider:ref:refs/tags/v1.0.0-beta.1` |
+| Release-Branches `release/*` | Je konkretem Branch, z. B. `repo:domdewom2/openspider:ref:refs/heads/release/1.0` |
+| Anderes Environment `<name>` | `repo:domdewom2/openspider:environment:<name>`; Job und Credential müssen denselben Namen verwenden. |
+
+Azure unterstützt in normalen Federated-Credential-Subjects **keine Wildcards**:
+`repo:domdewom2/openspider:ref:refs/tags/v*` und
+`repo:domdewom2/openspider:ref:refs/heads/release/*` sind keine gültige
+Musterfreigabe. Deshalb das Environment `release` verwenden, statt für jeden Tag
+neue Credentials anzulegen. Die separate Azure-Vorschau „Flexible federated identity
+credentials“ mit Claim-Ausdrücken wird hier nicht vorausgesetzt.
+Mit einem Environment enthält das OIDC-Subject den Environment-Namen statt des Refs;
+ein reines Branch-Credential reicht für den vorhandenen Windows-Job nicht aus.
+Siehe [Microsoft: Federated Credentials](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation-create-trust)
+und [GitHub: OIDC-Subjects](https://docs.github.com/en/actions/reference/security/oidc#example-subject-claims).
 Die Azure-Identität benötigt die Rolle **Artifact Signing Certificate Profile Signer**
 am vorgesehenen Signierprofil. Es gibt keinen Client-Secret.
 
@@ -94,8 +125,12 @@ Endpoint und Profil müssen derselben Azure-Region angehören. Der Workflow ben�
 `id-token: write`; bei `workflow_call` muss auch der Aufrufer diese Berechtigung gewähren.
 
 `azure/login@v2` meldet die Identität über OIDC an. Das Build installiert die offiziellen
-Microsoft-NuGet-Werkzeuge `Microsoft.ArtifactSigning.Client` und
-`Microsoft.Windows.SDK.BuildTools` sowie .NET 8. Tauri ruft
+Microsoft-NuGet-Werkzeuge `Microsoft.ArtifactSigning.Client` **1.0.146** und
+`Microsoft.Windows.SDK.BuildTools` **10.0.28000.2957** sowie .NET 8.
+Beide Versionen sind in `windows/initialize-signing.ps1` mit `-Version` gepinnt.
+Der aktuelle Client-Paketname wurde über die
+[NuGet-API](https://api.nuget.org/v3-flatcontainer/microsoft.artifactsigning.client/index.json)
+geprüft; `Microsoft.Trusted.Signing.Client` ist der frühere Paketname. Tauri ruft
 `scripts/release/sign-windows.ps1` als `signCommand` auf, einschließlich NSIS-Uninstaller
 und beider fertiger Installer. Die CLI wird bereits vor dem Bundeln signiert.
 SignTool verwendet die x64-Dlib, SHA-256 und den RFC-3161-Zeitstempel von
