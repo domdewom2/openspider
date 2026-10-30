@@ -235,6 +235,10 @@ test('L01-Gate blockiert CLI-Build und Assemble; native Signierung verwendet rel
   for (const platform of ['macos', 'windows']) {
     const child = readFileSync(join(root, `.github/workflows/release-${platform}.yml`), 'utf8');
     assert.match(child, /    environment: release/);
+    if (platform === 'macos') {
+      const smoke = child.split('  universal-smoke:\n')[1].split('  artifacts:\n')[0];
+      assert.match(smoke, /    environment: release/);
+    }
   }
 });
 

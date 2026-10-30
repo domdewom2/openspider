@@ -455,6 +455,7 @@ jobs:
   universal-smoke:
     if: needs.macos.result == 'success' && (inputs.arch == '' || inputs.arch == 'all' || inputs.arch == 'universal')
     needs: macos
+    environment: release
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
