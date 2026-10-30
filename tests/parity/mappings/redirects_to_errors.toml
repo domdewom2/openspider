@@ -1,5 +1,5 @@
 # Spaltenmapping Referenz -> OpenSpider fuer den Export "Report Redirects:Redirects to Errors" (Format: docs/plan/M1.md 5.2).
-# Stand M1-P29 (Welle 5): an die echten Kopfzeilen der Referenz (Referenzprodukt 24.3 Free, englische Oberflaeche) angepasst.
+# Stand M1-P29 (Welle 5): an die echten Kopfzeilen der Referenz (Referenzprodukt (Free-Version), englische Oberflaeche) angepasst.
 # Nur Spaltennamen der Kopfzeile; Beschreibungsspalten werden beim Einlesen verworfen (Clean-Room, A8).
 # Die Referenz schreibt eine Zeile je verlinkender Quelle (`Source`); OpenSpider eine Zeile je Start-URL (OS-Festlegung, OUT-081).
 # `dedupe_reference` faltet gleiche `Address`-Zeilen der Referenz zu einer; die Quelle/Linkspalten werden nicht verglichen.

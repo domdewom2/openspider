@@ -53,7 +53,7 @@ Wichtig:
 5. **Dateien ablegen**: nach `tests/golden/parity/<site>/ref/` kopieren (Ordner anlegen; unverändert, nicht öffnen und neu speichern).
    Weicht ein Dateiname von `ref_file` im Manifest ab, trägst du den **tatsächlichen** Namen im Manifest ein.
 6. **Manifest aktualisieren** (`tests/golden/parity/<site>/manifest.toml`):
-   - `ref_version` (Menü *Hilfe → Über*, z. B. `"24.3"`) und `exported_at` (Datum, `"JJJJ-MM-TT"`) eintragen;
+   - `ref_version` (neutraler Kennzeichner `"referenz-2026-10"`) und `exported_at` (Datum, `"JJJJ-MM-TT"`) eintragen;
    - je Export `status = "present"` setzen, wenn die Datei abgelegt ist; `status = "unavailable"`, wenn der Export in der
      Free-Version nicht möglich ist (Menüpunkt gesperrt) – dann in `ref_settings` einen kurzen Hinweis ergänzen;
    - sonst bleibt `status = "pending"`.
@@ -114,7 +114,7 @@ Welche Exporte zu welcher Site gehören:
 ## M2: fünf zusätzliche Sites (P01, Plan Abschnitt 6)
 
 Die bisherigen Sites und ihre 39 CSV-Dateien bleiben unverändert. Für die neuen Sites gilt
-Standardkonfiguration der Free-Version 24.3, macOS, Oberfläche **English (UK)**. Hreflang und
+Standardkonfiguration der Free-Version, macOS, Oberfläche **English (UK)**. Hreflang und
 Pagination nur **speichern, nicht crawlen**; Always Follow bleibt aus (**Not Followed**),
 kein JavaScript und kein TLS. Die Hinweise oben zu eingeschaltetem Hreflang-/Sitemap-Crawl
 sind historische M1-Exportwünsche; für M2 gelten die tatsächlich verfügbaren Standards (K2-59).

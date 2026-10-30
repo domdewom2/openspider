@@ -226,7 +226,7 @@ mod tests {
     const SAMPLE: &str = r#"
 site = "parity-onpage"
 port = 8902
-ref_version = "24.3"
+ref_version = "referenz-2026-10"
 exported_at = "2026-10-20"
 ref_settings = "Standard"
 [[export]]
@@ -251,6 +251,7 @@ os_file = "overview.csv"
         let m = Manifest::parse(SAMPLE).unwrap();
         assert_eq!(m.site, "parity-onpage");
         assert_eq!(m.port, 8902);
+        assert_eq!(m.ref_version.as_deref(), Some("referenz-2026-10"));
         assert_eq!(m.export.len(), 3);
         assert_eq!(m.export[1].status, ExportStatus::Pending);
         assert_eq!(m.present().count(), 1);

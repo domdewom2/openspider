@@ -110,9 +110,9 @@ Stichprobe der dünn belegten IDs (Nachtrag Welle-1-Sichtung):
 
 Mit Paritätsbeleg (`verified`, Regeln und Belegzuordnung in `tests/parity/evidence.toml`, nur IDs, deren Spec-Umfang die verglichenen Spalten vollständig abdecken und die ohne Referenzeinschränkung (Free) belegt sind): **5** – ONPAGE-012, ONPAGE-120, ONPAGE-130, TECH-010, TECH-011.
 
-## A3 Parität (Referenzprodukt 24.3 Free)
+## A3 Parität (Referenzprodukt (Free-Version))
 
-Referenz: Referenzprodukt 24.3 Free (macOS arm64, englische Oberfläche), exportiert am 14.10.2026; **5 von 5 Sites mit Status `present`** (Anforderung >= 4), 39 Exporte laut Manifest, davon 38 verglichen und 1 übersprungen. Lauf: `os-parity run --all --openspider target/debug/openspider --out target/parity` unter `lockf` (Bericht: `docs/plan/M1-acceptance/parity/report.md`, `report.json`), Stand M1-N18 (Basis `origin/main` 86bace1 plus die Änderungen dieses Pakets).
+Referenz: Referenzprodukt (Free-Version) (macOS arm64, englische Oberfläche), exportiert am 14.10.2026; **5 von 5 Sites mit Status `present`** (Anforderung >= 4), 39 Exporte laut Manifest, davon 38 verglichen und 1 übersprungen. Lauf: `os-parity run --all --openspider target/debug/openspider --out target/parity` unter `lockf` (Bericht: `docs/plan/M1-acceptance/parity/report.md`, `report.json`), Stand M1-N18 (Basis `origin/main` 86bace1 plus die Änderungen dieses Pakets).
 
 Ergebnis: **38 von 38 Vergleichen erfüllen die Schwelle aus A3** (URL-Menge identisch nach dokumentierten Abweichungen, Zellübereinstimmung >= Schwelle), Exit-Code **0**. Vorher (M1-P29): 26 von 38. Alle Vergleiche liegen bei 100,000 % der verglichenen Zellen; verbleibende Unterschiede sind ausschließlich die unten aufgeführten, begründeten Abweichungen und die Referenzeinschränkungen (Free).
 

@@ -1,5 +1,5 @@
 # Spaltenmapping Referenz -> OpenSpider fuer den Export "Bulk Export Response Codes:All Error Inlinks" (Format: docs/plan/M1.md 5.2).
-# Stand M1-P29 (Welle 5): an die echten Kopfzeilen der Referenz (Referenzprodukt 24.3 Free, englische Oberflaeche) angepasst.
+# Stand M1-P29 (Welle 5): an die echten Kopfzeilen der Referenz (Referenzprodukt (Free-Version), englische Oberflaeche) angepasst.
 # Nur Spaltennamen der Kopfzeile; Beschreibungsspalten werden beim Einlesen verworfen (Clean-Room, A8).
 # Wie all_inlinks. Referenzdatei: all_error_(4xx_5xx_no_response)_inlinks.csv.
 key = ["Type", "Source", "Destination", "#"]

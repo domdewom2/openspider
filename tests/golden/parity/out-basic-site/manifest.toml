@@ -3,9 +3,9 @@
 # Die Roh-Exporte der Referenz liegen unveraendert in ref/ (siehe ../README.md); Agents legen dort nichts an.
 site = "out-basic-site"
 port = 8900                       # Port beim Referenzexport (wird beim Vergleich zu {BASE} normalisiert)
-ref_version = "24.3"
+ref_version = "referenz-2026-10"
 exported_at = "2026-10-14"
-ref_settings = "Referenzprodukt Free 24.3 (macOS arm64), Oberflächensprache für den Export auf English (UK) gestellt (Spaltennamen englisch), sonst Standardkonfiguration. In der Free-Version ist die Spider-Konfiguration gesperrt; daher galten die Standards: Hreflang speichern=an/crawlen=aus, Pagination speichern=an/crawlen=aus, verlinkte XML-Sitemaps crawlen=aus, XML-Sitemaps über robots.txt automatisch erkennen=an (Crawl aber aus), robots.txt respektieren, kein JS-Rendering. Crawl-Analyse wurde nach jedem Crawl ausgeführt. Exportiert per Bildschirmsteuerung durch den Orchestrator am 2026-10-14."
+ref_settings = "Referenzprodukt (Free-Version) (macOS arm64), Oberflächensprache für den Export auf English (UK) gestellt (Spaltennamen englisch), sonst Standardkonfiguration. In der Free-Version ist die Spider-Konfiguration gesperrt; daher galten die Standards: Hreflang speichern=an/crawlen=aus, Pagination speichern=an/crawlen=aus, verlinkte XML-Sitemaps crawlen=aus, XML-Sitemaps über robots.txt automatisch erkennen=an (Crawl aber aus), robots.txt respektieren, kein JS-Rendering. Crawl-Analyse wurde nach jedem Crawl ausgeführt. Exportiert per Bildschirmsteuerung durch den Orchestrator am 2026-10-14."
 
 [[export]]
 ref_file = "internal_all.csv"

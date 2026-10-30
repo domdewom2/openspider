@@ -1,6 +1,6 @@
 # 10 – Agenten-Schnittstelle: MCP-Server, Skills, Plugin
 
-Ziel: Lokale KI-Assistenten (Claude Desktop, Claude Code, OpenAI Codex, Cursor u. a.) können OpenSpider steuern und Crawl-Daten gezielt abfragen. Baut auf OUT-285 (MCP-Server, Parität zur Referenz 24.0, führend für Transport/Menü-Grundlagen) und UI-129 auf und geht darüber hinaus.
+Ziel: Lokale KI-Assistenten (Claude Desktop, Claude Code, OpenAI Codex, Cursor u. a.) können OpenSpider steuern und Crawl-Daten gezielt abfragen. Baut auf OUT-285 (MCP-Server, Parität zum Referenzstand, führend für Transport/Menü-Grundlagen) und UI-129 auf und geht darüber hinaus.
 
 Grundsätze:
 - **Eine Logik, drei Zugänge:** CLI, MCP und Desktop-App rufen dieselben Kernfunktionen auf (`os-engine`, `os-store`, `os-export`, später `os-ai`). Neuer Crate `os-mcp` (Rust, offizielles MCP-Rust-SDK `rmcp` oder gleichwertig, Apache/MIT).

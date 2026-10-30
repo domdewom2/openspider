@@ -1,7 +1,7 @@
 # M2-P01: Exportauftrag an den Orchestrator; ref/ bleibt unberührt.
 site = "parity-m2-security"
 port = 8909
-ref_version = "24.3"
+ref_version = "referenz-2026-10"
 exported_at = ""
 ref_settings = "Free, macOS, English (UK), Standardkonfiguration; Crawl Analysis ausgeführt. Hreflang/Pagination speichern, nicht crawlen. Always-Follow aus (Not Followed). Kein JavaScript, kein TLS. Gesperrte/leere Exporte als unavailable mit Grund dokumentieren."
 

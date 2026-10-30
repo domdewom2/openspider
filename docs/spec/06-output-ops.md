@@ -1,6 +1,6 @@
 # 06 – Exporte, Reports & Betrieb (ID-Präfix `OUT`)
 
-Clean-Room-Spezifikation. Grundlage: öffentliche Bedienungsanleitung, FAQ, Tutorials und Release-Notes (Versionen 18.0–24.3) des Referenzprodukts. Alle Beschreibungen sind eigene Formulierungen. Wo das Referenzprodukt Verhalten nicht öffentlich festlegt oder wir bewusst abweichen, ist das als **(OS-Festlegung)** markiert – diese Punkte sind verbindlich für OpenSpider, aber keine Paritätsbehauptung.
+Clean-Room-Spezifikation. Grundlage: öffentliche Bedienungsanleitung, FAQ, Tutorials und Release-Notes mehrerer Hauptversionen des Referenzprodukts. Alle Beschreibungen sind eigene Formulierungen. Wo das Referenzprodukt Verhalten nicht öffentlich festlegt oder wir bewusst abweichen, ist das als **(OS-Festlegung)** markiert – diese Punkte sind verbindlich für OpenSpider, aber keine Paritätsbehauptung.
 
 Zuständige Crates (siehe `docs/ARCHITECTURE.md`): `os-export` (Formate, Bulk-Exporte, Reports, Sitemaps), `os-analyze` (Ketten, Orphans, hreflang-Rücklinks, Vergleich), `os-cli` (Kommandozeile, Scheduling-Ziel), `os-integrations` (Google Drive/Sheets, E-Mail-OAuth), `apps/desktop` (Dialoge).
 
@@ -496,7 +496,7 @@ Menü „Bulk Export“. Alle Bulk-Exporte beziehen sich auf den gesamten Crawl 
 
 ### OUT-041 Links: Pages With Uncrawlable Internal Outlinks
 - **Priorität:** P1
-- **Beschreibung:** Exportiert „Links“, die für Suchmaschinen nicht als normale Links crawlbar sind (seit Referenz 24.0), sofern das Speichern solcher Links aktiviert ist.
+- **Beschreibung:** Exportiert „Links“, die für Suchmaschinen nicht als normale Links crawlbar sind (Referenzstand), sofern das Speichern solcher Links aktiviert ist.
 - **Eingaben/Konfiguration:** Konfiguration → Crawl → „Nicht crawlbare Links speichern“.
 - **Ausgabe:** Standard-Linkformat + Spalte `Link Crawlability` mit Grund: `href on non-anchor element`, `onclick navigation`, `javascript: URL`, `missing href`, `empty href`, `fragment only` **(OS-Festlegung** der Werte).
 - **Akzeptanzkriterien:**
@@ -592,7 +592,7 @@ Menü „Bulk Export“. Alle Bulk-Exporte beziehen sich auf den gesamten Crawl 
 - **Beschreibung:** Für die Bereiche **Internal & External**, **Internal** und **External** je ein Export pro Response-Code-Filter mit allen Verweisen auf URLs dieses Filters.
 - **Eingaben/Konfiguration:** keine.
 - **Ausgabe:** Standard-Linkformat. Einträge je Bereich:
-  - `All` (alle Inlinks), `Blocked by Robots.txt Inlinks`, `Blocked Resource Inlinks`, `No Response Inlinks`, `Success (2xx) Inlinks`, `Redirection (3xx) Inlinks`, `Redirection (JavaScript) Inlinks`, `Redirection (Meta Refresh) Inlinks`, `Redirection (HTTP Refresh) Inlinks` (Filter seit Referenz 23.0), `Client Error (4xx) Inlinks`, `Server Error (5xx) Inlinks`, `All Error Inlinks` (seit Referenz 23.0, Details OUT-067).
+  - `All` (alle Inlinks), `Blocked by Robots.txt Inlinks`, `Blocked Resource Inlinks`, `No Response Inlinks`, `Success (2xx) Inlinks`, `Redirection (3xx) Inlinks`, `Redirection (JavaScript) Inlinks`, `Redirection (Meta Refresh) Inlinks`, `Redirection (HTTP Refresh) Inlinks` (Filter im Referenzstand), `Client Error (4xx) Inlinks`, `Server Error (5xx) Inlinks`, `All Error Inlinks` (Referenzstand, Details OUT-067).
 - **Akzeptanzkriterien:**
   - [ ] `Internal:Client Error (4xx) Inlinks` enthält genau alle Verweise mit internem Ziel, dessen Status 400–499 ist; Anzahl Ziele = Zähler „Client Error (4xx)“ im Tab Internal-Bereich.
   - [ ] `No Response Inlinks` umfasst Ziele mit DNS-Fehler, Verbindungsabbau, Timeout, ungültiger URL.
@@ -624,7 +624,7 @@ Menü „Bulk Export“. Alle Bulk-Exporte beziehen sich auf den gesamten Crawl 
   - `Spelling & Grammar Errors Summary` (ONPAGE-158): `Error`, `Type`, `URLs`, `Instances` (höchstens 100 Zeilen, Inhalt wie OUT-025).
   - `Soft 404 Inlinks` (ONPAGE-165/ONPAGE-147): Inlinks-Export zu Filter „Soft 404 Pages“ im Format aus OUT-031.
   - `All Page Text`: siehe OUT-046.
-  - Hinweis zur Benennung: Die öffentliche Tutorial-Doku der Referenz beschreibt einen kombinierten Export; der Spec-Review gegen Version 24.3 nennt getrennte Einträge für Rechtschreib- und Grammatikfehler (vor Umsetzung per Golden-Export der Free-Version bestätigen, Anhang B). OpenSpider registriert alle drei kanonischen Pfade `Content:Spelling Errors`, `Content:Grammar Errors`, `Content:Spelling & Grammar Errors`, damit Skripte beider Varianten funktionieren.
+  - Hinweis zur Benennung: Die öffentliche Tutorial-Doku der Referenz beschreibt einen kombinierten Export; der Spec-Review gegen den Referenzstand nennt getrennte Einträge für Rechtschreib- und Grammatikfehler (vor Umsetzung per Golden-Export der Free-Version bestätigen, Anhang B). OpenSpider registriert alle drei kanonischen Pfade `Content:Spelling Errors`, `Content:Grammar Errors`, `Content:Spelling & Grammar Errors`, damit Skripte beider Varianten funktionieren.
 - **Akzeptanzkriterien:**
   - [ ] Zwei Seiten mit identischem Inhaltsbereich → je Seite eine Zeile (Paar symmetrisch in beide Richtungen).
   - [ ] Bei Schwelle 90 % erscheinen Paare mit 89,9 % nicht, mit 90,0 % schon.
@@ -786,7 +786,7 @@ Menü „Bulk Export“. Alle Bulk-Exporte beziehen sich auf den gesamten Crawl 
 
 ### OUT-067 Response Codes: All Error Inlinks
 - **Priorität:** P1
-- **Beschreibung:** Ein gebündelter Export aller Verweise auf fehlerhafte Ziele – Ziele ohne Antwort, mit Client-Fehler (4xx) und mit Server-Fehler (5xx) – in einer Datei (in der Referenz seit 23.0 unter Bulk Export → Response Codes). Erspart das Zusammenführen dreier Einzelexporte.
+- **Beschreibung:** Ein gebündelter Export aller Verweise auf fehlerhafte Ziele – Ziele ohne Antwort, mit Client-Fehler (4xx) und mit Server-Fehler (5xx) – in einer Datei (im Referenzstand unter Bulk Export → Response Codes). Erspart das Zusammenführen dreier Einzelexporte.
 - **Eingaben/Konfiguration:** keine; verfügbar in den Bereichen `Internal & External`, `Internal`, `External` (kanonische Pfade `Response Codes:All Error Inlinks`, `Response Codes:Internal:All Error Inlinks`, `Response Codes:External:All Error Inlinks`) **(OS-Festlegung** für die Verfügbarkeit in allen drei Bereichen).
 - **Ausgabe:** Standard-Linkformat (OUT-031); `Status Code` leer und `Status` mit Fehlergrund (z. B. `DNS Lookup Failed`, `Connection Timeout`, `Connection Refused`) bei Zielen ohne Antwort.
 - **Akzeptanzkriterien:**
@@ -996,7 +996,7 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 - **Ausgabe:** `Address` (A), `Hreflang Language`, `Hreflang URL` (B), `Hreflang URL Status Code`, `Hreflang URL Indexability`, `Missing Return Link To` (A).
 - **Akzeptanzkriterien:**
   - [ ] A→B ohne B→A → eine Zeile.
-  - [ ] Ist B nicht 200 oder nicht gecrawlt, wird die Zeile trotzdem ausgegeben, mit Statuscode von B (Referenz ergänzte Statuscodes in 22.1).
+  - [ ] Ist B nicht 200 oder nicht gecrawlt, wird die Zeile trotzdem ausgegeben, mit Statuscode von B (Referenz ergänzte Statuscodes in einer früheren Version).
   - [ ] Rücklink über eine andere Quelle (z. B. Sitemap statt HTML) zählt als vorhanden.
 - **Testfixture:** `out-hreflang`.
 
@@ -1621,7 +1621,7 @@ Menü „Datei → Zeitplanung“. Eine geplante Aufgabe ist eine Beschreibung v
 - **Beschreibung:** Damit geplante Crawls ohne geöffnete App laufen, registriert OpenSpider jede Aufgabe beim OS-Planer, der `openspider --run-task <task-id>` aufruft **(OS-Festlegung)**.
   - macOS: LaunchAgent (`~/Library/LaunchAgents/de.openspider.task.<id>.plist`) mit `StartCalendarInterval`; läuft im Benutzerkontext, wenn der Benutzer angemeldet ist.
   - Windows: Aufgabe in der Aufgabenplanung (Ordner `\OpenSpider\`), Trigger gemäß Intervall, „Nur ausführen, wenn Benutzer angemeldet ist“ (Standard); **[P2]** Option „Unabhängig von der Anmeldung ausführen“ (verlangt Kennworteingabe im Windows-Dialog – OpenSpider speichert kein Windows-Kennwort).
-- **Eingaben/Konfiguration:** Optionen: „Auch im Akkubetrieb ausführen“ (Standard an, wie Referenz seit 18.2), „Verpasste Läufe nach dem Aufwachen nachholen“ (Standard an: höchstens **ein** Nachhol-Lauf), **[P2]** „Rechner zum Ausführen aufwecken“ (Windows).
+- **Eingaben/Konfiguration:** Optionen: „Auch im Akkubetrieb ausführen“ (Standard an, wie im Referenzstand), „Verpasste Läufe nach dem Aufwachen nachholen“ (Standard an: höchstens **ein** Nachhol-Lauf), **[P2]** „Rechner zum Ausführen aufwecken“ (Windows).
 - **Akzeptanzkriterien:**
   - [ ] Bei geschlossener App startet der Lauf zur geplanten Zeit (± 60 s).
   - [ ] Nach Ruhezustand über 3 verpasste tägliche Termine → genau ein Nachhol-Lauf.
@@ -1656,7 +1656,7 @@ Menü „Datei → Zeitplanung“. Eine geplante Aufgabe ist eine Beschreibung v
 - **Akzeptanzkriterien:**
   - [ ] Abgestürzter Lauf (Prozess beendet ohne Abschluss) erscheint beim nächsten App-Start als `Failed` mit „unexpected termination“.
   - [ ] Historie hält mindestens die letzten 100 Läufe je Aufgabe; ältere werden verworfen.
-  - [ ] Listenmodus-Läufe erscheinen ebenso in der Historie (Referenzfehler in 21.4 behoben).
+  - [ ] Listenmodus-Läufe erscheinen ebenso in der Historie (Referenzfehler in einer früheren Version behoben).
 - **Testfixture:** CLI-Integrationstest mit absichtlich abgebrochenem Prozess.
 
 ### OUT-170 Aufgaben exportieren/importieren
@@ -2153,7 +2153,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Tabelle bleibt bei 1 000 gespeicherten Crawls flüssig (< 500 ms Öffnen, Sortieren je Spalte < 200 ms, Suche < 100 ms); Metadaten stammen aus einem separaten Index, nicht aus dem Öffnen jeder Datei (übernommen aus CRAWL-128).
   - [ ] `ID` ist eine stabile, eindeutige Kennung (UUID v7) **(OS-Festlegung,** übernommen aus CRAWL-128); „ID kopieren“ legt genau die ID ohne Leerzeichen/Zeilenumbruch in die Zwischenablage, bei Mehrfachauswahl eine ID je Zeile in Tabellenreihenfolge; die kopierte ID wird von `--load-crawl` akzeptiert (End-to-End-Test Zwischenablage → CLI).
   - [ ] Mehrfachauswahl von bis zu 1 000 Crawls: Löschen, Sperren, Verschieben und Exportieren in einem Schritt (übernommen aus CRAWL-128); der Löschdialog nennt Anzahl und freiwerdenden Speicher und weist darauf hin, dass gelöschte Crawls nicht wiederherstellbar sind (übernommen aus UI-124).
-  - [ ] „Crawl exportieren…“ funktioniert für Crawls ohne Projekt und für Crawls in einem Projektordner (Referenzfehler 21.2 nicht übernehmen); Export eines laufenden Crawls ist deaktiviert (Tooltip „Crawl läuft – erst pausieren“), ein pausierter Crawl ist exportierbar und bleibt fortsetzbar (übernommen aus CRAWL-143).
+  - [ ] „Crawl exportieren…“ funktioniert für Crawls ohne Projekt und für Crawls in einem Projektordner (Referenzfehler nicht übernehmen); Export eines laufenden Crawls ist deaktiviert (Tooltip „Crawl läuft – erst pausieren“), ein pausierter Crawl ist exportierbar und bleibt fortsetzbar (übernommen aus CRAWL-143).
   - [ ] „Zum Vergleich wählen“ ist nur bei genau zwei markierten Crawls aktiv; „Löschen“ und „Umbenennen“ sind für gesperrte Crawls ausgegraut (übernommen aus CRAWL-143).
   - [ ] Löschen eines Crawls, der in einem gespeicherten Vergleich verwendet wird, nennt vorher den Vergleich namentlich (OUT-150).
   - [ ] [P2] „Projekt exportieren“ erzeugt ein ZIP mit allen `.ospider`-Dateien des Projekts; Import des ZIP auf einem anderen Rechner legt das Projekt mit allen Crawls an.
@@ -2311,7 +2311,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-245 Lokale Nutzungsstatistik
 - **Priorität:** P2
-- **Beschreibung:** Hilfe → Nutzungsstatistik zeigt eigene Nutzungsdaten über die Zeit, kumulativ und nicht-kumulativ (Parität 24.0, Umschalter 24.1). Daten bleiben ausschließlich lokal; es gibt keine Telemetrie ohne ausdrückliche Zustimmung (Opt-in, Standard aus). Führend; UI-128 verweist hierher (Dialoglayout und Diagramm: UI-128).
+- **Beschreibung:** Hilfe → Nutzungsstatistik zeigt eigene Nutzungsdaten über die Zeit, kumulativ und nicht-kumulativ (Parität zum Referenzstand). Daten bleiben ausschließlich lokal; es gibt keine Telemetrie ohne ausdrückliche Zustimmung (Opt-in, Standard aus). Führend; UI-128 verweist hierher (Dialoglayout und Diagramm: UI-128).
 - **Eingaben/Konfiguration:** Zeitraum (letzte 12 Monate, Kalenderjahr, gesamt); Darstellung „Kumulativ“ / „Je Zeitraum“; „Statistik zurücksetzen“ mit Rückfrage (übernommen aus UI-128).
 - **Ausgabe:** Kennzahlen je Monat: `Crawls`, `URLs Crawled`, `Crawl Time` (Stunden, Laufzeit ohne Pausen), `Exports`, `Reports`; Tabelle kopier-/exportierbar als CSV (übernommen aus UI-128). Speicherung lokal im Einstellungsordner (OUT-227).
 - **Akzeptanzkriterien:**
@@ -2437,7 +2437,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-264 Linux
 - **Priorität:** P2
-- **Beschreibung:** Nicht Zielplattform des Projekts (Zielplattformen: macOS arm64/x64, Windows x64). **Bewusste Paritätslücke:** Die Referenz liefert Linux-Pakete für Ubuntu (`.deb`) und Fedora (`.rpm`) und seit Version 24.0 zusätzlich Arm64-Linux-Pakete (Ubuntu arm64, Fedora aarch64). OpenSpider bietet bis auf Weiteres keine Linux-Pakete und keine Linux-Desktop-App an; diese Lücke wird in der Paritätsmatrix (README/Website) ausdrücklich als „nicht unterstützt“ geführt. Kern und CLI unter Linux x86_64 sind seit dem Abgleich mit der Cloud-Variante (16.10.2026) als OUT-273 (P1) geprüft; dieser Eintrag behält aarch64, Pakete und die Desktop-App. Pakete `.deb`/`.rpm` (x86_64 und arm64) sind Kandidaten für eine spätere Version.
+- **Beschreibung:** Nicht Zielplattform des Projekts (Zielplattformen: macOS arm64/x64, Windows x64). **Bewusste Paritätslücke:** Die Referenz liefert Linux-Pakete für Ubuntu (`.deb`) und Fedora (`.rpm`) und seit einer früheren Referenzversion zusätzlich Arm64-Linux-Pakete (Ubuntu arm64, Fedora aarch64). OpenSpider bietet bis auf Weiteres keine Linux-Pakete und keine Linux-Desktop-App an; diese Lücke wird in der Paritätsmatrix (README/Website) ausdrücklich als „nicht unterstützt“ geführt. Kern und CLI unter Linux x86_64 sind seit dem Abgleich mit der Cloud-Variante (16.10.2026) als OUT-273 (P1) geprüft; dieser Eintrag behält aarch64, Pakete und die Desktop-App. Pakete `.deb`/`.rpm` (x86_64 und arm64) sind Kandidaten für eine spätere Version.
 - **Akzeptanzkriterien:**
   - [ ] `cargo build -p os-cli` gelingt in CI auf einem aarch64-Linux-Runner bzw. per Cross-Build (Build-Check, keine Release-Pflicht). x86_64 einschließlich Golden-Vergleich und headless Chromium: siehe OUT-273.
   - [ ] Die Paritätsmatrix in der Doku listet Linux-Desktop und Linux-Pakete (x64/arm64) als bewusste Lücke mit Verweis auf diesen Eintrag.
@@ -2539,7 +2539,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - **Akzeptanzkriterien:**
   - [ ] Crawl in der UI mit globaler Option → eine Mail nach Ende.
   - [ ] Fehlgeschlagener geplanter Lauf → Mail mit Betreff-Präfix `[FAILED]` und Fehlermeldung.
-  - [ ] Entfernen eines Empfängers macht die Aufgabe nicht ungültig (Referenzfehler 21.3 nicht übernehmen); ohne Empfänger wird keine Mail gesendet.
+  - [ ] Entfernen eines Empfängers macht die Aufgabe nicht ungültig (Referenzfehler nicht übernehmen); ohne Empfänger wird keine Mail gesendet.
 - **Testfixture:** Test-SMTP-Server.
 
 ### OUT-282 Inhalt der Abschlussmail
@@ -2581,7 +2581,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-285 MCP-Server (Steuerung durch KI-Assistenten)
 - **Priorität:** P1
-- **Beschreibung:** Optionaler, lokal laufender MCP-Server, über den KI-Assistenten Crawls starten, Fortschritt abfragen (inkl. Crawl-ID), Daten abfragen und Exporte/Reports auslösen können – technisch eine Hülle um dieselben Funktionen wie das CLI (Abschnitt 8). Transporte: STDIO (headless) und Streamable HTTP ausschließlich auf Loopback (`127.0.0.1` und `::1`, Port konfigurierbar). Der HTTP-Transport ist nur zusammen mit dem Zugriffsschutz aus AGENT-002 (Bearer-Token + `Origin`-/`Host`-Prüfung) aktivierbar; ohne ihn wäre er für jeden lokalen Prozess und per DNS-Rebinding aus dem Browser erreichbar (OS-Festlegung, AGENT-002 ist Voraussetzung des HTTP-Teils). Standardmäßig deaktiviert. Führender Eintrag (Headline-Funktion der Referenz 24.0, daher P1; der STDIO-Kern mit lesenden Werkzeugen ist als AGENT-001 mit P0 vorgezogen, Erweiterungen in 10-agent-interface.md); UI-129 beschreibt nur Menü, Dialoge und Statusanzeige.
+- **Beschreibung:** Optionaler, lokal laufender MCP-Server, über den KI-Assistenten Crawls starten, Fortschritt abfragen (inkl. Crawl-ID), Daten abfragen und Exporte/Reports auslösen können – technisch eine Hülle um dieselben Funktionen wie das CLI (Abschnitt 8). Transporte: STDIO (headless) und Streamable HTTP ausschließlich auf Loopback (`127.0.0.1` und `::1`, Port konfigurierbar). Der HTTP-Transport ist nur zusammen mit dem Zugriffsschutz aus AGENT-002 (Bearer-Token + `Origin`-/`Host`-Prüfung) aktivierbar; ohne ihn wäre er für jeden lokalen Prozess und per DNS-Rebinding aus dem Browser erreichbar (OS-Festlegung, AGENT-002 ist Voraussetzung des HTTP-Teils). Standardmäßig deaktiviert. Führender Eintrag (Hauptneuerung einer jüngeren Referenzversion, daher P1; der STDIO-Kern mit lesenden Werkzeugen ist als AGENT-001 mit P0 vorgezogen, Erweiterungen in 10-agent-interface.md); UI-129 beschreibt nur Menü, Dialoge und Statusanzeige.
 - **Eingaben/Konfiguration:** Transport STDIO/Streamable HTTP; Port (Vorschlag zufällig aus 49152–65535); „Beim App-Start automatisch starten“ (Standard aus); Werkzeug-Freigaben je Werkzeug an/aus (übernommen aus UI-129); Standardfreigabe nach Werkzeugklassen gemäß AGENT-003 (führend): nur lesende Werkzeuge an, crawlstartende, schreibende und kostenpflichtige erst nach ausdrücklicher Freigabe (OS-Festlegung, bewusste Abweichung zugunsten der Sicherheit).
 - **Ausgabe:** Werkzeugliste über `tools/list`; herunterladbare API-Beschreibung `openspider-mcp-tools.md` (Markdown, je Werkzeug Überschrift, Beschreibung, Parametertabelle) (übernommen aus UI-129).
   - **Serverstatus (führend; Anzeige im Statusleistenfeld `MCP` nach UI-013, übernommen aus UI-129):** genau einer der Texte `MCP: aus` (HTTP-Server der App gestoppt oder Start gescheitert), `MCP: bereit (Port <p>)` (lauscht, keine aktive Sitzung) oder `MCP: verbunden (<n> Clients)` (n ≥ 1, Singular `1 Client`). n zählt die aktiven Sitzungen des Streamable-HTTP-Transports (Sitzungs-ID nach erfolgreichem `initialize`); eine Sitzung endet mit HTTP `DELETE`, beim Verbindungsabbruch des Clients oder nach 10 Minuten ohne Anfrage **(OS-Festlegung)**. STDIO-Server, die ein Client selbst startet (`openspider mcp`, AGENT-001), laufen als eigener Prozess und zählen nicht. Klick auf das Feld öffnet das Menü „MCP“ (UI-129).
@@ -2630,8 +2630,8 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - Die Referenz nennt für Google Sheets ein Limit von 5 Mio. Zellen; Google erlaubt inzwischen 10 Mio. – OUT-005 macht das Limit konfigurierbar.
 - Die Referenz teilt Sitemaps ab 49 999 URLs; das Protokoll erlaubt 50 000. OpenSpider übernimmt 49 999 als Standard (OUT-129).
 - Revision nach Spec-Review (2026-10-13, Score 86, „needs_work“) – Prüfstand gegen öffentliche Quellen:
-  - Belegt in der Referenz-Doku bzw. den Release-Notes: Response-Code-Filter `Redirection (HTTP Refresh)` und Bulk-Export `All Error Inlinks` (beide 23.0, OUT-050/-067/-080); Change-Detection-Filterliste mit 14 Elementen beginnend mit `Indexability` und Content-Schwelle „mehr als 10 %“ (OUT-144/-145); Site-Structure-Tiefen 1 bis 10+ nach Antwortcode (OUT-025); Spelling-&-Grammar-Panel mit den 100 häufigsten Fehlern und URL-Anzahl (OUT-025); CLI-Syntax `--project-crawl-comparison "true"` (OUT-152/-202); Looker-Studio-Export mit Datums- und URL-Feld, frei wählbarer Metrikreihenfolge und separat verlinkter Datentyp-Tabelle (OUT-210/-214); HSTS-Policy als interne 307 (OUT-081); Insecure-Content-Report umfasst HTTP-Links, Canonicals, Paginierung und Mixed Content ohne Einschränkung auf interne Ziele (OUT-097); Arm64-Linux-Pakete seit 24.0 (OUT-264).
-  - Entfernte, nicht belegte Versionsangaben: FAQ-Rich-Result-Entfernung „24.2“ (OUT-102), CLI-Namensliste „seit 24.2“ (OUT-203), RDP-Absturz als Referenzproblem (OUT-262; laut Review in 20.4 behoben, nun eigenes Kriterium). Die Release-History führt 24.1–24.3 nur als Bugfix-Versionen.
+  - Belegt in der Referenz-Doku bzw. den Release-Notes: Response-Code-Filter `Redirection (HTTP Refresh)` und Bulk-Export `All Error Inlinks` (OUT-050/-067/-080); Change-Detection-Filterliste mit 14 Elementen beginnend mit `Indexability` und Content-Schwelle „mehr als 10 %“ (OUT-144/-145); Site-Structure-Tiefen 1 bis 10+ nach Antwortcode (OUT-025); Spelling-&-Grammar-Panel mit den 100 häufigsten Fehlern und URL-Anzahl (OUT-025); CLI-Syntax `--project-crawl-comparison "true"` (OUT-152/-202); Looker-Studio-Export mit Datums- und URL-Feld, frei wählbarer Metrikreihenfolge und separat verlinkter Datentyp-Tabelle (OUT-210/-214); HSTS-Policy als interne 307 (OUT-081); Insecure-Content-Report umfasst HTTP-Links, Canonicals, Paginierung und Mixed Content ohne Einschränkung auf interne Ziele (OUT-097); Arm64-Linux-Pakete seit einer früheren Referenzversion (OUT-264).
+  - Entfernte, nicht belegte Versionsangaben: FAQ-Rich-Result-Entfernung (OUT-102), CLI-Namensliste (OUT-203), RDP-Absturz als Referenzproblem (OUT-262; laut Review in einer früheren Version behoben, nun eigenes Kriterium). Die Release-History führt die jüngeren Zwischenversionen nur als Bugfix-Versionen.
   - Noch per Golden-Export zu bestätigen: getrennte Bulk-Exporte `Content:Spelling Errors`/`Content:Grammar Errors` (OUT-052, OpenSpider registriert vorsorglich beide Varianten plus den kombinierten Export); exakte Werteliste `Chain Type` inkl. `HTTP Refresh` (OUT-081); Verfügbarkeit von `All Error Inlinks` im Bereich „Internal & External“ (OUT-067); Spaltennamen der Detail-Exporte Lighthouse/Accessibility/N-grams (OUT-021).
   - Clean-Room-Hinweis: `Description`/`How To Fix`/`Why It Matters` (OUT-025, OUT-063) und die Kurzbeschreibungen in `Grammar Errors:Detail` (OUT-052) werden eigenständig verfasst; Issue-Texte der Referenz dürfen weder kopiert noch als Vorlage für Umformulierungen genutzt werden.
 - Revision Spec v1 (2026-10-13, Entscheidungen des Architekten zu PARITY.md):

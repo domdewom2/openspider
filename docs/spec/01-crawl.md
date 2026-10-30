@@ -1,8 +1,8 @@
 # 01 – Crawl-Engine & Konfiguration (CRAWL)
 
-Clean-Room-Spezifikation für OpenSpider. Grundlage: öffentliche Benutzerdokumentation, FAQ, Tutorials und Release-Notes (Versionen 18.0 bis 24.3) des Referenzprodukts, in eigenen Worten zusammengefasst. Es wurde weder Code noch Bytecode des Referenzprodukts eingesehen.
+Clean-Room-Spezifikation für OpenSpider. Grundlage: öffentliche Benutzerdokumentation, FAQ, Tutorials und Release-Notes mehrerer Hauptversionen des Referenzprodukts, in eigenen Worten zusammengefasst. Es wurde weder Code noch Bytecode des Referenzprodukts eingesehen.
 
-Stand: 2026-10-13 (Revision 3, Konsolidierung nach PARITY.md) · Referenzversion: 24.3 · ID-Präfix: `CRAWL` · Zuständige Crates laut `docs/ARCHITECTURE.md`: `os-engine`, `os-fetch`, `os-url`, `os-render`, `os-store`, `os-cli`.
+Stand: 2026-10-13 (Revision 3, Konsolidierung nach PARITY.md) · Referenzstand: Oktober 2026 · ID-Präfix: `CRAWL` · Zuständige Crates laut `docs/ARCHITECTURE.md`: `os-engine`, `os-fetch`, `os-url`, `os-render`, `os-store`, `os-cli`.
 
 **Revision 2:** Einträge CRAWL-138 bis CRAWL-144 ergänzt (HTML-Validierung, Green Hosting, Voreinstellungen/Grenzwerte, automatische Crawl-Analyse, Update-Prüfung/Fokus-Modus als Verweis, Kontextmenü der Crawl-Verwaltung, Vergleichs-Detailansichten). Korrigiert: Geltungsbereich der URL-Umschreibung (J), Include/Exclude-Abgleichsemantik (CRAWL-109/110), CLI-Syntax (CRAWL-036/135), Vergleich ohne Speichermodus-Bedingung (CRAWL-032), Kennzeichnung nicht belegter Defaults (CRAWL-018/047/062/065/100), Proxy-Abweichung (CRAWL-122). Bestehende IDs unverändert.
 
@@ -399,7 +399,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
   - [ ] Verbindung steht, aber keine Antwort innerhalb des Antwort-Timeouts → „Antwort-Timeout“.
   - [ ] Verbindung wird mitten im Body abgebrochen → „Verbindungsfehler“ (bereits empfangener Statuscode wird verworfen, OS-Festlegung).
   - [ ] Ungültiges/abgelaufenes Zertifikat → „TLS-Fehler“ (sofern nicht CRAWL-023 anders konfiguriert).
-  - [ ] Alle diese Fälle erscheinen im Filter „Keine Antwort“; „Durch robots.txt blockiert“ erscheint ausschließlich im eigenen Filter, nicht zusätzlich unter „Keine Antwort“ (Referenz-Fix 23.1).
+  - [ ] Alle diese Fälle erscheinen im Filter „Keine Antwort“; „Durch robots.txt blockiert“ erscheint ausschließlich im eigenen Filter, nicht zusätzlich unter „Keine Antwort“ (Referenz-Fix).
 - **Testfixture:** `crawl-no-response`: Links auf `nicht-existent.invalid`, `site.test:1` (geschlossen), `/hang-response` (antwortet nie), `/reset-mid-body`, `https://expired.site.test/` (abgelaufenes Zertifikat). **OS-Festlegung 13.10.2026 (K-24):** Die frühere Route `/hang-connect` (Blackhole-Port) entfällt, weil ein hängender TCP-Aufbau plattformübergreifend nicht deterministisch herstellbar ist. Das Kriterium „TCP-Aufbau hängt“ wird über die Klassifikation (Unit-Test) und die Berechnung des Verbindungs-Timeouts (min(10 s, Antwort-Timeout), Test gegen einen nicht annehmenden Mini-Server bzw. simulierte Zeit) geprüft.
 
 ### CRAWL-014 HTTP-Weiterleitungen (3xx)
@@ -945,7 +945,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
   - [ ] Sitemap-URLs werden nach allen über Links erreichbaren URLs eingereiht (CRAWL-005), damit Tiefenwerte nicht verfälscht werden.
   - [ ] Sitemap-Einträge unterliegen Include/Exclude, robots.txt, URL-Umschreibung und Limits wie normale URLs.
   - [ ] Doppelte Angabe derselben Sitemap (manuell + robots.txt) führt zu genau einem Abruf.
-  - [ ] Eine spät entdeckte Sitemap (z. B. erst aus einer Kind-Sitemap) blockiert den Crawl nicht (Referenz-Fix 20.4).
+  - [ ] Eine spät entdeckte Sitemap (z. B. erst aus einer Kind-Sitemap) blockiert den Crawl nicht (Referenz-Fix).
 - **Testfixture:** `crawl-sitemaps` (manuelle Angabe `/extra-sitemap.xml`, nicht in robots.txt).
 
 ### CRAWL-060 Sitemap-Parser
@@ -1244,7 +1244,7 @@ Gemeinsame Regeln: Ein Limit von 0 oder leer bedeutet „unbegrenzt“, sofern n
 - **Akzeptanzkriterien:**
   - [ ] `throw new Error("x")` wird als Ebene „Fehler“ mit Quell-URL, Zeile und Spalte gespeichert.
   - [ ] Pro Seite werden höchstens 500 Meldungen gespeichert (OS-Default), der Rest wird gezählt.
-  - [ ] Interne Browser-Meldungen (z. B. zu blockierten Analytics-Endpunkten, CRAWL-062) werden herausgefiltert (Referenz-Fix 23.2).
+  - [ ] Interne Browser-Meldungen (z. B. zu blockierten Analytics-Endpunkten, CRAWL-062) werden herausgefiltert (Referenz-Fix).
   - [ ] Schalter aus: Es werden keine Konsolendaten gespeichert (Tabellenzeilen = 0); der Filter aus TECH-114 zeigt „Erfassung deaktiviert“ statt 0.
   - [ ] Erfasst werden Meldungen bis zum Ende des AJAX-Timeouts (CRAWL-080); spätere Meldungen nicht.
 - **Testfixture:** `crawl-js/errors.html`.
@@ -1256,7 +1256,7 @@ Gemeinsame Regeln: Ein Limit von 0 oder leer bedeutet „unbegrenzt“, sofern n
 - **Akzeptanzkriterien:**
   - [ ] Link in einem offenen Shadow-Root eines Web-Components wird gefunden (Herkunft „Gerendertes HTML“).
   - [ ] Text eines iframes erscheint in der Wortanzahl der Elternseite, wenn abflachen an; sonst nicht.
-  - [ ] Per JS in den `<head>` eingefügte iframes werden nicht in den Body übernommen (Referenz-Fix 20.3).
+  - [ ] Per JS in den `<head>` eingefügte iframes werden nicht in den Body übernommen (Referenz-Fix).
 - **Testfixture:** `crawl-js/shadow.html`, `/iframe-parent.html`.
 
 ### CRAWL-086 Website-Archiv (Ordner / WARC)
@@ -1403,8 +1403,8 @@ Gemeinsame Regeln: Ein Limit von 0 oder leer bedeutet „unbegrenzt“, sofern n
   - [ ] Nur die ersten 500 KiB werden ausgewertet (RFC 9309).
   - [ ] Weiterleitungen beim robots.txt-Abruf werden bis zu 5 Hops verfolgt.
   - [ ] Ein Host-Wechsel (anderer Port, http vs. https) bedeutet eine eigene robots.txt.
-  - [ ] Jeder Content-Type mit Textinhalt wird als robots.txt gelesen (Referenz-Fix 18.5).
-  - [ ] Sehr große robots.txt (mehrere MB) führen zu keinem Absturz (Referenz-Fix 19.7).
+  - [ ] Jeder Content-Type mit Textinhalt wird als robots.txt gelesen (Referenz-Fix).
+  - [ ] Sehr große robots.txt (mehrere MB) führen zu keinem Absturz (Referenz-Fix).
   - [ ] Die robots.txt wird je Host genau einmal pro Crawl abgerufen.
   - [ ] Die robots.txt interner und externer Hosts wird für die Regelprüfung abgerufen und als URL-Zeile **ohne Tabellen-Sichtbarkeit** gespeichert. Sie erscheint in keinem Tab, keinem Filter, keinem Zähler des Crawl Overview und in keinem Export. Das entspricht der Referenz: der Paritätslauf M1 hat gezeigt, dass sie die robots.txt in keinem Tab führt (Befund B-01, K-54; ersetzt die frühere Festlegung „interne robots.txt in den Tabellen“ aus K-40). Abrufstatus und Hinweis je Host bleiben über CRAWL-100 (Crawl-Übersicht) sichtbar.
 - **Testfixture:** `crawl-robots`: `robots.txt` mit Gruppen für `*`, `OpenSpider`, `Googlebot`; Regeln `Disallow: /privat/`, `Allow: /privat/oeffentlich`, `Disallow: /*.pdf$`, `Disallow: /*?sessionid=`, `Allow: /seite$`, `Disallow: /seite`; Links auf alle Grenzfälle; Varianten-Hosts `bom.site.test` (BOM + CRLF), `big.site.test` (3 MB), `redirect.site.test` (robots → 301 → andere Datei).
@@ -1513,7 +1513,7 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
   - [ ] Großbuchstaben: `/caf%c3%a9` wird als `/caf%C3%A9` angefragt.
   - [ ] Kleinbuchstaben: umgekehrt.
   - [ ] Unverändert: genau die Schreibweise des Quelltexts wird angefragt.
-  - [ ] Alte Profile ohne diese Einstellung laden mit „Großbuchstaben“ (Referenz-Fix 23.1).
+  - [ ] Alte Profile ohne diese Einstellung laden mit „Großbuchstaben“ (Referenz-Fix).
 - **Testfixture:** `crawl-rewrite/encoding.html`; Server antwortet auf `%c3%a9` mit 301 auf `%C3%A9`.
 
 ### CRAWL-107 Testfeld für Umschreibungen
@@ -1637,7 +1637,7 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
   - [ ] Header mit Zeilenumbrüchen im Wert werden abgewiesen (Header-Injection).
   - [ ] Standardmäßig werden eigene Header nicht an externe Hosts gesendet (Schutz von Tokens; OS-Festlegung, siehe Q).
   - [ ] Der Renderer sendet dieselben Header.
-  - [ ] [P2] Die Voreinstellungsliste enthält die Header-Namen der Web-Bot-Authentifizierung, mit der Shopify verifizierten Crawlern Zugriff gewährt (Referenz seit 23.1): `Signature`, `Signature-Input` und `Signature-Agent` (Namen nach HTTP Message Signatures, RFC 9421, und dem Web-Bot-Auth-Entwurf; die Referenz-Release-Notes nennen die Namen nicht, Abgleich Q38). Die Auswahl der Voreinstellung legt alle drei Zeilen mit leerem Pflicht-Wert an; `/echo-headers` zeigt danach alle drei Header mit den eingetragenen Werten, ein externer Host keinen.
+  - [ ] [P2] Die Voreinstellungsliste enthält die Header-Namen der Web-Bot-Authentifizierung, mit der Shopify verifizierten Crawlern Zugriff gewährt (Referenzstand): `Signature`, `Signature-Input` und `Signature-Agent` (Namen nach HTTP Message Signatures, RFC 9421, und dem Web-Bot-Auth-Entwurf; die Referenz-Release-Notes nennen die Namen nicht, Abgleich Q38). Die Auswahl der Voreinstellung legt alle drei Zeilen mit leerem Pflicht-Wert an; `/echo-headers` zeigt danach alle drei Header mit den eingetragenen Werten, ein externer Host keinen.
 - **Testfixture:** `crawl-http-basic/echo-headers`, `other.test/echo-headers`.
 
 ### CRAWL-116 Accept-Language
@@ -1662,7 +1662,7 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
   - [ ] Mit hinterlegten Daten: geschützte Seite liefert 200; die Zugangsdaten werden nur an den passenden Host gesendet, nie an andere Hosts oder nach einer Weiterleitung auf einen fremden Host.
   - [ ] Ohne Daten und mit Nachfragen: Crawl pausiert die betroffenen URLs, Dialog erscheint einmal pro Host/Realm; nach Eingabe werden alle wartenden URLs fortgesetzt; „Abbrechen“ speichert die 401-Antworten.
   - [ ] Headless ohne Daten: 401 wird gespeichert, kein Blockieren.
-  - [ ] Benutzernamen und Passwörter mit Nicht-ASCII-Zeichen werden UTF-8-kodiert (Referenz-Fix 20.3).
+  - [ ] Benutzernamen und Passwörter mit Nicht-ASCII-Zeichen werden UTF-8-kodiert (Referenz-Fix).
   - [ ] Passwörter werden im Betriebssystem-Schlüsselbund gespeichert, nicht im Klartext im Profil.
   - [ ] Basic-Daten werden über unverschlüsseltes HTTP nur nach Bestätigung gesendet (OS-Festlegung).
 - **Testfixture:** `crawl-auth`: `basic.site.test` (Realm „Test“, Benutzer `prüfer`/`geheim`), Weiterleitung von dort auf `other.test/echo-headers`.
@@ -1784,7 +1784,7 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
 - **Änderbar während „Läuft“** (Entscheidung (Fable-Empfehlung) vom 13.10.2026; OS-Festlegung): Der Konfigurationsdialog ist während eines laufenden Crawls geöffnet, aber nur diese Gruppen sind editierbar: Schwellwerte/Voreinstellungen (02 §0.3, `duplicates.*`, `content.low_word_count`, `links.*`, `issues.ignore_non_indexable`), Segmente (reine Sicht), Schalter der Crawl-Analyse (`analysis.*`) und `speed.threads` (wirkt live, CRAWL-112). Alle übrigen Felder sind ausgegraut mit Tooltip „Crawl pausieren, um zu ändern“ und der Schaltfläche „Pausieren und bearbeiten“. Strukturelle Änderungen (alles, was die Menge oder Art der Abrufe beeinflusst) bleiben der Pause vorbehalten; die laufende Engine arbeitet bis zur Pause mit ihrer Konfigurationskopie (nur die Thread-Zahl ändert sich live). Betroffene Analyse-Teilschritte werden als veraltet markiert (UI-082).
 - **Akzeptanzkriterien:**
   - [ ] Nach „Pause“ startet innerhalb von 1 s keine neue Anfrage mehr (Request-Log); laufende Anfragen werden zu Ende geführt und gespeichert (höchstens Threads-viele zusätzliche Zeilen).
-  - [ ] Pausieren eines Crawls mit 1 Mio. Warteschlangeneinträgen dauert < 3 s bis zum Status „Pausiert“ (Referenz-Fix 19.5 zeigt, dass das relevant ist).
+  - [ ] Pausieren eines Crawls mit 1 Mio. Warteschlangeneinträgen dauert < 3 s bis zum Status „Pausiert“ (Referenz-Fix zeigt, dass das relevant ist).
   - [ ] Fortsetzen nach App-Neustart: Gesamtergebnis identisch zu einem ununterbrochenen Crawl (Golden-Vergleich der URL-Menge, Statuscodes und Tiefen); keine URL im Request-Log doppelt.
   - [ ] Fortsetzen auf einem anderen Rechner: Crawl-Datei kopieren, öffnen, „Fortsetzen“ → gleiches Ergebnis wie oben.
   - [ ] Wird während der Pause ein Exclude ergänzt, werden passende Warteschlangeneinträge verworfen; der Zähler „verbleibend“ sinkt sofort nach „OK“ im Konfigurationsdialog.
@@ -1839,7 +1839,7 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
   - [ ] Stufe 1: Ab 80 % der Obergrenze erscheint ein gelber Hinweis in der Statusleiste („Arbeitsspeicher 80 %“), der Crawl läuft weiter.
   - [ ] Stufe 2: Ab 90 % der Obergrenze wird der Crawl innerhalb von 2 s pausiert (keine neuen Requests im Request-Log) und das Banner angezeigt (Test mit Obergrenze 300 MB und `crawl-synthetic`).
   - [ ] „Fortsetzen“ bei weiterhin ≥ 90 % pausiert erneut sofort und zeigt das Banner wieder; nach Senken der Threads und Speicherfreigabe < 80 % läuft der Crawl weiter.
-  - [ ] Die Warnung erscheint in allen Phasen: Crawl, Crawl-Analyse (Referenz-Fix 23.2), Export, Vergleichsberechnung; während der Analyse wird diese pausiert statt abgebrochen.
+  - [ ] Die Warnung erscheint in allen Phasen: Crawl, Crawl-Analyse (Referenz-Fix), Export, Vergleichsberechnung; während der Analyse wird diese pausiert statt abgebrochen.
   - [ ] Renderer-Prozesse werden mitgezählt: JS-Crawl mit künstlich speicherhungriger Seite (`/mem-hog.html` alloziert 200 MB) löst Stufe 2 aus, obwohl der Engine-Prozess allein darunter liegt.
   - [ ] Hilfe › Diagnose zeigt aktuelle RAM-Nutzung (Engine, Renderer, Summe), Obergrenze, Crawl-Dateigröße, freien Speicherplatz, aktives Leistungsprofil (CRAWL-124).
   - [ ] Obergrenze: Standard = 50 % des physischen RAM, begrenzt auf [1 GB, physischer RAM − 2 GB] (16-GB-Rechner → 8,0 GB; 3-GB-Rechner → 1,0 GB); Eingaben über physischer RAM − 2 GB oder unter 1 GB werden nicht übernommen, sondern mit Hinweis auf den zulässigen Bereich abgelehnt (übernommen aus UI-123).
@@ -1903,8 +1903,8 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
   - [ ] Regel „Adresse enthält `/produkt/`“ auf `crawl-shop`: genau die 40 Produkt-URLs tragen das Segment (Zähler im Segment-Bereich = 40).
   - [ ] Zwei überlappende Segmente („Shop“: Adresse enthält `/produkt/`; „Alle Seiten“: Inhaltstyp enthält `html`): Produkt-URLs erhalten „Shop“, wenn „Shop“ oben steht; nach Tausch der Reihenfolge erhalten sie „Alle Seiten“.
   - [ ] UND/ODER: Gruppe 1 = {Adresse enthält `/produkt/` UND Statuscode = 404}, Gruppe 2 = {Adresse enthält `/blog/`}: Segment enthält genau die 404-Produktseiten plus alle Blogseiten.
-  - [ ] Regel „Statuscode größer als 399“ funktioniert numerisch (404 und 500 ja, 200 und 301 nein; nicht lexikalisch; Referenz-Fix 21.2); Zeilen ohne Statuscode erfüllen sie nicht.
-  - [ ] Regex-Operator verwendet den gemeinsamen Dialekt; eine ungültige Regex wird beim Speichern mit Zeile und Position gemeldet und das Segment nicht gespeichert (Referenz-Fix 19.1).
+  - [ ] Regel „Statuscode größer als 399“ funktioniert numerisch (404 und 500 ja, 200 und 301 nein; nicht lexikalisch; Referenz-Fix); Zeilen ohne Statuscode erfüllen sie nicht.
+  - [ ] Regex-Operator verwendet den gemeinsamen Dialekt; eine ungültige Regex wird beim Speichern mit Zeile und Position gemeldet und das Segment nicht gespeichert (Referenz-Fix).
   - [ ] Bedingung „ist in Segment Shop“ in Segment „Shop-Fehler“ (unterhalb von „Shop“) funktioniert; dieselbe Bedingung in einem Segment **oberhalb** von „Shop“ wird beim Speichern als ungültig markiert.
   - [ ] Änderung der Segmente nach dem Crawl aktualisiert alle Ansichten ohne Neucrawl (Request-Zähler unverändert) in < 5 s bei 100 000 URLs. OS-Festlegung: Dieses Budget gilt verbindlich (auch für UI-020); das frühere UI-Budget „1 Mio. URLs in 5 s“ entfällt, weil Segmentregeln den gemeinsamen Backtracking-Regex-Dialekt nutzen (Konventionen) und dafür keine lineare Laufzeit garantiert ist. Für 1 Mio. URLs gilt < 60 s.
   - [ ] Segmente, die vor dem Crawl angelegt wurden, werden neuen URLs während des Crawls sofort zugeordnet (≤ 1 s nach dem Speichern der URL).
@@ -1947,9 +1947,9 @@ Die folgenden Einträge wurden nach dem Review angehängt. Sie gehören thematis
 - **Beschreibung:** Die Referenz bündelt Grenzwerte, die Filter steuern, unter Spider › Voreinstellungen. OpenSpider übernimmt diese Seite im Konfigurationsdialog. Die fachliche Wirkung jedes Grenzwerts ist im Zielbereich spezifiziert; dieser Eintrag legt fest, welche Grenzwerte die Seite enthält, wo sie verbindlich definiert sind und welche davon die **Crawl-Engine** betreffen (weil Rohdaten erhoben werden müssen). Grundregel: Filter werden aus gespeicherten Rohwerten berechnet, Grenzwertänderungen wirken daher ohne Neucrawl (ONPAGE-002). Kern (P0) sind Seite und Mechanik; die Größengrenzwerte für den Suchmaschinen-Abruf sind Teilumfang `[P1]`.
 - **Eingaben/Konfiguration:** Spider › Voreinstellungen, gruppiert:
   - **Seitentitel / Meta-Beschreibung / URL / H1 / H2 / Bilder (Größe, Alt-Text) / Inhalt (geringe Wortzahl)**: Schlüssel und Defaults verbindlich in ONPAGE 0.3 (u. a. `image.max_kb` = 100, `content.low_word_count` = 200).
-  - **Soft-404-Text** (Referenz seit 19.0): Liste von Phrasen, `content.soft404_phrases`, verbindlich in ONPAGE-147.
+  - **Soft-404-Text** (Referenzstand): Liste von Phrasen, `content.soft404_phrases`, verbindlich in ONPAGE-147.
   - **Links**: `high_internal_outlinks` (1 000, TECH-138), `high_external_outlinks` (100, TECH-137), `high_crawl_depth` (4, TECH-132), nicht beschreibende Ankertexte (TECH-Links).
-  - **Größengrenzen für Suchmaschinen-Abruf** (Referenz: konfigurierbar, Version laut Review 23.3, siehe Q34): `validation.html_doc_max_bytes` (Standard 2 097 152 = 2 MiB, TECH-289) und `validation.resource_max_bytes` (Standard 2 097 152, TECH-290).
+  - **Größengrenzen für Suchmaschinen-Abruf** (Referenz: konfigurierbar, siehe Q34): `validation.html_doc_max_bytes` (Standard 2 097 152 = 2 MiB, TECH-289) und `validation.resource_max_bytes` (Standard 2 097 152, TECH-290).
 - **Ausgabe (Spalten/Filter/Export):** Filterbezeichnungen enthalten den aktuellen Wert (z. B. „HTML-Dokument über 2 MB“, „Bilder über 100 KB“).
 - **Akzeptanzkriterien:**
   - [ ] Die Seite „Voreinstellungen“ zeigt alle oben genannten Gruppen; jeder Wert ist mit seinem Schlüssel im Profil gespeichert (Round-Trip CRAWL-132).
@@ -2050,18 +2050,18 @@ Diese Punkte sind in der öffentlichen Doku nicht eindeutig. Sie werden per Blac
 | Q31 | CRAWL-135 → OUT-180 ff. | Exakte Syntax von `--crawl-google-sheet` (nur Release-Notes/Sekundärquellen gefunden: `<Konto> <Tabellen-URL>`) | `--crawl-google-sheet <Konto> <Tabellen-URL>` |
 | Q32 | CRAWL-138 → TECH-008 | Standard „HTML-Validierung durchführen“; hängen Größenfilter (2 MB) und CO2 von diesem Schalter ab? | an; Größenfilter/CO2 unabhängig |
 | Q33 | CRAWL-139 → TECH-292 | Standard „Green Hosting“; gilt der Faktor auch für externe Ressourcen? | aus; nur interne URLs |
-| Q34 | CRAWL-140 | Seit welcher Version sind die 2-MB-Grenzen (Dokument/Ressource) einstellbar, und heißen sie in den Voreinstellungen genau so? (Review nennt 23.3; TECH-289 nennt 24.3 als Stand mit 2 MB, vorher 15 MB) | einstellbar, Standard 2 MiB |
+| Q34 | CRAWL-140 | Seit welcher Version sind die 2-MB-Grenzen (Dokument/Ressource) einstellbar, und heißen sie in den Voreinstellungen genau so? (TECH-289 nennt 2 MB als aktuellen Referenzstand, früher galt eine größere Grenze) | einstellbar, Standard 2 MiB |
 | Q35 | CRAWL-141 | Standard „Automatisch am Crawl-Ende analysieren“ | an |
 | Q36 | CRAWL-089 / ONPAGE 0.3 | Widerspruch Standard `issues.ignore_non_indexable`: 01 = an, 02 (A-51) = aus | entschieden (Architekt): an, CRAWL-089 führend; ONPAGE 0.3/A-51 und TECH-009 nachgezogen |
 | Q37 | CRAWL-144 → OUT-149 | Wie identifiziert die Referenz „hinzugefügte/entfernte“ Links (nur Ziel, oder Ziel + Ankertext)? | entschieden (Architekt): Identität (Quelle, Ziel, Linktyp), Ankertextwechsel ist eigene Änderungsart „Ankertext geändert“ – OUT-149 führend |
-| Q38 | CRAWL-115 | Welche Header-Namen enthält die Referenz-Voreinstellung für die Shopify-Bot-Authentifizierung (Release-Notes 23.1 nennen nur die Funktion)? | `Signature`, `Signature-Input`, `Signature-Agent` (RFC 9421 / Web-Bot-Auth) |
+| Q38 | CRAWL-115 | Welche Header-Namen enthält die Referenz-Voreinstellung für die Shopify-Bot-Authentifizierung (Release-Notes einer früheren Version nennen nur die Funktion)? | `Signature`, `Signature-Input`, `Signature-Agent` (RFC 9421 / Web-Bot-Auth) |
 | Q39 | CRAWL-084 | Standard „JavaScript-Fehlerberichte aktivieren“ (Referenz-Doku nennt keinen Wert) | an – vom Architekten bestätigt (nur im JS-Modus wirksam; abgestimmt mit TECH-114) |
 
 ---
 
 ## R. Quellen
 
-Öffentliche Benutzerdokumentation, Tutorials und Release-Notes des Referenzprodukts (Version 18–24.3). Die vollständige Quellenliste ist als Nachweis der Clean-Room-Erstellung außerhalb des öffentlichen Repositorys archiviert.
+Öffentliche Benutzerdokumentation, Tutorials und Release-Notes des Referenzprodukts (mehrere Hauptversionen). Die vollständige Quellenliste ist als Nachweis der Clean-Room-Erstellung außerhalb des öffentlichen Repositorys archiviert.
 
 ## Robots/Tempo
 

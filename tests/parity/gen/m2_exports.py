@@ -39,7 +39,7 @@ def new_manifest(site, port, entries, list_source=None):
     if target.exists(): return
     target.parent.mkdir(parents=True, exist_ok=True)
     text = '# M2-P01: Exportauftrag an den Orchestrator; ref/ bleibt unberührt.\n'
-    text += f'site = {Q(site)}\nport = {port}\nref_version = "24.3"\nexported_at = ""\n'
+    text += f'site = {Q(site)}\nport = {port}\nref_version = "referenz-2026-10"\nexported_at = ""\n'
     text += 'ref_settings = "Free, macOS, English (UK), Standardkonfiguration; Crawl Analysis ausgeführt. Hreflang/Pagination speichern, nicht crawlen. Always-Follow aus (Not Followed). Kein JavaScript, kein TLS. Gesperrte/leere Exporte als unavailable mit Grund dokumentieren."\n'
     if list_source: text += 'list_source = ' + Q(list_source) + '\n'
     for entry in entries:

@@ -2,7 +2,7 @@
 
 Bereich: benutzerdefinierte Suche und Extraktion, benutzerdefiniertes JavaScript, Link-Positionen, Google Analytics 4, Google Search Console (Search Analytics + URL Inspection), PageSpeed Insights / Lighthouse / CrUX, Linkmetriken (Majestic, Ahrefs, Moz), KI-Anbieter (OpenAI, Gemini, Anthropic, Ollama, OpenAI-kompatible Endpunkte) für Prompts und Embeddings, API-Authentifizierung und Kontingentverwaltung.
 
-Referenzstand: Referenzprodukt Version 24.3 (Verhalten laut öffentlicher Doku, FAQ, Tutorials und Release-Notes 18.0–24.x). Alle Beschreibungen sind eigenständig formuliert; es wurde kein Code des Referenzprodukts betrachtet. Wo die öffentliche Doku keine Details nennt (z. B. GSC-Suchtyp, Dimensionsfilter), leitet die Spezifikation das Verhalten aus den öffentlich dokumentierten Fähigkeiten der jeweiligen Anbieter-API ab und markiert das mit **(abgeleitet)**.
+Referenzstand: Oktober 2026, Referenzprodukt (Verhalten laut öffentlicher Doku, FAQ, Tutorials und Release-Notes mehrerer Hauptversionen). Alle Beschreibungen sind eigenständig formuliert; es wurde kein Code des Referenzprodukts betrachtet. Wo die öffentliche Doku keine Details nennt (z. B. GSC-Suchtyp, Dimensionsfilter), leitet die Spezifikation das Verhalten aus den öffentlich dokumentierten Fähigkeiten der jeweiligen Anbieter-API ab und markiert das mit **(abgeleitet)**.
 
 ---
 
@@ -1190,7 +1190,7 @@ Summe: 154 Funktionen (P0: 28, P1: 102, P2: 24). Davon sind 6 Einträge Verweis-
 
 ### INTEG-101 Kompatibilitätsprüfung von GA4-Metriken und -Dimensionen
 - **Priorität:** P1
-- **Beschreibung:** Die GA4 Data API lehnt Anfragen ab, deren Metriken und Dimensionen (Seitendimension aus INTEG-093 plus Filterdimensionen aus INTEG-094) nicht miteinander kombinierbar sind. Die Referenz macht inkompatible Metriken seit einem 19.x-Release in der Auswahl nicht mehr wählbar; Einzelheiten dazu beschreibt die öffentliche Doku nicht (Release-Zuordnung **zu verifizieren**). OpenSpider fragt dazu den Kompatibilitätsendpunkt der Data API (`checkCompatibility`) mit der aktuellen Auswahl ab und deaktiviert inkompatible Einträge im Metrik-Baum bzw. in der Dimensionsliste **(abgeleitet)**.
+- **Beschreibung:** Die GA4 Data API lehnt Anfragen ab, deren Metriken und Dimensionen (Seitendimension aus INTEG-093 plus Filterdimensionen aus INTEG-094) nicht miteinander kombinierbar sind. Die Referenz macht inkompatible Metriken seit einer früheren Hauptversion in der Auswahl nicht mehr wählbar; Einzelheiten dazu beschreibt die öffentliche Doku nicht (Release-Zuordnung **zu verifizieren**). OpenSpider fragt dazu den Kompatibilitätsendpunkt der Data API (`checkCompatibility`) mit der aktuellen Auswahl ab und deaktiviert inkompatible Einträge im Metrik-Baum bzw. in der Dimensionsliste **(abgeleitet)**.
 - **Eingaben/Konfiguration:** Metrik-Baum, Seitendimension je Metrik, Dimensionsfilter.
 - **Ausgabe:** Ausgegraute Einträge mit Tooltip „Nicht kombinierbar mit: <Dimension/Metrik>"; Warnsymbol an bereits gewählten, inzwischen inkompatiblen Metriken.
 - **Akzeptanzkriterien:**
@@ -1413,7 +1413,7 @@ Summe: 154 Funktionen (P0: 28, P1: 102, P2: 24). Davon sind 6 Einträge Verweis-
 
 ### INTEG-128 Read-Timeout für Search-Console-Anfragen
 - **Priorität:** P1
-- **Beschreibung:** Search-Console-Antworten (Search Analytics bei großen Properties, URL Inspection) können sehr lange dauern. Die Referenz hat den Lese-Timeout für Search-Console-Anfragen in 24.1 deutlich angehoben (von 20 s auf 2 Minuten). OpenSpider verwendet für alle Search-Console-Endpunkte (`sites.list`, `searchanalytics.query`, `urlInspection/index:inspect`) standardmäßig einen Lese-Timeout von 120 s, im Reiter „Erweitert" einstellbar. Der Verbindungsaufbau-Timeout ist davon getrennt (fest 30 s).
+- **Beschreibung:** Search-Console-Antworten (Search Analytics bei großen Properties, URL Inspection) können sehr lange dauern. Die Referenz hat den Lese-Timeout für Search-Console-Anfragen in einer jüngeren Version deutlich angehoben (von 20 s auf 2 Minuten). OpenSpider verwendet für alle Search-Console-Endpunkte (`sites.list`, `searchanalytics.query`, `urlInspection/index:inspect`) standardmäßig einen Lese-Timeout von 120 s, im Reiter „Erweitert" einstellbar. Der Verbindungsaufbau-Timeout ist davon getrennt (fest 30 s).
 - **Eingaben/Konfiguration:** „Erweitert → Read-Timeout (Sekunden)": Standard 120, Bereich 10–600.
 - **Ausgabe:** Bei Überschreitung Fehlerstatus `Read timeout` (Search Analytics: Statusmeldung der Integration; URL Inspection: `Summary = Error: Read timeout`).
 - **Akzeptanzkriterien:**
@@ -1740,7 +1740,7 @@ Summe: 154 Funktionen (P0: 28, P1: 102, P2: 24). Davon sind 6 Einträge Verweis-
 
 ### INTEG-157 Ahrefs-Optionen: Land und Volumenbasis
 - **Priorität:** P1
-- **Beschreibung:** Ein eigener Reiter „Optionen" der Ahrefs-Integration (in der Referenz seit 24.0) steuert, wie die Traffic- und Keyword-Metriken (Organic Keywords gesamt/Top 3/Top 10, Organic Traffic gesamt/Top 3/Top 10, Traffic Value) berechnet werden: **Land** (alle Länder oder ein bestimmtes Land) und **Volumenbasis** (monatliches Suchvolumen des aktuellsten Monats oder Durchschnittsvolumen über die letzten 12 Monate). Linkmetriken (Backlinks, Domain Rating usw.) sind davon unabhängig. Die Abbildung auf API-Parameter erfolgt gemäß Ahrefs-API-v3-Doku (z. B. Länderparameter als ISO-3166-1-alpha-2-Code, Volumenmodus `monthly`/`average`) **(abgeleitet)**.
+- **Beschreibung:** Ein eigener Reiter „Optionen" der Ahrefs-Integration (im Referenzstand) steuert, wie die Traffic- und Keyword-Metriken (Organic Keywords gesamt/Top 3/Top 10, Organic Traffic gesamt/Top 3/Top 10, Traffic Value) berechnet werden: **Land** (alle Länder oder ein bestimmtes Land) und **Volumenbasis** (monatliches Suchvolumen des aktuellsten Monats oder Durchschnittsvolumen über die letzten 12 Monate). Linkmetriken (Backlinks, Domain Rating usw.) sind davon unabhängig. Die Abbildung auf API-Parameter erfolgt gemäß Ahrefs-API-v3-Doku (z. B. Länderparameter als ISO-3166-1-alpha-2-Code, Volumenmodus `monthly`/`average`) **(abgeleitet)**.
 - **Eingaben/Konfiguration:** Dropdown „Land" (Standard: „Alle Länder"; durchsuchbare Liste aller von der API unterstützten Länder); Optionsfeld „Suchvolumen" (`Monatlich` | `Durchschnitt`, Standard `Monatlich` **(Annahme, zu verifizieren)**).
 - **Ausgabe:** unveränderte Spaltennamen; Spaltentooltip und Tab-Hinweis nennen Land und Volumenbasis (z. B. „Ahrefs: DE, Durchschnittsvolumen").
 - **Akzeptanzkriterien:**
@@ -1829,7 +1829,7 @@ Summe: 154 Funktionen (P0: 28, P1: 102, P2: 24). Davon sind 6 Einträge Verweis-
 
 ### INTEG-166 Modellkategorien
 - **Priorität:** P1
-- **Beschreibung:** Je Anbieter verfügbare Kategorien: OpenAI – Chat, Moderation, Embeddings, Bildgenerierung, Text-to-Speech; Gemini – Chat, Embeddings, Bildgenerierung, Text-to-Speech; Anthropic – Chat (keine Embeddings); Ollama – Chat, Embeddings, Bildgenerierung (in der Referenz seit 24.0; nutzt lokal installierte Bildmodelle, Laufzeit stark hardwareabhängig, daher mit einstellbarem Request-Timeout, INTEG-179). Die Kategorie bestimmt Endpunkt und Ergebnisformat.
+- **Beschreibung:** Je Anbieter verfügbare Kategorien: OpenAI – Chat, Moderation, Embeddings, Bildgenerierung, Text-to-Speech; Gemini – Chat, Embeddings, Bildgenerierung, Text-to-Speech; Anthropic – Chat (keine Embeddings); Ollama – Chat, Embeddings, Bildgenerierung (im Referenzstand; nutzt lokal installierte Bildmodelle, Laufzeit stark hardwareabhängig, daher mit einstellbarem Request-Timeout, INTEG-179). Die Kategorie bestimmt Endpunkt und Ergebnisformat.
 - **Eingaben/Konfiguration:** Dropdown Kategorie je Prompt.
 - **Ausgabe:** Chat → Text; Moderation → `flagged` (true/false) + markierte Kategorien; Embeddings → Vektor (INTEG-180); Bild/TTS → Datei (INTEG-167).
 - **Akzeptanzkriterien:**
@@ -1950,7 +1950,7 @@ Summe: 154 Funktionen (P0: 28, P1: 102, P2: 24). Davon sind 6 Einträge Verweis-
 
 ### INTEG-177 Systemweiter System-Prompt je Anbieter
 - **Priorität:** P1
-- **Beschreibung:** Im Reiter „Erweitert" jedes KI-Anbieters kann ein System-Prompt hinterlegt werden, der für **alle** Chat-Prompts dieses Anbieters gilt (Rolle, Tonfall, Ausgabeformat, Einschränkungen) – in der Referenz seit 24.0. Er wird im anbieterspezifischen Feld übertragen: OpenAI und OpenAI-kompatibel als Nachricht mit Rolle `system` (bzw. `developer`, wenn der Endpunkt das verlangt), Anthropic als Top-Level-Feld `system`, Gemini als `systemInstruction`, Ollama als Nachricht mit Rolle `system` **(abgeleitet aus den Anbieter-APIs)**. Rangfolge mit dem prompt-spezifischen System-Prompt (INTEG-164): Sind beide gesetzt, wird zuerst der systemweite, dann – durch eine Leerzeile getrennt – der prompt-spezifische Text gesendet **(OpenSpider-Festlegung)**. Für die Kategorien Embeddings, Moderation, Bildgenerierung und TTS wird kein System-Prompt gesendet.
+- **Beschreibung:** Im Reiter „Erweitert" jedes KI-Anbieters kann ein System-Prompt hinterlegt werden, der für **alle** Chat-Prompts dieses Anbieters gilt (Rolle, Tonfall, Ausgabeformat, Einschränkungen) – im Referenzstand. Er wird im anbieterspezifischen Feld übertragen: OpenAI und OpenAI-kompatibel als Nachricht mit Rolle `system` (bzw. `developer`, wenn der Endpunkt das verlangt), Anthropic als Top-Level-Feld `system`, Gemini als `systemInstruction`, Ollama als Nachricht mit Rolle `system` **(abgeleitet aus den Anbieter-APIs)**. Rangfolge mit dem prompt-spezifischen System-Prompt (INTEG-164): Sind beide gesetzt, wird zuerst der systemweite, dann – durch eine Leerzeile getrennt – der prompt-spezifische Text gesendet **(OpenSpider-Festlegung)**. Für die Kategorien Embeddings, Moderation, Bildgenerierung und TTS wird kein System-Prompt gesendet.
 - **Eingaben/Konfiguration:** Mehrzeiliges Feld „System-Prompt (für alle Prompts dieses Anbieters)", Standard leer; je Prompt im erweiterten Editor Checkbox „Systemweiten System-Prompt ignorieren" (Standard aus).
 - **Ausgabe:** — (Wirkung im Request; der Prompt-Tester INTEG-170 zeigt den gesendeten System-Prompt an).
 - **Akzeptanzkriterien:**
@@ -1964,7 +1964,7 @@ Summe: 154 Funktionen (P0: 28, P1: 102, P2: 24). Davon sind 6 Einträge Verweis-
 
 ### INTEG-178 Tokenverbrauch in den Kontoinformationen
 - **Priorität:** P1
-- **Beschreibung:** Der Dialog „Kontoinformationen" jedes verbundenen KI-Anbieters zeigt den Tokenverbrauch (in der Referenz seit 24.0). OpenSpider summiert dazu die `usage`-Angaben der Antworten (Eingabe-, Ausgabe- und Gesamt-Tokens; bei Anthropic `input_tokens`/`output_tokens`, bei Gemini `usageMetadata`, bei Ollama `prompt_eval_count`/`eval_count`) **(abgeleitet)** und weist sie getrennt aus für: aktuellen Crawl, aktuelle Sitzung und kumuliert seit Installation bzw. letztem Zurücksetzen – jeweils je Modell. Es handelt sich um lokal gezählte Werte, nicht um die Abrechnung des Anbieters.
+- **Beschreibung:** Der Dialog „Kontoinformationen" jedes verbundenen KI-Anbieters zeigt den Tokenverbrauch (im Referenzstand). OpenSpider summiert dazu die `usage`-Angaben der Antworten (Eingabe-, Ausgabe- und Gesamt-Tokens; bei Anthropic `input_tokens`/`output_tokens`, bei Gemini `usageMetadata`, bei Ollama `prompt_eval_count`/`eval_count`) **(abgeleitet)** und weist sie getrennt aus für: aktuellen Crawl, aktuelle Sitzung und kumuliert seit Installation bzw. letztem Zurücksetzen – jeweils je Modell. Es handelt sich um lokal gezählte Werte, nicht um die Abrechnung des Anbieters.
 - **Eingaben/Konfiguration:** Schaltfläche „Kontoinformationen" im Reiter „Konto"; „Zähler zurücksetzen".
 - **Ausgabe:** Tabelle `Model`, `Requests`, `Input Tokens`, `Output Tokens`, `Total Tokens` je Zeitraum (Crawl/Sitzung/Gesamt); Hinweis „lokal gezählt".
 - **Akzeptanzkriterien:**
@@ -1977,7 +1977,7 @@ Summe: 154 Funktionen (P0: 28, P1: 102, P2: 24). Davon sind 6 Einträge Verweis-
 
 ### INTEG-179 Request-Timeout für KI-Anbieter
 - **Priorität:** P1
-- **Beschreibung:** Je KI-Anbieter ist im Reiter „Erweitert" der Request-Timeout einstellbar. Die Referenz bietet das seit 24.0 ausdrücklich für Ollama an, weil lokale Modelle (insbesondere Bildgenerierung) je nach Hardware sehr lange rechnen; OpenSpider bietet die Einstellung für alle vier Anbieter. Ein Timeout gilt als vorübergehender Fehler und wird nach INTEG-005 wiederholt, bei Bildgenerierung höchstens einmal (teure Läufe).
+- **Beschreibung:** Je KI-Anbieter ist im Reiter „Erweitert" der Request-Timeout einstellbar. Die Referenz bietet das in einer jüngeren Version ausdrücklich für Ollama an, weil lokale Modelle (insbesondere Bildgenerierung) je nach Hardware sehr lange rechnen; OpenSpider bietet die Einstellung für alle vier Anbieter. Ein Timeout gilt als vorübergehender Fehler und wird nach INTEG-005 wiederholt, bei Bildgenerierung höchstens einmal (teure Läufe).
 - **Eingaben/Konfiguration:** „Request-Timeout (Sekunden)": Standard 120 für OpenAI/Gemini/Anthropic, 300 für Ollama **(OpenSpider-Festlegung)**; Bereich 10–3.600.
 - **Ausgabe:** Bei Überschreitung `<Prompt> Status = Error: Timeout nach <n> s`.
 - **Akzeptanzkriterien:**
@@ -2129,7 +2129,7 @@ Summe: 154 Funktionen (P0: 28, P1: 102, P2: 24). Davon sind 6 Einträge Verweis-
 
 ### INTEG-189 Voreinstellungen für die Dimensionsreduktion
 - **Priorität:** P1
-- **Beschreibung:** Für das Cluster-Diagramm gibt es Voreinstellungen (in der Referenz seit 22.1), damit Nutzer ohne Kenntnis der t-SNE-/UMAP-Parameter brauchbare Darstellungen erhalten. OpenSpider definiert drei Presets **(OpenSpider-Festlegung der Parameterwerte)**: „Lokal" (betont kleine, dichte Gruppen), „Ausgewogen" (Standard), „Global" (betont die Gesamtstruktur). Werte: UMAP – Lokal `n_neighbors=5, min_dist=0.0`, Ausgewogen `n_neighbors=15, min_dist=0.1`, Global `n_neighbors=50, min_dist=0.5`; t-SNE – Lokal `perplexity=5`, Ausgewogen `perplexity=30`, Global `perplexity=50`; jeweils Distanzmaß Kosinus. Zusätzlich „Benutzerdefiniert" mit freien Parametern. Das Preset ist unabhängig von der Verkürzung der Vektoren über Modellparameter (INTEG-187).
+- **Beschreibung:** Für das Cluster-Diagramm gibt es Voreinstellungen (im Referenzstand), damit Nutzer ohne Kenntnis der t-SNE-/UMAP-Parameter brauchbare Darstellungen erhalten. OpenSpider definiert drei Presets **(OpenSpider-Festlegung der Parameterwerte)**: „Lokal" (betont kleine, dichte Gruppen), „Ausgewogen" (Standard), „Global" (betont die Gesamtstruktur). Werte: UMAP – Lokal `n_neighbors=5, min_dist=0.0`, Ausgewogen `n_neighbors=15, min_dist=0.1`, Global `n_neighbors=50, min_dist=0.5`; t-SNE – Lokal `perplexity=5`, Ausgewogen `perplexity=30`, Global `perplexity=50`; jeweils Distanzmaß Kosinus. Zusätzlich „Benutzerdefiniert" mit freien Parametern. Das Preset ist unabhängig von der Verkürzung der Vektoren über Modellparameter (INTEG-187).
 - **Eingaben/Konfiguration:** Dropdown „Voreinstellung" (Lokal / Ausgewogen / Global / Benutzerdefiniert) im Zahnrad-Dialog; bei „Benutzerdefiniert" Felder `n_neighbors` (2–200), `min_dist` (0,0–0,99), `perplexity` (2–100).
 - **Ausgabe:** Diagramm; CSV-Export enthält in einer Kopfzeile Verfahren, Preset und Parameter.
 - **Akzeptanzkriterien:**

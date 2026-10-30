@@ -9,7 +9,8 @@
 #   2. der Produktname aus zwei Wörtern,
 #   3. das Kürzel als ganzes Wort,
 #   4. das Kürzel mit folgendem Unterstrich (Bezeichner),
-#   5. das Kürzel mit anschließendem Bindestrich und dem Wort für die Gratis-Version.
+#   5. das Kürzel mit anschließendem Bindestrich und dem Wort für die Gratis-Version,
+#   6. konkrete Versionsnummern und einen Referenzmarker in derselben Zeile (Nutzerentscheidung 29.10.2026).
 # Die Namen stehen hier nur als Teilstrings, damit sich dieses Skript nicht selbst meldet. Ausgenommen sind außerdem
 # per Pfad dieses Skript, seine Ausnahmedatei und die Messdaten tests/golden/parity/*/ref/*.csv.
 #
@@ -36,6 +37,14 @@ maker="${m1}${m2}(?!_snake_case)"
 product="${p1}\\s+${p2}"
 abbr="${k1}${k2}"
 pattern="${maker}|${product}|\\b${abbr}\\b|(?<![a-z])${abbr}_|\\b${abbr}-free"
+
+# Marker und Versionsmuster getrennt halten; beide Reihenfolgen derselben Zeile erfassen.
+r1='ref'; r2='erenz'
+reference="${r1}${r2}|${r1}_version|${r1}_settings"
+v_major='1[0-9]|2[0-9]'
+# Kalenderdaten (TT.MM.JJJJ) ausnehmen: kein Treffer direkt nach „Ziffer.“ und keiner, auf den „.Ziffer“ folgt.
+version="(?<![0-9.])\\b(${v_major})\\.[0-9]+\\b(?!\\.[0-9])"
+pattern="${pattern}|(?:${reference}).*${version}|${version}.*(?:${reference})"
 
 # Ausnahmedatei einlesen (parallele Arrays; bash 3.2 kompatibel).
 allow_paths=()
@@ -106,7 +115,7 @@ while [ "$i" -lt "$allow_count" ]; do
 done
 
 if [ "$violations" -gt 0 ]; then
-  echo "check-neutral: $violations Fundstelle(n) mit namentlichem Bezug auf das Referenzprodukt (nur „Referenzprodukt“ bzw. „Referenz“ verwenden)." >&2
+  echo "check-neutral: $violations Fundstelle(n) mit Namen oder konkreten Versionsnummern im Referenzumfeld." >&2
   exit 1
 fi
 echo "check-neutral: keine Fundstellen."

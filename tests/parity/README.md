@@ -6,7 +6,7 @@
 | `deviations.toml` | dokumentierte Paritätsabweichungen (`DEV-nnn`) und Referenzeinschränkungen der Free-Version (`REF-FREE-nn`, K-53) |
 | `evidence.toml` | Zuordnung Spec-ID ↔ Export für den Status `verified` (`os-parity coverage --parity-report … --evidence …`) |
 | `thresholds.toml` | Schwellen des Abnahmekriteriums A3 für `os-parity run` |
-| `profiles/parity.osconfig` | OpenSpider-Konfiguration für Paritätsläufe; entspricht der tatsächlichen Referenzkonfiguration (Referenzprodukt 24.3 Free, K-53) |
+| `profiles/parity.osconfig` | OpenSpider-Konfiguration für Paritätsläufe; entspricht der tatsächlichen Referenzkonfiguration (Referenzprodukt (Free-Version), K-53) |
 | `coverage/<site>.toml` | Absichtserklärung je Tab/Filter: welche Adresse Treffer sein soll, welche nicht |
 | `gen/` | Generator der Fixtures: `python3 -B tests/parity/gen/generate.py` (deterministisch, nur Python-Standardbibliothek) |
 | `fixtures_check.rs` | Prüftest der Fixtures (siehe unten) |
@@ -37,7 +37,7 @@ Er braucht nur `os_testsite`, `tokio`, `toml` und `flate2` (alle bereits Abhäng
 - jeder Tab der Gruppen Internal … Sitemaps hat Treffer und Nicht-Treffer; jeder Filter ist abgedeckt oder mit Grund ausgenommen;
 - Manifeste, Mappings, Profil, Abweichungsliste und README sind vorhanden und konsistent.
 
-## Stand M1-P29 (Referenzexporte 24.3 Free)
+## Stand M1-P29 (Referenzexporte (Free-Version))
 
 Die Referenzexporte liegen unter `tests/golden/parity/<site>/ref/` (unverändert, nur dort; A8). Der Lauf:
 

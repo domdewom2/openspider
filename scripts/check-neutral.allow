@@ -5,3 +5,23 @@ tests/fixtures/tech/multi-columns/c510.html	hreflang="sf" href="/hl/sf.html"	Tes
 tests/fixtures/tech/multi-columns/d500.html	hreflang="sf" href="/hl/sf.html"	Test-Sprachcode im hreflang-Attribut und Linkziel; die Goldens hängen daran
 package-lock.json	sha512-9rTIZ4ZjWwalCPiaY+kPiALLfOKgAz5CTi/Zb1L+qSZ8PH3zVo1T8JcgXIIqg1iM3pZ6hF+n9xO5r2jZ/SF+jg==	M2-S02/K2-61: exakter npm-Integritaetshash von devtools-protocol@0.0.1260888, zufaelliger Base64-Treffer, kein Produktbezug
 crates/os-render/resources/axe/axe.min.js	function sf(){if(window.perform	M2-D21: minifizierter Bezeichner sf in der unveränderten axe-core-Bibliothek (MPL-2.0), zufälliger Treffer, kein Produktbezug
+
+# neutral-ver: geprüfte Fehlalarme des strikten Versionsmusters (Datumsfragmente, Plattformen, Mengen, Abschnittsnummern).
+docs/plan/M2-packages.json	2.md 3.13 (verbindlich); Nutzer-Go 16.10.2026. Zuschnitt: E1 ohne Importer. Autonomo, evnx	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
+docs/plan/M2-packages.json	60/K2-61/K2-63). User-Entscheidung 18.10.: MCP-Umfang ergänzen (Abgleich: Referenzprodukt	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
+docs/plan/M2-packages.json	ff-Auszug, Grund). Anlass (Messung 20.10., Apple M2, CLI-Standardkonfiguration, main 4b671	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
+docs/plan/M2-packages.json	n; dazu die sechs Nutzerpunkte vom 27.10. (A02-01 … A02-06, falls nicht als erledigt marki	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
+docs/plan/M2-reports/fix-n02b-e2e.md	rces_and_filters` (`TECH-301`): je 10.000 Current- und Previous-Linkzeilen, alle drei Prese	Tausenderzahlen für Fixture-Mengen/Suchvolumen bzw. Leistung auf Referenzhardware, keine Produktversion
+docs/plan/M2-reports/u10.md	Stand: 19.10.2026, Branch `m2/u10`, macOS 26.3 arm64 (Darwin 2	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
+docs/plan/M2-reports/u24.md	Erstabgabe: 19.10.2026, Branch `m2/u24` (von `origin/main` 29c9b21)	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
+docs/plan/M2-spikes/S-1.md	chine: Apple M1, 16 GiB RAM, macOS 26.3 (25D125). Sie weicht von UI-Referenz A (MacBook A	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
+docs/plan/M2-spikes/S-1b.md	i M1 (`Macmini9,1`), 16 GiB, macOS 26.3 (25D125). Referenz A verlangt einen MacBook Air M	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
+docs/plan/M2-spikes/S-1b.md	## Referenzmessung 20.10.	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
+docs/plan/M2-spikes/S-3.md	i M1 (`Macmini9,1`), 16 GiB, macOS 26.3 (25D125), arm64,	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
+docs/plan/M2-spikes/S-5b.md	renz A: Mac mini M1, 16 GiB, macOS 26.3 (25D125), arm64, Node 22.20.0.	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
+docs/plan/M2-spikes/S-6.md	i M1 (`Macmini9,1`), 16 GiB, macOS 26.3 (25D125), arm64,	Betriebssystem-/Node-/Darwin-Versionen und ggf. Datumsangaben, keine Version des Referenzprodukts
+docs/plan/M2.md	ß gegen die Nutzerentscheidung vom 16.10. | `scripts/check-neutral.sh` im Job `parity` (H0	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
+docs/plan/M2.md	| Nutzerentscheidung 16.10.: öffentlich kein namentlicher Bezug auf das Refe	Kalenderdatum der Entscheidung, Prüfung oder Messung, keine Produktversion
+docs/spec/04-custom-integrations.md	t und auf alle CPU-Kerne verteilt; 10.000 URLs à 768 Dimensionen benötigen auf der Referenz	Tausenderzahlen für Fixture-Mengen/Suchvolumen bzw. Leistung auf Referenzhardware, keine Produktversion
+docs/spec/04-custom-integrations.md	nd dauert bei einer Stichprobe von 10.000 Punkten höchstens 30 s auf Referenzhardware (07-p	Tausenderzahlen für Fixture-Mengen/Suchvolumen bzw. Leistung auf Referenzhardware, keine Produktversion
+docs/spec/09-dataforseo.md	chvolumen): eigene Domain 42 / 17 (12.000), `competitor.test` 60 / 20 (20.000), `rival.test	Tausenderzahlen für Fixture-Mengen/Suchvolumen bzw. Leistung auf Referenzhardware, keine Produktversion

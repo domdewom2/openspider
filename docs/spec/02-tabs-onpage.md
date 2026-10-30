@@ -1,6 +1,6 @@
 # 02 – Analyse-Tabs I: Onpage (ID-Präfix `ONPAGE`)
 
-Clean-Room-Funktionsspezifikation für OpenSpider. Referenz: Referenzprodukt Version 24.3, beschrieben ausschließlich anhand öffentlicher Dokumentation (User Guide „Tabs“ und „Configuration“, SEO-Issues-Bibliothek, Tutorials zu Duplicate Content, Lesbarkeit, Rechtschreibung/Grammatik, Release-Notes 18.0–24.3). Alle Texte sind eigene Formulierungen. Wo die öffentliche Doku ein Verhalten nicht festlegt, trifft diese Spec eine **Annahme (A-n)**; alle Annahmen sind in Abschnitt 15 gesammelt und müssen per Paritätstest gegen die Referenz (Free-Version, ≤500 URLs) verifiziert und ggf. korrigiert werden.
+Clean-Room-Funktionsspezifikation für OpenSpider. Referenz: Referenzprodukt (Referenzstand Oktober 2026), beschrieben ausschließlich anhand öffentlicher Dokumentation (User Guide „Tabs“ und „Configuration“, SEO-Issues-Bibliothek, Tutorials zu Duplicate Content, Lesbarkeit, Rechtschreibung/Grammatik, Release-Notes mehrerer Hauptversionen). Alle Texte sind eigene Formulierungen. Wo die öffentliche Doku ein Verhalten nicht festlegt, trifft diese Spec eine **Annahme (A-n)**; alle Annahmen sind in Abschnitt 15 gesammelt und müssen per Paritätstest gegen die Referenz (Free-Version, ≤500 URLs) verifiziert und ggf. korrigiert werden.
 
 ## Inhaltsverzeichnis
 
@@ -356,7 +356,7 @@ Gilt für Titel, Meta-Description, Meta-Keywords, Überschriften, Alt-Texte:
 - **Priorität:** P0
 - **Beschreibung:**
   - **Element-Tabs** (Page Titles, Meta Description, Meta Keywords, H1, H2): Grundmenge („All“) sind alle **internen HTML-Seiten mit Statuscode 2xx** (**Annahme A-5**; Weiterleitungen, Fehlerseiten und blockierte URLs fehlen, weil deren Inhalt nicht ausgewertet wird).
-  - **PDF-Dokumente** (seit Referenz-Version 18.0): Interne PDFs mit Status 2xx werden geparst; ihr Dokumenttitel und ihre Keywords aus den Dokumenteigenschaften erscheinen ohne weitere Konfiguration in den Spalten `Title 1` und `Meta Keywords 1` des Internal-Tabs (ONPAGE-011, ONPAGE-166). Ob PDFs zusätzlich in der Grundmenge der Tabs Page Titles und Meta Keywords geführt werden, legt die öffentliche Doku nicht fest; das wird im Paritätstest V-2 geklärt (**Annahme A-5b**: nein, PDFs erscheinen nur im Internal-Tab). In Meta Description, H1 und H2 erscheinen PDFs nie.
+  - **PDF-Dokumente** (seit einer früheren Referenzversion): Interne PDFs mit Status 2xx werden geparst; ihr Dokumenttitel und ihre Keywords aus den Dokumenteigenschaften erscheinen ohne weitere Konfiguration in den Spalten `Title 1` und `Meta Keywords 1` des Internal-Tabs (ONPAGE-011, ONPAGE-166). Ob PDFs zusätzlich in der Grundmenge der Tabs Page Titles und Meta Keywords geführt werden, legt die öffentliche Doku nicht fest; das wird im Paritätstest V-2 geklärt (**Annahme A-5b**: nein, PDFs erscheinen nur im Internal-Tab). In Meta Description, H1 und H2 erscheinen PDFs nie.
   - **Content-Tab:** Grundmenge sind interne HTML-Seiten mit Status 2xx **und** – sofern `pdf.store = true` – interne PDFs mit Status 2xx (Wortzahl, Lesbarkeit, Rechtschreibung/Grammatik; ONPAGE-166).
   - **Indexierbarkeit:** schränkt die Grundmenge nicht ein; sie wird als Spalte gezeigt. Ist `issues.ignore_non_indexable = true` (Referenz: Option unter Spider-Konfiguration → Advanced, empfohlen abzuschalten bei komplett `noindex`-geschalteten Staging-Umgebungen), werden nicht indexierbare Seiten aus allen **Problemfiltern** (alle Filter außer „All“) der Element-Tabs sowie aus Low Content Pages entfernt; „All“ bleibt unverändert. Default-Stellung in der öffentlichen Doku nicht angegeben; OpenSpider-Standard ist **an** (`true`), festgelegt in CRAWL-089 (führend für den Schalter, A-51).
 - **Eingaben/Konfiguration:** `pdf.store`, `issues.ignore_non_indexable`.
@@ -849,7 +849,7 @@ Grundmenge („All“): alle internen und externen URLs mit Antwort- oder Blocki
 
 ### ONPAGE-054 Filter No Response
 - **Priorität:** P0
-- **Beschreibung:** URLs ohne HTTP-Antwort: fehlerhafte URL (nicht parsebar), DNS-Fehler, Verbindung abgelehnt, Verbindungsabbruch, Timeout, TLS-Fehler. Status Code 0, Status-Text gemäß ONPAGE-065. Mit Crawl-Option „Crawl Invalid Links“ (24.0) werden auch syntaktisch ungültige Links (z. B. `htps://`) hier als „Malformed“ gemeldet.
+- **Beschreibung:** URLs ohne HTTP-Antwort: fehlerhafte URL (nicht parsebar), DNS-Fehler, Verbindung abgelehnt, Verbindungsabbruch, Timeout, TLS-Fehler. Status Code 0, Status-Text gemäß ONPAGE-065. Mit Crawl-Option „Crawl Invalid Links“ (frühere Referenzversion) werden auch syntaktisch ungültige Links (z. B. `htps://`) hier als „Malformed“ gemeldet.
 - **Eingaben/Konfiguration:** Timeout, Retry-Anzahl (Crawl-Spec), „Crawl Invalid Links“.
 - **Ausgabe:** Filter `No Response`.
 - **Akzeptanzkriterien:**
@@ -857,7 +857,7 @@ Grundmenge („All“): alle internen und externen URLs mit Antwort- oder Blocki
   - [ ] `http://127.0.0.1:1/` → Status „Connection Refused“.
   - [ ] `http://nohost.invalid/` → Status „DNS Lookup Failed“.
   - [ ] Link `htps://x` mit „Crawl Invalid Links“ an → Eintrag mit Status „Malformed“; aus → kein Eintrag.
-  - [ ] Robots-blockierte URLs erscheinen **nicht** in No Response (Fehler aus 23.1 nicht nachbauen).
+  - [ ] Robots-blockierte URLs erscheinen **nicht** in No Response (früheren Referenzfehler nicht nachbauen).
   - [ ] Hosts ohne erreichbare robots.txt folgen CRAWL-100: mit der Voreinstellung „Host sperren“ stehen sie als „Blocked by Robots.txt (robots.txt unreachable)“ in Blocked by Robots.txt, nicht in No Response; die Fehlerstatus oben gelten mit „alles erlauben“ (OS-Festlegung 14.10.2026, K-44).
 - **Testfixture:** `onpage-rc/` wie ONPAGE-051, plus `invalid-links.html` mit `<a href="htps://x">`.
 
@@ -1895,7 +1895,7 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
 
 ### ONPAGE-166 PDF-Dokumente: Titel, Keywords, Wortzahl, Lesbarkeit, Rechtschreibung
 - **Priorität:** P1
-- **Beschreibung:** Seit Referenz-Version 18.0 werden interne PDFs (Klasse PDF nach ONPAGE-020, Status 2xx) geparst. Zwei Stufen:
+- **Beschreibung:** Seit einer früheren Referenzversion werden interne PDFs (Klasse PDF nach ONPAGE-020, Status 2xx) geparst. Zwei Stufen:
   1. **Immer** (sofern PDFs gecrawlt werden): Aus den Dokumenteigenschaften werden Titel und Keywords gelesen und im Internal-Tab in `Title 1` / `Title 1 Length` / `Title 1 Pixel Width` bzw. `Meta Keywords 1` / `Meta Keywords 1 Length` angezeigt (Normalisierung N(x) wie bei HTML). Fehlt der Dokumenttitel, bleibt `Title 1` leer (kein Ersatz durch Dateinamen oder erste Textzeile). Links im PDF werden extrahiert (Link-Spec).
   2. **Mit `pdf.store = true`** (Referenz: Option „Store PDF“ unter Spider-Konfiguration → Extraction): Der Textlayer des PDFs wird extrahiert und gespeichert. Daraus werden `Word Count` (Tokenisierung ONPAGE-141), Lesbarkeit (ONPAGE-149, Satzgrenzen zusätzlich an Absatzwechseln) und – bei aktivierter Prüfung – Rechtschreibung/Grammatik (ONPAGE-153/154, Bereiche „Page Title“ = Dokumenttitel und „Body“ = Dokumenttext) berechnet; die PDF erscheint dann als Zeile im Content-Tab (ONPAGE-009) und in den Filtern Readability Difficult/Very Difficult, Spelling Errors, Grammar Errors. Nicht für PDFs berechnet: Exact/Near Duplicates, Embeddings, Low Content, Soft 404, Lorem Ipsum (**Annahme A-53**).
   - PDFs ohne Textlayer (gescannte Bilder) haben `Word Count` = 0 und leere Lesbarkeitsspalten; keine OCR.
@@ -1926,7 +1926,7 @@ Grundmenge („All“): alle internen **und** externen Bild-URLs (Inhaltsklasse 
 - **Beschreibung:** Bild-URLs werden entdeckt aus:
   1. `<img src>` (P0),
   2. `<a href>`, wenn das Ziel ein Bild ist (Endung `.jpg/.jpeg/.png/.gif/.webp/.avif/.svg/.bmp/.ico` oder Content-Type `image/*`) (P0),
-  3. `<img srcset>` und `<picture><source srcset>` – als eigene Bild-URLs im Images-Tab (und Internal/External → Images) nur mit Option „Extract images from srcset“ (Default aus, **Annahme A-42**) (P1). **Unabhängig von dieser Option** (Referenzverhalten seit 23.1) werden srcset-Kandidaten als Instanzen im Lower-Tab Image Details der einbindenden Seite angezeigt (Quelle `srcset`); bei abgeschalteter Option werden sie dafür nicht angefragt (Size/Dimensionen leer),
+  3. `<img srcset>` und `<picture><source srcset>` – als eigene Bild-URLs im Images-Tab (und Internal/External → Images) nur mit Option „Extract images from srcset“ (Default aus, **Annahme A-42**) (P1). **Unabhängig von dieser Option** (Referenzverhalten) werden srcset-Kandidaten als Instanzen im Lower-Tab Image Details der einbindenden Seite angezeigt (Quelle `srcset`); bei abgeschalteter Option werden sie dafür nicht angefragt (Size/Dimensionen leer),
   4. CSS-Hintergrundbilder und dynamisch geladene Bilder – nur im Rendering-Modus, über die beim Rendern geladenen Ressourcen (P1, siehe ONPAGE-178),
   5. `<link rel="icon">`, `<meta property="og:image">` – nicht als Bild-Instanz (eigene Bereiche).
   Lazy-Load-Attribute (`data-src`) werden ohne Rendering nicht ausgewertet.
@@ -2221,7 +2221,7 @@ Bündeln mehrere Annahmen bzw. unbelegte Werte zu einem Prüflauf gegen die Refe
 
 ### Paritäts-Erwartungswerte Issue-Klassifizierung (zu V-4)
 
-Herkunft: früherer Inhalt von ONPAGE-006. Sachliche Einordnung, wie sie die öffentliche Issue-Bibliothek der Referenz (Stand 24.3) je Issue angibt; keine übernommenen Beschreibungstexte. **Keine Vorgabe für OpenSpider:** Maßgeblich ist die eigene Entscheidungslogik in UI-063. Die Tabelle dient ausschließlich als Vergleichsbasis im Paritätstest V-4.
+Herkunft: früherer Inhalt von ONPAGE-006. Sachliche Einordnung, wie sie die öffentliche Issue-Bibliothek der Referenz (Referenzstand Oktober 2026) je Issue angibt; keine übernommenen Beschreibungstexte. **Keine Vorgabe für OpenSpider:** Maßgeblich ist die eigene Entscheidungslogik in UI-063. Die Tabelle dient ausschließlich als Vergleichsbasis im Paritätstest V-4.
 
 | Tab | Filter | Typ | Priorität |
 |---|---|---|---|
