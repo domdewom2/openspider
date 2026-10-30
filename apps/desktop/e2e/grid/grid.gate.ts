@@ -24,6 +24,9 @@ test("gen-ui-large: last row, bounded DOM, React 19, keyboard and copy delegatio
   // The fallback must satisfy the functional gate, including StrictMode.
   const ariaRowCount = await page.locator('[role="grid"]').first().getAttribute("aria-rowcount", { timeout: 1000 }).catch(() => null);
   expect(ariaRowCount).toBe("5000001");
+  // U35: the standalone entry needs the same physical tokens as the app shell.
+  await expect(page.locator(".os-grid-a11y")).toHaveCSS("width", "1px");
+  await expect(page.locator(".os-grid-a11y")).toHaveCSS("height", "1px");
   const a11y = await new AxeBuilder({ page }).include(".os-data-grid").analyze();
   expect(a11y.violations).toEqual([]);
   const jump = await page.evaluate(() => window.gridSpike.jump(4_999_999));
@@ -144,7 +147,9 @@ test("native scrollbar, wheel, horizontal virtualization and controlled column g
   await expect.poll(() => page.evaluate(() => window.gridSpike.snapshot().visible!.y)).toBe(405);
   const expected = await page.locator(".os-grid-scroll").evaluate(e => {
     e.scrollTop = (e.scrollHeight - e.clientHeight) / 2;
-    return Math.round((5_000_000 - Math.floor((Number.parseFloat(e.parentElement!.querySelector("canvas")!.style.height) - 30) / 26)) / 2);
+    // Native scrollTop can round a fractional midpoint to a physical pixel.
+    const fraction = e.scrollTop / (e.scrollHeight - e.clientHeight);
+    return Math.round((5_000_000 - Math.floor((Number.parseFloat(e.parentElement!.querySelector("canvas")!.style.height) - 30) / 26)) * fraction);
   });
   await expect.poll(() => page.evaluate(() => window.gridSpike.snapshot().visible!.y)).toBe(expected);
   await page.evaluate(() => window.gridSpike.jump(400));

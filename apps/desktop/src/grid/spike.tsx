@@ -1,4 +1,5 @@
 // Dedicated measurement entry, shipped only by spike.vite.ts; no fixture switch in product UI.
+import "../ui/tokens/base.css";
 import { StrictMode, useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { createBridgeClient, createTauriClient, setClient } from "../ipc/client";
