@@ -24,11 +24,14 @@ impl<R: Runtime> Native<R> {
     ) -> Result<tauri_plugin_updater::Update, String> {
         let context = UpdateContext::default();
         manifest.validate(context.beta)?;
-        let target = context.target();
         self.handle
             .updater_builder()
+            .endpoints(vec![context
+                .endpoint
+                .parse()
+                .map_err(|_| "Update-Endpunkt ungültig")?])
+            .map_err(|_| "Update-Endpunkte fehlen oder sind ungültig")?
             .pubkey(context.pubkey)
-            .target(target)
             .restart_after_install(restart)
             .build()
             .and_then(|updater| {
@@ -51,13 +54,16 @@ impl<R: Runtime> UpdateBackend for Native<R> {
             let app = app.upgrade().ok_or("Anwendung beendet")?;
             let context = UpdateContext::default();
             manifest.validate(context.beta)?;
-            let target = context.target();
             let builder =
                 std::sync::Mutex::new(Some(os_app::update::download::client_builder(&app).await?));
             let update = handle
                 .updater_builder()
+                .endpoints(vec![context
+                    .endpoint
+                    .parse()
+                    .map_err(|_| "Update-Endpunkt ungültig")?])
+                .map_err(|_| "Update-Endpunkte fehlen oder sind ungültig")?
                 .pubkey(context.pubkey)
-                .target(target)
                 .configure_client(move |fallback| {
                     builder
                         .lock()
