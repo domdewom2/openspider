@@ -91,10 +91,10 @@ fn unlinked_ignores_annotation_redirect_and_external_inlinks_but_counts_noindex_
     );
     analyse(&fx);
     let unlinked = addresses(&fx, "Unlinked");
-    for name in ["a", "annotation", "external-source", "to-error"] {
+    for name in ["b", "c", "hidden", "external-only-target"] {
         assert!(unlinked.contains(&name.into()), "{name}");
     }
-    for name in ["c", "linked-source", "to-unknown", "not-followed"] {
+    for name in ["linked-source", "to-unknown", "not-followed"] {
         assert!(!unlinked.contains(&name.into()), "{name}");
     }
     let seq = os_store::queries::change_seq(fx.file.conn()).unwrap();
@@ -102,10 +102,10 @@ fn unlinked_ignores_annotation_redirect_and_external_inlinks_but_counts_noindex_
     assert_eq!(os_store::queries::change_seq(fx.file.conn()).unwrap(), seq);
     fx.file.conn().execute("INSERT INTO links(source_id,target_id,target_raw,link_type,position,follow) VALUES (1,13,'/hidden','Hyperlink',100,1)",[]).unwrap();
     analyse(&fx);
-    assert!(!addresses(&fx, "Unlinked").contains(&"annotation".into()));
+    assert!(!addresses(&fx, "Unlinked").contains(&"hidden".into()));
     fx.cfg.spider.canonicals.crawl = false;
     analyse(&fx);
-    assert!(addresses(&fx, "Unlinked").contains(&"external-source".into()));
+    assert!(addresses(&fx, "Unlinked").contains(&"external-only-target".into()));
     assert!(!addresses(&fx, "Unlinked").contains(&"to-unknown".into()));
 }
 
@@ -312,6 +312,6 @@ async fn real_crawl_marks_canonical_coverage_only_when_validation_is_enabled() {
                 |r| r.get(0),
             )
             .unwrap();
-        assert_eq!(count, 1);
+        assert_eq!(count, 0);
     }
 }

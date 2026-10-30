@@ -94,7 +94,9 @@ async fn meta_refresh_to_another_url_is_redirected_and_to_itself_is_not_indexabl
 
     // Ziel ≠ eigene URL (jede Verzögerung, Meta-Element und Header) → Redirected.
     expect(&m, "/refresh-other.html", "Redirected");
+    expect(&m, "/refresh-self-header.html", "Redirected");
     expect(&m, "/refresh-header.html", "Redirected");
+    expect(&m, "/refresh-self-header.html", "Redirected");
     // andere Query = andere URL; die Query-Variante verweist dann auf sich selbst
     expect(&m, "/refresh-query.html", "Redirected");
     expect(
@@ -108,7 +110,6 @@ async fn meta_refresh_to_another_url_is_redirected_and_to_itself_is_not_indexabl
         "/refresh-self-abs.html",
         "/refresh-bare.html",
         "/refresh-fragment.html",
-        "/refresh-self-header.html",
     ] {
         expect(&m, path, "Self Referencing Meta Refresh");
     }
@@ -126,13 +127,13 @@ async fn self_referencing_refresh_is_ignored_without_the_option() {
         "/refresh-self-abs.html",
         "/refresh-bare.html",
         "/refresh-fragment.html",
-        "/refresh-self-header.html",
         "/refresh-query.html?x=1",
     ] {
         expect(&m, path, "");
     }
     // Weiterleitungen und die übrigen Gründe bleiben.
     expect(&m, "/refresh-other.html", "Redirected");
+    expect(&m, "/refresh-self-header.html", "Redirected");
     expect(&m, "/refresh-query.html", "Redirected");
     expect(&m, "/noindex.html", "noindex");
 }

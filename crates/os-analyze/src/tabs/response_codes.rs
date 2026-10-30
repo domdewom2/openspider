@@ -55,7 +55,7 @@ macro_rules! meta_refresh {
 }
 macro_rules! http_refresh {
     () => {
-        "EXISTS (SELECT 1 FROM refresh r WHERE r.url_id = u.id AND r.source = 'header' AND r.target_url IS NOT NULL AND r.target_url <> u.url)"
+        "EXISTS (SELECT 1 FROM refresh r WHERE r.url_id = u.id AND r.source = 'header' AND r.target_url IS NOT NULL)"
     };
 }
 macro_rules! client_error {

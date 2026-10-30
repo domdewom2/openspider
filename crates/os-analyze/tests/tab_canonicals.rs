@@ -266,7 +266,6 @@ const BASIC_SELF: &[&str] = &[
 ];
 
 const BASIC_CANONICALISED: &[&str] = &[
-    "/body-only.html",
     "/canonicalised-target.html",
     "/doc.pdf",
     "/header-over-head.html",
@@ -294,7 +293,6 @@ const BASIC_CANONICALISED: &[&str] = &[
 ];
 
 const BASIC_MULTIPLE: &[&str] = &[
-    "/head-self-body-other.html",
     "/header-over-head.html",
     "/multi-case.html",
     "/multi-conflict-mixed.html",
@@ -308,7 +306,6 @@ const BASIC_MULTIPLE: &[&str] = &[
 ];
 
 const BASIC_CONFLICTING: &[&str] = &[
-    "/head-self-body-other.html",
     "/header-over-head.html",
     "/multi-case.html",
     "/multi-conflict-mixed.html",
@@ -391,7 +388,7 @@ async fn contains_canonical_counts_html_and_header_canonicals() {
     let contains = c.set("Contains Canonical");
     let expected: BTreeSet<String> = set(BASIC_ALL)
         .into_iter()
-        .filter(|a| a != "/none.html" && a != "/none.pdf")
+        .filter(|a| a != "/none.html" && a != "/none.pdf" && a != "/body-only.html")
         .collect();
     assert_eq!(
         contains,
@@ -402,7 +399,7 @@ async fn contains_canonical_counts_html_and_header_canonicals() {
         c.diagnostics()
     );
     // nur per HTTP-Header (HTML-Seite und PDF) sowie außerhalb des Heads: enthalten
-    for a in ["/header-only.html", "/doc.pdf", "/body-only.html"] {
+    for a in ["/header-only.html", "/doc.pdf"] {
         assert!(contains.contains(a), "{a}\n{}", c.diagnostics());
     }
     assert_eq!(
@@ -469,7 +466,10 @@ async fn canonicalised_pages_point_elsewhere_and_become_non_indexable() {
 #[tokio::test]
 async fn missing_lists_only_html_pages_without_any_canonical() {
     let c = crawl("tech/canonical-basic", CrawlConfig::default(), true).await;
-    assert_eq!(c.set("Missing"), set(&["/none.html", "/none.pdf"]));
+    assert_eq!(
+        c.set("Missing"),
+        set(&["/body-only.html", "/none.html", "/none.pdf"])
+    );
     // M2-S05: Auch PDFs ohne HTTP-Canonical stehen in Missing.
     assert!(c.set("All").contains("/none.pdf"));
     assert_eq!(
@@ -521,7 +521,7 @@ async fn multiple_conflicting_needs_two_different_valid_normalised_urls() {
 
 // spec: TECH-017
 #[tokio::test]
-async fn authoritative_canonical_prefers_header_then_head_then_body() {
+async fn authoritative_canonical_prefers_header_then_head_and_ignores_body() {
     let c = crawl("tech/canonical-basic", CrawlConfig::default(), true).await;
     let auth = |filter: &str, a: &str| c.text_cell(filter, a, "Canonical URL");
     let status = |filter: &str, a: &str| c.text_cell(filter, a, "Indexability Status");
@@ -538,13 +538,13 @@ async fn authoritative_canonical_prefers_header_then_head_then_body() {
     );
     // Head `/p` + Body `/b` → maßgeblich `/p` (Self Referencing), zugleich Multiple Conflicting
     assert_eq!(
-        auth("Multiple Conflicting", "/head-self-body-other.html"),
+        auth("Self Referencing", "/head-self-body-other.html"),
         "/head-self-body-other.html"
     );
     assert!(c
         .set("Self Referencing")
         .contains("/head-self-body-other.html"));
-    assert!(c
+    assert!(!c
         .set("Multiple Conflicting")
         .contains("/head-self-body-other.html"));
     assert_eq!(
@@ -552,8 +552,8 @@ async fn authoritative_canonical_prefers_header_then_head_then_body() {
         "Indexable"
     );
     // Body allein → maßgeblich, Canonicalised
-    assert_eq!(auth("Canonicalised", "/body-only.html"), "/target.html");
-    assert_eq!(status("Canonicalised", "/body-only.html"), "Canonicalised");
+    assert_eq!(auth("Missing", "/body-only.html"), "");
+    assert_eq!(status("Missing", "/body-only.html"), "");
 
     // Die Spalten zeigen alle Werte in Quelltext- bzw. Header-Reihenfolge, unabhängig von der Auswahlregel.
     assert_eq!(

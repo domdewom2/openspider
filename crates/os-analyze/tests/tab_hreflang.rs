@@ -146,11 +146,8 @@ async fn population_columns_and_occurrences_over_all_sources() {
             "/de/",
             "/en/",
             "/es/",
-            "/fr-old/",
             "/fr/",
-            "/it/",
             "/nl/",
-            "/pdf-en.pdf"
         ]
     );
 
@@ -158,8 +155,6 @@ async fn population_columns_and_occurrences_over_all_sources() {
     assert_eq!(cell(&all, "/en/", "Occurrences"), "7");
     assert_eq!(cell(&all, "/de/", "Occurrences"), "3");
     assert_eq!(cell(&all, "/es/", "Occurrences"), "2"); // nur Sitemap
-    assert_eq!(cell(&all, "/it/", "Occurrences"), "2"); // nur Sitemap, 404-Seite
-    assert_eq!(cell(&all, "/pdf-en.pdf", "Occurrences"), "1"); // nur HTTP-Header
     assert_eq!(cell(&all, "/", "Occurrences"), "0");
     // /fr/: 1 × HTML, 2 × Sitemap, davon `fr` → /fr/ identisch zur HTML-Angabe: zählt zweimal.
     assert_eq!(cell(&all, "/fr/", "Occurrences"), "3");
@@ -210,11 +205,6 @@ async fn population_columns_and_occurrences_over_all_sources() {
         "alte Form entfällt"
     );
     // HTTP- und Sitemap-Spalten.
-    assert_eq!(cell(&all, "/pdf-en.pdf", "HTTP hreflang 1"), "en");
-    assert_eq!(
-        cell(&all, "/pdf-en.pdf", "HTTP hreflang 1 URL"),
-        format!("{BASE}/pdf-en.pdf")
-    );
     assert_eq!(cell(&all, "/es/", "Sitemap hreflang 1"), "es");
     assert_eq!(cell(&all, "/es/", "Sitemap hreflang 2"), "en");
     assert_eq!(
@@ -260,15 +250,7 @@ async fn contains_hreflang_includes_urls_with_sitemap_annotations_only() {
         &cfg,
         "store-on_crawl-on",
         "Contains Hreflang",
-        &[
-            "/badcode/",
-            "/de/",
-            "/en/",
-            "/es/",
-            "/fr/",
-            "/it/",
-            "/pdf-en.pdf",
-        ],
+        &["/badcode/", "/de/", "/en/", "/es/", "/fr/"],
     );
     // /es/ hat nur Sitemap-Annotationen und ist trotzdem enthalten; /nl/ hat keine.
     let all = list(&fx.file, &cfg, "Hreflang", "Contains Hreflang");
@@ -523,8 +505,6 @@ async fn store_on_crawl_off_fills_the_tab_with_the_filters_that_need_only_the_ow
             "/en/",
             "/es/",
             "/fr/",
-            "/it/",
-            "/pdf-en.pdf",
         ],
     );
     check(

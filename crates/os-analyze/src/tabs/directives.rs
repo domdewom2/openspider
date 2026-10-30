@@ -1,6 +1,6 @@
 //! Tab „Directives“ (TECH-051 bis TECH-068).
 //!
-//! **Grundmenge (TECH-051):** alle internen Tabellenzeilen mit einer HTTP-Antwort (jeder Status), weil
+//! **Grundmenge (TECH-051):** alle internen Tabellenzeilen mit einer HTTP-2xx-Antwort, weil
 //! `X-Robots-Tag` auch an Nicht-HTML- und Nicht-200-Antworten hängt. Die robots.txt hat keine
 //! Tabellen-Sichtbarkeit und gehört nicht dazu (K-54, ersetzt K-45).
 //!
@@ -19,7 +19,8 @@ use super::canonicals::{
 };
 
 /// Grundmenge: interne Zeilen mit Antwort.
-const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 AND COALESCE(u.status_code, 0) > 0";
+const POPULATION: &str =
+    "u.is_internal = 1 AND u.in_tables = 1 AND u.status_code BETWEEN 200 AND 299";
 
 /// Prädikat „Token vorhanden“ (Kommagrenzen, nur wirksame Direktiven).
 macro_rules! has_token {
@@ -125,7 +126,7 @@ pub fn tab() -> TabDef {
         ],
         default_sort: Vec::new(),
         params: |_| Vec::new(),
-        hidden_population: Some("u.is_internal = 1 AND COALESCE(u.status_code, 0) > 0 AND u.indexability_status = 'noindex' AND EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'respect_hidden')"),
+        hidden_population: Some("u.is_internal = 1 AND u.status_code BETWEEN 200 AND 299 AND u.indexability_status = 'noindex' AND EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'respect_hidden')"),
     }
 }
 

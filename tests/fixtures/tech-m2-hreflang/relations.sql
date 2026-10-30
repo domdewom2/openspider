@@ -33,3 +33,9 @@ INSERT INTO hreflang (url_id,source,position,code_raw,code_norm,code_valid,href_
 (16,'http',0,'da','da',1,'/16','https://site.test/16',16,1),
 (17,'html',0,'de','de',1,'/2','https://site.test/2',2,1);
 INSERT INTO url_ext (url_id,key,v_int) VALUES (1,'validation.checked',1),(13,'validation.checked',1),(1,'hreflang.truncated',2),(1,'hreflang.truncated_sitemap',3);
+
+-- SQ-04/TECH-075: real hyperlinks and independent outside-head evidence.
+INSERT INTO links(source_id,target_id,target_raw,link_type,position,follow)
+SELECT 17,value,'/'||value,'Hyperlink',value,1 FROM json_each('[1,2,6,7,9]');
+INSERT INTO url_ext(url_id,key,v_int) VALUES (13,'hreflang.outside_head',1);
+DELETE FROM hreflang WHERE url_id=13;

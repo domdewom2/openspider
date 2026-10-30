@@ -118,6 +118,7 @@ async fn refresh_filter_keeps_header_facts_beside_http_and_meta_redirects() {
             "http://site.test/refresh-delay",
             "http://site.test/refresh-meta",
             "http://site.test/refresh-priority",
+            "http://site.test/refresh-self",
         ]
     );
     assert_eq!(
@@ -144,7 +145,7 @@ async fn refresh_filter_keeps_header_facts_beside_http_and_meta_redirects() {
             |r| r.get(0),
         )
         .unwrap();
-    assert_eq!(count, 3);
+    assert_eq!(count, 4);
     for path in ["/redirect", "/error"] {
         assert!(
             fx.site.requests().iter().any(|r| r.path_and_query == path),

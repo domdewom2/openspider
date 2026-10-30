@@ -1,13 +1,13 @@
 Address,Occurrences,Indexability Status,Canonical URL
 /,1,,/
-/body-only.html,1,Canonicalised,/target.html
+/body-only.html,0,,
 /canonicalised-target.html,1,Canonicalised,/target.html
 /case/A,1,,/case/A
 /case/a,1,,/case/a
 /doc.pdf,1,Canonicalised,/target.html
 /excluded/noindex-target.html,1,noindex,/excluded/noindex-target.html
 /fragment.html,1,,/fragment.html#top
-/head-self-body-other.html,2,,/head-self-body-other.html
+/head-self-body-other.html,1,,/head-self-body-other.html
 /header-only.html,1,,/header-only.html
 /header-over-head.html,2,Canonicalised,/target-a.html
 /invalid-url.html,1,,

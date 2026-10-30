@@ -3,6 +3,7 @@
     "blocked-source",
     "broken",
     "canonicalised",
+    "created",
     "first",
     "first-unknown",
     "last",
@@ -28,6 +29,7 @@
   "First Page": [
     "blocked-source",
     "broken",
+    "created",
     "first",
     "first-unknown",
     "lead",
@@ -84,6 +86,7 @@
   ],
   "Sequence Error": [
     "canonicalised",
+    "created",
     "first-unknown",
     "lead",
     "loop-a",

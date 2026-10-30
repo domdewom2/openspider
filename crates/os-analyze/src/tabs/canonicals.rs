@@ -284,8 +284,8 @@ pub fn tab() -> TabDef {
                 }],
                 ..filter(
                     "Outside <head>",
-                    "EXISTS (SELECT 1 FROM canonicals c WHERE c.url_id = u.id
-                    AND c.source = 'html' AND c.in_head = 0)",
+                    "EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id
+                    AND e.key = 'canonical.outside_head' AND e.v_int = 1)",
                     false,
                 )
             },

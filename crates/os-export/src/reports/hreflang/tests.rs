@@ -77,7 +77,7 @@ fn csv_report(index: usize) -> (Vec<String>, Vec<Vec<String>>) {
 fn all_reports_every_annotation_and_source() {
     let (header, rows) = csv_report(0);
     assert_eq!(header, entries()[0].header);
-    assert_eq!(rows.len(), 20);
+    assert_eq!(rows.len(), 19);
     assert!(rows.iter().any(|r| r[3] == "XML Sitemap"));
     assert!(rows.iter().any(|r| r[3] == "HTTP Header"));
     assert_eq!(
@@ -123,7 +123,6 @@ fn unlinked_emits_each_unlinked_relationship_after_analysis() {
         [
             "https://site.test/3",
             "https://site.test/4",
-            "https://site.test/5",
             "https://site.test/8",
             "https://site.test/16"
         ]
@@ -311,7 +310,7 @@ fn detail_export_pages_past_the_viewport_limit() {
         Format::Csv,
     )
     .unwrap();
-    assert_eq!(info.rows, 520);
+    assert_eq!(info.rows, 519);
 }
 
 // spec: TECH-089

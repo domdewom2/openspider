@@ -34,12 +34,12 @@ fn run(job: &TableJob<'_>, writer: &mut dyn TableWriter) -> Result<u64, ExportEr
     }
     let mut stmt = sql(job.file.conn().prepare(
         "SELECT u.address, t.address, t.status_code, t.status, t.indexability, t.indexability_status,
-            EXISTS(SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'unlinked_canonical')
+            EXISTS(SELECT 1 FROM url_flags f WHERE f.url_id = t.id AND f.flag = 'unlinked_canonical')
         FROM urls u JOIN urls t ON t.id = u.canonical_target_id
         WHERE u.is_internal = 1 AND u.in_tables = 1 AND u.status_code BETWEEN 200 AND 299
             AND u.canonical_self = 0 AND t.indexability IS NOT NULL
             AND (t.indexability = 'Non-Indexable' OR t.status_code <> 200 OR
-              EXISTS(SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'unlinked_canonical'))
+              EXISTS(SELECT 1 FROM url_flags f WHERE f.url_id = t.id AND f.flag = 'unlinked_canonical'))
         ORDER BY u.address COLLATE OS_TEXT"))?;
     let mut rows = sql(stmt.query([]))?;
     let mut count = 0;

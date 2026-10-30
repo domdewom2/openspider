@@ -77,12 +77,14 @@ fn collect(
 }
 
 /// Nur interne Hyperlinks zählen; der einmalige Linkscan funktioniert auch ohne links_target-Index.
-const SELECT_UNLINKED: &str = "SELECT u.id FROM urls u JOIN urls t ON t.id = u.canonical_target_id
+const SELECT_UNLINKED: &str =
+    "SELECT DISTINCT t.id FROM urls u JOIN urls t ON t.id = u.canonical_target_id
     WHERE u.is_internal = 1 AND u.status_code BETWEEN 200 AND 299
       AND u.canonical_count >= 1 AND u.canonical_self = 0 AND t.indexability IS NOT NULL
+      AND t.is_internal = 1 AND t.state = 'done'
       AND t.id NOT IN (SELECT l.target_id FROM links l JOIN urls s ON s.id = l.source_id
         WHERE s.is_internal = 1 AND l.link_type = 'Hyperlink' AND l.target_id IS NOT NULL)
-    ORDER BY u.id";
+    ORDER BY t.id";
 
 fn apply(
     conn: &Connection,

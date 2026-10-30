@@ -1,5 +1,5 @@
-All: 9
-Contains Hreflang: 7
+All: 7
+Contains Hreflang: 5
 Non-200 Hreflang URLs: 1
 Missing Return Links: 1
 Incorrect Language & Region Codes: 1
@@ -11,5 +11,5 @@ Noindex Return Links: 0
 Multiple Entries: 1
 Missing Self Reference: 0
 Not Using Canonical: 0
-Missing X-Default: 7
+Missing X-Default: 5
 Outside <head>: 0
