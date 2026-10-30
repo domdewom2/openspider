@@ -31,7 +31,7 @@ export async function prepare(page: Page, lang: string, theme: string, density =
 
 /** K2-75: inspect actual label nodes as well as their controls. Keep full diagnostics. */
 export async function audit(page: Page) {
-  const selector = '.os-tab-label, button, a[href], summary, [role=tab], [role=button], [role^=menuitem], [role=dialog] h1, [role=dialog] h2, [role=alertdialog] h2';
+  const selector = '.os-tab-label, button, button span, [role^=menuitem] span, a[href], summary, [role=tab], [role=button], [role^=menuitem], [role=dialog] h1, [role=dialog] h2, [role=alertdialog] h2';
   const geometry = await page.locator(selector).evaluateAll(textGeometry);
   return page.evaluate(({ geometry, selector }) => {
     const visible = (e: HTMLElement) => {

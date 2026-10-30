@@ -68,8 +68,10 @@ test("all three tab bars link their selected tab to the displayed panel after ke
 test("text audit detects clipping ancestors and tolerates less than one device pixel", async ({ page }) => {
   await page.setContent(`<style>button { display:block; width:180px; height:24px; white-space:nowrap; margin:20px; } .clip { width:80px; overflow:hidden; } .clip button { margin:0; } </style>
     <div class="clip"><button>Ancestor clipping fixture</button></div>
+    <button><span style="display:block;width:30px;overflow:hidden;white-space:nowrap">Nested clipping fixture</span></button>
     <button id="fraction">Subpixel</button><input value="Native input"><select><option>Native select</option></select>`);
   expect((await audit(page)).text.some(hit => hit.includes("Ancestor clipping fixture"))).toBe(true);
+  expect((await audit(page)).text.some(hit => hit.includes("Nested clipping fixture"))).toBe(true);
   await page.locator("#fraction").evaluate(el => {
     const range = document.createRange(); range.selectNodeContents(el);
     const width = range.getBoundingClientRect().width;
