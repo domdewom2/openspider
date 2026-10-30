@@ -1,0 +1,2 @@
+﻿"Type","Source","Destination","Size (Bytes)","Alt Text","Anchor","Status Code","Status","Crawlability","Follow","Target","Rel","Path Type","Link Path","Link Position","Link Origin"
+"Hyperlink","http://127.0.0.1:8908/noindex-source.html","http://127.0.0.1:8908/noindex-inlinks-only.html","157","","Only non-indexable source","200","OK","Crawlable","true","","","Root-Relative","//body/main/a","Content","HTML"

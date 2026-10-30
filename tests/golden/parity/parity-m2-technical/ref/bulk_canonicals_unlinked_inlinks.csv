@@ -1,0 +1,3 @@
+﻿"Type","Source","Destination","Size (Bytes)","Alt Text","Anchor","Status Code","Status","Crawlability","Follow","Target","Rel","Path Type","Link Path","Link Position","Link Origin"
+"HTML Canonical","http://127.0.0.1:8907/canonical-chain-a.html","http://127.0.0.1:8907/canonical-chain-b.html","206","","","200","OK","Crawlable","true","","","Root-Relative","//head/link","Head","HTML"
+"HTML Canonical","http://127.0.0.1:8907/canonical-unlinked.html","http://127.0.0.1:8907/canonical-unlinked-target.html","162","","","200","OK","Crawlable","true","","","Root-Relative","//head/link","Head","HTML"

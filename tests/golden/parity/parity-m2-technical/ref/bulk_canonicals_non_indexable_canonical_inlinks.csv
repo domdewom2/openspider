@@ -1,0 +1,4 @@
+﻿"Type","Source","Destination","Size (Bytes)","Alt Text","Anchor","Status Code","Status","Crawlability","Follow","Target","Rel","Path Type","Link Path","Link Position","Link Origin"
+"Hyperlink","http://127.0.0.1:8907/","http://127.0.0.1:8907/canonical-chain-a.html","207","","/canonical-chain-a.html","200","OK","Crawlable","true","","","Root-Relative","//body/main/ul/li[7]/a","Content","HTML"
+"HTTP Redirect","http://127.0.0.1:8907/redirect-canonical","http://127.0.0.1:8907/canonical-chain-a.html","207","","","200","OK","Crawlable","true","","","Root-Relative","","","HTTP"
+"Hyperlink","http://127.0.0.1:8907/","http://127.0.0.1:8907/canonical-to-noindex.html","210","","/canonical-to-noindex.html","200","OK","Crawlable","true","","","Root-Relative","//body/main/ul/li[9]/a","Content","HTML"

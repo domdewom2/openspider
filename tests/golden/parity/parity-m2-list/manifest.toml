@@ -2,36 +2,36 @@
 site = "parity-m2-list"
 port = 8910
 ref_version = "referenz-2026-10"
-exported_at = ""
-ref_settings = "Free, macOS, English (UK), Standardkonfiguration; Crawl Analysis ausgeführt. Hreflang/Pagination speichern, nicht crawlen. Always-Follow aus (Not Followed). Kein JavaScript, kein TLS. Gesperrte/leere Exporte als unavailable mit Grund dokumentieren."
+exported_at = "2026-10-30"
+ref_settings = "Free, macOS, English (UK), Standardkonfiguration; Crawl Analysis ausgeführt. Hreflang/Pagination speichern, nicht crawlen. Always-Follow aus (Not Followed). Kein JavaScript, kein TLS. Gesperrte/leere Exporte als unavailable mit Grund dokumentieren. Erzeugt am 2026-10-30 mit der lizenzierten Referenzversion (nicht Free; alle Sites unter 500 URLs), Oberflaeche English (UK), Standardkonfiguration; einzige Aenderung: automatische Crawl-Analyse am Crawl-Ende (gleichwertig zu Crawl Analysis > Start). Exporte per Kommandozeile (headless) aus einem gespeicherten Crawl je Site; Tab-, Bulk- und Report-Exporte getrennt erzeugt. Per Oberflaeche erzeugt: parity-m2-list internal_all (Listenmodus-Export in Upload-Reihenfolge, mit Spalte Original Url), parity-m2-links crawl_path_deep8, parity-m2-onpage sitemap_options. XML-Dateien: Generator-Kommentar entfernt (Neutralitaet)."
 list_source = "list.txt"
 
 [[export]]
 ref_file = "internal_all.csv"
 os = "tab:Internal:All"
 mapping = "list_internal"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "response_codes_all.csv"
 os = "tab:Response Codes:All"
 mapping = "response_codes_all"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "crawl_overview.csv"
 os = "report:Crawl Overview"
 mapping = "crawl_overview"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "redirects_redirect_chains.csv"
 os = "report:Redirects:Redirect Chains"
 mapping = "list_chains"
-status = "pending"
+status = "present"
 
 [[export]]
 ref_file = "redirects_redirect_canonical_chains.csv"
 os = "report:Redirects:Redirect & Canonical Chains"
 mapping = "list_chains"
-status = "pending"
+status = "present"

@@ -1,0 +1,6 @@
+﻿"Address","Word Count","Sentence Count","Average Words Per Sentence","Flesch Reading Ease Score","Readability","Indexability","Indexability Status"
+"http://127.0.0.1:8906/","110","111","0.991","36.629","Hard","Indexable",""
+"http://127.0.0.1:8906/same-h1.html","2","1","2.000","35.605","Hard","Indexable",""
+"http://127.0.0.1:8906/images.html","3","2","1.500","36.113","Hard","Indexable",""
+"http://127.0.0.1:8906/bookmarks.html","4","1","4.000","33.575","Hard","Indexable",""
+"http://127.0.0.1:8906/?s=stone","110","111","0.991","36.629","Hard","Indexable",""

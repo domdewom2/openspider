@@ -1,0 +1,3 @@
+﻿"Address","Content Type","Status Code","Status","Indexability","Indexability Status","Size (Bytes)","Transferred (Bytes)","Total Transferred (Bytes)","CO2 (mg)","Carbon Rating"
+"http://127.0.0.1:8907/validation-head-missing.html","text/html; charset=utf-8","200","OK","Indexable","","61","61","61","0.009",""
+"http://127.0.0.1:8907/validation-head-not-first.html","text/html; charset=utf-8","200","OK","Indexable","","85","85","85","0.013",""
