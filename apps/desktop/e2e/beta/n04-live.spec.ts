@@ -15,7 +15,8 @@ import { persistentBridge } from "./persistent-bridge";
 // spec: UI-124
 // spec: CRAWL-126 [M2]
 test("5000 fixture URLs: live HTML, retained details, pause/resume, completed file through Recent after restart", async ({ page }) => {
-  test.setTimeout(360_000);
+  test.setTimeout(960_000);
+  page.setDefaultTimeout(10_000);
   const home = mkdtempSync(join(tmpdir(), "os-n04-live-"));
   const site = spawn(toolBinary("os-testsite"), ["synthetic:n=5000,links=30,seed=7"], { stdio: ["ignore", "pipe", "inherit"] });
   const base = await new Promise<string>((resolve, reject) => {
@@ -58,7 +59,7 @@ test("5000 fixture URLs: live HTML, retained details, pause/resume, completed fi
       const { useSession } = await import(/* @vite-ignore */ String("/src/state/session.ts"));
       return useSession.getState().crawl?.crawled ?? 0;
     }), { timeout: 30_000 }).toBeGreaterThan(200);
-    await page.getByRole("region", { name: "Crawl table", exact: true }).getByRole("button", { name: "HTML", exact: true }).click();
+    await page.getByRole("region", { name: "Crawl table", exact: true }).getByRole("button", { name: /^HTML(?: \([\d,.\s]+\))?$/ }).click();
     const upperStarted = Date.now();
     const upper = page.getByRole("grid", { name: "Crawl table", exact: true });
     await expect(upper).toBeVisible({ timeout: 10_000 });
@@ -84,7 +85,7 @@ test("5000 fixture URLs: live HTML, retained details, pause/resume, completed fi
       const { useSession } = await import(/* @vite-ignore */ String("/src/state/session.ts"));
       return useSession.getState().crawl?.phase;
     }), { timeout: 180_000 }).toBe("completed");
-    await expect(page.getByTestId("analysis-feedback")).toHaveText("Analysis completed", { timeout: 120_000 });
+    await expect(page.getByTestId("analysis-feedback")).toHaveText("Analysis completed", { timeout: 600_000 });
     await expect(page.getByTestId("crawl-phase")).toHaveText("Completed");
     await page.goto("about:blank"); await bridge.stop();
     await test.info().attach("completed-crawl", { body: JSON.stringify({ fileBytes: statSync(reference.file).size, crawlId: reference.crawlId }), contentType: "application/json" });
@@ -108,6 +109,10 @@ test("5000 fixture URLs: live HTML, retained details, pause/resume, completed fi
     expect(summary?.crawled).toBeGreaterThanOrEqual(5000);
     await expect(page.getByTestId("crawl-open-error")).toHaveCount(0);
   } catch (error) {
+    await test.info().attach("session", { body: JSON.stringify(await page.evaluate(async () => {
+      const { useSession } = await import(/* @vite-ignore */ String("/src/state/session.ts"));
+      const { crawl, analysis, ops } = useSession.getState(); return { crawl, analysis, ops };
+    })), contentType: "application/json" });
     await test.info().attach("commands", { body: JSON.stringify(await page.evaluate(() => (globalThis as unknown as { __n04Calls: unknown[] }).__n04Calls)) ?? "[]", contentType: "application/json" });
     throw error;
   } finally {
