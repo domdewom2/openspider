@@ -18,6 +18,10 @@ on:
         description: "Release-Version ohne v (leer = Workspace-Version)"
         type: string
         default: ""
+      run_tests:
+        description: "Native Tests vor dem Build ausführen"
+        type: boolean
+        default: true
       channel:
         type: string
         default: stable
@@ -46,6 +50,10 @@ on:
         description: "Release-Version ohne v (leer = Workspace-Version)"
         type: string
         default: ""
+      run_tests:
+        description: "Native Tests vor dem Build ausführen"
+        type: boolean
+        default: true
       channel:
         description: "Update-Kanal"
         type: choice
@@ -56,10 +64,6 @@ on:
         type: choice
         options: [all, universal, aarch64, x86_64]
         default: all
-  push:
-    branches: ["**"]
-  schedule:
-    - cron: "23 3 * * *"
 
 permissions:
   contents: read
@@ -73,15 +77,16 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # OUT-260: arm64 bei jedem Push. K3-06: Intel nachts und vor Releases.
+  # OUT-260: native Release-Tests auf arm64 und Intel; Push-Tests liegen in ci.yml.
   tests:
+    if: inputs.run_tests
     name: Tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJSON(github.event_name == 'push' && inputs.channel == '' && '["macos-14"]' || '["macos-14","macos-15-intel"]') }}
+        os: [macos-14, macos-15-intel]
     env:
       OPENSPIDER_SECRET_STORE: memory
       CARGO_INCREMENTAL: 0
@@ -89,9 +94,9 @@ jobs:
       CARGO_PROFILE_DEV_DEBUG: "0"
       CARGO_PROFILE_TEST_DEBUG: "0"
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: npm
@@ -112,8 +117,8 @@ jobs:
       - run: bash scripts/check-neutral.sh
 
   macos:
-    # Reusable workflows retain the caller event_name (including a tag push).
-    if: inputs.channel != ''
+    # Explicit status check allows a deliberately skipped test job, but blocks failed tests.
+    if: ${{ !cancelled() && (needs.tests.result == 'success' || (!inputs.run_tests && needs.tests.result == 'skipped')) }}
     needs: tests
     name: signiertes DMG (${{ matrix.arch }})
     runs-on: ${{ matrix.os }}
@@ -134,6 +139,8 @@ jobs:
       OPENSPIDER_DISABLE_UPDATE_CHECK: "1"
       RELEASE_VERSION: ${{ inputs.version }}
       UPDATE_CHANNEL: ${{ inputs.channel || 'stable' }}
+      OPENSPIDER_UPDATER_PUBKEY: ${{ vars.OPENSPIDER_UPDATER_PUBKEY }}
+      OPENSPIDER_UPDATE_BETA: ${{ inputs.channel == 'beta' && '1' || '0' }}
     defaults:
       run:
         shell: bash
@@ -192,16 +199,16 @@ jobs:
           echo "BUNDLE_DIR=target/$target/release/bundle" >> "$GITHUB_ENV"
           echo "Build-Ziel: $target"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         if: steps.check.outputs.ready == 'true'
 
       # Ohne rust-cache: ein signierter Release-Build soll nicht von einem Cache abhängen.
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         if: steps.check.outputs.ready == 'true'
         with:
           targets: aarch64-apple-darwin,x86_64-apple-darwin
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         if: steps.check.outputs.ready == 'true'
         timeout-minutes: 10
         with:
@@ -217,7 +224,6 @@ jobs:
         id: updater
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          OPENSPIDER_UPDATER_PUBKEY: ${{ vars.OPENSPIDER_UPDATER_PUBKEY }}
         run: |
           set -euo pipefail
           case "$UPDATE_CHANNEL" in stable|beta) ;; *) echo "Ungültiger Kanal" >&2; exit 1 ;; esac
@@ -406,7 +412,7 @@ jobs:
 
       - name: Artefakt hochladen
         if: always() && steps.check.outputs.ready == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: openspider-macos-${{ env.ARCH }}
           path: release-artifacts/
@@ -430,8 +436,8 @@ jobs:
       matrix:
         os: [macos-14, macos-15-intel]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         id: download
         continue-on-error: true
         with:
