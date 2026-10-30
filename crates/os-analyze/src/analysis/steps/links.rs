@@ -16,46 +16,124 @@ fn run_inner(file: &CrawlFile, cancel: &CancelToken) -> Result<StepState, Analyz
         return Ok(StepState::Pending);
     }
     let conn = file.conn();
-    // Der teure Graphdurchlauf schreibt nur TEMP. Er darf die MAIN-Schreibsperre
-    // weder für andere Analysatoren noch für deren Fortschrittszustände festhalten.
+    // One sequential graph pass. The target index forces random table reads for
+    // every edge once the graph exceeds SQLite's page cache. Keep only five bits
+    // per internal URL; never materialize/sort a crawl-sized inlink relation.
+    const INDEXABLE: u8 = 1;
+    const ELIGIBLE: u8 = 2;
+    const FOLLOW: u8 = 4;
+    const NOFOLLOW: u8 = 8;
+    const INDEXABLE_SOURCE: u8 = 16;
+    let mut pages = std::collections::HashMap::<i64, u8>::new();
+    {
+        let mut stmt = conn.prepare(
+            "SELECT id, COALESCE(indexability,'') <> 'Non-Indexable',
+            COALESCE(indexability = 'Indexable' AND discovered_via <> 'start',0)
+            FROM urls WHERE is_internal = 1",
+        )?;
+        let mut rows = stmt.query([])?;
+        while let Some(row) = rows.next()? {
+            if cancel.is_cancelled() {
+                return Ok(StepState::Pending);
+            }
+            let flags = (u8::from(row.get::<_, bool>(1)?) * INDEXABLE)
+                | (u8::from(row.get::<_, bool>(2)?) * ELIGIBLE);
+            pages.insert(row.get(0)?, flags);
+        }
+    }
+    {
+        let mut stmt = conn.prepare(
+            "SELECT source_id,target_id,follow <> 0 FROM links NOT INDEXED
+            WHERE link_type = 'Hyperlink' AND crawlable = 1 AND source_id <> target_id",
+        )?;
+        let mut rows = stmt.query([])?;
+        while let Some(row) = rows.next()? {
+            if cancel.is_cancelled() {
+                return Ok(StepState::Pending);
+            }
+            let source: i64 = row.get(0)?;
+            let target: i64 = row.get(1)?;
+            if let Some(&source_flags) = pages.get(&source) {
+                if let Some(flags) = pages.get_mut(&target) {
+                    *flags |= if row.get::<_, bool>(2)? {
+                        FOLLOW
+                    } else {
+                        NOFOLLOW
+                    };
+                    if source_flags & INDEXABLE != 0 {
+                        *flags |= INDEXABLE_SOURCE;
+                    }
+                }
+            }
+        }
+    }
     struct Scratch<'a>(&'a rusqlite::Connection);
     impl Drop for Scratch<'_> {
         fn drop(&mut self) {
-            let _ = self.0.execute_batch("DROP TABLE IF EXISTS temp.d08_internal; DROP TABLE IF EXISTS temp.d08_inlinks; DROP TABLE IF EXISTS temp.d08_link_facts; DROP TABLE IF EXISTS temp.d08_link_changes;");
+            let _ = self.0.execute_batch(
+                "DROP TABLE IF EXISTS temp.d08_link_facts;
+                DROP TABLE IF EXISTS temp.d08_old_link_facts;
+                DROP TABLE IF EXISTS temp.d08_link_changes;",
+            );
         }
     }
     let _scratch = Scratch(conn);
     conn.execute_batch(
-        "DROP TABLE IF EXISTS temp.d08_internal; DROP TABLE IF EXISTS temp.d08_inlinks;
-        DROP TABLE IF EXISTS temp.d08_link_facts; DROP TABLE IF EXISTS temp.d08_link_changes;
-        CREATE TEMP TABLE d08_internal(id INTEGER PRIMARY KEY, indexable INTEGER NOT NULL);
-        INSERT INTO d08_internal SELECT id, COALESCE(indexability,'') <> 'Non-Indexable'
-            FROM urls WHERE is_internal = 1;
-        CREATE TEMP TABLE d08_inlinks AS
-        SELECT l.target_id AS id, MAX(l.follow <> 0) AS yes, MAX(l.follow = 0) AS no,
-            MAX(s.indexable) AS indexable
-        FROM links l JOIN d08_internal s ON s.id = l.source_id JOIN d08_internal t ON t.id = l.target_id
-        WHERE l.link_type = 'Hyperlink' AND l.crawlable = 1
-            AND l.source_id <> l.target_id GROUP BY l.target_id;",
+        "CREATE TEMP TABLE d08_link_facts (url_id INTEGER, key TEXT, v_int INTEGER,
+        PRIMARY KEY(url_id,key)) WITHOUT ROWID;",
     )?;
-    if cancel.is_cancelled() {
-        return Ok(StepState::Pending);
+    let scratch_tx = conn.unchecked_transaction()?;
+    {
+        let mut insert = scratch_tx.prepare("INSERT INTO d08_link_facts VALUES(?1,?2,1)")?;
+        for (id, flags) in pages {
+            if cancel.is_cancelled() {
+                return Ok(StepState::Pending);
+            }
+            for (key, present) in [
+                (
+                    "link.mixed_inlinks",
+                    flags & (FOLLOW | NOFOLLOW) == (FOLLOW | NOFOLLOW),
+                ),
+                (
+                    "link.nofollow_only",
+                    flags & (FOLLOW | NOFOLLOW) == NOFOLLOW,
+                ),
+                (
+                    "link.non_indexable_only",
+                    flags & (FOLLOW | NOFOLLOW) != 0
+                        && flags & INDEXABLE_SOURCE == 0
+                        && flags & ELIGIBLE != 0,
+                ),
+            ] {
+                if present {
+                    insert.execute(rusqlite::params![id, key])?;
+                }
+            }
+        }
     }
-    conn.execute_batch("CREATE TEMP TABLE d08_link_facts (url_id INTEGER, key TEXT, v_int INTEGER, PRIMARY KEY(url_id,key)) WITHOUT ROWID;")?;
-    for (key, condition) in [
-        ("link.mixed_inlinks", "d.yes = 1 AND d.no = 1"),
-        ("link.nofollow_only", "d.yes = 0 AND d.no = 1"),
-        (
-            "link.non_indexable_only",
-            "d.indexable = 0 AND u.indexability = 'Indexable' AND u.discovered_via <> 'start'",
-        ),
-    ] {
-        conn.execute(&format!("INSERT INTO d08_link_facts SELECT d.id, ?1, 1 FROM d08_inlinks d JOIN urls u ON u.id = d.id WHERE {condition}"), [key])?;
-    }
+    scratch_tx.commit()?;
     let tx = rusqlite::Transaction::new_unchecked(conn, rusqlite::TransactionBehavior::Immediate)?;
-    tx.execute_batch("CREATE TEMP TABLE d08_link_changes AS
-        SELECT url_id FROM (SELECT url_id,key,v_int FROM url_ext WHERE key IN ('link.mixed_inlinks','link.nofollow_only','link.non_indexable_only') EXCEPT SELECT * FROM d08_link_facts)
-        UNION SELECT url_id FROM (SELECT * FROM d08_link_facts EXCEPT SELECT url_id,key,v_int FROM url_ext WHERE key IN ('link.mixed_inlinks','link.nofollow_only','link.non_indexable_only'));")?;
+    // Numeric facts do not need the text-overflow join in url_ext. A sequential
+    // primary-tree pass also avoids three complete scans via change_seq.
+    tx.execute_batch(
+        "CREATE TEMP TABLE d08_old_link_facts(url_id INTEGER, key TEXT, v_int INTEGER)",
+    )?;
+    let have_old_keys: bool = tx.query_row(
+        "SELECT EXISTS(SELECT 1 FROM ext_keys WHERE key IN
+        ('link.mixed_inlinks','link.nofollow_only','link.non_indexable_only'))",
+        [],
+        |r| r.get(0),
+    )?;
+    if have_old_keys {
+        tx.execute(
+            "INSERT INTO d08_old_link_facts SELECT * FROM analysis_link_facts",
+            [],
+        )?;
+    }
+    tx.execute_batch("CREATE TEMP TABLE d08_link_changes(url_id INTEGER PRIMARY KEY);
+        INSERT INTO d08_link_changes
+        SELECT url_id FROM (SELECT * FROM d08_old_link_facts EXCEPT SELECT * FROM d08_link_facts)
+        UNION SELECT url_id FROM (SELECT * FROM d08_link_facts EXCEPT SELECT * FROM d08_old_link_facts);")?;
     let changed: bool = tx.query_row("SELECT EXISTS(SELECT 1 FROM d08_link_changes)", [], |r| {
         r.get(0)
     })?;
@@ -65,7 +143,20 @@ fn run_inner(file: &CrawlFile, cancel: &CancelToken) -> Result<StepState, Analyz
             "UPDATE urls SET change_seq = ?1 WHERE id IN (SELECT url_id FROM d08_link_changes)",
             [seq],
         )?;
-        tx.execute_batch("DELETE FROM url_ext WHERE key IN ('link.mixed_inlinks','link.nofollow_only','link.non_indexable_only') AND url_id IN (SELECT url_id FROM d08_link_changes)")?;
+        {
+            let mut changed = tx.prepare("SELECT url_id FROM d08_link_changes ORDER BY url_id")?;
+            let mut rows = changed.query([])?;
+            let mut delete = tx.prepare(
+                "DELETE FROM url_ext WHERE url_id=?1 AND key IN
+                ('link.mixed_inlinks','link.nofollow_only','link.non_indexable_only')",
+            )?;
+            while let Some(row) = rows.next()? {
+                if cancel.is_cancelled() {
+                    return Ok(StepState::Pending);
+                }
+                delete.execute([row.get::<_, i64>(0)?])?;
+            }
+        }
         tx.execute("INSERT INTO url_ext(url_id,key,v_int,change_seq) SELECT url_id,key,v_int,?1 FROM d08_link_facts WHERE url_id IN (SELECT url_id FROM d08_link_changes)", [seq])?;
         tx.execute(
             "INSERT OR REPLACE INTO crawl_meta(key,value) VALUES('change_seq',?1)",
@@ -73,7 +164,7 @@ fn run_inner(file: &CrawlFile, cancel: &CancelToken) -> Result<StepState, Analyz
         )?;
     }
     tx.execute_batch(
-        "DROP TABLE d08_inlinks; DROP TABLE d08_link_facts; DROP TABLE d08_link_changes;",
+        "DROP TABLE d08_old_link_facts; DROP TABLE d08_link_facts; DROP TABLE d08_link_changes;",
     )?;
     if cancel.is_cancelled() {
         return Ok(StepState::Pending);
