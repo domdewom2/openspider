@@ -1,5 +1,5 @@
-﻿Address,Word Count,Sentence Count,Average Words Per Sentence,Flesch Reading Ease Score,Readability,Closest Similarity Match,No. Near Duplicates,Closest Semantically Similar Address,Semantic Similarity Score,No. Semantically Similar,Semantic Relevance Score,Total Language Errors,Spelling Errors,Grammar Errors,Language,Hash,Indexability,Indexability Status,Matched Phrase
-{BASE}/empty.html,0,,,,,,,,,,,,,,,f838590dfbb2534049a465795aae7e9e,Indexable,,
-{BASE}/footer-heavy.html,150,1,150,0,Very Difficult,,,,,,,,,,,73981a4f8bae629a6859625d14c3113d,Indexable,,
-{BASE}/header-aside.html,115,3,38.3,83.3,Easy,,,,,,,,,,,3e66fdf878bcafc70bb42cc5cb52ba08,Indexable,,
-{BASE}/words-199.html,199,1,199,0,Very Difficult,,,,,,,,,,,9f686e820a1511ef313fccfbd67b3503,Indexable,,
+﻿Address,Word Count,Sentence Count,Average Words Per Sentence,Flesch Reading Ease Score,Readability,Closest Similarity Match,No. Near Duplicates,Closest Semantically Similar Address,Semantic Similarity Score,No. Semantically Similar,Semantic Relevance Score,Total Language Errors,Spelling Errors,Grammar Errors,Language,Hash,Indexability,Indexability Status,Title 1,Title 1 Length,Title 1 Pixel Width,H1-1,H1-1 Length,H2-1,H2-1 Length,Occurrences,Matched Phrase
+{BASE}/empty.html,0,,,,,,,,,,,,,,,f838590dfbb2534049a465795aae7e9e,Indexable,,Leer,4,40,,0,,0,0,
+{BASE}/footer-heavy.html,150,15,10,100,Very Easy,,,,,,,,,,,73981a4f8bae629a6859625d14c3113d,Indexable,,Footer lastig,13,112,,0,,0,0,
+{BASE}/header-aside.html,100,13,7.692,100,Very Easy,,,,,,,,,,,3e66fdf878bcafc70bb42cc5cb52ba08,Indexable,,Bereiche,8,78,,0,,0,0,
+{BASE}/words-199.html,199,20,9.95,100,Very Easy,,,,,,,,,,,9f686e820a1511ef313fccfbd67b3503,Indexable,,199 Woerter,11,110,,0,,0,0,

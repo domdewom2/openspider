@@ -198,10 +198,18 @@ async fn columns_follow_the_spec_and_unavailable_functions_are_empty_and_hidden(
             "Hash",
             "Indexability",
             "Indexability Status",
+            "Title 1",
+            "Title 1 Length",
+            "Title 1 Pixel Width",
+            "H1-1",
+            "H1-1 Length",
+            "H2-1",
+            "H2-1 Length",
+            "Occurrences",
             "Matched Phrase",
         ]
     );
-    // Sichtbar sind nur die M1-Spalten; die Spalten der P1-Funktionen sind ausgeblendet.
+    // Verfügbare Teilanalysen sind sichtbar; die konfigurierte Ansicht blendet deaktivierte aus.
     let visible: Vec<&str> = tab
         .columns
         .iter()
@@ -213,6 +221,16 @@ async fn columns_follow_the_spec_and_unavailable_functions_are_empty_and_hidden(
         [
             "Address",
             "Word Count",
+            "Sentence Count",
+            "Average Words Per Sentence",
+            "Flesch Reading Ease Score",
+            "Readability",
+            "Closest Similarity Match",
+            "No. Near Duplicates",
+            "Total Language Errors",
+            "Spelling Errors",
+            "Grammar Errors",
+            "Language",
             "Hash",
             "Indexability",
             "Indexability Status"
@@ -234,7 +252,22 @@ async fn columns_follow_the_spec_and_unavailable_functions_are_empty_and_hidden(
     // Standardansicht: nur die sichtbaren Spalten.
     let mut q = ViewQuery::new(TAB, "All");
     q.limit = 500;
-    assert_eq!(query_view(&fx.file, &cfg, &q).unwrap().columns, visible);
+    assert_eq!(
+        query_view(&fx.file, &cfg, &q).unwrap().columns,
+        [
+            "Address",
+            "Word Count",
+            "Sentence Count",
+            "Average Words Per Sentence",
+            "Flesch Reading Ease Score",
+            "Readability",
+            "Closest Similarity Match",
+            "No. Near Duplicates",
+            "Hash",
+            "Indexability",
+            "Indexability Status"
+        ]
+    );
 
     // Word Count aus dem Inhaltsbereich, Hash wie in der Crawl-Datei (Internal), Indexierbarkeit als Spalte.
     assert_eq!(
@@ -381,10 +414,10 @@ async fn low_content_pages_use_the_word_count_threshold() {
         cell(&fx, &page, "/footer-heavy.html", "Word Count"),
         Value::Int(150)
     );
-    // ONPAGE-140/141: nav und footer zählen nicht, header und aside schon (5 + 100 + 10).
+    // SQ-09: nav/footer/header/aside zählen nicht.
     assert_eq!(
         cell(&fx, &page, "/header-aside.html", "Word Count"),
-        Value::Int(115)
+        Value::Int(100)
     );
 
     let low = sorted_addresses(&fx, &cfg, TAB, "Low Content Pages");

@@ -162,6 +162,7 @@ pub(super) fn build<'t>(
         } else {
             &q.columns
         },
+        cfg,
     )?;
     let sort = sort_terms(tab, filter, &q.sort)?;
     let order_by = order_by(&sort);
@@ -331,6 +332,7 @@ pub(super) fn series_parts(def: &ColumnDef) -> Option<(&'static str, Vec<PairedP
 fn select_columns<'t>(
     tab: &'t TabDef,
     selection: &ColumnSelection,
+    cfg: &CrawlConfig,
 ) -> Result<Vec<SelectedColumn<'t>>, ViewError> {
     let whole = |def: &'t ColumnDef| SelectedColumn {
         def,
@@ -340,7 +342,25 @@ fn select_columns<'t>(
         ColumnSelection::Default => Ok(tab
             .columns
             .iter()
-            .filter(|c| c.default_visible)
+            .filter(|c| {
+                c.default_visible
+                    && (tab.id != "Content"
+                        || match (c.key, c.needs) {
+                            ("Total Language Errors" | "Language", _) => {
+                                cfg.spelling.enabled || cfg.grammar.enabled
+                            }
+                            (_, Some(crate::defs::Needs::Config("extraction.readability"))) => {
+                                cfg.extraction.readability
+                            }
+                            (_, Some(crate::defs::Needs::Config("spelling.enabled"))) => {
+                                cfg.spelling.enabled
+                            }
+                            (_, Some(crate::defs::Needs::Config("grammar.enabled"))) => {
+                                cfg.grammar.enabled
+                            }
+                            _ => true,
+                        })
+            })
             .map(whole)
             .collect()),
         ColumnSelection::All => {
