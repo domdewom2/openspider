@@ -34,7 +34,7 @@ use crate::defs::{
 };
 
 /// Grundmenge: interne Seiten mit hreflang-Bezug; `:store` ist `spider.hreflang.store`.
-const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 AND :store = 1 AND (:skip = 0 OR NOT EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key IN ('hreflang.truncated', 'hreflang.truncated_sitemap') AND e.v_int > 0)) AND u.content_class = 'HTML' AND u.status_code BETWEEN 200 AND 299";
+const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1 AND :store = 1 AND (:skip = 0 OR NOT EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key IN ('hreflang.truncated', 'hreflang.truncated_sitemap') AND e.v_int > 0)) AND u.status_code BETWEEN 200 AND 299 AND (u.content_class = 'HTML' OR EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id AND h.source = 'http'))";
 
 /// Die Seite hat mindestens eine Annotation (aus beliebiger Quelle).
 const HAS_ANNOTATION: &str = "EXISTS (SELECT 1 FROM hreflang h WHERE h.url_id = u.id)";

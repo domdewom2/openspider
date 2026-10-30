@@ -130,8 +130,8 @@ async fn population_columns_and_occurrences_over_all_sources() {
     let fx = run(cfg.clone()).await;
     let all = page(&fx.file, &cfg, "Hreflang", "All", true);
 
-    // Grundmenge: interne HTML-200-Seiten, URLs mit HTTP- oder Sitemap-hreflang, gecrawlte Ziele (/it/ 404,
-    // /fr-old/ 301). Sitemap-Dateien und robots.txt gehören nicht dazu.
+    // Grundmenge: interne HTML-2xx und Nicht-HTML-2xx mit HTTP-hreflang.
+    // Ziele ohne 2xx, Sitemap-Dateien und robots.txt gehören nicht dazu.
     let addresses: Vec<String> = all
         .rows
         .iter()
@@ -148,6 +148,7 @@ async fn population_columns_and_occurrences_over_all_sources() {
             "/es/",
             "/fr/",
             "/nl/",
+            "/pdf-en.pdf",
         ]
     );
 
@@ -205,6 +206,8 @@ async fn population_columns_and_occurrences_over_all_sources() {
         "alte Form entfällt"
     );
     // HTTP- und Sitemap-Spalten.
+    assert_eq!(cell(&all, "/pdf-en.pdf", "HTTP hreflang 1"), "en");
+    assert_eq!(cell(&all, "/pdf-en.pdf", "Occurrences"), "1");
     assert_eq!(cell(&all, "/es/", "Sitemap hreflang 1"), "es");
     assert_eq!(cell(&all, "/es/", "Sitemap hreflang 2"), "en");
     assert_eq!(
@@ -250,7 +253,7 @@ async fn contains_hreflang_includes_urls_with_sitemap_annotations_only() {
         &cfg,
         "store-on_crawl-on",
         "Contains Hreflang",
-        &["/badcode/", "/de/", "/en/", "/es/", "/fr/"],
+        &["/badcode/", "/de/", "/en/", "/es/", "/fr/", "/pdf-en.pdf"],
     );
     // /es/ hat nur Sitemap-Annotationen und ist trotzdem enthalten; /nl/ hat keine.
     let all = list(&fx.file, &cfg, "Hreflang", "Contains Hreflang");
@@ -333,6 +336,32 @@ async fn missing_return_links_are_live_and_accept_return_links_from_any_source()
         "Missing Return Links",
         &["/de/", "/en/"],
     );
+}
+
+// spec: TECH-071, TECH-076
+#[tokio::test]
+async fn http_hreflang_on_non_html_2xx_participates_in_return_link_filters() {
+    let cfg = cfg_run(true, true, true);
+    let fx = run(cfg.clone()).await;
+    // Extend the PDF fixture's HTTP annotation with an alternate lacking a return link.
+    fx.file.conn().execute(
+        "INSERT INTO hreflang (url_id, source, position, code_raw, code_norm, code_valid, href_raw, url, target_id, in_head) \
+         SELECT p.id, 'http', 2, 'de', 'de', 1, q.url, q.url, q.id, 1 FROM urls p JOIN urls q \
+         WHERE p.url = 'http://site.test/pdf-en.pdf' AND q.url = 'http://site.test/de/'",
+        [],
+    ).unwrap();
+    assert!(
+        list(&fx.file, &cfg, "Hreflang", "Missing Return Links").contains(&"/pdf-en.pdf".into())
+    );
+    // The HTTP annotation alone does not admit redirects or failed responses.
+    fx.file
+        .conn()
+        .execute(
+            "UPDATE urls SET status_code = 302 WHERE url = 'http://site.test/pdf-en.pdf'",
+            [],
+        )
+        .unwrap();
+    assert!(!list(&fx.file, &cfg, "Hreflang", "All").contains(&"/pdf-en.pdf".into()));
 }
 
 // spec: TECH-076
@@ -505,6 +534,7 @@ async fn store_on_crawl_off_fills_the_tab_with_the_filters_that_need_only_the_ow
             "/en/",
             "/es/",
             "/fr/",
+            "/pdf-en.pdf",
         ],
     );
     check(
