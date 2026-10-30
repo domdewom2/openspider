@@ -39,7 +39,8 @@
     "resources": {
       "../../../crates/os-render/resources/axe/axe.min.js": "axe/axe.min.js",
       "../../../crates/os-render/resources/axe/LICENSE": "axe/LICENSE",
-      "../../../crates/os-render/resources/axe/THIRD_PARTY_NOTICES": "axe/THIRD_PARTY_NOTICES"
+      "../../../crates/os-render/resources/axe/THIRD_PARTY_NOTICES": "axe/THIRD_PARTY_NOTICES",
+      "resources/third-party/": "third-party/"
     },
     "active": true,
     "targets": "all",
@@ -57,40 +58,63 @@
     },
     "fileAssociations": [
       {
-        "ext": ["ospider"],
+        "ext": [
+          "ospider"
+        ],
         "name": "OpenSpider Crawl",
         "description": "OpenSpider Crawl",
         "mimeType": "application/vnd.openspider.crawl",
         "role": "Editor"
       },
       {
-        "ext": ["osconfig"],
+        "ext": [
+          "osconfig"
+        ],
         "name": "OpenSpider Konfiguration",
         "description": "OpenSpider Konfiguration",
         "mimeType": "application/vnd.openspider.config",
         "role": "Editor"
       },
       {
-        "ext": ["osauth"],
+        "ext": [
+          "osauth"
+        ],
         "name": "OpenSpider Authentifizierungsprofile",
         "description": "OpenSpider Authentifizierungsprofile",
         "mimeType": "application/vnd.openspider.auth",
         "role": "Editor"
       },
       {
-        "ext": ["ospreset"],
+        "ext": [
+          "ospreset"
+        ],
         "name": "OpenSpider Vorgabe",
         "description": "OpenSpider Vorgabe",
         "mimeType": "application/vnd.openspider.preset",
         "role": "Editor"
       },
       {
-        "ext": ["ostask"],
+        "ext": [
+          "ostask"
+        ],
         "name": "OpenSpider Aufgabe",
         "description": "OpenSpider Aufgabe",
         "mimeType": "application/vnd.openspider.task",
         "role": "Editor"
       }
+    ],
+    "createUpdaterArtifacts": true,
+    "externalBin": [
+      "binaries/openspider"
     ]
+  },
+  "version": "0.1.0",
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://github.com/domdewom2/openspider/releases/latest/download/latest.json"
+      ],
+      "pubkey": ""
+    }
   }
 }

@@ -80,6 +80,40 @@ fn main() {
         PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR"));
     let out_dir = PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR"));
 
+    // M3-F01: Tauri does not expand environment variables in JSON configuration.
+    // Preserve CLI/platform overrides, then inject the public release configuration.
+    println!("cargo:rerun-if-env-changed=OPENSPIDER_UPDATER_PUBKEY");
+    println!("cargo:rerun-if-env-changed=OPENSPIDER_UPDATE_BETA");
+    let mut config: serde_json::Value = std::env::var("TAURI_CONFIG")
+        .ok()
+        .map(|s| serde_json::from_str(&s).expect("TAURI_CONFIG invalid"))
+        .unwrap_or_else(|| serde_json::json!({}));
+    let key = std::env::var("OPENSPIDER_UPDATER_PUBKEY").unwrap_or_default();
+    let manifest = match std::env::var("OPENSPIDER_UPDATE_BETA").as_deref() {
+        Ok("1") => "latest-beta.json",
+        Ok("0") | Err(_) => "latest.json",
+        _ => panic!("OPENSPIDER_UPDATE_BETA must be 0 or 1"),
+    };
+    config["plugins"]["updater"] = serde_json::json!({
+        "pubkey": key,
+        "endpoints": [format!("https://github.com/domdewom2/openspider/releases/latest/download/{manifest}")]
+    });
+    // cargo check/test do not stage the release sidecar; release builds require it.
+    let triple = std::env::var("TARGET").expect("TARGET");
+    let suffix = if triple.contains("windows") {
+        ".exe"
+    } else {
+        ""
+    };
+    let sidecar = manifest_dir.join(format!("binaries/openspider-{triple}{suffix}"));
+    println!("cargo:rerun-if-changed={}", sidecar.display());
+    if std::env::var("PROFILE").as_deref() == Ok("debug") && !sidecar.exists() {
+        config["bundle"]["externalBin"] = serde_json::json!([]);
+    }
+    let config = serde_json::to_string(&config).expect("config serialization");
+    std::env::set_var("TAURI_CONFIG", &config);
+    println!("cargo:rustc-env=TAURI_CONFIG={config}");
+
     let _ = std::fs::create_dir_all(manifest_dir.join("../dist"));
 
     println!("cargo:rerun-if-changed={COMMANDS_JSON}");
