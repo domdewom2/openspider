@@ -12,14 +12,6 @@ use os_parity::run::{
 
 const MAPPING: &str = "key = [\"Address\"]\n[columns]\n\"Address\" = \"Address\"\n\"Status Code\" = \"Status Code\"\n\"Title 1\" = \"Title 1\"\n";
 
-fn free_port() -> u16 {
-    std::net::TcpListener::bind("127.0.0.1:0")
-        .unwrap()
-        .local_addr()
-        .unwrap()
-        .port()
-}
-
 struct Repo {
     dir: tempfile::TempDir,
     port: u16,
@@ -48,15 +40,19 @@ fn write(path: &Path, text: &str) {
 }
 
 fn ref_csv(port: u16) -> String {
-    format!(
-        "Address,Status Code,Title 1\nhttp://127.0.0.1:{port}/,200,Start\nhttp://127.0.0.1:{port}/a.html,404,\n"
-    )
+    let base = if port == 0 {
+        "{BASE}".to_string()
+    } else {
+        format!("http://127.0.0.1:{port}")
+    };
+    format!("Address,Status Code,Title 1\n{base}/,200,Start\n{base}/a.html,404,\n")
 }
 
 /// Legt ein Repository mit Site `site-a` an: ein Export `present`, einer `pending`, einer `unavailable`.
 fn repo() -> Repo {
     let dir = tempfile::tempdir().unwrap();
-    let port = free_port();
+    // Let the server bind and retain an ephemeral port in one operation.
+    let port = 0;
     let r = dir.path();
     write(
         &r.join("tests/fixtures/site-a/index.html"),
@@ -407,15 +403,27 @@ fn command_exporter_runs_the_binary_end_to_end() {
     let repo = repo();
     let fake_bin = PathBuf::from(env!("CARGO_BIN_EXE_os-parity"));
     let src = repo.root().join("fake-src");
-    write(&src.join("internal_all.csv"), &ref_csv(repo.port));
+
     let mut exporter = CommandExporter::new(fake_bin);
     exporter
         .prefix_args
         .extend(["fake-openspider".into(), "--".into()]);
     exporter
         .env
-        .push(("FAKE_OPENSPIDER_SRC".into(), src.into()));
-    let s = run_sites(&repo.opts(&["site-a"], false), &exporter).unwrap();
+        .push(("FAKE_OPENSPIDER_SRC".into(), src.clone().into()));
+    let run_exporter = |req: &ExportRequest| {
+        // Use the bound server's real URL in the child-process fixture. The
+        // reference keeps symbolic {BASE} URLs, independent of port allocation.
+        assert!(http_status(&req.base_url).contains("200"));
+        let base = req.base_url.trim_end_matches('/');
+        assert_ne!(base.rsplit(':').next().unwrap(), "0");
+        write(
+            &src.join("internal_all.csv"),
+            &ref_csv(0).replace("{BASE}", base),
+        );
+        exporter.export(req)
+    };
+    let s = run_sites(&repo.opts(&["site-a"], false), &run_exporter).unwrap();
     assert!(s.passed, "{:?}", s.failures);
     let args = std::fs::read_to_string(repo.out().join("site-a/os/args.txt")).unwrap();
     let lines: Vec<&str> = args.lines().collect();
@@ -577,17 +585,17 @@ fn target_selection_preserves_steps_and_reports_missing_os_target_as_difference(
     let manifest = repo.root().join("tests/golden/parity/site-a/manifest.toml");
     write(&manifest, &format!("site = \"site-a\"\nport = {}\n[[export]]\nref_file = \"path.csv\"\nos = \"report:Crawl Path Report\"\nmapping = \"path\"\nstatus = \"present\"\n[export.select]\n\"Target Address\" = \"/deep/8.html\"\n", repo.port));
     write(&repo.root().join("tests/parity/mappings/path.toml"), "key = [\"Target Address\", \"Step\"]\n[columns]\n\"Target Address\" = \"Target Address\"\n\"Step\" = \"Step\"\n\"Address\" = \"Address\"\n");
-    let data = format!("Target Address,Step,Address\nhttp://127.0.0.1:{0}/deep/8.html,0,http://127.0.0.1:{0}/deep/8.html\nhttp://127.0.0.1:{0}/deep/8.html,1,http://127.0.0.1:{0}/deep/7.html\n", repo.port);
+    let data = "Target Address,Step,Address\n{BASE}/deep/8.html,0,{BASE}/deep/8.html\n{BASE}/deep/8.html,1,{BASE}/deep/7.html\n".to_string();
     write(
         &repo.root().join("tests/golden/parity/site-a/ref/path.csv"),
         &data,
     );
     let exporter = |req: &ExportRequest| {
-        let data = format!(
-            "{data}http://127.0.0.1:{}/other.html,0,http://127.0.0.1:{}/other.html\n",
-            repo.port, repo.port
+        let data = format!("{data}{{BASE}}/other.html,0,{{BASE}}/other.html\n");
+        write(
+            &req.out_dir.join("crawl_path_report.csv"),
+            &data.replace("{BASE}", req.base_url.trim_end_matches('/')),
         );
-        write(&req.out_dir.join("crawl_path_report.csv"), &data);
         Ok(())
     };
     let summary = run_sites(&repo.opts(&["site-a"], false), &exporter).unwrap();
@@ -639,7 +647,7 @@ fn sitemap_xml_is_compared_by_urls_and_attributes_in_both_run_and_diff() {
         .root()
         .join("tests/golden/parity/site-a/ref/sitemap.xml");
     let xml = |priority: &str, address: &str| {
-        format!("<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'><url><loc>http://127.0.0.1:{}/{address}</loc><priority>{priority}</priority></url></urlset>", repo.port)
+        format!("<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'><url><loc>{{BASE}}/{address}</loc><priority>{priority}</priority></url></urlset>")
     };
     write(&reference, &xml("0.9", "a.html"));
     let make_exporter = |priority: &'static str, address: &'static str| {
@@ -647,7 +655,10 @@ fn sitemap_xml_is_compared_by_urls_and_attributes_in_both_run_and_diff() {
         move |req: &ExportRequest| {
             assert_eq!(req.sitemap.as_deref(), Some("default"));
             assert!(CommandExporter::args(req).contains(&"--create-sitemap".to_string()));
-            write(&req.out_dir.join("sitemap.xml"), &xml);
+            write(
+                &req.out_dir.join("sitemap.xml"),
+                &xml.replace("{BASE}", req.base_url.trim_end_matches('/')),
+            );
             Ok(())
         }
     };
@@ -718,7 +729,7 @@ fn m2_presence_gate_activates_only_when_m2_exports_are_present() {
     let manifest = repo
         .root()
         .join(format!("tests/golden/parity/{site}/manifest.toml"));
-    let text = format!("site = \"{site}\"\nport = {}\n[[export]]\nref_file = \"internal_all.csv\"\nos = \"tab:Internal:All\"\nmapping = \"internal_all\"\nstatus = \"pending\"\n", free_port());
+    let text = format!("site = \"{site}\"\nport = {}\n[[export]]\nref_file = \"internal_all.csv\"\nos = \"tab:Internal:All\"\nmapping = \"internal_all\"\nstatus = \"pending\"\n", 0);
     write(&manifest, &text);
     let opts = repo.opts(&["site-a", site], true);
     let summary = run_sites(&opts, &fake("Start")).unwrap();
