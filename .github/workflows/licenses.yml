@@ -29,8 +29,18 @@ jobs:
       - uses: EmbarkStudios/cargo-deny-action@d755fbddac377c2d538f556dd0f9c7728c7f73e4 # v2.0.14
         with:
           command: check licenses
-      - name: Install build-only license tool (MIT OR Apache-2.0)
-        run: timeout 3600s nice -n 10 cargo install cargo-about --version 0.9.3 --features cli --locked -j 4
+      - name: Cache build-only license tool (MIT OR Apache-2.0)
+        id: cargo-about-cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ runner.temp }}/cargo-about/bin
+          key: cargo-about-0.9.3-cli-${{ runner.os }}-${{ runner.arch }}-v1
+      - name: Install build-only license tool on cache miss
+        if: steps.cargo-about-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 60
+        run: timeout 3600s nice -n 10 cargo install cargo-about --version 0.9.3 --features cli --locked -j 4 --root "$RUNNER_TEMP/cargo-about"
+      - name: Add license tool to PATH
+        run: echo "$RUNNER_TEMP/cargo-about/bin" >> "$GITHUB_PATH"
       - name: Generate complete release notices (all release targets)
         run: timeout 3600s nice -n 10 node scripts/release/licenses/generate.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

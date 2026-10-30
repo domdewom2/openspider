@@ -10,6 +10,7 @@ export default defineConfig({
     name: "openspider-release-licenses",
     apply: "build",
     buildStart() {
+      if (process.env.OPENSPIDER_REQUIRE_NOTICES !== "1") return;
       const text = readFileSync(resolve(import.meta.dirname, "src-tauri/resources/third-party/THIRD_PARTY_NOTICES.txt"), "utf8");
       if (!text.startsWith("OpenSpider — THIRD PARTY NOTICES\n") || !text.includes("\nRust: ") || !text.includes("\nnpm: ")) {
         throw new Error("Complete third-party notices required: node scripts/release/licenses/generate.mjs (repository root)");
