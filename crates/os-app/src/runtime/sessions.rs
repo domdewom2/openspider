@@ -76,9 +76,20 @@ impl SessionRegistry {
             .get(w)
             .cloned()
     }
-    pub fn set_current(&self, w: WindowId, mut s: SessionInfo) {
+    pub fn set_current(&self, w: WindowId, s: SessionInfo) {
+        self.insert_current(w, s, false);
+    }
+
+    /// A new engine run supersedes unacknowledged transitions from its previous run.
+    pub(crate) fn start_current(&self, w: WindowId, s: SessionInfo) {
+        self.insert_current(w, s, true);
+    }
+
+    fn insert_current(&self, w: WindowId, mut s: SessionInfo, new_run: bool) {
         let mut registry = self.0.lock().unwrap_or_else(|p| p.into_inner());
-        if let Some(state) = registry.awaiting_snapshot.get(&s.key) {
+        if new_run {
+            registry.awaiting_snapshot.insert(s.key.clone(), s.state);
+        } else if let Some(state) = registry.awaiting_snapshot.get(&s.key) {
             s.state = *state;
         }
         registry.sessions.insert(w, s);
@@ -171,5 +182,22 @@ mod tests {
             assert_eq!(registry.current(&main).unwrap().state, CrawlState::Running);
             assert!(registry.refresh_state(&key, CrawlState::Running));
         }
+    }
+
+    // spec: CRAWL-128
+    // spec: OUT-251
+    #[test]
+    fn a_new_engine_run_replaces_the_previous_unacknowledged_completion() {
+        let registry = SessionRegistry::default();
+        let key = CrawlKey("fixture".into());
+        let main = WindowId("main".into());
+        registry.set_current(main.clone(), session(&key));
+        registry.update_state(&key, CrawlState::Completed);
+        registry.start_current(main.clone(), session(&key));
+        assert_eq!(registry.current(&main).unwrap().state, CrawlState::Running);
+        assert!(!registry.refresh_state(&key, CrawlState::Completed));
+        assert_eq!(registry.current(&main).unwrap().state, CrawlState::Running);
+        assert!(registry.refresh_state(&key, CrawlState::Running));
+        assert!(registry.refresh_state(&key, CrawlState::Completed));
     }
 }

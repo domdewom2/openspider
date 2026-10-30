@@ -221,7 +221,7 @@ fn attach(
     h: CrawlHandle,
     ev: CrawlEvent,
 ) {
-    app.sessions().set_current(
+    app.sessions().start_current(
         ctx.window,
         SessionInfo {
             key: key.clone(),
