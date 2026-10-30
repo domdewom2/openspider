@@ -9,6 +9,7 @@ Build before measuring:
 ```sh
 export PATH="$HOME/.cargo/bin:$PATH"
 cargo build --release --locked -j 12 -p os-loadtest -p os-cli -p os-testsite
+cargo build --release --locked -j 12 -p os-engine --example crawl_child
 cargo test --release --locked -j 12 -p os-analyze --test near_dup_scale --test link_score_benchmarks --test link_score_m2 --test near_dup_d02 \
   -p os-export --test pipeline_perf -p os-render --test render_chromium \
   -p os-engine --test render_integration --no-run
@@ -23,10 +24,10 @@ systemd-run --user --scope --quiet -p MemoryMax=16G -p MemorySwapMax=0 \
 python3 scripts/q03/summarize.py
 ```
 
-The server script verifies both limits. Set `OPENSPIDER_CHROMIUM` to override its
+The server script verifies both limits and places temporary fixtures on the repository disk under `target/loadtest/tmp` (never an inherited RAM-backed `/tmp`). `Q03_FROM=perf006-recycle` resumes at that named block after archiving previous failures; the default runs everything. Set `OPENSPIDER_CHROMIUM` to override its
 local default. Failures do not prevent subsequent blocks; the final exit status
 indicates failed blocks. Raw output and process metrics go to `target/loadtest`.
-`test-bin.py` selects the most recently built matching release integration test,
+`test-bin.py` selects the most recently built matching release integration test, rejects ambiguous package names and zero matching tests,
 so build the documented test targets immediately before the suite.
 
 Stage 2, **only on the 16-GB reference Mac**:

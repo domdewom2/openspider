@@ -24,6 +24,7 @@ def main():
         parser.error('command required after --')
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
+    (out / (args.name + '.json')).write_text(json.dumps(dict(command=cmd, exit_code=None, completed=False, temp_directory=os.environ.get('TMPDIR'))) + '\n')
     start = time.monotonic()
     samples = []
     peak = 0
@@ -69,7 +70,7 @@ def main():
     seconds = time.monotonic() - start
     # macOS reports bytes, Linux KiB. wait4 is exact at process exit.
     peak = max(peak, usage.ru_maxrss * (1 if sys.platform == 'darwin' else 1024))
-    report = dict(command=cmd, exit_code=child.returncode, seconds=seconds,
+    report = dict(command=cmd, exit_code=child.returncode, completed=True, temp_directory=os.environ.get("TMPDIR"), seconds=seconds,
                   peak_rss_bytes=peak, samples=samples)
     if samples:
         growing = [(0.0, 0)]
