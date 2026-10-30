@@ -387,6 +387,19 @@ fn numbered_columns_absent_on_both_sides_are_complete() {
     );
     assert!(r.missing_ref_columns.is_empty() && r.missing_os_columns.is_empty());
     assert!(r.columns.iter().all(|c| c.errors == 0));
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let internal =
+        std::fs::read_to_string(root.join("tests/parity/mappings/internal_all.toml")).unwrap();
+    let r = compare_with(
+        &internal,
+        include_str!("fixtures/canonical_dynamic_ref.csv"),
+        include_str!("fixtures/canonical_dynamic_os.csv"),
+        &[],
+    );
+    for name in ["Canonical Link Element 2", "Canonical Link Element 3"] {
+        assert!(!r.missing_ref_columns.iter().any(|c| c == name));
+        assert!(!r.missing_os_columns.iter().any(|c| c == name));
+    }
 }
 
 // spec: TECH-141
