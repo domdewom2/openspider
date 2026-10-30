@@ -1,0 +1,11 @@
+# U32 Visual-Suite
+
+Ausführung und native Übergabe: [ausfuehrung.md](../../../../docs/plan/M2-acceptance/e2e/ausfuehrung.md).
+
+173 Fälle: 60 Kollisionsprüfungen, 60 Textprüfungen, 16 Screenshot-Fälle mit je sieben Bildern, 15 Sprachfälle, 15 Leerzustand-/Theme-Fälle, fünf Prüfer-Regressionsfälle und zwei echte Crawl-Vergleichsfälle. Chromium mit deviceScaleFactor 1/1.25/1.5/2; WebKit mit 2. Layout: 1024×640, 1440×900, 1920×1080 × de/en × hell/dunkel. Bilder zusätzlich kompakt/komfortabel. Die Plattformfont-Konvention folgt dem jeweiligen Zielbrowser (Chromium/Windows, WebKit/macOS); die tatsächliche Snapshot-Plattform bleibt `{platform}`.
+
+Die Hauptfenster-Fixture kombiniert bestehende Tabellen-Vertragsdaten mit dem kanonischen 30-Tab-Katalog der Bridge auf Basis 27f92ff1 (`src/harness/fixtures/fx-ui-basic-catalog.json`). Alle belegten Navigationsgruppen und die drei Überlaufmenüs werden geprüft. Datenquelle und Texte stammen aus dem eigenen Kern/Fluent-Katalog, nicht aus einem Referenzprodukt. SERP und Quelltext-Diff verwenden die bestehenden Fach-Fixtures, die Wortwolke die deterministische synthetische Fixture. Der wiederverwendete echte Crawl-Paar-Test beweist Change Detection separat gegen die Bridge; die Visual-Fixture behauptet keine Fachkorrektheit.
+
+`baselines/linux` ist ausschließlich Entwicklungsstand. Abnahme erst mit geprüften `baselines/darwin/webkit-2` und `baselines/win32/chromium-1`; Linux-Bilder nicht kopieren. Fehlende Baselines sind Testfehler. Baseline-Updates immer anschließend ohne `--update-snapshots` gegenprüfen.
+
+Produktbefunde U32-001/002/003 bleiben explizite erwartete Fehler. Die Kollisionsprüfung ist unabhängig davon. Weitere Textmeldungen werden vor `test.fail()` gegen die protokollierte Befundmenge geprüft und schlagen regulär fehl. Ein vollständig behobener erwarteter Textfehler erzeugt einen unerwarteten Erfolg und verlangt die Entfernung der Markierung. Keine Plattform wird still übersprungen.
