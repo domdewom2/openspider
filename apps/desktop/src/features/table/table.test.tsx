@@ -441,7 +441,6 @@ it("coalesces ticks while a filter-count snapshot is still in flight", async () 
   controller.dispose();
 });
 
-// spec: UI-018
 // spec: UI-016
 it("shows loading feedback instead of the no-data instruction while a filter opens", async () => {
   render(<UpperTable />); await screen.findByTestId("grid");

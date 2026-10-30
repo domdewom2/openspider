@@ -104,7 +104,6 @@ it("publishes the analysis phase and final stopped counters in the same status s
   expect(screen.getByText("Done 8 of 27 (29 %)")).toBeVisible();
 });
 
-// spec: UI-018
 // spec: CRAWL-129
 it("retains memory throttling after notice dismissal and clears it on recovery", () => {
   render(<Statusbar />);

@@ -180,7 +180,8 @@ async fn a_file_that_starts_the_app_is_not_lost_before_the_window_subscribes() {
     let UiEvent::Tick { tick } = sink.take().remove(0) else {
         panic!()
     };
-    assert_eq!(tick.notices[0], notice_for(&reqs[0]));
+    assert_eq!(tick.notices, vec![notice_for(&reqs[0])]);
+    assert!(sink.is_empty());
     let _ = std::fs::remove_dir_all(dir);
 }
 
