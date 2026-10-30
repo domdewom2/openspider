@@ -1,3 +1,4 @@
+import "./contrast.css";
 import { useEffect, useLayoutEffect, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import { ChevronsRight } from "lucide-react";
 import { Menu, type MenuEntry } from "./Menu";

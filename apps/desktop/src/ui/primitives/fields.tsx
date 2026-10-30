@@ -1,3 +1,4 @@
+import "./contrast.css";
 import { useId, type ReactNode } from "react";
 import {
   Checkbox as RacCheckbox,
@@ -114,7 +115,7 @@ export function Checkbox({ children, isSelected, onChange, isDisabled }: SwitchP
   return (
     <RacCheckbox className="os-checkbox" isSelected={isSelected} onChange={onChange} isDisabled={isDisabled}>
       <span className="os-checkbox-box" aria-hidden>
-        <Check size={12} />
+        {isSelected && <Check size={12} />}
       </span>
       <span>{children}</span>
     </RacCheckbox>

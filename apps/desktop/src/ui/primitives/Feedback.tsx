@@ -1,3 +1,4 @@
+import "./contrast.css";
 import type { ReactNode } from "react";
 import { ProgressBar as RacProgressBar } from "react-aria-components";
 import { AlertTriangle, CircleAlert, Info, X } from "lucide-react";

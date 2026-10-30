@@ -1,0 +1,59 @@
+/* UI-126: use the user's system palette explicitly, including author-coloured primary buttons.
+   Their accent foreground otherwise survives Chromium's dark forced-colours palette on a black button face. */
+@media (forced-colors: active) {
+  .os-btn.os-btn-primary,
+  .os-btn.os-btn-primary:hover,
+  .os-btn.os-btn-primary[data-pressed] {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    forced-color-adjust: none;
+  }
+  .os-btn.os-btn-primary:disabled,
+  .os-btn.os-btn-primary[data-disabled] {
+    color: GrayText;
+    border-color: GrayText;
+  }
+}
+
+@media (forced-colors: active) {
+  /* Keep system text on its canvas; WebKit's emulated Highlight/HighlightText pair is only 3.77:1.
+     Selection uses weight and an outline, so it survives without a low-contrast filled background. */
+  .os-tabs .os-tab[data-selected],
+  .os-tabbar .os-tab[data-selected],
+  .os-tabbar.os-tabbar-pills .os-tab[data-selected],
+  .os-popover .os-listbox-item[data-focused],
+  .os-popover .os-menu-item[data-focused] {
+    background: Canvas;
+    color: CanvasText;
+    border-color: CanvasText;
+    outline: var(--os-line) solid Highlight;
+    outline-offset: calc(var(--os-line) * -1);
+    font-weight: 700;
+    forced-color-adjust: none;
+  }
+  .os-tabs .os-tab[data-focus-visible],
+  .os-tabbar .os-tab:focus-visible {
+    outline: var(--os-focus-width) solid CanvasText;
+    outline-offset: calc(var(--os-focus-width) * -1);
+  }
+}
+
+@media (forced-colors: active) {
+  .os-switch .os-switch-track {
+    background: Canvas;
+    outline: var(--os-line) solid CanvasText;
+    forced-color-adjust: none;
+  }
+  .os-switch .os-switch-thumb { background: CanvasText; }
+  .os-switch[data-focus-visible] .os-switch-track {
+    outline: var(--os-focus-width) solid CanvasText;
+  }
+}
+
+@media (forced-colors: active) {
+  .os-badge.os-badge-accent { background: Canvas; color: CanvasText; border: var(--os-line) solid CanvasText; forced-color-adjust: none; }
+  /* Colour swatches represent the colour itself. Retain that content and mark selection independently of colour/shadow. */
+  .os-colorpicker .os-swatch { border-color: CanvasText; box-shadow: none; forced-color-adjust: none; }
+  .os-colorpicker .os-swatch[aria-pressed="true"] { outline: var(--os-focus-width) solid CanvasText; outline-offset: var(--os-size-4); }
+}
