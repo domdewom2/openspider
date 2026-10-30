@@ -56,6 +56,8 @@ async fn report_schema_without_crawler() {
     assert_eq!(m["server_errors"], 0);
     assert_eq!(m["server_deterministic"], true);
     assert_eq!(m["crawler_available"], false);
+    assert_eq!(m["acceptance_complete"], false);
+    assert_eq!(m["measurement_status"], "server_only");
     assert!(m["server_requests_per_s"].as_f64().unwrap() > 0.0);
 }
 

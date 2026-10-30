@@ -20,6 +20,10 @@ pub const SPEC_DELAY: Duration = Duration::from_millis(100);
 static SLOW_WAIT_NS: AtomicU64 = AtomicU64::new(0);
 /// DIAG-Zähler: Zahl der verlangsamten Schreibaufrufe.
 static SLOW_CALLS: AtomicU64 = AtomicU64::new(0);
+static BATCH_PAGES_MAX: AtomicU64 = AtomicU64::new(0);
+static BATCH_LINKS_MAX: AtomicU64 = AtomicU64::new(0);
+static BATCH_EXT_MAX: AtomicU64 = AtomicU64::new(0);
+static BATCH_EXT_BYTES_MAX: AtomicU64 = AtomicU64::new(0);
 
 /// Name der DIAG-Gruppe der Lasttest-eigenen Zähler (`DIAG loadtest …`, im Bericht `loadtest_<name>`).
 pub const DIAG_GROUP: &str = "loadtest";
@@ -31,6 +35,13 @@ pub fn diag_snapshot() -> Vec<(&'static str, u64)> {
     vec![
         ("slow_wait_ns", SLOW_WAIT_NS.load(Ordering::Relaxed)),
         ("slow_calls", SLOW_CALLS.load(Ordering::Relaxed)),
+        ("batch_pages_max", BATCH_PAGES_MAX.load(Ordering::Relaxed)),
+        ("batch_links_max", BATCH_LINKS_MAX.load(Ordering::Relaxed)),
+        ("batch_ext_max", BATCH_EXT_MAX.load(Ordering::Relaxed)),
+        (
+            "batch_ext_bytes_max",
+            BATCH_EXT_BYTES_MAX.load(Ordering::Relaxed),
+        ),
     ]
 }
 
@@ -59,6 +70,29 @@ impl SlowSink {
 
 impl CrawlSink for SlowSink {
     fn write(&mut self, batch: WriteBatch) -> Result<(), StoreError> {
+        BATCH_PAGES_MAX.fetch_max(batch.pages.len() as u64, Ordering::Relaxed);
+        BATCH_LINKS_MAX.fetch_max(
+            batch.pages.iter().map(|p| p.links.len() as u64).sum(),
+            Ordering::Relaxed,
+        );
+        BATCH_EXT_MAX.fetch_max(batch.ext.len() as u64, Ordering::Relaxed);
+        // Include the nested payload omitted by the engine's coarse batch estimate.
+        let ext_bytes = batch.ext.capacity() * std::mem::size_of::<os_model::ExtWrite>()
+            + batch
+                .ext
+                .iter()
+                .map(|e| {
+                    let key = match &e.key.0 {
+                        std::borrow::Cow::Owned(s) => s.capacity(),
+                        std::borrow::Cow::Borrowed(_) => 0,
+                    };
+                    key + match &e.value {
+                        os_model::Value::Text(s) => s.capacity(),
+                        _ => 0,
+                    }
+                })
+                .sum::<usize>();
+        BATCH_EXT_BYTES_MAX.fetch_max(ext_bytes as u64, Ordering::Relaxed);
         // Der Writer-Thread ist ein Betriebssystem-Thread (kein Tokio-Worker): Schlafen blockiert nur ihn.
         let waited = Instant::now();
         std::thread::sleep(self.delay);

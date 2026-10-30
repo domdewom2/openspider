@@ -273,6 +273,7 @@ async fn other_scenarios_have_no_engine_adapter_yet() {
         .unwrap();
     assert!(rep.passed);
     assert_eq!(metric(&rep, "crawler_available"), false);
+    assert_eq!(metric(&rep, "acceptance_complete"), false);
     assert_eq!(crawler().name(), "os-engine");
 }
 
@@ -312,10 +313,28 @@ fn several_scenarios_write_a_suite_report_and_one_report_each() {
 }
 
 // spec: PERF-001
-#[test]
-fn a_child_process_reports_its_peak_rss_to_the_parent() {
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_child_process_reports_its_peak_rss_to_the_parent() {
+    // A short-lived `list` may exit between /proc samples. Exercise a real crawl
+    // that remains resident for multiple sample intervals instead.
+    let site = os_testsite::TestSite::start_synthetic(
+        SyntheticConfig {
+            pages: 100,
+            delay_ms: 20,
+            slow_share: 1.0,
+            ..Default::default()
+        },
+        os_testsite::SiteOptions::default(),
+    )
+    .await
+    .unwrap();
+    let dir = tempfile::tempdir().unwrap();
     let mut child = Command::new(exe())
-        .arg("list")
+        .arg("crawl-child")
+        .arg("--file")
+        .arg(dir.path().join("rss.ospider"))
+        .arg("--start")
+        .arg(site.url("/"))
         .stdout(Stdio::null())
         .spawn()
         .unwrap();
