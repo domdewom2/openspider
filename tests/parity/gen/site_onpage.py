@@ -362,6 +362,8 @@ def build() -> Site:
     s.case("External", "Plugins", hit=["ext:/ctype/t-swf"], miss=["ext:/ctype/t-json.json"])
     s.case("External", "Other", hit=["ext:/ctype/t-json.json"], miss=["ext:/ctype/t-html.html", "ext:/ctype/t-swf"])
     s.case("External", "Unknown", hit=["dead:" + dead], miss=["ext:/ctype/t-html.html"])
+    for kind in ("Media", "Fonts", "XML"):
+        s.exempt_filter("External", kind, "SQ-07: die bestehende Fixture parity-onpage hat keine externen Treffer dieser Klasse; Produktpartition in crates/os-analyze/tests/n07_onpage.rs belegt. Keine neuen Crawl-URLs fuer alte Referenzexporte erzeugen.")
 
     # ------------------------------------------------------------------ Startseite
     std(
