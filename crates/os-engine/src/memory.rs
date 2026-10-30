@@ -473,7 +473,7 @@ mod n04_tests {
         fn exit(&self, _: &tracing::span::Id) {}
     }
     // spec: CRAWL-129
-    #[tokio::test]
+    #[tokio::test(start_paused = true)]
     async fn sixty_low_memory_ticks_log_once_then_recovery_preserves_live_threads() {
         struct Reset;
         impl Drop for Reset {
@@ -528,15 +528,16 @@ mod n04_tests {
             assert_eq!(tick(&input), MemoryAction::None);
             assert_eq!(events.load(std::sync::atomic::Ordering::SeqCst), 2);
         });
-        tokio::time::timeout(Duration::from_secs(45), live_threads_memory_fixture())
-            .await
-            .expect("live thread/memory fixture exceeded 45 s");
+        live_threads_memory_fixture().await;
     }
 
     // spec: CRAWL-112, CRAWL-126, CRAWL-129
     async fn live_threads_memory_fixture() {
-        use crate::testing::{test_deps, SimFetcher, SimSite, TokioClock};
+        use crate::testing::{test_deps, SimFetcher, SimSite};
+        use os_fetch::{Fetch, FetchPurpose, FetchRequest, FetchResult};
+        use os_model::{ManualClock, Timestamp};
         use std::sync::atomic::{AtomicU64, Ordering};
+        use tokio::sync::{mpsc, oneshot};
         let available = Arc::new(AtomicU64::new(8 << 30));
         let injected = available.clone();
         set_probe(Some(Arc::new(move || Sample {
@@ -547,12 +548,83 @@ mod n04_tests {
             ..Default::default()
         })));
         let dir = tempfile::tempdir().unwrap();
-        let fetcher =
-            SimFetcher::new(SimSite::tree("site.test", 1000).delay(Duration::from_millis(300)));
+        // Only the root and robots may finish freely. Every other fetch stays
+        // at an explicit barrier until the test releases that scheduling phase.
+        struct HeldFetcher {
+            inner: Arc<SimFetcher>,
+            entered: mpsc::UnboundedSender<oneshot::Sender<()>>,
+            phase: std::sync::atomic::AtomicUsize,
+            admissions: Mutex<Vec<usize>>,
+        }
+        impl Fetch for HeldFetcher {
+            fn fetch(
+                &self,
+                req: FetchRequest,
+            ) -> std::pin::Pin<Box<dyn std::future::Future<Output = FetchResult> + Send + '_>>
+            {
+                Box::pin(async move {
+                    if req.purpose != FetchPurpose::RobotsTxt && req.url.path() != "/" {
+                        let phase = self.phase.load(Ordering::SeqCst);
+                        self.admissions.lock().unwrap()[phase] += 1;
+                        let (release, held) = oneshot::channel();
+                        self.entered.send(release).unwrap();
+                        let _ = held.await;
+                    }
+                    self.inner.fetch(req).await
+                })
+            }
+        }
+        async fn barrier(
+            entered: &mut mpsc::UnboundedReceiver<oneshot::Sender<()>>,
+            count: usize,
+        ) -> Vec<oneshot::Sender<()>> {
+            let mut held = Vec::new();
+            // Wall time is only a deadlock watchdog, never a phase trigger.
+            let deadline = Instant::now() + Duration::from_secs(45);
+            while held.len() < count {
+                assert!(
+                    Instant::now() < deadline,
+                    "fetch barrier stalled at {}/{count}",
+                    held.len()
+                );
+                match entered.try_recv() {
+                    Ok(release) => held.push(release),
+                    Err(mpsc::error::TryRecvError::Empty) => tokio::task::yield_now().await,
+                    Err(error) => panic!("fetch barrier closed: {error}"),
+                }
+            }
+            held
+        }
+        async fn memory_tick(clock: &ManualClock) {
+            let before = TICKS.with(|ticks| ticks.borrow().len());
+            clock.advance(Duration::from_secs(1));
+            tokio::time::advance(Duration::from_millis(100)).await;
+            // tick() and applying its action have no await between them in the
+            // current-thread control loop. Observing TICKS confirms both.
+            let deadline = Instant::now() + Duration::from_secs(45);
+            while TICKS.with(|ticks| ticks.borrow().len()) == before {
+                assert!(Instant::now() < deadline, "memory action was not confirmed");
+                tokio::task::yield_now().await;
+            }
+        }
+        let (entered, mut arrivals) = mpsc::unbounded_channel();
+        // Discover the whole queue before blocking any child; a tree alone
+        // would expose only three children at the initial barrier.
+        let links = (1..1000)
+            .map(|n| format!("<a href=\"/page-{n}.html\">fixture</a>"))
+            .collect::<String>();
+        let site = SimSite::tree("site.test", 1000).page("https://site.test/", &links);
+        let fetcher = Arc::new(HeldFetcher {
+            inner: SimFetcher::new(site),
+            entered,
+            phase: std::sync::atomic::AtomicUsize::new(0),
+            admissions: Mutex::new(vec![0; 6]),
+        });
         let mut config = os_model::CrawlConfig::default();
         config.speed.threads = 20;
         let mut deps = test_deps();
-        deps.clock = TokioClock::new();
+        let clock = Arc::new(ManualClock::new(Timestamp::UNIX_EPOCH));
+        deps.clock = clock.clone();
         let handle = crate::start_crawl(
             fetcher.clone(),
             crate::CrawlRequest {
@@ -568,40 +640,43 @@ mod n04_tests {
         )
         .await
         .unwrap();
-        tokio::time::timeout(Duration::from_secs(5), async {
-            while fetcher.inflight() != 20 {
-                tokio::time::sleep(Duration::from_millis(10)).await;
-            }
-        })
-        .await
-        .expect("fixture did not reach the initial 20 requests");
-        // Keep recording every phase so the pre-fix run also exercises raising
-        // the desired value under pressure. Delays cover two memory ticks and
-        // let already running requests finish before measuring new concurrency.
-        let mut observed = Vec::new();
+        let mut held = barrier(&mut arrivals, 20).await;
         handle.set_threads(2);
-        tokio::time::sleep(Duration::from_millis(2200)).await;
-        observed.push(fetcher.inflight());
-        available.store(128 << 20, Ordering::SeqCst);
-        tokio::time::sleep(Duration::from_millis(2200)).await;
-        observed.push(fetcher.inflight());
-        available.store(8 << 30, Ordering::SeqCst);
-        tokio::time::sleep(Duration::from_millis(2200)).await;
-        observed.push(fetcher.inflight());
-        available.store(128 << 20, Ordering::SeqCst);
-        tokio::time::sleep(Duration::from_millis(2200)).await;
-        handle.set_threads(16);
-        tokio::time::sleep(Duration::from_millis(2200)).await;
-        observed.push(fetcher.inflight());
-        available.store(8 << 30, Ordering::SeqCst);
-        tokio::time::sleep(Duration::from_millis(2200)).await;
-        observed.push(fetcher.inflight());
+        // Each phase confirms a memory action, releases all old fetches, then
+        // holds the newly scheduled requests. No request can end while counted.
+        for (phase, (free, desired, expected)) in [
+            (8 << 30, None, 2),
+            (128 << 20, None, 2),
+            (8 << 30, None, 2),
+            (128 << 20, Some(16), 10),
+            (8 << 30, None, 16),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            // Recovery can admit additional requests immediately in the same
+            // control-loop turn as the confirmed action, before old ones end.
+            fetcher.phase.store(phase + 1, Ordering::SeqCst);
+            available.store(free, Ordering::SeqCst);
+            memory_tick(&clock).await;
+            if let Some(desired) = desired {
+                handle.set_threads(desired);
+            }
+            for release in held.drain(..) {
+                release.send(()).unwrap();
+            }
+            held = barrier(&mut arrivals, expected).await;
+        }
         handle.stop();
+        // Stop prevents further scheduling; let the final held workers finish.
+        for release in held {
+            release.send(()).unwrap();
+        }
         handle.wait().await.unwrap();
         assert_eq!(
-            observed,
-            vec![2, 2, 2, 10, 16],
-            "live reduction, pressure, recovery, live raise under pressure, recovery"
+            *fetcher.admissions.lock().unwrap(),
+            vec![20, 2, 2, 2, 10, 16],
+            "start, live reduction, pressure, recovery, live raise under pressure, recovery"
         );
     }
     // spec: CRAWL-129
