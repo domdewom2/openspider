@@ -385,9 +385,14 @@ async fn requires_chromium_bounds_console_with_locations_and_cutoff() {
 async fn requires_chromium_recycles_and_recovers_after_hanging_js() {
     let _lock = CHROMIUM.lock().await;
     let site = TestSite::start("render-r01").await.unwrap();
+    // K2-82: Dieser Teil prüft den Neustart nach N Seiten und die Erholung nach Endlos-JS.
+    // Der Standard-Speicherwächter (1500 MB) zog unter Last während der Endlosschleife die
+    // Generation zurück (Summen-RSS ~1,6 GB, lokal unter 8-facher CPU-Last gemessen) und
+    // verfälschte so den Generationenzähler. Der Speicherwächter wird unten separat geprüft.
     let renderer = requires_chromium(LaunchOpts {
         restart_after_pages: 3,
         max_tabs: 2,
+        memory_limit_mb: 0,
         ..Default::default()
     })
     .await;
