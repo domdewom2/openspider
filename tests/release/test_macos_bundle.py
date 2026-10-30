@@ -76,6 +76,7 @@ case "$*" in
     fi ;;
   *--verify*) [ "${BROKEN:-}" != unsigned ] ;;
   *)
+    [ "${BROKEN:-}" != adhoc ] || echo 'Signature=adhoc'
     [ "${BROKEN:-}" = runtime ] || echo 'CodeDirectory flags=0x10000(runtime)'
     [ "${BROKEN:-}" = timestamp ] || echo 'Timestamp=Oct 30 2026'
     true ;;
@@ -91,7 +92,7 @@ esac
         result = subprocess.run(['bash', str(CHECK), str(self.app)], env=env,
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        for broken in ('unsigned', 'runtime', 'timestamp', 'entitlements'):
+        for broken in ('unsigned', 'adhoc', 'runtime', 'timestamp', 'entitlements'):
             with self.subTest(broken=broken):
                 result = subprocess.run(['bash', str(CHECK), str(self.app)],
                                         env=dict(env, BROKEN=broken), capture_output=True, text=True)

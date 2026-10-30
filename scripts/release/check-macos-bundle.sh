@@ -47,13 +47,18 @@ while IFS= read -r -d '' binary; do
     universal) [[ " $(echo "$archs" | tr ' ' '\n' | sort | tr '\n' ' ')" == ' arm64 x86_64 ' ]] ;;
     aarch64) [[ "$archs" == arm64 ]] ;;
     x86_64) [[ "$archs" == x86_64 ]] ;;
+    '') ;;
+    *) echo 'Invalid MACOS_EXPECTED_ARCH' >&2; exit 2 ;;
   esac
   # Every slice must carry runtime, a secure timestamp and no entitlement exceptions.
   for slice in $archs; do
     info="$(codesign -dvv --arch "$slice" "$binary" 2>&1)"
     grep -Eq 'flags=0x[0-9a-f]+\([^)]*runtime' <<< "$info"
     grep -Eq '^Timestamp=.+' <<< "$info"
-    ! grep -q 'Signature=adhoc' <<< "$info"
+    if grep -q 'Signature=adhoc' <<< "$info"; then
+      echo "Ad-hoc signature rejected: $binary ($slice)" >&2
+      exit 1
+    fi
     entitlements="$(mktemp)"
     codesign -d --arch "$slice" --entitlements :- "$binary" > "$entitlements" 2>/dev/null
     python3 - "$entitlements" <<'PY'
