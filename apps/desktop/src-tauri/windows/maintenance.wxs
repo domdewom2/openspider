@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
-    <Property Id="ADDTOPATH" Value="0" Secure="yes"/>
+    <Property Id="ADDTOPATH" Secure="yes">
+      <RegistrySearch Id="OpenSpiderPreviousPath" Root="HKLM" Key="Software\OpenSpider\Installer" Name="Path" Type="raw" Win64="yes"/>
+    </Property>
     <Property Id="REMOVEUSERDATA" Secure="yes"/>
     <DirectoryRef Id="INSTALLDIR">
       <Component Id="OpenSpiderMachinePath" Guid="b255268f-a99f-48bf-b60a-af11605d903d" Win64="yes">
         <Condition>ADDTOPATH = "1"</Condition>
-        <RegistryValue Root="HKLM" Key="Software\OpenSpider\Installer" Name="Path" Type="integer" Value="1" KeyPath="yes"/>
+        <RegistryValue Root="HKLM" Key="Software\OpenSpider\Installer" Name="Path" Type="string" Value="1" KeyPath="yes"/>
         <Environment Id="OpenSpiderPath" Name="PATH" Value="[INSTALLDIR]" Part="last" Action="set" System="yes" Permanent="no"/>
       </Component>
     </DirectoryRef>
