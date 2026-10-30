@@ -219,6 +219,26 @@ jobs:
         if: steps.check.outputs.ready == 'true'
         run: npm ci
 
+      - name: Cache build-only license tool (MIT OR Apache-2.0)
+        if: steps.check.outputs.ready == 'true'
+        id: cargo-about-cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ runner.temp }}/cargo-about/bin
+          key: cargo-about-0.9.3-cli-${{ runner.os }}-${{ runner.arch }}-v1
+      - name: Install build-only license tool on cache miss
+        if: steps.check.outputs.ready == 'true' && steps.cargo-about-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 60
+        run: nice -n 10 cargo install cargo-about --version 0.9.3 --features cli --locked -j 4 --root "$RUNNER_TEMP/cargo-about"
+      - name: Add license tool to PATH
+        if: steps.check.outputs.ready == 'true'
+        run: echo "$RUNNER_TEMP/cargo-about/bin" >> "$GITHUB_PATH"
+      - name: Vollständige Drittlizenzen erzeugen
+        timeout-minutes: 60
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          nice -n 10 node scripts/release/licenses/generate.mjs
+
       - name: Version, Kanal und Updater konfigurieren
         if: steps.check.outputs.ready == 'true'
         id: updater
@@ -317,6 +337,7 @@ jobs:
         if: steps.check.outputs.ready == 'true'
         timeout-minutes: 60
         env:
+          OPENSPIDER_REQUIRE_NOTICES: "1"
           APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
           APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
           APPLE_ID: ${{ secrets.APPLE_ID }}

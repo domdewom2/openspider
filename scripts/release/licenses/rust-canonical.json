@@ -1,0 +1,22 @@
+{
+  "genawaiter@0.99.1": {
+    "license": "MIT",
+    "reason": "Neither the published archive nor its upstream repository contains a LICENSE file. Use canonical MIT terms with authors from the published Cargo manifest."
+  },
+  "genawaiter-macro@0.99.1": {
+    "license": "MIT OR Apache-2.0",
+    "reason": "Same genawaiter repository omits license texts; published Cargo manifest declares MIT OR Apache-2.0."
+  },
+  "genawaiter-proc-macro@0.99.1": {
+    "license": "MIT OR Apache-2.0",
+    "reason": "Same genawaiter repository omits license texts; published Cargo manifest declares MIT OR Apache-2.0."
+  },
+  "next-gen-proc_macros@0.1.1": {
+    "license": "Zlib OR MIT OR Apache-2.0",
+    "reason": "Archive omits license files; repository URL in Cargo manifest is no longer available. Canonical terms selected from the declared license with published authors."
+  },
+  "selectors@0.38.0": {
+    "license": "MPL-2.0",
+    "reason": "Archive and upstream repository omit MPL full text. Source file headers declare MPL-2.0 (The Servo Project Developers); reproduce canonical MPL terms and repository/source attribution."
+  }
+}

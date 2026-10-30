@@ -107,3 +107,6 @@ u04-unavailable-actions = Unavailable menu actions ({ $count })
 u04-context-modal = Unavailable while a modal dialog is open.
 u04-context-field = Unavailable while editing text.
 u04-context-table = Focus a table to use this action.
+
+u04-license-search = Search licenses
+u04-license-no-match = No matches.
