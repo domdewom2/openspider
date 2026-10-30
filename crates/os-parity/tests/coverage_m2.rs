@@ -695,3 +695,35 @@ fn junit_browser_projects_are_independent_of_retry_order() {
         serde_json::json!(["Browser > zeigt Browser"])
     );
 }
+
+// spec: OUT-080
+#[test]
+fn sq01_one_bad_filter_does_not_block_its_siblings() {
+    use serde_json::json;
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let clean = json!({"export":"security_all", "url_set_identical":true,
+        "missing_ref_columns":[], "missing_os_columns":[], "unmapped_ref_columns":[],
+        "columns":[{"ref_column":"Status Code", "errors":0}], "applied_deviations":[]});
+    let mut bad = clean.clone();
+    bad["url_set_identical"] = json!(false);
+    let export = |file: &str, os: &str, report: serde_json::Value| {
+        json!({
+        "ref_file":file,"mapping":"security_all","os":os,"status":"present","outcome":"compared","report":report})
+    };
+    let parity = json!({"sites":[{"site":"s","exports":[
+        export("security_all.csv","tab:Security:All",clean.clone()),
+        export("security_http_urls.csv","tab:Security:HTTP URLs",clean.clone()),
+        export("security_bad_content_type.csv","tab:Security:Bad Content Type",bad)
+    ]}]});
+    let summary = os_parity::coverage::evidence::filter_summary(&root, &parity).unwrap();
+    let ids = summary["verified_ids"].as_array().unwrap();
+    assert!(ids.contains(&json!("ONPAGE-031")));
+    assert!(!ids.contains(&json!("ONPAGE-043")));
+    let mut failed_export = parity;
+    failed_export["sites"][0]["exports"][1]["outcome"] = json!("error");
+    let summary = os_parity::coverage::evidence::filter_summary(&root, &failed_export).unwrap();
+    assert!(!summary["verified_ids"]
+        .as_array()
+        .unwrap()
+        .contains(&json!("ONPAGE-031")));
+}

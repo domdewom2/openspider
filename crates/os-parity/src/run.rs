@@ -510,7 +510,7 @@ fn run_site(
             results.push(result_of(
                 e,
                 Outcome::Skipped {
-                    reason: format!("außerhalb des M1-Umfangs: {why}"),
+                    reason: why.clone(),
                 },
             ));
             continue;
@@ -555,7 +555,9 @@ fn run_site(
             ExportStatus::Unavailable => results.push(result_of(
                 e,
                 Outcome::Skipped {
-                    reason: "in der Referenz nicht exportierbar (unavailable)".into(),
+                    reason: e.skip.clone().unwrap_or_else(|| {
+                        "in der Referenz nicht exportierbar (unavailable)".into()
+                    }),
                 },
             )),
         }
@@ -637,8 +639,8 @@ fn run_site(
                     && r.sitemap == sitemap
                     && match &p.os {
                         OsExport::Tab { .. } => !r.tabs.is_empty(),
-                        OsExport::Bulk(_) => !r.bulk.is_empty(),
-                        OsExport::Report(_) => !r.reports.is_empty(),
+                        OsExport::Bulk(_) => r.bulk == [p.os.cli_value()],
+                        OsExport::Report(_) => r.reports == [p.os.cli_value()],
                         OsExport::Sitemap(_) => r.sitemap.is_some(),
                     }
             })
@@ -769,7 +771,7 @@ fn compare_one(
         &p.entry.select,
         os_bases,
     )?;
-    let devs = deviations.for_export(Some(site), &p.entry.mapping);
+    let devs = deviations.for_file(Some(site), &p.entry.mapping, Some(&p.entry.ref_file));
     let mut report = compare(&CompareInput {
         export: &p.entry.mapping,
         site: Some(site),

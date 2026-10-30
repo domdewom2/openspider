@@ -497,10 +497,7 @@ fn a_present_export_with_a_skip_reason_is_not_requested_and_reported_as_out_of_s
     let Outcome::Skipped { reason } = &skipped.outcome else {
         panic!("{:?}", skipped.outcome);
     };
-    assert!(
-        reason.contains("außerhalb des M1-Umfangs") && reason.contains("OUT-084"),
-        "{reason}"
-    );
+    assert!(reason == "OUT-084 ist P1", "{reason}");
 }
 
 #[test]
@@ -789,4 +786,44 @@ fn tab_and_bulk_outputs_with_the_same_cli_filename_cannot_overwrite_each_other()
     let dirs = seen.lock().unwrap();
     assert_eq!(dirs.len(), 2);
     assert_ne!(dirs[0], dirs[1]);
+}
+
+// spec: OUT-080
+#[test]
+fn unknown_report_does_not_break_other_exports() {
+    let repo = repo();
+    let path = repo.root().join("tests/golden/parity/site-a/manifest.toml");
+    let mut manifest = std::fs::read_to_string(&path).unwrap();
+    for (file, name) in [
+        ("overview.csv", "Crawl Overview"),
+        ("unknown.csv", "Unknown Report"),
+    ] {
+        manifest.push_str(&format!("\n[[export]]\nref_file = {file:?}\nos = \"report:{name}\"\nmapping = \"internal_all\"\nos_file = {file:?}\nstatus = \"present\"\n"));
+        write(
+            &repo
+                .root()
+                .join("tests/golden/parity/site-a/ref")
+                .join(file),
+            &ref_csv(repo.port),
+        );
+    }
+    write(&path, &manifest);
+    let exporter = |req: &ExportRequest| {
+        if req.reports.iter().any(|r| r == "Unknown Report") {
+            return Err(ParityError::Invalid("unknown report".into()));
+        }
+        fake("Start")(req)?;
+        if req.reports == ["Crawl Overview"] {
+            std::fs::copy(
+                req.out_dir.join("internal_all.csv"),
+                req.out_dir.join("overview.csv"),
+            )?;
+        }
+        Ok(())
+    };
+    let result = run_sites(&repo.opts(&["site-a"], false), &exporter).unwrap();
+    let exports = &result.sites[0].exports;
+    assert!(matches!(exports[0].outcome, Outcome::Compared { .. }));
+    assert!(matches!(exports[3].outcome, Outcome::Compared { .. }));
+    assert!(matches!(exports[4].outcome, Outcome::Error { .. }));
 }

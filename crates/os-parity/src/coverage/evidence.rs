@@ -33,6 +33,12 @@ pub struct Evidence {
     pub specs: Vec<String>,
     /// Mapping-Slugs der Exporte.
     pub exports: Vec<String>,
+    /// Optionaler Site-Selektor.
+    #[serde(default)]
+    pub sites: Vec<String>,
+    /// Optionaler Referenzdatei-Selektor (unterscheidet Filter mit gleichem Mapping).
+    #[serde(default)]
+    pub files: Vec<String>,
     /// Optional: nur diese Referenzspalten prüfen.
     #[serde(default)]
     pub columns: Vec<String>,
@@ -65,6 +71,7 @@ pub fn load_evidence(path: &Path) -> Result<Vec<Evidence>, ParityError> {
 struct Compared<'a> {
     site: &'a str,
     export: &'a str,
+    file: &'a str,
     report: &'a Value,
 }
 
@@ -93,6 +100,7 @@ fn compared_reports(parity: &Value) -> Vec<Compared<'_>> {
             out.push(Compared {
                 site: name,
                 export,
+                file: e.get("ref_file").and_then(Value::as_str).unwrap_or(""),
                 report,
             });
         }
@@ -104,12 +112,42 @@ fn compared_reports(parity: &Value) -> Vec<Compared<'_>> {
 fn check(ev: &Evidence, compared: &[Compared<'_>]) -> Result<Vec<Value>, String> {
     let mut lines = Vec::new();
     for slug in &ev.exports {
-        let reports: Vec<&Compared<'_>> = compared.iter().filter(|c| c.export == slug).collect();
+        let reports: Vec<&Compared<'_>> = compared
+            .iter()
+            .filter(|c| {
+                c.export == slug
+                    && (ev.sites.is_empty() || ev.sites.iter().any(|s| s == c.site))
+                    && (ev.files.is_empty() || ev.files.iter().any(|f| f == c.file))
+            })
+            .collect();
         if reports.is_empty() {
             return Err(format!("Export {slug} wurde nicht verglichen"));
         }
         for c in reports {
             let r = c.report;
+            for field in [
+                "missing_ref_columns",
+                "missing_os_columns",
+                "unmapped_ref_columns",
+            ] {
+                if r.get(field)
+                    .and_then(Value::as_array)
+                    .is_some_and(|v| !v.is_empty())
+                {
+                    return Err(format!(
+                        "{}/{slug}: Spaltenabdeckung unvollständig ({field})",
+                        c.site
+                    ));
+                }
+            }
+            for requested in &ev.columns {
+                if !r["columns"]
+                    .as_array()
+                    .is_some_and(|cols| cols.iter().any(|c| c["ref_column"] == *requested))
+                {
+                    return Err(format!("{}/{slug}: Belegspalte {requested} fehlt", c.site));
+                }
+            }
             if ev.url_set && r.get("url_set_identical").and_then(|v| v.as_bool()) != Some(true) {
                 return Err(format!("{}/{slug}: URL-Menge nicht identisch", c.site));
             }
@@ -165,7 +203,28 @@ pub fn evaluate(evidence: &[Evidence], parity: &Value) -> BTreeMap<String, Resul
     let compared = compared_reports(parity);
     let mut per_id: BTreeMap<String, Vec<Result<Vec<Value>, String>>> = BTreeMap::new();
     for ev in evidence {
-        let res = check(ev, &compared);
+        let unavailable = parity["sites"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .find_map(|site| {
+                let name = site["site"].as_str().unwrap_or("");
+                if !ev.sites.is_empty() && !ev.sites.iter().any(|s| s == name) {
+                    return None;
+                }
+                site["exports"]
+                    .as_array()
+                    .into_iter()
+                    .flatten()
+                    .find(|e| {
+                        e["status"] == "present"
+                            && ev.exports.iter().any(|s| e["mapping"] == *s)
+                            && (ev.files.is_empty() || ev.files.iter().any(|f| e["ref_file"] == *f))
+                            && e["outcome"] != "compared"
+                    })
+                    .map(|e| format!("{name}/{}: nicht verglichen", e["ref_file"]))
+            });
+        let res = unavailable.map_or_else(|| check(ev, &compared), Err);
         for id in &ev.specs {
             per_id.entry(id.clone()).or_default().push(res.clone());
         }
@@ -209,6 +268,8 @@ mod tests {
         vec![Evidence {
             specs: vec!["ONPAGE-120".into()],
             exports: vec!["h1_all".into()],
+            sites: vec![],
+            files: vec![],
             columns: columns.iter().map(|c| c.to_string()).collect(),
             url_set: true,
         }]
@@ -238,11 +299,177 @@ mod tests {
             &[Evidence {
                 specs: vec!["X-1".into()],
                 exports: vec!["nicht_da".into()],
+                sites: vec![],
+                files: vec![],
                 columns: vec![],
                 url_set: true,
             }],
             &parity(0, true, false),
         );
         assert!(missing["X-1"].is_err());
+    }
+}
+
+/// SQ-01: Filterbelege aus den kanonischen Katalogen und dem vollständigen Laufjournal.
+/// Jeder Tab-All-Export und jeder vorhandene eigene Filterexport muss streng grün sein.
+pub fn filter_summary(root: &Path, parity: &Value) -> Result<Value, ParityError> {
+    let excluded_tabs = [
+        "JavaScript",
+        "Structured Data",
+        "PageSpeed",
+        "Mobile",
+        "Accessibility",
+        "Custom Search",
+        "Custom Extraction",
+        "Custom JavaScript",
+        "Analytics",
+        "Search Console",
+        "Link Metrics",
+        "Sitemaps",
+        "Change Detection",
+    ];
+    let excluded_ids = [
+        "ONPAGE-053",
+        "ONPAGE-057",
+        "ONPAGE-155",
+        "ONPAGE-156",
+        "ONPAGE-178",
+        "ONPAGE-180",
+    ];
+    let mut checks: BTreeMap<String, Vec<Value>> = BTreeMap::new();
+    let compared = compared_reports(parity);
+    for milestone in ["M1", "M2"] {
+        let catalog: toml::Value = toml::from_str(&std::fs::read_to_string(
+            root.join(format!("docs/plan/{milestone}-filters.toml")),
+        )?)
+        .map_err(|e| ParityError::Invalid(e.to_string()))?;
+        for tab in catalog["tab"].as_array().into_iter().flatten() {
+            let name = tab["id"].as_str().unwrap_or("");
+            if excluded_tabs.contains(&name) {
+                continue;
+            }
+            for filter in tab["filters"].as_array().into_iter().flatten() {
+                let id = filter["id"].as_str().unwrap_or("");
+                let spec = filter["spec"].as_str().unwrap_or("");
+                if filter.get("extension").and_then(toml::Value::as_bool) == Some(true)
+                    || id.contains('<')
+                    || excluded_ids.contains(&spec)
+                {
+                    continue;
+                }
+                let label = filter
+                    .get("default_label")
+                    .and_then(toml::Value::as_str)
+                    .unwrap_or(id);
+                let all = format!("tab:{name}:All");
+                let own = format!("tab:{name}:{label}");
+                let mut selected = 0;
+                let mut all_count = 0;
+                let mut failure = None;
+                for site in parity["sites"].as_array().into_iter().flatten() {
+                    let site_name = site["site"].as_str().unwrap_or("");
+                    for export in site["exports"].as_array().into_iter().flatten() {
+                        let os = export["os"].as_str().unwrap_or("");
+                        if export["status"] != "present" || (os != all && os != own) {
+                            continue;
+                        }
+                        selected += 1;
+                        if os == all {
+                            all_count += 1;
+                        }
+                        if export["outcome"] != "compared" {
+                            failure.get_or_insert_with(|| {
+                                format!("{site_name}/{}: nicht verglichen", export["ref_file"])
+                            });
+                            continue;
+                        }
+                        let ev = Evidence {
+                            specs: vec![spec.to_string()],
+                            exports: vec![export["mapping"].as_str().unwrap_or("").to_string()],
+                            sites: vec![site_name.to_string()],
+                            files: vec![export["ref_file"].as_str().unwrap_or("").to_string()],
+                            columns: vec![],
+                            url_set: true,
+                        };
+                        if let Err(why) = check(&ev, &compared) {
+                            failure.get_or_insert(why);
+                        }
+                    }
+                }
+                if all_count == 0 || selected == 0 {
+                    failure.get_or_insert("Tab-All wurde nicht verglichen".into());
+                }
+                if ["Internal", "Links"].contains(&name) {
+                    failure.get_or_insert("SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3".into());
+                }
+                checks.entry(spec.to_string()).or_default().push(json!({
+                    "tab": name, "filter": id, "passed": failure.is_none(),
+                    "reason": failure.unwrap_or_else(|| "vollständig fehlerfrei verglichen".into()),
+                    "exports_checked": selected,
+                }));
+            }
+        }
+    }
+    let verified: Vec<_> = checks
+        .iter()
+        .filter(|(_, rows)| rows.iter().all(|r| r["passed"] == true))
+        .map(|(id, _)| id.clone())
+        .collect();
+    Ok(
+        json!({"denominator": checks.len(), "referencable_ids": checks.keys().collect::<Vec<_>>(),
+        "verified": verified.len(), "pct": 100.0 * verified.len() as f64 / checks.len() as f64,
+        "verified_ids": verified, "checks": checks, "target_pct": 60,
+        "definition": "SQ-01: je Filter-ID, Tab-All auf allen Sites plus eigener Filterexport; URL-Menge, null Zellfehler, vollständige Spalten, DEV erlaubt, REF-FREE sperrt; ohne Change Detection"}),
+    )
+}
+
+#[cfg(test)]
+mod strict_tests {
+    use super::*;
+
+    // spec: OUT-080
+    #[test]
+    fn incomplete_columns_and_missing_requested_columns_never_verify() {
+        let mut parity = json!({"sites":[{"site":"s","exports":[{"ref_file":"all.csv","outcome":"compared","report":{
+            "export":"h1_all","url_set_identical":true,"columns":[],"applied_deviations":[],
+            "missing_ref_columns":[],"missing_os_columns":[],"unmapped_ref_columns":[]
+        }}]}]});
+        let mut ev = Evidence {
+            specs: vec!["ONPAGE-120".into()],
+            exports: vec!["h1_all".into()],
+            sites: vec!["s".into()],
+            files: vec!["all.csv".into()],
+            columns: vec![],
+            url_set: true,
+        };
+        assert!(evaluate(&[ev.clone()], &parity)["ONPAGE-120"].is_ok());
+        for field in [
+            "missing_ref_columns",
+            "missing_os_columns",
+            "unmapped_ref_columns",
+        ] {
+            parity["sites"][0]["exports"][0]["report"][field] = json!(["H1-1"]);
+            assert!(evaluate(&[ev.clone()], &parity)["ONPAGE-120"].is_err());
+            parity["sites"][0]["exports"][0]["report"][field] = json!([]);
+        }
+        ev.columns = vec!["H1-1".into()];
+        assert!(evaluate(&[ev.clone()], &parity)["ONPAGE-120"].is_err());
+        ev.columns.clear();
+        ev.files = vec!["filter.csv".into()];
+        assert!(evaluate(&[ev], &parity)["ONPAGE-120"].is_err());
+    }
+
+    // spec: OUT-080
+    #[test]
+    fn sq01_denominator_excludes_change_detection() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let summary = filter_summary(&root, &json!({"sites":[]})).unwrap();
+        assert_eq!(summary["denominator"], 155);
+        assert_eq!(summary["verified"], 0);
+        assert!(summary["referencable_ids"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|id| !id.as_str().unwrap().starts_with("TECH-30")));
     }
 }
