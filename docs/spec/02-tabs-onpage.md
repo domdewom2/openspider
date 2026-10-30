@@ -1558,15 +1558,15 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
 
 ### ONPAGE-140 Inhaltsbereich (Content Area)
 - **Priorität:** P0
-- **Beschreibung:** Legt fest, welcher Text einer Seite in Wortzählung, Near-Duplicates, Lesbarkeit, Rechtschreibung/Grammatik (Body-Teil), Low Content, Soft 404, Lorem Ipsum und Embeddings eingeht. Basis ist der Textinhalt des `<body>`. Standardmäßig ausgeschlossen: Elemente `nav` und `footer` samt Nachfahren; **vorbehaltlich M2-N08** zusätzlich `header` und `aside` (K2-87, SQ-09: gilt erst, wenn N08 belegt, dass die M1-Belege K-68 – Word Count auf 211 Seiten – grün bleiben; sonst bleibt der Standard `nav`/`footer` und die Abweichung wird DEV). Immer ausgeschlossen: `script`, `style`, `noscript`, `template`, `svg`, Kommentare. Konfigurierbar sind Listen „Include“ und „Exclude“ für Elementnamen, Klassen und IDs.
+- **Beschreibung:** Legt fest, welcher Text einer Seite in Wortzählung, Near-Duplicates, Lesbarkeit, Rechtschreibung/Grammatik (Body-Teil), Low Content, Soft 404, Lorem Ipsum und Embeddings eingeht. Basis ist der Textinhalt des `<body>`. Standardmäßig ausgeschlossen: Elemente `nav`, `footer`, `header` und `aside` samt Nachfahren (K2-87/SQ-09, bestätigt durch N08 und K2-95: M1 38/38, Word Count ohne Zellfehler). Immer ausgeschlossen: `script`, `style`, `noscript`, `template`, `svg`, Kommentare. Konfigurierbar sind Listen „Include“ und „Exclude“ für Elementnamen, Klassen und IDs.
   - Ist mindestens eine Include-Regel gesetzt, wird nur Text innerhalb passender Elemente verwendet; Exclude-Regeln wirken danach (Exclude gewinnt bei Verschachtelung).
   - Block-Grenzen (`p`, `div`, `li`, `td`, `th`, `h1`–`h6`, `br`, `section`, `article` …) erzeugen einen Leerraum, damit `<p>a</p><p>b</p>` zu „a b“ wird, nicht „ab“.
   - Versteckter Text (CSS `display:none`, `hidden`-Attribut) wird **nicht** ausgeschlossen.
   - Im Rendering-Modus wird das gerenderte DOM verwendet.
-- **Eingaben/Konfiguration:** `content.area.include_elements|classes|ids`, `content.area.exclude_elements|classes|ids` (Default exclude_elements = [`nav`, `footer`]; nach Bestätigung durch N08 [`nav`, `footer`, `header`, `aside`]).
+- **Eingaben/Konfiguration:** `content.area.include_elements|classes|ids`, `content.area.exclude_elements|classes|ids` (Default exclude_elements = [`nav`, `footer`, `header`, `aside`], K2-95).
 - **Ausgabe:** gespeicherter Seitentext je URL (komprimiert in `os-store`, Voraussetzung für Neuanalyse ohne Recrawl).
 - **Akzeptanzkriterien:**
-  - [ ] Default: Text in `<nav>` und `<footer>` fehlt; Text in `<main>` ist enthalten; Text in `<header>` und `<aside>` ist enthalten, nach SQ-09-Bestätigung durch N08 nicht (Beleg Referenz `parity-m2-links` `positions.html`: Word Count 1).
+  - [ ] Default: Text in `<nav>` und `<footer>` fehlt; Text in `<main>` ist enthalten; Text in `<header>` und `<aside>` fehlt (SQ-09/K2-95) (Beleg Referenz `parity-m2-links` `positions.html`: Word Count 1).
   - [ ] Exclude-Klasse `mobile-menu` entfernt `<div class="menu mobile-menu">…</div>` (Klassenvergleich tokenweise).
   - [ ] Exclude-ID `comments` entfernt `<section id="comments">`.
   - [ ] Include-Element `main` → nur Text aus `<main>`.
@@ -1577,7 +1577,7 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
 
 ### ONPAGE-141 Wortzählung
 - **Priorität:** P0
-- **Beschreibung:** `Word Count` = Anzahl Token des Inhaltsbereich-Textes, getrennt an Unicode-Leerraum. Jedes nicht-leere Token zählt, auch reine Satzzeichen-Token wie „–“ (**Annahme A-35**). **Dazu kommt je Listenelement `<li>` im Inhaltsbereich ein Token** (**Annahme A-35b**, Paritätsbefund M1 vom 14.10.2026, Befund N-03, K-59, präzisiert durch K-68 vom 15.10.2026). M1-P31 hat die Regel zellgenau geprüft: Token + Anzahl `<li>` im Inhaltsbereich trifft `Word Count` auf allen 211 HTML-Seiten der Paritäts-Sites (0 Abweichungen). Die vorherige Fassung „+ 1 je `<a href>`“ ist widerlegt: Links in `<p>` zählen in der Referenz nicht (`out-basic-site`, `parity-technical` `/links/*`). `<li>` in ausgeschlossenen Bereichen (`nav`, `footer`, Exclude-Regeln) zählen nicht, Include-Regeln gelten. Auf allen Fixture-Seiten enthält jedes `<li>` genau einen Link; ein `<li>` ohne Link ist gegen die Referenz nicht belegt und zählt nach der Regel ebenfalls (Annahme, M2-S06). **Vorbehaltlich M2-N08 (K2-87, SQ-09):** Jede Grenze eines `<a>`-Elements trennt wie Leerraum, aneinandergrenzende Anker werden nicht verkettet (Beleg Referenz `parity-m2-links` `anchors.html`); gilt erst, wenn N08 belegt, dass K-68 grün bleibt, sonst DEV. Keine Sprachsegmentierung (CJK-Text ohne Leerzeichen zählt als ein Wort pro Block – bekannte Einschränkung, dokumentieren).
+- **Beschreibung:** `Word Count` = Anzahl Token des Inhaltsbereich-Textes, getrennt an Unicode-Leerraum. Jedes nicht-leere Token zählt, auch reine Satzzeichen-Token wie „–“ (**Annahme A-35**). **Dazu kommt je Listenelement `<li>` im Inhaltsbereich ein Token** (**Annahme A-35b**, Paritätsbefund M1 vom 14.10.2026, Befund N-03, K-59, präzisiert durch K-68 vom 15.10.2026). M1-P31 hat die Regel zellgenau geprüft: Token + Anzahl `<li>` im Inhaltsbereich trifft `Word Count` auf allen 211 HTML-Seiten der Paritäts-Sites (0 Abweichungen). Die vorherige Fassung „+ 1 je `<a href>`“ ist widerlegt: Links in `<p>` zählen in der Referenz nicht (`out-basic-site`, `parity-technical` `/links/*`). `<li>` in ausgeschlossenen Bereichen (`nav`, `footer`, Exclude-Regeln) zählen nicht, Include-Regeln gelten. Auf allen Fixture-Seiten enthält jedes `<li>` genau einen Link; ein `<li>` ohne Link ist gegen die Referenz nicht belegt und zählt nach der Regel ebenfalls (Annahme, M2-S06). **K2-87/SQ-09, bestätigt durch N08 (K2-95):** Jede Grenze eines `<a>`-Elements trennt wie Leerraum, aneinandergrenzende Anker werden nicht verkettet (Beleg Referenz `parity-m2-links` `anchors.html`, K-68 grün). Keine Sprachsegmentierung (CJK-Text ohne Leerzeichen zählt als ein Wort pro Block – bekannte Einschränkung, dokumentieren).
 - **Eingaben/Konfiguration:** Inhaltsbereich.
 - **Ausgabe:** Spalte `Word Count` (Internal, Content).
 - **Akzeptanzkriterien:**
@@ -1586,7 +1586,7 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
   - [ ] „E-Mail-Adresse“ → 1.
   - [ ] `a&nbsp;b` → 2 (NBSP trennt).
   - [ ] Leerer Body → 0.
-  - [ ] `area.html` aus ONPAGE-140 → 5 + 100 + 15 + 30 + 10 + 3 = 163 (nur nav/footer ausgeschlossen; die Fixture enthält im Inhaltsbereich keine Listenelemente `<li>`); nach SQ-09-Bestätigung 148 (`header` und `aside` ausgeschlossen).
+  - [ ] `area.html` aus ONPAGE-140 → 100 + 15 + 30 + 3 = 148 (`nav`, `footer`, `header` und `aside` ausgeschlossen; keine Listenelemente `<li>` im Inhaltsbereich).
   - [ ] [vorbehaltlich N08, SQ-09] `<main><p><a href="/a">click here</a><a href="/b">read more</a><a href="/c"></a><a href="/d">River guide</a></p></main>` → 6.
   - [ ] `<main><p>eins zwei</p><ul><li><a href="/a">Seite 1</a></li><li><a href="/b">Seite 2</a></li></ul></main><nav><a href="/c">Menü</a></nav>` → 2 + 4 + 2 = 8 (A-35b: zwei `<li>`; `nav` ist ausgeschlossen).
   - [ ] `<main><p>Mehr <a href="/x">hier lesen</a></p></main>` → 3 (ein Link im Absatz zählt nicht zusätzlich; K-68).
@@ -1705,9 +1705,11 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
 ### ONPAGE-149 Lesbarkeit: Flesch-Berechnung und Spalten
 - **Priorität:** P1
 - **Beschreibung:** Berechnet für jede Seite der Grundmenge mit ≥ 1 Wort den Flesch Reading Ease Score (englische Formel) über den Inhaltsbereich-Text:
-  - **Wörter W:** Token aus ONPAGE-141, die mindestens einen Buchstaben enthalten.
-  - **Sätze S:** Satzende an `.`, `!`, `?`, `…` gefolgt von Leerraum oder Textende; zusätzlich endet jeder Block (Absatz, Listeneintrag, Tabellenzelle, Überschrift) einen Satz, sofern er Wörter enthält (**Annahme A-41**, vorläufig: M2-N08 kalibriert die Satz- und Silbenregel an den Referenzwerten je Seite aus Q02, Triage G08; das Ergebnis trägt der Planer hier nach, K2-87, SQ-08). `3.5` oder `z.B.` ohne folgendes Leerzeichen trennt nicht.
-  - **Silben Syl** (englische Heuristik): Wort kleinschreiben, Nicht-Buchstaben entfernen; Anzahl Gruppen aufeinanderfolgender Vokale `[aeiouy]` (inkl. äöü als Vokal); endet das Wort auf `e` (aber nicht auf Konsonant + `le`) und Anzahl > 1, minus 1; Minimum 1.
+  - **Kalibrierung K2-87/SQ-08, K2-95:**
+    1. W aus der Wortzahl des Inhaltsbereichs einschließlich Zahlentoken und A-35b. Auf der Startseite ergeben 55 Linktexte plus 55 Listeneinträge W=110. Der Satztext enthält keine künstlichen Listenpunktzeichen.
+    2. Erst nichtleere Satzfragmente an `. ! ? … :` sowie Blockgrenzen bilden; Dezimalpunkte zwischen ASCII-Ziffern und Initialismen wie `z.B.` bleiben erhalten. Auch Punkte/Fragezeichen innerhalb von URL-Texten trennen. Anschließend jedes Fragment an Wortgrenzen umbrechen, bevor die Zeile 80 Unicode-Zeichen erreicht (höchstens 79). Lange einzelne Token werden nicht zerschnitten. Satzzeichen belegen keine Umbruchbreite. Ankergrenzen allein sind keine Satzgrenzen. Gegenprobe: auf allen 379 synthetischen HTML-Seiten stimmt S; Breite 80 Zeichen ergibt 28 Abweichungen, 80 Bytes 20, 79 Zeichen vor Abtrennung des Endpunkts noch 3. Die Trennung vor dem Umbruch beseitigt auch diese drei.
+    3. Kleinschreibung; Trennzeichen innerhalb und am Ende eines Tokens bleiben erhalten, damit Vokalgruppen nicht über Bindestriche oder `&` zusammenfallen und `notice.` anders als `notice` gezählt wird. Stummes `ed`/`es` am Tokenende entfernen; `es` nach c/g/s/x/z bzw. ch/sh bleibt. ASCII-Vokalgruppen aeiouy zählen. `ia`/`io` zählen eine zusätzliche Gruppe, außer nach c/s/t. Für abschließendes e eine Gruppe abziehen, außer bei ee oder Konsonant+le. Die Formel verwendet den rohen Gruppenzähler einschließlich **0 für „the“**; die öffentliche Einzelwort-Hilfe `syllables` behält ihr spezifiziertes Minimum 1. Damit ergeben sich beim Absatz mit vier „the“ Syl=28, bei `kategorie` und `variante` jeweils 3, bei `tree` 1 und `images` 3. Die Mitnahme von äöü erklärt zusätzliche Silben und zu niedrige Scores auf der alten synthetischen Site.
+    4. Score nach der unveränderten Flesch-Formel, Begrenzung 0…100, Rundung erst am Ende auf drei Nachkommastellen. Labels nach der Banddatei.
   - **Score** = 206,835 − 1,015 × (W/S) − 84,6 × (Syl/W), auf [0, 100] begrenzt, drei Nachkommastellen (K2-87, SQ-08; vorher eine).
   - **Readability**-Label nach der Werteliste der Referenz (V-5 durch Q02 belegt, K2-87, SQ-08; ersetzt A-54): ≥ 90 „Very Easy“; 80 bis < 90 „Easy“; 70 bis < 80 „Fairly Easy“; 60 bis < 70 „Normal“; 50 bis < 60 „Fairly Hard“; 30 bis < 50 „Hard“; < 30 „Very Hard“. Die Filter ONPAGE-150/151 behalten ihre Namen „Readability Difficult“/„Readability Very Difficult“ und entsprechen den Labels „Hard“/„Very Hard“. Die Labels liegen als Daten vor (`readability_bands.toml`).
   - `Sentence Count` = S (Spalte laut Referenz-Tutorial, siehe ONPAGE-142 Fußnote ¹); `Average Words Per Sentence` = W/S (drei Nachkommastellen, K2-87, SQ-08).
@@ -1716,7 +1718,7 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
 - **Ausgabe:** Spalten `Sentence Count`, `Average Words Per Sentence`, `Flesch Reading Ease Score`, `Readability`.
 - **Akzeptanzkriterien:**
   - [ ] Silben: `the`→1, `cake`→1, `table`→2, `beautiful`→3, `readability`→5, `rhythm`→1 (y als Vokal), `a`→1.
-  - [ ] „The cat sat on the mat.“ → W=6, S=1, Syl=6, Rohscore 116,1 → 100,000, „Very Easy“.
+  - [ ] „The cat sat on the mat.“ → W=6, S=1, Syl=4 (kalibrierter Rohzähler), Rohscore 144,345 → 100,000, „Very Easy“.
   - [ ] „Internationalization considerations necessitate comprehensive organizational restructuring.“ → Score 0,000, „Very Hard“.
   - [ ] `<p>Ohne Punkt</p><p>Noch ein Satz</p>` → S = 2.
   - [ ] „Es kostet 3.5 Euro.“ → S = 1.
