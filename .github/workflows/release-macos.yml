@@ -244,8 +244,10 @@ jobs:
         id: updater
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          INPUT_CHANNEL: ${{ inputs.channel }}
         run: |
           set -euo pipefail
+          case "${INPUT_CHANNEL:-stable}" in stable|beta) ;; *) echo "Ungültiger Kanal" >&2; exit 1 ;; esac
           # R04 sets the version and lockfile before calling; never mutate dependencies here.
           node scripts/release/check-version.mjs
           node --input-type=module - <<'JSVERSION'
