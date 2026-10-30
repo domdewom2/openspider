@@ -1,11 +1,12 @@
+# Q02b / OUT-094/095: A/B-Bezug der Referenzspalten anhand der nativen Diff-Proben korrigiert; keine Mengen-/Spaltenausnahme.
 # N06: Spaltensatz nach Referenzkopfzeile; Soll und Ignoriergründe aus der Spec.
-key = ["URL with Inconsistent Language Return Link", "URL Target", "#"]
+key = ["URL with Inconsistent Language Return Link", "URL Returning with Inconsistent Language", "#"]
 drop_ref_columns = ["Description", "How To Fix"]
 
 [columns]
 "URL with Inconsistent Language Return Link" = "Address"
-"URL Target" = "Hreflang URL"
-"URL Returning with Inconsistent Language" = { ignore = true, reason = "OUT-094: Rücklinkquelle nicht im OS-Reportvertrag" }
+"URL Target" = { ignore = true, reason = "OUT-094: Referenz wiederholt hier die Selbstannotation (identisch mit URL with Inconsistent Language Return Link); Bezugspaar und Expected/Actual Language bleiben verglichen." }
+"URL Returning with Inconsistent Language" = "Hreflang URL"
 "Expected Language" = "Expected Language"
 "Actual Language" = "Actual Language"
 
