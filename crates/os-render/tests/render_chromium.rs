@@ -96,8 +96,17 @@ async fn requires_chromium_renders_and_reuses_engine_response() {
         .network
         .iter()
         .any(|r| r.url.ends_with("/reuse.html") && r.status == 200));
+    // K2-82: Berechtigungsabfragen und Worker-Registrierung laufen über den Browserprozess
+    // und lösen ihr Promise erst nach `load` auf; 100 ms reichen auf belasteten CI-Runnern
+    // nicht sicher. Geprüft wird das Ergebnis, nicht die Zeit (CRAWL-078 nennt keine).
     let security = renderer
-        .render(&site.url("/security.html"), &quick())
+        .render(
+            &site.url("/security.html"),
+            &RenderOpts {
+                ajax_timeout_ms: 2000,
+                ..quick()
+            },
+        )
         .await
         .unwrap();
     assert!(
@@ -113,6 +122,7 @@ async fn requires_chromium_renders_and_reuses_engine_response() {
 #[tokio::test]
 // Spec-Fixture `crawl-js` (paketeigen unter render-r01).
 // spec: CRAWL-080
+// spec: CRAWL-095
 async fn requires_chromium_waits_after_load_and_preserves_partial_dom() {
     let _lock = CHROMIUM.lock().await;
     let site = TestSite::start("render-r01").await.unwrap();
@@ -132,7 +142,10 @@ async fn requires_chromium_waits_after_load_and_preserves_partial_dom() {
     assert!(late.dom_html.contains("id=\"status\">arrived"));
     assert!(late.timings.load_ms >= 650);
     opts.ajax_timeout_ms = 100;
-    opts.response_timeout_ms = 500;
+    // K2-82: Das Dokument muss innerhalb des Antwort-Timeouts ankommen, erst `load` bleibt
+    // aus. 500 ms reichten auf langsamen Runnern nicht immer für Antwort und Commit; die
+    // Spec nennt hier keine Zahl. Geprüft bleibt Antwort-Timeout + AJAX-Timeout.
+    opts.response_timeout_ms = 3000;
     let partial = renderer
         .render(&site.url("/never-load.html"), &opts)
         .await
@@ -140,8 +153,24 @@ async fn requires_chromium_waits_after_load_and_preserves_partial_dom() {
     assert!(partial.load_timed_out);
     assert!(partial.dom_html.contains("partial DOM"));
     assert!(partial.dom_html.contains("data-ran=\"yes\""));
-    assert!(partial.timings.total_ms >= 600);
+    assert!(partial.timings.total_ms >= opts.response_timeout_ms + opts.ajax_timeout_ms);
     assert_eq!(partial.timings.screenshot_ms, 0);
+    // K2-82: Kommt innerhalb des Antwort-Timeouts gar keine Antwort, gibt es kein DOM
+    // dieser URL. Ergebnis ist ein Timeout, nicht about:blank als gerenderte Seite.
+    opts.response_timeout_ms = 300;
+    let late = renderer
+        .render(&site.url("/late-document.html"), &opts)
+        .await;
+    assert!(
+        matches!(late, Err(RenderError::Timeout(_))),
+        "{:?}",
+        late.map(|page| (page.final_url, page.load_timed_out, page.dom_html))
+    );
+    assert!(site
+        .requests()
+        .iter()
+        .any(|r| r.path_and_query == "/late-document.html"));
+    opts.response_timeout_ms = 3000;
     opts.ajax_timeout_ms = 1;
     assert!(renderer
         .render(&site.url("/csr.html"), &opts)
@@ -356,9 +385,14 @@ async fn requires_chromium_bounds_console_with_locations_and_cutoff() {
 async fn requires_chromium_recycles_and_recovers_after_hanging_js() {
     let _lock = CHROMIUM.lock().await;
     let site = TestSite::start("render-r01").await.unwrap();
+    // K2-82: Dieser Teil prüft den Neustart nach N Seiten und die Erholung nach Endlos-JS.
+    // Der Standard-Speicherwächter (1500 MB) zog unter Last während der Endlosschleife die
+    // Generation zurück (Summen-RSS ~1,6 GB, lokal unter 8-facher CPU-Last gemessen) und
+    // verfälschte so den Generationenzähler. Der Speicherwächter wird unten separat geprüft.
     let renderer = requires_chromium(LaunchOpts {
         restart_after_pages: 3,
         max_tabs: 2,
+        memory_limit_mb: 0,
         ..Default::default()
     })
     .await;
@@ -375,11 +409,22 @@ async fn requires_chromium_recycles_and_recovers_after_hanging_js() {
         ..quick()
     };
     let start = Instant::now();
-    assert!(matches!(
-        renderer.render(&site.url("/hang.html"), &opts).await,
-        Err(RenderError::Timeout(_))
-    ));
-    assert!(start.elapsed() < Duration::from_secs(4));
+    // K2-82: Kommt das Dokument auf einem langsamen Runner erst nach dem Antwort-Timeout an,
+    // ist das Ergebnis ebenfalls ein Timeout (CRAWL-095), nicht mehr about:blank.
+    let hung = renderer.render(&site.url("/hang.html"), &opts).await;
+    assert!(
+        matches!(hung, Err(RenderError::Timeout(_))),
+        "{:?}",
+        hung.map(|page| (page.final_url, page.load_timed_out, page.dom_html))
+    );
+    // K2-82: Obergrenze aus den Produktgrenzen statt 4 s: Kontextaufbau und -abbau sind
+    // je auf 5 s begrenzt, dazu die Seitenzeitgrenze. Sie bleibt klar unter dem
+    // Standard-Antwort-Timeout (20 s) und der festen CDP-Befehlsgrenze (30 s).
+    assert!(
+        start.elapsed() < Duration::from_millis(u64::from(opts.page_timeout_ms) + 10_000),
+        "{:?}",
+        start.elapsed()
+    );
     assert!(renderer
         .render(&site.url("/csr.html"), &quick())
         .await
@@ -499,7 +544,8 @@ async fn requires_chromium_limits_tabs_and_recovers_from_cancellation() {
     let r = renderer.clone();
     let url = site.url("/hang.html");
     let task = tokio::spawn(async move { r.render(&url, &quick()).await });
-    tokio::time::timeout(Duration::from_secs(5), async {
+    // K2-82: Fehlerschranke, kein Zeitkriterium; gewartet wird auf den eingegangenen Request.
+    tokio::time::timeout(Duration::from_secs(30), async {
         while !site
             .requests()
             .iter()
@@ -561,7 +607,11 @@ async fn requires_chromium_screenshot_wait_captures_late_paint_pixels() {
         ..RenderOpts::fixed_viewport(800, 600)
     };
     opts.screenshot.size = Some((200, 200));
-    for (wait, color) in [(0, "0,0,255,255"), (300, "255,0,0,255")] {
+    // K2-82: Die Zeiten 200/300/0 ms gibt CRAWL-082 vor. Der 0-ms-Fall läuft nicht mehr als
+    // erste Aufnahme des frisch gestarteten Browsers, damit einmalige Anlaufkosten der
+    // Bildaufnahme (Software-Compositor ohne GPU auf CI-Runnern) nicht in das
+    // 200-ms-Fenster fallen. Beide Fälle werden unverändert geprüft.
+    for (wait, color) in [(300, "255,0,0,255"), (0, "0,0,255,255")] {
         opts.screenshot.resize_wait_ms = wait;
         let rendered = renderer
             .render(&site.url("/late-paint.html"), &opts)
@@ -585,7 +635,8 @@ async fn requires_chromium_screenshot_wait_captures_late_paint_pixels() {
             .unwrap();
         assert!(
             page.dom_html.contains(&format!("data-pixel=\"{color}\"")),
-            "{}",
+            "Wartezeit {wait} ms, erwartet {color}, Screenshot-Phase {} ms: {}",
+            rendered.timings.screenshot_ms,
             page.dom_html.chars().take(200).collect::<String>()
         );
     }
