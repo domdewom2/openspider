@@ -9,6 +9,9 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
+# M3-F01 release foundation.
+zip.workspace = true
+sha2.workspace = true
 os-model.workspace = true
 # M2-F01 (3.2): Chromium über das DevTools-Protokoll; Rendering, Screenshots, Konsole, blockierte Ressourcen (M2-R01)
 chromiumoxide.workspace = true

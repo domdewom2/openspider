@@ -16,6 +16,9 @@ e2e-bridge = ["dep:tokio-tungstenite"]
 stub-views = []
 
 [dependencies]
+# M3-F01 release foundation.
+minisign-verify.workspace = true
+semver.workspace = true
 # M2-X03 review: temporary staging for export.sheets (OUT-005).
 tempfile.workspace = true
 tracing-subscriber.workspace = true

@@ -20,11 +20,14 @@ stub-views = ["os-app/stub-views"]
 e2e-webdriver = ["dep:tauri-plugin-wdio-webdriver"]
 
 [build-dependencies]
+serde_json.workspace = true
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = [] }
 # M2-F01 (docs/plan/M2.md 3.1/3.7): Plugins der Hülle; die Registrierung und die Capabilities setzt M2-F03
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-notification = "2"
