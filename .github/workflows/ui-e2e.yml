@@ -57,10 +57,14 @@ jobs:
             os: windows-latest
             projects: chromium
             browsers: chromium
-          - name: linux-both
+          - name: linux-chromium
             os: ubuntu-latest
-            projects: chromium,webkit
-            browsers: chromium webkit
+            projects: chromium
+            browsers: chromium
+          - name: linux-webkit
+            os: ubuntu-latest
+            projects: webkit
+            browsers: webkit
     defaults:
       run:
         shell: bash
