@@ -1,10 +1,26 @@
 // Harness für visuelle und Zugänglichkeitstests (nur Dev-Build): deterministische Szenen ohne Kern, gesteuert über die
 // Adresse – /?harness=<szene>&theme=light|dark&lang=de|en&density=compact|normal&platform=mac|win&zoom=100&accent=%23rrggbb
 // Szenen: primitives, empty, settings, shortcuts.
+import { Serp } from "../features/detail/serp/Serp";
+import { ViewSource } from "../features/detail/source/ViewSource";
+import { fachFixtureCore } from "../features/detail/rendered/fixtures/core";
+import { CRAWL_ID } from "../features/detail/rendered/fixtures/data";
+import type { DetailPanelProps } from "../features/detail/frame/types";
+import { WordCloudView } from "../features/viz/WordCloudView";
+import { fxUiWords } from "../features/viz/fixtures/synthetic";
+import { startAppearanceSync } from "../app/appearance";
+import { App, registerMainRegions } from "../App";
+import { bootWindow } from "../app/runtime";
+import { TopTabs } from "../features/toptabs/TopTabs";
+import { UpperTable } from "../features/table/UpperTable";
+import { DetailFrame } from "../features/detail/frame/DetailFrame";
+import shellCatalog from "./fixtures/fx-ui-basic-catalog.json";
+import { tableFixture } from "../features/table/fixtures/core";
+import "../app/app.css";
 import type { Root } from "react-dom/client";
 import { useState } from "react";
 import { SettingsFrame } from "../features/settings/frame/SettingsFrame";
-import { setLanguage, useFormat, useT } from "../i18n";
+import { createI18n, i18n, loadFtlFiles, setLanguage, useFormat, useT } from "../i18n";
 import { createClient, setClient } from "../ipc/client";
 import { MockCore } from "../ipc/transport/mock";
 import { usePrefs } from "../state/prefs";
@@ -128,10 +144,19 @@ function Shortcuts() {
   );
 }
 
+const detailProps: DetailPanelProps = {
+  selection: { urlIds: [1], focus: 1, crawlId: CRAWL_ID }, rendering: true, htmlStored: true,
+  storeUncrawlable: false, positions: [], listMode: false,
+  actions: { navigate: () => undefined, back: () => undefined, openBrowser: () => undefined, export: () => undefined, reportError: error => { throw error; } },
+};
 function Scene({ scene }: { scene: string }) {
   switch (scene) {
+    case "serp": return <Serp {...detailProps} />;
+    case "source": return <ViewSource {...detailProps} />;
+    case "viz": return <WordCloudView snapshotId="u32-words" urlId={1} generation={1} />;
     case "empty":
       return <EmptyStates />;
+    case "community":
     case "settings":
       return <div style={{ height: "100vh" }}><SettingsFrame {...(location.hash ? { anchor: decodeURIComponent(location.hash.slice(1)) } : {})} /></div>;
     case "shortcuts":
@@ -144,6 +169,10 @@ function Scene({ scene }: { scene: string }) {
 export function mountHarness(root: Root): void {
   const p = new URLSearchParams(location.search);
   const scene = p.get("harness") || "primitives";
+  if (scene === "community") {
+    const resources = import.meta.glob<string>("/e2e/visual/fixtures/community/i18n/*.ftl", { query: "?raw", import: "default", eager: true });
+    Object.assign(i18n, createI18n([...loadFtlFiles(), ...loadFtlFiles(resources)]));
+  }
   const platform = p.get("platform") === "mac" ? "mac" : "win";
   setPlatformOverride(platform);
   const lang = p.get("lang") === "de" ? "de" : "en";
@@ -155,15 +184,23 @@ export function mountHarness(root: Root): void {
     zebra: p.get("zebra") !== "off",
   };
   // Feste Einstellungen über den Mock-Kern, damit die Szenen deterministisch sind (kein localStorage, kein Netz).
-  const core = new MockCore();
+  const core = scene === "shell" ? tableFixture().core : ["serp", "source"].includes(scene) ? fachFixtureCore().core : new MockCore();
+  if (scene === "viz") core.handlers.set("viz.words", () => fxUiWords());
+  if (scene === "shell") {
+    core.handlers.set("catalog.tabs", () => shellCatalog);
+    core.handlers.set("catalog.filterCounts", () => ({ version: 1, filters: shellCatalog.flatMap(tab => tab.filters.map(filter => ({ tab: tab.id, filter: { ...filter, count: filter.id === "All" ? 3 : 0 } }))) }));
+    registerMainRegions({ tabs: TopTabs, table: UpperTable, detail: DetailFrame });
+  }
   setClient(createClient(core.transport("harness")));
   void setLanguage(lang).then(async () => {
-    await usePrefs.getState().load();
+    if (scene === "shell") await bootWindow({ kind: "main", transport: core.transport("main") }).ready;
+    else await usePrefs.getState().load();
     usePrefs.setState({ appearance });
+    if (scene === "community") startAppearanceSync({ platform });
     applyAppearance(document.documentElement, appearance, { platform, systemDark: false });
     root.render(
-      <div className="harness-root" data-harness-ready={scene}>
-        <Scene scene={scene} />
+      <div className={scene === "shell" ? "harness-shell" : "harness-root"} data-harness-ready={scene}>
+        {scene === "shell" ? <App /> : <Scene scene={scene} />}
       </div>,
     );
   });

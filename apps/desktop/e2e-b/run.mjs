@@ -11,6 +11,8 @@ import { createServer } from "node:net";
 import { createServer as httpServer } from "node:http";
 import { setTimeout as delay } from "node:timers/promises";
 import { remote } from "webdriverio";
+import { nativeCases } from "./u32-cases.mjs";
+import { menuCases } from "../e2e-c/menu.mjs";
 import { measure, validateRate } from "./measurement.mjs";
 import { viteReady } from "./readiness.mjs";
 import { prepareKeyboard } from "./focus.mjs";
@@ -19,7 +21,7 @@ const repo = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const binary = process.argv[2] && resolve(process.argv[2]);
 const mode = process.argv[3] ?? "smoke";
 const output = resolve(process.argv[4] ?? `apps/desktop/e2e-b/artifacts/s02-${mode}`);
-if (!binary || !["smoke", "s3", "s6"].includes(mode)) throw new Error("Usage: node apps/desktop/e2e-b/run.mjs <debug binary> [smoke|s3|s6] [output]");
+if (!binary || !["smoke", "s3", "s6", "u32", "menu"].includes(mode)) throw new Error("Usage: node apps/desktop/e2e-b/run.mjs <debug binary> [smoke|s3|s6|u32|menu] [output]");
 if (!["darwin", "win32"].includes(process.platform)) throw new Error("Native spike requires macOS or Windows");
 const started = Date.now();
 const guiLaunch = process.platform === "darwin" && process.env.S02_GUI !== "0";
@@ -250,7 +252,9 @@ try {
       assert.fail("window.rs lacks NSWindowOcclusionState observation and separate telemetry for frontend/shell sources (N01 interface requirement)");
     });
   }
-  if (mode === "smoke") {
+  if (mode === "u32") await nativeCases({ browser, evaluate, check, until, output, binary, startFixture, appPid });
+  if (mode === "menu") await menuCases({ browser, evaluate, check, output, appPid });
+  if (mode === "smoke" || mode === "u32") {
     // spec: UI-001
     await check("active native desktop", async () => {
       const state = await evaluate("window.s02.snapshot()");
@@ -276,7 +280,7 @@ try {
     });
     // spec: UI-113, OUT-232
     await check("app.requestQuit confirms a running fixture crawl", async () => {
-      await startFixture();
+      if (!report.crawlStart) await startFixture();
       report.quitDecision = await evaluate("window.s02.requestQuit()");
       assert.equal(report.quitDecision.kind, "confirm");
       assert.ok(report.quitDecision.reasons.includes("crawl"));
@@ -289,6 +293,25 @@ try {
       await until(() => browser.execute("return !!document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')"), "quit confirmation");
       return await browser.execute("return document.querySelector('[role=alertdialog], [role=dialog], dialog[open]').textContent");
     });
+    if (mode === "u32") {
+      // spec: UI-001
+      await check("U32 cancel quit confirmation keeps the main window and crawl", async () => {
+        const before = await browser.getWindowHandles();
+        const clicked = await browser.execute(() => {
+          const dialog = document.querySelector('[role=alertdialog], [role=dialog], dialog[open]');
+          const cancel = [...(dialog?.querySelectorAll("button") ?? [])].find(button => /^(Cancel|Abbrechen)$/.test(button.textContent.trim()));
+          cancel?.click();
+          return !!cancel;
+        });
+        assert.equal(clicked, true, "Quit confirmation must offer Cancel");
+        await until(() => browser.execute("return !document.querySelector('[role=alertdialog], [role=dialog], dialog[open]')"), "cancelled quit dialog");
+        assert.deepEqual(await browser.getWindowHandles(), before);
+        const state = await evaluate("window.s02.snapshot()");
+        assert.equal(state.shell.visible, true);
+        assert.ok(state.ticks.some(t => t.phase === "running"));
+        return { cancelled: true, mainAlive: true };
+      });
+    }
   }
 } catch (e) { report.errors.push(String(e)); }
 finally {
