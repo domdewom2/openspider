@@ -22,6 +22,8 @@ Build-Variablen:
 - `OPENSPIDER_UPDATER_PUBKEY`: öffentlicher minisign-Schlüssel; wird von build.rs
   in die Tauri-Konfiguration übernommen. Kein Produkt- oder Testschlüssel im Repo-Config.
 - `OPENSPIDER_UPDATE_BETA=1`: `latest-beta.json`, sonst `latest.json` (0 oder ungesetzt).
+  Einzige Kanalvariable für Update-Kern, CLI und Tauri-Adapter; Windows wählt
+  sein NSIS-/MSI-Target über den Tauri-Updater selbst.
   Feste Basis: `https://github.com/domdewom2/openspider/releases/latest/download/`.
 - Der feste HTTP-User-Agent des Update-Kerns ist `OpenSpider-Updater`, ohne Kennung.
 
