@@ -607,11 +607,10 @@ async fn requires_chromium_screenshot_wait_captures_late_paint_pixels() {
         ..RenderOpts::fixed_viewport(800, 600)
     };
     opts.screenshot.size = Some((200, 200));
-    // K2-82: Die Zeiten 200/300/0 ms gibt CRAWL-082 vor. Der 0-ms-Fall läuft nicht mehr als
-    // erste Aufnahme des frisch gestarteten Browsers, damit einmalige Anlaufkosten der
-    // Bildaufnahme (Software-Compositor ohne GPU auf CI-Runnern) nicht in das
-    // 200-ms-Fenster fallen. Beide Fälle werden unverändert geprüft.
-    for (wait, color) in [(300, "255,0,0,255"), (0, "0,0,255,255")] {
+    // K2-82: CRAWL-082 (angepasst) – das Fixture färbt 1 000 ms nach der Größenänderung;
+    // geprüft wird mit 1 500 ms (sichtbar) und 0 ms (nicht sichtbar). Das frühere
+    // 200-ms-Fenster war auf GPU-losen CI-Runnern zu knapp für die Bildaufnahme.
+    for (wait, color) in [(1500, "255,0,0,255"), (0, "0,0,255,255")] {
         opts.screenshot.resize_wait_ms = wait;
         let rendered = renderer
             .render(&site.url("/late-paint.html"), &opts)

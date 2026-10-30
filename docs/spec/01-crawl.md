@@ -1217,12 +1217,12 @@ Gemeinsame Regeln: Ein Limit von 0 oder leer bedeutet „unbegrenzt“, sofern n
 - **Akzeptanzkriterien:**
   - [ ] Einstellung 1024 × 768 ohne „An Inhalt anpassen“: Bilddatei ist exakt 1024 × 768 px (× Skalierungsfaktor des Viewports, falls ≠ 1).
   - [ ] „An Inhalt anpassen“ bei einer 3 000 px hohen Seite: Bildhöhe 3 000 px (± 1 px); bei einer 20 000 px hohen Seite: 8 192 px.
-  - [ ] Inhalt, der 200 ms nach der Größenänderung nachgeladen wird, ist bei Wartezeit 300 ms im Bild sichtbar, bei 0 ms nicht (Pixelprüfung einer farbigen Fläche).
+  - [ ] Inhalt, der 1 000 ms nach der Größenänderung nachgeladen wird, ist bei Wartezeit 1 500 ms im Bild sichtbar, bei 0 ms nicht (Pixelprüfung einer farbigen Fläche; K2-82: Abstand groß genug für GPU-lose Runner).
   - [ ] Screenshots werden in der Crawl-Datei gespeichert (komprimiert) und sind nach Schließen und erneutem Öffnen verfügbar (Byte-Vergleich).
   - [ ] Option aus: es wird kein Screenshot erzeugt (Anzahl gespeicherter Bilder = 0), die Detailansicht zeigt „Screenshots deaktiviert“; die mittlere Renderzeit je Seite sinkt messbar (Benchmark: ≥ 10 % schneller bei 100 Seiten).
   - [ ] Sammelexport von 100 Seiten erzeugt 100 Dateien; URLs mit Query-String erzeugen keine Kollision.
   - [ ] Im Textmodus ist die Option ausgegraut und der Detailbereich zeigt „Nur im JavaScript-Rendering-Modus verfügbar“.
-- **Testfixture:** `crawl-js/ssr.html`, `/tall-3000.html`, `/tall-20000.html`, `/late-paint.html` (färbt 200 ms nach `resize` eine Fläche rot), `/q.html?a=1` und `/q.html?a=2`.
+- **Testfixture:** `crawl-js/ssr.html`, `/tall-3000.html`, `/tall-20000.html`, `/late-paint.html` (färbt 1 000 ms nach `resize` eine Fläche rot), `/q.html?a=1` und `/q.html?a=2`.
 
 ### CRAWL-083 Blockierte Ressourcen beim Rendern
 - **Priorität:** P1
