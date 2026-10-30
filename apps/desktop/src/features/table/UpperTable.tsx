@@ -26,6 +26,7 @@ import { Checkbox, SearchField } from "../../ui/primitives/fields";
 import { EmptyState } from "../../ui/primitives/EmptyState";
 import { Menu, MenuBody, type MenuEntry } from "../../ui/primitives/Menu";
 import { Popover } from "react-aria-components";
+import { Tooltip } from "../../ui/primitives/Tooltip";
 import { FONT_STACKS, SIZES, resolveTokens } from "../../ui/tokens/tokens";
 import { resolveTheme, systemPrefersDark } from "../../ui/tokens/theme";
 import { ColumnsMenu } from "./ColumnsMenu";
@@ -288,7 +289,7 @@ function RegularUpperTable() {
           { id: "export-multi", label: t("u34-export-multi"), onAction: () => { runAction("export.multi"); } },
         ]} trigger={<IconButton label={t("u34-export-more")} icon={<ChevronDown size={14} />} />} />
       </div>
-      <IconButton label={t("u20-columns-open")} title={t("u20-columns-open")} icon={<Columns3 size={16} />} onPress={() => setConfigurator(true)} isDisabled={!columns.length} />
+      <Tooltip text={t("u20-columns-open")}><IconButton label={t("u20-columns-open")} icon={<Columns3 size={16} aria-hidden="true" />} onPress={() => setConfigurator(true)} isDisabled={!columns.length} /></Tooltip>
       <ColumnsMenu columns={columns} onChange={next => void columnState.change(tabs.active, next).catch(fail)} onReset={() => void columnState.reset(tabs.active).catch(fail)} />
     </div>
     {searchError && <p role="alert" className="u20-error">{searchError}</p>}
