@@ -449,15 +449,15 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Eingaben/Konfiguration:** –
 - **Ausgabe (Spalten/Filter/Export):** Filter „Multiple Conflicting“; Einstufung: Fehler / Hoch.
 - **Akzeptanzkriterien:**
-  - [ ] Bedingung: Die Menge der nach TECH-002 aufgelösten und normalisierten Canonical-URLs (HTML-Elemente im und außerhalb des Heads plus HTTP-Header-Einträge) hat ≥ 2 verschiedene Elemente. Rohwerte, die sich nicht auflösen lassen (TECH-002, ungültige URL), werden für diese Menge ignoriert (Festlegung).
+  - [ ] Bedingung: Die Menge der nach TECH-002 aufgelösten und normalisierten Canonical-URLs (gültige HTML-Elemente im Head plus HTTP-Header-Einträge; Body-Canonicals zählen nur für TECH-023, K2-86/K2-93) hat ≥ 2 verschiedene Elemente. Rohwerte, die sich nicht auflösen lassen (TECH-002, ungültige URL), werden für diese Menge ignoriert (Festlegung).
   - [ ] Jede Seite in „Multiple Conflicting“ steht auch in „Multiple“ (TECH-016); umgekehrt nicht.
   - [ ] Header zeigt auf `/a`, HTML auf `/b` → Conflicting.
   - [ ] `/a` und `/a#x` → **nicht** conflicting (Fragment entfernt). Relativ `/a` und absolut `https://site.test/a` auf derselben Seite → nicht conflicting.
   - [ ] `/a` und `/A` → conflicting (Pfad case-sensitiv). `/a` und `/a/` → conflicting.
   - [ ] `/a` und `http://[bad` → **nicht** conflicting (ungültiger Wert ignoriert), aber `Occurrences = 2` und damit „Multiple“.
-  - [ ] Auswahlregel für die „maßgebliche“ Canonical-URL (für TECH-013/014, TECH-018 und die Indexierbarkeit): erster gültiger HTTP-Header-Eintrag; sonst erstes gültiges HTML-Element mit `in_head = true`; sonst erstes gültiges HTML-Element außerhalb des Heads (Festlegung, Anhang A Punkt 1).
-  - [ ] Beispiele der Auswahlregel auf Seite `/p`: Header `/a` + Head `/b` → maßgeblich `/a`, Status `Canonicalised`. Head `/p` + Body `/b` → maßgeblich `/p`, Self Referencing (TECH-013); die Seite steht zusätzlich in „Multiple Conflicting“ und (bei TECH-008 an) in TECH-023. Body `/b` allein → maßgeblich `/b`, `Canonicalised`.
-  - [ ] Die Spalten `Canonical Link Element n` und `HTTP Canonical n` zeigen alle Werte in Quelltext- bzw. Header-Reihenfolge (TECH-004), unabhängig von der Auswahlregel.
+  - [ ] Auswahlregel für die „maßgebliche“ Canonical-URL (für TECH-013/014, TECH-018 und die Indexierbarkeit): erster gültiger HTTP-Header-Eintrag; sonst erstes gültiges HTML-Element mit `in_head = true`. Body-Canonicals zählen nicht für die Auswahl (K2-86). (K2-93)
+  - [ ] Beispiele der Auswahlregel auf Seite `/p`: Header `/a` + Head `/b` → maßgeblich `/a`, Status `Canonicalised`. Head `/p` + Body `/b` → maßgeblich `/p`, Self Referencing (TECH-013); die Seite steht ausschließlich zusätzlich in TECH-023, unabhängig von TECH-008. Body `/b` allein → keine maßgebliche Canonical-URL, ausschließlich TECH-023. (K2-93)
+  - [ ] Die Spalten `Canonical Link Element n` und `HTTP Canonical n` zeigen alle wirksamen Werte in Quelltext- bzw. Header-Reihenfolge (TECH-004); Body-Canonicals tragen weder Werte noch Occurrences bei (TECH-023/K2-86). (K2-93)
 - **Testfixture:** `canonical-basic/multi-conflict.html` (zwei HTML-Canonicals `/a`, `/b`), `/multi-conflict-mixed` (Header `/a` vs. HTML `/b`), `/multi-relabs` (relativ + absolut gleich, Negativtest), `/multi-case` (`/a` vs. `/A`), `/multi-invalid` (`/a` + `http://[bad`), `/head-self-body-other` (Head self, Body fremd). Golden: Filterzugehörigkeit Multiple/Conflicting, maßgebliche URL, `Indexability Status`.
 
 ### TECH-018 Filter „Non-Indexable Canonical“
@@ -836,10 +836,10 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - **Eingaben/Konfiguration:** „Crawl Meta Refresh“ (Standard an): Ziel wird in die Frontier aufgenommen.
 - **Ausgabe (Spalten/Filter/Export):** Filter „Refresh“ (Information); Spalte `Meta Refresh n` = Rohwert ausschließlich der Meta-Elemente, nicht der HTTP-Header. (K2-93) Details der Weiterleitung im Response-Codes-Bereich.
 - **Akzeptanzkriterien:**
-  - [ ] Bedingung: mindestens ein gültiges Meta-Refresh-Element (Head oder Body). HTTP-Refresh wird ausschließlich im Response-Codes-Filter TECH-050 gelistet, nicht in diesem Filter. (K2-93)
+  - [ ] Bedingung: mindestens ein gültiges Meta-Refresh-Element (Head oder Body). HTTP-Refresh wird ausschließlich im Response-Codes-Filter „Redirection (HTTP Refresh)“ (05-ui.md) gelistet, nicht in diesem Filter. (K2-93)
   - [ ] Refresh mit Ziel ≠ eigener URL → Indexierbarkeit `Redirected` (TECH-001); Ziel-URL wird gecrawlt.
-  - [ ] Meta-Refresh auf sich selbst oder ohne Ziel → im Filter, kein neuer Abruf. HTTP-Refresh zählt hier nicht, auch nicht bei eigener Ziel-URL. (K2-93) Indexierbarkeit: Header mit eigener Ziel-URL → `Redirected` (SQ-05). Meta-Selbst-Refresh nach TECH-068 bleibt bei Standard (Option aus) indexierbar, sofern kein anderer Grund vorliegt; mit Option an `Non-Indexable` / `Self Referencing Meta Refresh`. Ein Header ohne Ziel ist keine Weiterleitung (K-69). (K2-93)
-- **Testfixture:** `directives/refresh-0.html` (`0; url=/target` → Redirected), `/refresh-5-self.html` (→ Self Referencing Meta Refresh), `/refresh-bare.html` (`content="10"` → Self Referencing Meta Refresh), `/refresh-header` (Header `Refresh: 0; url=/target`).
+  - [ ] Meta-Refresh auf sich selbst oder ohne Ziel → im Filter, kein neuer Abruf. HTTP-Refresh zählt hier nicht, auch nicht bei eigener Ziel-URL. Indexierbarkeit: Header mit eigener Ziel-URL → `Redirected` (SQ-05). Meta-Selbst-Refresh nach TECH-068 bleibt bei Standard (Option aus) indexierbar, sofern kein anderer Grund vorliegt; mit Option an `Non-Indexable` / `Self Referencing Meta Refresh`. Ein Header ohne Ziel ist keine Weiterleitung (K-69). (K2-93)
+- **Testfixture:** `directives/refresh-0.html` (`0; url=/target` → Redirected), `/refresh-5-self.html` (→ Self Referencing Meta Refresh), `/refresh-bare.html` (`content="10"` → Self Referencing Meta Refresh), `/refresh-header` (Header `Refresh: 0; url=/target`, Negativfall für diesen Filter). (K2-93)
 
 ### TECH-065 Filter „Outside \<head>“ (Meta Robots)
 - **Priorität:** P1
@@ -956,7 +956,7 @@ Begriffe: Eine **Annotation** ist ein Paar (Code, URL) auf Seite P. Die **Annota
 - **Eingaben/Konfiguration:** Nachlauf, Bereich „Hreflang“ in der Crawl-Analyse (einziger hreflang-Filter, der zwingend die Crawl-Analyse benötigt, TECH-005).
 - **Ausgabe (Spalten/Filter/Export):** Filter „Unlinked Hreflang URLs“; Einstufung: Fehler / Mittel (korrigiert; Begründung Anhang B). Gelistet wird die Quellseite; Report listet Quelle + Ziel.
 - **Akzeptanzkriterien:**
-  - [ ] Bedingung: Ein Alternate Q (intern) hat keinen eingehenden Hyperlink von einer internen Seite (Logik wie TECH-020).
+  - [ ] Bedingung: Ein Alternate Q (intern, bereits gecrawlt) hat keinen eingehenden Hyperlink von einer internen Seite (Logik wie TECH-020). Nur bekannte, nicht gecrawlte Ziele lösen den Filter nicht aus. (K2-93)
   - [ ] Externe Alternates (andere Domain, nicht als intern konfiguriert) lösen den Filter immer aus, weil sie im Crawl nicht verlinkt sein können (Verhalten wie Referenz bei Mehr-Domain-Setups).
 - **Testfixture:** `hreflang/en/` annotiert `/nl/`, das nirgends verlinkt ist.
 
@@ -979,7 +979,7 @@ Begriffe: Eine **Annotation** ist ein Paar (Code, URL) auf Seite P. Die **Annota
 - **Eingaben/Konfiguration:** Live, inkrementell (TECH-005).
 - **Ausgabe (Spalten/Filter/Export):** Filter „Inconsistent Language & Region Return Links“; Einstufung: Fehler / Hoch. Report: OUT-094 (führend für Namen und Spalten). Mapping-Aliase für den Paritätstest: Tab-Doku „Inconsistent Language & Region Return Links“ (Hauptname); Report-Menü der Referenz „Inconsistent Language Return Links“ (OpenSpider-Report-Name nach OUT-094); laut Review in der Issue-Bibliothek „Inconsistent Language & Region Confirmation Links“ (in der öffentlichen Tab-Doku nicht bestätigt, vor dem Golden-Test prüfen). In der Detailansicht TECH-089 heißt der zugehörige Bestätigungsstatus `Inconsistent`.
 - **Akzeptanzkriterien:**
-  - [ ] Bedingung: P hat einen Selbstcode S; ein Alternate Q hat einen Rücklink auf P mit Code C; C ≠ S (case-insensitiv verglichen).
+  - [ ] Bedingung: P hat einen Selbstcode S; ein Alternate Q hat einen Rücklink auf P mit Code C; C ≠ S (case-insensitiv verglichen). `x-default` ist kein Sprachcode und wird bei diesem Vergleich ausgeschlossen. (K2-93)
   - [ ] P ohne Selbstreferenz → Filter für P nicht auswertbar, nicht gelistet.
   - [ ] Beispiel: `/en-gb/` sagt sich selbst `en-gb`, `/de/` verweist auf `/en-gb/` mit `en` → `/en-gb/` gelistet.
 - **Testfixture:** `hreflang/inconsistent/en-gb/` und `/de/` wie im Beispiel.
@@ -1000,7 +1000,7 @@ Begriffe: Eine **Annotation** ist ein Paar (Code, URL) auf Seite P. Die **Annota
 - **Eingaben/Konfiguration:** Live, inkrementell (TECH-005).
 - **Ausgabe (Spalten/Filter/Export):** Filter „Noindex Return Links“; Einstufung: Fehler / Hoch.
 - **Akzeptanzkriterien:**
-  - [ ] Bedingung: Ein Alternate Q von P (gecrawlt, 200) hat effektives `noindex` (inkl. `none`); P wird gelistet.
+  - [ ] Bedingung: Ein Alternate Q von P (gecrawlt, 200) hat effektives `noindex` (inkl. `none`); P wird gelistet. Die Selbstannotation einer noindex-Seite zählt ebenfalls (Q = P). (K2-93)
 - **Testfixture:** `hreflang/noindex/en/` → `/de/` mit `noindex`.
 
 ### TECH-080 Filter „Incorrect Language & Region Codes“
@@ -2129,7 +2129,7 @@ Alle Funktionen dieses Abschnitts setzen den Rendering-Modus „JavaScript“ vo
 - **Eingaben/Konfiguration:** –
 - **Ausgabe (Spalten/Filter/Export):** Filter „\<head> Not First In \<html> Element“; Einstufung: Warnung / Hoch.
 - **Akzeptanzkriterien:**
-  - [ ] Bedingung: Es gibt ein `<head>`-Start-Tag, und vor ihm (nach `<html>` bzw. ab Dokumentbeginn, falls `<html>` fehlt) steht ein anderes Element-Start-Tag oder Nicht-Whitespace-Text. Doctype, Kommentare und Whitespace zählen nicht.
+  - [ ] Bedingung bei vorhandenem `<head>`-Start-Tag (Ausnahme bei fehlendem Head siehe nächster Punkt): Vor ihm (nach `<html>` bzw. ab Dokumentbeginn, falls `<html>` fehlt) steht ein anderes Element-Start-Tag oder Nicht-Whitespace-Text. Doctype, Kommentare und Whitespace zählen nicht. (K2-93)
   - [ ] Fehlt `<head>` ganz → zusätzlich zu TECH-284 auch dieser Filter. (K2-93)
 - **Testfixture:** `validation/p-before-head.html`, `/img-before-head.html`.
 
@@ -2346,7 +2346,7 @@ Change Detection ist Teil des Vergleichsmodus. Auswahl der Crawls, Rollentausch,
 
 Legende: **F** = OpenSpider-Festlegung (Referenzverhalten unbekannt, gegen Golden prüfen); **PA** = bewusste Paritätsabweichung (Referenzverhalten bekannt, OpenSpider weicht ab; Golden-Vergleich schließt aus bzw. erwartet Differenz); **K** = in dieser Überarbeitung nach Doku-Prüfung korrigiert.
 
-1. **F – Maßgebliche Canonical-URL bei mehreren Angaben (TECH-017):** HTTP-Header vor HTML-Element im Head vor Element außerhalb; ungültige Werte übersprungen. Referenzverhalten unbekannt.
+1. **F – Maßgebliche Canonical-URL bei mehreren Angaben (TECH-017):** HTTP-Header vor gültigem HTML-Element im Head; Body-Canonicals ausschließlich im Problemfilter TECH-023 (K2-86). (K2-93)
 2. **F – Leerer Canonical-`href` (TECH-002):** Auflösung zur eigenen URL (→ Self Referencing). Alternativ könnte die Referenz ihn ignorieren.
 3. **F – Schwellwert „High External Outlinks“ (TECH-137/144):** Referenz-Standard nicht dokumentiert; Festlegung 100.
 4. **F – Standardliste nichtssagender Ankertexte (TECH-144):** Referenzliste nicht öffentlich; eigene Liste (de/en), exakter Abgleich nach Normalisierung.
