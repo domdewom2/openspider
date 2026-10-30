@@ -38,3 +38,28 @@ async fn header_filters_include_all_2xx_content_types_but_keep_hsts_population()
         }
     }
 }
+
+// spec: ONPAGE-043
+#[tokio::test]
+async fn bad_content_type_excludes_non_2xx_even_with_stored_positive_fact() {
+    let cfg = CrawlConfig::default();
+    let fx = crawl_fixture_from("onpage-m2-security", "https://site.test/", cfg.clone()).await;
+    for status in [199, 200, 204, 299, 300, 404, 500] {
+        fx.file
+            .conn()
+            .execute(
+                "UPDATE urls SET status_code=?1 WHERE url='https://site.test/image.jpg'",
+                [status],
+            )
+            .unwrap();
+        let mut q = ViewQuery::new("Security", "Bad Content Type");
+        q.columns = ColumnSelection::Named(vec!["Address".into()]);
+        q.limit = 500;
+        let got = query_view(&fx.file, &cfg, &q)
+            .unwrap()
+            .rows
+            .iter()
+            .any(|r| r[0] == Value::from("https://site.test/image.jpg"));
+        assert_eq!(got, (200..300).contains(&status), "{status}");
+    }
+}

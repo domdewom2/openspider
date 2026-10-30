@@ -68,7 +68,7 @@ pub fn tab() -> TabDef {
             filter("Missing X-Content-Type-Options Header", "u.status_code BETWEEN 200 AND 299 AND EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id=u.id AND e.key='security.missing_xcto' AND e.v_int=1)"),
             filter("Missing X-Frame-Options Header", "u.status_code BETWEEN 200 AND 299 AND EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id=u.id AND e.key='security.missing_xfo' AND e.v_int=1)"),
             filter("Missing Secure Referrer-Policy Header", "u.status_code BETWEEN 200 AND 299 AND EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id=u.id AND e.key='security.missing_referrer_policy' AND e.v_int=1)"),
-            filter("Bad Content Type", "u.status_code > 0 AND EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id=u.id AND e.key='security.bad_content_type' AND e.v_int=1)"),
+            filter("Bad Content Type", "u.status_code BETWEEN 200 AND 299 AND EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id=u.id AND e.key='security.bad_content_type' AND e.v_int=1)"),
         ],
         default_sort: Vec::new(),
         params: |_| Vec::new(),
