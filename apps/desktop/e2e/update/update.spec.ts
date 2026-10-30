@@ -76,18 +76,21 @@ for (const lang of ["de", "en"] as const) {
 }
 // spec: OUT-251
 // spec: UI-002 [M3]
-test("manual check reports current, disabled and failed states", async ({ page }) => {
+for (const lang of ["de", "en"] as const) test(`${lang}: manual check reports current, disabled and failed states`, async ({ page }) => {
   bridge = await startFakeBridge();
-  bridge.core.settings.general.language = "en";
+  bridge.core.settings.general.language = lang;
   state = "idle";
   bridge.core.handlers.set("update.status", () => state);
   bridge.core.handlers.set("update.check", () => state);
   await page.goto(`/?bridge=${encodeURIComponent(bridge.url)}`);
   await page.waitForFunction(() => window.__osMenu !== undefined);
   for (const [next, text] of [
-    ["upToDate", "OpenSpider is up to date."],
-    [{ disabled: "environment" }, "Update checks are disabled by OPENSPIDER_DISABLE_UPDATE_CHECK=1."],
-    [{ failed: "mock interrupted" }, "The update could not be completed. Please try again."],
+    ["upToDate", lang === "de" ? "OpenSpider ist aktuell." : "OpenSpider is up to date."],
+    [{ disabled: "environment" }, lang === "de" ? "Die Update-Prüfung ist durch OPENSPIDER_DISABLE_UPDATE_CHECK=1 deaktiviert." : "Update checks are disabled by OPENSPIDER_DISABLE_UPDATE_CHECK=1."],
+    [{ disabled: "settings" }, lang === "de" ? "Die Update-Prüfung ist in den Einstellungen deaktiviert." : "Update checks are disabled in Settings."],
+    [{ disabled: "missingPublicKey" }, lang === "de" ? "Die Update-Prüfung ist nicht verfügbar, weil der Signaturschlüssel fehlt." : "Update checks are unavailable because the signing key is missing."],
+    [{ disabled: "invalidPublicKey" }, lang === "de" ? "Die Update-Prüfung ist nicht verfügbar, weil der Signaturschlüssel ungültig ist." : "Update checks are unavailable because the signing key is invalid."],
+    [{ failed: "mock interrupted" }, lang === "de" ? "Das Update konnte nicht abgeschlossen werden. Bitte erneut versuchen." : "The update could not be completed. Please try again."],
   ] as const) {
     state = next;
     await page.evaluate(async () => {
@@ -95,11 +98,11 @@ test("manual check reports current, disabled and failed states", async ({ page }
       const { runAction } = await import("/src/ui/actions.ts");
       runAction("help.updates", { source: "menu" });
     });
-    const dialog = page.getByRole("dialog", { name: "Software updates" });
+    const dialog = page.getByRole("dialog", { name: lang === "de" ? "Updates" : "Software updates" });
     await expect(dialog.getByText(text)).toBeVisible();
     const axe = await new AxeBuilder({ page }).include('[role="dialog"]').analyze();
     expect(axe.violations.filter(v => v.impact === "critical" || v.impact === "serious")).toEqual([]);
-    await dialog.getByRole("button", { name: "Close", exact: true }).click();
+    await dialog.getByRole("button", { name: lang === "de" ? "Schließen" : "Close", exact: true }).click();
   }
 });
 // spec: OUT-251

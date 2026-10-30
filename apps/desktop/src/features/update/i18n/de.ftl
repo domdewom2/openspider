@@ -1,10 +1,12 @@
 update-title = Updates
-update-check = Nach Updates suchen
 update-auto = Automatisch nach Updates suchen
 update-checking = Suche nach Updates …
 update-current = OpenSpider ist aktuell.
 update-environment = Die Update-Prüfung ist durch OPENSPIDER_DISABLE_UPDATE_CHECK=1 deaktiviert.
-update-disabled = Die Update-Prüfung ist deaktiviert oder der Signaturschlüssel fehlt.
+update-disabled-settings = Die Update-Prüfung ist in den Einstellungen deaktiviert.
+update-disabled-missing-key = Die Update-Prüfung ist nicht verfügbar, weil der Signaturschlüssel fehlt.
+update-disabled-invalid-key = Die Update-Prüfung ist nicht verfügbar, weil der Signaturschlüssel ungültig ist.
+update-disabled-unavailable = Die Update-Prüfung ist in diesem Build nicht verfügbar.
 update-failed = Das Update konnte nicht abgeschlossen werden. Bitte erneut versuchen.
 update-version = Version { $version }
 update-notes = Release-Notes
