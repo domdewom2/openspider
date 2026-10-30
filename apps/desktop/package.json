@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node ../../scripts/lint-css.mjs && vitest run --maxWorkers=2",
     "gen:ipc": "node scripts/gen-ipc.mjs",
+    "lint": "npm run check:static",
     "check:static": "node scripts/check-static.mjs",
     "check:licenses": "node scripts/check-licenses.mjs",
     "e2e": "playwright test",
