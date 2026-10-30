@@ -20,10 +20,25 @@ Azure Artifact Signing für Windows (K3-05; Umsetzung M3-R02).
 Build-Variablen:
 
 - `OPENSPIDER_UPDATER_PUBKEY`: öffentlicher minisign-Schlüssel; wird von build.rs
-  in die Tauri-Konfiguration übernommen. Kein Produkt- oder Testschlüssel im Repo-Config.
-- `OPENSPIDER_UPDATE_BETA=1`: `latest-beta.json`, sonst `latest.json` (0 oder ungesetzt).
-  Feste Basis: `https://github.com/domdewom2/openspider/releases/latest/download/`.
+  gezielt als `plugins.updater.pubkey` übernommen. Ohne gesetzte Schlüssel-/Beta-Variable
+  bleibt die eingehende Updater-Konfiguration (auch `--config`/`TAURI_CONFIG`) erhalten.
+  Ein Release-Build mit leerem effektivem Schlüssel gibt eine Cargo-Warnung aus.
+  Kein Produkt- oder Testschlüssel im Repo-Config.
+- `OPENSPIDER_UPDATE_BETA=1`: `latest-beta.json`, bei `0` `latest.json`. Die Variable
+  setzt ausschließlich den Endpunkt; ein eingehender Schlüssel bleibt erhalten.
+  Bei allein gesetztem Schlüssel ergänzt der Build `latest.json`, sofern kein
+  Endpunkt-Override vorliegt. Ohne Build-Variablen bleibt der Endpunkt-Platzhalter leer.
+- `OPENSPIDER_UPDATE_REPO`: GitHub-Repository als `owner/repo`; der Standard steht
+  einmalig in `apps/desktop/src-tauri/build_update.rs` und wird von `build.rs` verwendet.
+  Endpunkte entstehen als `https://github.com/<repo>/releases/latest/download/<manifest>`.
+  Diese Variable allein überschreibt keine eingehende Updater-Konfiguration.
 - Der feste HTTP-User-Agent des Update-Kerns ist `OpenSpider-Updater`, ohne Kennung.
+
+K3-04, Orchestrator-Entscheid vom 30.10.2026: Bis 1.0 werden Betas als **normale
+GitHub-Releases**, ohne Pre-Release-Markierung, veröffentlicht. Jeder Release trägt
+beide Manifeste `latest.json` und `latest-beta.json`. Beta-Builds verwenden
+`releases/latest/download/latest-beta.json`. Die Veröffentlichung bleibt an das
+Go des Nutzers gebunden.
 
 F01 stellt ausschließlich Stubs bereit: keine Hintergrundprüfung, kein Download,
 keine Installation; Commands melden `Unsupported`, CLI-Hooks Exit 2. Verifikation
