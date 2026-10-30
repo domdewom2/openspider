@@ -30,6 +30,8 @@ pub mod run_task;
 mod segment_workbook;
 pub mod signals;
 mod staging;
+pub mod uninstall;
+pub mod update;
 pub mod upload;
 pub mod xls;
 
@@ -242,6 +244,18 @@ pub fn run(cli: Cli) -> i32 {
         return os_mcp::cli::run(args);
     }
     let args = cli.run;
+    if args.check_update {
+        return match update::check() {
+            Ok(code) => code,
+            Err(error) => fail(&error),
+        };
+    }
+    if args.uninstall_cleanup {
+        return match uninstall::cleanup() {
+            Ok(()) => 0,
+            Err(error) => fail(&error),
+        };
+    }
 
     // OUT-166: Deinstallation entfernt alle Planer-Einträge.
     if args.unregister_tasks {
