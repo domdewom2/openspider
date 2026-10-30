@@ -317,7 +317,7 @@ id = "REF-FREE-01"
 spec = "TECH-210"
 kind = "Annahme"
 export = "sitemaps_all"
-site = "*"
+site = "out-basic-site|parity-onpage|parity-technical|parity-response|parity-synthetic"
 key_prefix = "{BASE}/"
 scope = "missing_in_os"
 reason = "Referenz-Free-Einschraenkung (Spider-Konfiguration gesperrt): verlinkte XML-Sitemaps und robots.txt-Sitemaps werden nicht abgerufen; die Referenz listet im Tab Sitemaps dennoch alle internen URLs, OpenSpider ohne verarbeitete Sitemap keine (TECH-211: Tab leer)."
@@ -327,7 +327,165 @@ id = "REF-FREE-02"
 spec = "TECH-210"
 kind = "Annahme"
 export = "crawl_overview"
-site = "*"
+site = "out-basic-site|parity-onpage|parity-technical|parity-response|parity-synthetic"
 column = "URLs"
 key_prefixes = ["sitemaps | "]
 reason = "Referenz-Free-Einschraenkung (Spider-Konfiguration gesperrt): ohne Sitemap-Crawl zaehlt die Referenz alle URLs im Abschnitt Sitemaps, OpenSpider 0 (TECH-211)."
+
+# Q02: REF-FREE-01/02 gelten nur fuer die alten Free-Exporte. Die fuenf neuen
+# Manifeste dokumentieren eine lizenzierte Referenz; deren Befunde werden nicht
+# durch diese Einschraenkungen entschuldigt (M2-B02, K2-14).
+
+# Q02 / M2.md 6.1, K2-14: keine Referenz fuer gesperrte bzw. im
+# Referenzprofil nicht aktivierte Funktionsgruppen. Nur Overview-Zellen;
+# Produktfehler und referenzfaehige Filter bleiben im Bericht sichtbar.
+
+[[deviation]]
+id = "REF-FREE-03"
+spec = "TECH-101"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "javascript | "
+reason = "M2.md 6.1 / K2-14: JavaScript hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: TECH-101, TECH-102, TECH-103, TECH-104, TECH-105, TECH-106, TECH-107, TECH-108, TECH-109, TECH-110, TECH-111, TECH-114."
+
+[[deviation]]
+id = "REF-FREE-04"
+spec = "TECH-183"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "structured data | "
+reason = "M2.md 6.1 / K2-14: Structured Data hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: TECH-183, TECH-184, TECH-185, TECH-186, TECH-187, TECH-188."
+
+[[deviation]]
+id = "REF-FREE-05"
+spec = "INTEG-134"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "pagespeed | "
+reason = "M2.md 6.1 / K2-14: PageSpeed hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-134, INTEG-139."
+
+[[deviation]]
+id = "REF-FREE-06"
+spec = "TECH-231"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "mobile | "
+reason = "M2.md 6.1 / K2-14: Mobile hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: TECH-231, TECH-232, TECH-233, TECH-234, TECH-235, TECH-236, TECH-237."
+
+[[deviation]]
+id = "REF-FREE-07"
+spec = "TECH-251"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "accessibility | "
+reason = "M2.md 6.1 / K2-14: Accessibility hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: TECH-251, TECH-252."
+
+[[deviation]]
+id = "REF-FREE-08"
+spec = "INTEG-031"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "custom search | "
+reason = "M2.md 6.1 / K2-14: Custom Search hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-031."
+
+[[deviation]]
+id = "REF-FREE-09"
+spec = "INTEG-053"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "custom extraction | "
+reason = "M2.md 6.1 / K2-14: Custom Extraction hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-053."
+
+[[deviation]]
+id = "REF-FREE-10"
+spec = "INTEG-071"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "custom javascript | "
+reason = "M2.md 6.1 / K2-14: Custom JavaScript hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-071."
+
+[[deviation]]
+id = "REF-FREE-11"
+spec = "INTEG-097"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "analytics | "
+reason = "M2.md 6.1 / K2-14: Analytics hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-097, INTEG-098."
+
+[[deviation]]
+id = "REF-FREE-12"
+spec = "INTEG-115"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "search console | "
+reason = "M2.md 6.1 / K2-14: Search Console hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-115, INTEG-116, INTEG-125."
+
+[[deviation]]
+id = "REF-FREE-13"
+spec = "INTEG-151"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "link metrics | "
+reason = "M2.md 6.1 / K2-14: Link Metrics hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-151."
+
+[[deviation]]
+id = "REF-FREE-14"
+spec = "ONPAGE-155"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+address = "content | spelling errors"
+reason = "M2.md 6.1 / K2-14: Rechtschreibung/Grammatik hat keinen aktivierten Referenzbeleg; ein Nullzaehler bei deaktivierter Analyse belegt die Funktion nicht. Kein verified; Beleg ueber spec-abgeleitete Fixtures in B2."
+
+[[deviation]]
+id = "REF-FREE-15"
+spec = "ONPAGE-156"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+address = "content | grammar errors"
+reason = "M2.md 6.1 / K2-14: Rechtschreibung/Grammatik hat keinen aktivierten Referenzbeleg; ein Nullzaehler bei deaktivierter Analyse belegt die Funktion nicht. Kein verified; Beleg ueber spec-abgeleitete Fixtures in B2."
+
+[[deviation]]
+id = "REF-FREE-16"
+spec = "ONPAGE-053"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["response codes | blocked resource", "response codes | internal blocked resource", "response codes | external blocked resource"]
+reason = "M2.md 6.1 / K2-14: rendering.mode=javascript ist im Referenzprofil nicht aktiv; die Rendering-Zaehler haben keinen Referenzbeleg. Nur vorhandene Overview-Zellen ausgenommen; fehlende bzw. falsch benannte Zeilen bleiben Mapping-Befund. Kein verified."
+
+[[deviation]]
+id = "REF-FREE-17"
+spec = "ONPAGE-057"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["response codes | redirection (javascript)", "response codes | internal redirection (javascript)", "response codes | external redirection (javascript)"]
+reason = "M2.md 6.1 / K2-14: rendering.mode=javascript ist im Referenzprofil nicht aktiv; die Rendering-Zaehler haben keinen Referenzbeleg. Nur vorhandene Overview-Zellen ausgenommen; fehlende bzw. falsch benannte Zeilen bleiben Mapping-Befund. Kein verified."
