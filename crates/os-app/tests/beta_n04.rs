@@ -89,6 +89,14 @@ async fn synthetic_5000_live_details_filter_pause_resume_and_reopen() {
         }));
         ready.await.unwrap();
     }
+    // The real HTML-chip path asks for metadata before view.open. Exercising
+    // only view.open would miss a remaining dependency on aggregate readers.
+    tokio::time::timeout(
+        Duration::from_secs(1),
+        call(&first, "catalog.columns", json!({"tab":"Internal"})),
+    )
+    .await
+    .expect("HTML filter metadata blocked by aggregate readers");
     for (command, args) in [
         ("detail.urlDetails", json!({"urlId":1})),
         ("detail.duplicates", json!({"urlId":1,"kind":"exact"})),
@@ -215,6 +223,27 @@ async fn stopped_mcp_catalog_contains_all_tools_without_starting_server() {
 // spec: UI-124
 #[tokio::test]
 async fn failed_open_reports_reason_as_well_as_returning_error() {
+    #[derive(Clone)]
+    struct Logs(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
+    impl std::io::Write for Logs {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            self.0.lock().unwrap().extend_from_slice(bytes);
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    let bytes = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let logs = Logs(bytes.clone());
+    let _subscriber = tracing::subscriber::set_default(
+        tracing_subscriber::fmt()
+            .without_time()
+            .with_ansi(false)
+            .with_max_level(tracing::Level::INFO)
+            .with_writer(move || logs.clone())
+            .finish(),
+    );
     let dir = tempfile::tempdir().unwrap();
     let (app, _clock) = manual_app(dir.path());
     let sink = std::sync::Arc::new(os_app::events::CollectingSink::new());
@@ -240,6 +269,11 @@ async fn failed_open_reports_reason_as_well_as_returning_error() {
         .expect("opening failure is visible");
     assert_eq!(failure.args["detail"], json!(error.detail));
     assert!(notices.iter().any(|n| n.code == "crawl-open-started"));
+    let log = String::from_utf8(bytes.lock().unwrap().clone()).unwrap();
+    assert!(log.contains("Crawl-Datei öffnen: begonnen"), "{log}");
+    assert!(log.contains("Crawl-Datei öffnen: fehlgeschlagen"), "{log}");
+    assert!(log.contains("reason="), "{log}");
+    assert!(log.contains("detail="), "{log}");
 }
 
 // spec: UI-129
