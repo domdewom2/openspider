@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { audit, prepare } from "../visual/support";
 import { test as bridgeTest, selectFirstRow, scan, tabTo, visibleFocus } from "../a11y/fixture";
+import { test as alphaTest } from "../alpha/fixture";
 
 // spec: UI-126
 test("ComboBox keeps input focus on listbox padding and selects by mouse", async ({ page }) => {
@@ -124,3 +125,16 @@ for (const theme of ["light", "dark"] as const) {
     await scan(page, `n12-forced-colors-segments-${theme}`, "#shell-sidebar");
   });
 }
+
+// spec: UI-126
+// spec: UI-001
+alphaTest("the shared table fixture scopes grid and filter actions to the linked tab panel", async ({ alpha }) => {
+  await alpha.open();
+  await alpha.startFromHeader();
+  await alpha.waitCompleted();
+  const panel = alpha.table();
+  await expect(panel).toBeVisible();
+  await expect(panel.getByRole("grid")).toBeVisible();
+  await panel.getByRole("button", { name: /^HTML(?: \([\d,.\s]+\))?$/ }).click();
+  await expect(panel.getByRole("grid")).toBeVisible();
+});
