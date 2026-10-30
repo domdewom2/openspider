@@ -22,13 +22,22 @@ Von der Repository-Wurzel unter Linux:
 timeout 3600s nice -n 10 cargo install cargo-about --version 0.9.3 --features cli --locked -j 4
 node --test scripts/release/licenses/generate.test.mjs
 timeout 3600s nice -n 10 node scripts/release/licenses/generate.mjs
-npm run -w apps/desktop build
+OPENSPIDER_REQUIRE_NOTICES=1 npm run -w apps/desktop build
 ```
 
 Die Plattform-Workflows `release-macos.yml` und `release-windows.yml` installieren das
-Werkzeug und erzeugen die Datei unmittelbar nach `npm ci`. Fehler stoppen den Build.
-Vite lehnt einen Build mit Platzhalter oder fehlenden Rust-/npm-Abschnitten ab. Der
-Entwicklungsserver und normale Frontend-Tests funktionieren mit dem Platzhalter.
+Werkzeug nur bei einem Cache-Miss und erzeugen die Datei nach `npm ci`. Fehler stoppen
+den Build. `actions/cache` (SHA-gepinnt, v4.3.0) speichert ausschließlich das
+Werkzeugverzeichnis `runner.temp/cargo-about/bin`; der exakte Schlüssel enthält
+cargo-about-Version, CLI-Feature, Betriebssystem, Architektur und Cache-Revision.
+Es gibt keine unscharfen Restore-Schlüssel und keinen Cache für Produkt-Builds.
+Auch `licenses.yml` verwendet diesen Cache. Bei Versions-/Featureänderungen den
+Schlüssel mitändern; `v1` bei Bedarf zur Neuerzeugung erhöhen.
+
+Beide Release-Workflows setzen beim Tauri-Build `OPENSPIDER_REQUIRE_NOTICES=1`.
+Nur mit diesem exakten Wert lehnt Vite einen Platzhalter oder fehlende Rust-/npm-
+Abschnitte ab. Normales `npm run -w apps/desktop build`, `tauri build --debug`,
+der Entwicklungsserver und Frontend-Tests funktionieren mit dem Platzhalter.
 Tauri bündelt das gesamte Ressourcenverzeichnis; Vite bettet denselben Text für den
 Über-Dialog ein. Die Anzeige braucht weder Netzwerk noch Dateisystemrechte; das lokale Textmodul wird
 erst beim Öffnen von Über geladen.
@@ -80,8 +89,23 @@ Push auf main erreichbar. Er prüft Generator-Negativfälle, die bisherige npm-P
 
 M3-R04 muss die erzeugten Hinweise auch dem separaten Linux-CLI-Archiv beilegen und den
 Lizenzjob als Freigabebedingung verwenden. Dafür kann es `licenses.yml` per workflow_call
-aufrufen und das Artefakt `third-party-notices` übernehmen. Die Desktop-Workflows erzeugen
-für ihre Installer bereits selbstständig vollständige Hinweise.
+aufrufen und das Artefakt `third-party-notices` übernehmen. Die Schnittstelle ist:
+keine Inputs, keine Secrets, keine Workflow-Outputs; `permissions: contents: read`.
+Das Artefakt enthält im Wurzelverzeichnis `THIRD_PARTY_NOTICES.txt` und `NOTICE`.
+Der nachgelagerte Archiv-/Release-Job muss per `needs` vom erfolgreichen Lizenzjob
+abhängen und dieses Artefakt aus demselben Workflow-Lauf herunterladen.
+
+```yaml
+jobs:
+  licenses:
+    uses: ./.github/workflows/licenses.yml
+    permissions:
+      contents: read
+  # Im bestehenden R04-Job: needs: [licenses, ...]
+  # actions/download-artifact (SHA-gepinnt) mit name: third-party-notices
+```
+
+Die Desktop-Workflows erzeugen für ihre Installer bereits selbstständig vollständige Hinweise.
 
 STUB/TODO(R03): Mit ausgeliefertem Installer prüfen, dass `third-party/NOTICE` und
 `third-party/THIRD_PARTY_NOTICES.txt` vorhanden sind und Hilfe → Über offline funktioniert.
