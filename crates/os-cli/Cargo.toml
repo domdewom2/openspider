@@ -9,6 +9,12 @@ repository.workspace = true
 authors.workspace = true
 
 [dependencies]
+base64.workspace = true
+reqwest.workspace = true
+semver.workspace = true
+serde.workspace = true
+minisign-verify.workspace = true
+
 time.workspace = true
 zip.workspace = true
 sysinfo.workspace = true

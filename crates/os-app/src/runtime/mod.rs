@@ -122,6 +122,8 @@ pub struct AppConfig {
     pub stub_views: bool,
     /// Leseverbindungen je Crawl im Lese-Pool.
     pub read_connections: usize,
+    /// Automatic update startup hook (off in the test/bridge constructor, on in from_env).
+    pub check_updates_on_startup: bool,
 }
 
 impl std::fmt::Debug for AppConfig {
@@ -153,6 +155,7 @@ impl AppConfig {
             secrets: Arc::new(MemorySecretStore::new()),
             stub_views: false,
             read_connections: DEFAULT_READ_CONNECTIONS,
+            check_updates_on_startup: false,
         }
     }
 
@@ -174,6 +177,7 @@ impl AppConfig {
             secrets,
             stub_views: false,
             read_connections: DEFAULT_READ_CONNECTIONS,
+            check_updates_on_startup: true,
         }
     }
 
