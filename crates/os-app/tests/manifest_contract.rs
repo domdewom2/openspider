@@ -135,6 +135,12 @@ const CATALOG_4_4: &[&str] = &[
 
 /// Tabelle 3.6a (alle Zeilen) einschließlich `detail.spellingContext` und `detail.a11yNode`.
 const CATALOG_3_6A: &[&str] = &[
+    // M3.md 3.2: release update contracts.
+    "update.check",
+    "update.status",
+    "update.download",
+    "update.install",
+    "update.set_auto",
     "app.requestQuit",
     "app.confirmQuit",
     "config.testRobots",

@@ -28,8 +28,10 @@ pub mod mail;
 pub mod mcp;
 pub mod sidebar;
 pub mod tasks;
+pub mod update;
 pub mod view;
 pub mod viz;
+pub use update::*;
 
 pub use api::*;
 pub use app::*;
@@ -67,6 +69,13 @@ fn export_all_with(cfg: &ts_rs::Config) -> Result<(), ts_rs::ExportError> {
         }};
     }
     export_list!(
+        DisableReason,
+        AvailableUpdate,
+        PendingInstall,
+        InstallWhen,
+        UpdateState,
+        UpdateInstallArgs,
+        UpdateSetAutoArgs,
         LoggingSettingsDto,
         BundlePreview,
         ExportSel,
@@ -435,6 +444,13 @@ fn remove_generated(dir: &Path) -> std::io::Result<()> {
 
 /// Namen aller exportierten Wurzeltypen in Deklarationsreihenfolge der Module (Test `dto_exports`).
 pub const TYPE_NAMES: &[&str] = &[
+    "DisableReason",
+    "AvailableUpdate",
+    "PendingInstall",
+    "InstallWhen",
+    "UpdateState",
+    "UpdateInstallArgs",
+    "UpdateSetAutoArgs",
     "LoggingSettingsDto",
     "BundlePreview",
     "ExportSel",

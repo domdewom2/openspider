@@ -1108,5 +1108,35 @@
     "args": "MailTestArgs",
     "ret": "MailTestResult",
     "longRunning": true
+  },
+  {
+    "name": "update.check",
+    "args": "void",
+    "ret": "UpdateState",
+    "longRunning": false
+  },
+  {
+    "name": "update.status",
+    "args": "void",
+    "ret": "UpdateState",
+    "longRunning": false
+  },
+  {
+    "name": "update.download",
+    "args": "void",
+    "ret": "UpdateState",
+    "longRunning": false
+  },
+  {
+    "name": "update.install",
+    "args": "UpdateInstallArgs",
+    "ret": "UpdateState",
+    "longRunning": false
+  },
+  {
+    "name": "update.set_auto",
+    "args": "UpdateSetAutoArgs",
+    "ret": "void",
+    "longRunning": false
   }
 ]

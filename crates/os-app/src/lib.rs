@@ -45,3 +45,5 @@ pub mod write_queue;
 pub use dto::{CmdError, ErrorCode};
 pub use registry::{default_registry, manifest_json, CmdResult, CommandMeta, Handler, Registry};
 pub use runtime::{App, AppConfig, CallCtx, WindowId};
+
+pub mod update;

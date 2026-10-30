@@ -79,6 +79,7 @@ pub fn register_all(r: &mut Registry) {
     auth::register(r);
     auth_login::register(r);
     mail::register(r);
+    update::register(r);
 }
 
 pub mod app_quit;
@@ -89,3 +90,5 @@ pub mod settings_network;
 
 /// Crawl-file desktop extension points (M2-U15, K2-61).
 pub mod crawl_files;
+
+pub mod update;

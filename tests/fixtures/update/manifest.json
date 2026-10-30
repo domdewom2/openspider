@@ -1,0 +1,15 @@
+{
+  "version": "1.0.1",
+  "notes": "OpenSpider fixture update",
+  "pub_date": "2026-10-30T12:00:00Z",
+  "platforms": {
+    "darwin-aarch64": {
+      "url": "https://updates.test/update/artifact",
+      "signature": "STUB(M3-U01)"
+    },
+    "windows-x86_64-nsis": {
+      "url": "https://updates.test/update/artifact",
+      "signature": "STUB(M3-U01)"
+    }
+  }
+}

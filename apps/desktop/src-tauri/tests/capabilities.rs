@@ -115,6 +115,8 @@ fn the_capability_grants_every_domain_to_the_app_windows() {
                 "os",
                 "clipboard-manager",
                 "deep-link",
+                "updater",
+                "process",
             ]
             .contains(&prefix);
         assert!(known, "unbekannte Berechtigung {p}");
