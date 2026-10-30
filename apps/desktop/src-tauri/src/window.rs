@@ -67,6 +67,9 @@ pub fn request_quit<R: Runtime>(app: App, handle: AppHandle<R>, quitting: Quitti
     tauri::async_runtime::spawn(async move {
         match app.request_quit().await {
             QuitDecision::Quit => {
+                if !os_app::update::install::on_quit(&app).await {
+                    return;
+                }
                 quitting.set();
                 handle.exit(0);
             }

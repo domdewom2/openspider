@@ -20,6 +20,7 @@ pub mod events;
 mod manual;
 pub mod open;
 pub mod plugin_names;
+pub mod update;
 pub mod window;
 
 use os_app::{App, AppConfig};
@@ -68,6 +69,9 @@ pub fn run() {
     }
 
     builder = builder
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
+        .plugin(update::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_notification::init())

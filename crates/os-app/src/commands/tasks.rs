@@ -1316,15 +1316,14 @@ pub fn on_startup(app: &App) {
             let Some(planner) = planner_of(&app) else {
                 return;
             };
-            let binary = planner::cli_binary();
             for task in store(&app).list() {
                 if !task.enabled || !planner.is_registered(&task.id) {
                     continue;
                 }
-                if planner.registered_binary(&task.id).as_deref() != Some(binary.as_path()) {
-                    if let Err(e) = planner.install(&planner_spec(&app, &task)) {
-                        tracing::warn!("Aufgabe '{}' nicht neu eingetragen: {e}", task.id);
-                    }
+                if let Err(e) =
+                    planner::reregister::repair(planner.as_ref(), &planner_spec(&app, &task))
+                {
+                    tracing::warn!("Aufgabe '{}' nicht neu eingetragen: {e}", task.id);
                 }
             }
         }

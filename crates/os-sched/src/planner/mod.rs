@@ -7,6 +7,7 @@
 //! Backend zugleich der Dry-Run für Tests; echte Registrierung gibt es nur im Betrieb ([`system`]).
 
 pub mod launchd;
+pub mod reregister;
 pub mod windows;
 
 use std::path::{Path, PathBuf};
