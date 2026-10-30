@@ -9,7 +9,7 @@ Build before measuring:
 ```sh
 export PATH="$HOME/.cargo/bin:$PATH"
 cargo build --release --locked -j 12 -p os-loadtest -p os-cli -p os-testsite
-cargo test --release --locked -j 12 -p os-analyze --test near_dup_scale --test link_score_benchmarks \
+cargo test --release --locked -j 12 -p os-analyze --test near_dup_scale --test link_score_benchmarks --test link_score_m2 --test near_dup_d02 \
   -p os-export --test pipeline_perf -p os-render --test render_chromium \
   -p os-engine --test render_integration --no-run
 ```

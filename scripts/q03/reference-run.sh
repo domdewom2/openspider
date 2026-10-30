@@ -14,7 +14,7 @@ if [[ ${Q03_CAFFEINATED:-0} != 1 ]]; then
 fi
 mkdir -p target/loadtest
 cargo build --release --locked -j 12 -p os-loadtest -p os-cli -p os-testsite
-cargo test --release --locked -j 12 -p os-analyze --test near_dup_scale --test link_score_benchmarks \
+cargo test --release --locked -j 12 -p os-analyze --test near_dup_scale --test link_score_benchmarks --test link_score_m2 --test near_dup_d02 \
   -p os-export --test pipeline_perf -p os-render --test render_chromium \
   -p os-engine --test render_integration --no-run
 # Each block checks the 1-minute load immediately before starting. No cgroups on macOS.
@@ -49,6 +49,8 @@ run perf005 -- target/release/os-loadtest run --scenario perf-005 --size large -
 run perf006-recycle -- python3 scripts/q03/test-bin.py render_chromium requires_chromium_recycles_and_recovers_after_hanging_js --nocapture --test-threads=1
 run perf006-tabs -- python3 scripts/q03/test-bin.py render_chromium requires_chromium_limits_tabs_and_recovers_from_cancellation --nocapture --test-threads=1
 run perf006-engine -- python3 scripts/q03/test-bin.py render_integration --nocapture --test-threads=1
+run perf007-cancel-links -- python3 scripts/q03/test-bin.py link_score_m2 cancellation_during_iterations_keeps_the_previous_complete_result --nocapture --test-threads=1
+run perf007-cancel-near -- python3 scripts/q03/test-bin.py near_dup_d02 analysis_is_deterministic_excludes_exact_pairs_and_can_cancel --nocapture --test-threads=1
 run perf007-near -- python3 scripts/q03/test-bin.py near_dup_scale --ignored --nocapture --test-threads=1
 run perf007-links -- python3 scripts/q03/test-bin.py link_score_benchmarks --ignored --nocapture --test-threads=1
 run perf008 -- python3 scripts/q03/test-bin.py pipeline_perf --ignored --nocapture --test-threads=1
