@@ -2363,7 +2363,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - **Priorität:** P2
 - **Beschreibung:** Administratoren können Updates zentral steuern: MSI-Installationen per Softwareverteilung, Update-Prüfung per Richtlinie deaktiviert **(OS-Festlegung)**:
   - Windows: Registry `HKLM\Software\Policies\OpenSpider` bzw. `HKCU\Software\Policies\OpenSpider`, Wert `DisableUpdateCheck` (REG_DWORD); MSI-Eigenschaft `DISABLEUPDATECHECK=1` schreibt den HKLM-Wert bei der Installation.
-  - macOS: verwaltete Einstellungen (Konfigurationsprofil) in der Domain `de.openspider.app`, Schlüssel `DisableUpdateCheck` (Boolean).
+  - macOS: verwaltete Einstellungen (Konfigurationsprofil) in der Domain `org.openspider.desktop` (= Bundle-ID), Schlüssel `DisableUpdateCheck` (Boolean).
   - Rangfolge: HKLM/Profil > HKCU > Umgebungsvariable `OPENSPIDER_DISABLE_UPDATE_CHECK` > `settings.toml` (OUT-250).
 - **Akzeptanzkriterien:**
   - [ ] `DisableUpdateCheck`=1 (bzw. `true`) → kein Netzwerkzugriff auf den Update-Server (Netzwerkmitschnitt über 2 App-Starts und manuelles „Nach Updates suchen“); der Menüpunkt zeigt „Durch Administrator deaktiviert“.

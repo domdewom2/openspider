@@ -1,0 +1,838 @@
+[
+ {
+  "id": "M5-H01",
+  "kind": "package",
+  "model": "human",
+  "wave": "0a",
+  "size": "S",
+  "runner": "human",
+  "human": true,
+  "title": "DataForSEO-Konto und Vorab-Probeaufrufe: Zugang einrichten, kostenfreie Prüfungen (user_data, Sandbox, available_filters, timeseries_new_lost)",
+  "spec_ids": [],
+  "depends_on": [],
+  "owns": [
+   "docs/plan/M5-acceptance/live/vorab.md"
+  ],
+  "prompt_notes": "Menschliche bzw. Orchestrator-Aufgabe; kein Agent setzt Code um und kein Agent sieht Zugangsdaten. Kostenpflichtige Live-Aufrufe und Veröffentlichungen nur nach Go des Nutzers (M3 D12). Nutzer legt bzw. nutzt ein DataForSEO-Konto und hinterlegt die Zugangsdaten nur im eigenen Schlüsselbund bzw. als Umgebungsvariablen der Live-Tests. Vorab (kostenfrei bzw. Sandbox): `user_data` (V-D10 Zuordnung `user_data_key`), Sandbox mit Produktiv-Zugangsdaten (V-D8), `available_filters` (V-D5); kostenpflichtiger Probeaufruf `timeseries_new_lost` (V-D7) nur nach ausdrücklichem Go. Ergebnisse mit Datum als Vorschlag an den Planer für 09 „Vor Umsetzung zu verifizieren“; keine Zugangsdaten, keine Kontostände im Repo.",
+  "extra_spec_ids": []
+ },
+ {
+  "id": "M5-F01",
+  "kind": "package",
+  "model": "sol",
+  "wave": "0a",
+  "size": "L",
+  "runner": "server+ci",
+  "title": "DataForSEO-Fundament: Modul dataforseo in os-integrations, Konfiguration, Schema dfs_*, Anmeldung am BudgetLedger, Register-Stubs für Tabs, Filter, Exporte, CLI und MCP",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "AI-013"
+  ],
+  "depends_on": [
+   "M4-K05",
+   "M4-F02"
+  ],
+  "owns": [
+   "Cargo.toml",
+   "Cargo.lock",
+   "crates/*/Cargo.toml (nur Einträge für M5)",
+   "crates/os-integrations/src/dataforseo/** (neu, STUB je Modul)",
+   "crates/os-integrations/src/lib.rs (nur Modul)",
+   "crates/os-model/src/dfs/** (neu)",
+   "crates/os-model/src/lib.rs (nur Modul)",
+   "crates/os-model/src/config/** (nur DataForSEO-Abschnitte)",
+   "docs/spec/schemas/** (nur Neuerzeugung)",
+   "crates/os-store/migrations/0007_dfs.sql (neu)",
+   "crates/os-store/src/schema.rs (nur Registrierung)",
+   "crates/os-store/src/dfs/** (neu, STUB je Tabelle)",
+   "crates/os-store/src/lib.rs (nur Modul)",
+   "crates/os-analyze/src/tabs/{organic_keywords,rankings,llm_mentions}.rs (STUB)",
+   "crates/os-analyze/src/tabs/link_metrics.rs (nur Registrierung DFS-Spalten als STUB)",
+   "crates/os-analyze/src/tabs/mod.rs (nur Registrierung)",
+   "crates/os-analyze/src/defs.rs (nur neue IDs)",
+   "docs/plan/M5-filters.toml (neu)",
+   "core/issues/catalog.d/dataforseo.toml (Gerüst)",
+   "core/issues/texts/{de,en}.d/dataforseo.toml (Gerüst)",
+   "crates/os-export/src/catalog/{bulk_dfs,reports_dfs}.rs (STUB)",
+   "crates/os-export/src/catalog/mod.rs (nur Registrierung)",
+   "crates/os-cli/src/args.rs (nur DataForSEO-Optionen als STUB)",
+   "crates/os-cli/src/dfs.rs (STUB)",
+   "crates/os-mcp/src/tools/dfs_*.rs (STUB)",
+   "crates/os-mcp/src/tools/mod.rs (nur Registrierung)",
+   "resources/dataforseo/** (nur Verzeichnisse und Schemas)"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). Inhalt nach M5.md 3.1. Schritte: (1) Modul `os-integrations::dataforseo` mit Untermodulen connection, limits, market, tasks, cost, cache, labs, backlinks, serp, llm, combine als STUB(M5-xx). (2) Konfiguration (Module, Markt, Gerät, Modus, Budgets/Teilbudgets, Cache-Alter, Abfrageumfang). (3) Migration 0007_dfs.sql mit allen Tabellen aus 09 Anhang A; Migrationstest von 0006. (4) DataForSEO als zweiter Bereich am BudgetLedger (aus M4-K05) angemeldet, Verbrauch aus dfs_cost_log; Gesamtbudget-Test mit leerer DFS-Seite. (5) Stubs für Tabs Organic Keywords, Rankings, LLM Mentions, DFS-Spalten in Link Metrics, Filter-IDs in M5-filters.toml, Issue-Gerüst, Exporte/Reports, CLI-Optionen aus D4S-073, MCP-Hüllen Klasse cost. Manifest-Änderungen nur hier; Lockfile-Konflikte mit M4-N0x löst der Integrator (G2)."
+ },
+ {
+  "id": "M5-T01",
+  "kind": "package",
+  "model": "sol",
+  "wave": "0a",
+  "size": "L",
+  "runner": "server",
+  "title": "DataForSEO-Mock und Fixture-Site: alle Endpunkte, Kontoprofile, Szenarien inkl. Pflichtabdeckung, Request-Log, Fixture dfs-site mit TLS",
+  "spec_ids": [
+   "D4S-009"
+  ],
+  "extra_spec_ids": [
+   "INTEG-019"
+  ],
+  "depends_on": [
+   "M4-T01"
+  ],
+  "owns": [
+   "crates/os-testsite/src/mocks/dataforseo/** (neu)",
+   "crates/os-testsite/src/mocks/mod.rs (nur Registrierung)",
+   "crates/os-testsite/tests/dfs_mock_*.rs",
+   "tests/fixtures/dfs-mock/**",
+   "tests/fixtures/dfs-site/**"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). B2: je [M5]-Kriterium der extra_spec_ids mindestens ein getaggter Test `// spec: <ID> [M5]` mit Ergebnis ok; übrige extra_spec_ids nur mitprüfen. Exakt nach 09 „Testinfrastruktur“: Routen unter `/__mock/dataforseo/v3/…`, Kontoprofile mock-good/-bad/-unverified/-low/-costlimit/-paused, Szenarien per `POST /__control/dfs/scenario` oder Header `X-Scenario` (INTEG-019 [M5]: Erfolg→ok, Leer→empty, 4xx→invalid-field-one, Drossel→ratelimit-x2), Pflichtabdeckung je Endpunkt inkl. slow-150/slow-190 und partial-offset, `available_filters` in zwei Varianten, Fixture-Site mit den Pfaden der Tabelle (`{BASE}`, `{BASE_NOWWW}`, `{BASE_HTTPS_NOWWW}`, Testzertifikat aus dem Test-Truststore), Domain-Ebene mit 5 000 000 000 Backlinks (64-Bit), SERP- und AI-Mode-Mock, Request-Log `GET /__control/dfs/log` mit gemeldeter `cost`."
+ },
+ {
+  "id": "M5-F02",
+  "kind": "package",
+  "model": "sol",
+  "wave": "0b",
+  "size": "M",
+  "runner": "server+ci",
+  "title": "DataForSEO-Vorbau Service und Oberfläche: Commands, DTOs, IPC, Feature-Gerüste, Tabs, Abschnitt im Kostenvoranschlag",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-004"
+  ],
+  "depends_on": [
+   "M5-F01",
+   "M4-U01"
+  ],
+  "owns": [
+   "crates/os-app/src/commands/dfs_*.rs (STUB)",
+   "crates/os-app/src/dto/dfs*.rs",
+   "crates/os-app/src/{registry.rs,commands/mod.rs,dto/mod.rs} (nur Registrierung)",
+   "apps/desktop/src/ipc/gen/**",
+   "apps/desktop/src/ipc/commands.json",
+   "apps/desktop/src/features/dfs/** (neu, Gerüst)",
+   "apps/desktop/src/features/toptabs/** (nur Registrierung der DFS-Tabs)",
+   "apps/desktop/src/features/ai/cost/** (nur Einhängepunkt Abschnitt DataForSEO)",
+   "apps/desktop/src/features/config/frame/registry.ts (nur Registrierung der DFS-Seiten)",
+   "apps/desktop/src/i18n/** (nur Einbindung)",
+   "apps/desktop/e2e/dfs/** (Gerüst)"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). B2: je [M5]-Kriterium der extra_spec_ids mindestens ein getaggter Test `// spec: <ID> [M5]` mit Ergebnis ok; übrige extra_spec_ids nur mitprüfen. Wie M4-F02. UI-004 [M5]: Tabs Organic Keywords, Rankings, LLM Mentions nur mit aktivem Modul; Fokus-Modus (UI-005) blendet sie ohne aktives Modul aus (Test in M5-O01)."
+ },
+ {
+  "id": "M5-K01",
+  "kind": "package",
+  "model": "sol",
+  "wave": 1,
+  "size": "L",
+  "runner": "server+ci",
+  "title": "Verbindung und Konto: Zugangsdaten, Kontostand, Limits und Live-Preise, Sandbox-Modus, Antwort- und Fehlercodes, Datenschutz-Hinweis",
+  "spec_ids": [
+   "D4S-001",
+   "D4S-002",
+   "D4S-003",
+   "D4S-004",
+   "D4S-010"
+  ],
+  "extra_spec_ids": [
+   "INTEG-001"
+  ],
+  "depends_on": [
+   "M5-F01",
+   "M5-T01"
+  ],
+  "owns": [
+   "crates/os-integrations/src/dataforseo/{connection,account,errors,privacy}.rs",
+   "crates/os-integrations/tests/dfs_connection*.rs",
+   "crates/os-app/src/commands/dfs_connection.rs",
+   "apps/desktop/src/features/integrations/** (nur Eintrag DataForSEO unter „Daten-APIs“)"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). B2: je [M5]-Kriterium der extra_spec_ids mindestens ein getaggter Test `// spec: <ID> [M5]` mit Ergebnis ok; übrige extra_spec_ids nur mitprüfen. HTTP Basic nur im Header, Zugangsdaten nur im Schlüsselbund (SecretStoreMut, Tests MemorySecretStore); `GET /v3/appendix/user_data` als Verbindungstest (INTEG-001 [M5], zwölf Einträge ab M5); alle Fehlercodes der Tabelle aus D4S-004 inkl. Freigabe nach 40203 über user_data; Sandbox-Banner und `sandbox-no-llm`; D4S-010: URLs mit Query-String/Userinfo nie senden, Hinweistext zu Fremdinhalten."
+ },
+ {
+  "id": "M5-K02",
+  "kind": "package",
+  "model": "sol",
+  "wave": 1,
+  "size": "M",
+  "runner": "server",
+  "title": "Ratenbegrenzung und Parallelität, Timeouts und Teilfehler, Markt-Auswahl, Standard-Tasks mit Wiederaufnahme",
+  "spec_ids": [
+   "D4S-005",
+   "D4S-006",
+   "D4S-007",
+   "D4S-008"
+  ],
+  "extra_spec_ids": [
+   "INTEG-005"
+  ],
+  "depends_on": [
+   "M5-F01",
+   "M5-T01"
+  ],
+  "owns": [
+   "crates/os-integrations/src/dataforseo/{limits,market,tasks}.rs",
+   "crates/os-integrations/tests/dfs_{limits,market,tasks}*.rs",
+   "resources/dataforseo/markets/**"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). B2: je [M5]-Kriterium der extra_spec_ids mindestens ein getaggter Test `// spec: <ID> [M5]` mit Ergebnis ok; übrige extra_spec_ids nur mitprüfen. INTEG-005 [M5]: Standard 10 gleichzeitige Anfragen, 1–30, Eingabe 31 abgelehnt; 40202/40209 mit Backoff; 180-s-Grenze (slow-150 ok, slow-190 Timeout); LLM-Marktliste aus dem eigenen Endpunkt (Q7); task_post (≤ 100), tasks_ready (≤ 20/min), task_get mit Wiederaufnahme nach Neustart (dfs_tasks)."
+ },
+ {
+  "id": "M5-K03",
+  "kind": "package",
+  "model": "sol",
+  "wave": 1,
+  "size": "L",
+  "runner": "server",
+  "title": "Kostenkontrolle und Cache: Preiskatalog, Kostenschätzung im gemeinsamen Dialog, Budget über BudgetLedger, Kostenprotokoll, Cache, Übernahme, Priorisierung, Invalidierung",
+  "spec_ids": [
+   "D4S-011",
+   "D4S-012",
+   "D4S-013",
+   "D4S-014",
+   "D4S-015",
+   "D4S-016",
+   "D4S-017",
+   "D4S-018"
+  ],
+  "extra_spec_ids": [
+   "AI-012",
+   "AI-013"
+  ],
+  "depends_on": [
+   "M5-F01",
+   "M5-T01",
+   "M4-K05"
+  ],
+  "owns": [
+   "crates/os-integrations/src/dataforseo/{cost,cache,scope}.rs",
+   "crates/os-store/src/dfs/{cost_log,cache}.rs",
+   "resources/dataforseo/pricing.json",
+   "crates/os-integrations/tests/dfs_{cost,cache,scope}*.rs",
+   "crates/os-ai/tests/cost_m5_*.rs",
+   "crates/os-store/tests/dfs_budget*.rs"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). B2: je [M5]-Kriterium der extra_spec_ids mindestens ein getaggter Test `// spec: <ID> [M5]` mit Ergebnis ok; übrige extra_spec_ids nur mitprüfen. Mikro-USD; Preiskatalog mit Stand-Datum und `user_data_key` (V-D10 aus H01); Reservierung mit Maximalpreis inkl. SERP-Zuschlägen nach Festlegung Q3 (Golden-Test V-D3 in M5-Q03); AI-012 [M5]: ein Dialog mit beiden Abschnitten und Summenzeile (Prüfwerte 0,1500/0,2900 USD); AI-013 [M5]: Budget 1,00 USD, DFS 0,70 + KI 0,25 → Reservierung 0,06 nicht, 0,04 gesendet; Lasttest 4+4 Worker mit 200 Einträgen je Bereich ≤ Budget. Die M5-Ignores aus M4-K05 (`M5: …`) auflösen."
+ },
+ {
+  "id": "M5-L01",
+  "kind": "package",
+  "model": "sol",
+  "wave": 2,
+  "size": "L",
+  "runner": "server+ci",
+  "title": "Labs Ranked Keywords: Abfrage je URL, Detail-Tab, Optionen, Domain-Abzug, Vorfilter per Traffic-Schätzung, Relevant Pages, Tab „Organic Keywords“",
+  "spec_ids": [
+   "D4S-020",
+   "D4S-021",
+   "D4S-022",
+   "D4S-023",
+   "D4S-024",
+   "D4S-025",
+   "D4S-026"
+  ],
+  "extra_spec_ids": [
+   "UI-004"
+  ],
+  "depends_on": [
+   "M5-K01",
+   "M5-K02",
+   "M5-K03",
+   "M5-F02"
+  ],
+  "owns": [
+   "crates/os-integrations/src/dataforseo/labs/**",
+   "crates/os-store/src/dfs/ranked_keywords.rs",
+   "crates/os-analyze/src/tabs/organic_keywords.rs",
+   "crates/os-app/src/commands/dfs_labs.rs",
+   "apps/desktop/src/features/dfs/{labs,organic-keywords}/**",
+   "apps/desktop/src/features/detail/ranked-keywords/** (neu)",
+   "crates/os-integrations/tests/dfs_labs*.rs",
+   "apps/desktop/e2e/dfs-labs/**"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). B2: je [M5]-Kriterium der extra_spec_ids mindestens ein getaggter Test `// spec: <ID> [M5]` mit Ergebnis ok; übrige extra_spec_ids nur mitprüfen. URL-Formen nach Q4 (http ohne www nicht an ranked_keywords; Vorfilter nur https://www.); Regel „keine Daten“ vs. „null Treffer“ verbindlich; Fixture-Werte aus 09 (z. B. /a: 3 Keywords, ETV 320,5); Orphan-Kandidaten aus Relevant Pages (INTEG-015)."
+ },
+ {
+  "id": "M5-B01",
+  "kind": "package",
+  "model": "sol",
+  "wave": 2,
+  "size": "M",
+  "runner": "server+ci",
+  "title": "Backlinks: Kennzahlen je URL, Subdomain- und Domain-Ebene, neue und verlorene Backlinks, einheitliches Linkmetrik-Schema, Detail-Tab (P2)",
+  "spec_ids": [
+   "D4S-030",
+   "D4S-031",
+   "D4S-032",
+   "D4S-033",
+   "D4S-034"
+  ],
+  "depends_on": [
+   "M5-K01",
+   "M5-K02",
+   "M5-K03",
+   "M5-F02"
+  ],
+  "owns": [
+   "crates/os-integrations/src/dataforseo/backlinks/**",
+   "crates/os-store/src/dfs/backlinks.rs",
+   "crates/os-analyze/src/tabs/link_metrics.rs (nur DFS-Spalten)",
+   "crates/os-app/src/commands/dfs_backlinks.rs",
+   "apps/desktop/src/features/detail/dfs-backlinks/** (neu)",
+   "crates/os-integrations/tests/dfs_backlinks*.rs"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). Spaltenschema `DFS <Metrik> (<Ebene>)` nach INTEG-150; 64-Bit-Werte; fehlendes nofollow-Feld = 0 (V-D11); Standard nur indexierbare 200er (Q10); D4S-034 (P2) Detail-Tab auf Abruf.",
+  "extra_spec_ids": []
+ },
+ {
+  "id": "M5-S01",
+  "kind": "package",
+  "model": "sol",
+  "wave": 2,
+  "size": "L",
+  "runner": "server+ci",
+  "title": "SERP API: Haupt-Keyword je Seite, Live-Ranking, SERP-Features, AI-Overview-Präsenz und Zitat, Modi Live/Standard/Priority, Orts- und Geräteoptionen",
+  "spec_ids": [
+   "D4S-040",
+   "D4S-041",
+   "D4S-042",
+   "D4S-043",
+   "D4S-044",
+   "D4S-045"
+  ],
+  "depends_on": [
+   "M5-K01",
+   "M5-K02",
+   "M5-K03",
+   "M5-F02"
+  ],
+  "owns": [
+   "crates/os-integrations/src/dataforseo/serp/** (ohne ai_mode.rs, multi.rs)",
+   "crates/os-store/src/dfs/serp_results.rs",
+   "crates/os-analyze/src/tabs/rankings.rs",
+   "crates/os-app/src/commands/dfs_serp.rs",
+   "apps/desktop/src/features/dfs/rankings/**",
+   "crates/os-integrations/tests/dfs_serp*.rs",
+   "apps/desktop/e2e/dfs-rankings/**"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). Haupt-Keyword aus Meta/Regeln, Operatoren nie senden (`Skipped (operator)`); AI-Overview-Referenzen auf Item- und Element-Ebene inkl. Szenario `kg-aio`; Fragmente vor dem URL-Vergleich entfernen; Zuschläge nach Q3 im Preis (Prüfung im Release-Gate).",
+  "extra_spec_ids": []
+ },
+ {
+  "id": "M5-M01",
+  "kind": "package",
+  "model": "sol",
+  "wave": 2,
+  "size": "L",
+  "runner": "server+ci",
+  "title": "LLM Mentions: Domain- und Seiten-Erwähnungen, Top Domains/Pages je Keyword, Wettbewerbervergleich, Verlauf (P2), Erwähnungs-Details (P2), Tab „LLM Mentions“",
+  "spec_ids": [
+   "D4S-050",
+   "D4S-051",
+   "D4S-052",
+   "D4S-053",
+   "D4S-054",
+   "D4S-055"
+  ],
+  "depends_on": [
+   "M5-K01",
+   "M5-K02",
+   "M5-K03",
+   "M5-F02",
+   "M5-H01"
+  ],
+  "owns": [
+   "crates/os-integrations/src/dataforseo/llm/**",
+   "crates/os-store/src/dfs/llm.rs",
+   "crates/os-analyze/src/tabs/llm_mentions.rs",
+   "crates/os-app/src/commands/dfs_llm.rs",
+   "apps/desktop/src/features/dfs/llm-mentions/**",
+   "crates/os-integrations/tests/dfs_llm*.rs",
+   "apps/desktop/e2e/dfs-llm/**"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). Plattformen google/chat_gpt nach Abschnitt F; Pagination mit partial-offset; serverseitiger page-Filter nur bei Angebot in available_filters, sonst clientseitig; `order_by` mit Rückfall bei 40501 (Q5); D4S-054 erst nach Klärung V-D7 durch M5-H01, sonst Test mit `#[ignore = \"Klärung K5-04\"]`; Fremdinhalte löschbar („Erwähnungs-Details löschen“, SQL-Zählung 0).",
+  "extra_spec_ids": []
+ },
+ {
+  "id": "M5-U01",
+  "kind": "package",
+  "model": "sol",
+  "wave": 2,
+  "size": "M",
+  "runner": "server+ci",
+  "title": "DataForSEO-Oberfläche: Konfiguration der Module und Märkte, Abschnitt im Kostenvoranschlag, Teilbudgets, Kontostand, Statusleiste",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-013",
+   "INTEG-001",
+   "D4S-012",
+   "D4S-013"
+  ],
+  "depends_on": [
+   "M5-K01",
+   "M5-K03",
+   "M5-F02",
+   "M4-U01"
+  ],
+  "owns": [
+   "apps/desktop/src/features/dfs/{settings,cost}/**",
+   "apps/desktop/src/features/config/pages/dataforseo/** (neu)",
+   "apps/desktop/src/features/ai/cost/** (nur Abschnitt DataForSEO und Summenzeile)",
+   "apps/desktop/src/features/statusbar/** (nur Tooltip-Aufteilung KI/DataForSEO)",
+   "crates/os-app/src/commands/dfs_settings.rs",
+   "apps/desktop/e2e/dfs-settings/**"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). B2: je [M5]-Kriterium der extra_spec_ids mindestens ein getaggter Test `// spec: <ID> [M5]` mit Ergebnis ok; übrige extra_spec_ids nur mitprüfen. Ein gemeinsamer Dialog (keine zweite Kostenansicht), Teilbudgets je Modul, Kontostand aus user_data, Monatszähler je Konto; UI-013 Tooltip mit Aufteilung; axe ohne critical/serious; de/en."
+ },
+ {
+  "id": "M5-N01",
+  "kind": "package",
+  "model": "sol",
+  "wave": "2n",
+  "size": "M",
+  "runner": "server+ci",
+  "title": "Nacharbeit Welle 1/2: Platzhalter, Schnittstellenbedarf, Auflagen aus Reviews",
+  "spec_ids": [],
+  "depends_on": [
+   "M5-K01",
+   "M5-K02",
+   "M5-K03",
+   "M5-L01",
+   "M5-B01",
+   "M5-S01",
+   "M5-M01",
+   "M5-U01"
+  ],
+  "owns": [
+   "crates/*/tests/pending_m5_*.rs",
+   "apps/desktop/e2e/dfs*/** (nur Platzhalter-Ignores entfernen)",
+   "Cargo.toml",
+   "Cargo.lock",
+   "crates/*/Cargo.toml",
+   "crates/os-app/src/{registry.rs,commands/mod.rs,dto/mod.rs}",
+   "apps/desktop/src/ipc/gen/**",
+   "apps/desktop/src/ipc/commands.json",
+   "weitere Pfade nur laut docs/plan/M5-reports/n01-auflagen.md"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). Wie M4-N01.",
+  "extra_spec_ids": []
+ },
+ {
+  "id": "M5-S02",
+  "kind": "package",
+  "model": "sol",
+  "wave": 3,
+  "size": "M",
+  "runner": "server+ci",
+  "title": "SERP II: Detail-Tab „SERP“, mehrere Keywords je Seite (P2), Google AI Mode (P2)",
+  "spec_ids": [
+   "D4S-046",
+   "D4S-047",
+   "D4S-048"
+  ],
+  "depends_on": [
+   "M5-S01",
+   "M5-N01"
+  ],
+  "owns": [
+   "crates/os-integrations/src/dataforseo/serp/{ai_mode,multi}.rs",
+   "apps/desktop/src/features/detail/dfs-serp/** (neu)",
+   "crates/os-integrations/tests/dfs_serp_{ai_mode,multi}*.rs"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). AI Mode je Request abgerechnet (Q8 geklärt), Status `DFS AI Mode Status`; P2-Einträge nach K5-02.",
+  "extra_spec_ids": []
+ },
+ {
+  "id": "M5-C01",
+  "kind": "package",
+  "model": "sol",
+  "wave": 3,
+  "size": "L",
+  "runner": "server+ci",
+  "title": "Kombinationen mit Crawl-Daten und Issues: Rankings trotz Nicht-Indexierbarkeit, Fehlerseiten mit Backlinks, Kannibalisierung, Orphans mit Rankings, Issue-Katalog",
+  "spec_ids": [
+   "D4S-060",
+   "D4S-061",
+   "D4S-062",
+   "D4S-063",
+   "D4S-064",
+   "D4S-065",
+   "D4S-066",
+   "D4S-067",
+   "D4S-068",
+   "D4S-069"
+  ],
+  "extra_spec_ids": [
+   "UI-064"
+  ],
+  "depends_on": [
+   "M5-L01",
+   "M5-B01",
+   "M5-S01",
+   "M5-M01",
+   "M5-N01"
+  ],
+  "owns": [
+   "crates/os-analyze/src/dfs_combine/** (neu)",
+   "crates/os-analyze/src/analysis/steps/dfs_combine.rs",
+   "core/issues/catalog.d/dataforseo.toml",
+   "core/issues/texts/{de,en}.d/dataforseo.toml",
+   "docs/issues/dfs-*.md",
+   "crates/os-analyze/tests/dfs_combine*.rs"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). B2: je [M5]-Kriterium der extra_spec_ids mindestens ein getaggter Test `// spec: <ID> [M5]` mit Ergebnis ok; übrige extra_spec_ids nur mitprüfen. Berechnung im Nachlauf, sobald auch die API-Warteschlange leer ist, sonst Hinweis „Crawl-Analyse erforderlich“; UI-064 [M5]: Kategorien Organic Keywords, Link Metrics (DataForSEO), Rankings, LLM Mentions = Snapshot gegen D4S-069; Issue-Texte eigenständig (what/why/fix)."
+ },
+ {
+  "id": "M5-O01",
+  "kind": "package",
+  "model": "sol",
+  "wave": 3,
+  "size": "M",
+  "runner": "server+ci",
+  "title": "Internal-Tab und APIs-Modus, Fortschritt und Kostenanzeige, Fokus-Modus mit DataForSEO-Tabs",
+  "spec_ids": [
+   "D4S-070",
+   "D4S-071"
+  ],
+  "extra_spec_ids": [
+   "UI-004",
+   "UI-005",
+   "INTEG-012",
+   "INTEG-007"
+  ],
+  "depends_on": [
+   "M5-L01",
+   "M5-B01",
+   "M5-S01",
+   "M5-M01",
+   "M5-U01",
+   "M5-N01"
+  ],
+  "owns": [
+   "crates/os-analyze/src/tabs/internal.rs (nur DFS-Spalten)",
+   "crates/os-integrations/src/crawl_glue/** (nur DataForSEO im APIs-Modus)",
+   "crates/os-app/src/commands/dfs_progress.rs",
+   "apps/desktop/src/features/sidebar/api/** (nur DataForSEO-Fortschritt)",
+   "apps/desktop/src/features/toptabs/** (nur Fokus-Modus DFS-Tabs)",
+   "apps/desktop/e2e/dfs-progress/**"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). B2: je [M5]-Kriterium der extra_spec_ids mindestens ein getaggter Test `// spec: <ID> [M5]` mit Ergebnis ok; übrige extra_spec_ids nur mitprüfen. UI-004/UI-005 [M5]: DFS-Tabs nur mit aktivem Modul, im Fokus-Modus ausgeblendet ohne Modul; APIs-Modus nach INTEG-012 inkl. DataForSEO; Fortschritt der API-Warteschlange (INTEG-007) mit Kosten."
+ },
+ {
+  "id": "M5-O02",
+  "kind": "package",
+  "model": "sol",
+  "wave": 3,
+  "size": "M",
+  "runner": "server+ci",
+  "title": "Bulk-Exporte und Reports, CLI-Optionen, Zeitplanung für DataForSEO",
+  "spec_ids": [
+   "D4S-072",
+   "D4S-073",
+   "D4S-074"
+  ],
+  "extra_spec_ids": [
+   "OUT-194",
+   "OUT-201"
+  ],
+  "depends_on": [
+   "M5-L01",
+   "M5-B01",
+   "M5-S01",
+   "M5-M01",
+   "M5-N01"
+  ],
+  "owns": [
+   "crates/os-export/src/catalog/{bulk_dfs,reports_dfs}.rs",
+   "crates/os-cli/src/dfs.rs",
+   "crates/os-cli/tests/dfs_*.rs",
+   "crates/os-sched/src/tasks/dfs.rs (neu)",
+   "tests/fixtures/out-m5-cli/**",
+   "tests/golden/dfs/**"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). B2: je [M5]-Kriterium der extra_spec_ids mindestens ein getaggter Test `// spec: <ID> [M5]` mit Ergebnis ok; übrige extra_spec_ids nur mitprüfen. OUT-194 [M5]: `--save-report \"DataForSEO:Keyword Cannibalization\"` gegen den Mock = Datei aus D4S-072; OUT-201 [M5]: `--use-dataforseo`, `--dfs-*`, `--api-budget` gemeinsam mit KI; Zeitplanung mit Budget und Cache-Alter."
+ },
+ {
+  "id": "M5-X01",
+  "kind": "package",
+  "model": "sol",
+  "wave": 3,
+  "size": "M",
+  "runner": "server+ci",
+  "title": "P2-Ausbau: Positionsverlauf im Crawl-Vergleich, DataForSEO-Werte als Eingabe für KI-Fragen",
+  "spec_ids": [
+   "D4S-075",
+   "D4S-076"
+  ],
+  "depends_on": [
+   "M5-L01",
+   "M5-S01",
+   "M5-N01",
+   "M4-D01"
+  ],
+  "owns": [
+   "crates/os-analyze/src/compare/dfs.rs (neu)",
+   "crates/os-ai/src/decisions/input_dfs.rs (neu, Einhängepunkt additiv)",
+   "crates/os-analyze/tests/compare_dfs*.rs",
+   "crates/os-ai/tests/decisions_input_dfs*.rs"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). Nach K5-02 kürzbar (P2). Vergleich nach OUT-140 ff. mit DFS-Positionen; KI-Eingabefelder aus DFS-Werten nur mit erteilter Einwilligung und unter Schwärzung (AI-018/AI-024).",
+  "extra_spec_ids": []
+ },
+ {
+  "id": "M5-C02",
+  "kind": "package",
+  "model": "sol",
+  "wave": 4,
+  "size": "M",
+  "runner": "server+ci",
+  "title": "MCP-Hüllen für DataForSEO (Klasse cost) mit Kostenvoranschlag, Bestätigung und gemeinsamem Budget",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "AGENT-030"
+  ],
+  "depends_on": [
+   "M5-K03",
+   "M5-L01",
+   "M5-B01",
+   "M5-S01",
+   "M5-M01",
+   "M4-C02"
+  ],
+  "owns": [
+   "crates/os-mcp/src/tools/dfs_*.rs",
+   "crates/os-mcp/tests/dfs_tools*.rs"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). B2: je [M5]-Kriterium der extra_spec_ids mindestens ein getaggter Test `// spec: <ID> [M5]` mit Ergebnis ok; übrige extra_spec_ids nur mitprüfen. AGENT-030 [M5]: Schätzung ohne Request, `confirm: true` führt aus, Budget erreicht → Status `Budget reached`, Ergebnisse gleich App/CLI gegen den Mock."
+ },
+ {
+  "id": "M5-X02",
+  "kind": "package",
+  "model": "sol",
+  "wave": 4,
+  "size": "M",
+  "runner": "server+ci",
+  "title": "Bedingt (K5-01): DataForSEO über evnxt-Credits mit identischem Spaltenschema",
+  "spec_ids": [
+   "D4S-200"
+  ],
+  "depends_on": [
+   "M5-K03",
+   "M5-U01",
+   "M4-X01"
+  ],
+  "owns": [
+   "crates/os-integrations/src/dataforseo/evnxt.rs",
+   "crates/os-integrations/tests/dfs_evnxt*.rs",
+   "crates/os-testsite/src/mocks/evnxt/dfs.rs"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). Startet nur, wenn M4-X01 umgesetzt wurde und der Nutzer K5-01 freigibt; sonst entfällt das Paket.",
+  "extra_spec_ids": []
+ },
+ {
+  "id": "M5-N02",
+  "kind": "package",
+  "model": "sol",
+  "wave": "4n",
+  "size": "M",
+  "runner": "server+ci",
+  "title": "Nacharbeit Welle 3/4: Platzhalter, Schnittstellenbedarf, Auflagen aus Reviews",
+  "spec_ids": [],
+  "depends_on": [
+   "M5-S02",
+   "M5-C01",
+   "M5-O01",
+   "M5-O02",
+   "M5-X01",
+   "M5-C02"
+  ],
+  "owns": [
+   "crates/*/tests/pending_m5_*.rs",
+   "apps/desktop/e2e/dfs*/** (nur Platzhalter-Ignores entfernen)",
+   "Cargo.toml",
+   "Cargo.lock",
+   "crates/*/Cargo.toml",
+   "weitere Pfade nur laut docs/plan/M5-reports/n02-auflagen.md"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). Wie M4-N02.",
+  "extra_spec_ids": []
+ },
+ {
+  "id": "M5-Q01",
+  "kind": "measurement",
+  "model": "sol",
+  "wave": 5,
+  "size": "M",
+  "runner": "server+ci",
+  "title": "Abnahme-Messung M5: Spec-Abdeckung, Mock-Pflichtabdeckung je Endpunkt, Budget-Lasttest KI+DataForSEO, E2E-A und axe, Regression M1–M4",
+  "spec_ids": [],
+  "depends_on": [
+   "M5-N02",
+   "M3-Q01"
+  ],
+  "owns": [
+   "docs/plan/M5-acceptance/coverage/**",
+   "docs/plan/M5-acceptance/e2e/**",
+   "scripts/gate/m5_*.sh"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). `os-parity coverage --milestone M5` (62 IDs) und Teilkriterien [M5]; Pflichtabdeckung der Szenarien je Endpunkt (Matrix); Lasttest gemeinsames Budget; Netzwerk-Wächter; M1–M4 unverändert.",
+  "extra_spec_ids": []
+ },
+ {
+  "id": "M5-Q02",
+  "kind": "measurement",
+  "model": "human",
+  "wave": 5,
+  "size": "S",
+  "runner": "human",
+  "human": true,
+  "title": "Live-Stichprobe mit echtem DataForSEO-Konto: kleiner Crawl, alle Module, Abgleich gemeldeter Kosten, V-D1 … V-D11 ohne V-D3",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "D4S-004",
+   "D4S-011",
+   "D4S-020",
+   "D4S-030",
+   "D4S-041",
+   "D4S-050"
+  ],
+  "depends_on": [
+   "M5-N02",
+   "M5-H01"
+  ],
+  "owns": [
+   "docs/plan/M5-acceptance/live/stichprobe.md"
+  ],
+  "prompt_notes": "Menschliche bzw. Orchestrator-Aufgabe; kein Agent setzt Code um und kein Agent sieht Zugangsdaten. Kostenpflichtige Live-Aufrufe und Veröffentlichungen nur nach Go des Nutzers (M3 D12). ARCHITECTURE: „Mock-Tests + Stichprobe mit echtem Konto“. Nur mit `OPENSPIDER_LIVE_API_TESTS=1`, Zugangsdaten aus der Umgebung des Nutzers; Crawl einer eigenen kleinen Site (≤ 25 URLs) mit allen Modulen, Budget klein gesetzt; Protokoll: gemeldete `cost` je Schritt gegen Cost Min/Max, Fehlercodes, Abweichungen. Ergebnisse zu V-D1, V-D2, V-D4 … V-D11 als Vorschlag an den Planer. Keine Kontostände oder Beträge des Kontos ins Repo."
+ },
+ {
+  "id": "M5-Q03",
+  "kind": "measurement",
+  "model": "human",
+  "wave": 5,
+  "size": "S",
+  "runner": "human",
+  "human": true,
+  "title": "Release-Gate M5: Golden-Test SERP-Zuschläge (V-D3) mit depth 10/20, mit und ohne AI Overview, Modi Standard/Priority/Live",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "D4S-011",
+   "D4S-012",
+   "D4S-013",
+   "D4S-043"
+  ],
+  "depends_on": [
+   "M5-N02",
+   "M5-H01"
+  ],
+  "owns": [
+   "docs/plan/M5-acceptance/live/release-gate-v-d3.md"
+  ],
+  "prompt_notes": "Menschliche bzw. Orchestrator-Aufgabe; kein Agent setzt Code um und kein Agent sieht Zugangsdaten. Kostenpflichtige Live-Aufrufe und Veröffentlichungen nur nach Go des Nutzers (M3 D12). Exakt nach 09 „Release-Gate M5“: gegen die Sandbox, bei `cost = 0` nach Go mit dem Produktivkonto; bestanden, wenn jede gemeldete `cost` zwischen Cost Min und Cost Max liegt. Fällt der Test durch: Befund an den Planer → Preiskatalog/Formeln/Reservierung anpassen (N-Paket) und Test wiederholen; Ergebnis mit Datum in V-D3."
+ },
+ {
+  "id": "M5-A01",
+  "kind": "package",
+  "model": "human",
+  "wave": "5h",
+  "size": "S",
+  "runner": "human",
+  "human": true,
+  "title": "Nutzer-Abnahme DataForSEO: Durchklick mit eigenem Konto an einer eigenen Site",
+  "spec_ids": [],
+  "depends_on": [
+   "M5-Q01",
+   "M5-Q02"
+  ],
+  "owns": [
+   "docs/plan/M5-acceptance/user/{build.md,durchklickplan.md,befunde.md}"
+  ],
+  "prompt_notes": "Menschliche bzw. Orchestrator-Aufgabe; kein Agent setzt Code um und kein Agent sieht Zugangsdaten. Kostenpflichtige Live-Aufrufe und Veröffentlichungen nur nach Go des Nutzers (M3 D12). ≤ 45 min: Verbinden, Markt wählen, Kostenvoranschlag mit KI und DataForSEO, Crawl mit allen Modulen, Tabs und Issues, Kannibalisierungs-Report, CLI-Lauf mit Budget, MCP-Aufruf mit Bestätigung. Befunde IDs A5-nn; Blocker → M5-N03.",
+  "extra_spec_ids": []
+ },
+ {
+  "id": "M5-N03",
+  "kind": "package",
+  "model": "sol",
+  "wave": 6,
+  "size": "M",
+  "runner": "server+ci",
+  "title": "Befunde aus der Nutzer-Abnahme DataForSEO und dem Release-Gate (nur Blocker/Hoch)",
+  "spec_ids": [],
+  "depends_on": [
+   "M5-A01",
+   "M5-Q03"
+  ],
+  "owns": [
+   "Pfade nach Zuschnitt durch den Planer (Nachtrag vor dem Start)",
+   "docs/plan/M5-reports/n03.md"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). Entfällt ohne Blocker/Hoch; bei durchgefallenem V-D3 Pflicht (Preiskatalog, Formeln, Reservierung).",
+  "extra_spec_ids": []
+ },
+ {
+  "id": "M5-Q04",
+  "kind": "measurement",
+  "model": "sol",
+  "wave": 7,
+  "size": "M",
+  "runner": "server",
+  "title": "Abnahmebericht M5: M5-status.json, checklist.md B1–B12, Release-Gate-Nachweis",
+  "spec_ids": [],
+  "depends_on": [
+   "M5-A01",
+   "M5-Q01",
+   "M5-Q02",
+   "M5-Q03"
+  ],
+  "owns": [
+   "docs/plan/M5-acceptance/checklist.md",
+   "docs/plan/M5-status.json"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). Hängt zusätzlich an M5-N03, falls gestartet; Release-Gate V-D3 abgehakt mit Datum.",
+  "extra_spec_ids": []
+ },
+ {
+  "id": "M5-G1",
+  "kind": "gate",
+  "model": "fable",
+  "wave": "7g",
+  "size": "S",
+  "runner": "local-mac",
+  "title": "Fable-Gate M5 (DataForSEO, Release 1.2)",
+  "spec_ids": [],
+  "depends_on": [
+   "M5-Q04",
+   "M4-G1"
+  ],
+  "owns": [
+   "docs/plan/M5-acceptance/gate.md"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M5.md Abschnitt 2 (Abweichungen G1–G8), docs/plan/M4.md 2, docs/plan/M3.md 2 und M2.md 2/2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Schritte in der genannten Reihenfolge; Durchhalteregel und Abschlussmarke PAKET FERTIG/PAKET OFFEN (M3 D4); Bericht docs/plan/M5-reports/<kurz-id>.md. Nur gegen den DataForSEO-Mock testen, nie gegen api.dataforseo.com oder die Sandbox (G4). needs_work → N-Paket Welle 7n und Recheck.",
+  "extra_spec_ids": []
+ },
+ {
+  "id": "M5-REL",
+  "kind": "release",
+  "model": "human",
+  "wave": 8,
+  "size": "S",
+  "runner": "human",
+  "human": true,
+  "title": "Release 1.2 (DataForSEO): Tag v1.2.0, Veröffentlichung, Update-Manifest, Website-Abschnitt DataForSEO",
+  "spec_ids": [],
+  "depends_on": [
+   "M5-G1",
+   "M4-REL"
+  ],
+  "owns": [
+   "CHANGELOG.md (Eintrag 1.2.0)",
+   "docs/release/1.2.md",
+   "website/site/{funktionen,en/features}/** (nur DataForSEO-Abschnitt)",
+   "website/site/{handbuch,en/manual}/dataforseo/** (neu)"
+  ],
+  "prompt_notes": "Menschliche bzw. Orchestrator-Aufgabe; kein Agent setzt Code um und kein Agent sieht Zugangsdaten. Kostenpflichtige Live-Aufrufe und Veröffentlichungen nur nach Go des Nutzers (M3 D12). Wie M4-REL; Bündelung mit 1.1 nach K4-08 möglich.",
+  "extra_spec_ids": []
+ }
+]
