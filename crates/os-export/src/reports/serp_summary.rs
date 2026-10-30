@@ -113,9 +113,9 @@ mod tests {
                 "UPDATE urls SET is_internal=0 WHERE id=3;
              UPDATE urls SET content_class='PDF' WHERE id=4;
              UPDATE urls SET in_tables=0 WHERE id=5;
-             INSERT INTO urls (url,address,is_internal,state,status_code,content_class,in_tables) VALUES
-             ('https://site.test/error','https://site.test/error',1,'done',404,'HTML',1),
-             ('https://site.test/redirect','https://site.test/redirect',1,'done',301,'HTML',1);",
+             INSERT INTO urls (url,address,origin,is_internal,state,discovered_via,folder_depth,url_length,status_code,content_class,in_tables) VALUES
+             ('https://site.test/error','https://site.test/error','https://site.test',1,'done','link',0,LENGTH('https://site.test/error'),404,'HTML',1),
+             ('https://site.test/redirect','https://site.test/redirect','https://site.test',1,'done','link',0,LENGTH('https://site.test/redirect'),301,'HTML',1);",
             )
             .unwrap();
         os_store::queries::serp::save(
