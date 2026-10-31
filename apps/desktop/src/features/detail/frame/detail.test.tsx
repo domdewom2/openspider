@@ -417,6 +417,23 @@ describe("headers and images", () => {
 // spec: UI-032
 // spec: UI-033
 // spec: UI-145
+it("loads the first bounded window before publishing the detail grid", async () => {
+  const original = fixture.core.handlers.get("view.rows")!;
+  let complete!: () => void;
+  fixture.core.handlers.set("view.rows", (args, ctx) => new Promise(resolve => {
+    complete = () => resolve(original(args, ctx));
+  }));
+  render(<DetailFrame selection={selection} actions={actions} />); await settle();
+  await selectTab("Inlinks");
+  expect(screen.queryByRole("table", { name: "Inlinks" })).toBeNull();
+  await act(async () => complete()); await settle(0);
+  expect(screen.getByRole("table", { name: "Inlinks" })).toHaveTextContent("https://site.test/source");
+});
+
+// spec: UI-030
+// spec: UI-032
+// spec: UI-033
+// spec: UI-145
 it("retains loaded link rows immediately when returning to a detail tab", async () => {
   render(<DetailFrame selection={selection} actions={actions} />); await settle();
   await selectTab("Inlinks"); await settle();
