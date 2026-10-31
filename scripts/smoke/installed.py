@@ -105,7 +105,9 @@ $i=$t | Get-ScheduledTaskInfo
     for name, command in commands:
         try:
             result = subprocess.run(command, text=True, capture_output=True, timeout=30)
-            (evidence / name).write_text(result.stdout, encoding='utf-8')
+            # Export-ScheduledTask declares UTF-16 in its XML header.
+            encoding = 'utf-16' if name.endswith('.xml') else 'utf-8'
+            (evidence / name).write_text(result.stdout, encoding=encoding)
             (evidence / (name + '.stderr')).write_text(
                 f'exit={result.returncode}\n{result.stderr}', encoding='utf-8')
         except Exception as error:

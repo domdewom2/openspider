@@ -85,7 +85,7 @@ class SchedulerContract(unittest.TestCase):
                  patch.object(installed.time, 'monotonic', side_effect=[0, 241]), \
                  patch.object(installed.subprocess, 'run', side_effect=[
                      subprocess.CompletedProcess([], 0, 'State LastRunTime LastTaskResult', ''),
-                     subprocess.CompletedProcess([], 0, '<Task/>', '')]) as inspect:
+                     subprocess.CompletedProcess([], 0, '<?xml version="1.0" encoding="UTF-16"?><Task/>', '')]) as inspect:
                 with self.assertRaisesRegex(RuntimeError, 'last record=None; diagnostics:'):
                     installed.scheduled(Path('app/openspider.exe'), home, 'http://localhost', evidence, env, False)
             registration = powershell.call_args_list[0].args[0]
@@ -94,7 +94,8 @@ class SchedulerContract(unittest.TestCase):
             self.assertIn('Unregister-ScheduledTask', powershell.call_args_list[-1].args[0])
             self.assertIn('Get-ScheduledTaskInfo', inspect.call_args_list[0].args[0][-1])
             self.assertIn('Export-ScheduledTask', inspect.call_args_list[1].args[0][-1])
-            self.assertEqual((evidence / 'scheduled-task-definition.xml').read_text(), '<Task/>')
+            import xml.etree.ElementTree as ET
+            self.assertEqual(ET.parse(evidence / 'scheduled-task-definition.xml').getroot().tag, 'Task')
             self.assertEqual((evidence / 'task.stderr').read_text(), 'task failure')
             wrapper = (evidence / 'scheduled.ps1').read_text()
             self.assertIn('1> ', wrapper)
