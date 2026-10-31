@@ -1,0 +1,19 @@
+{
+  "scenario": "sidebar-siteStructure",
+  "engine": "chromium",
+  "size": "large",
+  "started_at": "2026-10-31T20:51:34.394Z",
+  "metrics": {
+    "ms": {
+      "value": 5.299999997019768,
+      "budget": 1000,
+      "completed": true,
+      "passed": true
+    }
+  },
+  "details": {
+    "error": "",
+    "scope": "Core RPC, excluding UI paint"
+  },
+  "passed": true
+}

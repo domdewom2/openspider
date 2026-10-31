@@ -1,0 +1,11 @@
+fmt exit=0 secs=4
+clippy exit=0 secs=26
+crates exit=0 secs=495
+workspace exit=0 secs=1419
+deny exit=0 secs=2
+neutral exit=0 secs=1
+typecheck exit=0 secs=2
+desktop exit=0 secs=124
+bins exit=0 secs=42
+parity exit=0 secs=293
+CHECKS_DONE

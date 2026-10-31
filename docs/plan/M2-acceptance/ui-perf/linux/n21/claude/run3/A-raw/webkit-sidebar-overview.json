@@ -1,0 +1,19 @@
+{
+  "scenario": "sidebar-overview",
+  "engine": "webkit",
+  "size": "large",
+  "started_at": "2026-10-31T20:06:34.544Z",
+  "metrics": {
+    "ms": {
+      "value": 44388.292247,
+      "budget": 100,
+      "completed": false,
+      "passed": false
+    }
+  },
+  "details": {
+    "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+    "scope": "Core RPC, excluding UI paint"
+  },
+  "passed": false
+}

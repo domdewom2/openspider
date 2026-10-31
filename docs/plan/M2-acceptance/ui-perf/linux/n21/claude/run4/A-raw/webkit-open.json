@@ -1,0 +1,77 @@
+{
+  "scenario": "open",
+  "size": "large",
+  "started_at": "2026-10-31T20:51:35.970Z",
+  "engine": "webkit",
+  "metrics": {
+    "browserContextToRowsMs": {
+      "value": 535.3386780000001,
+      "budget": 3000,
+      "direction": "max",
+      "passed": true
+    },
+    "openMs": {
+      "value": 408,
+      "budget": 3000,
+      "direction": "max",
+      "passed": true
+    }
+  },
+  "details": {
+    "scope": "Fresh browser context to painted real DataGrid; OS application cold start requires native E2E-B",
+    "rows": 5000000,
+    "snapshot": {
+      "openPhases": {
+        "crawlOpenMs": 65,
+        "catalogColumnsMs": 22,
+        "viewBuildMs": 89
+      },
+      "total": 5000000,
+      "columns": 65,
+      "visible": {
+        "x": 1,
+        "y": 0,
+        "width": 6,
+        "height": 28
+      },
+      "selection": {
+        "kind": "ids",
+        "ids": []
+      },
+      "cachedRows": 200,
+      "last": "loading",
+      "rowCount": "5000001",
+      "visibility": "visible",
+      "documentFocus": true,
+      "innerWidth": 1280,
+      "innerHeight": 800,
+      "domRows": 29,
+      "dpr": 1,
+      "zoom": 1,
+      "canvas": [
+        {
+          "width": 1264,
+          "height": 748,
+          "cssWidth": 1264,
+          "cssHeight": 748,
+          "widthError": 0,
+          "heightError": 0
+        }
+      ],
+      "cellWidth": 240,
+      "bounds": {
+        "x": 320,
+        "y": 66,
+        "width": 240,
+        "height": 26
+      },
+      "headerBounds": {
+        "x": 320,
+        "y": 36,
+        "width": 240,
+        "height": 30
+      }
+    }
+  },
+  "passed": true
+}
