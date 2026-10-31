@@ -126,11 +126,15 @@ describe("Weitere Primitive", () => {
     expect(onSize).toHaveBeenLastCalledWith(240);
   });
 
+  // spec: UI-126
   it("Tabs: tablist mit Roving Tabindex, Pfeiltasten wechseln den Tab", () => {
     const onSelect = vi.fn();
     render(<Tabs label="Views" selected="one" onSelect={onSelect} tabs={[{ id: "one", label: "One", content: <p>1</p> }, { id: "two", label: "Two", content: <p>2</p> }]} />);
     const list = screen.getByRole("tablist", { name: "Views" });
     const [first, second] = within(list).getAllByRole("tab");
+    const panel = screen.getByRole("tabpanel");
+    expect(first).toHaveAttribute("aria-controls", panel.id);
+    expect(panel).toHaveAttribute("aria-labelledby", first?.id);
     expect(first).toHaveAttribute("aria-selected", "true");
     expect(first).toHaveAttribute("tabindex", "0");
     expect(second).toHaveAttribute("tabindex", "-1");
@@ -178,6 +182,18 @@ describe("Weitere Primitive", () => {
 });
 
 describe("TabBar (Überlauf, Reihenfolge)", () => {
+  // spec: UI-126
+  it("links tabs to an explicitly named shared panel without colliding between bars", () => {
+    const tabs = [{ id: "one", label: "One" }];
+    render(<><TabBar tabs={tabs} selected="one" onSelect={() => undefined} label="First" overflowLabel="More" panelId="first-panel" />
+      <TabBar tabs={tabs} selected="one" onSelect={() => undefined} label="Second" overflowLabel="More" panelId="second-panel" /></>);
+    const rendered = screen.getAllByRole("tab");
+    expect(rendered[0]).toHaveAttribute("id", "first-panel-tab-one");
+    expect(rendered[0]).toHaveAttribute("aria-controls", "first-panel");
+    expect(rendered[1]).toHaveAttribute("id", "second-panel-tab-one");
+    expect(rendered[1]).toHaveAttribute("aria-controls", "second-panel");
+  });
+
   it("fitTabs hält den gewählten Tab sichtbar und schiebt den Rest in den Überlauf", () => {
     expect(fitTabs([100, 100, 100], 400, 32, 0)).toEqual({ visible: [0, 1, 2], hidden: [] });
     expect(fitTabs([100, 100, 100, 100], 250, 32, 0)).toEqual({ visible: [0, 1], hidden: [2, 3] });

@@ -216,7 +216,7 @@ html[data-accent-warn="on"] .os-btn-primary { outline:var(--os-line) solid var(-
   flex:0 0 auto; height:var(--os-tab-height); min-height:var(--os-tab-height); max-width:min(100%, var(--os-relative-20-rem)); min-width:0;
   padding:0 var(--os-space-8); line-height:1.25; white-space:nowrap; box-sizing:border-box; cursor:default;
 }
-.os-tabbar .os-tab-label { display:block; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.os-tabbar .os-tab .os-tab-label { height:var(--os-size-20); line-height:var(--os-size-20); padding-block:0; display:block; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .os-tabbar .os-tab:focus-visible { outline:var(--os-focus-width) solid var(--os-focus); outline-offset:calc(var(--os-focus-width) * -1); }
 .os-tabbar .os-tab:hover:not([data-selected]) { background:var(--os-bg-hover); }
 .os-tabbar-overflow { display:flex; flex:none; align-items:center; padding-inline:var(--os-size-4); }

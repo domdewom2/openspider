@@ -5,6 +5,8 @@ import { join } from "node:path";
 import type { Page } from "@playwright/test";
 import { expect, type Alpha } from "../alpha/fixture";
 
+import { textGeometry } from "../n12/textGeometry";
+
 export type Bar = "top" | "detail" | "sidebar";
 export const SIZES = [
   { width: 1024, height: 640 },
@@ -82,7 +84,8 @@ export interface TabMeasure {
 export async function measureBar(page: Page, bar: Bar): Promise<{ tabs: TabMeasure[]; hasTrigger: boolean }> {
   const list = page.getByRole("tablist", { name: BAR_LISTS[bar] });
   await expect(list).toBeVisible();
-  return list.evaluate((el) => {
+  const geometry = await list.locator('[role=tab]:visible .os-tab-label').evaluateAll(textGeometry);
+  return list.evaluate((el, geometry) => {
     const root = el.closest(".os-tabbar") as HTMLElement;
     const trigger = root.querySelector<HTMLElement>(":scope > [data-tabbar-overflow]");
     const t = trigger?.getBoundingClientRect();
@@ -90,22 +93,21 @@ export async function measureBar(page: Page, bar: Bar): Promise<{ tabs: TabMeasu
     const tabs = [...el.querySelectorAll<HTMLElement>("[role=tab]")].filter((tab) => !tab.hidden && getComputedStyle(tab).visibility !== "hidden");
     return {
       hasTrigger: !!trigger,
-      tabs: tabs.map((tab) => {
-        const label = tab.querySelector<HTMLElement>(".os-tab-label") ?? tab;
+      tabs: tabs.map((tab, index) => {
         const r = tab.getBoundingClientRect();
         const overlaps = !!t && r.left < t.right - 0.5 && r.right > t.left + 0.5 && r.top < t.bottom && r.bottom > t.top;
         return {
           id: tab.dataset.tabId ?? "",
           text: tab.textContent ?? "",
           title: tab.getAttribute("title"),
-          verticalCut: tab.scrollHeight > tab.clientHeight + 0.5 || label.scrollHeight > label.clientHeight + 0.5,
-          horizontalCut: label.scrollWidth > label.clientWidth + 0.5 || tab.scrollWidth > tab.clientWidth + 0.5,
+          verticalCut: geometry[index]!.vertical,
+          horizontalCut: geometry[index]!.horizontal,
           overlapsTrigger: overlaps,
           outsideList: r.right > l.right + 0.5 || r.left < l.left - 0.5,
         };
       }),
     };
-  });
+  }, geometry);
 }
 
 /** Öffnet das Überlaufmenü einer Leiste; gibt die Einträge zurück und schließt es wieder. */

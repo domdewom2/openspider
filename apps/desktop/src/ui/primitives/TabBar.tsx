@@ -5,6 +5,8 @@ import { Menu, type MenuEntry } from "./Menu";
 import { IconButton } from "./Button";
 import { cx } from "./cx";
 
+export const tabId = (panelId: string, id: string) => `${panelId}-tab-${encodeURIComponent(id)}`;
+
 export interface TabBarItem {
   id: string;
   label: string;
@@ -87,7 +89,7 @@ export function overflowMenuEntries(config: TabBarConfig, clipped: readonly TabB
  * Beschriftungen sind einzeilig; was nicht passt, endet mit „…“ und nennt den vollen Text im Tooltip (A02-01, A02-02, UI-007).
  * Mit `config` ist der Überlaufknopf immer da und sein Platz wird vor dem Verteilen der Tabs abgezogen (A01-08).
  */
-export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReorder, measure, className, overflowEntries, config }: {
+export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReorder, measure, className, overflowEntries, config, panelId }: {
   /** Optional complete overflow/configuration menu (M2-U10); default lists clipped tabs. Ignored when `config` is set. */
   overflowEntries?: readonly MenuEntry[];
   tabs: readonly TabBarItem[];
@@ -100,6 +102,8 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
   measure?: (root: HTMLElement) => { widths: number[]; available: number; overflowWidth: number };
   className?: string;
   config?: TabBarConfig;
+  /** ID of the shared panel displaying the selected tab. */
+  panelId?: string;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const [hidden, setHidden] = useState<number[]>([]);
@@ -205,6 +209,8 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
             <div
               key={t.id}
               role="tab"
+              id={panelId ? tabId(panelId, t.id) : undefined}
+              aria-controls={panelId}
               data-tab-id={t.id}
               data-tab-measure=""
               data-truncated={isTruncated || undefined}

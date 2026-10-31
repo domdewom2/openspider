@@ -321,7 +321,7 @@ export function DataGrid(props: DataGridProps) {
         event.preventDefault(); if (activeRow === -1) sort(activeCol, event.shiftKey); else void selectRow(activeRow, activeCol, event.shiftKey, mod).catch(props.onError);
       } else if (event.key === "Escape") { selectionRequest.current++; setTooltip(undefined); }
     }}>
-    <div ref={scroller} className="os-grid-scroll" aria-hidden="true" onScroll={event => {
+    <div ref={scroller} className="os-grid-scroll" aria-hidden="true" tabIndex={-1} onScroll={event => {
       const e = event.currentTarget;
       if (geometryChanging.current) return;
       const same = expectedTop.current !== undefined && Math.abs(e.scrollTop - expectedTop.current) < 1;

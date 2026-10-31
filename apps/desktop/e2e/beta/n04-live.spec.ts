@@ -59,7 +59,7 @@ test("5000 fixture URLs: live HTML, retained details, pause/resume, completed fi
       const { useSession } = await import(/* @vite-ignore */ String("/src/state/session.ts"));
       return useSession.getState().crawl?.crawled ?? 0;
     }), { timeout: 30_000 }).toBeGreaterThan(200);
-    await page.getByRole("region", { name: "Crawl table", exact: true }).getByRole("button", { name: /^HTML(?: \([\d,.\s]+\))?$/ }).click();
+    await page.getByRole("tabpanel").and(page.locator("#data-panel")).getByRole("button", { name: /^HTML(?: \([\d,.\s]+\))?$/ }).click();
     const upperStarted = Date.now();
     const upper = page.getByRole("grid", { name: "Crawl table", exact: true });
     await expect(upper).toBeVisible({ timeout: 10_000 });
