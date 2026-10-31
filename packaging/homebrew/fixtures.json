@@ -1,0 +1,9 @@
+{
+  "OpenSpider_1.0.0_aarch64.dmg": "fixture: R01 aarch64 DMG bytes\n",
+  "OpenSpider_1.0.0_x64.dmg": "fixture: R01 Intel DMG bytes\n",
+  "OpenSpider_1.0.0_universal.dmg": "fixture: optional universal DMG, not ambiguous\n",
+  "OpenSpider_1.0.0_x64_en-US.msi": "fixture: R02 machine MSI bytes\n",
+  "OpenSpider_1.0.0_x64-setup.exe": "fixture: R02 user NSIS bytes\n",
+  "OpenSpider_aarch64.app.tar.gz": "fixture: updater archive must never be selected\n",
+  "openspider.exe": "fixture: standalone CLI must never be selected\n"
+}
