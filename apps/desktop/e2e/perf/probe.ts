@@ -37,6 +37,7 @@ export function installPerf({
     if (e.kind === "tick") ticks.push(performance.now());
   });
   const run = async (spec: ViewSpec) => {
+    ({ source, handle } = api.current());
     performance.mark("u31-operation-start");
     const h = await settled(await view.update({ viewId: handle.viewId, spec }));
     handle = h;
@@ -60,6 +61,7 @@ export function installPerf({
     errors,
     async openMs() {
       while (!api.ready()) await paint();
+      await paint();
       return performance.now() - openStart;
     },
     async ipc() {
@@ -89,40 +91,56 @@ export function installPerf({
     jump: (row: number) => api.jump(row),
     async operations() {
       const result: Record<string, number> = {};
-      result.tabMs = await run(tab());
-      result.filterMs = await run({
-        kind: "tab",
-        tab: "Response Codes",
-        filter: "All",
-        sort: [],
+      const measure = async (
+        name: string,
+        operation: () => Promise<number>,
+      ) => {
+        try {
+          result[name] = await operation();
+        } catch (error) {
+          result[name] = NaN;
+          if (errors.length < 100) errors.push(`${name}: ${String(error)}`);
+        }
+      };
+      await measure("tabMs", async () => {
+        const start = performance.now();
+        await api.switchTab("Response Codes");
+        return performance.now() - start;
       });
-      result.numericMs = await run(
-        tab({ sort: [{ column: "Status Code", dir: "asc" }] }),
+      await measure("tabReturnMs", async () => {
+        const start = performance.now();
+        await api.switchTab("Internal");
+        return performance.now() - start;
+      });
+      await measure("filterMs", () => run(tab({ filter: "HTML" })));
+      await measure("numericMs", () =>
+        run(tab({ sort: [{ column: "Status Code", dir: "asc" }] })),
       );
-      result.reverseMs = await run(
-        tab({ sort: [{ column: "Status Code", dir: "desc" }] }),
+      await measure("reverseMs", () =>
+        run(tab({ sort: [{ column: "Status Code", dir: "desc" }] })),
       );
-      result.textMs = await run(
-        tab({ sort: [{ column: "Address", dir: "asc" }] }),
+      await measure("textMs", () =>
+        run(tab({ sort: [{ column: "Title 1", dir: "asc" }] })),
       );
-      result.substringMs = await run(
-        tab({ search: { kind: "simple", text: "0001" } }),
+      await measure("substringMs", () =>
+        run(tab({ search: { kind: "simple", text: "0001" } })),
       );
-      result.regexMs = await run(
-        tab({
-          search: {
-            kind: "rules",
-            caseSensitive: false,
-            tree: {
-              kind: "cond",
-              column: "Address",
-              op: "regex",
-              value: "000[12]",
+      await measure("regexMs", () =>
+        run(
+          tab({
+            search: {
+              kind: "rules",
+              caseSensitive: false,
+              tree: {
+                kind: "cond",
+                column: "Address",
+                op: "regex",
+                value: "000[12]",
+              },
             },
-          },
-        }),
+          }),
+        ),
       );
-      await run(tab());
       return result;
     },
     async sidebars() {
@@ -143,16 +161,12 @@ export function installPerf({
       return times;
     },
     async action(seed: number) {
-      const row = (seed >>> 0) % Math.max(1, source.total);
+      const row = (seed >>> 0) % Math.max(1, api.snapshot().total);
       if ((seed & 15) === 0) {
         try {
-          await run({
-            kind: "tab",
-            tab: "Response Codes",
-            filter: "All",
-            sort: [],
-          });
-          await run(tab());
+          await api.switchTab(
+            (seed & 16) === 0 ? "Response Codes" : "Internal",
+          );
         } catch (error) {
           violations++;
           if (errors.length < 100) errors.push(String(error));
@@ -160,7 +174,7 @@ export function installPerf({
       }
       const result = await api.jump(
         row,
-        (seed >>> 8) % Math.min(65, source.columns.length),
+        (seed >>> 8) % Math.min(65, api.snapshot().columns),
       );
       if (
         !result.contentReady ||

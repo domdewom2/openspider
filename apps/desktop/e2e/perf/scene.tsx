@@ -31,13 +31,13 @@ const { settled } = await import("./settled");
 const fixture = new URLSearchParams(location.search).get("fixture");
 const openStart = performance.now();
 if (fixture) await crawl.open({ kind: "path", path: fixture });
-const handle = await settled(
+let handle = await settled(
   await view.open({
     spec: { kind: "tab", tab: "Internal", filter: "All", sort: [] },
     columns: [],
   }),
 );
-const source = new ViewDataSource(handle);
+let source = new ViewDataSource(handle);
 let controller: GridController | null = null;
 let selection = SelectionModel.empty();
 let zoom = 1;
@@ -166,6 +166,25 @@ function scrollElement(): HTMLElement {
   return element;
 }
 const api = {
+  current: () => ({ source, handle }),
+  switchTab: async (tab: string) => {
+    const next = await settled(
+      await view.open({
+        spec: { kind: "tab", tab, filter: "All", sort: [] },
+        columns: [],
+      }),
+    );
+    const previous = source;
+    handle = next;
+    source = new ViewDataSource(next);
+    controller = null;
+    root.render(<SnapshotApp key={next.viewId} />);
+    await previous.dispose();
+    const deadline = performance.now() + 120_000;
+    while (!api.ready() && performance.now() < deadline) await paint();
+    if (!api.ready()) throw new Error("Tab did not become ready");
+    return api.snapshot();
+  },
   activate: async () => {
     if (isTauri()) {
       const { getCurrentWindow } = await import("@tauri-apps/api/window");
@@ -283,7 +302,8 @@ declare global {
 window.perfGrid = api;
 const { installPerf } = await import("./probe");
 installPerf({ api, source, handle, view, client, settled, openStart });
-createRoot(document.getElementById("root")!).render(
+const root = createRoot(document.getElementById("root")!);
+root.render(
   new URLSearchParams(location.search).get("strict") === "0" ? (
     <SnapshotApp />
   ) : (

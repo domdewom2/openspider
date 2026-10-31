@@ -5,6 +5,7 @@ import { crawls } from "../../src/ipc/crawls";
 import { sidebar } from "../../src/ipc/sidebar";
 import { crawl } from "../../src/ipc/crawl";
 import { useSession } from "../../src/state/session";
+import { recordFrames, paint } from "../../src/grid/recorder";
 const ticks: { at: number; phase?: string }[] = [];
 const clicks: number[] = [];
 client.subscribe("main", (event) => {
@@ -67,6 +68,21 @@ window.perfShell = {
     }
     throw new Error("Import timed out");
   },
+  async scrollFrames(axis: "vertical" | "horizontal") {
+    const element = document.querySelector<HTMLElement>(
+      ".os-data-grid .os-grid-scroll",
+    );
+    if (!element) throw new Error("Native grid scroll element missing");
+    element.scrollTop = 0;
+    element.scrollLeft = 0;
+    await paint();
+    return recordFrames((elapsed) => {
+      if (axis === "vertical") element.scrollTop = elapsed * 1.5;
+      else
+        element.scrollLeft =
+          ((element.scrollWidth - element.clientWidth) * elapsed) / 10000;
+    });
+  },
   stop: () => crawl.stop(),
 };
 declare global {
@@ -82,6 +98,9 @@ declare global {
       }>;
       state(): ReturnType<typeof useSession.getState>["crawl"];
       start(base: string): Promise<void>;
+      scrollFrames(
+        axis: "vertical" | "horizontal",
+      ): ReturnType<typeof recordFrames>;
       stop(): Promise<void>;
     };
   }
