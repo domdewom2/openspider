@@ -35,3 +35,13 @@
     ${EndIf}
   ${EndIf}
 !macroend
+
+!macro NSIS_HOOK_POSTUNINSTALL
+  ; Full uninstall: drop the stored install location. Otherwise a later MSI install reads it
+  ; (Tauri's WiX AppSearch on the default value) and overrides a given INSTALLDIR.
+  ${If} $UpdateMode != 1
+    DeleteRegValue SHCTX "${MANUPRODUCTKEY}" ""
+    DeleteRegKey /ifempty SHCTX "${MANUPRODUCTKEY}"
+    DeleteRegKey /ifempty SHCTX "${MANUKEY}"
+  ${EndIf}
+!macroend

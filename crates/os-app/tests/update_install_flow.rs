@@ -178,13 +178,17 @@ async fn download_keeps_crawl_running_and_paused_checkpoint_reopens_and_resumes(
     drop(app);
     let restarted = App::new(AppConfig::new(temp.path())).unwrap();
     update::pending::reopen(&restarted).await;
+    // Reopening canonicalizes (macOS /private/var, Windows \\?\ and 8.3 names): compare the same file.
     assert_eq!(
-        restarted
-            .sessions()
-            .current(&common::window())
-            .unwrap()
-            .path,
-        path
+        std::fs::canonicalize(
+            restarted
+                .sessions()
+                .current(&common::window())
+                .unwrap()
+                .path
+        )
+        .unwrap(),
+        std::fs::canonicalize(&path).unwrap()
     );
     assert_eq!(
         restarted
