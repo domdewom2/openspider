@@ -189,6 +189,9 @@ pub mod diag {
         wal_cp_frames,
         wal_cp_frames_left,
         wal_bytes_max,
+        cache_used_bytes_max,
+        schema_used_bytes_max,
+        stmt_used_bytes_max,
         cache_hit,
         cache_miss,
         cache_write,
@@ -271,6 +274,19 @@ pub mod diag {
                 0
             }
         };
+        // Retained SQLite allocations explain RSS outside the page pipeline.
+        // These status operations report current bytes in `cur`; keep our own
+        // high-water mark across batches rather than SQLite's unused `hi` field.
+        for (counter, op) in [
+            (&STATS.cache_used_bytes_max, ffi::SQLITE_DBSTATUS_CACHE_USED),
+            (
+                &STATS.schema_used_bytes_max,
+                ffi::SQLITE_DBSTATUS_SCHEMA_USED,
+            ),
+            (&STATS.stmt_used_bytes_max, ffi::SQLITE_DBSTATUS_STMT_USED),
+        ] {
+            counter.fetch_max(read(op), Ordering::Relaxed);
+        }
         CacheDelta {
             hit: read(ffi::SQLITE_DBSTATUS_CACHE_HIT),
             miss: read(ffi::SQLITE_DBSTATUS_CACHE_MISS),

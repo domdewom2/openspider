@@ -2,7 +2,9 @@
 //!
 //! Ein eigener Betriebssystem-Thread besitzt die Senke (`Box<dyn CrawlSink>`, Standard `SqliteSink`) und
 //! schreibt, was die Worker über einen **begrenzten** Kanal schicken. Ist der Kanal voll, warten die Worker
-//! in `reserve().await`/`send().await`: Fetch und Auswertung werden gedrosselt, der Speicher wächst nicht.
+//! in `reserve().await`/`send().await`. Zusätzlich drosselt ein gemeinsames Byte-Gate neue Fetches.
+//! Bereits zugelassene Seiten und atomare Übergrößen dürfen die Schwelle überschreiten;
+//! die Bytebilanz ist kein harter RSS-Deckel.
 //!
 //! Der Thread fasst die Nachrichten zu Batches zusammen (**Gruppen-Commit**, M1-P30). Die Reihenfolge der
 //! Nachrichten bleibt erhalten; der Store verarbeitet innerhalb eines Batches `new_urls` vor `pages`, deshalb
@@ -14,12 +16,13 @@
 //!   höchstens 100 ms im Speicher.
 //! * **Rückstau** (während des letzten Schreibens oder beim Eintreffen der Nachricht war der Kanal nicht leer, die
 //!   Senke ist der Engpass): mehrere Batches werden zu **einer** Transaktion zusammengefasst, bis
-//!   [`BATCH_PAGES_BACKLOG`] Seiten beisammen sind oder [`BATCH_MAX_WAIT_BACKLOG`] verstrichen ist. Jeder Commit
+//!   [`BATCH_PAGES_BACKLOG`] Seiten beisammen sind, das Nutzdatenbudget [`BATCH_BYTES`] erreicht ist
+//!   oder [`BATCH_MAX_WAIT_BACKLOG`] verstrichen ist. Jeder Commit
 //!   schreibt die geänderten Seiten der Indizes und der Tabellen neu ins WAL; bei gleichverteilten Zielen (jede
 //!   Seite berührt 30 verschiedene Zeilen) wächst die Zahl dieser Seiten kaum mit der Batchgröße, die Kosten je
 //!   Seite sinken also mit größeren Batches (Messung P28/P30: 1 000 statt 200 Seiten je Commit −42 %, 5 000 −71 %
 //!   Writer-Zeit). Der Writer sammelt in seinem eigenen Speicher weiter, die Worker werden dadurch nicht
-//!   zusätzlich gedrosselt, und der Speicher bleibt durch die Seitengrenze begrenzt (PERF-001/003).
+//!   zusätzlich gedrosselt. Seiten- und Nutzdatenbudget begrenzen den Sammelbatch (PERF-001/003).
 //!
 //! Was bei einem harten Abbruch ungeschrieben bleibt, ist durch die Konstanten begrenzt: Kanal
 //! ([`CHANNEL_CAPACITY`]) plus größter Batch ([`BATCH_PAGES_BACKLOG`]) plus die Abrufe in Bearbeitung (K-49).
@@ -48,6 +51,12 @@ pub const BATCH_PAGES: usize = 200;
 /// Im vollständigen 1M-Vergleich sank die Writer-Zeit von 396 auf 295 s bei 803 MB RSS;
 /// die Messung umfasst auch die Speicher-/Indexkorrekturen (kein isolierter Batchvergleich).
 pub const BATCH_PAGES_BACKLOG: usize = 4_000;
+/// Budget für die geschätzten Nutzdaten eingehender Nachrichten je Sammelbatch.
+/// Einzelne größere Nachrichten bleiben atomar und werden allein geschrieben.
+/// Kein exaktes RSS-Limit: Vec-Wachstum und Allocator-Metadaten kommen hinzu.
+pub const BATCH_BYTES: u64 = 8 * 1024 * 1024;
+/// Shared admission threshold for fetched bodies and unwritten results (PERF-003).
+pub const IN_FLIGHT_BYTES: u64 = 16 * 1024 * 1024;
 /// Längste Wartezeit, bis ein nicht voller Batch im Normalbetrieb geschrieben wird.
 pub const BATCH_MAX_WAIT: Duration = Duration::from_millis(100);
 /// Längste Wartezeit beim Sammeln eines Gruppen-Commits (Rückstau).
@@ -55,8 +64,12 @@ pub const BATCH_MAX_WAIT_BACKLOG: Duration = Duration::from_millis(500);
 /// Nachrichten, die im Kanal warten dürfen, bevor die Worker blockieren.
 pub const CHANNEL_CAPACITY: usize = 256;
 
+/// Nach großen Batches ungenutzte Allocator-Seiten zurückgeben (PERF-003).
+/// Kleine normale Commits benötigen diesen zusätzlichen Systemaufruf nicht.
+const HEAP_RECLAIM_MIN_BATCH_BYTES: u64 = 8 * 1024 * 1024;
+
 enum Msg {
-    Batch(Box<WriteBatch>),
+    Batch(Box<WriteBatch>, Charge),
     /// Antwort: `true` = alles geschrieben, `false` = die Senke hat einen Fehler gemeldet.
     Flush(oneshot::Sender<bool>),
     Checkpoint(oneshot::Sender<bool>),
@@ -80,6 +93,78 @@ struct Shared {
     /// Erster Fehler der Senke (als Original, für `finish`) und sein Text.
     error: Mutex<Option<StoreError>>,
     stats: WriterStats,
+    budget: Arc<ByteBudget>,
+}
+
+/// Shared byte accounting. Admission happens before Fetch and before reserving a
+/// discovery slot. Already active pages may cross the threshold; they must drain
+/// without another admission wait (otherwise all workers could deadlock).
+#[derive(Default)]
+struct ByteBudget {
+    bytes: AtomicU64,
+    changed: tokio::sync::Notify,
+}
+pub(crate) struct Charge {
+    budget: Arc<ByteBudget>,
+    bytes: u64,
+    writer_stage: Option<diag::StageGuard>,
+}
+impl ByteBudget {
+    fn charge(self: &Arc<Self>, bytes: u64) -> Charge {
+        let total = self.bytes.fetch_add(bytes, Ordering::SeqCst) + bytes;
+        diag::peak(&diag::STATS.mem_in_flight_bytes_max, total);
+        Charge {
+            budget: self.clone(),
+            bytes,
+            writer_stage: None,
+        }
+    }
+    async fn ready(&self) {
+        loop {
+            let changed = self.changed.notified();
+            tokio::pin!(changed);
+            changed.as_mut().enable();
+            if self.bytes.load(Ordering::SeqCst) < IN_FLIGHT_BYTES {
+                return;
+            }
+            changed.await;
+        }
+    }
+}
+impl Charge {
+    pub(crate) fn resize(&mut self, bytes: u64) {
+        if bytes > self.bytes {
+            let total = self
+                .budget
+                .bytes
+                .fetch_add(bytes - self.bytes, Ordering::SeqCst)
+                + bytes
+                - self.bytes;
+            diag::peak(&diag::STATS.mem_in_flight_bytes_max, total);
+        } else {
+            self.budget
+                .bytes
+                .fetch_sub(self.bytes - bytes, Ordering::SeqCst);
+            self.budget.changed.notify_waiters();
+        }
+        self.bytes = bytes;
+    }
+    fn writer(mut self) -> Self {
+        self.writer_stage = Some(diag::StageGuard::new(
+            &diag::STATS.mem_writer_backlog_entries,
+            &diag::STATS.mem_writer_backlog_bytes,
+            &diag::STATS.mem_writer_backlog_entries_max,
+            &diag::STATS.mem_writer_backlog_bytes_max,
+            self.bytes,
+        ));
+        self
+    }
+}
+impl Drop for Charge {
+    fn drop(&mut self) {
+        self.budget.bytes.fetch_sub(self.bytes, Ordering::SeqCst);
+        self.budget.changed.notify_waiters();
+    }
 }
 
 /// Der Writer-Thread ist beendet oder hat einen Fehler gemeldet; den Fehler selbst liefert
@@ -105,13 +190,15 @@ pub struct WriterSender {
 /// Reservierter Platz im Kanal. Senden geht ohne Warten und ist damit unter einer Sperre möglich.
 pub struct Slot {
     permit: mpsc::OwnedPermit<Msg>,
+    budget: Arc<ByteBudget>,
 }
 
 impl Slot {
     /// Legt den Batch in den Kanal (sofort, ohne Warten).
     pub fn send(self, batch: WriteBatch) {
         if !is_empty(&batch) {
-            self.permit.send(Msg::Batch(Box::new(batch)));
+            let charge = self.budget.charge(estimate_bytes(&batch)).writer();
+            self.permit.send(Msg::Batch(Box::new(batch), charge));
         }
     }
 }
@@ -157,11 +244,18 @@ impl WriterThread {
 
     /// Wie [`spawn`](Self::spawn) mit eigener Kanalgröße (Tests).
     pub fn spawn_with(sink: Box<dyn CrawlSink>, capacity: usize) -> Self {
+        diag::STATS
+            .mem_in_flight_limit_bytes
+            .store(IN_FLIGHT_BYTES, Ordering::Relaxed);
+        diag::STATS
+            .mem_writer_batch_limit_bytes
+            .store(BATCH_BYTES, Ordering::Relaxed);
         let (tx, rx) = mpsc::channel(capacity.max(1));
         let shared = Arc::new(Shared {
             failed: AtomicBool::new(false),
             error: Mutex::new(None),
             stats: WriterStats::default(),
+            budget: Arc::new(ByteBudget::default()),
         });
         let thread_shared = Arc::clone(&shared);
         let thread = std::thread::Builder::new()
@@ -262,19 +356,46 @@ impl WriterStatsSnapshot {
 }
 
 impl WriterSender {
+    /// Blocks new Fetch work while retained responses/results exceed the shared
+    /// byte threshold. No Frontier lock may be held by the caller.
+    pub(crate) async fn wait_for_bytes(&self) {
+        let at = Instant::now();
+        self.shared.budget.ready().await;
+        diag::add(&diag::STATS.byte_wait_ns, at);
+    }
+
+    pub(crate) fn fetched_bytes(&self, bytes: u64) -> Charge {
+        self.shared.budget.charge(bytes)
+    }
+
     /// Reserviert vor synchroner Frontier-Mutation; bei Gegendruck bleibt die Frontier unverändert.
     pub fn try_reserve(&self) -> Result<Slot, WriterGone> {
+        if self.shared.budget.bytes.load(Ordering::SeqCst) >= IN_FLIGHT_BYTES {
+            return Err(WriterGone);
+        }
         self.tx
             .clone()
             .try_reserve_owned()
-            .map(|permit| Slot { permit })
+            .map(|permit| Slot {
+                permit,
+                budget: self.shared.budget.clone(),
+            })
             .map_err(|_| WriterGone)
     }
 
     /// Reserviert einen Platz (wartet, solange der Kanal voll ist – hier greift der Gegendruck).
     pub async fn reserve(&self) -> Result<Slot, WriterGone> {
+        self.wait_for_bytes().await;
+        self.reserve_admitted().await
+    }
+
+    /// Drain an already byte-accounted page, even above the admission threshold.
+    pub(crate) async fn reserve_admitted(&self) -> Result<Slot, WriterGone> {
         match self.tx.clone().reserve_owned().await {
-            Ok(permit) => Ok(Slot { permit }),
+            Ok(permit) => Ok(Slot {
+                permit,
+                budget: self.shared.budget.clone(),
+            }),
             Err(_) => Err(WriterGone),
         }
     }
@@ -284,8 +405,20 @@ impl WriterSender {
         if is_empty(&batch) {
             return Ok(());
         }
+        self.wait_for_bytes().await;
+        let charge = self.shared.budget.charge(estimate_bytes(&batch));
+        self.send_admitted(batch, charge).await
+    }
+
+    /// Transfer a live page's byte ownership to the writer without a budget gap.
+    pub(crate) async fn send_admitted(
+        &self,
+        batch: WriteBatch,
+        mut charge: Charge,
+    ) -> Result<(), WriterGone> {
+        charge.resize(estimate_bytes(&batch));
         self.tx
-            .send(Msg::Batch(Box::new(batch)))
+            .send(Msg::Batch(Box::new(batch), charge.writer()))
             .await
             .map_err(|_| WriterGone)
     }
@@ -345,9 +478,10 @@ pub(crate) fn merge(into: &mut WriteBatch, from: WriteBatch) {
     into.api_values.extend(from.api_values);
 }
 
-/// Grobe Schätzung des Speichers eines Batches für den Zähler `mem_writer_batch_bytes_max` (M1-P33): Größe der
-/// Strukturen plus die Kapazität der Zeichenketten der neuen URLs und der Linkzeilen (der Rest ist klein).
-fn estimate_bytes(b: &WriteBatch) -> u64 {
+/// Schätzung der Batch-Nutzdaten: Vektorkapazitäten und die wesentlichen eigenen
+/// Heap-Daten im Textcrawl, einschließlich M2-Erweiterungen und gespeichertem HTML.
+/// Kein vollständiges Heap-Profil für sämtliche optionalen Fach-/Renderdaten.
+pub(crate) fn estimate_bytes(b: &WriteBatch) -> u64 {
     use std::mem::size_of;
     let opt = |s: &Option<String>| s.as_ref().map_or(0, String::capacity);
     let mut bytes = b.new_urls.capacity() * size_of::<os_model::NewUrl>()
@@ -379,7 +513,47 @@ fn estimate_bytes(b: &WriteBatch) -> u64 {
     for u in &b.new_urls {
         bytes += u.url.capacity() + u.address.capacity() + u.origin.capacity();
     }
+    for e in &b.ext {
+        if let std::borrow::Cow::Owned(key) = &e.key.0 {
+            bytes += key.capacity();
+        }
+        if let os_model::Value::Text(text) = &e.value {
+            bytes += text.capacity();
+        }
+    }
+    for (key, value) in &b.meta {
+        bytes += key.capacity() + value.capacity();
+    }
+    for e in &b.events {
+        bytes += e.kind.capacity() + e.code.capacity() + e.message.capacity();
+    }
     for p in &b.pages {
+        if let Some(html) = &p.html {
+            bytes += html.body.capacity() + opt(&html.encoding);
+        }
+        bytes += p.fetch.status.capacity()
+            + opt(&p.fetch.content_type)
+            + opt(&p.fetch.http_version)
+            + opt(&p.fetch.last_modified_raw)
+            + opt(&p.fetch.redirect_url)
+            + opt(&p.fetch.hash_md5)
+            + opt(&p.fetch.charset)
+            + opt(&p.fetch.robots_matched_line)
+            + opt(&p.fetch.robots_txt_url);
+        if let Some(page) = &p.page {
+            bytes += opt(&page.canonical_url);
+            for pair in [
+                &page.title,
+                &page.meta_description,
+                &page.meta_keywords,
+                &page.h1,
+                &page.h2,
+            ] {
+                for text in [&pair.first, &pair.second].into_iter().flatten() {
+                    bytes += text.text.capacity();
+                }
+            }
+        }
         bytes += p.links.capacity() * size_of::<os_model::LinkRow>()
             + p.images.capacity() * size_of::<os_model::ImageRow>()
             + p.headers.capacity() * size_of::<os_model::HeaderRow>();
@@ -421,7 +595,9 @@ fn write_out(
     batch: &mut WriteBatch,
     pages: &mut usize,
     shared: &Shared,
+    charges: &mut Vec<Charge>,
 ) {
+    let _charges = std::mem::take(charges);
     if is_empty(batch) {
         return;
     }
@@ -432,13 +608,26 @@ fn write_out(
         return; // nach einem Fehler nur noch verwerfen
     }
     diag::peak(&diag::STATS.w_pages_max, n as u64);
-    diag::peak(
-        &diag::STATS.mem_writer_batch_bytes_max,
-        estimate_bytes(&taken),
-    );
+    let heap_bytes = estimate_bytes(&taken);
+    diag::peak(&diag::STATS.mem_writer_batch_bytes_max, heap_bytes);
     let completes = completes_crawl(&taken);
     let t = Instant::now();
     let written = sink.write(taken);
+    if heap_bytes >= HEAP_RECLAIM_MIN_BATCH_BYTES {
+        // Die Senke hat den Batch konsumiert; dessen freigegebene Puffer können
+        // jetzt zurückgegeben werden, ohne laufende Seiten oder Caches zu ändern.
+        let reclaim_at = Instant::now();
+        let released = os_store::profile::release_system_heap();
+        diag::inc(&diag::STATS.w_heap_reclaims);
+        if released {
+            diag::inc(&diag::STATS.w_heap_reclaim_successes);
+        }
+        diag::add_max(
+            &diag::STATS.w_heap_reclaim_ns,
+            &diag::STATS.w_heap_reclaim_max_ns,
+            reclaim_at,
+        );
+    }
     let write_ns = diag::add_max(&diag::STATS.w_write_ns, &diag::STATS.w_write_max_ns, t);
     if completes {
         // Der Schreibaufruf mit `Completed` (Endbatch, K-80): Daten, Indexaufbau und Commit.
@@ -485,6 +674,8 @@ fn writer_loop(
         .expect("Warteschleife des Writers");
     let mut batch = WriteBatch::default();
     let mut pages = 0usize;
+    let mut charges = Vec::new();
+    let mut batch_bytes = 0u64;
     let mut first_at: Option<Instant> = None;
     // Die Senke ist der Engpass: bei der letzten Nachricht oder nach dem letzten Schreiben stand Arbeit im Kanal.
     let mut behind = false;
@@ -527,7 +718,8 @@ fn writer_loop(
         let msg = match next {
             Next::Msg(m) => m,
             Next::Timeout => {
-                write_out(&mut sink, &mut batch, &mut pages, &shared);
+                write_out(&mut sink, &mut batch, &mut pages, &shared, &mut charges);
+                batch_bytes = 0;
                 first_at = None;
                 behind = !rx.is_empty();
                 continue;
@@ -540,7 +732,16 @@ fn writer_loop(
             .w_queue_max
             .fetch_max(queued as u64, Ordering::Relaxed);
         match msg {
-            Msg::Batch(b) => {
+            Msg::Batch(b, charge) => {
+                let incoming_bytes = estimate_bytes(&b);
+                if batch_bytes.saturating_add(incoming_bytes) > BATCH_BYTES {
+                    write_out(&mut sink, &mut batch, &mut pages, &shared, &mut charges);
+                    batch_bytes = 0;
+                    first_at = None;
+                    behind = !rx.is_empty();
+                }
+                charges.push(charge);
+                batch_bytes = batch_bytes.saturating_add(incoming_bytes);
                 pages += b.pages.len();
                 merge(&mut batch, *b);
                 first_at.get_or_insert_with(Instant::now);
@@ -551,20 +752,23 @@ fn writer_loop(
                 } else {
                     BATCH_PAGES
                 };
-                if pages >= limit {
-                    write_out(&mut sink, &mut batch, &mut pages, &shared);
+                if pages >= limit || batch_bytes >= BATCH_BYTES {
+                    write_out(&mut sink, &mut batch, &mut pages, &shared, &mut charges);
+                    batch_bytes = 0;
                     first_at = None;
                     behind = !rx.is_empty();
                 }
             }
             Msg::Flush(ack) => {
-                write_out(&mut sink, &mut batch, &mut pages, &shared);
+                write_out(&mut sink, &mut batch, &mut pages, &shared, &mut charges);
+                batch_bytes = 0;
                 first_at = None;
                 behind = !rx.is_empty();
                 let _ = ack.send(!shared.failed.load(Ordering::SeqCst));
             }
             Msg::Checkpoint(ack) => {
-                write_out(&mut sink, &mut batch, &mut pages, &shared);
+                write_out(&mut sink, &mut batch, &mut pages, &shared, &mut charges);
+                batch_bytes = 0;
                 first_at = None;
                 behind = !rx.is_empty();
                 let ok = if shared.failed.load(Ordering::SeqCst) {
@@ -579,7 +783,7 @@ fn writer_loop(
             }
         }
     }
-    write_out(&mut sink, &mut batch, &mut pages, &shared);
+    write_out(&mut sink, &mut batch, &mut pages, &shared, &mut charges);
     if !shared.failed.load(Ordering::SeqCst) {
         if let Err(e) = sink.checkpoint() {
             record_error(&shared, e);
@@ -654,6 +858,111 @@ mod tests {
             });
         }
         b
+    }
+
+    // spec: PERF-003
+    #[tokio::test]
+    async fn byte_admission_waits_until_the_slow_fixture_store_consumes_its_batch() {
+        use std::future::Future;
+        use std::task::{Context, Poll};
+        struct GatedSink {
+            entered: Option<oneshot::Sender<()>>,
+            release: std::sync::mpsc::Receiver<()>,
+        }
+        impl CrawlSink for GatedSink {
+            fn write(&mut self, batch: WriteBatch) -> Result<(), StoreError> {
+                if let Some(entered) = self.entered.take() {
+                    let _ = entered.send(());
+                    self.release.recv().unwrap();
+                }
+                drop(batch);
+                Ok(())
+            }
+            fn checkpoint(&mut self) -> Result<(), StoreError> {
+                Ok(())
+            }
+        }
+        fn fixture(bytes: u64) -> WriteBatch {
+            let mut batch = page_batch(1);
+            let overhead = estimate_bytes(&batch);
+            batch.pages[0].html = Some(os_model::PageHtml {
+                encoding: None,
+                body: vec![b'x'; (bytes - overhead) as usize],
+            });
+            assert_eq!(estimate_bytes(&batch), bytes);
+            batch
+        }
+        let (entered, wait) = oneshot::channel();
+        let (release, block) = std::sync::mpsc::channel();
+        let writer = WriterThread::spawn(Box::new(GatedSink {
+            entered: Some(entered),
+            release: block,
+        }));
+        let tx = writer.sender();
+        // A full byte budget, despite only one channel message. No wall-clock
+        // threshold: the sink is released explicitly after polling the gate.
+        let mut page = tx.fetched_bytes(IN_FLIGHT_BYTES / 2);
+        // Transfer Fetch -> Parse -> Writer with the same ownership token.
+        page.resize(IN_FLIGHT_BYTES);
+        tx.send_admitted(fixture(IN_FLIGHT_BYTES), page)
+            .await
+            .unwrap();
+        wait.await.unwrap();
+        assert_eq!(
+            tx.shared.budget.bytes.load(Ordering::SeqCst),
+            IN_FLIGHT_BYTES
+        );
+        {
+            let mut admission = std::pin::pin!(tx.wait_for_bytes());
+            let mut context = Context::from_waker(futures_util::task::noop_waker_ref());
+            assert_eq!(admission.as_mut().poll(&mut context), Poll::Pending);
+            assert!(tx.try_reserve().is_err());
+            release.send(()).unwrap();
+            admission.await;
+        }
+        tx.flush().await.unwrap();
+        assert_eq!(tx.shared.budget.bytes.load(Ordering::SeqCst), 0);
+        drop(tx);
+        assert_eq!(writer.finish().unwrap().pages, 1);
+    }
+
+    // spec: PERF-003, PERF-005
+    #[tokio::test]
+    async fn n15_byte_budget_flushes_extension_only_batches_without_loss() {
+        let (s, log) = sink(Duration::from_millis(5), None);
+        let writer = WriterThread::spawn(s);
+        let tx = writer.sender();
+        let part = BATCH_BYTES as usize / 3 + 1024;
+        let sizes = [part, part, part, BATCH_BYTES as usize + 1];
+        for (i, size) in sizes.into_iter().enumerate() {
+            tx.send(WriteBatch {
+                ext: vec![os_model::ExtWrite {
+                    url: os_model::UrlId(i as i64),
+                    key: os_model::ExtKey::from_static("crawl.test"),
+                    value: os_model::Value::Text("x".repeat(size)),
+                }],
+                ..Default::default()
+            })
+            .await
+            .unwrap();
+        }
+        tx.flush().await.unwrap();
+        drop(tx);
+        writer.finish().unwrap();
+        let log = log.lock().unwrap();
+        assert_eq!(
+            log.batches.iter().map(|b| b.ext.len()).collect::<Vec<_>>(),
+            vec![2, 1, 1]
+        );
+        let entries = log.batches.iter().flat_map(|b| &b.ext).collect::<Vec<_>>();
+        for (i, entry) in entries.into_iter().enumerate() {
+            assert_eq!(entry.url, os_model::UrlId(i as i64));
+            let os_model::Value::Text(text) = &entry.value else {
+                panic!("text expected")
+            };
+            assert_eq!(text.len(), sizes[i]);
+            assert!(text.bytes().all(|b| b == b'x'));
+        }
     }
 
     fn event(code: &str) -> WriteBatch {
