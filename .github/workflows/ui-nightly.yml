@@ -1,0 +1,95 @@
+name: ui-nightly
+
+on:
+  schedule:
+    - cron: "19 2 * * *"
+  workflow_dispatch:
+    inputs:
+      soak_seconds:
+        description: "Soak duration (1800 for full UI-144 acceptance)"
+        default: "300"
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: ui-nightly-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ui:
+    name: UI (${{ matrix.os }}, ${{ matrix.rows }} rows)
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15, windows-latest]
+        rows: [100000, 5000000]
+    defaults:
+      run:
+        shell: bash
+    env:
+      CARGO_INCREMENTAL: "0"
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
+      OPENSPIDER_SECRET_STORE: memory
+      OS_PERF_REQUIRE_NATIVE: "1"
+      OS_PERF_ROWS: ${{ matrix.rows }}
+      OS_PERF_SOAK_SECONDS: ${{ inputs.soak_seconds || vars.UI_PERF_SOAK_SECONDS || '300' }}
+      OS_E2E_PROJECTS: ${{ matrix.os == 'windows-latest' && 'chromium' || 'webkit' }}
+      OS_PERF_SOAK_ENGINE: ${{ matrix.os == 'windows-latest' && 'none' || 'webkit' }}
+      OS_APP_BRIDGE_BIN: ${{ github.workspace }}/target/release/os-app-bridge${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+      OS_PERF_ARTIFACT: ui-perf-${{ matrix.os }}-${{ matrix.rows }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: npm
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - name: Verify native architecture
+        run: node -e 'const expected=process.platform==="darwin"?"arm64":"x64"; if(process.arch!==expected) throw new Error(`Expected ${expected}, got ${process.arch}`)'
+      - name: Dependencies and regression gate tests
+        run: |
+          npm ci
+          npm exec -w apps/desktop -- playwright install chromium webkit
+          node --test apps/desktop/e2e/perf/report.test.mjs
+      - name: Tools and real bridge
+        run: |
+          cargo build --locked -j 6 -p os-testsite -p os-cli -p os-parity --bins
+          cargo build --release --locked -j 6 -p os-app --bin os-app-bridge --features e2e-bridge
+          cargo build --release --locked -j 6 -p os-loadtest --bin gen-ui-large
+      - name: Restore last seven comparable artifact reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node apps/desktop/e2e/perf/history.mjs
+      - name: Browser performance suite and absolute budget gate
+        id: browser
+        run: node apps/desktop/e2e/perf/run.mjs
+      - name: Build native measurement entry
+        if: always() && steps.browser.outcome != 'skipped'
+        run: |
+          node apps/desktop/e2e-b/perf/prepare.mjs
+          npm exec -w apps/desktop -- tauri build --no-bundle --features e2e-webdriver --config ../../target/ui-perf-native.conf.json
+      - name: Native cold start, opening, Windows soak and CDP trace
+        if: always() && steps.browser.outcome != 'skipped'
+        run: |
+          if [[ "$RUNNER_OS" == Windows ]]; then
+            node apps/desktop/e2e-b/perf/run.mjs target/release/openspider-desktop.exe
+          else
+            node apps/desktop/e2e-b/perf/run.mjs target/release/openspider-desktop
+          fi
+      - name: Final PERF-009 report and seven-run median regression gate
+        if: always()
+        run: node apps/desktop/e2e/perf/report.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: ${{ env.OS_PERF_ARTIFACT }}
+          path: |
+            target/loadtest/
+            !target/loadtest/history/**
+          if-no-files-found: error
+          retention-days: 90
