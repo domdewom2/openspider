@@ -5,8 +5,9 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$script_dir/../../../.."
 [[ "$(uname -s)" == Darwin ]] || { echo "Reference A requires macOS" >&2; exit 1; }
 export OS_PERF_LOAD_LIMIT="${OS_PERF_LOAD_LIMIT:-2.5}"
-export OS_PERF_ROWS="${OS_PERF_ROWS:-5000000}"
-export OS_PERF_SOAK_SECONDS="${OS_PERF_SOAK_SECONDS:-1800}"
+export OS_PERF_ROWS=5000000
+export OS_PERF_FIXTURE="${OS_PERF_FIXTURE:-$PWD/target/ui-perf-reference.ospider}"
+export OS_PERF_SOAK_SECONDS=1800
 export OS_PERF_SOAK_ENGINE=webkit OS_E2E_PROJECTS=webkit OS_PERF_REFERENCE=1 OPENSPIDER_SECRET_STORE=memory
 export CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=line-tables-only
 if [[ "${1:-}" != --awake ]]; then exec caffeinate -dimsu "$script_dir/run-reference.sh" --awake; fi
@@ -16,6 +17,11 @@ import os,sys
 sys.exit(0 if os.getloadavg()[0] < float(sys.argv[1]) else 1)
 PYQUIET
 }
+python3 - "$OS_PERF_LOAD_LIMIT" <<'PYLIMIT'
+import math,sys
+limit=float(sys.argv[1])
+assert math.isfinite(limit) and limit > 0, "OS_PERF_LOAD_LIMIT must be finite and positive"
+PYLIMIT
 while ! quiet; do echo "Waiting for load < $OS_PERF_LOAD_LIMIT"; sleep 15; done
 mkdir -p target/loadtest
 system_profiler SPHardwareDataType SPSoftwareDataType > target/loadtest/reference-hardware.txt

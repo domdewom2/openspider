@@ -245,27 +245,34 @@ try {
     passed:
       !details.errors.length && Object.values(metrics).every((m) => m.passed),
   };
+  try {
+    if (session)
+      await request(`/session/${session}`, undefined, "DELETE").catch(() => {});
+    if (child.exitCode === null && child.signalCode === null) {
+      child.kill();
+      await Promise.race([
+        new Promise((r) => child.once("exit", r)),
+        delay(5000),
+      ]);
+      if (child.exitCode === null && child.signalCode === null)
+        child.kill("SIGKILL");
+    }
+    await rm(home, {
+      recursive: true,
+      force: true,
+      maxRetries: 10,
+      retryDelay: 100,
+    });
+  } catch (error) {
+    details.errors.push(`cleanup: ${String(error)}`);
+  }
+  report.passed =
+    !details.errors.length && Object.values(metrics).every((m) => m.passed);
   await mkdir("target/loadtest/raw", { recursive: true });
   await writeFile(
     "target/loadtest/raw/native.json",
     JSON.stringify(report, null, 2),
   );
   await writeFile("target/loadtest/native.log", log);
-  if (session)
-    await request(`/session/${session}`, undefined, "DELETE").catch(() => {});
-  if (child.exitCode === null) {
-    child.kill();
-    await Promise.race([
-      new Promise((r) => child.once("exit", r)),
-      delay(5000),
-    ]);
-    if (child.exitCode === null) child.kill("SIGKILL");
-  }
-  await rm(home, {
-    recursive: true,
-    force: true,
-    maxRetries: 10,
-    retryDelay: 100,
-  });
   if (!report.passed) process.exitCode = 1;
 }
