@@ -1,0 +1,119 @@
+[
+  {
+    "name": "fmt",
+    "command": "~/ws-slot.sh && timeout 3600s nice -n 10 cargo fmt --all --check",
+    "exit": 0,
+    "seconds": 4.58,
+    "start": "2026-10-31T05:20:48Z"
+  },
+  {
+    "name": "clippy",
+    "command": "~/ws-slot.sh && timeout 3600s nice -n 10 cargo clippy --workspace --all-targets -j 6 --locked -- -D warnings",
+    "exit": 0,
+    "seconds": 123.14,
+    "start": "2026-10-31T05:20:52Z"
+  },
+  {
+    "name": "workspace-test",
+    "command": "~/ws-slot.sh && timeout 3600s nice -n 10 cargo test --workspace -j 6 --locked --no-fail-fast",
+    "exit": 0,
+    "seconds": 1463.83,
+    "start": "2026-10-31T05:22:56Z"
+  },
+  {
+    "name": "near-1",
+    "command": "timeout 3600s nice -n 10 env OPENSPIDER_NEAR_DUP_THREADS=1 cargo test -p os-analyze --test near_dup_n16 --test near_dup_d02 -j 6 --locked",
+    "exit": 0,
+    "seconds": 100.91,
+    "start": "2026-10-31T05:47:19Z"
+  },
+  {
+    "name": "near-8",
+    "command": "timeout 3600s nice -n 10 env OPENSPIDER_NEAR_DUP_THREADS=8 cargo test -p os-analyze --test near_dup_n16 --test near_dup_d02 -j 6 --locked",
+    "exit": 0,
+    "seconds": 21.68,
+    "start": "2026-10-31T05:49:00Z"
+  },
+  {
+    "name": "frontend",
+    "command": "timeout 3600s nice -n 10 npm run -w apps/desktop typecheck && timeout 3600s nice -n 10 npm run -w apps/desktop test && timeout 3600s nice -n 10 npm run -w apps/desktop check:static",
+    "exit": 127,
+    "seconds": 0.15,
+    "start": "2026-10-31T05:49:22Z"
+  },
+  {
+    "name": "bridge-build",
+    "command": "timeout 3600s nice -n 10 cargo build -j 6 --locked -p os-app --features e2e-bridge --bin os-app-bridge",
+    "exit": 0,
+    "seconds": 91.99,
+    "start": "2026-10-31T05:49:22Z"
+  },
+  {
+    "name": "tools-build",
+    "command": "timeout 3600s nice -n 10 cargo build -j 6 --locked -p os-testsite -p os-cli -p os-parity --bins",
+    "exit": 0,
+    "seconds": 17.84,
+    "start": "2026-10-31T05:50:54Z"
+  },
+  {
+    "name": "e2e",
+    "command": "timeout 3600s nice -n 10 npm run -w apps/desktop e2e -- e2e/beta e2e/mcp e2e/a11y --project=chromium --project=webkit --workers=4",
+    "exit": 0,
+    "seconds": 1062.66,
+    "start": "2026-10-31T05:51:12Z"
+  },
+  {
+    "name": "parity",
+    "command": "timeout 3600s nice -n 10 target/debug/os-parity run --all --openspider /home/build/Projects/openspider-wt/m2-int-20/target/debug/openspider --out /tmp/int-20/parity",
+    "exit": 0,
+    "seconds": 303.84,
+    "start": "2026-10-31T06:08:55Z"
+  },
+  {
+    "name": "coverage",
+    "command": "timeout 3600s nice -n 10 target/debug/os-parity coverage --milestone M2 --parity-report /tmp/int-20/parity/parity-all.json",
+    "exit": 2,
+    "seconds": 0.01,
+    "start": "2026-10-31T06:13:58Z"
+  },
+  {
+    "name": "plan",
+    "command": "python3 -I docs/plan/M2-check.py",
+    "exit": 0,
+    "seconds": 2.97,
+    "start": "2026-10-31T06:13:58Z"
+  },
+  {
+    "name": "neutral",
+    "command": "bash scripts/check-neutral.sh",
+    "exit": 0,
+    "seconds": 0.39,
+    "start": "2026-10-31T06:14:01Z"
+  },
+  {
+    "name": "deny",
+    "command": "timeout 3600s nice -n 10 cargo deny check licenses bans sources",
+    "exit": 0,
+    "seconds": 2.72,
+    "start": "2026-10-31T06:14:02Z"
+  },
+  {
+    "name": "coverage-retry",
+    "command": "timeout 3600s nice -n 10 target/debug/os-parity coverage --milestone M2 --parity-report /tmp/int-20/parity/report.json --write /tmp/int-20/coverage.json",
+    "exit": 0,
+    "seconds": 0.09
+  },
+  {
+    "name": "frontend-retry",
+    "command": "npm ci; npm run -w apps/desktop typecheck && npm run -w apps/desktop test && npm run -w apps/desktop check:static (je timeout 3600s nice -n 10)",
+    "exit": 0,
+    "unit_seconds": 115.79,
+    "static_seconds": 2.41
+  },
+  {
+    "name": "actionlint",
+    "command": "/tmp/l01-tools/actionlint .github/workflows/ui-e2e.yml",
+    "version": "1.7.12",
+    "exit": 0
+  }
+]
