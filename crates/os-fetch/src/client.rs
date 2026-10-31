@@ -391,7 +391,9 @@ impl HttpFetcher {
         if let Some(limiter) = &self.limiter {
             limiter.acquire().await;
         }
-        pinned.fetch_impl(req).await
+        // The protected fetch path is polled below the engine and robots state
+        // machines. Bound its caller's frame independently of the HTTP future.
+        Box::pin(pinned.fetch_impl(req)).await
     }
 
     /// Die wirksame Konfiguration.
@@ -498,7 +500,7 @@ impl HttpFetcher {
             max_body,
             req.body_limit.abort_media_after,
         );
-        let result = match tokio::time::timeout(budget, exchange).await {
+        let result = match tokio::time::timeout(budget, Box::pin(exchange)).await {
             Ok(r) => r,
             Err(_) => Err(Failure {
                 proxy_auth_required: false,
