@@ -4751,5 +4751,50 @@
   "size": "S",
   "runner": "server+ci",
   "prompt_notes": "K2-99: Link-Fakten inline lesen, keine neue Migration oder Schemaversion. Autoindex bei Copy-Swap prüfen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen. Regeln M2.md Abschnitt 2/2a."
+ },
+ {
+  "id": "M2-N16",
+  "kind": "package",
+  "model": "codex",
+  "title": "Near-Duplicate-Beschleunigung mit bitgleichem Differentialnachweis und begrenztem Speicher",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "PERF-007",
+   "ONPAGE-144"
+  ],
+  "owns": [
+   "crates/os-analyze/src/analysis/steps/near_duplicates.rs",
+   "crates/os-analyze/src/analysis/steps/near_duplicates/disk.rs",
+   "crates/os-analyze/tests/near_dup_n16.rs",
+   "crates/os-analyze/tests/near_dup_scale.rs",
+   "crates/os-analyze/tests/near_dup_support/**",
+   "docs/plan/M2-reports/n16.md"
+  ],
+  "depends_on": [
+   "M2-D02"
+  ],
+  "size": "M",
+  "runner": "server+ci",
+  "prompt_notes": "Regeln M2.md Abschnitt 2/2a. Fable approved mit Auflagen 84; Korrekturrunde erfüllt. Bitgleiche Paare und Ähnlichkeiten, deterministischer Disk-Fallback; Mac-mini-Abnahme gemäß Bericht. Integrator ergänzt Paketeintrag (Fable-Befund 7). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-N17",
+  "kind": "package",
+  "model": "codex",
+  "title": "ui-e2e-CI: Werkzeuge vorbauen und macOS-WebKit-Tastaturnavigation aktivieren",
+  "wave": "4n",
+  "spec_ids": [],
+  "owns": [
+   ".github/workflows/ui-e2e.yml",
+   "docs/plan/M2-reports/n17.md"
+  ],
+  "depends_on": [
+   "M2-U30",
+   "M2-U32"
+  ],
+  "size": "S",
+  "runner": "server+ci",
+  "prompt_notes": "Regeln M2.md Abschnitt 2/2a. os-testsite, os-cli und os-parity vor E2E bauen; AppleKeyboardUIMode für Playwright-WebKit auf macOS setzen. Keine Produkt- oder Teständerung. Native CI-Nachweise durch den Orchestrator ergänzen."
  }
 ]
