@@ -1,0 +1,70 @@
+name: Publish package metadata
+
+# D12: no push, dispatch, workflow_call or prerelease trigger may publish packages.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    if: github.event.release.draft == false && github.event.release.prerelease == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
+    steps:
+      - name: M3-REL opt-in and access prerequisites (D14)
+        id: gate
+        env:
+          ENABLED: ${{ vars.RELEASE_PACKAGES_ENABLED }}
+          PACKAGE_ID: ${{ vars.OPENSPIDER_PACKAGE_ID }}
+          TAP_REPOSITORY: ${{ vars.HOMEBREW_TAP_REPOSITORY }}
+          WINGET_FORK: ${{ vars.WINGET_FORK_REPOSITORY }}
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          WINGET_TOKEN: ${{ secrets.WINGET_PR_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ "$ENABLED" != true || -z "$PACKAGE_ID" || -z "$TAP_REPOSITORY" || -z "$WINGET_FORK" || -z "$TAP_TOKEN" || -z "$WINGET_TOKEN" ]]; then
+            echo '::notice::Paketveröffentlichung deaktiviert: M3-REL/K3-08 oder Zugänge fehlen. Keine externen Änderungen.'
+            echo 'Paketveröffentlichung übersprungen; Freigabe erst mit M3-REL. Keine Tokenwerte protokolliert.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo 'enabled=true' >> "$GITHUB_OUTPUT"
+
+  publish:
+    needs: gate
+    if: needs.gate.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: release
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Download exact published assets and generate metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          OPENSPIDER_PACKAGE_ID: ${{ vars.OPENSPIDER_PACKAGE_ID }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          gh release download "$RELEASE_TAG" --dir release-assets --pattern '*.dmg' --pattern '*.msi' --pattern '*-setup.exe'
+          node packaging/homebrew/generate.mjs --directory release-assets --output generated \
+            --version "${RELEASE_TAG#v}" --repository "$GH_REPO"
+      - name: Commit existing tap and open winget PR in existing fork
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          OPENSPIDER_PACKAGE_ID: ${{ vars.OPENSPIDER_PACKAGE_ID }}
+          HOMEBREW_TAP_REPOSITORY: ${{ vars.HOMEBREW_TAP_REPOSITORY }}
+          WINGET_FORK_REPOSITORY: ${{ vars.WINGET_FORK_REPOSITORY }}
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          WINGET_PR_TOKEN: ${{ secrets.WINGET_PR_TOKEN }}
+        run: bash packaging/winget/publish.sh
