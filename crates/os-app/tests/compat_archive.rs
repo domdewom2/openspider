@@ -200,9 +200,10 @@ async fn reopening_legacy_crawl_preserves_previous_migrations_and_occupied_names
     let app = app(dir.path());
     let reopened = open(&app, &source).await;
     assert_eq!(reopened.schema_version, 5);
+    // Opening canonicalizes (macOS /private/var, Windows \\?\ and 8.3 names): compare the same file.
     assert_eq!(
-        PathBuf::from(reopened.file),
-        dir.path().join("legacy.migrated-3.ospider")
+        fs::canonicalize(PathBuf::from(reopened.file)).unwrap(),
+        fs::canonicalize(dir.path().join("legacy.migrated-3.ospider")).unwrap()
     );
     assert_eq!(fs::read(first).unwrap(), migrated);
     assert_eq!(fs::read(occupied).unwrap(), b"existing file must survive");
