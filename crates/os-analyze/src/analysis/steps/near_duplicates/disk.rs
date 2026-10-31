@@ -131,11 +131,11 @@ pub fn run(
     }
     scratch.begin(Transaction::Publish)?;
     conn.execute_batch(
-        "DELETE FROM near_duplicates; INSERT INTO near_duplicates SELECT * FROM temp.d02_pairs;",
+        "DELETE FROM near_duplicates; INSERT INTO near_duplicates SELECT * FROM temp.d02_pairs ORDER BY url_id, other_id;",
     )?;
     scratch.release()?;
     if profile {
-        eprintln!(
+        tracing::debug!(
             "n16 baseline total={:?} band_lookup={:?} band_write={:?} compare_write={:?}",
             started.elapsed(),
             phases[0],

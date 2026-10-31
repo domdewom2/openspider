@@ -5,6 +5,19 @@ mod baseline;
 #[path = "framework_common.rs"]
 mod common;
 use common::*;
+// Compile the exact product source with parent visibility to force cache limits
+// without a public API or process-global environment override.
+#[path = "../src/analysis/steps/near_duplicates.rs"]
+mod limited;
+use os_analyze::{analysis, error};
+
+fn disk_fallback(
+    file: &os_store::CrawlFile,
+    cfg: &CrawlConfig,
+    cancel: &CancelToken,
+) -> Result<os_model::StepState, error::AnalyzeError> {
+    limited::run_with_limits(file, cfg, cancel, 0, 0)
+}
 use os_analyze::{
     analysis::{steps::near_duplicates, CancelToken},
     minhash,
@@ -90,12 +103,14 @@ fn n16_pairs_and_similarity_bits_match_disk_oracle_at_every_threshold() {
             cfg.duplicates.only_indexable = only_indexable;
             baseline::run(&file, &cfg, &CancelToken::new()).unwrap();
             let expected = dump(&file);
-            near_duplicates::run(&file, &cfg, &CancelToken::new()).unwrap();
-            assert_eq!(
-                dump(&file),
-                expected,
-                "threshold={threshold} indexable={only_indexable}"
-            );
+            for run in [near_duplicates::run, limited::run, disk_fallback] {
+                run(&file, &cfg, &CancelToken::new()).unwrap();
+                assert_eq!(
+                    dump(&file),
+                    expected,
+                    "threshold={threshold} indexable={only_indexable}"
+                );
+            }
         }
     }
 }
@@ -174,7 +189,7 @@ fn n16_publication_survives_an_unrelated_wal_writer_during_comparison() {
     };
     use std::time::Duration;
     let mut outcomes = Vec::new();
-    for original in [true, false] {
+    for mode in 0..3 {
         let dir = tempfile::tempdir().unwrap();
         let (path, file) = create(dir.path(), "wal-writer.ospider", 0x16);
         let text = "identical words across these three documents";
@@ -231,17 +246,27 @@ fn n16_publication_survives_an_unrelated_wal_writer_during_comparison() {
         });
         let mut cfg = CrawlConfig::default();
         cfg.duplicates.near_enabled = true;
-        let run = if original {
-            baseline::run
-        } else {
-            near_duplicates::run
+        let run = match mode {
+            0 => baseline::run,
+            1 => near_duplicates::run,
+            _ => disk_fallback,
         };
         let result = run(&file, &cfg, &CancelToken::new());
         writer.join().unwrap();
-        eprintln!("original={original} result={result:?}");
+        eprintln!("mode={mode} result={result:?}");
         outcomes.push(result.is_ok_and(|s| s == os_model::StepState::Done));
         if outcomes.last() == Some(&true) {
-            assert_eq!(dump(&file).len(), 6);
+            assert_eq!(
+                dump(&file),
+                vec![
+                    (1, 2, 1_f64.to_bits()),
+                    (1, 3, 1_f64.to_bits()),
+                    (2, 1, 1_f64.to_bits()),
+                    (2, 3, 1_f64.to_bits()),
+                    (3, 1, 1_f64.to_bits()),
+                    (3, 2, 1_f64.to_bits())
+                ]
+            );
         }
         assert!(file.conn().is_autocommit());
         assert_eq!(
@@ -251,5 +276,5 @@ fn n16_publication_survives_an_unrelated_wal_writer_during_comparison() {
             1
         );
     }
-    assert_eq!(outcomes, [true, true]);
+    assert_eq!(outcomes, [true, true, true]);
 }

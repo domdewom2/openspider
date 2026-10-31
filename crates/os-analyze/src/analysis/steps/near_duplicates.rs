@@ -1,5 +1,6 @@
 //! Bounded, parallel LSH over persisted signatures; exact Jaccard and atomic publication.
 //! Larger populations fall back to the disk implementation instead of growing the cache.
+#[path = "near_duplicates/disk.rs"]
 mod disk;
 use crate::{analysis::CancelToken, error::AnalyzeError, minhash};
 use os_model::{CrawlConfig, StepState};
@@ -132,14 +133,20 @@ fn load(
 }
 
 fn workers() -> usize {
-    // No new dependency or global pool: a bounded scoped pool, also usable by CLI/tests.
-    std::env::var("OPENSPIDER_NEAR_DUP_THREADS")
-        .ok()
-        .or_else(|| std::env::var("RAYON_NUM_THREADS").ok())
-        .and_then(|v| v.parse::<usize>().ok())
+    worker_count(
+        std::env::var("OPENSPIDER_NEAR_DUP_THREADS")
+            .ok()
+            .and_then(|v| v.parse::<usize>().ok()),
+        std::thread::available_parallelism().map_or(1, usize::from),
+    )
+}
+
+fn worker_count(test_override: Option<usize>, available: usize) -> usize {
+    let available = available.clamp(1, MAX_WORKERS);
+    test_override
         .filter(|n| *n > 0)
-        .unwrap_or_else(|| std::thread::available_parallelism().map_or(1, usize::from))
-        .min(MAX_WORKERS)
+        .unwrap_or(available)
+        .min(available)
 }
 
 fn fingerprint(bytes: &[u8]) -> u64 {
@@ -232,7 +239,7 @@ pub fn run(
     run_with_limits(file, cfg, cancel, MAX_PAGES, MAX_HASH_BYTES)
 }
 
-fn run_with_limits(
+pub(super) fn run_with_limits(
     file: &CrawlFile,
     cfg: &CrawlConfig,
     cancel: &CancelToken,
@@ -393,12 +400,12 @@ fn run_with_limits(
     }
     scratch.begin(Transaction::Publish)?;
     conn.execute_batch(
-        "DELETE FROM near_duplicates; INSERT INTO near_duplicates SELECT * FROM temp.d02_pairs;",
+        "DELETE FROM near_duplicates; INSERT INTO near_duplicates SELECT * FROM temp.d02_pairs ORDER BY url_id, other_id;",
     )?;
     scratch.release()?;
     write_time += timer.elapsed();
     if profile {
-        eprintln!("n16 pages={} threads={threads} total={:?} load={load_time:?} lsh_wall={lsh_time:?} band_hash_sort_worker_sum={band_time:?} candidate_read={read_time:?} shingling={shingle_time:?} compare={compare_time:?} write_publish={write_time:?} candidates={candidates}; persisted MinHash/SimHash unchanged", pages.len(), started.elapsed());
+        tracing::debug!("n16 pages={} threads={threads} total={:?} load={load_time:?} lsh_wall={lsh_time:?} band_hash_sort_worker_sum={band_time:?} candidate_read={read_time:?} shingling={shingle_time:?} compare={compare_time:?} write_publish={write_time:?} candidates={candidates}; persisted MinHash/SimHash unchanged", pages.len(), started.elapsed());
     }
     cancel.set_progress(1.0);
     Ok(StepState::Done)
@@ -407,6 +414,19 @@ fn run_with_limits(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // spec: PERF-007
+    #[test]
+    fn n16_workers_respect_available_parallelism_and_eight_thread_cap() {
+        for available in [1, 2, 4, 8, 16] {
+            for requested in [None, Some(0), Some(1), Some(8), Some(100)] {
+                let count = worker_count(requested, available);
+                assert!((1..=available.min(8)).contains(&count));
+            }
+        }
+        assert_eq!(worker_count(Some(8), 4), 4);
+        assert_eq!(worker_count(None, 16), 8);
+    }
 
     // spec: ONPAGE-144
     #[test]
