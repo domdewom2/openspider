@@ -39,3 +39,30 @@ fn class_filters_partition_both_modes_and_plugins_is_public_name() {
         assert_eq!(sum, count("All"));
     }
 }
+
+// spec: ONPAGE-011
+// spec: TECH-022
+#[test]
+fn internal_canonical_display_strips_fragment_without_changing_stored_evidence() {
+    let dir = tempfile::tempdir().unwrap();
+    let (_, file) = create(dir.path(), "fragment.ospider", 96);
+    insert(&file, &[row(1, "https://site.test/source")]);
+    file.conn().execute_batch("INSERT INTO canonicals (url_id,source,position,raw,resolved,in_head) VALUES (1,'html',0,'/target#part','https://site.test/target#part',1)").unwrap();
+    let mut query = ViewQuery::new("Internal", "All");
+    query.columns = os_analyze::views::ColumnSelection::All;
+    let data = query_view(&file, &CrawlConfig::default(), &query).unwrap();
+    let column = data
+        .columns
+        .iter()
+        .position(|name| name == "Canonical Link Element 1")
+        .unwrap();
+    assert_eq!(
+        data.rows[0][column],
+        os_model::Value::Text("https://site.test/target".into())
+    );
+    let stored: String = file
+        .conn()
+        .query_row("SELECT resolved FROM canonicals", [], |row| row.get(0))
+        .unwrap();
+    assert_eq!(stored, "https://site.test/target#part");
+}

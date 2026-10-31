@@ -1,0 +1,37 @@
+{
+  "measurement": "Native os-parity CSV reader, all ten Internal-All exports; 20px Regular only",
+  "samples": 1021,
+  "exact_before": 723,
+  "exact_after": 1020,
+  "improved": 297,
+  "worsened": 0,
+  "changes": {
+    "/": {
+      "before": 6,
+      "after": 8
+    },
+    ".": {
+      "before": 6,
+      "after": 5
+    }
+  },
+  "digit_width_unchanged": 11,
+  "remaining": [
+    {
+      "site": "parity-m2-onpage",
+      "title": "STRASSE",
+      "ref": 84,
+      "os": 86
+    }
+  ],
+  "engine_validation": {
+    "native_cli_samples": 936,
+    "different_from_calibrated_metric": 0,
+    "empty_title_without_numeric_cli_width": 85,
+    "note": "936 nichtleere Titel direkt gegen den nativen CLI-Endexport geprüft; 85 leere Titel haben dort keine numerische Breite. Kein Titel weicht von der separat gemessenen Zeichenmetrik ab."
+  },
+  "secondary_titles": {
+    "nonempty": 2,
+    "affected_by_changed_characters": []
+  }
+}

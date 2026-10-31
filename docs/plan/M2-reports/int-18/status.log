@@ -1,0 +1,17 @@
+2026-10-31T01:01:08Z parity start
+2026-10-31T01:01:15Z workspace start
+parity exit=1
+coverage exit=0
+m1 exit=0
+workspace exit=0
+build exit=0
+fmt exit=0
+plan exit=1
+neutral exit=0
+2026-10-31T01:32:04Z parity-clock start
+plan (N04/N12 bestätigt) exit=0
+e2e-main exit=1 (976 bestanden / 1 Zeitfehler / 3 Skips)
+e2e-preferences-repeat exit=0 (1/1)
+parity-clock exit=0
+coverage exit=0
+m1 exit=0

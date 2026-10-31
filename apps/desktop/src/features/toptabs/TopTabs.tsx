@@ -66,7 +66,7 @@ function RegularTopTabs() {
     <GroupNav />
     {s.view === "tabs" && <TabContextMenuHost className="u20-tab-host" label={t("u20-tab-menu")} entriesFor={tab => tabContextEntries(t, tab, layout, {
       hide: ids => void s.hide(ids).catch(fail), configure: () => setConfigure(true), reset: () => void s.resetGroup(group).catch(fail) })}>
-      <TabBar tabs={visible.map(id => ({ id, label: label(id) }))} className="os-tabbar-pills"
+      <TabBar panelId="data-panel" tabs={visible.map(id => ({ id, label: label(id) }))} className="os-tabbar-pills"
         selected={s.active} onSelect={s.select} onReorder={ids => void s.layout(ids, layout.hidden, group).catch(fail)}
         label={t("u10-tabs")} overflowLabel={t("u10-tabs-configure")} config={config} />
     </TabContextMenuHost>}

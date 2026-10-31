@@ -1,4 +1,4 @@
-//! N14 differential fixture and opt-in real HTTP crawl/statement benchmark.
+//! N14-Differenzfixture und optionaler HTTP-Crawl mit Statement-Messung.
 #[path = "n14_support/before.rs"]
 mod before;
 #[path = "framework_common.rs"]
@@ -87,8 +87,8 @@ fn n14_streaming_matches_before_including_stale_facts_and_change_feed() {
     assert_eq!(unchanged, snapshot(new.conn()));
 }
 
-// SQLite's bundled profiler is enabled only here; it also captures statement execution
-// while the Rust streaming loops consume rows. No product instrumentation or feature change.
+// Der SQLite-Profiler ist nur im Test aktiv; er erfasst auch die Ausführung
+// während der Rust-Zeilenverarbeitung. Keine Produktinstrumentierung.
 unsafe extern "C" fn profile(
     _: u32,
     _: *mut std::ffi::c_void,
@@ -170,11 +170,11 @@ async fn n14_crawl_and_profile() {
     file.conn()
         .pragma_update(Some("temp"), "cache_size", -32_768)
         .unwrap();
-    // The standard synthetic site has no positive link issue facts. Before and
-    // after therefore see identical input for these keys (checked below).
+    // Die synthetische Standardsite hat keine positiven Link-Issue-Fakten.
+    // Beide Implementierungen erhalten identische Eingaben (unten geprüft).
     let facts_before: i64 = file
         .conn()
-        .query_row("SELECT COUNT(*) FROM analysis_link_facts", [], |r| r.get(0))
+        .query_row("SELECT COUNT(*) FROM (SELECT e.url_id,k.key,e.v_int FROM url_ext_data e INDEXED BY sqlite_autoindex_url_ext_data_1 CROSS JOIN ext_keys k ON k.id=e.key_id WHERE e.key_id IN (SELECT id FROM ext_keys WHERE key IN ('link.mixed_inlinks','link.nofollow_only','link.non_indexable_only')))", [], |r| r.get(0))
         .unwrap();
     assert_eq!(facts_before, 0);
     file.conn().execute_batch("CREATE TEMP TABLE n14_internal(id INTEGER PRIMARY KEY,indexable INTEGER);
@@ -209,12 +209,12 @@ async fn n14_crawl_and_profile() {
         profiling(file.conn(), false);
         let facts: i64 = file
             .conn()
-            .query_row("SELECT COUNT(*) FROM analysis_link_facts", [], |r| r.get(0))
+            .query_row("SELECT COUNT(*) FROM (SELECT e.url_id,k.key,e.v_int FROM url_ext_data e INDEXED BY sqlite_autoindex_url_ext_data_1 CROSS JOIN ext_keys k ON k.id=e.key_id WHERE e.key_id IN (SELECT id FROM ext_keys WHERE key IN ('link.mixed_inlinks','link.nofollow_only','link.non_indexable_only')))", [], |r| r.get(0))
             .unwrap();
         assert_eq!(facts, facts_before);
     }
-    // Also exercise a resumed crawl whose dictionary retains these keys even
-    // when no current URL has an issue. This exposes the EAV scan independently.
+    // Fortgesetzten Crawl mit vorhandenen Schlüsseln ohne aktuelle Issues
+    // prüfen; das misst den EAV-Scan unabhängig.
     for key in [
         "link.mixed_inlinks",
         "link.nofollow_only",
@@ -226,7 +226,7 @@ async fn n14_crawl_and_profile() {
     }
     for (label, sql) in [
         ("before_eav", "SELECT url_id,key,v_int FROM url_ext WHERE key IN ('link.mixed_inlinks','link.nofollow_only','link.non_indexable_only')"),
-        ("after_eav", "SELECT * FROM analysis_link_facts"),
+        ("after_eav", "SELECT e.url_id,k.key,e.v_int FROM url_ext_data e INDEXED BY sqlite_autoindex_url_ext_data_1 CROSS JOIN ext_keys k ON k.id=e.key_id WHERE e.key_id IN (SELECT id FROM ext_keys WHERE key IN ('link.mixed_inlinks','link.nofollow_only','link.non_indexable_only'))"),
         ("after_graph", "SELECT source_id,target_id,follow <> 0 FROM links NOT INDEXED WHERE link_type='Hyperlink' AND crawlable=1 AND source_id<>target_id"),
         ("after_delete", "DELETE FROM url_ext WHERE url_id=1 AND key IN ('link.mixed_inlinks','link.nofollow_only','link.non_indexable_only')"),
     ] {
@@ -239,7 +239,7 @@ async fn n14_crawl_and_profile() {
             profiling(file.conn(), false);
         }
     }
-    // Existing progress callbacks/time diagnostics record every standard step.
+    // Vorhandene Fortschritts-/Zeitdiagnostik erfasst jeden Standardschritt.
     os_analyze::analysis::runner::run(&file, &cfg, &CancelToken::new(), &|step, fraction| {
         eprintln!("N14_PROGRESS {step:?} {fraction}");
     })

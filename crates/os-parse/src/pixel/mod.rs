@@ -266,3 +266,24 @@ pub fn width_px_with_bold_terms(text: &str, size_px: f64, terms: &[String]) -> u
     }
     (sum + 0.5).floor() as u32
 }
+
+#[cfg(test)]
+mod q02b_calibration_tests {
+    // spec: UI-038
+    // spec: ONPAGE-096
+    #[test]
+    fn measured_punctuation_fixes_boundary_without_changing_digits_or_other_profiles() {
+        use super::width_px;
+        for title in ["Fixture /graph/10.html", "Fixture /graph/99.html"] {
+            assert_eq!(width_px(title, 20.0, false), 202);
+        }
+        assert_eq!(width_px("Fixture /", 20.0, false), 75);
+        assert_eq!(width_px("Fixture /item-39.html", 20.0, false), 190);
+        assert_eq!(width_px("/Case.html", 20.0, false), 99);
+        assert_eq!(width_px("0123456789", 20.0, false), 110);
+        assert_eq!(width_px("i", 20.0, false), 5);
+        assert_eq!(width_px("W", 20.0, false), 18);
+        assert_eq!(width_px("./", 14.0, false), 8);
+        assert_eq!(width_px("./", 20.0, true), 11);
+    }
+}

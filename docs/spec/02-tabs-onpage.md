@@ -405,7 +405,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
   - [ ] `Meta Robots 1` enthält den `content` des ersten `<meta name="robots">` (Name case-insensitiv), z. B. `noindex, follow`.
   - [ ] `X-Robots-Tag 1` enthält den Wert des ersten `X-Robots-Tag`-Headers.
   - [ ] `Meta Refresh 1` enthält den `content` des ersten `<meta http-equiv="refresh">`, z. B. `5; url=/ziel`.
-  - [ ] `Canonical Link Element 1` enthält die absolut aufgelöste URL aus `<link rel="canonical">`.
+  - [ ] `Canonical Link Element 1` enthält die absolut aufgelöste URL aus `<link rel="canonical">`, in der Anzeige ohne Fragment wie im Canonicals-Tab (K2-96); die gespeicherte Originalannotation bleibt als TECH-022-Beleg erhalten.
   - [ ] `HTTP rel="next" 1` stammt aus einem `Link`-Header mit `rel="next"`.
 - **Testfixture:** `onpage-internal/elements.html` mit allen Elementen; Route `/elements-header` mit `X-Robots-Tag: noindex` und `Link: <{{BASE_URL}}/p2>; rel="next"`.
 
@@ -424,6 +424,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
 
 ### ONPAGE-013 Internal: Word Count, Text Ratio
 - **Priorität:** P0
+- **Präzisierung (K2-96):** In den Body reparierte `title`-Elemente bilden für die Text Ratio eine Textgrenze. Normale Inline-Elemente bleiben zusammenhängend; die Wortzählungsregeln bleiben ONPAGE-141.
 - **Beschreibung:** `Word Count` gemäß ONPAGE-141 (nur Inhaltsbereich). `Text Ratio` = (Anzahl Zeichen des sichtbaren Textes im `<body>` ohne Markup, ohne `script`/`style`/`noscript`/`template`) ÷ (Anzahl Zeichen des gesamten HTML-Quelltextes) × 100, drei Nachkommastellen (K2-87, SQ-08; vorher eine) (**Annahme A-7**: Text Ratio nutzt den gesamten Body, nicht nur den Inhaltsbereich).
 - **Eingaben/Konfiguration:** Inhaltsbereich (ONPAGE-140).
 - **Ausgabe:** Spalten `Word Count`, `Text Ratio`.

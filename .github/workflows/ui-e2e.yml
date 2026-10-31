@@ -102,6 +102,18 @@ jobs:
       - name: os-app-bridge bauen
         run: cargo build --locked -p os-app --features e2e-bridge --bin os-app-bridge
 
+      # beta/* und mcp/bridge brauchen os-testsite; alpha/support.ts braucht zusätzlich CLI und Paritätswerkzeug.
+      # Cargo erzeugt unter Windows .exe; die Fixtures lösen die Namen plattformneutral auf.
+      - name: E2E-Fixture-Werkzeuge bauen
+        run: cargo build --locked -p os-testsite -p os-cli -p os-parity --bins
+
+      # N17: WebKit übernimmt auf macOS die native Tastaturnavigation. Ohne sie überspringt Tab native Buttons
+      # (auch in der isolierten Grid-Fixture). UI-126 prüft weiterhin echte Tab-Tasten und alle Zustandsmerkmale.
+      # https://github.com/microsoft/playwright/issues/41808
+      - name: WebKit-Tastaturnavigation einschalten (macOS)
+        if: runner.os == 'macOS'
+        run: defaults write org.webkit.Playwright AppleKeyboardUIMode -int 2
+
       - name: E2E-A
         env:
           OS_E2E_PROJECTS: ${{ matrix.projects }}

@@ -91,9 +91,49 @@ function mergeDeep(target: unknown, patch: unknown): unknown {
 // read from the same mutation generation may replace the visible preferences.
 let readGeneration = 0;
 let mutationGeneration = 0;
-const pendingPatches = new Map<number, Patch>();
+const pendingPatches = new Map<string, Patch>();
+// getRandomValues also works on custom app origins without secure-context UUID APIs.
+const sender = Array.from(globalThis.crypto.getRandomValues(new Uint32Array(4)), value => value.toString(16)).join("-");
+let broadcast: BroadcastChannel | null = null;
 let confirmedDto: AppSettingsDto | null = null;
 let patchTail: Promise<unknown> = Promise.resolve();
+
+function publishPrefs() {
+  const dto = [...pendingPatches.values()].reduce<AppSettingsDto | null>(
+    (base, pending) => base ? mergeDeep(base, pending) as AppSettingsDto : null,
+    confirmedDto,
+  );
+  if (dto) usePrefs.setState({ dto, restartRequired: dto.restartRequired ?? [], ...fromNormalized(normalizeSettings(dto)) });
+}
+
+// UI-120/UI-121: transport the live edit independently of disk writes and the
+// settingsChanged -> settings.get round trip. Bridge instances have isolated homes.
+export function startPrefsBroadcast(scope: string): () => void {
+  if (typeof BroadcastChannel === "undefined") return () => undefined;
+  const channel = new BroadcastChannel(`openspider-prefs:${scope}`);
+  broadcast = channel;
+  channel.onmessage = ({ data }: MessageEvent<{
+    sender: string; id: string; patch?: Patch; dto?: AppSettingsDto; error?: CmdError | null;
+  }>) => {
+    if (data.sender === sender) return;
+    ++readGeneration;
+    if (pendingPatches.size === 0) confirmedDto = usePrefs.getState().dto;
+    if (data.patch) pendingPatches.set(data.id, data.patch);
+    else {
+      pendingPatches.delete(data.id);
+      if (data.dto) {
+        confirmedDto = data.dto;
+        usePrefs.setState({ loaded: true });
+      }
+      usePrefs.setState({ error: data.error ?? null });
+    }
+    publishPrefs();
+  };
+  return () => {
+    channel.close();
+    if (broadcast === channel) broadcast = null;
+  };
+}
 
 export const usePrefs = create<PrefsState>((set, get) => ({
   loaded: false,
@@ -111,6 +151,14 @@ export const usePrefs = create<PrefsState>((set, get) => ({
     const mutation = mutationGeneration;
     try {
       const dto = await settingsApi.get();
+      // A window can receive a live edit while its initial read is in flight.
+      // Use that read as the baseline, then apply the pending overlay.
+      if (!get().loaded && confirmedDto === null) {
+        confirmedDto = dto;
+        set({ loaded: true });
+        publishPrefs();
+        return;
+      }
       if (read !== readGeneration || mutation !== mutationGeneration || pendingPatches.size > 0) return;
       confirmedDto = dto;
       set({ loaded: true, error: null, dto, restartRequired: dto.restartRequired ?? [], ...fromNormalized(normalizeSettings(dto)) });
@@ -124,15 +172,10 @@ export const usePrefs = create<PrefsState>((set, get) => ({
     ++readGeneration;
     // With no writes in flight the visible DTO is the confirmed baseline.
     if (pendingPatches.size === 0) confirmedDto = get().dto;
-    pendingPatches.set(mutation, patch);
-    const publish = () => {
-      const dto = [...pendingPatches.values()].reduce<AppSettingsDto | null>(
-        (base, pending) => base ? mergeDeep(base, pending) as AppSettingsDto : null,
-        confirmedDto,
-      );
-      if (dto) set({ dto, restartRequired: dto.restartRequired ?? [], ...fromNormalized(normalizeSettings(dto)) });
-    };
-    publish(); // UI-120: immediate, including while earlier writes are pending.
+    const id = `${sender}:${mutation}`;
+    pendingPatches.set(id, patch);
+    broadcast?.postMessage({ sender, id, patch });
+    publishPrefs();
     try {
       const saving = patchTail.then(() => settingsApi.set({ patch: patch as never }));
       patchTail = saving.catch(() => undefined);
@@ -143,8 +186,9 @@ export const usePrefs = create<PrefsState>((set, get) => ({
     } catch (e) {
       if (mutation === mutationGeneration) set({ error: toCmdError(e) });
     } finally {
-      pendingPatches.delete(mutation);
-      publish();
+      pendingPatches.delete(id);
+      broadcast?.postMessage({ sender, id, dto: confirmedDto, error: get().error });
+      publishPrefs();
     }
   },
 

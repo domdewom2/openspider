@@ -445,7 +445,15 @@ pub fn report_rows(
     let url = ColumnKind::Url;
     let mut fields = vec![
         ("Address", url, "u.address"),
-        ("Hreflang Language", text, "h.code_raw"),
+        (
+            "Hreflang Language",
+            text,
+            if filter == "Missing Return Links" {
+                "''"
+            } else {
+                "h.code_raw"
+            },
+        ),
         ("Hreflang URL", url, TARGET_URL),
     ];
     match filter {

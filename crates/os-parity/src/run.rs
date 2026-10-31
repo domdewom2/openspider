@@ -23,6 +23,7 @@ use std::process::Command;
 
 use serde::Serialize;
 
+use crate::crawl_date::CrawlWindow;
 use crate::csvio::{read_output, read_reference, Table};
 use crate::deviations::Deviations;
 use crate::diff::{compare, evaluate, CompareInput};
@@ -79,6 +80,8 @@ pub struct ExportRequest {
     pub bulk: Vec<String>,
     /// Werte für `--save-report`.
     pub reports: Vec<String>,
+    /// Einzelne Ziel-URL für den Auswahl-Export OUT-023.
+    pub crawl_path: Option<String>,
 }
 
 /// Erzeugt die OpenSpider-Exporte einer Site.
@@ -158,6 +161,9 @@ impl CommandExporter {
                 a.push(flag.into());
                 a.push(values.join(","));
             }
+        }
+        if let Some(target) = &req.crawl_path {
+            a.extend(["--export-crawl-path".into(), target.clone()]);
         }
         a
     }
@@ -628,6 +634,11 @@ fn run_site(
     let mut requests: Vec<ExportRequest> = Vec::new();
     let mut destinations = Vec::new();
     for p in &prepared {
+        let crawl_path = if matches!(&p.os, OsExport::Report(name) if name == "Crawl Path Report") {
+            Some(crawl_path_target(&p.entry, &os_base)?)
+        } else {
+            None
+        };
         let sitemap = match &p.os {
             OsExport::Sitemap(kind) => Some(kind.clone()),
             _ => None,
@@ -635,12 +646,13 @@ fn run_site(
         let index = requests
             .iter()
             .position(|r| {
-                r.config == p.entry.config
+                r.crawl_path == crawl_path
+                    && r.config == p.entry.config
                     && r.sitemap == sitemap
                     && match &p.os {
                         OsExport::Tab { .. } => !r.tabs.is_empty(),
                         OsExport::Bulk(_) => !r.bulk.is_empty(),
-                        OsExport::Report(_) => !r.reports.is_empty(),
+                        OsExport::Report(_) => r.crawl_path.is_some() || !r.reports.is_empty(),
                         OsExport::Sitemap(_) => r.sitemap.is_some(),
                     }
             })
@@ -661,6 +673,7 @@ fn run_site(
                     tabs: Vec::new(),
                     bulk: Vec::new(),
                     reports: Vec::new(),
+                    crawl_path: crawl_path.clone(),
                 });
                 index
             });
@@ -669,6 +682,7 @@ fn run_site(
         let list = match &p.os {
             OsExport::Tab { .. } => Some(&mut req.tabs),
             OsExport::Bulk(_) => Some(&mut req.bulk),
+            OsExport::Report(_) if req.crawl_path.is_some() => None,
             OsExport::Report(_) => Some(&mut req.reports),
             OsExport::Sitemap(_) => None,
         };
@@ -679,10 +693,15 @@ fn run_site(
             }
         }
     }
-    let mut errors: Vec<_> = requests
+    let (mut errors, mut crawl_windows): (Vec<_>, Vec<_>) = requests
         .iter()
-        .map(|req| exporter.export(req).err())
-        .collect();
+        .map(|req| {
+            let started = os_model::Timestamp::now_utc();
+            let error = exporter.export(req).err();
+            let window = CrawlWindow::new(started, os_model::Timestamp::now_utc());
+            (error, window)
+        })
+        .unzip();
     // Nur fehlgeschlagene Namensgruppen einzeln wiederholen. Erfolgreiche Gruppen
     // brauchen keinen weiteren Crawl; jeder Fehler bleibt seinem Export zugeordnet.
     for (item, (p, destination)) in prepared.iter().zip(&mut destinations).enumerate() {
@@ -698,7 +717,9 @@ fn run_site(
         }
         retry.out_dir = req.out_dir.join(format!("fallback-{item}"));
         *destination = requests.len();
+        let started = os_model::Timestamp::now_utc();
         errors.push(exporter.export(&retry).err());
+        crawl_windows.push(CrawlWindow::new(started, os_model::Timestamp::now_utc()));
         requests.push(retry);
     }
     let site_failure = destinations
@@ -720,6 +741,8 @@ fn run_site(
                 site,
                 p,
                 &requests[index].out_dir,
+                manifest.exported_at.as_deref(),
+                &crawl_windows[index],
                 &ref_bases,
                 &os_bases,
                 thresholds,
@@ -757,6 +780,8 @@ fn compare_one(
     site: &str,
     p: &Prepared,
     os_dir: &Path,
+    exported_at: Option<&str>,
+    crawl_window: &CrawlWindow,
     ref_bases: &BaseUrls,
     os_bases: &BaseUrls,
     thresholds: &Thresholds,
@@ -774,21 +799,47 @@ fn compare_one(
             ))
         })?;
     let ref_path = opts.golden_dir(site).join("ref").join(&p.entry.ref_file);
-    let reference = select_rows(
-        read_reference(&ref_path, &p.mapping)?,
-        &p.entry.select,
-        ref_bases,
-    )?;
+    let mut reference_table = read_reference(&ref_path, &p.mapping)?;
+    if p.mapping.format == crate::mapping::RefFormat::CrawlPath {
+        let target = p
+            .entry
+            .select
+            .get("Target Address")
+            .ok_or_else(|| ParityError::Invalid("Crawl Path: Zielauswahl fehlt".into()))?;
+        crate::csvio::label_crawl_path(&mut reference_table, target)?;
+    }
+    let mut reference = select_rows(reference_table, &p.entry.select, ref_bases)?;
     if !p.entry.select.is_empty() && reference.rows.is_empty() {
         return Err(ParityError::Invalid(
             "Zielauswahl der Referenz hat keine Zeilen".into(),
         ));
     }
-    let os = select_rows(
-        read_output(&os_path, &p.mapping)?,
-        &p.entry.select,
-        os_bases,
-    )?;
+    let output_table = read_output(&os_path, &p.mapping)?;
+    if p.mapping.format == crate::mapping::RefFormat::CrawlPath {
+        let index = output_table
+            .index_of("Target Address")
+            .ok_or_else(|| ParityError::Invalid("Crawl Path: Ziel fehlt".into()))?;
+        let selected = &p.entry.select["Target Address"];
+        if output_table
+            .rows
+            .iter()
+            .any(|row| !row[index].ends_with(selected))
+        {
+            return Err(ParityError::Invalid(
+                "Crawl Path: unerwarteter Zielblock".into(),
+            ));
+        }
+    }
+    let mut os = select_rows(output_table, &p.entry.select, os_bases)?;
+    // OUT-123: Nur die Server-Quelle hat den Ersatzwert Crawl-Datum.
+    if matches!(p.os, OsExport::Sitemap(_))
+        && p.entry
+            .config
+            .get("sitemap_gen.lastmod.source")
+            .is_none_or(|source| source == "server")
+    {
+        crate::crawl_date::normalize(&mut reference, &mut os, exported_at, crawl_window)?;
+    }
     let devs = deviations.for_file(Some(site), &p.entry.mapping, Some(&p.entry.ref_file));
     let mut report = compare(&CompareInput {
         export: &p.entry.mapping,
@@ -1138,5 +1189,46 @@ mod n11_list_order_tests {
         assert!(!matches(table(&["b", "a", "extra"])));
         std::fs::write(&input, "https://site.test/b\n").unwrap();
         assert!(!matches(table(&["b", "a"])));
+    }
+}
+
+/// OUT-023 accepts exactly one path selection, bound only after the fixture server starts.
+fn crawl_path_target(entry: &ExportEntry, base: &str) -> Result<String, ParityError> {
+    match entry.select.get("Target Address") {
+        Some(path)
+            if entry.select.len() == 1
+                && path.starts_with('/')
+                && !path.starts_with("//")
+                && !path.contains(['?', '#']) =>
+        {
+            Ok(format!("{}{path}", base.trim_end_matches('/')))
+        }
+        _ => Err(ParityError::Invalid(
+            "Crawl Path benötigt genau eine eindeutige Target Address als absoluten URL-Pfad"
+                .into(),
+        )),
+    }
+}
+
+#[cfg(test)]
+mod crawl_path_selection_tests {
+    use super::*;
+    // spec: OUT-023
+    #[test]
+    fn target_selection_is_unique_and_bound_to_runtime_origin() {
+        let manifest = Manifest::parse("site = 'fixture'\nport = 0\n[[export]]\nref_file = 'crawl.csv'\nos = 'report:Crawl Path Report'\nmapping = 'crawl_path'\n[export.select]\n'Target Address' = '/deep/8.html'\n").unwrap();
+        let mut entry = manifest.export[0].clone();
+        assert_eq!(
+            crawl_path_target(&entry, "http://127.0.0.1:1234/").unwrap(),
+            "http://127.0.0.1:1234/deep/8.html"
+        );
+        entry.select.insert("Step".into(), "0".into());
+        assert!(crawl_path_target(&entry, "http://a").is_err());
+        entry.select.clear();
+        assert!(crawl_path_target(&entry, "http://a").is_err());
+        entry
+            .select
+            .insert("Target Address".into(), "//other/end".into());
+        assert!(crawl_path_target(&entry, "http://a").is_err());
     }
 }

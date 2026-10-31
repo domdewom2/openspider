@@ -429,3 +429,36 @@ fn analyze_counts_serialized_chars_without_building_the_string() {
         analyze_with_source(&doc, &cfg, serialized)
     );
 }
+
+// spec: ONPAGE-013
+#[test]
+fn repaired_body_titles_have_text_ratio_boundaries_without_changing_content_words() {
+    for (html, expected) in [
+        (
+            include_str!(
+                "../../../tests/fixtures/parity-m2-technical/validation-body-before-html.html"
+            ),
+            27.397,
+        ),
+        (
+            include_str!(
+                "../../../tests/fixtures/parity-m2-technical/validation-head-not-first.html"
+            ),
+            30.588,
+        ),
+    ] {
+        let doc = Document::parse(html);
+        let stats = analyze_with_source(&doc, &ContentAreaConfig::default(), html.chars().count());
+        assert!((stats.text_ratio - expected).abs() < 0.0005);
+    }
+    let html = "<head><title>Normal head</title></head><body><span>a</span><span>b</span></body>";
+    let stats = analyze_with_source(
+        &Document::parse(html),
+        &ContentAreaConfig::default(),
+        html.chars().count(),
+    );
+    assert_eq!(
+        stats.word_count, 1,
+        "Inline-Elemente erhalten keine künstlichen Wortgrenzen"
+    );
+}

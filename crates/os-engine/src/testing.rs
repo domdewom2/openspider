@@ -69,6 +69,21 @@ pub fn test_deps() -> EngineDeps {
     }
 }
 
+/// Launch a real browser once for a fixture suite, independently of crawl deadlines.
+/// The caller injects it through `EngineDeps::renderer` and closes it after all
+/// crawls. This avoids a disposable availability probe and a cold launch per crawl.
+/// Missing Chromium remains an error; page rendering still uses engine deadlines.
+pub async fn fixture_browser(launch_timeout_ms: u32) -> Arc<os_render::Renderer> {
+    Arc::new(
+        os_render::Renderer::launch(os_render::LaunchOpts {
+            launch_timeout_ms,
+            ..Default::default()
+        })
+        .await
+        .expect("real fixture Chromium starts"),
+    )
+}
+
 /// HTTP-Abrufer für eine laufende Testsite (für `resume_crawl`, `recrawl_urls` u. Ä. gegen eine vorhandene
 /// Crawl-Datei): löst `*.test` auf die Site auf (zusätzlich zu den Regeln in `cfg`) und vertraut ihrer Test-CA.
 pub fn site_fetcher(

@@ -1,10 +1,11 @@
+# Q02b / OUT-094/095: A/B-Bezug der Referenzspalten anhand der nativen Diff-Proben korrigiert; keine Mengen-/Spaltenausnahme.
 # N06: Spaltensatz nach Referenzkopfzeile; Soll und Ignoriergründe aus der Spec.
 key = ["URL", "Non Canonical Return Link URL", "#"]
 drop_ref_columns = ["Description", "How To Fix"]
 
 [columns]
-"URL" = "Address"
-"Non Canonical Return Link URL" = "Hreflang URL"
+"URL" = "Hreflang URL"
+"Non Canonical Return Link URL" = "Address"
 "Canonical" = "Canonical Of Hreflang URL"
 
 [normalize]

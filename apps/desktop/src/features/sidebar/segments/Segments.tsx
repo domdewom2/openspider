@@ -1,3 +1,4 @@
+import { Button } from "../../../ui/primitives/Button";
 import { useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useT, useFormat } from "../../../i18n";
@@ -48,12 +49,12 @@ export function Segments() {
 
   return <div className="os-sidebar-segments-panel">
     <div className="os-sidebar-actions">
-      <button type="button" onClick={() => openSegmentsDialog()}>{t("sg-configure")}</button>
-      {scope.segment && <button type="button" onClick={clear}>{t("sg-clear-filter")}</button>}
+      <Button onPress={() => openSegmentsDialog()}>{t("sg-configure")}</Button>
+      {scope.segment && <Button onPress={clear}>{t("sg-clear-filter")}</Button>}
     </div>
     <QueryFeedback error={query.error} loading={!!crawl && query.isPending} retry={() => void query.refetch()} />
     {!crawl && <p>{t("sidebar-no-crawl")}</p>}
-    {rows && share && !hasSegments(rows) && <div className="os-sidebar-empty" data-empty-state="no-segments"><p>{t("sg-empty")}</p><button type="button" onClick={() => openSegmentsDialog()}>{t("sg-create")}</button></div>}
+    {rows && share && !hasSegments(rows) && <div className="os-sidebar-empty" data-empty-state="no-segments"><p>{t("sg-empty")}</p><Button onPress={() => openSegmentsDialog()}>{t("sg-create")}</Button></div>}
     {rows && share && hasSegments(rows) && <>
       <PanelActions which="segments" rows={[[t("sg-segment"), t("sidebar-urls"), t("sg-percent-segmented"), ...columns.map(c => c.header)], ...rows.map(r => [label(r), r.urls, `${share.pct(r).toFixed(1)} %`, ...columns.map(c => classValue(r, c.key) ?? "–")])]} />
       <div className="os-sidebar-view"><label>{t("sg-view")} <select aria-label={t("sg-view")} value={view} onChange={e => setView(e.target.value as SegmentsView)}>{SEGMENT_VIEWS.map(v => <option key={v} value={v}>{t(`sg-view-${v}`)}</option>)}</select></label></div>

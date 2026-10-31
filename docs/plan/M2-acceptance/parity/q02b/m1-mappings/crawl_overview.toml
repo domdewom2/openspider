@@ -1,0 +1,29 @@
+# Spaltenmapping Referenz -> OpenSpider fuer den Export "Report Crawl Overview" (Format: docs/plan/M1.md 5.2).
+# Stand M1-P29 (Welle 5): an die echten Kopfzeilen der Referenz (Referenzprodukt (Free-Version), englische Oberflaeche) angepasst.
+# Nur Spaltennamen der Kopfzeile; Beschreibungsspalten werden beim Einlesen verworfen (Clean-Room, A8).
+# Die Referenz schreibt ein Blockformat (Kopfzeilen, dann je Abschnitt eine Kopfzeile und Eintraege, Dezimalkomma `100,00%`);
+# der Runner ueberfuehrt es in (Section, Item, URLs, % of Total) und verwirft die Spalten `Total URLs`/`Total URLs Description`.
+# Verglichen werden die M1-Filter (docs/plan/M1-filters.toml); Zeilen der Referenz zu anderen Filtern werden nur gezaehlt.
+# K2-66: Die M2-Filter (`filters = ["docs/plan/M2-filters.toml"]` in [blocks]) werden erst in Q02 scharf geschaltet
+# (M2.md 6.1); Arbeitsliste: docs/plan/M2-reports/parity-deviations-q02.md.
+key = ["Section", "Item"]
+drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
+format = "blocks"
+
+[blocks]
+m1_filters = "docs/plan/M1-filters.toml"
+os_only_rows_ok = true
+section_map = { "Depth (Clicks from Start URL)" = "Crawl Depth" }
+
+[columns]
+"Section" = { os = "Section", transform = ["ignore_case"] }
+"Item" = { os = "Item", transform = ["ignore_case"] }
+"URLs" = "URLs"
+"% of Total" = { ignore = true, reason = "abgeleitet aus URLs und Grundgesamtheit des Abschnitts; verglichen werden die Zaehler (URLs, A3). Die Grundgesamtheit unterscheidet sich ueber die robots.txt-Zeile (K-40) und die Crawl-Depth-Population" }
+
+[normalize]
+base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}
+trim = true
+bool = "case-insensitive"
+number_decimals = 3      # Zahlen werden nach Rundung verglichen
+empty_equals_null = true

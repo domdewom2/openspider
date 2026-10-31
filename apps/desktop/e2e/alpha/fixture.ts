@@ -88,7 +88,7 @@ export const test = base.extend<{ alpha: Alpha }, { site: Site }>({
         },
         { cmd, args },
       ) as Promise<T>;
-    const table = () => page.getByRole("region", { name: /^(Crawl table|Crawl-Tabelle)$/ });
+    const table = () => page.getByRole("tabpanel").and(page.locator("#data-panel"));
     const alpha: Alpha = {
       site,
       bridge,

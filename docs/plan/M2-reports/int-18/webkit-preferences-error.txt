@@ -1,0 +1,248 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: beta/preferences.spec.ts >> theme and language reach both open windows within 200 ms
+- Location: e2e/beta/preferences.spec.ts:38:1
+
+# Error details
+
+```
+Error: expect(received).toBeLessThanOrEqual(expected)
+
+Expected: <= 200
+Received:    315
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic:
+    - region "Exportstatus"
+  - generic [ref=e3]:
+    - separator "Seitenleiste vergrößern; Eingabe stellt sie wieder her, Pos1 klappt sie ein" [ref=e4]
+    - separator "Details vergrößern; Eingabe stellt sie wieder her, Pos1 klappt sie ein" [ref=e5]
+    - region "Details" [ref=e7]:
+      - generic [ref=e8]:
+        - heading "Details" [level=2] [ref=e9]
+        - button "Crawl-Pfad" [disabled] [ref=e10]
+      - generic [ref=e12]:
+        - tablist "Detail-Tabs" [ref=e13]:
+          - tab "URL-Details" [selected] [ref=e14]
+          - tab "Eingehende Links" [ref=e16]
+          - tab "Ausgehende Links" [ref=e18]
+          - tab "Bilddetails" [ref=e20]
+          - tab "Ressourcen" [ref=e22]
+          - tab "SERP-Snippet" [ref=e24]
+          - tab "Gerenderte Seite" [ref=e26]
+          - tab "Chrome-Konsolenprotokoll" [ref=e28]
+        - button "Weitere Detail-Tabs" [ref=e31]
+      - tabpanel "URL-Details" [ref=e35]:
+        - status [ref=e36]:
+          - paragraph [ref=e43]: Wähle in der oberen Tabelle eine Zeile aus, um ihre Details zu sehen.
+    - banner "Kopfleiste" [ref=e44]:
+      - generic [ref=e45]:
+        - heading "OpenSpider" [level=1] [ref=e46]
+        - generic [ref=e48]:
+          - generic [ref=e49]:
+            - generic [ref=e50]: Modus
+            - combobox "Modus" [ref=e51]:
+              - option "Spider" [selected]
+              - option "Liste"
+              - option "APIs"
+          - generic [ref=e52]:
+            - generic [ref=e53]: Start-URL
+            - combobox "Start-URL" [invalid] [ref=e57]
+          - generic [ref=e58]:
+            - generic [ref=e59]: Bereich
+            - combobox "Bereich" [ref=e60]:
+              - option "Diese Subdomain" [selected]
+              - option "Alle Subdomains"
+              - option "Unterordner"
+          - button "Starten" [disabled] [ref=e61]
+          - button "Stoppen" [disabled] [ref=e64]
+          - button "Löschen" [disabled] [ref=e67]
+          - button "Einstellungen" [ref=e71]
+        - region "Crawl-Fortschritt" [ref=e75]:
+          - strong [ref=e76]: Bereit
+          - generic [ref=e78]:
+            - progressbar "Crawl-Fortschritt" [ref=e79]
+            - strong [ref=e81]: 0,0 %
+          - generic [ref=e82]: 0 / 0 URLs
+          - generic [ref=e83]: 0,0 URLs/s
+          - generic [ref=e84]: "Laufzeit: 0:00"
+          - generic [ref=e85]: "Restzeit: –"
+        - generic [ref=e86]: Eine gültige HTTP- oder HTTPS-Adresse eingeben.
+    - navigation "Datenansichten" [ref=e87]:
+      - generic [ref=e88]:
+        - generic [ref=e89]:
+          - group "Bereiche" [ref=e90]:
+            - button "Übersicht" [ref=e92]
+            - button "URLs" [ref=e94]
+            - generic [ref=e95]:
+              - button "Inhalte" [ref=e96]
+              - button "Tabs von Inhalte" [ref=e97]
+            - generic [ref=e100]:
+              - button "Technik" [ref=e101]
+              - button "Tabs von Technik" [ref=e102]
+            - generic [ref=e105]:
+              - button "Links" [ref=e106]
+              - button "Tabs von Links" [ref=e107]
+            - generic [ref=e110]:
+              - button "Leistung" [ref=e111]
+              - button "Tabs von Leistung" [ref=e112]
+            - generic [ref=e115]:
+              - button "Benutzerdefiniert" [ref=e116]
+              - button "Tabs von Benutzerdefiniert" [ref=e117]
+            - button "Konfiguration" [ref=e121]
+          - generic [ref=e125]:
+            - tablist "Daten-Tabs" [ref=e126]:
+              - tab "Intern" [selected] [ref=e127]
+              - tab "Extern" [ref=e129]
+              - tab "Sicherheit" [ref=e131]
+              - tab "Antwortcodes" [ref=e133]
+              - tab "URL" [ref=e135]
+            - button "Tabs konfigurieren" [ref=e138]
+        - button "Crawls vergleichen" [ref=e143]
+    - main "Ergebnisse" [ref=e151]:
+      - tabpanel "Intern" [ref=e152]:
+        - generic [ref=e153]:
+          - group "Schnellfilter" [ref=e154]:
+            - button "Alle" [pressed] [ref=e155]
+            - button "HTML" [ref=e156]
+            - button "JavaScript" [ref=e157]
+          - generic [ref=e159]:
+            - generic [ref=e160]: Filter
+            - generic [ref=e161]:
+              - combobox "Filter" [ref=e162]: Alle (–)
+              - button "Filter" [ref=e163]
+          - generic [ref=e166]:
+            - searchbox "URLs durchsuchen" [ref=e168]
+            - button "Erweiterte Suche" [ref=e169]: ▾
+          - group "Ansicht" [ref=e170]:
+            - button "Liste" [pressed] [ref=e171]
+            - button "Baum" [disabled] [ref=e173]
+          - generic [ref=e179]:
+            - button "Exportieren" [disabled] [ref=e180]
+            - button "Weitere Exporte" [ref=e184]
+          - button "Spalten konfigurieren…" [ref=e187]
+          - button "Spalten konfigurieren" [ref=e190]: +
+        - alert [ref=e191]: Kein Crawl geöffnet.
+        - status [ref=e193]:
+          - paragraph [ref=e199]: Keine Zeile passt zum aktuellen Filter.
+        - status [ref=e200]: "Angezeigt: 0 von –"
+    - complementary "Seitenleiste" [ref=e201]:
+      - generic [ref=e202]:
+        - generic [ref=e204]:
+          - tablist "Crawl-Zusammenfassung" [ref=e205]:
+            - tab "Übersicht" [selected] [ref=e206]
+            - tab "Befunde" [ref=e208]
+            - tab "Seitenstruktur" [ref=e210]
+          - button "Weitere Seitenleisten-Tabs" [ref=e213] [cursor=pointer]
+        - tabpanel "Übersicht" [ref=e217]:
+          - paragraph [ref=e218]: Einen Crawl öffnen, um seine Zusammenfassung zu sehen.
+    - contentinfo "Statusleiste" [ref=e219]:
+      - generic [ref=e220]:
+        - group "Statistik" [ref=e221]:
+          - generic [ref=e222]: "Modus: Spider"
+          - generic [ref=e223]: Bereit
+          - generic [ref=e224]: "Aktuell: 0,0 URL/s"
+          - generic [ref=e225]: "Durchschnitt: 0,0 URL/s"
+          - generic [ref=e226]: Erledigt 0 von 0 (0 %)
+          - generic [ref=e227]: "Verbleibend: 0"
+          - generic [ref=e228]: "Restzeit: –"
+          - generic [ref=e229]: "Arbeits-Threads: 0"
+          - generic [ref=e230]: "Speicher: – / –"
+          - generic [ref=e231]: "Crawl-Datei: –"
+        - 'button "MCP: aus" [ref=e232]'
+        - group [ref=e233]:
+          - generic "Statistik" [ref=e234]
+      - group [ref=e235]:
+        - generic "Nicht verfügbare Menüaktionen (38)" [ref=e236] [cursor=pointer]
+      - generic [ref=e237]: Version 0.1.0
+    - region "Crawl-Meldung"
+```
+
+# Test source
+
+```ts
+  1  | import { test, expect } from "@playwright/test";
+  2  | import { startAlphaBridge, startSite } from "../alpha/support";
+  3  |
+  4  | // spec: UI-120
+  5  | // spec: UI-121
+  6  | test("a delayed settings read cannot undo a live theme and language change", async ({ page }) => {
+  7  |   const site = await startSite(); const bridge = await startAlphaBridge();
+  8  |   try {
+  9  |     await page.goto(`/?${new URLSearchParams({ bridge: bridge.url })}`);
+  10 |     await expect(page.locator("[data-shell-ready]")).toHaveAttribute("data-shell-ready", "true");
+  11 |     const result = await page.evaluate(async () => {
+  12 |       const { settings } = await import(/* @vite-ignore */ String("/src/ipc/settings.ts"));
+  13 |       const { usePrefs } = await import(/* @vite-ignore */ String("/src/state/prefs.ts"));
+  14 |       const original = settings.get;
+  15 |       let first = true; let captured!: () => void;
+  16 |       const ready = new Promise<void>(resolve => { captured = resolve; });
+  17 |       settings.get = async (signal?: AbortSignal) => {
+  18 |         const dto = await original(signal);
+  19 |         if (first) { first = false; captured(); await new Promise(r => setTimeout(r, 50)); }
+  20 |         return dto;
+  21 |       };
+  22 |       try {
+  23 |         const loading = usePrefs.getState().load();
+  24 |         await ready;
+  25 |         await usePrefs.getState().patch({ appearance: { theme: "dark" }, general: { language: "de" } });
+  26 |         await loading;
+  27 |         return { language: usePrefs.getState().language, theme: usePrefs.getState().appearance.theme };
+  28 |       } finally { settings.get = original; }
+  29 |     });
+  30 |     expect(result).toEqual({ language: "de", theme: "dark" });
+  31 |     await expect(page.locator("html")).toHaveAttribute("lang", "de");
+  32 |     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+  33 |   } finally { await bridge.stop(); await site.stop(); }
+  34 | });
+  35 |
+  36 | // spec: UI-120
+  37 | // spec: UI-121
+  38 | test("theme and language reach both open windows within 200 ms", async ({ page, context }) => {
+  39 |   const bridge = await startAlphaBridge(); const settingsPage = await context.newPage();
+  40 |   try {
+  41 |     const query = new URLSearchParams({ bridge: bridge.url });
+  42 |     await page.goto(`/?${query}`);
+  43 |     await expect(page.locator("[data-shell-ready]")).toHaveAttribute("data-shell-ready", "true");
+  44 |     await settingsPage.goto(`/settings.html?${query}`);
+  45 |     await expect(settingsPage.locator("[data-settings-section]").first()).toBeVisible();
+  46 |     for (const [language, theme] of [["de", "dark"], ["en", "light"]] as const) {
+  47 |       for (const window of [page, settingsPage]) await window.evaluate(({ language, theme }) => {
+  48 |         const root = document.documentElement;
+  49 |         const sample = { at: 0 };
+  50 |         const observer = new MutationObserver(() => {
+  51 |           if (root.lang === language && root.dataset.theme === theme) { sample.at = performance.timeOrigin + performance.now(); observer.disconnect(); }
+  52 |         });
+  53 |         observer.observe(root, { attributes: true });
+  54 |         Object.assign(globalThis, { __n03PreferenceSample: sample });
+  55 |       }, { language, theme });
+  56 |       const started = await settingsPage.evaluate(async ({ language, theme }) => {
+  57 |         const { usePrefs } = await import(/* @vite-ignore */ String("/src/state/prefs.ts"));
+  58 |         const started = performance.timeOrigin + performance.now();
+  59 |         await usePrefs.getState().patch({ general: { language }, appearance: { theme } });
+  60 |         return started;
+  61 |       }, { language, theme });
+  62 |       for (const window of [page, settingsPage]) {
+  63 |         await expect(window.locator("html")).toHaveAttribute("lang", language);
+  64 |         await expect(window.locator("html")).toHaveAttribute("data-theme", theme);
+  65 |         const changedAt = await window.evaluate(() => (globalThis as unknown as { __n03PreferenceSample: { at: number } }).__n03PreferenceSample.at);
+  66 |         expect(changedAt - started).toBeGreaterThanOrEqual(0);
+> 67 |         expect(changedAt - started).toBeLessThanOrEqual(200);
+     |                                     ^ Error: expect(received).toBeLessThanOrEqual(expected)
+  68 |       }
+  69 |       await expect(page.getByRole("combobox", { name: language === "de" ? "Bereich" : "Scope", exact: true })).toBeVisible();
+  70 |     }
+  71 |   } finally { await settingsPage.close(); await bridge.stop(); }
+  72 | });
+  73 |
+```

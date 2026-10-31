@@ -1,19 +1,22 @@
-# M2-P01: Spec-abgeleitete Spalten; keine Referenzwerte oder Beschreibungstexte.
-key = ["Target Address", "Step"]
+# OUT-023 / K2-96: geprüfte Projektion von Knoten auf Verbindungen.
+format = "crawl_path"
+key = ["Source", "Destination", "#"]
 drop_ref_columns = ["Description", "How To Fix"]
 
 [columns]
 "Target Address" = "Target Address"
-"Step" = "Step"
-"Address" = "Address"
-"Status Code" = "Status Code"
-"Link Type" = "Link Type"
+"Status" = { ignore = true, reason = "OUT-023 liefert Status Code des Knotens, keinen separaten Statustext. Status Code bleibt geprüft, auch bei Weiterleitungen." }
+"Source" = "Source"
+"Destination" = "Destination"
+"Type" = "Type"
 "Anchor" = "Anchor"
 "Crawl Depth" = "Crawl Depth"
+"Status Code" = "Status Code"
+"Follow" = { ignore = true, reason = "OUT-023 enthält keine Follow-Spalte; Knoten-/Verbindungsmenge bleibt vollständig geprüft." }
+"Alt Text" = { ignore = true, reason = "OUT-023 enthält keine Alt-Text-Spalte; Anchor bleibt geprüft." }
 
 [normalize]
 base_url = true
 trim = true
-bool = "case-insensitive"
 number_decimals = 3
 empty_equals_null = true

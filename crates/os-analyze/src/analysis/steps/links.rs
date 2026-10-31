@@ -1,4 +1,4 @@
-//! Atomic, repeatable incoming-link facts for TECH-139/140/142.
+//! Atomare, wiederholbare Inlink-Fakten für TECH-139/140/142.
 use crate::{analysis::CancelToken, error::AnalyzeError};
 use os_model::{CrawlConfig, StepState};
 use os_store::CrawlFile;
@@ -16,9 +16,9 @@ fn run_inner(file: &CrawlFile, cancel: &CancelToken) -> Result<StepState, Analyz
         return Ok(StepState::Pending);
     }
     let conn = file.conn();
-    // One sequential graph pass. The target index forces random table reads for
-    // every edge once the graph exceeds SQLite's page cache. Keep only five bits
-    // per internal URL; never materialize/sort a crawl-sized inlink relation.
+    // Ein sequenzieller Graphdurchlauf vermeidet zufällige Tabellenzugriffe
+    // über den Zielindex außerhalb des SQLite-Seitencaches. Fünf Zustandsbits
+    // je interner URL ersetzen die vollständige Inlink-Gruppierung.
     const INDEXABLE: u8 = 1;
     const ELIGIBLE: u8 = 2;
     const FOLLOW: u8 = 4;
@@ -113,8 +113,10 @@ fn run_inner(file: &CrawlFile, cancel: &CancelToken) -> Result<StepState, Analyz
     }
     scratch_tx.commit()?;
     let tx = rusqlite::Transaction::new_unchecked(conn, rusqlite::TransactionBehavior::Immediate)?;
-    // Numeric facts do not need the text-overflow join in url_ext. A sequential
-    // primary-tree pass also avoids three complete scans via change_seq.
+    // Numerische Fakten benötigen keinen Text-Overflow-Join. Der sequenzielle
+    // Primärindex-Durchlauf vermeidet wiederholte Scans über change_seq.
+    // Copy-Swap-Migrationen von url_ext_data müssen den Autoindex-Namen
+    // sqlite_autoindex_url_ext_data_1 prüfen (K2-99).
     tx.execute_batch(
         "CREATE TEMP TABLE d08_old_link_facts(url_id INTEGER, key TEXT, v_int INTEGER)",
     )?;
@@ -126,7 +128,7 @@ fn run_inner(file: &CrawlFile, cancel: &CancelToken) -> Result<StepState, Analyz
     )?;
     if have_old_keys {
         tx.execute(
-            "INSERT INTO d08_old_link_facts SELECT * FROM analysis_link_facts",
+            "INSERT INTO d08_old_link_facts SELECT e.url_id,k.key,e.v_int FROM url_ext_data e INDEXED BY sqlite_autoindex_url_ext_data_1 CROSS JOIN ext_keys k ON k.id=e.key_id WHERE e.key_id IN (SELECT id FROM ext_keys WHERE key IN ('link.mixed_inlinks','link.nofollow_only','link.non_indexable_only'))",
             [],
         )?;
     }
@@ -173,8 +175,8 @@ fn run_inner(file: &CrawlFile, cancel: &CancelToken) -> Result<StepState, Analyz
     Ok(StepState::Done)
 }
 
-/// Interrupt long SQLite grouping/sorting statements as well as the Rust loops.
-/// Only the interrupt handle crosses threads; the connection stays on its owner thread.
+/// Unterbricht lange SQLite-Anweisungen ebenso wie die Rust-Schleifen.
+/// Nur der Interrupt-Handle wechselt den Thread; die Verbindung bleibt beim Besitzer.
 pub(super) fn with_sql_cancel(
     conn: &rusqlite::Connection,
     cancel: &CancelToken,

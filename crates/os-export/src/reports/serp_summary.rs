@@ -37,7 +37,7 @@ fn run(job: &TableJob<'_>, writer: &mut dyn TableWriter) -> Result<u64, ExportEr
                 COALESCE(title_1_px, 0), COALESCE(meta_desc_1, ''),
                 COALESCE(meta_desc_1_len, 0), COALESCE(meta_desc_1_px, 0)
          FROM urls
-         WHERE is_internal = 1 AND in_tables = 1 AND content_class = 'HTML'
+         WHERE is_internal = 1 AND in_tables = 1 AND content_class = 'HTML' AND status_code BETWEEN 200 AND 299
          ORDER BY id",
         )
         .map_err(|e| ExportError::Write(e.to_string()))?;
@@ -112,7 +112,10 @@ mod tests {
             .execute_batch(
                 "UPDATE urls SET is_internal=0 WHERE id=3;
              UPDATE urls SET content_class='PDF' WHERE id=4;
-             UPDATE urls SET in_tables=0 WHERE id=5;",
+             UPDATE urls SET in_tables=0 WHERE id=5;
+             INSERT INTO urls (url,address,origin,is_internal,state,discovered_via,folder_depth,url_length,status_code,content_class,in_tables) VALUES
+             ('https://site.test/error','https://site.test/error','https://site.test',1,'done','link',0,LENGTH('https://site.test/error'),404,'HTML',1),
+             ('https://site.test/redirect','https://site.test/redirect','https://site.test',1,'done','link',0,LENGTH('https://site.test/redirect'),301,'HTML',1);",
             )
             .unwrap();
         os_store::queries::serp::save(

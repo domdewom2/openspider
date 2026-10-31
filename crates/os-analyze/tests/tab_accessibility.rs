@@ -146,15 +146,24 @@ fn ui_parameters_and_stable_node_keys_survive_sorting_and_paging() {
 #[tokio::test]
 async fn requires_chromium_engine_persists_audit_in_the_crawl_file() {
     let _chromium = CHROMIUM.lock().await;
+    // Audit tests need a real prepared browser, not the cold-start availability
+    // deadline. Windows CI can spend the entire 20-s default before emitting CDP.
+    let browser = os_engine::testing::fixture_browser(60_000).await;
+    let mut deps = os_engine::testing::test_deps();
+    deps.renderer = Some(browser.clone());
     let mut cfg = CrawlConfig::default();
     cfg.rendering.mode = RenderingMode::JavaScript;
     cfg.rendering.ajax_timeout_s = 0.0;
     cfg.rendering.page_timeout_s = 60;
     cfg.rendering.screenshots.enabled = false;
     cfg.extraction.accessibility = true;
-    let fx =
-        os_engine::testing::crawl_fixture_from("ui/fx-ui-a11y", "/result-types.html", cfg.clone())
-            .await;
+    let fx = os_engine::testing::crawl_fixture_with(
+        "ui/fx-ui-a11y",
+        "/result-types.html",
+        cfg.clone(),
+        deps,
+    )
+    .await;
     let page = query_view(
         &fx.file,
         &cfg,
@@ -226,6 +235,7 @@ async fn requires_chromium_engine_persists_audit_in_the_crawl_file() {
     )
     .unwrap();
     assert_eq!(nodes.total, 2);
+    browser.close().await;
 }
 
 // spec: TECH-252
@@ -238,6 +248,11 @@ async fn requires_chromium_engine_persists_audit_in_the_crawl_file() {
 #[tokio::test]
 async fn requires_chromium_group_fixtures_drive_rule_filters_and_counters() {
     let _chromium = CHROMIUM.lock().await;
+    // Reuse one real browser for all eight rule groups instead of launching a
+    // disposable probe and another browser for each individual crawl.
+    let browser = os_engine::testing::fixture_browser(60_000).await;
+    let mut deps = os_engine::testing::test_deps();
+    deps.renderer = Some(browser.clone());
     let cases: &[(&str, &str, &[&str])] = &[
         (
             "best-practice",
@@ -294,10 +309,11 @@ async fn requires_chromium_group_fixtures_drive_rule_filters_and_counters() {
         cfg.rendering.screenshots.enabled = false;
         cfg.extraction.accessibility = true;
         cfg.limits.max_urls = 1;
-        let fx = os_engine::testing::crawl_fixture_from(
+        let fx = os_engine::testing::crawl_fixture_with(
             "ui/fx-ui-a11y",
             &format!("/{fixture}.html"),
             cfg.clone(),
+            deps.clone(),
         )
         .await;
         let mut q = ViewQuery::new("Accessibility", "All");
@@ -385,4 +401,5 @@ async fn requires_chromium_group_fixtures_drive_rule_filters_and_counters() {
             "{fixture}: group count"
         );
     }
+    browser.close().await;
 }

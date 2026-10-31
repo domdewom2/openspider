@@ -1,0 +1,103 @@
+# Spaltenmapping Referenz -> OpenSpider fuer den Export "Internal:All" (Format: docs/plan/M1.md 5.2).
+# Stand M1-P29 (Welle 5): an die echten Kopfzeilen der Referenz (Referenzprodukt (Free-Version), englische Oberflaeche) angepasst.
+# Nur Spaltennamen der Kopfzeile; Beschreibungsspalten werden beim Einlesen verworfen (Clean-Room, A8).
+# Die Referenz schreibt nummerierte Spalten (Title 2, H1-2, Meta Robots 2 ...) nur, wenn Daten vorliegen; der Runner behandelt fehlende
+# nummerierte Referenzspalten als leer, wenn OpenSpider die Spalte liefert (K-53).
+key = ["Address"]
+drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
+
+[columns]
+"Address" = "Address"
+"Content Type" = { os = "Content" }
+"Status Code" = "Status Code"
+"Status" = { os = "Status", transform = ["ignore_case"] }
+"Indexability" = "Indexability"
+"Indexability Status" = { os = "Indexability Status", transform = ["ignore_case"] }
+"Title 1" = "Title 1"
+"Title 1 Length" = "Title 1 Length"
+"Title 1 Pixel Width" = { os = "Title 1 Pixel Width", tolerance_pct = 3.0 }
+"Title 2" = "Title 2"
+"Title 2 Length" = "Title 2 Length"
+"Title 2 Pixel Width" = { os = "Title 2 Pixel Width", tolerance_pct = 3.0 }
+"Meta Description 1" = "Meta Description 1"
+"Meta Description 1 Length" = "Meta Description 1 Length"
+"Meta Description 1 Pixel Width" = { os = "Meta Description 1 Pixel Width", tolerance_pct = 3.0 }
+"Meta Description 2" = "Meta Description 2"
+"Meta Description 2 Length" = "Meta Description 2 Length"
+"Meta Description 2 Pixel Width" = { os = "Meta Description 2 Pixel Width", tolerance_pct = 3.0 }
+"Meta Keywords 1" = "Meta Keywords 1"
+"Meta Keywords 1 Length" = "Meta Keywords 1 Length"
+"H1-1" = "H1-1"
+"H1-1 Length" = "H1-1 Length"
+"H1-2" = "H1-2"
+"H1-2 Length" = "H1-2 Length"
+"H2-1" = "H2-1"
+"H2-1 Length" = "H2-1 Length"
+"H2-2" = "H2-2"
+"H2-2 Length" = "H2-2 Length"
+"Meta Robots 1" = "Meta Robots 1"
+"Meta Robots 2" = "Meta Robots 2"
+"Meta Robots 3" = "Meta Robots 3"
+"X-Robots-Tag 1" = "X-Robots-Tag 1"
+"X-Robots-Tag 2" = "X-Robots-Tag 2"
+"X-Robots-Tag 3" = "X-Robots-Tag 3"
+"Meta Refresh 1" = "Meta Refresh 1"
+"Meta Refresh 2" = "Meta Refresh 2"
+"Canonical Link Element 1" = "Canonical Link Element 1"
+"Canonical Link Element 2" = "Canonical Link Element 2"
+"Canonical Link Element 3" = "Canonical Link Element 3"
+"rel=\"next\" 1" = "rel=\"next\" 1"
+"rel=\"prev\" 1" = "rel=\"prev\" 1"
+"HTTP rel=\"next\" 1" = "HTTP rel=\"next\" 1"
+"HTTP rel=\"prev\" 1" = "HTTP rel=\"prev\" 1"
+"amphtml Link Element" = { ignore = true, reason = "AMP erst mit M2 (M1.md 7.2)" }
+"Size (Bytes)" = { os = "Size (bytes)" }
+"Transferred (Bytes)" = { os = "Transferred (bytes)" }
+"Total Transferred (Bytes)" = { os = "Total Transferred (bytes)" }
+"CO2 (mg)" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2): Nachhaltigkeitsspalten" }
+"Carbon Rating" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2): Nachhaltigkeitsspalten" }
+"Word Count" = "Word Count"
+"Sentence Count" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2) (ONPAGE-149)" }
+"Average Words Per Sentence" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2) (ONPAGE-149)" }
+"Flesch Reading Ease Score" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2) (ONPAGE-149)" }
+"Readability" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2) (ONPAGE-149)" }
+"Text Ratio" = { os = "Text Ratio", tolerance_pct = 1.0, transform = ["decimal_comma"] }
+"Crawl Depth" = "Crawl Depth"
+"Folder Depth" = "Folder Depth"
+"Link Score" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2) (TECH-145)" }
+"Inlinks" = "Inlinks"
+"Unique Inlinks" = "Unique Inlinks"
+"Unique JS Inlinks" = { ignore = true, reason = "nur mit JavaScript-Rendering (M2)" }
+"% of Total" = { os = "% of Total", transform = ["decimal_comma"] }
+"Outlinks" = "Outlinks"
+"Unique Outlinks" = "Unique Outlinks"
+"Unique JS Outlinks" = { ignore = true, reason = "nur mit JavaScript-Rendering (M2)" }
+"External Outlinks" = "External Outlinks"
+"Unique External Outlinks" = "Unique External Outlinks"
+"Unique External JS Outlinks" = { ignore = true, reason = "nur mit JavaScript-Rendering (M2)" }
+"Closest Near Duplicate Match" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2): Near Duplicates (ONPAGE-144 ff.)" }
+"No. Near Duplicates" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2): Near Duplicates (ONPAGE-144 ff.)" }
+"Spelling Errors" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2): Rechtschreibung/Grammatik" }
+"Grammar Errors" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2): Rechtschreibung/Grammatik" }
+"Hash" = { os = "Hash", transform = ["hex_trim_zeros"] }
+"Response Time" = { ignore = true, reason = "nicht deterministisch" }
+"Last Modified" = { os = "Last-Modified" }
+"Redirect URL" = "Redirect URL"
+"Redirect Type" = "Redirect Type"
+"Cookies" = { ignore = true, reason = "Cookie-Zusammenfassung erst mit M2 (OUT-112, M1.md 7.3)" }
+"Language" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2): Sprache (ONPAGE-153)" }
+"HTTP Version" = { ignore = true, reason = "Transportdetail, nicht Teil der Parität (HTTP-Versionen erst M2, CRAWL-025)" }
+"Mobile Alternate Link" = { ignore = true, reason = "Mobile erst mit M2 (M1.md 7.2)" }
+"Closest Semantically Similar Address" = { ignore = true, reason = "KI-Funktion, M4" }
+"Semantic Similarity Score" = { ignore = true, reason = "KI-Funktion, M4" }
+"No. Semantically Similar" = { ignore = true, reason = "KI-Funktion, M4" }
+"Semantic Relevance Score" = { ignore = true, reason = "KI-Funktion, M4" }
+"URL Encoded Address" = "URL Encoded Address"
+"Crawl Timestamp" = { ignore = true, reason = "nicht deterministisch" }
+
+[normalize]
+base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}
+trim = true
+bool = "case-insensitive"
+number_decimals = 3      # Zahlen werden nach Rundung verglichen
+empty_equals_null = true

@@ -1,4 +1,5 @@
-//! Atomic, repeatable incoming-link facts for TECH-139/140/142.
+//! Unveränderter Implementierungs-Snapshot von f7ad3f29 für den N14-Vergleich.
+//! Atomare, wiederholbare Inlink-Fakten für TECH-139/140/142.
 use os_analyze::{analysis::CancelToken, error::AnalyzeError};
 use os_model::{CrawlConfig, StepState};
 use os_store::CrawlFile;
@@ -82,8 +83,8 @@ fn run_inner(file: &CrawlFile, cancel: &CancelToken) -> Result<StepState, Analyz
     Ok(StepState::Done)
 }
 
-/// Interrupt long SQLite grouping/sorting statements as well as the Rust loops.
-/// Only the interrupt handle crosses threads; the connection stays on its owner thread.
+/// Unterbricht lange SQLite-Anweisungen ebenso wie die Rust-Schleifen.
+/// Nur der Interrupt-Handle wechselt den Thread; die Verbindung bleibt beim Besitzer.
 pub(super) fn with_sql_cancel(
     conn: &rusqlite::Connection,
     cancel: &CancelToken,

@@ -1,0 +1,12 @@
+{
+  "compared": 218,
+  "passed": 215,
+  "failures": [
+    "parity-m2-onpage/sitemap_default.xml: Zellübereinstimmung 76.000 % liegt unter 97.000 %",
+    "parity-m2-onpage/sitemap_options.xml: Zellübereinstimmung 76.000 % liegt unter 97.000 %",
+    "parity-m2-onpage/sitemap_images.xml: Zellübereinstimmung 75.000 % liegt unter 97.000 %"
+  ],
+  "verified": 129,
+  "m1_passed": 38,
+  "m1_total": 38
+}

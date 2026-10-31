@@ -1,0 +1,164 @@
+{
+  "Canonicals": [
+    "TECH-011",
+    "TECH-012",
+    "TECH-013",
+    "TECH-014",
+    "TECH-015",
+    "TECH-016",
+    "TECH-017",
+    "TECH-018",
+    "TECH-019",
+    "TECH-020",
+    "TECH-021",
+    "TECH-022"
+  ],
+  "Directives": [
+    "TECH-051",
+    "TECH-052",
+    "TECH-053",
+    "TECH-054",
+    "TECH-055",
+    "TECH-056",
+    "TECH-057",
+    "TECH-058",
+    "TECH-059",
+    "TECH-061",
+    "TECH-062",
+    "TECH-063",
+    "TECH-064"
+  ],
+  "External": [
+    "ONPAGE-025",
+    "ONPAGE-026"
+  ],
+  "H1": [
+    "ONPAGE-009",
+    "ONPAGE-121",
+    "ONPAGE-122",
+    "ONPAGE-123",
+    "ONPAGE-124",
+    "ONPAGE-125",
+    "ONPAGE-126"
+  ],
+  "H2": [
+    "ONPAGE-009",
+    "ONPAGE-131",
+    "ONPAGE-132",
+    "ONPAGE-133",
+    "ONPAGE-134",
+    "ONPAGE-135"
+  ],
+  "Hreflang": [
+    "TECH-071",
+    "TECH-073",
+    "TECH-074",
+    "TECH-075",
+    "TECH-076",
+    "TECH-077",
+    "TECH-078",
+    "TECH-079",
+    "TECH-080",
+    "TECH-081",
+    "TECH-082",
+    "TECH-083",
+    "TECH-084",
+    "TECH-085"
+  ],
+  "Images": [
+    "ONPAGE-171",
+    "ONPAGE-174",
+    "ONPAGE-175",
+    "ONPAGE-176",
+    "ONPAGE-177",
+    "ONPAGE-179"
+  ],
+  "Meta Description": [
+    "ONPAGE-009",
+    "ONPAGE-101",
+    "ONPAGE-102",
+    "ONPAGE-103",
+    "ONPAGE-104",
+    "ONPAGE-105",
+    "ONPAGE-106",
+    "ONPAGE-107"
+  ],
+  "Meta Keywords": [
+    "ONPAGE-110",
+    "ONPAGE-111",
+    "ONPAGE-112",
+    "ONPAGE-113"
+  ],
+  "Page Titles": [
+    "ONPAGE-009",
+    "ONPAGE-091",
+    "ONPAGE-092",
+    "ONPAGE-093",
+    "ONPAGE-094",
+    "ONPAGE-095",
+    "ONPAGE-096",
+    "ONPAGE-097",
+    "ONPAGE-098"
+  ],
+  "Pagination": [
+    "TECH-031",
+    "TECH-032",
+    "TECH-033",
+    "TECH-034",
+    "TECH-035",
+    "TECH-036",
+    "TECH-037",
+    "TECH-038",
+    "TECH-039",
+    "TECH-040",
+    "TECH-041"
+  ],
+  "Response Codes": [
+    "CRAWL-012",
+    "ONPAGE-051",
+    "ONPAGE-052",
+    "ONPAGE-054",
+    "ONPAGE-055",
+    "ONPAGE-056",
+    "ONPAGE-058",
+    "ONPAGE-059",
+    "ONPAGE-060",
+    "ONPAGE-061",
+    "ONPAGE-062",
+    "ONPAGE-063"
+  ],
+  "Security": [
+    "ONPAGE-031",
+    "ONPAGE-032",
+    "ONPAGE-033",
+    "ONPAGE-034",
+    "ONPAGE-035",
+    "ONPAGE-036",
+    "ONPAGE-037",
+    "ONPAGE-038",
+    "ONPAGE-039",
+    "ONPAGE-040",
+    "ONPAGE-041",
+    "ONPAGE-042",
+    "ONPAGE-043"
+  ],
+  "URL": [
+    "ONPAGE-070",
+    "ONPAGE-071",
+    "ONPAGE-072",
+    "ONPAGE-073",
+    "ONPAGE-074",
+    "ONPAGE-075",
+    "ONPAGE-076",
+    "ONPAGE-077",
+    "ONPAGE-078",
+    "ONPAGE-079",
+    "ONPAGE-080",
+    "ONPAGE-081"
+  ],
+  "Validation": [
+    "TECH-281",
+    "TECH-289",
+    "TECH-290"
+  ]
+}

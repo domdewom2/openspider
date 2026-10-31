@@ -115,10 +115,15 @@ jobs:
             os: windows-latest
             projects: chromium
             browsers: chromium
-          - name: linux-both
+          # Getrennt wie ui-e2e.yml: beide Engines nacheinander überschreiten 60 min (Lauf 41183672386).
+          - name: linux-chromium
             os: ubuntu-latest
-            projects: chromium,webkit
-            browsers: chromium webkit
+            projects: chromium
+            browsers: chromium
+          - name: linux-webkit
+            os: ubuntu-latest
+            projects: webkit
+            browsers: webkit
     env:
       CARGO_TERM_COLOR: always
       OS_E2E_TRANSPORT: auto
@@ -201,7 +206,7 @@ jobs:
           junit_files=(evidence/e2e/*/playwright-m2.xml)
           # Fehlende Matrix-Belege sind sichtbar und machen nur das manuelle Gate rot.
           missing=0
-          if [[ ${#junit_files[@]} -ne 3 ]]; then missing=1; fi
+          if [[ ${#junit_files[@]} -ne 4 ]]; then missing=1; fi
           for file in "${junit_files[@]}"; do args+=(--frontend-junit "$file"); done
           status=0
           cargo run --locked -p os-parity -- coverage --milestone M2 \

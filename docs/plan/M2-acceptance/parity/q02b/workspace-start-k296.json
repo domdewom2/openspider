@@ -1,0 +1,9 @@
+{
+  "pid": 4085368,
+  "started_epoch": 1793403450.22,
+  "started_at": "2026-10-30T23:37:30.220000+00:00",
+  "command": "cargo test --workspace --exclude openspider-desktop -j 6 --locked --no-fail-fast",
+  "dev_debug": "line-tables-only",
+  "test_debug": "line-tables-only",
+  "incremental": false
+}

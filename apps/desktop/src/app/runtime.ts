@@ -12,7 +12,7 @@ import { createClient, createBridgeClient, createTauriClient, detectTransport, s
 import { bindVisibility, connectWindowEvents, eventBus } from "../ipc/events";
 import { localStoragePersistence, MockCore } from "../ipc/transport/mock";
 import type { Transport } from "../ipc/transport/types";
-import { usePrefs } from "../state/prefs";
+import { startPrefsBroadcast, usePrefs } from "../state/prefs";
 import { attachSession, useSession } from "../state/session";
 import { startAppearanceSync } from "./appearance";
 import { BASE_MENU } from "./baseMenu";
@@ -82,6 +82,7 @@ export function bootWindow(opts: BootOptions): Runtime {
 
   const offs: (() => void)[] = [];
   offs.push(installGlobalErrorLogging());
+  offs.push(startPrefsBroadcast(new URLSearchParams(search).get("bridge") ?? client.transportName));
   offs.push(connectWindowEvents(client, label, eventBus));
   offs.push(attachSession(eventBus));
   offs.push(eventBus.on("settingsChanged", () => void usePrefs.getState().load()));

@@ -1,0 +1,68 @@
+{
+  "basis": "d7b7a6d6",
+  "branch": "m2/int-20",
+  "merges": [
+    "ccfe1f88",
+    "fdf2d7ab"
+  ],
+  "n16": "28648507",
+  "n17": "a30cc1a3",
+  "n15_merged": false,
+  "tokio": "1.53.3",
+  "lockfile_unchanged": true,
+  "workspace": {
+    "passed": 4024,
+    "failed": 0,
+    "ignored": 49,
+    "blocks": 544
+  },
+  "lastflakes": [],
+  "near-1": {
+    "passed": 22,
+    "failed": 0
+  },
+  "near-8": {
+    "passed": 22,
+    "failed": 0
+  },
+  "frontend": {
+    "typecheck_exit": 0,
+    "files": 90,
+    "passed": 858,
+    "seconds": 115.79,
+    "static": 29,
+    "licenses": 474,
+    "exit": 0,
+    "initial_missing_dependencies_exit": 127
+  },
+  "actionlint": {
+    "version": "1.7.12",
+    "exit": 0
+  },
+  "native": "Orchestrator: macOS-/Windows-CI nach Abholung und Push; kein Push durch Integrator",
+  "e2e": {
+    "passed": 92,
+    "failure_markers": 0,
+    "final_summary": [
+      "92 passed (17.7m)"
+    ]
+  },
+  "parity": {
+    "passed": true,
+    "compared": 218,
+    "sites": 10,
+    "failures": [],
+    "warnings": []
+  },
+  "coverage": {
+    "verified": 129,
+    "denominator": 155,
+    "pct": 83.2258064516129,
+    "exit": 0
+  },
+  "fmt_exit": 0,
+  "plan_exit": 0,
+  "neutral_exit": 0,
+  "deny_exit": 0,
+  "clippy_exit": 0
+}

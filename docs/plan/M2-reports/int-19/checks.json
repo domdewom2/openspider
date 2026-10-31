@@ -1,0 +1,72 @@
+{
+  "basis": "1503ca76",
+  "branch": "m2/int-19",
+  "merge": "5a9e5449",
+  "n13": "b05cc985",
+  "workspace": {
+    "passed": 4012,
+    "failed": 0,
+    "ignored": 45,
+    "suites_including_doc_and_empty": 543,
+    "desktop_passed": 20,
+    "desktop_ignored": 1,
+    "exit": 0,
+    "seconds_including_build_and_lock_wait": 1713.71
+  },
+  "run_site": {
+    "passed": 26,
+    "failed": 0,
+    "ignored": 0,
+    "exit": 0,
+    "seconds_including_build": 23.68
+  },
+  "clippy": {
+    "workspace": true,
+    "all_targets": true,
+    "desktop": true,
+    "exclude": false,
+    "exit": 0,
+    "cargo_reported_seconds": 120
+  },
+  "fmt_exit": 0,
+  "frontend": {
+    "typecheck_exit": 0,
+    "test_files": 90,
+    "tests_passed": 858,
+    "test_seconds": 126.15,
+    "static_tests_passed": 29,
+    "licensed_packages": 474,
+    "exit": 0
+  },
+  "cargo_deny": {
+    "bans": "ok",
+    "licenses": "ok",
+    "sources": "ok",
+    "exit": 0
+  },
+  "chromium_exit": 0,
+  "plan": {
+    "packages": 129,
+    "spec_ids": 590,
+    "exit": 0
+  },
+  "neutral_exit": 0,
+  "lastflakes": [],
+  "native_A1": "Orchestrator: Push und neue macOS-/Windows-CI-Nachweise ausstehend",
+  "parity": {
+    "passed": 218,
+    "compared": 218,
+    "unavailable_skips": 3,
+    "sites_present": 10,
+    "failures": [],
+    "exit": 0,
+    "seconds": 252.18,
+    "fixed_clock": false
+  },
+  "coverage": {
+    "verified": 129,
+    "denominator": 155,
+    "pct": 83.2258064516129,
+    "exit": 0
+  }
+}

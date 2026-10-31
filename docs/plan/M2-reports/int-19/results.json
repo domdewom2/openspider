@@ -1,0 +1,65 @@
+[
+  {
+    "name": "workspace-test",
+    "command": [
+      "cargo",
+      "test",
+      "--workspace",
+      "-j",
+      "6",
+      "--locked",
+      "--no-fail-fast"
+    ],
+    "start": "2026-10-31T04:14:05.354444+00:00",
+    "seconds": 1713.71,
+    "exit": 0
+  },
+  {
+    "name": "run-site",
+    "command": [
+      "cargo",
+      "test",
+      "-p",
+      "os-parity",
+      "--test",
+      "run_site",
+      "-j",
+      "6",
+      "--locked"
+    ],
+    "start": "2026-10-31T04:42:39.061234+00:00",
+    "seconds": 23.68,
+    "exit": 0
+  },
+  {
+    "name": "parity-all",
+    "command": [
+      "target/debug/os-parity",
+      "run",
+      "--all",
+      "--openspider",
+      "/home/build/Projects/openspider-wt/m2-int-19/target/debug/openspider",
+      "--out",
+      "/tmp/int-19/parity"
+    ],
+    "start": "2026-10-31T04:43:39.344340+00:00",
+    "seconds": 252.18,
+    "exit": 0
+  },
+  {
+    "name": "coverage",
+    "command": [
+      "target/debug/os-parity",
+      "coverage",
+      "--milestone",
+      "M2",
+      "--parity-report",
+      "/tmp/int-19/parity/report.json",
+      "--write",
+      "/tmp/int-19/coverage.json"
+    ],
+    "start": "2026-10-31T04:47:51.523563+00:00",
+    "seconds": 0.06,
+    "exit": 0
+  }
+]

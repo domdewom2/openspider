@@ -1,0 +1,1032 @@
+{
+  "stats": {
+    "startTime": "2026-10-31T00:48:05.809Z",
+    "duration": 2248997.406,
+    "expected": 976,
+    "skipped": 3,
+    "unexpected": 1,
+    "flaky": 0
+  },
+  "projects": [
+    {
+      "project": "chromium",
+      "status": "expected",
+      "count": 490
+    },
+    {
+      "project": "webkit",
+      "status": "expected",
+      "count": 486
+    },
+    {
+      "project": "webkit",
+      "status": "unexpected",
+      "count": 1
+    },
+    {
+      "project": "webkit",
+      "status": "skipped",
+      "count": 3
+    }
+  ],
+  "suites": [
+    {
+      "suite": "a11y/contrast.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 8
+    },
+    {
+      "suite": "a11y/contrast.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 8
+    },
+    {
+      "suite": "a11y/grid.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "a11y/grid.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "a11y/keyboard.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "a11y/keyboard.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "a11y/views.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "a11y/views.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "alpha/appearance.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "alpha/appearance.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "alpha/crawl-control.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "alpha/crawl-control.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "alpha/detail-sidebar.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 13
+    },
+    {
+      "suite": "alpha/detail-sidebar.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 13
+    },
+    {
+      "suite": "alpha/export.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "alpha/export.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "alpha/foreign-crawl.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "alpha/foreign-crawl.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "alpha/quality.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "alpha/quality.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "alpha/table.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 13
+    },
+    {
+      "suite": "alpha/table.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 13
+    },
+    {
+      "suite": "auth/bridge.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "auth/bridge.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "auth/forms.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "auth/forms.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/control.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/control.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/delay.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "beta/delay.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "beta/detail-during-crawl.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/detail-during-crawl.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/n04-live.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/n04-live.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/n04-mcp.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/n04-mcp.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/overview.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/overview.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/preferences.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "beta/preferences.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/preferences.spec.ts",
+      "project": "webkit",
+      "status": "unexpected",
+      "count": 1
+    },
+    {
+      "suite": "beta/quit.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/quit.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/resume.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/resume.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/services.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "beta/services.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "beta/uistate.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "beta/uistate.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "compare/bridge.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "compare/bridge.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "config/bridge.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 7
+    },
+    {
+      "suite": "config/bridge.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 7
+    },
+    {
+      "suite": "config/dialog.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 13
+    },
+    {
+      "suite": "config/dialog.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 13
+    },
+    {
+      "suite": "config-fach/fach.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 4
+    },
+    {
+      "suite": "config-fach/fach.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 4
+    },
+    {
+      "suite": "crawls/bridge.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "crawls/bridge.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "crawls/compare.pending.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "crawls/compare.pending.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "crawls/management.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "crawls/management.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "detail/core-integration.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "detail/core-integration.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "detail/detail.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 7
+    },
+    {
+      "suite": "detail/detail.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 7
+    },
+    {
+      "suite": "detail-fach/core-integration.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "detail-fach/core-integration.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "detail-fach/detail-fach.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 15
+    },
+    {
+      "suite": "detail-fach/detail-fach.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 15
+    },
+    {
+      "suite": "export/bridge.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "export/bridge.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "export/dialog.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 7
+    },
+    {
+      "suite": "export/dialog.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 7
+    },
+    {
+      "suite": "header/header.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "header/header.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "i18n/dialogs.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 10
+    },
+    {
+      "suite": "i18n/dialogs.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 10
+    },
+    {
+      "suite": "i18n/exports.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "i18n/exports.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "i18n/help.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "i18n/help.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "i18n/language.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 3
+    },
+    {
+      "suite": "i18n/language.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 3
+    },
+    {
+      "suite": "i18n/text-fit.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "i18n/text-fit.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "integrations/bridge.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "integrations/bridge.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "integrations/dialog.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "integrations/dialog.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "keyboard/shortcuts.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 87
+    },
+    {
+      "suite": "keyboard/shortcuts.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 87
+    },
+    {
+      "suite": "keyboard-suite/shortcuts.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 89
+    },
+    {
+      "suite": "keyboard-suite/shortcuts.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 89
+    },
+    {
+      "suite": "mcp/bridge.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "mcp/bridge.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "mcp/dialog.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "mcp/dialog.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "menu/core.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "menu/core.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "menu/debug.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "menu/debug.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "menu/menu.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "menu/menu.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "n12/regressions.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 8
+    },
+    {
+      "suite": "n12/regressions.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 8
+    },
+    {
+      "suite": "polish/language.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "polish/language.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "polish/layout.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "polish/layout.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "polish/tabbars.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 14
+    },
+    {
+      "suite": "polish/tabbars.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 11
+    },
+    {
+      "suite": "polish/tabbars.spec.ts",
+      "project": "webkit",
+      "status": "skipped",
+      "count": 3
+    },
+    {
+      "suite": "polish/visual-capture.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "polish/visual-capture.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "polish/visual-heights.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 8
+    },
+    {
+      "suite": "polish/visual-heights.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 8
+    },
+    {
+      "suite": "settings/bridge-protocol.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "settings/bridge-protocol.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "settings/harness.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "settings/harness.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "settings/settings.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "settings/settings.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "settings-sections/bridge.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 3
+    },
+    {
+      "suite": "settings-sections/bridge.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 3
+    },
+    {
+      "suite": "settings-sections/sections.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "settings-sections/sections.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "shell/persistence.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "shell/persistence.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "shell/quit.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "shell/quit.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "shell/shell.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "shell/shell.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "sidebar/sidebar.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "sidebar/sidebar.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 5
+    },
+    {
+      "suite": "sidebar-fach/sidebar-fach.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "sidebar-fach/sidebar-fach.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "statusbar/statusbar.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "statusbar/statusbar.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "table/bridge.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "table/bridge.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "table/grid.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "table/grid.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "table/table.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 3
+    },
+    {
+      "suite": "table/table.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 3
+    },
+    {
+      "suite": "table-advanced/bridge.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "table-advanced/bridge.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 1
+    },
+    {
+      "suite": "table-advanced/table-advanced.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 7
+    },
+    {
+      "suite": "table-advanced/table-advanced.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 7
+    },
+    {
+      "suite": "tasks/bridge.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "tasks/bridge.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "tasks/tasks.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "tasks/tasks.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 6
+    },
+    {
+      "suite": "viz/bridge.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "viz/bridge.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 2
+    },
+    {
+      "suite": "viz/viz.spec.ts",
+      "project": "chromium",
+      "status": "expected",
+      "count": 18
+    },
+    {
+      "suite": "viz/viz.spec.ts",
+      "project": "webkit",
+      "status": "expected",
+      "count": 18
+    }
+  ],
+  "skips": [
+    [
+      "webkit",
+      "polish/tabbars.spec.ts",
+      "labels stay whole at scale 1.25",
+      [
+        {
+          "type": "skip",
+          "description": "Skalierungsfaktoren prüft die Abnahme mit Chromium (WebView2)",
+          "location": {
+            "file": "/home/build/Projects/openspider-wt/m2-int-18/apps/desktop/e2e/polish/tabbars.spec.ts",
+            "line": 74,
+            "column": 14
+          }
+        }
+      ]
+    ],
+    [
+      "webkit",
+      "polish/tabbars.spec.ts",
+      "labels stay whole at scale 1.5",
+      [
+        {
+          "type": "skip",
+          "description": "Skalierungsfaktoren prüft die Abnahme mit Chromium (WebView2)",
+          "location": {
+            "file": "/home/build/Projects/openspider-wt/m2-int-18/apps/desktop/e2e/polish/tabbars.spec.ts",
+            "line": 74,
+            "column": 14
+          }
+        }
+      ]
+    ],
+    [
+      "webkit",
+      "polish/tabbars.spec.ts",
+      "labels stay whole at scale 2",
+      [
+        {
+          "type": "skip",
+          "description": "Skalierungsfaktoren prüft die Abnahme mit Chromium (WebView2)",
+          "location": {
+            "file": "/home/build/Projects/openspider-wt/m2-int-18/apps/desktop/e2e/polish/tabbars.spec.ts",
+            "line": 74,
+            "column": 14
+          }
+        }
+      ]
+    ]
+  ]
+}

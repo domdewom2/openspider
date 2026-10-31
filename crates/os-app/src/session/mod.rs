@@ -71,6 +71,8 @@ pub fn init(app: &App) {
             {
                 continue;
             }
+            // Deliver due control status before starting potentially expensive reads.
+            app.flush_tick();
             if let Err(e) = poll(&app).await {
                 tracing::warn!(error = ?e, "Session poll failed");
             }

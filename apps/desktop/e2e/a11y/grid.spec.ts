@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 // spec: UI-126
-test("virtual grid announces the complete total and absolute row indices, with a single Tab stop", async ({ page, browserName }) => {
+test("virtual grid announces the complete total and absolute row indices, with a single Tab stop", async ({ page }) => {
   await page.goto("/e2e/a11y/grid.html");
   const grid = page.getByRole("grid", { name: "Virtual fixture" });
   await expect(grid).toHaveAttribute("aria-rowcount", "5001");
@@ -19,9 +19,4 @@ test("virtual grid announces the complete total and absolute row indices, with a
   await expect.soft(page.getByRole("button", { name: "After grid" })).toBeFocused();
   await page.keyboard.press("Shift+Tab");
   await expect(grid).toBeFocused();
-  // U30-F01 remains a failing assertion until N12; any other failure stays unexpected.
-  const errors = test.info().errors;
-  if (browserName === "chromium" && errors.every(error => error.message?.includes("name: 'After grid'"))) {
-    test.fail(true, "U30-F01: additional Chromium grid tab stop; known red until N12");
-  }
 });

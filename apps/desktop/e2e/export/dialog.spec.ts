@@ -3,7 +3,24 @@ import type {} from "./harness";
 
 test.beforeEach(async ({ page }) => {
   await page.clock.install({ time: new Date("2026-10-18T12:00:00Z") });
-  await page.goto("/e2e/export/index.html?transport=mock");
+  // A refused Vite module request leaves the ES module graph permanently failed.
+  // Retry only that bootstrap transport failure; feature assertions run once.
+  let refused = false;
+  const failed = (request: import("@playwright/test").Request) => {
+    if (request.resourceType() === "script" && request.failure()?.errorText.includes("ERR_CONNECTION_REFUSED")) refused = true;
+  };
+  page.on("requestfailed", failed);
+  try {
+    await page.goto("/e2e/export/index.html?transport=mock");
+    await expect.poll(async () => {
+      if (refused) {
+        refused = false;
+        await page.reload();
+      }
+      return page.evaluate(() => !!window.exportFixture);
+    }).toBe(true);
+    await expect(page.getByRole("button", { name: "Sitemap", exact: true })).toBeVisible();
+  } finally { page.off("requestfailed", failed); }
 });
 
 // spec: OUT-006

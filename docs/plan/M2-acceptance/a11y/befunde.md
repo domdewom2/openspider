@@ -2,7 +2,9 @@
 
 Basis: Integrationsrunde 15, `27f92ff1`, Linux; Chromium und WebKit headless. Fremde Produktdateien und Manifeste wurden nicht geändert. Eigene Regressionstests bleiben bei einem offenen Befund rot; es gibt keine Regelabschaltung, keine erwarteten Fehler und keine Ignores zum Verdecken eines Befunds.
 
-## U30-F01 · zusätzlicher Grid-Tabstopp in Chromium · offen, N-Paket
+## U30-F01 · zusätzlicher Grid-Tabstopp in Chromium · unter Linux behoben (N12)
+
+- **Status N12, 30.10.2026:** `tabIndex={-1}` am visuellen Scrollcontainer; der unveränderte Grid-Test besteht regulär in Chromium und WebKit (Tab, Shift+Tab, Gesamtzahl und absolute Zeilenindizes). Die test.fail-Erwartungen sind nach K2-63 entfernt. Native macOS-/Windows-CI bleibt beim Orchestrator; [N12-Bericht](../../M2-reports/n12.md).
 
 - Datei: `apps/desktop/src/grid/DataGrid.tsx`, Scrollcontainer `.os-grid-scroll` innerhalb von `.os-data-grid` (außerhalb `src/grid/a11y/**`).
 - Element: scrollbares, mit `aria-hidden="true"` markiertes `div`, ohne expliziten `tabindex`.
@@ -24,7 +26,9 @@ Basis: Integrationsrunde 15, `27f92ff1`, Linux; Chromium und WebKit headless. Fr
 - `ui/primitives/Button.tsx`, `contrast.css`: Primärbutton im dunklen Forced-Colors-Modus von Chromium meldete `color-contrast` (serious; etwa 1,2:1). Explizite Systemfarben `Canvas`/`CanvasText`, deaktiviert `GrayText`.
 - `ui/primitives/{Tabs,TabBar}.tsx`, `contrast.css`: WebKits emulierte Kombination Highlight/HighlightText erreichte auf ausgewählten Tabs nur etwa 3,77:1 (`color-contrast`, serious). Systemtext auf Systemcanvas; Auswahl bleibt zusätzlich durch Schriftstärke und Rahmen erkennbar, Fokus durch eigenen Rahmen. Dasselbe gilt für fokussierte Menü-/Listeneinträge.
 
-## U30-F03 · Issues: mittlere Priorität im hellen Theme · offen, N-Paket
+## U30-F03 · Issues: mittlere Priorität im hellen Theme · unter Linux behoben (N12)
+
+- **Status N12, 30.10.2026:** Theme-Texttoken mit Reserve: gemessen 16,56:1 hell und 13,89:1 dunkel in beiden Engines; Priorität und Typ bleiben ausgeschrieben. Reguläre Panel-Scans in Chromium und WebKit ohne critical/serious. Die test.fail-Erwartungen sind nach K2-63 entfernt. Native macOS-/Windows-CI bleibt beim Orchestrator; [N12-Bericht](../../M2-reports/n12.md).
 
 - Dateien: `apps/desktop/src/features/sidebar/frame/sidebar.css:17`, `apps/desktop/src/features/sidebar/issues/Issues.tsx`.
 - Elemente: `.os-sidebar-priority-medium`, Badge-Text und Prioritätsspalte in der Issue-Tabelle.
@@ -32,7 +36,9 @@ Basis: Integrationsrunde 15, `27f92ff1`, Linux; Chromium und WebKit headless. Fr
 - Nachweis: `views.spec.ts`, Scan `Crawl summary-issues-light`; kein Ausschluss des Panels.
 - Vorschlag: zuständiges N-Paket verwendet eine kontraststärkere Textfarbe für mittlere Priorität (mindestens 4,5:1, mit Reserve); Badge und Priorität weiterhin als Text ausgeben. Keine globale Änderung des Status-Tokens aus U30.
 
-## U30-F04 · Segment-Buttons im dunklen Theme · offen, N-Paket
+## U30-F04 · Segment-Buttons im dunklen Theme · unter Linux behoben (N12)
+
+- **Status N12, 30.10.2026:** Konfigurieren/Erstellen/Filter-Löschen verwenden den gemeinsamen Button; normale Themes, Forced Colors und Fokus in Chromium und WebKit geprüft. Reguläre Panel-Scans ohne critical/serious. Die test.fail-Erwartungen sind nach K2-63 entfernt. Native macOS-/Windows-CI bleibt beim Orchestrator; [N12-Bericht](../../M2-reports/n12.md).
 
 - Dateien: `apps/desktop/src/features/sidebar/segments/Segments.tsx:51`, `apps/desktop/src/features/sidebar/frame/sidebar.css`.
 - Elemente: „Configure segments“ und „Create segments“, Selektoren `.os-sidebar-actions > button` und `.os-sidebar-empty > button`.

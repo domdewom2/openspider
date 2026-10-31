@@ -48,7 +48,7 @@ pub async fn assert_copy_uses_one_page(page_reads: impl Fn(&App) -> usize) {
     app.sessions().set_current(
         WindowId("main".into()),
         SessionInfo {
-            key,
+            key: key.clone(),
             path,
             config: Arc::new(CrawlConfig::default()),
             state: CrawlState::Completed,
@@ -70,7 +70,19 @@ pub async fn assert_copy_uses_one_page(page_reads: impl Fn(&App) -> usize) {
     let clipboard = Arc::new(Clipboard::default());
     app.set_desktop_actions(clipboard.clone());
     let ctx = CallCtx::for_window("main");
-    let h = app.dispatch(ctx.clone(), "view.open", json!({"spec":{"kind":"tab","tab":"Internal","filter":"All","sort":[{"column":"Address","dir":"desc"}]},"columns":["Address"]})).await.unwrap();
+    // Exercise the asynchronous handle even when the fixture builds quickly.
+    let readers = app.read_pool().exclusive(&key).await;
+    let mut h = app.dispatch(ctx.clone(), "view.open", json!({"spec":{"kind":"tab","tab":"Internal","filter":"All","sort":[{"column":"Address","dir":"desc"}]},"columns":["Address"]})).await.unwrap();
+    assert_eq!(h["state"], "building");
+    drop(readers);
+    let build = app
+        .ops()
+        .wait(h["op"]["opId"].as_str().unwrap())
+        .await
+        .unwrap();
+    assert_eq!(build.state, os_app::dto::OpState::Done, "{build:?}");
+    h = build.result.unwrap();
+    assert_eq!(h["state"], "ready");
     assert!(h["total"].as_u64().unwrap() > 2000);
     let before = page_reads(&app);
     let result = app.dispatch(ctx, "view.copy", json!({"viewId":h["viewId"],"selection":{"kind":"ids","ids":[20,30,20,6]},"columns":["Address"],"withHeader":false})).await.unwrap();

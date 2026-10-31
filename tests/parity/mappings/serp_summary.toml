@@ -1,3 +1,4 @@
+# Q02b / UI-038, K-64: dieselbe festgelegte Pixelmetrik wie Internal/Page Titles; Export-Schwellen unveraendert.
 # N06: Spaltensatz nach Referenzkopfzeile; Soll und Ignoriergründe aus der Spec.
 key = ["URL"]
 
@@ -5,10 +6,10 @@ key = ["URL"]
 "URL" = "Address"
 "Title" = "Title 1"
 "Character Length" = "Title 1 Length"
-"Pixel Length" = "Title 1 Pixel Width"
+"Pixel Length" = { os = "Title 1 Pixel Width", tolerance_pct = 3.0 }
 "Description" = "Meta Description 1"
 "Character Length (2)" = "Meta Description 1 Length"
-"Pixel Length (2)" = "Meta Description 1 Pixel Width"
+"Pixel Length (2)" = { os = "Meta Description 1 Pixel Width", tolerance_pct = 3.0 }
 
 [normalize]
 bool = "case-insensitive"

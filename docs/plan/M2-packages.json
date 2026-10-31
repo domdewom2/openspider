@@ -4645,7 +4645,12 @@
    "apps/desktop/e2e/n12/**",
    "docs/plan/M2-acceptance/e2e/befunde.md (nur Status U32-002/003)",
    "docs/plan/M2-acceptance/a11y/befunde.md (nur Status U30-F01/F03/F04)",
-   "docs/plan/M2-reports/n12.md"
+   "docs/plan/M2-reports/n12.md",
+   "apps/desktop/src/ui/primitives/ComboBox.tsx",
+   "apps/desktop/src/features/detail/frame/DetailFrame.tsx",
+   "apps/desktop/src/features/toptabs/TopTabs.tsx",
+   "apps/desktop/src/features/table/UpperTable.tsx",
+   "apps/desktop/e2e/** (Owns-Ausweitung für die Integration bestätigt)"
   ],
   "depends_on": [
    "M2-U30",
@@ -4653,7 +4658,7 @@
   ],
   "size": "S",
   "runner": "server+ci",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Clean-Room: nur docs/spec/* beschreibt das Soll; das Referenzprodukt nie nennen (nur „Referenz“), scripts/check-neutral.sh bleibt grün. Server-Ausführung: schwere Befehle mit `timeout 3600s nice -n 10`, Cargo `-j 8 --locked`. ARBEITSLISTE (K2-89/K2-90): (1) U32-002 – `.os-tab-label` aller drei Tab-Leisten: scrollHeight 17 > clientHeight 16 bei allen Faktoren und Größen; die Zeilenbox der Tab-Beschriftung ganzzahlig machen (line-height und Höhe in ganzen px, keine Bruchteil-Padding-Summe), Tab-Höhe nach M2-ui-concept 5 unverändert; U30 hat ganze 20-px-Zeilenboxen in TabBar eingeführt – darauf aufbauen. (2) Kappungsprüfung robust machen (visual/support.ts, polish/support.ts): gekappter Text wird am Textrechteck (Range.getBoundingClientRect der Textknoten) gegen das sichtbare Elementrechteck gemessen, Rundungstoleranz < 1 Gerätepixel; Ellipse mit vollem Tooltip/zugänglichem Namen bleibt erlaubt; die bestehenden Negativfälle (absichtlich gekappter Text, überlappende Controls, Ellipse ohne Namen) bleiben rot. Die erwarteten Fehler (`test.fail`) zu U32-002/003 entfallen danach; U32-003 (native select unter Linux-WebKit, 75×23 > 74×22) fällt unter die Toleranz oder wird mit Messwert gemeldet. (3) U30-F01 – `.os-grid-scroll` aus dem Tab-Zyklus nehmen (`tabIndex={-1}`), Grid bleibt einziger Einstieg; Tab/Shift+Tab in Chromium und WebKit gegenprüfen. (4) U30-F03 – Textfarbe der mittleren Priorität in Issues (hell) ≥ 4,5:1 mit Reserve. (5) U30-F04 – Segment-Buttons (dunkel) auf den gemeinsamen Button oder Theme-Tokens umstellen, Forced Colors prüfen. NACHWEIS: U30-Suite a11y (beide Browser, 0 critical/serious, Tabfolge grün), U32 layout.spec.ts ohne erwartete Fehler bei 1 024 × 640/1 440 × 900/1 920 × 1 080, vier Skalierungen, de/en, hell/dunkel; macOS/Windows über die CI-Matrix (Lauf-ID im Bericht). Baselines nur neu erzeugen, wenn sich die Tab-Darstellung sichtbar ändert, mit Begründung im Commit (Baselines gehören U32; Änderung melden statt selbst committen). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Clean-Room: nur docs/spec/* beschreibt das Soll; das Referenzprodukt nie nennen (nur „Referenz“), scripts/check-neutral.sh bleibt grün. Server-Ausführung: schwere Befehle mit `timeout 3600s nice -n 10`, Cargo `-j 8 --locked`. ARBEITSLISTE (K2-89/K2-90): (1) U32-002 – `.os-tab-label` aller drei Tab-Leisten: scrollHeight 17 > clientHeight 16 bei allen Faktoren und Größen; die Zeilenbox der Tab-Beschriftung ganzzahlig machen (line-height und Höhe in ganzen px, keine Bruchteil-Padding-Summe), Tab-Höhe nach M2-ui-concept 5 unverändert; U30 hat ganze 20-px-Zeilenboxen in TabBar eingeführt – darauf aufbauen. (2) Kappungsprüfung robust machen (visual/support.ts, polish/support.ts): gekappter Text wird am Textrechteck (Range.getBoundingClientRect der Textknoten) gegen das sichtbare Elementrechteck gemessen, Rundungstoleranz < 1 Gerätepixel; Ellipse mit vollem Tooltip/zugänglichem Namen bleibt erlaubt; die bestehenden Negativfälle (absichtlich gekappter Text, überlappende Controls, Ellipse ohne Namen) bleiben rot. Die erwarteten Fehler (`test.fail`) zu U32-002/003 entfallen danach; U32-003 (native select unter Linux-WebKit, 75×23 > 74×22) fällt unter die Toleranz oder wird mit Messwert gemeldet. (3) U30-F01 – `.os-grid-scroll` aus dem Tab-Zyklus nehmen (`tabIndex={-1}`), Grid bleibt einziger Einstieg; Tab/Shift+Tab in Chromium und WebKit gegenprüfen. (4) U30-F03 – Textfarbe der mittleren Priorität in Issues (hell) ≥ 4,5:1 mit Reserve. (5) U30-F04 – Segment-Buttons (dunkel) auf den gemeinsamen Button oder Theme-Tokens umstellen, Forced Colors prüfen. NACHWEIS: U30-Suite a11y (beide Browser, 0 critical/serious, Tabfolge grün), U32 layout.spec.ts ohne erwartete Fehler bei 1 024 × 640/1 440 × 900/1 920 × 1 080, vier Skalierungen, de/en, hell/dunkel; macOS/Windows über die CI-Matrix (Lauf-ID im Bericht). Baselines nur neu erzeugen, wenn sich die Tab-Darstellung sichtbar ändert, mit Begründung im Commit (Baselines gehören U32; Änderung melden statt selbst committen). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Integrationsrunde 17: Owns-Ausweitung auf ComboBox, DetailFrame, TopTabs, UpperTable und e2e/* bestätigt; Tabellenbenennung ohne Tab-Leiste erhalten und Geometrie atomar in einem evaluate messen."
  },
  {
   "id": "M2-N13",
@@ -4671,6 +4676,10 @@
    "deny.toml (nur Ausnahme mit Begründung, falls die Lizenzprüfung sie verlangt)",
    "crates/os-integrations/tests/api_framework.rs (nur sliding_window_and_retry_limit_are_observed_by_mock)",
    "crates/os-integrations/src/{http,quota}.rs (nur Uhr-Injektion, falls der Test ohne sie nicht deterministisch wird; Verhalten unverändert)",
+   "crates/os-app/tests/{cmd_api_framework,cmd_copy_page_fixture,pending_w1_i01,pending_w1_k02,pending_w1_k04}.rs (Orchestrator-Nachtrag K2-100: Fixture-Synchronisierung und Dateisperren)",
+   "crates/os-parity/tests/run_site.rs (Orchestrator-Nachtrag K2-100: ephemere Ports und Laufzeit-Origin)",
+   "crates/os-engine/src/testing.rs (Orchestrator-Nachtrag K2-100: vorbereiteter Fixture-Browser)",
+   "crates/os-analyze/tests/tab_accessibility.rs (Orchestrator-Nachtrag K2-100: Browser-Vorbereitung und Wiederverwendung)",
    "docs/plan/M2-reports/n13.md"
   ],
   "depends_on": [
@@ -4678,7 +4687,7 @@
   ],
   "size": "S",
   "runner": "server+ci",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Clean-Room: nur docs/spec/* beschreibt das Soll; das Referenzprodukt nie nennen (nur „Referenz“), scripts/check-neutral.sh bleibt grün. Server-Ausführung: schwere Befehle mit `timeout 3600s nice -n 10`, Cargo `-j 8 --locked`. ARBEITSLISTE: (1) U30-F02/U32-004 – `cargo clippy --workspace --all-targets --locked -- -D warnings` scheitert unter Linux mit E0063 in tauri-plugin-deep-link 2.6.2 (lib.rs:539, `ini::ParseOption` ohne die Felder `enabled_indented_mutiline_value` und `enabled_preserve_key_leading_whitespace`; rust-ini 0.21.3 im Lockfile). Kompatible Kombination gezielt herstellen: `cargo update -p rust-ini --precise <v>` oder `-p tauri-plugin-deep-link --precise <v>`, **kein** `cargo update` des ganzen Baums; Diff von Cargo.lock auf diese Pakete begrenzt (im Bericht zeigen); Lizenz MIT/Apache-2.0 per `cargo deny check licenses bans sources` belegen. Danach Workspace-Clippy und `cargo test --workspace --locked` unter Linux vollständig grün, macOS/Windows über CI. (2) U32-005 – `crates/os-integrations/tests/api_framework.rs:617` vergleicht Ankunftszeiten am Mock mit der Wanduhr (≥ 990 ms) und scheitert im vollen Core-Lauf: deterministisch machen (feste/pausierte Uhr, z. B. `tokio::time::pause` bzw. Prüfung über die Reservierungszeitpunkte des Quota-Ledgers mit `reserve_limits_at`), Aussage von INTEG-005 (Fenster 2 je 1 s, keine Wiederholung) unverändert; Testinhalt sonst nicht abschwächen. NACHWEIS: drei volle C4-Core-Läufe in Folge grün, CI-Lauf-IDs im Bericht. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Clean-Room: nur docs/spec/* beschreibt das Soll; das Referenzprodukt nie nennen (nur „Referenz“), scripts/check-neutral.sh bleibt grün. Server-Ausführung: schwere Befehle mit `timeout 3600s nice -n 10`, Cargo `-j 8 --locked`. ARBEITSLISTE: (1) U30-F02/U32-004 – `cargo clippy --workspace --all-targets --locked -- -D warnings` scheitert unter Linux mit E0063 in tauri-plugin-deep-link 2.6.2 (lib.rs:539, `ini::ParseOption` ohne die Felder `enabled_indented_mutiline_value` und `enabled_preserve_key_leading_whitespace`; rust-ini 0.21.3 im Lockfile). Kompatible Kombination gezielt herstellen: `cargo update -p rust-ini --precise <v>` oder `-p tauri-plugin-deep-link --precise <v>`, **kein** `cargo update` des ganzen Baums; Diff von Cargo.lock auf diese Pakete begrenzt (im Bericht zeigen); Lizenz MIT/Apache-2.0 per `cargo deny check licenses bans sources` belegen. Danach Workspace-Clippy und `cargo test --workspace --locked` unter Linux vollständig grün, macOS/Windows über CI. (2) U32-005 – `crates/os-integrations/tests/api_framework.rs:617` vergleicht Ankunftszeiten am Mock mit der Wanduhr (≥ 990 ms) und scheitert im vollen Core-Lauf: deterministisch machen (feste/pausierte Uhr, z. B. `tokio::time::pause` bzw. Prüfung über die Reservierungszeitpunkte des Quota-Ledgers mit `reserve_limits_at`), Aussage von INTEG-005 (Fenster 2 je 1 s, keine Wiederholung) unverändert; Testinhalt sonst nicht abschwächen. NACHWEIS: drei volle C4-Core-Läufe in Folge grün, CI-Lauf-IDs im Bericht. K2-100: Owns-Erweiterung durch Orchestrator-Nachtrag (Fixture-Flakes); rust-ini auf 0.21.1 gepinnt (nur Cargo.lock), bis tauri-plugin-deep-link > 2.6.2 mit rust-ini 0.21.3 kompatibel; CI immer --locked. Kein weiteres cargo update in der Integration. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
  },
  {
   "id": "M2-Q04",
@@ -4709,10 +4718,83 @@
    "M2-N04",
    "M2-Q02b",
    "M2-N12",
-   "M2-N13"
+   "M2-N13",
+   "M2-N14"
   ],
   "size": "M",
   "runner": "cloud",
   "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nachtrag K2-75: hängt zusätzlich an M2-U34 und M2-A03; Beleg für B9 enthält die Nutzer-Abnahmen docs/plan/M2-acceptance/beta/befunde.md und beta-2/befunde.md (offene A03-Befunde nur mit Verweis auf N-Paket oder M2-backlog.md). Entsteht aus A03 ein N-Paket (Welle 4n), hängt Q04 auch daran. Nachtrag K2-83/K2-91: hängt zusätzlich an M2-Q02b (Paritätsbeleg B3 nach SQ-01, Nenner 155) sowie M2-N12 und M2-N13 (Auflagen der Fable-Urteile U30/U32, vollständiger Workspace-Clippy für B1)."
+ },
+ {
+  "id": "M2-N14",
+  "kind": "package",
+  "model": "codex",
+  "title": "Skalierung des Links-Analyseschritts ohne Schema-Bump (K2-99)",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "TECH-139",
+   "TECH-140",
+   "TECH-142",
+   "TECH-145",
+   "PERF-003"
+  ],
+  "owns": [
+   "crates/os-analyze/src/analysis/steps/links.rs",
+   "crates/os-analyze/tests/n14_*",
+   "tests/golden/out-m2-read-api/*.q.txt",
+   "docs/plan/M2-reports/n14.md"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "S",
+  "runner": "server+ci",
+  "prompt_notes": "K2-99: Link-Fakten inline lesen, keine neue Migration oder Schemaversion. Autoindex bei Copy-Swap prüfen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen. Regeln M2.md Abschnitt 2/2a."
+ },
+ {
+  "id": "M2-N16",
+  "kind": "package",
+  "model": "codex",
+  "title": "Near-Duplicate-Beschleunigung mit bitgleichem Differentialnachweis und begrenztem Speicher",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "PERF-007",
+   "ONPAGE-144"
+  ],
+  "owns": [
+   "crates/os-analyze/src/analysis/steps/near_duplicates.rs",
+   "crates/os-analyze/src/analysis/steps/near_duplicates/disk.rs",
+   "crates/os-analyze/tests/near_dup_n16.rs",
+   "crates/os-analyze/tests/near_dup_scale.rs",
+   "crates/os-analyze/tests/near_dup_support/**",
+   "docs/plan/M2-reports/n16.md"
+  ],
+  "depends_on": [
+   "M2-D02"
+  ],
+  "size": "M",
+  "runner": "server+ci",
+  "prompt_notes": "Regeln M2.md Abschnitt 2/2a. Fable approved mit Auflagen 84; Korrekturrunde erfüllt. Bitgleiche Paare und Ähnlichkeiten, deterministischer Disk-Fallback; Mac-mini-Abnahme gemäß Bericht. Integrator ergänzt Paketeintrag (Fable-Befund 7). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-N17",
+  "kind": "package",
+  "model": "codex",
+  "title": "ui-e2e-CI: Werkzeuge vorbauen und macOS-WebKit-Tastaturnavigation aktivieren",
+  "wave": "4n",
+  "spec_ids": [],
+  "owns": [
+   ".github/workflows/ui-e2e.yml",
+   "docs/plan/M2-reports/n17.md"
+  ],
+  "depends_on": [
+   "M2-U30",
+   "M2-U32"
+  ],
+  "size": "S",
+  "runner": "server+ci",
+  "prompt_notes": "Regeln M2.md Abschnitt 2/2a. os-testsite, os-cli und os-parity vor E2E bauen; AppleKeyboardUIMode für Playwright-WebKit auf macOS setzen. Keine Produkt- oder Teständerung. Native CI-Nachweise durch den Orchestrator ergänzen."
  }
 ]
