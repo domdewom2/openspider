@@ -1,115 +1,91 @@
-# Fixture test of the embedded Cask hooks, without Homebrew or OS modifications.
-require "pathname"
+# Fixture of the generated script. No Homebrew or OS registrations are modified.
+require_relative "lifecycle"
 require "tmpdir"
-require "json"
-require "fileutils"
-
-class Pathname
-  # Homebrew provides atomic_write. Model that boundary without importing Homebrew.
-  def atomic_write(content)
-    write(content)
-  end
-end
-
-class CaskFixture
-  attr_reader :loaded, :hooks
-  attr_accessor :fail_bootstrap
-
-  def initialize
-    @loaded = {}
-    @hooks = {}
-  end
-
-  def postflight(&block)
-    @hooks[:install] = block
-  end
-
-  def uninstall_preflight(&block)
-    @hooks[:uninstall] = block
-  end
-
-  def run(hook)
-    instance_eval(&@hooks.fetch(hook))
-  end
-
-  def system_command(command, args:, must_succeed: true)
-    raise "Unexpected command" unless command == "/bin/launchctl"
-
-    case args[0]
-    when "print"
-      Struct.new(:success?).new(@loaded.key?(args[1]))
-    when "bootstrap"
-      raise "Bootstrap fixture failure" if fail_bootstrap
-
-      name = File.basename(args[2], ".plist")
-      @loaded["#{args[1]}/#{name}"] = File.read(args[2])
-      Struct.new(:success?).new(true)
-    else
-      raise "Unexpected launchctl operation"
-    end
-  end
-end
 
 def check(condition, message)
   raise message unless condition
 end
 
-original_home = Dir.method(:home)
 Dir.mktmpdir("p01-cask-") do |home|
-  Dir.define_singleton_method(:home) { home }
-  begin
-    fixture = CaskFixture.new
-    fixture.instance_eval(File.read(File.join(__dir__, "lifecycle.rb")))
-    agents = Pathname(home)/"Library/LaunchAgents"
-    agents.mkpath
-    active = agents/"de.openspider.task.active.plist"
-    inactive = agents/"de.openspider.task.inactive.plist"
-    unrelated = agents/"org.other.task.plist"
-    active.write("active fixture")
-    inactive.write("inactive fixture")
-    unrelated.write("other fixture")
-    domain = "gui/#{Process.uid}"
-    fixture.loaded["#{domain}/de.openspider.task.active"] = active.read
-    snapshot = Pathname(home)/"Library/Application Support/OpenSpider/homebrew-launchagents.json"
+  loaded = {}
+  fail_bootstrap = false
+  launchctl = lambda do |args, must_succeed:|
+    case args[0]
+    when "print"
+      loaded.key?(args[1])
+    when "bootout"
+      check(loaded.key?(args[1]), "Unexpected bootout target")
+      loaded.delete(args[1])
+      true
+    when "bootstrap"
+      raise "Bootstrap fixture failure" if fail_bootstrap
 
-    # spec: OUT-166 [M3] — DSL fixture of loaded-only preservation and uninstall removal.
-    fixture.run(:uninstall)
-    entries = JSON.parse(snapshot.read)
-    check(entries.size == 1 && entries[0]["name"] == active.basename.to_s, "Inactive task was backed up")
-    check((snapshot.stat.mode & 0o777) == 0o600, "Snapshot permissions")
-    active.unlink
-    inactive.unlink
-    fixture.loaded.clear
-    check(!active.exist? && fixture.loaded.empty?, "Uninstall left registrations")
-    fixture.run(:install)
-    check(active.read == "active fixture", "Active plist lost on upgrade")
-    check(fixture.loaded.key?("#{domain}/de.openspider.task.active"), "Active registration not restored")
-    check(!inactive.exist? && unrelated.read == "other fixture", "Inactive/unrelated job changed")
-    check(!snapshot.exist?, "Snapshot not consumed")
-    puts "ok: active task survives upgrade; inactive stays unregistered; unrelated task unchanged"
-
-    fixture.run(:uninstall)
-    active.unlink
-    fixture.loaded.clear
-    fixture.fail_bootstrap = true
-    begin
-      fixture.run(:install)
-      raise "Expected bootstrap failure"
-    rescue RuntimeError => error
-      raise unless error.message == "Bootstrap fixture failure"
+      name = File.basename(args[2], ".plist")
+      loaded["#{args[1]}/#{name}"] = File.read(args[2])
+      true
+    else
+      raise "Unexpected launchctl operation"
     end
-    check(snapshot.exist? && !active.exist?, "Failed restoration not retryable")
-    fixture.fail_bootstrap = false
-    fixture.run(:install)
-    check(active.exist? && !snapshot.exist?, "Restore retry failed")
-    puts "ok: failed bootstrap retains snapshot and can be retried"
-
-    fixture.run(:uninstall)
-    active.write("independent registration")
-    fixture.run(:install)
-    check(active.read == "independent registration", "Independent registration overwritten")
-    puts "ok: independently created registration preserved"
-  ensure
-    Dir.define_singleton_method(:home, original_home)
   end
+  lifecycle = OpenSpiderLaunchAgents.new(home: home, launchctl: launchctl)
+  agents = File.join(home, "Library/LaunchAgents")
+  FileUtils.mkdir_p(agents)
+  active = File.join(agents, "de.openspider.task.active.plist")
+  inactive = File.join(agents, "de.openspider.task.inactive.plist")
+  unrelated = File.join(agents, "org.other.task.plist")
+  File.write(active, "active fixture")
+  File.write(inactive, "inactive fixture")
+  File.write(unrelated, "other fixture")
+  domain = "gui/#{Process.uid}"
+  user_domain = "user/#{Process.uid}"
+  loaded["#{domain}/de.openspider.task.active"] = File.read(active)
+  loaded["#{user_domain}/de.openspider.task.active"] = File.read(active)
+  snapshot = File.join(home, "operation-temp/launchagents.json")
+
+  # // spec: OUT-166 [M3]
+  lifecycle.save(snapshot)
+  entries = JSON.parse(File.read(snapshot))
+  check(entries.size == 2 && entries.sum { |e| e["domains"].size } == 2, "Activation state lost")
+  check(loaded.empty?, "Uninstall left a registration in the other domain")
+  check((File.stat(snapshot).mode & 0o777) == 0o600, "Snapshot permissions")
+  File.unlink(active)
+  File.unlink(inactive)
+  loaded.clear # Homebrew's uninstall directives unload and delete these jobs.
+  lifecycle.restore(snapshot)
+  check(File.read(active) == "active fixture", "Active plist lost on upgrade")
+  check(loaded.key?("#{domain}/de.openspider.task.active"), "Active registration not restored")
+  check(loaded.key?("#{user_domain}/de.openspider.task.active"), "Other domain not restored")
+  check(File.read(inactive) == "inactive fixture", "Inactive definition lost")
+  check(!loaded.key?("#{domain}/de.openspider.task.inactive"), "Inactive task activated")
+  check(File.read(unrelated) == "other fixture", "Unrelated job changed")
+  check(!File.exist?(snapshot), "Snapshot not consumed")
+  puts "ok: upgrade preserves active and inactive definitions and activation state"
+
+  lifecycle.save(snapshot)
+  File.unlink(active)
+  loaded.clear
+  fail_bootstrap = true
+  begin
+    lifecycle.restore(snapshot)
+    raise "Expected bootstrap failure"
+  rescue RuntimeError => error
+    raise unless error.message == "Bootstrap fixture failure"
+  end
+  check(File.exist?(snapshot) && !File.exist?(active), "Failed restoration not retryable")
+  fail_bootstrap = false
+  lifecycle.restore(snapshot)
+  check(File.exist?(active) && !File.exist?(snapshot), "Restore retry failed")
+  puts "ok: failed bootstrap retains snapshot and can be retried"
+
+  lifecycle.save(snapshot)
+  File.write(active, "independent registration")
+  lifecycle.restore(snapshot)
+  check(File.read(active) == "independent registration", "Independent registration overwritten")
+  # Separate install after normal uninstall gets a new operation temp, so no resurrection.
+  loaded.clear
+  File.unlink(active)
+  File.unlink(inactive)
+  lifecycle.restore(File.join(home, "next-operation-temp/launchagents.json"))
+  check(loaded.empty? && !File.exist?(active), "Separate reinstall resurrected registrations")
+  puts "ok: independent registrations preserved; separate reinstall does not restore uninstalled jobs"
 end

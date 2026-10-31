@@ -28,8 +28,11 @@ test('Cask links the CLI at the stable app path and removes registrations withou
   assert.match(cask, /uninstall launchctl: "de.openspider.task.\*"/);
   assert.match(cask, /delete: "~\/Library\/LaunchAgents\/de.openspider.task.\*.plist"/);
   assert.doesNotMatch(cask.split('uninstall launchctl:')[1].split('zap trash:')[0], /Application Support|Preferences|Caches/);
-  assert.match(cask, /uninstall_preflight do/);
-  assert.match(cask, /postflight do/);
+  assert.match(cask, /uninstall_preflight_steps do/);
+  assert.match(cask, /postflight_steps do/);
+  assert.match(cask, /generated_script "openspider-launchagents.rb"/);
+  assert.match(cask, /\{\{temp\}\}\/launchagents.json/);
+  assert.doesNotMatch(cask, /\b(?:uninstall_preflight|postflight) do/);
   assert.match(cask, /zap trash:[\s\S]*org.openspider.desktop/);
   assert.match(cask, new RegExp(createHash('sha256').update(fixture['OpenSpider_1.0.0_x64.dmg']).digest('hex')));
   assert.match(cask, /\/v1.0.0\/OpenSpider_1.0.0_aarch64.dmg/);
@@ -101,9 +104,9 @@ test('publication has only release published trigger and defaults to no external
     const summary = join(root, 'summary');
     const output = join(root, 'output');
     const skipped = spawnSync('bash', ['-c', gate], { encoding: 'utf8', env: {
-      PATH: process.env.PATH, ENABLED: 'true', PACKAGE_ID: 'OpenSpider.CITest',
+      PATH: process.env.PATH, ENABLED: 'true', DRAFT: 'false', PRERELEASE: 'false', PACKAGE_ID: 'OpenSpider.CITest',
       TAP_REPOSITORY: 'example/homebrew-openspider', WINGET_FORK: 'example/winget-pkgs',
-      TAP_TOKEN: '', WINGET_TOKEN: '', GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary,
+      TAP_READY: 'false', WINGET_READY: 'false', GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary,
     } });
     assert.equal(skipped.status, 0, skipped.stderr);
     assert.match(readFileSync(summary, 'utf8'), /übersprungen/);

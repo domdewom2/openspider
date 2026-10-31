@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   gate:
-    if: github.event.release.draft == false && github.event.release.prerelease == false
     runs-on: ubuntu-latest
     timeout-minutes: 60
     outputs:
@@ -20,14 +19,20 @@ jobs:
         id: gate
         env:
           ENABLED: ${{ vars.RELEASE_PACKAGES_ENABLED }}
+          DRAFT: ${{ github.event.release.draft }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
           PACKAGE_ID: ${{ vars.OPENSPIDER_PACKAGE_ID }}
           TAP_REPOSITORY: ${{ vars.HOMEBREW_TAP_REPOSITORY }}
           WINGET_FORK: ${{ vars.WINGET_FORK_REPOSITORY }}
-          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          WINGET_TOKEN: ${{ secrets.WINGET_PR_TOKEN }}
+          TAP_READY: ${{ secrets.HOMEBREW_TAP_TOKEN != '' }}
+          WINGET_READY: ${{ secrets.WINGET_PR_TOKEN != '' }}
         run: |
           set -euo pipefail
-          if [[ "$ENABLED" != true || -z "$PACKAGE_ID" || -z "$TAP_REPOSITORY" || -z "$WINGET_FORK" || -z "$TAP_TOKEN" || -z "$WINGET_TOKEN" ]]; then
+          if [[ "$DRAFT" == true || "$PRERELEASE" == true ]]; then
+            echo '::notice::Paketveröffentlichung übersprungen: nur stabile veröffentlichte Releases.'
+            exit 0
+          fi
+          if [[ "$ENABLED" != true || -z "$PACKAGE_ID" || -z "$TAP_REPOSITORY" || -z "$WINGET_FORK" || "$TAP_READY" != true || "$WINGET_READY" != true ]]; then
             echo '::notice::Paketveröffentlichung deaktiviert: M3-REL/K3-08 oder Zugänge fehlen. Keine externen Änderungen.'
             echo 'Paketveröffentlichung übersprungen; Freigabe erst mit M3-REL. Keine Tokenwerte protokolliert.' >> "$GITHUB_STEP_SUMMARY"
             exit 0

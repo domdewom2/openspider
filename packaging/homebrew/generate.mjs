@@ -53,9 +53,23 @@ export function generate({ directory, output, version, repository, packageId, mo
   depends_on macos: ">= :ventura"
 
   app "OpenSpider.app"
+  generated_script "openspider-launchagents.rb", content: <<~'RUBY'
+${readFileSync(new URL('./lifecycle.rb', import.meta.url), 'utf8').split('\n').map(line => `    ${line}`).join('\n')}
+  RUBY
   binary "#{appdir}/OpenSpider.app/Contents/MacOS/openspider"
 
-${readFileSync(new URL('./lifecycle.rb', import.meta.url), 'utf8')}
+  postflight_steps do
+    run "/usr/bin/ruby",
+        args: ["{{staged_path}}/openspider-launchagents.rb", "restore", "{{temp}}/launchagents.json"],
+        writable_paths: ["~/Library/LaunchAgents"]
+  end
+
+  uninstall_preflight_steps do
+    run "/usr/bin/ruby",
+        args: ["{{staged_path}}/openspider-launchagents.rb", "save", "{{temp}}/launchagents.json"],
+        writable_paths: ["~/Library/LaunchAgents"]
+  end
+
   uninstall launchctl: "de.openspider.task.*",
             delete: "~/Library/LaunchAgents/de.openspider.task.*.plist"
 

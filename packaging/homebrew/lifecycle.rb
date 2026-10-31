@@ -1,58 +1,92 @@
-  # Homebrew runs uninstall directives during upgrade too. Preserve only loaded jobs;
-  # a later install restores the last active registrations, never inactive tasks.
-  postflight do
-    require "json"
-    snapshot = Pathname(Dir.home)/"Library/Application Support/OpenSpider/homebrew-launchagents.json"
-    if snapshot.exist?
-      raise "LaunchAgent snapshot is a symlink" if snapshot.symlink?
+# Embedded as a generated script in the Cask; no Homebrew internals required.
+require "json"
+require "fileutils"
+require "tempfile"
+require "open3"
 
-      JSON.parse(snapshot.read).each do |entry|
-        name = entry.fetch("name")
-        unless File.basename(name) == name && name.start_with?("de.openspider.task.") && name.end_with?(".plist")
-          raise "Invalid OpenSpider LaunchAgent name"
-        end
-        domain = entry.fetch("domain")
-        raise "Invalid LaunchAgent domain" unless ["gui/#{Process.uid}", "user/#{Process.uid}"].include?(domain)
+class OpenSpiderLaunchAgents
+  def initialize(home: Dir.home, uid: Process.uid, launchctl: nil)
+    @home = home
+    @domains = ["gui/#{uid}", "user/#{uid}"]
+    @launchctl = launchctl || method(:native_launchctl)
+  end
 
-        target = Pathname(Dir.home)/"Library/LaunchAgents"/name
-        target.dirname.mkpath
-        raise "LaunchAgent target is a symlink" if target.symlink?
+  def save(snapshot)
+    entries = Dir.glob(File.join(@home, "Library/LaunchAgents/de.openspider.task.*.plist")).sort.map do |path|
+      raise "LaunchAgent is a symlink" if File.symlink?(path)
 
-        # Never overwrite a registration created independently since uninstall.
-        unless target.exist?
-          target.atomic_write(entry.fetch("plist"))
-          begin
-            system_command "/bin/launchctl", args: ["bootstrap", domain, target.to_s], must_succeed: true
-          rescue StandardError
-            target.unlink
-            raise
-          end
-        end
+      label = File.basename(path, ".plist")
+      domains = @domains.select { |d| @launchctl.call(["print", "#{d}/#{label}"], must_succeed: false) }
+      { "name" => File.basename(path), "domains" => domains, "plist" => File.read(path) }
+    end
+    atomic_write(snapshot, JSON.generate(entries))
+    # Homebrew's wildcard discovery uses its current domain. Also remove jobs in
+    # the other domain explicitly, after securing the snapshot and before deletion.
+    entries.each do |entry|
+      label = File.basename(entry.fetch("name"), ".plist")
+      entry.fetch("domains").each do |domain|
+        @launchctl.call(["bootout", "#{domain}/#{label}"], must_succeed: true)
       end
-      snapshot.unlink
     end
   end
 
-  uninstall_preflight do
-    require "json"
-    snapshot = Pathname(Dir.home)/"Library/Application Support/OpenSpider/homebrew-launchagents.json"
-    snapshot.dirname.mkpath
-    raise "LaunchAgent snapshot is a symlink" if snapshot.symlink?
+  def restore(snapshot)
+    raise "LaunchAgent snapshot is a symlink" if File.symlink?(snapshot)
+    return unless File.exist?(snapshot)
 
-    entries = []
-    Dir.glob("#{Dir.home}/Library/LaunchAgents/de.openspider.task.*.plist").sort.each do |path|
-      plist = Pathname(path)
-      raise "LaunchAgent is a symlink" if plist.symlink?
+    JSON.parse(File.read(snapshot)).each do |entry|
+      name = entry.fetch("name")
+      unless File.basename(name) == name && name.start_with?("de.openspider.task.") && name.end_with?(".plist")
+        raise "Invalid OpenSpider LaunchAgent name"
+      end
+      domains = entry.fetch("domains")
+      raise "Invalid LaunchAgent domains" unless domains.is_a?(Array) && (domains - @domains).empty?
 
-      label = plist.basename(".plist").to_s
-      ["gui/#{Process.uid}", "user/#{Process.uid}"].each do |domain|
-        loaded = system_command "/bin/launchctl", args: ["print", "#{domain}/#{label}"], must_succeed: false
-        next unless loaded.success?
+      target = File.join(@home, "Library/LaunchAgents", name)
+      raise "LaunchAgent target is a symlink" if File.symlink?(target)
+      next if File.exist?(target) # Preserve independently created registrations.
 
-        entries << { "name" => plist.basename.to_s, "domain" => domain, "plist" => plist.read }
-        break
+      atomic_write(target, entry.fetch("plist"))
+      begin
+        domains.each do |domain|
+          label = File.basename(name, ".plist")
+          next if @launchctl.call(["print", "#{domain}/#{label}"], must_succeed: false)
+
+          @launchctl.call(["bootstrap", domain, target], must_succeed: true)
+        end
+      rescue StandardError
+        File.unlink(target)
+        raise
       end
     end
-    snapshot.atomic_write(JSON.generate(entries))
-    snapshot.chmod(0o600)
+    File.unlink(snapshot)
   end
+
+  private
+
+  def atomic_write(path, content)
+    raise "LaunchAgent state is a symlink" if File.symlink?(path)
+
+    FileUtils.mkdir_p(File.dirname(path))
+    Tempfile.create(["openspider-", ".tmp"], File.dirname(path)) do |file|
+      file.chmod(0o600)
+      file.write(content)
+      file.flush
+      File.rename(file.path, path)
+    end
+  end
+
+  def native_launchctl(args, must_succeed:)
+    _stdout, stderr, status = Open3.capture3("/bin/launchctl", *args)
+    raise "launchctl failed: #{stderr}" if must_succeed && !status.success?
+
+    status.success?
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  phase, snapshot = ARGV
+  raise "Expected save|restore and snapshot path" unless ARGV.length == 2 && %w[save restore].include?(phase)
+
+  OpenSpiderLaunchAgents.new.public_send(phase, snapshot)
+end

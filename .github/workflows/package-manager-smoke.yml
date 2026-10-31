@@ -57,6 +57,8 @@ jobs:
           set -euo pipefail
           PACKAGE_VERSION=$(node --input-type=module -e "import {readVersion} from './scripts/release/check-version.mjs'; console.log(readVersion(process.cwd()))")
           export PACKAGE_VERSION
+          # Current structured Cask steps need Homebrew 7; update runner tooling first.
+          brew update
           ruby packaging/homebrew/lifecycle.test.rb
           bash packaging/homebrew/smoke.sh
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
