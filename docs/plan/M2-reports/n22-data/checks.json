@@ -121,5 +121,43 @@
       "filter_passed": false,
       "peak_load_1m": 3.03515625
     }
+  },
+  "supplementary_baseline_5000000": {
+    "exit_status": 0,
+    "peak_load_1m": 4.259765625,
+    "max_load_limit": 6,
+    "valid_under_4": false,
+    "valid_under_continuation_6": true,
+    "errors": [
+      "substringMs: Search(Deadline)"
+    ]
+  },
+  "extraction_profile": {
+    "exit_status": 0,
+    "peak_load_1m": 3.73974609375,
+    "valid_under_4": true
+  },
+  "coordinator_cli": {
+    "syntax": true,
+    "help": true,
+    "rejects_ceiling_above_6": true,
+    "fixture_run_completed": true,
+    "default_ceiling": 4
+  },
+  "measurement_archive": {
+    "files_verified": 82,
+    "sha256_equal_to_originals": true
+  },
+  "cleanup": {
+    "root_target_absent": true,
+    "desktop_target_absent": true,
+    "large_fixtures_removed": true,
+    "python_bytecode_removed": true
+  },
+  "final_neutral": {
+    "exit_status": 0
+  },
+  "final_diff_check": {
+    "exit_status": 0
   }
 }
