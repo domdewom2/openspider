@@ -3,6 +3,9 @@ mod control;
 mod permutation;
 mod projection;
 
+#[cfg(test)]
+mod n21_tests;
+
 use super::{build, exec, ColumnSelection, PageStart, SearchSpec, ViewQuery, URLS_FROM};
 use crate::{
     defs::SortKey,
@@ -680,15 +683,58 @@ fn materialize(
         } else {
             let mut ids = RoaringBitmap::new();
             if ready {
+                // UI-141: an All-population pass can prepare its simple content
+                // class filters without another crawl scan per subsequent switch.
+                let mut classes = HashMap::new();
+                if built.filter.predicate == "1"
+                    && built.filter.requires.is_empty()
+                    && !built.filter.ignore_non_indexable
+                {
+                    for filter in &built.tab.filters {
+                        if !filter.requires.is_empty()
+                            || filter.ignore_non_indexable
+                            || !matches!(filter.kind, crate::defs::FilterKind::Live)
+                        {
+                            continue;
+                        }
+                        if let Some(class) = filter
+                            .predicate
+                            .strip_prefix("u.content_class = '")
+                            .and_then(|s| s.strip_suffix('\''))
+                        {
+                            let sibling =
+                                build::build(&tabs, &ViewQuery::new(built.tab.id, filter.id), cfg)?;
+                            classes
+                                .insert(class, (filter_key(&sibling, true), RoaringBitmap::new()));
+                        }
+                    }
+                }
                 let mut stmt = file.conn().prepare(&format!(
-                    "SELECT u.id FROM {URLS_FROM} WHERE {}",
+                    "SELECT u.id, u.content_class FROM {URLS_FROM} WHERE {}",
                     build::where_sql(&built.plan)
                 ))?;
                 exec::bind_named(&mut stmt, &built.plan.params, &[])?;
                 let mut rows = stmt.raw_query();
                 while let Some(row) = rows.next()? {
                     control.check()?;
-                    ids.insert(url_index(row.get(0)?)?);
+                    let id = url_index(row.get(0)?)?;
+                    ids.insert(id);
+                    if !classes.is_empty() {
+                        let class: String = row.get(1)?;
+                        if let Some((_, bitmap)) = classes.get_mut(class.as_str()) {
+                            bitmap.insert(id);
+                        }
+                    }
+                }
+                for (_, (key, ids)) in classes {
+                    cache.filters.insert(
+                        key,
+                        FilterBitmap {
+                            ids,
+                            seq,
+                            stamp: stamp.clone(),
+                        },
+                    );
                 }
             }
             ids
