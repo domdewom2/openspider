@@ -1,7 +1,7 @@
 """Additive Unix coordinator; invokes the unchanged U31 binary, never edits its verdict.
 
 Start below load 3.5; retain every attempt and accept a measurement only when its
-one-minute load stayed below 4. Budget failures remain failures, without retries.
+one-minute load stayed below the explicit ceiling (default 4). Budget failures remain failures, without retries.
 """
 import argparse
 import datetime
@@ -15,7 +15,7 @@ import sys
 import time
 
 
-def measure(phase, rows, output, start_load):
+def measure(phase, rows, output, start_load, max_load):
     fixture = Path(f"target/n22-{rows}.ospider")
     metadata = json.loads(Path(f"{fixture}.json").read_text())
     assert metadata["rows"] == rows
@@ -53,13 +53,13 @@ def measure(phase, rows, output, start_load):
         stdout, stderr = process.communicate()
         samples.append((round(time.monotonic() - at, 3), os.getloadavg()))
         peak = max(load[0] for _, load in samples)
-        valid = peak < 4
+        valid = peak < max_load
         (folder / f"{stem}.stdout").write_text(stdout)
         (folder / f"{stem}.stderr").write_text(stderr)
         (folder / f"{stem}.load.json").write_text(json.dumps({
             "started": started, "load_before": samples[0][1],
             "load_after": samples[-1][1], "load_samples": samples,
-            "peak_load_1m": peak, "start_load_limit": start_load, "valid_quiet": valid, "exit_status": process.returncode,
+            "peak_load_1m": peak, "start_load_limit": start_load, "max_load_limit": max_load, "valid_quiet": valid, "exit_status": process.returncode,
             "binary": str(binary.relative_to(Path.cwd())), "binary_sha256": binary_digest,
         }, indent=2) + "\n")
         if process.returncode:
@@ -72,7 +72,7 @@ def measure(phase, rows, output, start_load):
             for path in folder.glob(f"{stem}.*"):
                 shutil.copyfile(path, output / path.name)
             return
-        print("Load crossed 4; retain attempt as diagnostic and wait again.", flush=True)
+        print(f"Load crossed {max_load}; retain attempt as diagnostic and wait again.", flush=True)
         attempt += 1
 
 
@@ -82,13 +82,15 @@ def main():
     parser.add_argument("--rows", type=int, choices=[1_000_000, 5_000_000])
     parser.add_argument("--output", type=Path, default=Path("target/n22-results"))
     parser.add_argument("--start-load", type=float, default=3.5)
+    parser.add_argument("--max-load", type=float, default=4.0,
+                        help="load ceiling; default 4, dated continuation permits up to 6")
     args = parser.parse_args()
-    if not 0 < args.start_load < 4:
-        parser.error("start load must be positive and below 4")
+    if not 0 < args.start_load < args.max_load <= 6:
+        parser.error("require 0 < start load < max load <= 6")
     args.output.mkdir(parents=True, exist_ok=True)
     for rows in ([args.rows] if args.rows else [1_000_000, 5_000_000]):
         for phase in ([args.phase] if args.phase else ["before", "after"]):
-            measure(phase, rows, args.output, args.start_load)
+            measure(phase, rows, args.output, args.start_load, args.max_load)
 
 
 if __name__ == "__main__":

@@ -48,3 +48,9 @@ are labelled separately: the legacy numeric permutation already uses the
 covering `urls_status` index, whereas the generic SQL page needs a temporary
 sort. Extraction timings borrow cells and are lower bounds; they do not include
 owned key allocation, collation key generation, sorting or result materialization.
+
+The default validity ceiling remains 4. The dated 31 October continuation permits
+load below 6 for supplementary runs; opt in explicitly with `--max-load 6`
+(and, for example, `--start-load 4.5`). The selected ceiling is recorded in each
+load JSON. N22 primary after results were already collected below 4. This option
+changes neither the U31 runner nor any operation budget or completion verdict.
