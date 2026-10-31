@@ -171,24 +171,20 @@ jobs:
             cp LICENSE NOTICE third-party-notices/THIRD_PARTY_NOTICES.txt "$cli_dir/"
             tar -czf "$archive" -C "$cli_dir" openspider LICENSE NOTICE THIRD_PARTY_NOTICES.txt
           done
-      - name: 'STUB/TODO(R03): Smoke gegen die gesammelten Artefakte'
-        run: |
-          mkdir -p release-reports
-          echo 'STUB/TODO(R03): Plattform-Smoke einschließlich Windows ARM fehlt; R01/R02 und Linux-Smoke ersetzen diese Abnahme nicht.' | tee release-reports/R03.txt
-          cat release-reports/R03.txt >> "$GITHUB_STEP_SUMMARY"
       - name: Release-Notes und Update-Manifeste
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
           RELEASE_DATE: ${{ needs.prepare.outputs.date }}
         run: |
           set -euo pipefail
+          mkdir -p release-reports
           node scripts/release/notes.mjs "$VERSION" release-reports/release-notes.md
           node scripts/release/manifest.mjs release-assets "$VERSION" "$GITHUB_REPOSITORY" release-reports/release-notes.md "$RELEASE_DATE" --allow-unsigned > release-reports/updater-status.txt
           cat release-reports/updater-status.txt >> "$GITHUB_STEP_SUMMARY"
           if [[ ! -f release-assets/latest.json ]]; then
             echo 'unsigniert: keine vollständigen signierten Updater-Artefakte; keine Update-Manifeste.' >> release-reports/release-notes.md
           fi
-          cat release-reports/R03.txt >> release-reports/release-notes.md
+          echo 'Installations-Smoke: separater workflow_call; Entwurf wartet auf erfolgreiche Plattformmatrix und Bytevergleich.' >> release-reports/release-notes.md
       - name: SHA256SUMS über alle Release-Assets
         run: node scripts/release/checksums.mjs release-assets
       - name: Archiv-Kompatibilitäts-Fixture (D01)
@@ -216,9 +212,16 @@ jobs:
           path: release-reports/
           if-no-files-found: error
 
+  smoke-installed:
+    needs: [macos, windows]
+    permissions:
+      contents: read
+      actions: read
+    uses: ./.github/workflows/smoke-installed.yml
+
   draft:
     if: github.event_name == 'push' || !inputs.dry_run
-    needs: [prepare, assemble]
+    needs: [prepare, assemble, smoke-installed]
     runs-on: ubuntu-latest
     environment: release
     permissions:
