@@ -111,6 +111,23 @@ pub const BLOCK_COLUMNS: [&str; 4] = ["Section", "Item", "URLs", "% of Total"];
 pub fn read_reference(path: &Path, mapping: &Mapping) -> Result<Table, ParityError> {
     match mapping.format {
         RefFormat::Table => read_csv(path, &mapping.drop_ref_columns),
+        RefFormat::CrawlPath => {
+            let mut table = read_csv(path, &mapping.drop_ref_columns)?;
+            table
+                .rows
+                .retain(|row| !row.iter().all(|cell| cell.trim().is_empty()));
+            for name in [
+                "Source",
+                "Destination",
+                "Type",
+                "Anchor",
+                "Crawl Depth",
+                "Status Code",
+            ] {
+                required(&table, name)?;
+            }
+            Ok(table)
+        }
         RefFormat::Xml => crate::xml::read_sitemap(path),
         RefFormat::Blocks => {
             let bytes = std::fs::read(path).map_err(|e| {
@@ -126,7 +143,9 @@ pub fn read_reference(path: &Path, mapping: &Mapping) -> Result<Table, ParityErr
 
 /// Liest OpenSpider-Ausgaben; Block-Mappings beziehen sich nur auf die Referenz.
 pub fn read_output(path: &Path, mapping: &Mapping) -> Result<Table, ParityError> {
-    if mapping.format == RefFormat::Xml {
+    if mapping.format == RefFormat::CrawlPath {
+        project_crawl_path(read_csv(path, &[])?)
+    } else if mapping.format == RefFormat::Xml {
         crate::xml::read_sitemap(path)
     } else {
         read_csv(path, &[])
@@ -327,5 +346,274 @@ mod tests {
         let t = parse_csv(b"A,B\n", &[]).unwrap();
         assert!(t.rows.is_empty());
         assert_eq!(t.columns.len(), 2);
+    }
+}
+
+fn required(table: &Table, name: &str) -> Result<usize, ParityError> {
+    table
+        .index_of(name)
+        .ok_or_else(|| ParityError::Invalid(format!("Crawl Path: Spalte {name} fehlt")))
+}
+
+/// OUT-023: validate complete, ordered target blocks before projecting adjacent nodes.
+pub fn project_crawl_path(table: Table) -> Result<Table, ParityError> {
+    let indices = [
+        "Target Address",
+        "Step",
+        "Address",
+        "Status Code",
+        "Link Type",
+        "Anchor",
+        "Crawl Depth",
+    ]
+    .map(|name| required(&table, name))
+    .into_iter()
+    .collect::<Result<Vec<_>, _>>()?;
+    let mut result = Table {
+        columns: [
+            "Target Address",
+            "Source",
+            "Destination",
+            "Type",
+            "Anchor",
+            "Crawl Depth",
+            "Status Code",
+        ]
+        .map(String::from)
+        .to_vec(),
+        ..Default::default()
+    };
+    let mut seen = std::collections::BTreeSet::new();
+    let mut offset = 0;
+    while offset < table.rows.len() {
+        let target = &table.rows[offset][indices[0]];
+        if target.is_empty() || !seen.insert(target.clone()) {
+            return Err(ParityError::Invalid(
+                "Crawl Path: vermischte Zielblöcke".into(),
+            ));
+        }
+        let end = (offset..table.rows.len())
+            .find(|&i| table.rows[i][indices[0]] != *target)
+            .unwrap_or(table.rows.len());
+        let block = &table.rows[offset..end];
+        let mut addresses = std::collections::BTreeSet::new();
+        for (step, row) in block.iter().enumerate() {
+            if row[indices[1]].parse::<usize>().ok() != Some(step)
+                || !addresses.insert(&row[indices[2]])
+                || row[indices[2]].is_empty()
+            {
+                return Err(ParityError::Invalid(
+                    "Crawl Path: fehlender Knoten, falsche Steps oder Zyklus".into(),
+                ));
+            }
+        }
+        let root = block.last().expect("nonempty block");
+        if block[0][indices[2]] != *target
+            || root[indices[6]] != "0"
+            || !root[indices[4]].is_empty()
+            || !root[indices[5]].is_empty()
+        {
+            return Err(ParityError::Invalid(
+                "Crawl Path: falsches Ziel oder unvollständiger Startknoten".into(),
+            ));
+        }
+        for pair in block.windows(2) {
+            let destination = &pair[0];
+            let source = &pair[1];
+            if destination[indices[4]].is_empty() {
+                return Err(ParityError::Invalid(
+                    "Crawl Path: Verbindungsart fehlt".into(),
+                ));
+            }
+            result.rows.push(vec![
+                target.clone(),
+                source[indices[2]].clone(),
+                destination[indices[2]].clone(),
+                destination[indices[4]].clone(),
+                destination[indices[5]].clone(),
+                source[indices[6]].clone(),
+                destination[indices[3]].clone(),
+            ]);
+        }
+        offset = end;
+    }
+    Ok(result)
+}
+
+/// The reference has edges without target labels. Require one complete chain ending at the selection;
+/// never discard an unrecognised or disconnected row. Blank separators are removed at read time only.
+pub fn label_crawl_path(table: &mut Table, target_path: &str) -> Result<(), ParityError> {
+    let source = required(table, "Source")?;
+    let destination = required(table, "Destination")?;
+    let depth = required(table, "Crawl Depth")?;
+    let targets: Vec<_> = table
+        .rows
+        .iter()
+        .filter(|row| row[destination].ends_with(target_path))
+        .collect();
+    if targets.len() != 1 {
+        return Err(ParityError::Invalid(
+            "Crawl Path: falsche oder mehrdeutige Referenz-Zielauswahl".into(),
+        ));
+    }
+    let target = targets[0][destination].clone();
+    let base = target
+        .strip_suffix(target_path)
+        .ok_or_else(|| ParityError::Invalid("Crawl Path: Zielpfad fehlt".into()))?;
+    let mut cursor = format!("{base}/");
+    let mut used = std::collections::BTreeSet::new();
+    while cursor != target {
+        let next: Vec<_> = table
+            .rows
+            .iter()
+            .enumerate()
+            .filter(|(_, row)| row[source] == cursor)
+            .collect();
+        if next.len() != 1 {
+            return Err(ParityError::Invalid(
+                "Crawl Path: fehlende oder mehrdeutige Referenzverbindung".into(),
+            ));
+        }
+        let (index, row) = next[0];
+        if row[depth].parse::<usize>().ok() != Some(used.len()) || !used.insert(index) {
+            return Err(ParityError::Invalid(
+                "Crawl Path: Referenztiefe oder Zyklus".into(),
+            ));
+        }
+        cursor = row[destination].clone();
+    }
+    if used.len() != table.rows.len() {
+        return Err(ParityError::Invalid(
+            "Crawl Path: unverbundene Referenzzeilen".into(),
+        ));
+    }
+    table.columns.push("Target Address".into());
+    for row in &mut table.rows {
+        row.push(target.clone());
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod crawl_path_tests {
+    use super::*;
+    fn nodes() -> Table {
+        parse_csv(b"Target Address,Step,Address,Status Code,Link Type,Anchor,Crawl Depth\nhttp://a/end,0,http://a/end,200,Redirect,,2\nhttp://a/end,1,http://a/mid,301,Hyperlink,Go,1\nhttp://a/end,2,http://a/,200,,,0\n", &[]).unwrap()
+    }
+    // spec: OUT-023
+    #[test]
+    fn projects_redirect_destination_status_and_source_depth() {
+        let table = project_crawl_path(nodes()).unwrap();
+        assert_eq!(
+            table.rows,
+            [
+                [
+                    "http://a/end",
+                    "http://a/mid",
+                    "http://a/end",
+                    "Redirect",
+                    "",
+                    "1",
+                    "200"
+                ],
+                [
+                    "http://a/end",
+                    "http://a/",
+                    "http://a/mid",
+                    "Hyperlink",
+                    "Go",
+                    "0",
+                    "301"
+                ],
+            ]
+        );
+        let mut two = nodes();
+        let mut second = nodes();
+        for row in &mut second.rows {
+            for cell in row {
+                *cell = cell.replace("http://a", "http://b");
+            }
+        }
+        two.rows.extend(second.rows);
+        assert_eq!(project_crawl_path(two).unwrap().rows.len(), 4);
+    }
+    // spec: OUT-023
+    #[test]
+    fn rejects_missing_reversed_mixed_or_wrong_target_nodes() {
+        let mut missing = nodes();
+        missing.rows.remove(1);
+        assert!(project_crawl_path(missing).is_err());
+        let mut reversed = nodes();
+        reversed.rows.reverse();
+        assert!(project_crawl_path(reversed).is_err());
+        let mut wrong = nodes();
+        wrong.rows[0][2] = "http://a/wrong".into();
+        assert!(project_crawl_path(wrong).is_err());
+        let mut mixed = nodes();
+        mixed.rows[1][0] = "http://b/end".into();
+        assert!(project_crawl_path(mixed).is_err());
+    }
+    // spec: OUT-023
+    #[test]
+    fn validates_reference_chain_and_preserves_values_for_comparison() {
+        let mut edges = project_crawl_path(nodes()).unwrap();
+        edges.columns.remove(0);
+        for row in &mut edges.rows {
+            row.remove(0);
+        }
+        label_crawl_path(&mut edges.clone(), "/end").unwrap();
+        assert!(label_crawl_path(&mut edges.clone(), "/wrong").is_err());
+        let mut missing = edges.clone();
+        missing.rows.pop();
+        assert!(label_crawl_path(&mut missing, "/end").is_err());
+        let mut wrong_depth = edges.clone();
+        wrong_depth.rows[1][4] = "4".into();
+        assert!(label_crawl_path(&mut wrong_depth, "/end").is_err());
+        let mut anchor = edges.clone();
+        anchor.rows[1][3] = "Wrong".into();
+        label_crawl_path(&mut anchor, "/end").unwrap();
+        assert_eq!(
+            anchor.rows[1][3], "Wrong",
+            "Anchor bleibt uneingeschränkt im Zellvergleich"
+        );
+    }
+}
+
+#[cfg(test)]
+mod crawl_path_comparison_tests {
+    use super::*;
+    // spec: OUT-023
+    #[test]
+    fn wrong_anchor_depth_or_missing_connection_cannot_pass_the_mapping() {
+        let reference = parse_csv(b"Target Address,Source,Destination,Type,Anchor,Crawl Depth,Status Code\nhttp://a/end,http://a/,http://a/mid,Hyperlink,Go,0,301\nhttp://a/end,http://a/mid,http://a/end,Redirect,,1,200\n", &[]).unwrap();
+        let mapping = Mapping::parse(include_str!(
+            "../../../tests/parity/mappings/crawl_path.toml"
+        ))
+        .unwrap();
+        let bases = crate::normalize::BaseUrls::from_base("http://a");
+        let compare = |output: &Table| {
+            crate::diff::compare(&crate::diff::CompareInput {
+                export: "crawl_path",
+                site: None,
+                reference: &reference,
+                os: output,
+                mapping: &mapping,
+                ref_bases: &bases,
+                os_bases: &bases,
+                deviations: &[],
+            })
+            .unwrap()
+        };
+        let ok = compare(&reference);
+        assert_eq!(ok.cells_equal, ok.cells_compared);
+        for column in ["Anchor", "Crawl Depth", "Status Code"] {
+            let mut wrong = reference.clone();
+            wrong.rows[0][required(&reference, column).unwrap()] = "wrong".into();
+            let report = compare(&wrong);
+            assert!(report.cells_equal < report.cells_compared, "{column}");
+        }
+        let mut missing = reference.clone();
+        missing.rows.pop();
+        assert!(!compare(&missing).missing_in_os.is_empty());
     }
 }

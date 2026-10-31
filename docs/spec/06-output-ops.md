@@ -386,6 +386,7 @@ Menü „Bulk Export“. Alle Bulk-Exporte beziehen sich auf den gesamten Crawl 
   - `Type` ∈ {`Hyperlink`, `Image`, `CSS`, `JavaScript`, `Media`, `Iframe`, `Canonical`, `HTTP Canonical`, `Rel Next`, `Rel Prev`, `Hreflang`, `HTTP Hreflang`, `AMP`, `Mobile Alternate`, `Meta Refresh`, `HTTP Refresh`, `HTTP Redirect`, `HSTS Policy`, `JavaScript Redirect`, `XML Sitemap`, `PDF Link`}.
   - `Status` = Statustext bzw. Ergebnis (`OK`, `Not Found`, `Moved Permanently`, `HSTS Policy`, `DNS Lookup Failed`, `Connection Timeout`, `Blocked by Robots.txt`, `Not Crawled` …).
   - `Rel` = alle `rel`-Werte des Elements in Originalreihenfolge, kleingeschrieben, mit einem Leerzeichen getrennt; `Target` = Wert des `target`-Attributs oder leer.
+  - `Size (Bytes)` eines bekannten, noch nicht gecrawlten internen Ziels ist im Linkexport 0 (K2-96); unbekannte externe Größen bleiben leer.
   - `Alt Text` nur bei `Type`=Image (bzw. verlinktem Bild bei Hyperlink); sonst leer.
   - `Follow` = `True`/`False` (False bei `rel=nofollow`/`ugc`/`sponsored` am Link oder Meta/X-Robots nofollow der Quelle).
   - `Path Type` ∈ {`Absolute`, `Protocol-Relative`, `Root-Relative`, `Path-Relative`}.
@@ -941,12 +942,12 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 
 ### OUT-087 Canonicals: Non-Indexable Canonicals
 - **Priorität:** P1
-- **Beschreibung:** Canonical-Ziele, die nicht indexierbar sind (Status ≠ 200, noindex, selbst kanonisiert, blockiert), sowie Canonical-Ziele, die ausschließlich über Canonicals gefunden wurden („unlinked“).
+- **Beschreibung:** Canonical-Ziele, die nicht indexierbar sind (Status ≠ 200, noindex, selbst kanonisiert, blockiert); indexierbare ausschließlich über Canonicals gefundene Ziele gehören nur zum eigenen Unlinked-Filter/Report (K2-96).
 - **Ausgabe:** `Source` (Seite mit Canonical), `Canonical`, `Status Code`, `Status`, `Indexability`, `Indexability Status`, `Unlinked` (True/False).
 - **Akzeptanzkriterien:**
   - [ ] Canonical auf 404 → enthalten, `Indexability Status`=Client Error.
   - [ ] Canonical auf noindex-Seite → enthalten.
-  - [ ] Canonical auf 200-Seite, die nirgends verlinkt ist → enthalten mit `Unlinked`=True, obwohl indexierbar.
+  - [ ] Canonical auf indexierbare 200-Seite, die nirgends verlinkt ist → hier nicht enthalten; nur im eigenen Unlinked-Filter/Report (K2-96).
 - **Testfixture:** `out-canonicals`.
 
 ### OUT-088 Pagination: Non-200 Pagination URLs
@@ -994,7 +995,7 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 ### OUT-093 Hreflang: Missing Return Links
 - **Priorität:** P1
 - **Beschreibung:** Seite A verweist per hreflang auf B, aber B verweist nicht per hreflang zurück auf A.
-- **Ausgabe:** `Address` (A), `Hreflang Language`, `Hreflang URL` (B), `Hreflang URL Status Code`, `Hreflang URL Indexability`, `Missing Return Link To` (A).
+- **Ausgabe:** `Address` (A), `Hreflang Language` (Code des fehlenden Rücklinks, daher leer; K2-96), `Hreflang URL` (B), `Hreflang URL Status Code`, `Hreflang URL Indexability`, `Missing Return Link To` (A).
 - **Akzeptanzkriterien:**
   - [ ] A→B ohne B→A → eine Zeile.
   - [ ] Ist B nicht 200 oder nicht gecrawlt, wird die Zeile trotzdem ausgegeben, mit Statuscode von B (Referenz ergänzte Statuscodes in einer früheren Version).
@@ -1044,7 +1045,7 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 
 ### OUT-098 SERP Summary
 - **Priorität:** P1
-- **Beschreibung:** Titles und Meta Descriptions aller internen HTML-Seiten mit Zeichenlänge und Pixelbreite; die Datei kann im SERP-Modus wieder geladen, bearbeitet und erneut berechnet werden.
+- **Beschreibung:** Titles und Meta Descriptions aller internen HTML-Seiten mit Status 2xx (keine Fehlerseiten; K2-96) mit Zeichenlänge und Pixelbreite; die Datei kann im SERP-Modus wieder geladen, bearbeitet und erneut berechnet werden.
 - **Ausgabe:** `Address`, `Title 1`, `Title 1 Length`, `Title 1 Pixel Width`, `Meta Description 1`, `Meta Description 1 Length`, `Meta Description 1 Pixel Width`.
 - **Akzeptanzkriterien:**
   - [ ] Längen und Pixelbreiten sind identisch mit den Werten in Page Titles/Meta Description (gleiche Berechnung, Schrift und Pixelregeln aus dem On-Page-Bereich).

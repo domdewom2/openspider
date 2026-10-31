@@ -1,0 +1,33 @@
+# Spaltenmapping Referenz -> OpenSpider fuer den Export "Content:All" (Format: docs/plan/M1.md 5.2).
+# Stand M1-P29 (Welle 5): an die echten Kopfzeilen der Referenz (Referenzprodukt (Free-Version), englische Oberflaeche) angepasst.
+# Nur Spaltennamen der Kopfzeile; Beschreibungsspalten werden beim Einlesen verworfen (Clean-Room, A8).
+key = ["Address"]
+drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
+
+[columns]
+"Address" = "Address"
+"Word Count" = "Word Count"
+"Sentence Count" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2) (ONPAGE-149)" }
+"Average Words Per Sentence" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2) (ONPAGE-149)" }
+"Flesch Reading Ease Score" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2) (ONPAGE-149)" }
+"Readability" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2) (ONPAGE-149)" }
+"Closest Near Duplicate Match" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2): Near Duplicates (ONPAGE-144 ff.)" }
+"No. Near Duplicates" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2): Near Duplicates (ONPAGE-144 ff.)" }
+"Closest Semantically Similar Address" = { ignore = true, reason = "KI-Funktion, M4" }
+"Semantic Similarity Score" = { ignore = true, reason = "KI-Funktion, M4" }
+"No. Semantically Similar" = { ignore = true, reason = "KI-Funktion, M4" }
+"Semantic Relevance Score" = { ignore = true, reason = "KI-Funktion, M4" }
+"Total Language Errors" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2): Rechtschreibung/Grammatik" }
+"Spelling Errors" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2): Rechtschreibung/Grammatik" }
+"Grammar Errors" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2): Rechtschreibung/Grammatik" }
+"Language" = { ignore = true, reason = "nicht in M1 (P1/P2, M1.md 7.2): Sprache (ONPAGE-153)" }
+"Hash" = { os = "Hash", transform = ["hex_trim_zeros"] }
+"Indexability" = "Indexability"
+"Indexability Status" = { os = "Indexability Status", transform = ["ignore_case"] }
+
+[normalize]
+base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}
+trim = true
+bool = "case-insensitive"
+number_decimals = 3      # Zahlen werden nach Rundung verglichen
+empty_equals_null = true

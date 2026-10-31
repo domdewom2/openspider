@@ -1,0 +1,136 @@
+{
+  "basis": "9b1b402d",
+  "decision": "K2-63 / K2-96",
+  "title_pixel_cells": 2,
+  "link_size_cells": 12,
+  "other_cells_changed": false,
+  "reference_files_changed": false,
+  "changes": [
+    {
+      "file": "tests/golden/onpage-titles/page_titles__all.csv",
+      "row": 3,
+      "column": "Title 1 Pixel Width",
+      "before": "106",
+      "after": "108",
+      "spec": "UI-038 / ONPAGE-096",
+      "key": "{BASE}/rcdata.html"
+    },
+    {
+      "file": "tests/golden/onpage-titles/page_titles__below_30_characters.csv",
+      "row": 2,
+      "column": "Title 1 Pixel Width",
+      "before": "106",
+      "after": "108",
+      "spec": "UI-038 / ONPAGE-096",
+      "key": "{BASE}/rcdata.html"
+    },
+    {
+      "file": "tests/golden/out-links/links_all_inlinks.csv",
+      "row": 17,
+      "column": "Size (Bytes)",
+      "before": "",
+      "after": "0",
+      "spec": "OUT-031 / ONPAGE-012",
+      "key": "Mobile Alternate | http://www.site.test/ | http://www.site.test/m.html"
+    },
+    {
+      "file": "tests/golden/out-links/links_all_inlinks.csv",
+      "row": 23,
+      "column": "Size (Bytes)",
+      "before": "",
+      "after": "0",
+      "spec": "OUT-031 / ONPAGE-012",
+      "key": "Rel Prev | http://www.site.test/ | http://www.site.test/page0.html"
+    },
+    {
+      "file": "tests/golden/out-links/links_all_inlinks.csv",
+      "row": 24,
+      "column": "Size (Bytes)",
+      "before": "",
+      "after": "0",
+      "spec": "OUT-031 / ONPAGE-012",
+      "key": "Rel Next | http://www.site.test/ | http://www.site.test/page2.html"
+    },
+    {
+      "file": "tests/golden/out-links/links_all_inlinks.csv",
+      "row": 31,
+      "column": "Size (Bytes)",
+      "before": "",
+      "after": "0",
+      "spec": "OUT-031 / ONPAGE-012",
+      "key": "Hyperlink | http://www.site.test/ | http://www.site.test/sponsor.html"
+    },
+    {
+      "file": "tests/golden/out-links/links_all_inlinks.csv",
+      "row": 35,
+      "column": "Size (Bytes)",
+      "before": "",
+      "after": "0",
+      "spec": "OUT-031 / ONPAGE-012",
+      "key": "Hyperlink | http://www.site.test/ | http://www.site.test/x"
+    },
+    {
+      "file": "tests/golden/out-links/links_all_inlinks.csv",
+      "row": 36,
+      "column": "Size (Bytes)",
+      "before": "",
+      "after": "0",
+      "spec": "OUT-031 / ONPAGE-012",
+      "key": "Hyperlink | http://www.site.test/ | http://www.site.test/x"
+    },
+    {
+      "file": "tests/golden/out-links/links_all_outlinks.csv",
+      "row": 6,
+      "column": "Size (Bytes)",
+      "before": "",
+      "after": "0",
+      "spec": "OUT-031 / ONPAGE-012",
+      "key": "Hyperlink | http://www.site.test/ | http://www.site.test/x"
+    },
+    {
+      "file": "tests/golden/out-links/links_all_outlinks.csv",
+      "row": 7,
+      "column": "Size (Bytes)",
+      "before": "",
+      "after": "0",
+      "spec": "OUT-031 / ONPAGE-012",
+      "key": "Hyperlink | http://www.site.test/ | http://www.site.test/x"
+    },
+    {
+      "file": "tests/golden/out-links/links_all_outlinks.csv",
+      "row": 10,
+      "column": "Size (Bytes)",
+      "before": "",
+      "after": "0",
+      "spec": "OUT-031 / ONPAGE-012",
+      "key": "Hyperlink | http://www.site.test/ | http://www.site.test/sponsor.html"
+    },
+    {
+      "file": "tests/golden/out-links/links_all_outlinks.csv",
+      "row": 25,
+      "column": "Size (Bytes)",
+      "before": "",
+      "after": "0",
+      "spec": "OUT-031 / ONPAGE-012",
+      "key": "Mobile Alternate | http://www.site.test/ | http://www.site.test/m.html"
+    },
+    {
+      "file": "tests/golden/out-links/links_all_outlinks.csv",
+      "row": 28,
+      "column": "Size (Bytes)",
+      "before": "",
+      "after": "0",
+      "spec": "OUT-031 / ONPAGE-012",
+      "key": "Rel Next | http://www.site.test/ | http://www.site.test/page2.html"
+    },
+    {
+      "file": "tests/golden/out-links/links_all_outlinks.csv",
+      "row": 29,
+      "column": "Size (Bytes)",
+      "before": "",
+      "after": "0",
+      "spec": "OUT-031 / ONPAGE-012",
+      "key": "Rel Prev | http://www.site.test/ | http://www.site.test/page0.html"
+    }
+  ]
+}

@@ -116,7 +116,7 @@ pub(crate) const X_ROBOTS_LIST: &str = "SELECT raw FROM directives WHERE url_id 
      source = 'x_robots_tag' AND applies = 1 ORDER BY position";
 
 /// Alle `<link rel=\"canonical\">` im HTML (absolut aufgelöst), in Quelltextreihenfolge.
-pub(crate) const CANONICAL_LIST: &str = "SELECT COALESCE(resolved, raw) FROM canonicals WHERE \
+pub(crate) const CANONICAL_LIST: &str = "SELECT CASE WHEN instr(COALESCE(resolved, raw), '#') > 0 THEN substr(COALESCE(resolved, raw), 1, instr(COALESCE(resolved, raw), '#') - 1) ELSE COALESCE(resolved, raw) END FROM canonicals WHERE \
      url_id = ?1 AND source = 'html' ORDER BY position";
 
 /// Die Basisspalten `Address … Indexability Status` (ONPAGE-010), gemeinsam für Internal und Security.

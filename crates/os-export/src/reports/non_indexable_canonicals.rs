@@ -38,8 +38,7 @@ fn run(job: &TableJob<'_>, writer: &mut dyn TableWriter) -> Result<u64, ExportEr
         FROM urls u JOIN urls t ON t.id = u.canonical_target_id
         WHERE u.is_internal = 1 AND u.in_tables = 1 AND u.status_code BETWEEN 200 AND 299
             AND u.canonical_self = 0 AND t.indexability IS NOT NULL
-            AND (t.indexability = 'Non-Indexable' OR t.status_code <> 200 OR
-              EXISTS(SELECT 1 FROM url_flags f WHERE f.url_id = t.id AND f.flag = 'unlinked_canonical'))
+            AND (t.indexability = 'Non-Indexable' OR t.status_code <> 200)
         ORDER BY u.address COLLATE OS_TEXT"))?;
     let mut rows = sql(stmt.query([]))?;
     let mut count = 0;
@@ -77,7 +76,7 @@ mod tests {
     // spec: TECH-025
     // spec: OUT-087
     #[test]
-    fn report_lists_error_noindex_and_unlinked_targets_without_unknowns_or_self_references() {
+    fn report_excludes_indexable_unlinked_targets_without_losing_nonindexable_targets() {
         let fx = fixture();
         analyse(&fx);
         let result = crate::save_report(
@@ -93,7 +92,6 @@ mod tests {
         for (source, status, unlinked) in [
             ("to-error", "Client Error", "True"),
             ("to-noindex", "noindex", "True"),
-            ("annotation", "", "True"),
         ] {
             let row = table
                 .rows
@@ -115,7 +113,7 @@ mod tests {
         )
         .unwrap();
         assert_eq!(read(&known.files[0].path).rows, table.rows);
-        for source in ["c", "linked-source", "to-unknown"] {
+        for source in ["c", "linked-source", "to-unknown", "annotation"] {
             assert!(!table
                 .rows
                 .iter()

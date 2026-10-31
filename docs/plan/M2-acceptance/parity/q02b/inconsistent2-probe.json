@@ -1,0 +1,46 @@
+{
+  "export": "hreflang_inconsistent_returns",
+  "site": null,
+  "ref_rows": 2,
+  "os_rows": 2,
+  "matched": 2,
+  "missing_in_os": [],
+  "extra_in_os": [],
+  "cells_compared": 4,
+  "cells_equal": 4,
+  "agreement_pct": 100.0,
+  "columns": [
+    {
+      "ref_column": "Expected Language",
+      "os_column": "Expected Language",
+      "compared": 2,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Actual Language",
+      "os_column": "Actual Language",
+      "compared": 2,
+      "errors": 0,
+      "examples": []
+    }
+  ],
+  "applied_deviations": [],
+  "dropped_ref_columns": [],
+  "ignored_columns": [
+    {
+      "column": "URL Target",
+      "reason": "OUT-094: Referenz wiederholt hier die Selbstannotation (identisch mit URL with Inconsistent Language Return Link); Bezugspaar und Expected/Actual Language bleiben verglichen."
+    }
+  ],
+  "unmapped_ref_columns": [],
+  "unmapped_os_columns": [],
+  "missing_ref_columns": [],
+  "missing_os_columns": [],
+  "ignored_ref_rows": [],
+  "os_only_rows": [],
+  "threshold_pct": 97.0,
+  "url_set_identical": true,
+  "passed": true,
+  "failures": []
+}

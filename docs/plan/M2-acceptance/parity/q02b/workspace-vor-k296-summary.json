@@ -1,0 +1,49 @@
+{
+  "main_exit": 124,
+  "main_complete": false,
+  "tail_exit": 0,
+  "doc_exit": 0,
+  "single_green_workspace_run": false,
+  "parts": {
+    "workspace.log": {
+      "targets": 483,
+      "passed": 3694,
+      "failed": 1,
+      "ignored": 42,
+      "target_seconds": 2404.64
+    },
+    "workspace-tail.log": {
+      "targets": 36,
+      "passed": 283,
+      "failed": 0,
+      "ignored": 1,
+      "target_seconds": 68.8
+    },
+    "doc-tests.log": {
+      "targets": 17,
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "target_seconds": 0.0
+    }
+  },
+  "total": {
+    "targets": 536,
+    "passed": 3977,
+    "failed": 1,
+    "ignored": 43,
+    "target_seconds": 2473.44
+  },
+  "expected_targets_from_unchanged_integration": 536,
+  "all_targets_measured": true,
+  "failures": [
+    {
+      "spec": "INTEG-009",
+      "file": "crates/os-app/tests/pending_w1_i01.rs",
+      "test": "selection_all_resolves_real_view_version_and_exceptions",
+      "message": "CmdError Stale / err-view-stale bei api.fetch mit Selection::All",
+      "candidate_source": "crates/os-app/src/commands/api.rs:1152",
+      "next_step": "View-/Auswahlversionsrennen nach view.open und vor api.fetch untersuchen; keine Assertion gelockert und kein Retry eingefuehrt."
+    }
+  ]
+}

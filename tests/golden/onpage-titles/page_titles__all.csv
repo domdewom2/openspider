@@ -1,7 +1,7 @@
 ﻿Address,Occurrences,Title 1,Title 1 Length,Title 1 Pixel Width,Title 2,Title 2 Length,Title 2 Pixel Width,H1-1,Indexability,Indexability Status
 {BASE}/,1,Titel Index aaaa bbbb cccc ddddz,32,295,,0,0,,Indexable,
 {BASE}/basic.html,1,Start,5,44,,0,0,,Indexable,
-{BASE}/rcdata.html,1,A <b>B</b>,10,106,,0,0,,Indexable,
+{BASE}/rcdata.html,1,A <b>B</b>,10,108,,0,0,,Indexable,
 {BASE}/svg-title.html,1,Titel svg-title aaaa bbbb cccc dddd eeee,40,358,,0,0,,Indexable,
 {BASE}/entities.html,1,Shop & Mehr,11,114,,0,0,,Indexable,
 {BASE}/missing-none.html,0,,0,0,,0,0,,Indexable,

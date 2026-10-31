@@ -155,6 +155,8 @@ pub enum RefFormat {
     Blocks,
     /// XML- oder Bilder-Sitemap.
     Xml,
+    /// Referenz-Verbindungen und OpenSpider-Knoten (OUT-023).
+    CrawlPath,
 }
 
 /// Einstellungen für [`RefFormat::Blocks`].
@@ -402,9 +404,10 @@ impl Mapping {
             None | Some("") | Some("table") => RefFormat::Table,
             Some("blocks") => RefFormat::Blocks,
             Some("xml") => RefFormat::Xml,
+            Some("crawl_path") => RefFormat::CrawlPath,
             Some(other) => {
                 return Err(ParityError::Invalid(format!(
-                    "unbekanntes format {other:?} (erlaubt: table, blocks, xml)"
+                    "unbekanntes format {other:?} (erlaubt: table, blocks, xml, crawl_path)"
                 )))
             }
         };

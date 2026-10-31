@@ -8,7 +8,7 @@ key = ["Type", "Source", "Destination", "#"]
 drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
 
 [columns]
-"Type" = { os = "Type", map = { "HTML Canonical" = "Canonical", "HTML Hreflang" = "Hreflang", "Meta Refresh Redirect" = "Meta Refresh", "HTTP Refresh Redirect" = "HTTP Refresh" } }
+"Type" = { os = "Type", map = { "HTML Canonical" = "Canonical", "HTML Hreflang" = "Hreflang", "HTML Rel Next" = "Rel Next", "HTML Rel Prev" = "Rel Prev", "Meta Refresh Redirect" = "Meta Refresh", "HTTP Refresh Redirect" = "HTTP Refresh" } }
 "Source" = "Source"
 "Destination" = "Destination"
 "Size (Bytes)" = "Size (Bytes)"

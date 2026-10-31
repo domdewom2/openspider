@@ -1,0 +1,11 @@
+{
+  "complete": false,
+  "reason": "Symbolbereinigung beeintraechtigt Backtrace-Pruefung; kompletter Wiederholungslauf mit unveraenderten Tests und ungestrippten Programmen folgt.",
+  "removed_test_executables": 327,
+  "failed_targets": [
+    "os-app/cmd_view_session",
+    "os-app/logging_rotation",
+    "os-app/pending_w1_k02",
+    "os-cli (scheduled_task comparison)"
+  ]
+}

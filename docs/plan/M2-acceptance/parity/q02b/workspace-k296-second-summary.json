@@ -1,0 +1,14 @@
+{
+  "exit_code": 101,
+  "all_targets_measured": true,
+  "targets": 536,
+  "passed": 3985,
+  "failed": 3,
+  "ignored": 43,
+  "known_failures": [
+    "OUT-098 new fixture lacked SQLite NOT NULL fields (fixed in 3895e13b)",
+    "OUT-031/ONPAGE-012 all_inlinks/all_outlinks own Golden sizes empty -> 0, K2-63 (fixed in 3895e13b)"
+  ],
+  "serp_fixture_check_exit": 0,
+  "wall_seconds": 1375.76
+}

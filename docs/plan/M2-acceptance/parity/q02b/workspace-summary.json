@@ -1,0 +1,32 @@
+{
+  "main_exit": 0,
+  "main_complete": true,
+  "single_green_workspace_run": true,
+  "command": "cargo test --workspace --exclude openspider-desktop -j 6 --locked --no-fail-fast",
+  "profile": {
+    "dev_debug": "line-tables-only",
+    "test_debug": "line-tables-only",
+    "incremental": false
+  },
+  "started_at": "2026-10-30T23:37:30.220000+00:00",
+  "finished_at": "2026-10-31T00:02:20.240100+00:00",
+  "wall_seconds": 1490.02,
+  "total": {
+    "targets": 536,
+    "passed": 3988,
+    "failed": 0,
+    "ignored": 43,
+    "target_seconds": 1255.33
+  },
+  "expected_targets_from_unchanged_integration": 536,
+  "all_targets_measured": true,
+  "source_log": "workspace-k296-final.log.gz",
+  "previous_runs": [
+    "workspace-k296-first-c5.log.gz",
+    "workspace-k296-second-c5.log.gz"
+  ],
+  "known_failure_corrections": [
+    "32c22808: zwei Pixel-Goldenwerte 106 -> 108, K2-63/UI-038",
+    "3895e13b: SERP-Fixture-Pflichtfelder und 12 Link-Groessen-Goldenwerte, K2-63/OUT-031/ONPAGE-012"
+  ]
+}

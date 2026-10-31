@@ -339,3 +339,17 @@ fn detail_csv_matches_fixture_golden() {
         include_str!("../../../../../tests/fixtures/tech-m2-hreflang/detail.csv")
     );
 }
+
+// spec: OUT-093
+#[test]
+fn missing_return_language_is_empty_instead_of_copying_the_forward_code() {
+    let (header, rows) = csv_report(3);
+    let language = header
+        .iter()
+        .position(|s| s == "Hreflang Language")
+        .unwrap();
+    assert!(!rows.is_empty());
+    assert!(rows.iter().all(|row| row[language].is_empty()));
+    let (_, annotations) = csv_report(0);
+    assert!(annotations.iter().any(|row| !row[language].is_empty()));
+}

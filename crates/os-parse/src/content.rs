@@ -260,7 +260,7 @@ fn walk_into(body: ElementRef, rules: &Rules, mut counter: TokenCounter) -> Toke
                         continue;
                     }
                     let name = el.name();
-                    let block = is_block(name);
+                    let block = is_block(name) || (name == "title" && !rules.count_list_items);
                     if rules.separate_anchors && name == "a" {
                         counter.inline_boundary();
                     }
@@ -307,7 +307,7 @@ fn walk_into(body: ElementRef, rules: &Rules, mut counter: TokenCounter) -> Toke
                     if rules.separate_anchors && el.name() == "a" {
                         counter.inline_boundary();
                     }
-                    if is_block(el.name()) {
+                    if is_block(el.name()) || (el.name() == "title" && !rules.count_list_items) {
                         counter.boundary();
                     }
                 }
