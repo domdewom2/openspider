@@ -3,6 +3,8 @@
 mod baseline;
 #[path = "framework_common.rs"]
 mod common;
+#[path = "near_dup_support/transaction.rs"]
+mod transaction;
 use common::*;
 use os_analyze::{
     analysis::{steps::near_duplicates, CancelToken},
@@ -70,6 +72,8 @@ fn scale(size: usize, budget: std::time::Duration) {
     let cancel = CancelToken::new();
     let run = if std::env::var_os("OPENSPIDER_NEAR_DUP_BASELINE").is_some() {
         baseline::run
+    } else if std::env::var_os("OPENSPIDER_NEAR_DUP_TRANSACTION_ONLY").is_some() {
+        transaction::run
     } else {
         near_duplicates::run
     };
