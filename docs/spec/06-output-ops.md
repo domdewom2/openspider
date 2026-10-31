@@ -1015,7 +1015,7 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 ### OUT-095 Hreflang: Non Canonical Return Links
 - **Priorität:** P1
 - **Beschreibung:** Rücklinks zeigen auf eine kanonisierte (nicht-kanonische) URL statt auf die kanonische.
-- **Ausgabe:** `Address`, `Hreflang Language`, `Hreflang URL`, `Canonical Of Hreflang URL`.
+- **Ausgabe:** `Address`, `Hreflang Language`, `Hreflang URL`, `Canonical Of Hreflang URL`. Richtung nach K2-98 analog OUT-094: `Address` ist die Quelle A, `Hreflang URL` das Ziel B des Hreflang-Verweises A → B; B verweist auf eine nicht-kanonische Variante von A zurück.
 - **Akzeptanzkriterien:**
   - [ ] B verweist zurück auf `/de/?ref=x`, die per Canonical auf `/de/` zeigt → enthalten.
 - **Testfixture:** `out-hreflang`.

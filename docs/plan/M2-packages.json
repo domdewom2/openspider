@@ -4714,5 +4714,32 @@
   "size": "M",
   "runner": "cloud",
   "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Nachtrag K2-75: hängt zusätzlich an M2-U34 und M2-A03; Beleg für B9 enthält die Nutzer-Abnahmen docs/plan/M2-acceptance/beta/befunde.md und beta-2/befunde.md (offene A03-Befunde nur mit Verweis auf N-Paket oder M2-backlog.md). Entsteht aus A03 ein N-Paket (Welle 4n), hängt Q04 auch daran. Nachtrag K2-83/K2-91: hängt zusätzlich an M2-Q02b (Paritätsbeleg B3 nach SQ-01, Nenner 155) sowie M2-N12 und M2-N13 (Auflagen der Fable-Urteile U30/U32, vollständiger Workspace-Clippy für B1)."
+ },
+ {
+  "id": "M2-N14",
+  "kind": "package",
+  "model": "codex",
+  "title": "Skalierung des Links-Analyseschritts ohne Schema-Bump (K2-99)",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "TECH-139",
+   "TECH-140",
+   "TECH-142",
+   "TECH-145",
+   "PERF-003"
+  ],
+  "owns": [
+   "crates/os-analyze/src/analysis/steps/links.rs",
+   "crates/os-analyze/tests/n14_*",
+   "tests/golden/out-m2-read-api/*.q.txt",
+   "docs/plan/M2-reports/n14.md"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "S",
+  "runner": "server+ci",
+  "prompt_notes": "K2-99: Link-Fakten inline lesen, keine neue Migration oder Schemaversion. Autoindex bei Copy-Swap prüfen. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen. Regeln M2.md Abschnitt 2/2a."
  }
 ]
