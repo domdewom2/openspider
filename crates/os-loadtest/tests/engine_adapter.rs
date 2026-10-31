@@ -363,6 +363,7 @@ async fn n20_slow_fixture_emits_additive_stage_watermarks_and_peak_observation()
         "engine_mem_writer_backlog_bytes_max",
         "engine_mem_in_flight_limit_bytes",
         "memory_sampled_peak_rss_bytes",
+        "store_cache_used_bytes_max",
     ] {
         assert!(
             diag[name]
