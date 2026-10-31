@@ -50,8 +50,9 @@ neue CLI-Aufruf in `exec.rs`. Die Q02b-/N14-Fachänderungen bleiben erhalten.
   und Byte-Gleichheit von CLI und direktem Surface-Export; B01s Writer-Scope-Tests
   und die Header-Matrix für CSV/XLSX/XLS bleiben unverändert.
 
-Keine eigenen Test-, Fixture-, Golden- oder Baseline-Anpassungen; K2-63 wurde nicht
-in Anspruch genommen. M2s mitgebrachte Tests/Baselines wurden unverändert integriert.
+Die Exportimplementierung und Testlogik bleiben unverändert. Die unten dokumentierten
+Erwartungsfortschreibungen wurden am 31.10. um 10:30 ausdrücklich nach K2-63
+freigegeben und anschließend übernommen.
 
 ### (b) N18-Quittung und M3-U02 Update/Quit
 
@@ -113,11 +114,11 @@ Workern, Hauptsuite Chromium und WebKit einschließlich beta/a11y/update.
 |---|---|
 | `cargo fmt --all --check` | grün |
 | `cargo clippy --workspace --all-targets -j 8 --locked -- -D warnings` | grün, Desktop eingeschlossen; erster Lauf E0425, anschließend Header-Konflikt korrigiert |
-| `cargo test --workspace --no-fail-fast -j 8 --locked` | 4.083 bestanden, 3 fehlgeschlagen, 49 ignoriert, 564 Testziele inkl. Doc-Tests; ca. 20 min (Summe gemeldeter Ziel-Laufzeiten 1.184,34 s), Exit 101; nur die zwei `compat_archive`-Testziele rot |
+| `cargo test --workspace --no-fail-fast -j 8 --locked` | nach K2-63 grün: 4.086 bestanden, 0 fehlgeschlagen, 49 ignoriert, 564 Testziele inkl. Doc-Tests, Exit 0; Summe Ziel-Laufzeiten 1181.27 s; Erstlauf: 4.083 bestanden, 3 Archiv-Erwartungsfehler |
 | Desktop Typecheck / Vitest | grün; 92 Dateien, 864 Tests |
 | `check:static` / `check:licenses` | grün; statische Vertragstests 2 Dateien / 29 Tests; 476 npm-Pakete unter der Positivliste |
 | Playwright-Hauptsuite, Chromium + WebKit, 4 Worker | 990 bestanden, 3 übersprungen, 1 Erstfehler, 28,4 min; Einzelwiederholung 1/1 grün in 2,9 s |
-| Playwright Visual, 4 Worker | 152 bestanden, 5 übersprungen, 16 Screenshot-Abweichungen, 3,6 min; Baselines unverändert |
+| Playwright Visual, 4 Worker | nach K2-63 grün: 168 bestanden, 5 übersprungen, 0 Fehler, 4,0 min; Erstlauf: 152 bestanden, 16 Screenshot-Abweichungen |
 | Direkte Crawl-Path-Headerprobe | 6/6 Fälle grün, CSV/XLSX × Default/canonical/Deutsch |
 | `os-parity run --all` | 218/218 verglichen und grün, 3 vorgesehene Auslassungen, 10 Sites, 0 Fehler, 0 Warnungen |
 | `os-parity coverage --parity-report …` | grün, verified 129/155 = 83,226 % |
@@ -131,6 +132,11 @@ Workern, Hauptsuite Chromium und WebKit einschließlich beta/a11y/update.
 | `bash scripts/check-neutral.sh` | grün |
 | `cargo deny check licenses bans sources` | alle drei Prüfungen grün |
 
+Alle unverändert gebliebenen Prüfbereiche wurden anhand der bereits vorhandenen
+vollständigen Laufprotokolle bewertet; nach den reinen Erwartungsänderungen wurden
+Archivtests, Visual-Suite und der gesamte Rust-Workspace sowie Formatierung und
+Neutralität erneut ausgeführt.
+
 Die drei Hauptsuite-Auslassungen betreffen die nur für Chromium vorgesehenen
 Windows-DPI-Skalierungen unter WebKit. Der einmalige Chromium-Fehler war
 `e2e/crawls/compare.pending.spec.ts:11`: innerhalb von 5 s kein `compare.open`
@@ -141,7 +147,9 @@ Session-Ablauf und bestand. Der erste Hauptlauf bleibt als Exit 1 ausgewiesen.
 
 Die fünf Visual-Auslassungen sind der vorhandene `test.fixme` für die vollständigen
 es/fr/it-Kataloge nach K2-79, einmal je Browser-/DPI-Projekt. Die 16 Screenshotfälle
-scheitern jeweils schon am ersten Bild (`shell`); sie sind keine Lastflakes.
+scheiterten im Erstlauf jeweils schon am ersten Bild (`shell`); sie waren keine
+Lastflakes. Mit den freigegebenen Erwartungen bestehen alle 16 Fälle einschließlich
+aller sieben Szenen im regulären Wiederholungslauf.
 
 `zip` war zunächst nicht installiert: 29/30 Node-Tests grün, fehlgeschlagen war der
 Archivierungsvertrag. Installation mit sudo war nicht verfügbar. Statt einer
@@ -149,12 +157,12 @@ Projektänderung wurde das Distributionspaket mit `apt-get download zip` unter
 `/tmp/m3-int-e-tools` entpackt und nur für den Wiederholungslauf dessen `usr/bin`
 vorne in `PATH` gesetzt: danach 30/30 grün. Kein System-/Repository-Umbau.
 
-## Offene Erwartungskonflikte und vorbereitete K2-63-Kandidaten
+## Freigegebene Erwartungsfortschreibungen nach K2-63
 
-Die ausdrückliche Vorgabe „Goldens unverändert“ bleibt eingehalten. Im Chat wurde
-für die folgenden konkreten Erwartungsänderungen eine Entscheidung angefragt;
-bis zu einer Antwort werden sie nicht übernommen. Keine Abschwächung der Tests,
-keine Toleranzänderung, keine Abschaltung der neuen M2/M3-Funktionalität.
+Der Orchestrator hat am 31.10. um 10:30 beide vorbereiteten Kandidatensätze
+ausdrücklich freigegeben. Genau diese Erwartungen wurden übernommen; Testlogik,
+Vergleichstoleranzen und Funktionalität bleiben unverändert. Die Freigabe ersetzt
+für diese Dateien die ursprüngliche Vorgabe „Goldens unverändert“.
 
 1. **Archiv-CSV:** `tests/fixtures/migrations/schema-v{1,2,3,4,5}/internal_all.csv`
    stammt aus M3-int-b. M2 macht gemäß ONPAGE-019 vier Inhaltsspalten sichtbar:
@@ -162,11 +170,13 @@ keine Toleranzänderung, keine Abschaltung der neuen M2/M3-Funktionalität.
    `No. Near Duplicates`; alle acht zugehörigen Datenzellen je Datei sind leer.
    Außerdem wird `Meta Keywords 2 Length` für die HTML-200-Seite von leer zu `0`
    (M2s `COALESCE`, ONPAGE-110); alle übrigen bestehenden Zellen und die zwei Zeilen je Datei
-   bleiben identisch. Kandidaten aus temporären Crawl-Kopien liegen ausschließlich
+   bleiben identisch. Die übernommenen Kandidaten aus temporären Crawl-Kopien liegen
    unter `/tmp/m3-int-e-candidate-goldens/schema-v*.csv`; Zellvergleich unter
    `/tmp/m3-int-e-logs/golden-diff.log`. Der App-Archivtest reproduziert den Fehler
    auch einzeln (0/1), somit kein Lastflake. Dieselben Goldens betreffen zwei
-   CLI-Archivtests. Weder Archivdatenbanken noch Testlogik wurden verändert.
+   CLI-Archivtests. Die fünf CSV-Dateien wurden aus diesen Kandidaten übernommen;
+   `tests/fixtures/migrations/README.md` dokumentiert „Erwartung nach M2-Integration
+   (int-e), K2-63“. Weder Archivdatenbanken noch Testlogik wurden verändert.
 2. **Linux-Visual-Baselines:** Unter
    `apps/desktop/e2e/visual/baselines/linux/{chromium-1,webkit-2}/screenshots.spec.ts/`
    benötigen genau 32 Bilder eine Erwartungsfortschreibung: je acht `shell-*`
@@ -180,15 +190,19 @@ keine Toleranzänderung, keine Abschaltung der neuen M2/M3-Funktionalität.
    ausschließlich umgeleitetem Snapshot-Pfad geprüft: 16/16 Fälle grün, dabei alle
    sieben Szenen je Fall durchlaufen. Genau 32 Bilder ändern sich; die übrigen
    80 bleiben bytegleich. Kandidaten: `/tmp/m3-int-e-visual-candidates`; Liste:
-   `/tmp/m3-int-e-logs/visual-candidate-changes.txt`. Keine dieser Änderungen ist
-   in die Repository-Baselines übernommen worden.
+   `/tmp/m3-int-e-logs/visual-candidate-changes.txt`. Genau diese 32 Bilder wurden in die Repository-Baselines übernommen. Ein
+   SHA-256-Vergleich vor/nach der Übernahme bestätigt: die übrigen 80 Linux-Bilder,
+   sämtliche macOS-/Windows-Baselines und alle Archivdatenbanken bleiben bytegleich
+   (Protokoll `approved-expectation-changes.json`).
 
-Die Kandidaten sind reine Erwartungsänderungen für bereits integriertes
-spec-gemäßes Verhalten; eine Übernahme wäre nach K2-63 zu dokumentieren und danach
-mit den unveränderten Vertragstests und der regulären Visual-Konfiguration erneut
-zu prüfen. Mit eingefrorenen Erwartungen kann die geforderte vollständig grüne
-Linux-Prüfung nicht erreicht werden. Der Stand ist deshalb noch nicht als grüner
-Beta-Build freigegeben.
+Die Änderungen schreiben ausschließlich Erwartungen für bereits integriertes,
+spec-gemäßes Verhalten fort. Die vorherigen roten Läufe bleiben oben als
+Erstbefunde dokumentiert; die regulären Wiederholungen stehen im Abschluss.
+
+**Nativer Folgepunkt:** macOS-/Windows-Screenshot-Baselines können dieselbe
+beabsichtigte Änderung durch M3-U02 benötigen. Sie werden ausschließlich auf den
+jeweiligen nativen Plattformen geprüft und gegebenenfalls nach K2-63 fortgeschrieben;
+von Linux aus wurde keine dieser Dateien geändert.
 
 Die native macOS-/Windows-Matrix, Installationsprüfung und Veröffentlichung liegen
 beim Orchestrator; sie wurden in diesem lokalen Paket nicht ausgelöst. Der
@@ -201,26 +215,31 @@ genannten Kandidatenpfaden. `target/` wurde nach Abschluss aller Prüfungen entf
 
 ## Abschluss
 
-Bei der erneuten Aufnahme des Auftrags lag dieser Merge samt Header-Korrektur und
-allen oben genannten Laufprotokollen bereits im sauberen Checkout vor. Die
-Merge-Eltern wurden erneut gegen die angegebenen Remote-Referenzen geprüft;
-`git merge --no-ff --no-commit origin/m2/int-21` bestätigte `Already up to date`.
-Die vorhandenen vollständigen Rust-, Clippy-, Playwright- und Einzelwiederholungs-
-Logs wurden mit den Zahlen dieses Berichts abgeglichen. Erneut grün ausgeführt:
-Formatierung, Neutralität, M2-Planprüfer, Websiteprüfung, actionlint 1.7.12 sowie
-`cargo metadata --locked` und `cargo tree --locked -d`. Das Lockfile blieb dabei
-unverändert und `target/` blieb abwesend. Kein weiterer vollständiger Build ohne
-Code- oder Erwartungsänderung. Die ausdrückliche Vorgabe „Goldens unverändert“
-bleibt bis zu einer abweichenden Nutzerentscheidung maßgeblich.
+Merge-Eltern und vorherige vollständige Prüfprotokolle wurden bereits gegen die
+angegebenen Remote-Referenzen geprüft. Nach Freigabe der Erwartungen wurden
+`compat_archive` (os-app, os-cli, os-store), die reguläre vollständige Visual-Suite
+und `cargo test --workspace --no-fail-fast -j 8 --locked` erneut grün ausgeführt.
+E2E-Werkzeuge und Bridge wurden vorher erfolgreich neu gebaut; jeder Workspace-Lauf
+verwendet `~/ws-slot.sh`.
 
-Merge und Header-Integrationskorrektur sind committet, der Arbeitsstand enthält
-keine eigenen Golden-/Baseline-Änderungen. Der vollständige Rust-Lauf wurde trotz
-der Archivfehler bis einschließlich aller übrigen Ziele und Doc-Tests beendet;
-keine weiteren Rust-Fehler und keine Rust-Lastflakes. Coverage wurde anschließend
-mit diesem vollständigen Log erneut ausgeführt: weiterhin 129/155 verified, Exit 0.
+- `93584dbb`: fünf Archiv-CSVs und README nach K2-63; isolierte Vertragstests
+  `compat_archive`: os-app 4/4, os-cli 3/3, os-store 3/3 grün.
+- `1fa3fe4e`: genau 32 Linux-Visual-Bilder nach K2-63; reguläre Visual-Suite
+  mit vier Workern: 168 bestanden, fünf bestehende Auslassungen, null Fehler,
+  4,0 Minuten, Exit 0. Keine native Baseline geändert.
+- Formatierung und Neutralitätsprüfung nach Übernahme erneut grün.
 
-**PAKET OFFEN:** Nächster Schritt ist die Entscheidung über die konkret vorbereitete
-K2-63-Fortschreibung der fünf Archiv-CSVs und 32 Linux-Screenshot-Baselines. Bei
-Freigabe genau diese Erwartungen übernehmen, Vertragstests und reguläre Visual-
-Suite erneut grün prüfen und Bericht ergänzen; andernfalls bleiben die Befunde
-offen. Kein Push. Dieser Stand erfüllt das grüne Beta-Gate noch nicht.
+Die neuen Laufprotokolle heißen `/tmp/m3-int-e-logs/approved-*.log` mit
+zugehöriger `.exit`-Datei. Der vollständige Workspace-Lauf bestätigt 4.086 bestandene
+Tests, null Fehler, 49 bestehende Ignores und 564 Ziele einschließlich Doc-Tests
+(Exit 0, Summe Ziel-Laufzeiten 1181.27 s). Keine Rust-Lastflakes,
+keine Einzelwiederholung erforderlich. Die zuvor drei Archiv-Erwartungsfehler sind
+behoben. Abschließender Hashvergleich bestätigt unveränderte Archivdatenbanken,
+80 übrige Linux-Bilder und sämtliche nativen Baselines; `Cargo.lock` unverändert.
+
+`target/` wurde anschließend entfernt. Beide Erwartungsänderungen und dieser
+Bericht sind separat mit Co-Author-Trailer committet; kein Push.
+
+**PAKET FERTIG.** Das Linux-Gate ist grün. Nächster Schritt beim Orchestrator:
+Vorprüfung/Merge-Freigabe und native macOS-/Windows-Visual-Prüfung samt etwaiger
+K2-63-Fortschreibung auf den jeweiligen Plattformen.
