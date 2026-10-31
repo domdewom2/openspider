@@ -140,9 +140,15 @@ export async function generate() {
     writeFileSync(config, `accepted = ${JSON.stringify(allowed)}\ntargets = ${targets}\nignore-dev-dependencies = true\n`);
     const rustSources = await supplementalTexts('rust-sources.json');
     const canonical = JSON.parse(readFileSync(join(root, 'scripts/release/licenses/rust-canonical.json'), 'utf8'));
-    const desktop = rustEntries(JSON.parse(run('cargo', ['about', 'generate', '--locked', '--workspace', '--fail', '--format', 'json', '--config', config])), allowed, rustSources, canonical);
+    // cargo-about refuses captured stdout under PowerShell (Windows runner): always write to a file.
+    const about = (name, args) => {
+      const output = join(temporary, `${name}.json`);
+      run('cargo', ['about', 'generate', ...args, '--fail', '--format', 'json', '--config', config, '--output-file', output]);
+      return JSON.parse(readFileSync(output, 'utf8'));
+    };
+    const desktop = rustEntries(about('desktop', ['--locked', '--workspace']), allowed, rustSources, canonical);
     // Linux ships the CLI only: do not pull in GTK/WebKit build dependencies for a Linux desktop.
-    const cli = rustEntries(JSON.parse(run('cargo', ['about', 'generate', '--locked', '--manifest-path', 'crates/os-cli/Cargo.toml', '--target', 'x86_64-unknown-linux-gnu', '--fail', '--format', 'json', '--config', config])), allowed, rustSources, canonical);
+    const cli = rustEntries(about('cli', ['--locked', '--manifest-path', 'crates/os-cli/Cargo.toml', '--target', 'x86_64-unknown-linux-gnu']), allowed, rustSources, canonical);
     const rust = [...new Map([...desktop, ...cli].map((entry) => [`${entry.name}@${entry.version}`, entry])).values()];
     // npm's own resolver includes transitive dependencies, optional packages and peers,
     // and excludes other workspaces and frontend devDependencies.
