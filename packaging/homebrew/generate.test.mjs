@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, writeFileSync, rmSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync, rmSync, mkdirSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -101,11 +101,13 @@ test('publication has only release published trigger and defaults to no external
     const summary = join(root, 'summary');
     const output = join(root, 'output');
     const skipped = spawnSync('bash', ['-c', gate], { encoding: 'utf8', env: {
-      PATH: process.env.PATH, ENABLED: 'true', PACKAGE_ID: '', TAP_REPOSITORY: '', WINGET_FORK: '',
+      PATH: process.env.PATH, ENABLED: 'true', PACKAGE_ID: 'OpenSpider.CITest',
+      TAP_REPOSITORY: 'example/homebrew-openspider', WINGET_FORK: 'example/winget-pkgs',
       TAP_TOKEN: '', WINGET_TOKEN: '', GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary,
     } });
     assert.equal(skipped.status, 0, skipped.stderr);
     assert.match(readFileSync(summary, 'utf8'), /übersprungen/);
     assert.match(skipped.stdout, /notice/);
+    assert.equal(existsSync(output), false);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
