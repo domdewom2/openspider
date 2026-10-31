@@ -491,7 +491,7 @@ fn write_out(
         // Die Senke hat den Batch konsumiert; dessen freigegebene Puffer können
         // jetzt zurückgegeben werden, ohne laufende Seiten oder Caches zu ändern.
         let reclaim_at = Instant::now();
-        let released = os_store::profile::reclaim_batch_heap();
+        let released = os_store::profile::release_system_heap();
         diag::inc(&diag::STATS.w_heap_reclaims);
         if released {
             diag::inc(&diag::STATS.w_heap_reclaim_successes);

@@ -195,7 +195,7 @@ unsafe extern "C" {
 /// eine Freigabe gemeldet hat. Auf anderen Plattformen geschieht nichts.
 /// GNU: <https://man7.org/linux/man-pages/man3/malloc_trim.3.html>.
 /// macOS: <https://github.com/apple-oss-distributions/libmalloc/blob/main/include/malloc/malloc.h>.
-pub fn reclaim_batch_heap() -> bool {
+pub fn release_system_heap() -> bool {
     #[cfg(all(target_os = "linux", target_env = "gnu"))]
     {
         // SAFETY: malloc_trim ist MT-Safe und gibt nur unbenutzte Seiten zurück;

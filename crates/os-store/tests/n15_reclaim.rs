@@ -12,7 +12,7 @@ fn n15_reclaim_preserves_live_allocations() {
     drop(retired);
 
     // Freigabemengen sind allocator-/plattformabhängig, die Datenintegrität nicht.
-    let _ = os_store::profile::reclaim_batch_heap();
+    let _ = os_store::profile::release_system_heap();
     for (value, block) in (0..=u8::MAX).zip(std::hint::black_box(&live)) {
         assert!(block.iter().all(|byte| *byte == value));
     }
