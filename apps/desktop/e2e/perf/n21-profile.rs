@@ -27,7 +27,7 @@ fn main() {
         let writer = CrawlFile::open(Path::new(&args[1]), OpenMode::ReadWrite).unwrap();
         let at = Instant::now();
         let cancel = os_model::CancelToken::new();
-        while !views::overview_progress(&writer, &cfg, &cancel, 2).unwrap() {
+        while !views::overview_progress(&writer, &cfg, &cancel, 2).unwrap().complete() {
             views::persist_facts(&writer).unwrap();
         }
         let (facts, _) = views::overview_facts(&writer, &cfg, &cancel).unwrap();

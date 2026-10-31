@@ -135,7 +135,7 @@ fn interrupted_counting_resumes_from_stored_tabs() {
     let (_dir, cfg, file) = fixture();
     let cancel = os_model::CancelToken::new();
     let tabs = crate::tabs::configured_for_file(&cfg, &file).len();
-    assert!(!overview_progress(&file, &cfg, &cancel, 1).unwrap());
+    assert!(!overview_progress(&file, &cfg, &cancel, 1).unwrap().complete());
     assert!(persist(&file).unwrap());
     // Closing the crawl loses memory, not the stored pieces.
     forget(&file);
@@ -149,7 +149,10 @@ fn interrupted_counting_resumes_from_stored_tabs() {
             .unwrap()
     };
     assert_eq!(stored(&file), 1);
-    assert!(!overview_progress(&file, &cfg, &cancel, 1).unwrap());
+    // Loading only: the stored tab counts as progress without new counting.
+    let progress = overview_progress(&file, &cfg, &cancel, 0).unwrap();
+    assert_eq!((progress.done, progress.total), (1, tabs));
+    assert!(!overview_progress(&file, &cfg, &cancel, 1).unwrap().complete());
     assert!(persist(&file).unwrap());
     assert_eq!(stored(&file), 2);
     let (facts, pending) = overview_facts(&file, &cfg, &cancel).unwrap();

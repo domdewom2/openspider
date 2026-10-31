@@ -125,14 +125,30 @@ fn with_entry<R>(file: &CrawlFile, v: &Version, f: impl FnOnce(&mut Entry) -> R)
     f(&mut memory[index].1)
 }
 
+/// Progress of the Overview/Issues facts of one data version: tabs counted out of all tabs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct OverviewProgress {
+    /// Tabs whose counts are present (memory or `view_cache`).
+    pub done: usize,
+    /// All tabs.
+    pub total: usize,
+}
+impl OverviewProgress {
+    /// All pieces present.
+    pub fn complete(&self) -> bool {
+        self.done == self.total
+    }
+}
+
 /// Computes at most `max_tabs` missing tab pieces (and the summary) of the file's current data
-/// version, preferring pieces already stored in `view_cache`. Returns `true` once all are present.
+/// version, preferring pieces already stored in `view_cache`. `max_tabs = 0` only loads stored
+/// pieces and reports the progress (UI-141 progress indicator).
 pub fn overview_progress(
     file: &CrawlFile,
     cfg: &CrawlConfig,
     cancel: &os_model::CancelToken,
     max_tabs: usize,
-) -> Result<bool, ViewError> {
+) -> Result<OverviewProgress, ViewError> {
     let conn = file.conn();
     let _snapshot = conn
         .is_autocommit()
@@ -186,7 +202,7 @@ pub fn overview_progress(
             None => todo.push(i),
         }
     }
-    let more = todo.len() > max_tabs;
+    let pending = todo.len();
     todo.truncate(max_tabs);
     if !todo.is_empty() {
         let counts = filter_counts_parallel(&tabs, &todo, file, cfg, cancel)?;
@@ -208,7 +224,10 @@ pub fn overview_progress(
             }
         });
     }
-    Ok(!more)
+    Ok(OverviewProgress {
+        done: tabs.len() - pending + todo.len(),
+        total: tabs.len(),
+    })
 }
 
 /// Facts of the file's current data version: from memory, from `view_cache`, or computed now.
@@ -223,7 +242,7 @@ pub fn overview_facts(
         .is_autocommit()
         .then(|| conn.unchecked_transaction())
         .transpose()?;
-    while !overview_progress(file, cfg, cancel, usize::MAX)? {}
+    while !overview_progress(file, cfg, cancel, usize::MAX)?.complete() {}
     let v = version(file)?;
     let tabs = crate::tabs::configured_for_file(cfg, file);
     Ok(with_entry(file, &v, |e| {
