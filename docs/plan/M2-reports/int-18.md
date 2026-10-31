@@ -1,6 +1,6 @@
 # Integrationsrunde 17 – m2/int-18
 
-**PAKET OFFEN.** Q02b, N14 und N12 sind integriert; technische Auflagen und K2-97…99 sind umgesetzt. Rust und die gezielten UI-Suiten sind grün. Die Browser-Hauptsuite enthält einen WebKit-Zeitfehler mit grüner Einzelwiederholung. Parität erreicht mit fester Vergleichsuhr 218/218; der ungefrorene CI-Aufruf benötigt noch eine Nachbesserung außerhalb der Owns.
+**PAKET FERTIG (Korrekturrunde P1/P2).** Q02b, N14 und N12 sind integriert; technische Auflagen und K2-97…99 sind umgesetzt. Rust und die gezielten UI-Suiten sind grün. Die Browser-Hauptsuite enthält einen WebKit-Zeitfehler mit grüner Einzelwiederholung. Die Korrekturrunde P1 ersetzt die historische feste Vergleichsuhr durch die OUT-123-Normalisierung im Paritätswerkzeug; aktuelle Prüfergebnisse stehen im Nachtrag unten.
 
 Basis: origin/m2/int-17, f7ad3f29. Linux x86_64, Rust/Cargo 1.99.1, Node 22.23.4, Tokio unverändert **1.53.3**. Kein cargo update, keine Änderung an Cargo-/npm-Lockdateien, keine Referenzdatei verändert, kein Push.
 
@@ -60,40 +60,27 @@ Linux schließt die Desktop-Hülle wie beauftragt aus. Native macOS-/Windows-Pr�
 
 Der WebKit-Fehler betrifft e2e/beta/preferences.spec.ts:38, „theme and language reach both open windows within 200 ms“: korrekte Zustände, aber **315 ms > 200 ms** unter paralleler Serverlast. Unveränderte Einzelwiederholung **1/1 grün** (5,4 s). Der volle Lauf bleibt ausdrücklich **rot**; die Einzelwiederholung ersetzt ihn nicht.
 
-Belege: [Prüfzahlen](int-18/checks.json), [Rust-Summe](int-18/workspace-summary.json), [Rust-Gesamtlog](int-18/workspace.log.gz), [Browser-Summe](int-18/e2e-main-summary.json), [Browser-Gesamtergebnis](int-18/e2e-main.json.gz), [Einzelwiederholung](int-18/e2e-preferences-repeat.json.gz), [ursprünglicher 315-ms-Fehler](int-18/webkit-preferences-error.txt).
+Historische Belege vor P1: [Prüfzahlen](int-18/checks.json), [Rust-Summe](int-18/workspace-summary.json), [Rust-Gesamtlog](int-18/workspace.log.gz), [Browser-Summe](int-18/e2e-main-summary.json), [Browser-Gesamtergebnis](int-18/e2e-main.json.gz), [Einzelwiederholung](int-18/e2e-preferences-repeat.json.gz), [ursprünglicher 315-ms-Fehler](int-18/webkit-preferences-error.txt).
 
 Der Browser-JSON enthält alle Ergebnisse, Fehler, Zeitwerte und Textanhänge. Die 224 eingebetteten PNG-Binärkörper sind zugunsten der Repo-Größenregel durch Namen, Typ, Base64-Länge und Prüfsumme ersetzt; keine Testresultate wurden entfernt.
 
-## Parität vor/nach Integration und feste Uhr nach M2 Abschnitt 2, Regel 8
+## Parität vor/nach Integration
 
 | Messung | Ergebnis |
 |---|---|
 | Q02b-Abschluss vor Integration | **218/218**, verified **129/155**, M1 **38/38** |
 | origin/m2/int-17 Coverage-Basis | **129/155 verified** |
 | integriertes parity-m2-links | **23/23**, Exit 0 |
-| integrierter Gesamtlauf ohne Zeitfixierung | **215/218**, drei Sitemap-Datumsfehler |
-| integrierter Gesamtlauf mit fester Vergleichsuhr | **218/218**, zehn Sites, drei unverfügbare Exporte regulär übersprungen, Exit 0 |
-| Coverage nach Integration | **129/155**, **83,226 %**, unverändert |
-| M1/A3-Nachlauf | **38/38**, vor/nach unverändert |
+| historischer Gesamtlauf vor P1 ohne Normalisierung | **215/218**, drei Sitemap-Datumsfehler |
+| historischer Gesamtlauf mit fester Vergleichsuhr | **218/218**, nur Diagnosebeleg, keine CI-Lösung |
+| Coverage nach Integration vor P1 | **129/155**, **83,226 %**, unverändert |
+| M1/A3-Nachlauf vor P1 | **38/38**, vor/nach unverändert |
 
-Ohne feste Uhr weichen ausschließlich Lastmod-Zellen in sitemap_default.xml, sitemap_options.xml und sitemap_images.xml ab: **48/48/2 Zellen**, jeweils 31.10. statt 30.10. Alle übrigen Spalten und URL-Mengen stimmen. OUT-123 verwendet bei fehlendem HTTP-Last-Modified das Crawl-Datum; die Referenz-Fixture wurde am 30.10. exportiert. Der Befund ist im [ungefrorenen Gesamtbericht](int-18/parity-unfixed.json.gz) erhalten.
+Vor P1 wichen ohne feste Uhr ausschließlich Lastmod-Zellen in sitemap_default.xml, sitemap_options.xml und sitemap_images.xml ab: **48/48/2 Zellen**, jeweils 31.10. statt 30.10. Alle übrigen Spalten und URL-Mengen stimmten. OUT-123 verwendet bei fehlendem HTTP-Last-Modified das Crawl-Datum. `exported_at = "2026-10-30"` und die Erzeugungsnotiz im vorhandenen Manifest `tests/golden/parity/parity-m2-onpage/manifest.toml` belegen das Referenzdatum; Metadaten mussten nicht ergänzt werden. Der [ursprüngliche ungefrorene Bericht](int-18/parity-unfixed.json.gz) bleibt erhalten.
 
-OUT-123 verlangt Tests mit fester Uhr und die Normalisierung des Crawl-Datums im Paritätsvergleich. Der bestehende CI-Aufruf stellt diese Vergleichsbedingung nicht sicher. M2 Abschnitt 2, Regel 8 verlangt ebenfalls eine feste Prüfuhr. [clock-cli.sh](int-18/clock-cli.sh) setzt ausschließlich die Echtzeituhr der Paritäts-CLI auf 2026-10-30 12:00 UTC mit normal weiterlaufenden Sekunden. Monotone Uhr und Stat-Zeiten bleiben echt. Probe: Echtzeit 12:00:00 → 12:00:01 bei einer Sekunde monotoner Laufzeit. Systemuhr und andere Prozesse bleiben unverändert. libfaketime wurde nur lokal unter target entpackt; keine Systeminstallation oder Produktabhängigkeit.
+Der historische Versuch mit libfaketime war ein Diagnosebeleg. Er erfüllt P1 nicht und wird durch die Normalisierung im Werkzeug ersetzt. [clock-cli.sh](int-18/clock-cli.sh) bleibt ausschließlich im Berichtsordner als Beleg; CI und aktuelle Prüfaufrufe verwenden direkt die unveränderte CLI und die echte Uhr. `.github/workflows/parity.yml` benötigt dafür keine Änderung.
 
-Reproduktion nach dem Build der CLI und des Paritätswerkzeugs, aus der Repo-Wurzel:
-
-```sh
-mkdir -p target/int18-clock
-(cd target/int18-clock && apt-get download libfaketime)
-dpkg-deb -x target/int18-clock/libfaketime_*.deb target/int18-clock/extracted
-# Alternativ vorhandene Bibliothek über INT18_FAKETIME_LIB auswählen.
-# Vor Gesamtlauf Ressourcen-/Plattenschranke anwenden.
-OPENSPIDER_HOME="$PWD/target/int18-clock-all-home" OPENSPIDER_SECRET_STORE=memory \
-  timeout 3600s nice -n 10 target/debug/os-parity run --all \
-  --openspider docs/plan/M2-reports/int-18/clock-cli.sh --out target/int18-clock-all
-```
-
-Belege: [Links](int-18/parity-links.json.gz), [fester Gesamtlauf](int-18/parity-all.json.gz), [Coverage](int-18/coverage-after.json.gz), [M1-Nachlauf](int-18/m1-after.json.gz), [reproduzierbares M1-Skript](int-18/m1-nachlauf.py).
+Historische Belege: [Links](int-18/parity-links.json.gz), [Diagnoselauf mit fester Uhr](int-18/parity-all.json.gz), [Coverage](int-18/coverage-after.json.gz), [M1-Nachlauf](int-18/m1-after.json.gz), [M1-Skript](int-18/m1-nachlauf.py).
 
 ## Ressourcen und Bereinigung
 
@@ -105,14 +92,37 @@ Setup-Korrekturen sind offengelegt: erster Visual-Ansatz mit dynamischem Import 
 
 Nach Sicherung aller Belege wurden **target/**, eigene Testausgaben und der eigene node_modules-Symlink entfernt; ein eigener übriggebliebener Vite-Server wurde beendet. Keine fremden Caches oder Prozesse bereinigt. Nach Löschung rund **103 GiB frei**; [Cleanup-Beleg](int-18/cleanup.json).
 
-## Offene Punkte / nächster Schritt
+## Offene CI-Abnahme / nächster Schritt
 
 1. **Kein uneingeschränkt grüner UI-Gesamtlauf:** WebKit-Fensterabgleich 315 ms; Einzelwiederholung grün. Unter CI-/ruhiger Last bewerten, ohne den 200-ms-Grenzwert zu lockern.
-2. **Paritäts-CI braucht feste Vergleichsuhr:** .github/workflows/parity.yml:69 verwendet die ungefrorene CLI und trifft den Tageswechsel-Befund ebenfalls. Diese Datei liegt außerhalb der freigegebenen Owns; der Orchestrator muss die Zeitfixierung freigeben/anbinden bzw. als Nachbesserung führen.
-3. **Native Matrix samt Lauf-ID offen:** Der Orchestrator holt den Branch, pusht und startet macOS/Windows. Hier kein Push, keine erfundene Lauf-ID; VoiceOver/NVDA und native Hardwareabnahmen bleiben dort.
+2. **Native Matrix samt Lauf-ID offen:** Der Orchestrator holt den Branch, pusht und startet macOS/Windows. Hier kein Push, keine erfundene Lauf-ID; VoiceOver/NVDA und native Hardwareabnahmen bleiben dort.
 
-**PAKET OFFEN – nächster Schritt: Orchestrator bewertet den UI-Lastbefund, klärt die CI-Zeitfixierung und führt die native Matrix aus.**
+Die serverseitige Korrekturrunde ist abgeschlossen. Nächster Schritt: Orchestrator bewertet den UI-Lastbefund in der CI und führt die native Matrix aus.
 
 ## Wiederaufnahmeprüfung am 31.10.2026
 
 Vorhandene Integration und Belege geprüft; keine erneuten Merges und keine weiteren Paketstände übernommen. Fmt, M2-check (129 Pakete / 590 Spec-IDs) und Neutralitätsprüfung erneut grün. Runner-Kommentare und Regelverweis zur festen Uhr berichtigt. Keine Produkt- oder Teständerung; die oben dokumentierten Gesamtlaufbefunde bleiben offen. target/ bleibt entfernt.
+
+## Korrekturrunde P1/P2 (31.10.2026)
+
+**P1 – Umsetzung:** Der Runner beobachtet für jeden einzelnen Exporter-Aufruf (einschließlich Wiederholungen) den Start und das Ende in UTC. Liegen beide auf demselben Tag, ist damit das Datum aller URL-Abrufe dieses Crawls belegt. Bei Tageswechsel oder rückläufiger Uhr wird der Vergleich mit Fehler beendet; es wird kein Datum geraten und kein Intervall pauschal normalisiert. Die Referenzseite verwendet ausschließlich das vorhandene `exported_at` aus dem Manifest (Datum oder RFC-3339-Zeitstempel, UTC). Fehlende/ungültige Metadaten sind bei befülltem Lastmod ein Fehler.
+
+Nur Sitemap-Exporte mit Server-Quelle erhalten in `Lastmod` den Platzhalter `<CRAWLDATE>`: OS-Zellen genau beim OS-Crawl-Datum, Referenzzellen genau beim Referenz-Exportdatum. Alle anderen Werte bleiben unverändert, ebenso benutzerdefinierte Datumswerte. In der Output-Spec ist keine weitere exportierte Datumsspalte mit diesem Ersatzwert definiert; insbesondere wird `Last Modified` in Tabellen nicht verändert. Referenzdateien, Mappings, Schwellen, Lockdateien und CI-Uhren bleiben unverändert.
+
+**Tests/K2-63:** Additive OUT-123-Tests, keine bestehende Erwartung gelockert. Die temporäre Sitemap-Fixture belegt für Standard- und Bilder-Sitemaps den positiven Vergleich bei unterschiedlichen Crawl-Tagen sowie rote Vergleiche bei geändertem echtem Lastmod und beim auf der falschen Seite auftauchenden Referenzdatum. Benutzerdefinierte Daten bleiben rot. Zusätzliche Tests prüfen fehlende/ungültige Referenzmetadaten, UTC-Offset, Mitternacht und rückläufige Uhr. Erster Lauf des neuen Tests scheiterte an der fehlenden XML-Namespace-Angabe seiner neuen Fixture; diese wurde korrigiert, keine Produktregel geändert.
+
+**P2 – erfüllt:** `e2e/beta/preferences.spec.ts:38` bleibt unverändert mit **200 ms**. Der historische WebKit-Wert **315 ms** bleibt als Lastbefund mit rotem Gesamtlauf und grüner Einzelwiederholung dokumentiert. Bewertung in ui-e2e macOS/Linux durch den Orchestrator; keine lokale Wiederholung als Ersatz für diese CI-Abnahme, keine erfundene Lauf-ID.
+
+Aktuelle P1-Prüfung: `cargo fmt --all --check`, `cargo clippy -p os-parity --all-targets -j 8 --locked -- -D warnings` und `cargo test -p os-parity -j 8 --locked` grün: **189 bestanden, 0 fehlgeschlagen, 0 ignoriert, 11 Test-/Doc-Test-Ziele**. Clippy 14,75 s. M2-check erneut **129 Pakete / 590 Spec-IDs, OK**, Neutralitätsprüfung grün. Der bereits belegte vollständige Linux-Workspace- und Desktop-Stand oben bleibt bestehen; die Korrekturrunde wiederholt gemäß Nachtrag gezielt os-parity.
+
+Belege: [Tests](int-18/p1-tests.log.gz), [Clippy](int-18/p1-clippy.log.gz), [Fmt](int-18/p1-fmt.log.gz), [Planprüfung](int-18/p1-plan.log.gz), [Neutralität](int-18/p1-neutral.log.gz), [Build](int-18/p1-build.log.gz), [Prüfaufruf mit Ressourcenschranke](int-18/p1-run.sh).
+
+**P1 – erfüllt:** `os-parity run --all` mit echter Uhr und direkter CLI: **218/218 grün**, zehn Sites, drei bestehende unavailable-Skips, keine Fehler. `parity-m2-links` darin **23/23**; Sitemap default/options/images jeweils **100 %**. Lauf **02:01:28–02:07:06 UTC, 5 min 38 s**. Coverage vorher/nachher **129/155**, M1 vorher/nachher **38/38**. Keine Uhrmanipulation und keine CI-Anpassung nötig.
+
+Ressourcenschranke: zwei Minuten gewartet, bei höchstens einem fremden Workspace-Test und **68 GiB frei** gestartet. Wie oben bindet die Prozesszählung das Muster an echte Cargo-Prozesse; der ungebundene Ausdruck zählte bei der Vorprüfung zehn Prozesse, davon nur zwei echte Workspace-Tests. Auftrags- und Shell-Texte erzeugen sonst eine dauerhafte Fehlblockade. Der ausgeführte Prüfaufruf und Start/Ende sind als Beleg erhalten.
+
+Aktuelle Belege: [Prüfzahlen P1/P2](int-18/p1-checks.json), [Gesamtlauf ohne feste Uhr](int-18/p1-parity-all.json.gz), [Coverage](int-18/p1-coverage.json.gz), [M1-Nachlauf](int-18/p1-m1.json.gz), [Laufjournal](int-18/p1-run.log.gz). Implementierung: **8f581ae3**. Bestehende Merges nicht wiederholt, keine weiteren Branches übernommen. **P2 erfüllt** durch unveränderte Grenze und ausdrücklich dokumentierten Lastbefund; die native CI-Bewertung bleibt beim Orchestrator.
+
+Nach Sicherung der Belege wurde das eigene **target/** vollständig gelöscht; **97.66 GiB frei**. [Bereinigungsbeleg](int-18/p1-cleanup.json). Kein Push.
+
+**PAKET FERTIG – P1/P2 erfüllt. Nächster Schritt: Orchestrator übernimmt den Branch, pusht und führt die CI-/native Abnahme aus.**

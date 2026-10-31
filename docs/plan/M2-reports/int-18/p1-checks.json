@@ -1,0 +1,47 @@
+{
+  "status": "PAKET FERTIG (Korrekturrunde P1/P2)",
+  "implementation_commit": "8f581ae3",
+  "p1_fulfilled": true,
+  "p2_fulfilled": true,
+  "tests": {
+    "passed": 189,
+    "failed": 0,
+    "ignored": 0,
+    "targets": 11
+  },
+  "fmt_exit": 0,
+  "clippy_exit": 0,
+  "plan_exit": 0,
+  "neutral_exit": 0,
+  "parity": {
+    "passed": true,
+    "compared": 218,
+    "passed_exports": 218,
+    "skipped": 3,
+    "sites": 10,
+    "links_passed": 23,
+    "verified_before": 129,
+    "verified_after": 129,
+    "denominator": 155,
+    "m1_before": 38,
+    "m1_after": 38,
+    "m1_total": 38,
+    "clock_manipulation": false,
+    "started_at": "2026-10-31T02:01:28Z",
+    "completed_at": "2026-10-31T02:07:06Z",
+    "wall_seconds": 338
+  },
+  "p2": {
+    "test": "e2e/beta/preferences.spec.ts:38",
+    "limit_ms": 200,
+    "observed_ms": 315,
+    "limit_unchanged": true,
+    "evaluation": "ui-e2e macOS/Linux durch Orchestrator"
+  },
+  "ci_run_id": null,
+  "pushed": false,
+  "open": [
+    "CI-Bewertung des unveränderten WebKit-Lastbefunds",
+    "Native macOS-/Windows-Matrix samt Lauf-ID durch Orchestrator"
+  ]
+}
