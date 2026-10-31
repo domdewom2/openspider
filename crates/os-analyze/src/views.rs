@@ -33,7 +33,17 @@ pub use build::column_name_resolves;
 /// Tabs lesen die Link-Zähler (`Inlinks`, `Outlinks`, …) aus `c`, nie aus den Zählerspalten von `urls`. Der
 /// `LEFT JOIN` über den Primärschlüssel entfällt, wenn keine Spalte, kein Filter und keine Sortierung `c` nutzt.
 pub const URLS_FROM: &str = "urls u LEFT JOIN url_counters c ON c.url_id = u.id";
-pub use counts::percent;
+pub use counts::{percent, FilterMembers};
+
+/// Memberships of all countable filters of `tabs` among `ids` (UI-145 incremental path).
+pub fn filter_members_in(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    ids: &[i64],
+) -> Result<Vec<FilterMembers>, ViewError> {
+    counts::members_in(tabs, file, cfg, ids)
+}
 pub use facts::{
     overview_facts, overview_progress, persist as persist_overview_facts,
     persist_all as persist_facts, OverviewFacts,

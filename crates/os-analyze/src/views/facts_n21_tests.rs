@@ -161,3 +161,38 @@ fn interrupted_counting_resumes_from_stored_tabs() {
         super::super::filter_counts(&file, &cfg).unwrap()
     );
 }
+
+// spec: UI-145
+#[test]
+fn per_row_memberships_reproduce_the_filter_counts() {
+    let (_dir, cfg, file) = fixture();
+    let tabs = crate::tabs::configured_for_file(&cfg, &file);
+    let ids: Vec<i64> = file
+        .conn()
+        .prepare("SELECT id FROM urls")
+        .unwrap()
+        .query_map([], |r| r.get(0))
+        .unwrap()
+        .collect::<Result<_, _>>()
+        .unwrap();
+    let members = super::super::filter_members_in(&tabs, &file, &cfg, &ids).unwrap();
+    let counts = super::super::filter_counts_in(&tabs, &file, &cfg).unwrap();
+    for c in counts.iter().filter(|c| c.count.is_some()) {
+        let m = members
+            .iter()
+            .find(|m| m.tab == c.tab && m.filter == c.filter)
+            .unwrap_or_else(|| panic!("{}/{}", c.tab, c.filter));
+        assert_eq!(
+            m.ids.len() as u64,
+            c.count.unwrap(),
+            "{}/{}",
+            c.tab,
+            c.filter
+        );
+    }
+    // A subset only evaluates the requested rows.
+    let some = super::super::filter_members_in(&tabs, &file, &cfg, &ids[..2]).unwrap();
+    assert!(some
+        .iter()
+        .all(|m| m.ids.iter().all(|id| ids[..2].contains(id))));
+}

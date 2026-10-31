@@ -46,9 +46,10 @@ struct TabPlan<'a> {
     query: Option<SumQuery>,
 }
 
-/// SQL of one tab's sums over its whole population.
+/// SQL of one tab's sums over its whole population, and of per-row memberships for given IDs.
 struct SumQuery {
     sql: String,
+    members: String,
     params: Vec<(String, os_model::Value)>,
 }
 
@@ -64,6 +65,7 @@ fn plan_tab<'a>(
         filter_states_for_file(&tab.filters, tab, file, cfg, cfg_json, analysis)?;
     // Ein Plan je zählbarem Filter; Population und Parameter sind für den ganzen Tab gleich.
     let mut sums: Vec<String> = Vec::new();
+    let mut flags: Vec<String> = Vec::new();
     let mut slots: Vec<Option<usize>> = Vec::new();
     let mut population = None;
     let mut params = Vec::new();
@@ -82,6 +84,10 @@ fn plan_tab<'a>(
             "COALESCE(SUM(CASE WHEN {} THEN 1 ELSE 0 END), 0)",
             built.plan.filter_sql
         ));
+        flags.push(format!(
+            "CASE WHEN {} THEN 1 ELSE 0 END",
+            built.plan.filter_sql
+        ));
     }
     let query = population.map(|population| {
         let sums = sums.join(", ");
@@ -94,6 +100,11 @@ fn plan_tab<'a>(
         };
         SumQuery {
             sql: format!("SELECT {sums} FROM {from} WHERE {population}"),
+            // UI-145 incremental path: the same predicates, evaluated only for the given rows.
+            members: format!(
+                "SELECT u.id, {} FROM {from} WHERE u.id IN (SELECT value FROM json_each(:os_member_ids)) AND {population}",
+                flags.join(", ")
+            ),
             params,
         }
     });
@@ -288,4 +299,71 @@ fn parallel_sums(
         }
     }
     Ok(Some(sums))
+}
+
+/// Filter memberships among a set of URL IDs (UI-145 incremental path).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FilterMembers {
+    /// Tab.
+    pub tab: String,
+    /// Filter id as in `FilterCount::filter`.
+    pub filter: String,
+    /// Members among the requested IDs, ascending.
+    pub ids: Vec<i64>,
+}
+
+/// Evaluates every countable filter of `tabs` for exactly `ids`; per-page cost instead of a crawl scan.
+pub(super) fn members_in(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    ids: &[i64],
+) -> Result<Vec<FilterMembers>, ViewError> {
+    let conn = file.conn();
+    let _tx = conn
+        .is_autocommit()
+        .then(|| conn.unchecked_transaction())
+        .transpose()?;
+    let cfg_json = serde_json::to_value(cfg).unwrap_or(serde_json::Value::Null);
+    let analysis = analysis_snapshot(file)?;
+    let list = serde_json::to_string(ids).unwrap_or_else(|_| "[]".into());
+    let mut out = Vec::new();
+    for tab in tabs {
+        let plan = plan_tab(tabs, tab, file, cfg, &cfg_json, &analysis)?;
+        let Some(query) = &plan.query else {
+            continue;
+        };
+        let mut stmt = conn.prepare(&query.members)?;
+        bind_named(
+            &mut stmt,
+            &query.params,
+            &[(
+                ":os_member_ids".into(),
+                rusqlite::types::Value::Text(list.clone()),
+            )],
+        )?;
+        let width = plan.slots.iter().flatten().count();
+        let mut hits: Vec<Vec<i64>> = vec![Vec::new(); width];
+        let mut rows = stmt.raw_query();
+        while let Some(row) = rows.next()? {
+            let id: i64 = row.get(0)?;
+            for (slot, hit) in hits.iter_mut().enumerate() {
+                if row.get::<_, i64>(slot + 1)? == 1 {
+                    hit.push(id);
+                }
+            }
+        }
+        for (filter, slot) in tab.filters.iter().zip(&plan.slots) {
+            if let Some(slot) = slot {
+                let mut ids = std::mem::take(&mut hits[*slot]);
+                ids.sort_unstable();
+                out.push(FilterMembers {
+                    tab: tab.id.to_string(),
+                    filter: filter.id.to_string(),
+                    ids,
+                });
+            }
+        }
+    }
+    Ok(out)
 }
