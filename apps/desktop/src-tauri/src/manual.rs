@@ -1,7 +1,7 @@
 //! Fixed documentation destination, opened by native APIs without spawning a shell.
 use tauri::{AppHandle, Runtime};
 
-const MANUAL_URL: &std::ffi::CStr = c"https://github.com/domdewom2/openspider/tree/main/docs";
+const MANUAL_URL: &std::ffi::CStr = c"https://openspider.de/handbuch/";
 
 #[tauri::command]
 pub async fn open_manual<R: Runtime>(app: AppHandle<R>) -> Result<(), String> {

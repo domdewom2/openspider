@@ -77,8 +77,8 @@ Version 1.0 and the public beta are being prepared. The [download page](https://
 contains clearly marked GitHub Releases asset URL templates and SHA256SUMS guidance;
 these templates are not live downloads. Desktop targets: macOS 13+ (Apple Silicon/Intel),
 Windows 10 1809+ / Windows 11 x64, and Windows on ARM via x64 emulation.
-Linux x86_64 with glibc supports the core and CLI only (OUT-273); Linux desktop,
-.deb/.rpm and arm64 releases remain unsupported (OUT-264).
+Linux x86_64 with glibc supports the core and CLI only; Linux desktop,
+.deb/.rpm and arm64 releases remain unsupported.
 Homebrew and winget distribution are planned and not available yet.
 
 The [German user guide](website/site/handbuch/index.html) and
@@ -92,7 +92,7 @@ Settings → Updates or with `OPENSPIDER_DISABLE_UPDATE_CHECK=1`.
 
 - [Benutzerhandbuch (Deutsch)](website/site/handbuch/index.html)
 - [User guide (English)](website/site/en/manual/index.html)
-- [Agency beta instructions](website/site/en/beta/index.html) — feedback channel pending A00.
+- [Agency beta instructions](website/site/en/beta/index.html) — you will receive the feedback channel with your invitation.
 
 ### Build the CLI from source
 
