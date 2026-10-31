@@ -80,6 +80,9 @@ und die passenden `InstallLocation`-Schalter. Ohne `REMOVEUSERDATA=1` bleiben
 Benutzerdaten erhalten. Die R02-Installer führen Aufgaben-, PATH- und
 Startmenü-Bereinigung aus. Die lokale Schema-Prüfung nutzt unveränderte, mit MIT-
 Lizenz eingecheckte Microsoft-Schemata; native Abnahme bleibt `winget validate`.
+M3-REL-Punkt: aktuell von winget-pkgs empfohlene Schema-Version abgleichen,
+bei Bedarf alle drei Schemata byteidentisch vendoren und Generator-/Schema- sowie
+native Windows-Proben erneut ausführen. Schema 1.9.0 bleibt bis dahin bestehen.
 
 Die Installationsprobe läuft auf **windows-latest**, ohne Windows Sandbox. Falls
 App Installer fehlt, installiert das offizielle MIT-Modul `Microsoft.WinGet.Client`
@@ -155,13 +158,25 @@ Ergebnisse in `docs/plan/M3-reports/p01.md` ergänzen.
 ## Veröffentlichung erst mit M3-REL
 
 `publish-packages.yml` hat ausschließlich `release: types: [published]`; zusätzlich
-werden Drafts/Prereleases ausgeschlossen. Ohne ausdrückliches Opt-in
-`RELEASE_PACKAGES_ENABLED=true`, bestätigte `OPENSPIDER_PACKAGE_ID`, bestehende
-Repositories `HOMEBREW_TAP_REPOSITORY` und `WINGET_FORK_REPOSITORY` sowie beide
-Secrets `HOMEBREW_TAP_TOKEN` und `WINGET_PR_TOKEN` endet er grün mit Hinweis.
-Die Prüfung erfolgt in einem eigenen Job ohne Environment; die beiden Secrets
-müssen später als Repository-Secrets vorliegen. Nur der aktivierte Folgejob nutzt
-Environment `release` als Freigabegrenze. Jetzt nichts davon einrichten.
+werden Drafts/Prereleases und Tags außerhalb von `^v[0-9]+\.[0-9]+\.[0-9]+$`
+mit Notice und Exit 0 übersprungen. Das gilt auch für normale veröffentlichte
+Beta-Releases (K3-04), deren Prerelease-Flag nicht gesetzt ist. Ohne ausdrückliches
+Opt-in `RELEASE_PACKAGES_ENABLED=true`, bestätigte `OPENSPIDER_PACKAGE_ID` und
+bestehende Repositories `HOMEBREW_TAP_REPOSITORY` / `WINGET_FORK_REPOSITORY`
+endet der Gate grün mit Hinweis. Dieser Job hat kein Environment und greift auf
+keine Secrets zu.
+
+Die Secrets `HOMEBREW_TAP_TOKEN` und `WINGET_PR_TOKEN` später ausschließlich als
+**Environment-Secrets im Environment `release`** einrichten, nicht als Repository-
+Secrets. Für `release` Required Reviewers sowie Deployment-Branch-/Tag-Schutz
+konfigurieren und den Release-Zweig durch Branch-Schutz absichern. Erst nach
+dieser Freigabe prüft der Publish-Job die Secret-Verfügbarkeit; fehlen Secrets,
+endet er grün mit Hinweis und überspringt alle weiteren Schritte. `publish.sh`
+verlangt beide Tokens zusätzlich mit `${HOMEBREW_TAP_TOKEN:?}` beziehungsweise
+`${WINGET_PR_TOKEN:?}` und bricht bei fehlenden Werten vor externen Änderungen ab.
+Für den PR gegen `microsoft/winget-pkgs` ist vermutlich ein klassisches PAT mit
+`public_repo` nötig; Token-Typ und minimalen Berechtigungsumfang vor M3-REL
+gegen GitHubs aktuelle Fork-/PR-Regeln prüfen. Jetzt nichts davon einrichten.
 
 Nach M3-REL lädt er die veröffentlichten stabilen Release-Assets, erzeugt den
 Cask und die YAMLs, committet `Casks/openspider.rb` im **bestehenden** Tap und öffnet
