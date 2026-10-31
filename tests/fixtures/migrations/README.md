@@ -45,7 +45,11 @@ ausgeführt; so werden auch abgeleitete Spalten wie Link Score verglichen.
 Die Tests arbeiten für Schreibzugriffe auf temporären Kopien. Die App öffnet alte
 Crawls auf migrierten Kopien; das Original bleibt erhalten.
 
-## Releases ab beta.1
+## Release-Archiv und Übernahme ab beta.1
+
+Bei jeder Version, einschließlich Trockenläufen, entsteht das Archiv.
+Die Grenze ab `1.0.0-beta.1` betrifft ausschließlich die Übernahme veröffentlichter
+Versionen ins Repository.
 
 `release.yml` ruft `scripts/release/archive-compat-fixture.mjs --version <version>
 --out release-reports/compat --cli <release-cli>` auf. Das Skript verwendet die
@@ -56,7 +60,7 @@ Ein veraltetes Seed-Schema, eine Exportabweichung oder vorhandenes Ziel bricht a
 Mit neuer Schema-/Konfigurationsversion sind zuerst Seed und Generator zu ergänzen.
 
 Das Release enthält `compat_<version>.tar.gz` mit Prüfsumme; der Actions-Bericht
-enthält denselben Versionsordner. Nach tatsächlicher Veröffentlichung den Ordner
+enthält denselben Versionsordner. Ab `1.0.0-beta.1` nach tatsächlicher Veröffentlichung den Ordner
 unverändert nach `tests/fixtures/migrations/releases/<version>/` übernehmen und
 committen. CLI-Tests entdecken alle Release-Ordner automatisch. Das Skript darf
 auch direkt mit dem Standardziel im Repository verwendet werden; es committet,
