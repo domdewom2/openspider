@@ -683,6 +683,76 @@ fn sitemap_xml_is_compared_by_urls_and_attributes_in_both_run_and_diff() {
     .unwrap());
 }
 
+// spec: OUT-123
+#[test]
+fn sitemap_crawl_dates_normalize_but_real_lastmod_differences_fail() {
+    let repo = repo();
+    let manifest = repo.root().join("tests/golden/parity/site-a/manifest.toml");
+    let today = os_model::Timestamp::now_utc().to_db()[..10].to_string();
+    // Die Referenz liegt absichtlich an einem anderen Tag als der OS-Crawl.
+    let reference_date = if today == "2026-10-30" {
+        "2026-10-29"
+    } else {
+        "2026-10-30"
+    };
+    write(
+        &repo.root().join("tests/parity/mappings/sitemap_xml.toml"),
+        "format = \"xml\"\nkey = [\"Address\"]\n[columns]\n\"Address\" = \"Address\"\n\"Lastmod\" = \"Lastmod\"\n",
+    );
+    let xml = |crawl_date: &str, lastmod: &str| {
+        format!("<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'><url><loc>http://127.0.0.1:{}/fallback</loc><lastmod>{crawl_date}</lastmod></url><url><loc>http://127.0.0.1:{}/header</loc><lastmod>{lastmod}</lastmod></url></urlset>", repo.port, repo.port)
+    };
+    for (kind, explicit_server) in [("default", false), ("default", true), ("images", false)] {
+        write(&manifest, &format!("site = \"site-a\"\nport = {}\nexported_at = \"{reference_date}\"\n[[export]]\nref_file = \"sitemap.xml\"\nos = \"sitemap:{kind}\"\nmapping = \"sitemap_xml\"\nstatus = \"present\"\n", repo.port));
+        if explicit_server {
+            let mut text = std::fs::read_to_string(&manifest).unwrap();
+            text.push_str("\n[export.config]\n\"sitemap_gen.lastmod.source\" = \"server\"\n");
+            write(&manifest, &text);
+        }
+        write(
+            &repo
+                .root()
+                .join("tests/golden/parity/site-a/ref/sitemap.xml"),
+            &xml(reference_date, "2001-01-01"),
+        );
+        for lastmod in ["2001-01-01", "2001-01-02", reference_date] {
+            let output = xml(&today, lastmod);
+            let exporter = |req: &ExportRequest| {
+                let name = if kind == "images" {
+                    "image-sitemap.xml"
+                } else {
+                    "sitemap.xml"
+                };
+                write(&req.out_dir.join(name), &output);
+                Ok(())
+            };
+            let result = run_sites(&repo.opts(&["site-a"], false), &exporter).unwrap();
+            assert_eq!(
+                result.passed,
+                lastmod == "2001-01-01",
+                "{:?}",
+                result.failures
+            );
+            assert!(matches!(single_export(&result), Outcome::Compared { .. }));
+        }
+    }
+    // Benutzerdefinierte Datumswerte dürfen selbst bei Gleichheit mit den
+    // seitenspezifischen Crawl-Daten nicht normalisiert werden.
+    let mut text = std::fs::read_to_string(&manifest).unwrap();
+    text.push_str("\n[export.config]\n\"sitemap_gen.lastmod.source\" = \"custom\"\n");
+    write(&manifest, &text);
+    let exporter = |req: &ExportRequest| {
+        write(
+            &req.out_dir.join("image-sitemap.xml"),
+            &xml(&today, "2001-01-01"),
+        );
+        Ok(())
+    };
+    let result = run_sites(&repo.opts(&["site-a"], false), &exporter).unwrap();
+    assert!(!result.passed);
+    assert!(matches!(single_export(&result), Outcome::Compared { .. }));
+}
+
 // spec: OUT-015
 #[test]
 fn ordered_mapping_rejects_a_permutation_even_when_every_cell_and_duplicate_matches() {

@@ -23,6 +23,7 @@ use std::process::Command;
 
 use serde::Serialize;
 
+use crate::crawl_date::CrawlWindow;
 use crate::csvio::{read_output, read_reference, Table};
 use crate::deviations::Deviations;
 use crate::diff::{compare, evaluate, CompareInput};
@@ -692,10 +693,15 @@ fn run_site(
             }
         }
     }
-    let mut errors: Vec<_> = requests
+    let (mut errors, mut crawl_windows): (Vec<_>, Vec<_>) = requests
         .iter()
-        .map(|req| exporter.export(req).err())
-        .collect();
+        .map(|req| {
+            let started = os_model::Timestamp::now_utc();
+            let error = exporter.export(req).err();
+            let window = CrawlWindow::new(started, os_model::Timestamp::now_utc());
+            (error, window)
+        })
+        .unzip();
     // Nur fehlgeschlagene Namensgruppen einzeln wiederholen. Erfolgreiche Gruppen
     // brauchen keinen weiteren Crawl; jeder Fehler bleibt seinem Export zugeordnet.
     for (item, (p, destination)) in prepared.iter().zip(&mut destinations).enumerate() {
@@ -711,7 +717,9 @@ fn run_site(
         }
         retry.out_dir = req.out_dir.join(format!("fallback-{item}"));
         *destination = requests.len();
+        let started = os_model::Timestamp::now_utc();
         errors.push(exporter.export(&retry).err());
+        crawl_windows.push(CrawlWindow::new(started, os_model::Timestamp::now_utc()));
         requests.push(retry);
     }
     let site_failure = destinations
@@ -733,6 +741,8 @@ fn run_site(
                 site,
                 p,
                 &requests[index].out_dir,
+                manifest.exported_at.as_deref(),
+                &crawl_windows[index],
                 &ref_bases,
                 &os_bases,
                 thresholds,
@@ -770,6 +780,8 @@ fn compare_one(
     site: &str,
     p: &Prepared,
     os_dir: &Path,
+    exported_at: Option<&str>,
+    crawl_window: &CrawlWindow,
     ref_bases: &BaseUrls,
     os_bases: &BaseUrls,
     thresholds: &Thresholds,
@@ -796,7 +808,7 @@ fn compare_one(
             .ok_or_else(|| ParityError::Invalid("Crawl Path: Zielauswahl fehlt".into()))?;
         crate::csvio::label_crawl_path(&mut reference_table, target)?;
     }
-    let reference = select_rows(reference_table, &p.entry.select, ref_bases)?;
+    let mut reference = select_rows(reference_table, &p.entry.select, ref_bases)?;
     if !p.entry.select.is_empty() && reference.rows.is_empty() {
         return Err(ParityError::Invalid(
             "Zielauswahl der Referenz hat keine Zeilen".into(),
@@ -818,7 +830,16 @@ fn compare_one(
             ));
         }
     }
-    let os = select_rows(output_table, &p.entry.select, os_bases)?;
+    let mut os = select_rows(output_table, &p.entry.select, os_bases)?;
+    // OUT-123: Nur die Server-Quelle hat den Ersatzwert Crawl-Datum.
+    if matches!(p.os, OsExport::Sitemap(_))
+        && p.entry
+            .config
+            .get("sitemap_gen.lastmod.source")
+            .is_none_or(|source| source == "server")
+    {
+        crate::crawl_date::normalize(&mut reference, &mut os, exported_at, crawl_window)?;
+    }
     let devs = deviations.for_file(Some(site), &p.entry.mapping, Some(&p.entry.ref_file));
     let mut report = compare(&CompareInput {
         export: &p.entry.mapping,
