@@ -8,6 +8,10 @@ fi
 mkdir -p "$1"
 output=$(cd "$1" && pwd)
 cd "$(dirname "${BASH_SOURCE[0]}")/../../.."
+# C11: keep the reference Mac awake for the full measurement block.
+if [[ $(uname -s) == Darwin && ${N20_CAFFEINATED:-0} != 1 ]]; then
+  exec caffeinate -dims env N20_CAFFEINATED=1 bash "$PWD/crates/os-loadtest/scripts/n20-mac.sh" "$output"
+fi
 export PATH="$HOME/.cargo/bin:$PATH"
 export CARGO_INCREMENTAL=0 OPENSPIDER_SECRET_STORE=memory
 export N20_MAX_LOAD=${N20_MAX_LOAD:-2.5}
