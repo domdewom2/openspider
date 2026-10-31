@@ -28,14 +28,28 @@ fn compare(a: &Value, b: &Value, collate: bool) -> Ordering {
     }
     match (a, b) {
         (Value::Integer(a), Value::Integer(b)) => a.cmp(b),
-        (Value::Real(a), Value::Real(b)) => a.total_cmp(b),
-        (Value::Integer(a), Value::Real(b)) => (*a as f64).total_cmp(b),
-        (Value::Real(a), Value::Integer(b)) => a.total_cmp(&(*b as f64)),
+        (Value::Real(a), Value::Real(b)) => a.partial_cmp(b).unwrap_or(Ordering::Equal),
+        (Value::Integer(a), Value::Real(b)) => compare_integer_real(*a, *b),
+        (Value::Real(a), Value::Integer(b)) => compare_integer_real(*b, *a).reverse(),
         (Value::Text(a), Value::Text(b)) if collate => os_store::collation::compare(a, b),
         (Value::Text(a), Value::Text(b)) => a.cmp(b),
         (Value::Blob(a), Value::Blob(b)) => a.cmp(b),
         _ => rank(a).cmp(&rank(b)),
     }
+}
+// SQLite compares integer/real without losing integer precision above 2^53.
+fn compare_integer_real(integer: i64, real: f64) -> Ordering {
+    if real >= 9_223_372_036_854_775_808.0 {
+        return Ordering::Less;
+    }
+    if real < -9_223_372_036_854_775_808.0 {
+        return Ordering::Greater;
+    }
+    integer.cmp(&(real as i64)).then_with(|| {
+        (integer as f64)
+            .partial_cmp(&real)
+            .unwrap_or(Ordering::Equal)
+    })
 }
 fn rank(v: &Value) -> u8 {
     match v {
@@ -51,8 +65,8 @@ impl Permutation {
         terms: &[SortTerm],
         cancel: &CancelToken,
     ) -> Result<Self, ViewError> {
-        if terms.len() == 1 && terms[0].collate {
-            return Self::build_text(file, &terms[0], cancel);
+        if terms.len() == 1 {
+            return Self::build_single(file, &terms[0], cancel);
         }
         let terms: Vec<_> = terms
             .iter()
@@ -154,7 +168,8 @@ impl Permutation {
         })
     }
 
-    fn build_text(
+    /// Extract one column and Address once. Only the permutation and equal-key runs survive.
+    fn build_single(
         file: &CrawlFile,
         term: &SortTerm,
         cancel: &CancelToken,
@@ -166,54 +181,74 @@ impl Permutation {
         };
         let mut stmt = file
             .conn()
-            .prepare(&format!("SELECT u.id,{} FROM {from}", term.raw))?;
+            .prepare(&format!("SELECT u.id,{},u.address FROM {from}", term.raw))?;
         let mut rows = stmt.query([])?;
         let mut values = Vec::new();
-        let mut empty_ids = Vec::new();
         while let Some(row) = rows.next()? {
             cancel.checkpoint().map_err(|_| SearchError::Cancelled)?;
-            let id = super::url_index(row.get(0)?)?;
-            let value: Value = row.get(1)?;
-            if empty(&value) {
-                empty_ids.push(id);
-            } else {
-                values.push((id, value));
-            }
+            values.push(SortValue {
+                id: super::url_index(row.get(0)?)?,
+                value: row.get(1)?,
+                address: row.get(2)?,
+                key: Vec::new(),
+            });
         }
         drop(rows);
-        values.shrink_to_fit();
-        let order = sort_text(&mut values, cancel)?;
-        let mut ids = Vec::with_capacity(values.len() + empty_ids.len());
+        drop(stmt);
+        // ICU keys are made with exactly the collator used by SQL. They are never persisted.
+        if term.collate && !values.is_empty() {
+            let workers = std::thread::available_parallelism().map_or(1, |n| n.get().min(4));
+            let chunk = values.len().div_ceil(workers);
+            std::thread::scope(|scope| {
+                let jobs: Vec<_> = values
+                    .chunks_mut(chunk)
+                    .map(|chunk| {
+                        scope.spawn(move || {
+                            for value in chunk {
+                                cancel.checkpoint().map_err(|_| SearchError::Cancelled)?;
+                                if let Value::Text(text) = &value.value {
+                                    value.key = os_store::collation::sort_key(text);
+                                }
+                            }
+                            Ok::<_, ViewError>(())
+                        })
+                    })
+                    .collect();
+                for job in jobs {
+                    job.join()
+                        .map_err(|_| super::invalid("Sortierthread abgebrochen"))??;
+                }
+                Ok::<_, ViewError>(())
+            })?;
+        }
+        let order = sort_values(&mut values, cancel, term.collate)?;
+        let mut ids = Vec::with_capacity(values.len());
         let mut ties = Vec::new();
         let mut previous: Option<usize> = None;
         let mut start = 0;
+        let mut non_null = values.len();
         for index in order {
             if ids.len().is_multiple_of(1024) {
                 cancel.checkpoint().map_err(|_| SearchError::Cancelled)?;
             }
             let index = index as usize;
+            if empty(&values[index].value) {
+                non_null = non_null.min(ids.len());
+            }
             if previous
-                .is_some_and(|p| compare(&values[p].1, &values[index].1, true) != Ordering::Equal)
+                .is_some_and(|p| values[p].primary(&values[index], term.collate) != Ordering::Equal)
             {
-                if ids.len() - start > 1 {
+                if ids.len() - start > 1 && start < non_null {
                     ties.push((start as u32, ids.len() as u32));
                 }
                 start = ids.len();
             }
             previous = Some(index);
-            ids.push(values[index].0);
+            ids.push(values[index].id);
         }
-        if ids.len() - start > 1 {
+        if ids.len() - start > 1 && start < non_null {
             ties.push((start as u32, ids.len() as u32));
         }
-        drop(values);
-        let non_null = ids.len();
-        ids.extend(empty_ids);
-        if ids.len() - non_null > 1 {
-            ties.push((non_null as u32, ids.len() as u32));
-        }
-        order_addresses(file, &mut ids, &ties, cancel)?;
-        ties.retain(|(_, end)| *end as usize <= non_null);
         ties.shrink_to_fit();
         let mut term = term.clone();
         term.desc = false;
@@ -398,14 +433,47 @@ impl Permutation {
     }
 }
 
+/// Temporary column keys; Address and ID always resolve collation ties bytewise.
+struct SortValue {
+    id: u32,
+    value: Value,
+    address: String,
+    key: Vec<u8>,
+}
+impl SortValue {
+    fn primary(&self, other: &Self, collate: bool) -> Ordering {
+        if collate
+            && !empty(&self.value)
+            && !empty(&other.value)
+            && matches!(
+                (&self.value, &other.value),
+                (Value::Text(_), Value::Text(_))
+            )
+        {
+            self.key.cmp(&other.key)
+        } else {
+            compare(&self.value, &other.value, collate)
+        }
+    }
+    fn compare(&self, other: &Self, collate: bool) -> Ordering {
+        self.primary(other, collate)
+            .then_with(|| self.address.cmp(&other.address))
+            .then(self.id.cmp(&other.id))
+    }
+}
+
 /// Sort bounded blocks, then merge adjacent runs. At most four workers and no retained workers.
-fn sort_text(values: &mut [(u32, Value)], cancel: &CancelToken) -> Result<Vec<u32>, ViewError> {
+fn sort_values(
+    values: &mut [SortValue],
+    cancel: &CancelToken,
+    collate: bool,
+) -> Result<Vec<u32>, ViewError> {
     const CHUNK: usize = 32_768;
     let len = u32::try_from(values.len()).map_err(|_| super::invalid("Zu viele Sortwerte"))?;
     let workers = std::thread::available_parallelism().map_or(1, |n| n.get().min(4));
     if values.len() <= CHUNK {
         cancel.checkpoint().map_err(|_| SearchError::Cancelled)?;
-        values.sort_unstable_by(|a, b| compare(&a.1, &b.1, true));
+        values.sort_unstable_by(|a, b| a.compare(b, collate));
         return Ok((0..len).collect());
     }
     let batch = CHUNK * values.len().div_ceil(CHUNK).div_ceil(workers);
@@ -416,7 +484,7 @@ fn sort_text(values: &mut [(u32, Value)], cancel: &CancelToken) -> Result<Vec<u3
                 scope.spawn(move || {
                     for chunk in batch.chunks_mut(CHUNK) {
                         cancel.checkpoint().map_err(|_| SearchError::Cancelled)?;
-                        chunk.sort_unstable_by(|a, b| compare(&a.1, &b.1, true));
+                        chunk.sort_unstable_by(|a, b| a.compare(b, collate));
                     }
                     Ok::<_, ViewError>(())
                 })
@@ -451,11 +519,9 @@ fn sort_text(values: &mut [(u32, Value)], cancel: &CancelToken) -> Result<Vec<u3
                                 }
                                 if a < left.len()
                                     && (b == right.len()
-                                        || compare(
-                                            &values[left[a] as usize].1,
-                                            &values[right[b] as usize].1,
-                                            true,
-                                        ) != Ordering::Greater)
+                                        || values[left[a] as usize]
+                                            .compare(&values[right[b] as usize], collate)
+                                            != Ordering::Greater)
                                 {
                                     *slot = left[a];
                                     a += 1;
@@ -540,4 +606,46 @@ fn order_addresses(
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod n22_tests {
+    use super::*;
+
+    // spec: UI-141
+    #[test]
+    fn numeric_keys_match_sqlite_at_precision_and_signed_zero_boundaries() {
+        let fixture = rusqlite::Connection::open_in_memory().unwrap();
+        let values = [
+            Value::Integer(i64::MIN),
+            Value::Integer(i64::MAX),
+            Value::Integer(9_007_199_254_740_993),
+            Value::Integer(-9_007_199_254_740_993),
+            Value::Integer(0),
+            Value::Integer(1),
+            Value::Integer(-1),
+            Value::Real(9_223_372_036_854_775_808.0),
+            Value::Real(-9_223_372_036_854_775_808.0),
+            Value::Real(9_007_199_254_740_992.0),
+            Value::Real(-9_007_199_254_740_992.0),
+            Value::Real(-0.0),
+            Value::Real(0.0),
+            Value::Real(1.5),
+            Value::Real(-1.5),
+            Value::Real(f64::INFINITY),
+            Value::Real(f64::NEG_INFINITY),
+        ];
+        for a in &values {
+            for b in &values {
+                let expected: i32 = fixture
+                    .query_row(
+                        "SELECT CASE WHEN ?1=?2 THEN 0 WHEN ?1<?2 THEN -1 ELSE 1 END",
+                        rusqlite::params![a, b],
+                        |r| r.get(0),
+                    )
+                    .unwrap();
+                assert_eq!(compare(a, b, false), expected.cmp(&0), "{a:?} vs {b:?}");
+            }
+        }
+    }
 }
