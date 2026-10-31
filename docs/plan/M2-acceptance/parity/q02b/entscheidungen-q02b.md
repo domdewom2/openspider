@@ -1,6 +1,6 @@
-# Q02b: angewandte Entscheide und K2-96-Bedarf
+# Q02b: angewandte Entscheide und K2-96
 
-Grundlage sind SQ-01 … SQ-16 und K2-93 … K2-95. Q02b ändert kein Produktverhalten und schreibt keinen neuen Spec-Entscheid in den verbindlichen Plan. Ein Fix-Auftrag ist ausdrücklich keine DEV-Ausnahme und kein bestandener Vergleich.
+Grundlage sind SQ-01 … SQ-16, K2-93 … K2-95 und der explizite Orchestrator-Nachtrag K2-96 vom 30.10. Die dort freigegebenen Produkt- und Spec-Korrekturen sowie der Crawl-Path-Messfix sind umgesetzt. Ein Fix-Auftrag wird weiterhin nicht als DEV-Ausnahme oder bestandener Vergleich gezählt.
 
 | Thema | Umsetzung / Beleg |
 |---|---|
@@ -30,13 +30,15 @@ Grundlage sind SQ-01 … SQ-16 und K2-93 … K2-95. Q02b ändert kein Produktver
 - `hreflang_inconsistent_returns`: Bezugspaar aus URL with Inconsistent Language Return Link und URL Returning with Inconsistent Language; URL Target wiederholt nur die Selbstannotation. Expected/Actual Language und beide Beziehungen werden voll verglichen. Die Probe mit der zunächst vermuteten Gegenrichtung bleibt rot erhalten; die richtige Zuordnung ergibt 100 %.
 - `hreflang_noncanonical_returns`: die Referenz benennt das A/B-Paar in der Gegenrichtung; Zuordnung korrigiert, Canonical-Wert bleibt geprüft. Native Probe 100 %, identische Beziehungsmenge.
 
-## K2-96: noch nötige Spec-/Fix-Entscheide
+## K2-96: freigegebene Umsetzung
 
-K2-96 ist im verbindlichen Basisplan noch nicht eingetragen. Q02b macht deshalb keine unbelegte Behauptung, es gebe bereits einen solchen Beschluss. Konkrete Aufträge mit Beispielen stehen in [restbefunde.json](restbefunde.json).
+- OUT-098: nur interne HTML-Seiten mit 2xx im SERP Summary; 404 und Weiterleitung werden im Fixture-Test ausgeschlossen.
+- OUT-087: indexierbare Unlinked-Ziele nur im eigenen Unlinked-Filter/Report. Nicht indexierbare unlinked-Ziele bleiben hier enthalten. K2-63: die frühere Test-Erwartung für `annotation` wurde entsprechend dem ausdrücklichen Spec-Entscheid von enthalten auf ausgeschlossen geändert; Auswahl, Export und übrige Assertions bleiben geprüft.
+- OUT-093: Sprachcode des fehlenden Rücklinks leer. Der Code der vorhandenen Hinannotation bleibt im All-Hreflang-Report erhalten; keine Mapping-Regel „leer = beliebig“.
+- UI-038/ONPAGE-096: separate Zeichenbreiten für `/` und `.`, 20 px Regular. 1.021 native Titelmessungen, 297 verbessert, keiner verschlechtert; keine Ziffern-, URL- oder Schwellenänderung. Andere Schriftprofile unverändert. Beleg `pixel-k296.json`. K2-63: zwei eigene Golden-Zellen (`onpage-titles/page_titles__all.csv`, `page_titles__below_30_characters.csv`) für den wörtlichen Titel `A <b>B</b>` von 106 auf 108 px angepasst (eine Slash-Glyphe +2 px); keine sonstige Zelle und keine Referenzdatei geändert.
+- ONPAGE-011/TECH-022: Internal zeigt Canonicals fragmentfrei; Rohannotation bleibt als Filterbeleg gespeichert.
+- ONPAGE-013: in den Body reparierte title-Elemente begrenzen den Text-Ratio-Text. Inhaltswortzahl und normale Inline-Grenzen bleiben unverändert. Die beiden realen fehlerhaften HTML-Fixtures sind Regressionstests.
+- OUT-031/ONPAGE-012: bislang unbestimmter Größenwert eines bekannten ungecrawlten internen Ziels im Linkexport auf 0 präzisiert (Referenz konsistent, kein fachlicher Grund für Abweichung). Unbekannte externe Größen bleiben leer; keine Änderung an Status-/Follow-Regeln. K2-63: bestehender Fixture-Test erhält nur eine zusätzliche Assertion für die neu präzisierte Größe, keine entfernte Prüfung. K2-63: zusätzlich zwölf Größenwerte in den eigenen Goldens `out-links/links_all_inlinks.csv` und `links_all_outlinks.csv` für bekannte interne Not-Crawled-Ziele leer → 0; alle übrigen Zellen unverändert, Einzelbeleg `golden-k263.json`.
+- OUT-023: Auswahl per `--export-crawl-path` zur Laufzeit an die gestartete Site gebunden. Referenz-Trenner werden entfernt; alle echten Kanten bleiben geprüft. Knotenblöcke mit lückenlosen Steps, Ziel-/Startvalidierung und Zyklusprüfung werden auf Kanten projiziert. Quelle, Ziel, Typ, Anchor, Quelltiefe und Zielstatus werden verglichen; kein Status-/Wert-Blanket. Negativtests für fehlende Knoten/Kanten, Reihenfolge, Ziel, gemischte Blöcke, Anchor, Tiefe und Status; Positivtests mit Redirect und zwei Zielblöcken.
 
-- OUT-098: Referenz-SERP enthält keine echte 404-Seite; Grundmenge gegenüber ONPAGE-009/Element-Tabs präzisieren und danach Export fixen. Eine pauschale Ausnahme für Fehlerseiten wurde nicht eingetragen.
-- OUT-087: Spec verlangt zusätzlich indexierbare unlinked-Canonical-Ziele, Referenzreport lässt diesen Fall aus. Abgrenzung zum eigenen Unlinked-Report entscheiden; bei konsistentem Referenzverhalten ohne fachlichen Grund Spec nach K2-96 nachziehen und Produktfix beauftragen.
-- OUT-093: Referenz-Spalte für den fehlenden Rücklinkcode ist leer, OS schreibt den Code der vorhandenen Hinbeziehung. Semantik klären, dann Mapping-/Spec-/Reportfix; keine `leer = beliebig`-Regel.
-- ONPAGE-096/UI-038: [native Breitenprobe](pixel-boundary.json) isoliert exakt die 90 URLs graph/10.html … graph/99.html: Referenz 202 px, OS 199 px. Damit sind 23/113 vollständig erklärt; Status, Inhaltstyp und Indexierbarkeit stimmen nativ exakt. Das ist ein Kalibrierungsauftrag, keine Widerlegung der 200-px-Schwelle und kein Grund für einen pauschalen Overview-DEV.
-
-ONPAGE-094 hat im integrierten Endlauf keine offene Zählerdifferenz. Der historische N09-DEV-Vorschlag wird deshalb nicht als unbenutzte Ausnahme hinzugefügt. Die belegten drei restlichen Internal-Zellfehler (Fragmentanzeige und Text Ratio in repariertem HTML) bleiben ebenfalls Fix-Aufträge.
+INTEG-009/pending_w1_i01 bleibt ausdrücklich N13 zugeordnet; keine Änderung in dessen Besitz.

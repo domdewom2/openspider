@@ -1,18 +1,34 @@
 {
-  "target_deleted": true,
-  "ram_profile_directories_deleted": [
-    "/tmp/openspider-q02b-guard-u77v3672",
-    "/tmp/openspider-q02b-guard-dd46ueds",
-    "/dev/shm/openspider-q02b-guard-uetnshy5"
+  "at": "2026-10-31T00:08:18.846966+00:00",
+  "target_exists": false,
+  "ram_directories": [
+    {
+      "path": "/tmp/openspider-q02b-guard-h30loh_d",
+      "existed_before": true,
+      "exists_after": false
+    },
+    {
+      "path": "/tmp/openspider-q02b-guard-8_mp9wm2",
+      "existed_before": true,
+      "exists_after": false
+    },
+    {
+      "path": "/dev/shm/openspider-q02b-guard-sqbopwsg",
+      "existed_before": true,
+      "exists_after": false
+    },
+    {
+      "path": "/tmp/openspider-q02b-guard-dl3yvebc",
+      "existed_before": true,
+      "exists_after": false
+    },
+    {
+      "path": "/dev/shm/openspider-q02b-guard-farwj9lr",
+      "existed_before": true,
+      "exists_after": false
+    }
   ],
-  "known_ram_profile_directories": [
-    "/tmp/openspider-q02b-target-r91r1h6g",
-    "/tmp/openspider-q02b-guard-u77v3672",
-    "/tmp/openspider-q02b-guard-dd46ueds",
-    "/dev/shm/openspider-q02b-guard-uetnshy5"
-  ],
-  "active_own_test_programs_before_cleanup": [],
-  "free_bytes_before": 65537073152,
-  "free_bytes_after": 71822213120,
-  "foreign_processes_or_targets_modified": false
+  "free_before_bytes": 149694414848,
+  "free_after_bytes": 157170470912,
+  "only_own_artifacts": true
 }

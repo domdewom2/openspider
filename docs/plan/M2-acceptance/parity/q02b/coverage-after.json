@@ -28,7 +28,7 @@
         "exports_checked": 10,
         "filter": "All",
         "passed": false,
-        "reason": "parity-m2-technical/internal_m2: Spalte Canonical Link Element 1 mit 1 Abweichungen",
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
         "tab": "Internal"
       },
       {
@@ -74,7 +74,7 @@
         "exports_checked": 10,
         "filter": "HTML",
         "passed": false,
-        "reason": "parity-m2-technical/internal_m2: Spalte Canonical Link Element 1 mit 1 Abweichungen",
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
         "tab": "Internal"
       }
     ],
@@ -83,28 +83,28 @@
         "exports_checked": 10,
         "filter": "JavaScript",
         "passed": false,
-        "reason": "parity-m2-technical/internal_m2: Spalte Canonical Link Element 1 mit 1 Abweichungen",
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
         "tab": "Internal"
       },
       {
         "exports_checked": 10,
         "filter": "CSS",
         "passed": false,
-        "reason": "parity-m2-technical/internal_m2: Spalte Canonical Link Element 1 mit 1 Abweichungen",
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
         "tab": "Internal"
       },
       {
         "exports_checked": 10,
         "filter": "Images",
         "passed": false,
-        "reason": "parity-m2-technical/internal_m2: Spalte Canonical Link Element 1 mit 1 Abweichungen",
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
         "tab": "Internal"
       },
       {
         "exports_checked": 10,
         "filter": "PDF",
         "passed": false,
-        "reason": "parity-m2-technical/internal_m2: Spalte Canonical Link Element 1 mit 1 Abweichungen",
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
         "tab": "Internal"
       }
     ],
@@ -113,35 +113,35 @@
         "exports_checked": 11,
         "filter": "Plugins",
         "passed": false,
-        "reason": "parity-m2-technical/internal_m2: Spalte Canonical Link Element 1 mit 1 Abweichungen",
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
         "tab": "Internal"
       },
       {
         "exports_checked": 11,
         "filter": "Other",
         "passed": false,
-        "reason": "parity-m2-technical/internal_m2: Spalte Canonical Link Element 1 mit 1 Abweichungen",
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
         "tab": "Internal"
       },
       {
         "exports_checked": 10,
         "filter": "Media",
         "passed": false,
-        "reason": "parity-m2-technical/internal_m2: Spalte Canonical Link Element 1 mit 1 Abweichungen",
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
         "tab": "Internal"
       },
       {
         "exports_checked": 10,
         "filter": "Fonts",
         "passed": false,
-        "reason": "parity-m2-technical/internal_m2: Spalte Canonical Link Element 1 mit 1 Abweichungen",
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
         "tab": "Internal"
       },
       {
         "exports_checked": 10,
         "filter": "XML",
         "passed": false,
-        "reason": "parity-m2-technical/internal_m2: Spalte Canonical Link Element 1 mit 1 Abweichungen",
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
         "tab": "Internal"
       }
     ],
@@ -150,7 +150,7 @@
         "exports_checked": 10,
         "filter": "Unknown",
         "passed": false,
-        "reason": "parity-m2-technical/internal_m2: Spalte Canonical Link Element 1 mit 1 Abweichungen",
+        "reason": "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3",
         "tab": "Internal"
       }
     ],

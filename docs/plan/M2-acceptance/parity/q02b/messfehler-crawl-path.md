@@ -1,6 +1,6 @@
-# OUT-023: nachgewiesener Messfehler und freizugebender Fix
+# OUT-023: nachgewiesener Messfehler und freigegebener Fix
 
-Der Paketeintrag M2-Q02b verlangt für os-parity-Code ausdrücklich „nur bei nachgewiesenem Messfehler (melden, dann Freigabe)“. Die Freigabe wurde während der Arbeit angefragt; ohne Antwort wird kein Runner-Code geändert. Das ist keine fehlende Produktfunktion: N11 hat den CLI- und Oberflächenexport implementiert und getestet.
+Der Paketeintrag M2-Q02b verlangt für os-parity-Code ausdrücklich „nur bei nachgewiesenem Messfehler (melden, dann Freigabe)“. Die Freigabe wurde im Orchestrator-Nachtrag vom 30.10. ausdrücklich erteilt; Umsetzung und Negativtests sind im K2-96-Nachlauf enthalten. Das ist keine fehlende Produktfunktion: N11 hat den CLI- und Oberflächenexport implementiert und getestet.
 
 ## Reproduktion und Beleg
 
@@ -21,3 +21,7 @@ Der Paketeintrag M2-Q02b verlangt für os-parity-Code ausdrücklich „nur bei n
 6. Danach vollständiges `os-parity run --all` und `coverage`; bestehende 129/155 dürfen nicht sinken. Referenzdatei, Export-Schwellen und Produktcode bleiben unverändert.
 
 Betroffene zusätzliche Dateien: `crates/os-parity/src/{run,mapping,csvio}.rs` sowie passende Runner-/Layouttests. Die Freigabe soll genau diesen Messfix umfassen; weitere Produktkorrekturen sind nicht Bestandteil dieses Vorschlags.
+
+## Umsetzung nach Freigabe
+
+Runner, Mapping, CSV-Projektion und Manifest sind umgesetzt. Reale deep8-Probe: 9 Knoten → 8 Verbindungen, 100 % Zellübereinstimmung, identische Verbindungsmenge. Zielstatus wird anhand der Redirect-Probe von der Quelltiefe unterschieden. Separate Zielblöcke bleiben erhalten; vermischte oder unvollständige Blöcke schlagen fehl. Der vollständige Endlauf und die Abschlussprüfungen stehen in bericht-q02b.md.

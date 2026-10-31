@@ -1,19 +1,10 @@
 {
   "sites": 10,
   "m2_sites": 5,
-  "compared": 217,
-  "passed": 212,
-  "failed": 5,
+  "compared": 218,
+  "passed": 218,
+  "failed": 0,
   "skipped": [
-    {
-      "site": "parity-m2-links",
-      "ref_file": "crawl_path_deep8.csv",
-      "mapping": "crawl_path",
-      "os": "report:Crawl Path Report",
-      "status": "present",
-      "outcome": "skipped",
-      "reason": "SQ-14 / OUT-023: N11-CLI vorhanden; Runner-Ansteuerung und Verbindungs-Mapping fehlen (Messfehler Q02b gemeldet, Code-Freigabe ausstehend)"
-    },
     {
       "site": "parity-m2-onpage",
       "ref_file": "content_near_duplicates.csv",
@@ -42,9 +33,9 @@
       "reason": "in der Referenz nicht exportierbar (unavailable)"
     }
   ],
-  "rest_cells": 8,
-  "rest_rows": 2,
-  "classified_findings": 10,
+  "rest_cells": 0,
+  "rest_rows": 0,
+  "classified_findings": 0,
   "verified": 129,
   "denominator": 155
 }

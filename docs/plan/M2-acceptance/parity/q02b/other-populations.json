@@ -180,7 +180,7 @@
       "Status": "Blocked by Robots.txt"
     },
     {
-      "Address": "http://127.0.0.1:8904/chain2",
+      "Address": "http://127.0.0.1:8904/long2",
       "Original Url": "",
       "Content": "",
       "Status Code": "301",
@@ -192,13 +192,6 @@
       "Content": "",
       "Status Code": "302",
       "Status": "Found"
-    },
-    {
-      "Address": "http://127.0.0.1:8904/long2",
-      "Original Url": "",
-      "Content": "",
-      "Status Code": "301",
-      "Status": "Moved Permanently"
     },
     {
       "Address": "http://127.0.0.1:8904/r-chain-500b",
@@ -223,6 +216,13 @@
     },
     {
       "Address": "http://127.0.0.1:8904/long5",
+      "Original Url": "",
+      "Content": "",
+      "Status Code": "301",
+      "Status": "Moved Permanently"
+    },
+    {
+      "Address": "http://127.0.0.1:8904/chain2",
       "Original Url": "",
       "Content": "",
       "Status Code": "301",

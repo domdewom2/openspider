@@ -5,10 +5,8 @@
     "before": [
       "Zellübereinstimmung 98.605 % liegt unter 100.000 %"
     ],
-    "after": [
-      "Zellübereinstimmung 99.531 % liegt unter 100.000 %"
-    ],
-    "passed": false
+    "after": [],
+    "passed": true
   },
   {
     "site": "parity-m2-links",
@@ -25,10 +23,8 @@
     "before": [
       "Zellübereinstimmung 91.667 % liegt unter 97.000 %"
     ],
-    "after": [
-      "Zellübereinstimmung 95.652 % liegt unter 97.000 %"
-    ],
-    "passed": false
+    "after": [],
+    "passed": true
   },
   {
     "site": "parity-m2-links",
@@ -93,10 +89,8 @@
       "Zellübereinstimmung 88.000 % liegt unter 97.000 %",
       "URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich"
     ],
-    "after": [
-      "URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich"
-    ],
-    "passed": false
+    "after": [],
+    "passed": true
   },
   {
     "site": "parity-m2-security",
@@ -131,10 +125,8 @@
     "before": [
       "URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich"
     ],
-    "after": [
-      "URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich"
-    ],
-    "passed": false
+    "after": [],
+    "passed": true
   },
   {
     "site": "parity-m2-technical",
@@ -151,10 +143,8 @@
     "before": [
       "Zellübereinstimmung 66.667 % liegt unter 97.000 %"
     ],
-    "after": [
-      "Zellübereinstimmung 66.667 % liegt unter 97.000 %"
-    ],
-    "passed": false
+    "after": [],
+    "passed": true
   },
   {
     "site": "parity-m2-technical",

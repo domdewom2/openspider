@@ -49,7 +49,7 @@ for spec, why in sorted(reasons.items()):
                     passed_fixture_tests=tests,
                     failed_tests=[test for test in status.get("tests", []) if test["result"] == "failed"],
                     evidence_complete=bool(tests) and status.get("status") in {"implemented", "verified"}))
-result = dict(basis="M2.md 6.1 / K2-14; Testzuordnung durch os-parity coverage (M2, für dort nicht aufgeführte M1-IDs ergänzend M1) aus tatsächlich abgeschlossenen Tests des Workspace-Hauptlaufs; dieser endete mit Timeout und ist kein grüner Gesamtnachweis",
+result = dict(basis="M2.md 6.1 / K2-14; Testzuordnung durch os-parity coverage (M2, für dort nicht aufgeführte M1-IDs ergänzend M1) aus tatsächlich abgeschlossenen Tests des Workspace-Nachlaufs K2-96; der Prozessstatus und alle fehlgeschlagenen oder nicht abgeschlossenen Targets stehen separat im Workspace-Bericht",
               scope="Filterkataloge und ausdrücklich ausgeschlossene Fachfunktionen; keine Aussage über die vollständige B2/UI-Abnahme",
               count=len(ids), with_passed_fixture_test=sum(bool(i["passed_fixture_tests"]) for i in ids),
               complete_fixture_status=sum(i["evidence_complete"] for i in ids),
