@@ -254,7 +254,7 @@ function RegularUpperTable() {
   const empty = activeFilter?.state.kind === "needsCrawlAnalysis" ? { code: "NEEDS_CRAWL_ANALYSIS" as const } :
     activeFilter?.state.kind === "needsConfig" ? { code: "FEATURE_DISABLED" as const, arg: activeFilter.state.key } :
     activeFilter?.state.kind === "needsRendering" ? { code: "NEEDS_JS_RENDERING" as const } : null;
-  return <section className="u10-table" data-shortcut-scope="table" role="tabpanel" id="data-panel" aria-labelledby={tabId("data-panel", tabs.active)}>
+  return <section className="u10-table" data-shortcut-scope="table" role="tabpanel" id="data-panel" aria-labelledby={tabs.view === "tabs" ? tabId("data-panel", tabs.active) : undefined} aria-label={tabs.view === "tabs" ? undefined : t("u10-table")}>
     <div className="u10-toolbar" key={tabs.active}>
       {/* K2-77: the first filters of the tab (and the active one) as chips with counts; all filters stay in the dropdown. */}
       <div className="u34-chips" role="group" aria-label={t("u34-quick-filters")}>

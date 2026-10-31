@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # macos-15 statt macos-14 (M2.md C11-Bedingung 2): der Playwright-WebKit-Build für macOS 14 meldet „Unknown setting: PushAPIEnabled“, siehe ui-e2e.yml.
+          # macos-15 statt macos-15 (M2.md C11-Bedingung 2): der Playwright-WebKit-Build für macOS 14 meldet „Unknown setting: PushAPIEnabled“, siehe ui-e2e.yml.
           - os: macos-15
             project: webkit
             binary: target/debug/openspider-desktop
