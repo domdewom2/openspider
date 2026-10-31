@@ -86,6 +86,14 @@ fn scale(size: usize, budget: std::time::Duration) {
         eprintln!("near_duplicates process_peak_rss_kib={kib}");
         assert!(kib < 2_000_000_000 / 1024);
     }
+    let pairs: i64 = file
+        .conn()
+        .query_row("SELECT COUNT(*) FROM near_duplicates", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(
+        pairs, 0,
+        "page-specific shingles have zero pairwise Jaccard similarity"
+    );
     assert!(start.elapsed() < budget);
     assert_eq!(cancel.progress(), 1.0);
 }
