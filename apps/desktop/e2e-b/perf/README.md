@@ -5,9 +5,12 @@ active macOS/Windows desktop and changes no Tauri product files. From repository
 root, after browser preparation (including the import fixture):
 
 ```sh
+export OS_PERF_ROWS=5000000
+export OS_PERF_FIXTURE="$PWD/target/ui-perf-5000000.ospider"
+node apps/desktop/e2e/perf/run.mjs --prepare-only
 node apps/desktop/e2e-b/perf/prepare.mjs
 npm exec -w apps/desktop -- tauri build --no-bundle --features e2e-webdriver --config ../../target/ui-perf-native.conf.json
-OS_PERF_ROWS=5000000 node apps/desktop/e2e-b/perf/run.mjs target/release/openspider-desktop
+node apps/desktop/e2e-b/perf/run.mjs target/release/openspider-desktop
 node apps/desktop/e2e/perf/report.mjs
 ```
 
