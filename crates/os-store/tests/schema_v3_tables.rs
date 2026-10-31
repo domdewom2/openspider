@@ -210,6 +210,7 @@ fn a_reopened_v3_file_has_all_tables_and_views_and_the_integrity_check_passes() 
     assert_eq!(
         views,
         [
+            "analysis_link_facts",
             "q_columns",
             "q_config",
             "q_links",
