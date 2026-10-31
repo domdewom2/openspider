@@ -70,14 +70,7 @@ pub fn export_detail_with(
     format: Format,
     ctx: &mut ExportCtx<'_>,
 ) -> Result<Option<ExportFileInfo>, ExportError> {
-    ctx.checkpoint()?;
-    if file.conn().is_autocommit() {
-        os_store::link_index::ensure_if_idle(file)?;
-    }
-    crate::pipeline::snapshot(file, || {
-        let opts = crate::pipeline::writer_options(&file.config()?);
-        export_detail_with_writer_options(file, detail, urls, out, format, ctx, &opts)
-    })
+    export_detail_impl(file, detail, urls, out, format, ctx, None)
 }
 
 /// Exports with explicit writer options, including presentation header labels.
@@ -91,11 +84,32 @@ pub fn export_detail_with_writer_options(
     ctx: &mut ExportCtx<'_>,
     opts: &crate::types::WriterOptions,
 ) -> Result<Option<ExportFileInfo>, ExportError> {
+    export_detail_impl(file, detail, urls, out, format, ctx, Some(opts))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn export_detail_impl(
+    file: &CrawlFile,
+    detail: DetailKind,
+    urls: &[UrlId],
+    out: &Path,
+    format: Format,
+    ctx: &mut ExportCtx<'_>,
+    opts: Option<&crate::types::WriterOptions>,
+) -> Result<Option<ExportFileInfo>, ExportError> {
     ctx.checkpoint()?;
     if file.conn().is_autocommit() {
         os_store::link_index::ensure_if_idle(file)?;
     }
     crate::pipeline::snapshot(file, || {
+        let default_opts;
+        let opts = match opts {
+            Some(opts) => opts,
+            None => {
+                default_opts = crate::pipeline::writer_options(&file.config()?);
+                &default_opts
+            }
+        };
         let (sheet, where_sql) = match detail {
             DetailKind::Inlinks => ("Inlinks", "l.target_id = :url_id"),
             DetailKind::Outlinks => ("Outlinks", "l.source_id = :url_id"),
