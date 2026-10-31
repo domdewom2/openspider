@@ -30,16 +30,22 @@ const { client } = await import("../../src/ipc/client");
 const { settled } = await import("./settled");
 const fixture = new URLSearchParams(location.search).get("fixture");
 const openStart = performance.now();
+const openPhases: Record<string, number> = {};
 if (fixture) await crawl.open({ kind: "path", path: fixture });
+openPhases.crawlOpenMs = performance.now() - openStart;
+const columnsStart = performance.now();
 const initialColumns = (await catalog.columns({ tab: "Internal" }))
   .slice(0, 65)
   .map((c) => c.key);
+openPhases.catalogColumnsMs = performance.now() - columnsStart;
+const viewStart = performance.now();
 let handle = await settled(
   await view.open({
     spec: { kind: "tab", tab: "Internal", filter: "All", sort: [] },
     columns: initialColumns,
   }),
 );
+openPhases.viewBuildMs = performance.now() - viewStart;
 let source = new ViewDataSource(handle);
 let controller: GridController | null = null;
 let selection = SelectionModel.empty();
@@ -203,6 +209,7 @@ const api = {
   errors,
   failures,
   snapshot: () => ({
+    openPhases,
     total: source.total,
     columns: source.columns.length,
     visible: controller?.visible(),
