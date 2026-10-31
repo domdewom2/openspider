@@ -7,7 +7,7 @@
 ]]>
 </system-out>
 <failure message="{&quot;additionalRssBytes&quot;:{&quot;value&quot;:549777408,&quot;budget&quot;:314572800,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;freedBytes&quot;:{&quot;value&quot;:63389696,&quot;budget&quot;:1,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true}}" type="expect.toBe">
-<![CDATA[  [webkit] › memory.bench.ts:11:1 › visualization memory: 10000 nodes add at most 300 MiB and closing releases RSS 
+<![CDATA[  [webkit] › memory.bench.ts:11:1 › visualization memory: 10000 nodes add at most 300 MiB and closing releases RSS
 
     Error: {"additionalRssBytes":{"value":549777408,"budget":314572800,"direction":"max","passed":false},"freedBytes":{"value":63389696,"budget":1,"direction":"min","passed":true}}
 
@@ -40,7 +40,7 @@
 ]]>
 </system-out>
 <failure message="{&quot;clickP95Ms&quot;:{&quot;value&quot;:92,&quot;budget&quot;:100,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:true},&quot;validClickSamples&quot;:{&quot;value&quot;:30,&quot;budget&quot;:30,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true},&quot;crawlFps&quot;:{&quot;value&quot;:59.26469117696077,&quot;budget&quot;:50,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true},&quot;eventsPerSecond&quot;:{&quot;value&quot;:1.8744600721133238,&quot;budget&quot;:10,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:true},&quot;fixtureUrlsPerSecond&quot;:{&quot;value&quot;:232.82684307484905,&quot;budget&quot;:200,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true},&quot;idleUiCpuPercent&quot;:{&quot;value&quot;:59.577963163391075,&quot;budget&quot;:15,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false}}" type="expect.toBe">
-<![CDATA[  [webkit] › perf.bench.ts:298:1 › 200 URL/s fixture with 20 crawl threads: click latency and event cap 
+<![CDATA[  [webkit] › perf.bench.ts:298:1 › 200 URL/s fixture with 20 crawl threads: click latency and event cap
 
     Error: {"clickP95Ms":{"value":92,"budget":100,"direction":"max","passed":true},"validClickSamples":{"value":30,"budget":30,"direction":"min","passed":true},"crawlFps":{"value":59.26469117696077,"budget":50,"direction":"min","passed":true},"eventsPerSecond":{"value":1.8744600721133238,"budget":10,"direction":"max","passed":true},"fixtureUrlsPerSecond":{"value":232.82684307484905,"budget":200,"direction":"min","passed":true},"idleUiCpuPercent":{"value":59.577963163391075,"budget":15,"direction":"max","passed":false}}
 
