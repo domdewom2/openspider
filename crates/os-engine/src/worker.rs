@@ -152,7 +152,8 @@ pub(crate) async fn process<F: Fetch>(sh: Arc<Shared<F>>, item: QueueItem) {
         sh: Arc::clone(&sh),
     };
     let started = std::time::Instant::now();
-    let outcome = run_item(&sh, &item).await;
+    // Keep the per-URL state machine off the polling thread's small stack.
+    let outcome = Box::pin(run_item(&sh, &item)).await;
     diag::inc(&diag::STATS.items);
     diag::add(&diag::STATS.item_ns, started);
     match outcome {
@@ -194,7 +195,7 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
     }
     // 1. robots.txt
     let t = std::time::Instant::now();
-    let check = sh.gate.check(&*sh.fetcher, &url).await;
+    let check = Box::pin(sh.gate.check(&*sh.fetcher, &url)).await;
     diag::add(&diag::STATS.robots_ns, t);
     let mut sitemap_seeds = Vec::new();
     if let Some((fetch_result, write)) = check.robots_fetch {
@@ -263,7 +264,7 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
     }
     // 3. Auswertung
     let t = std::time::Instant::now();
-    let mut analysis = analyze(sh, item, &url, &result).await;
+    let mut analysis = Box::pin(analyze(sh, item, &url, &result)).await;
     diag::add(&diag::STATS.analyze_ns, t);
     if let RobotsDecision::ReportOnly {
         would_block,
@@ -282,7 +283,7 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         .response_time_ms
         .filter(|_| analysis.facts.status_code != 0);
     let t = std::time::Instant::now();
-    let batch = assemble(sh, item, analysis).await?;
+    let batch = Box::pin(assemble(sh, item, analysis)).await?;
     diag::add(&diag::STATS.assemble_ns, t);
     let t = std::time::Instant::now();
     sh.writer.send(batch).await?;

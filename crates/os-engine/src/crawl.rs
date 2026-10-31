@@ -214,7 +214,7 @@ pub async fn start_crawl<F: Fetch>(
                     start = crate::fragments::normalize(&start.url, true);
                 }
             }
-            start_spider(fetcher, req, deps, start).await
+            Box::pin(start_spider(fetcher, req, deps, start)).await
         }
         CrawlSource::List { items, label } => {
             let (items, label) = (items.clone(), label.clone());
