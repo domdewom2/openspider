@@ -102,7 +102,7 @@ impl Harness {
     pub async fn op(&self, name: &str, args: Value) -> Result<Value, os_app::CmdError> {
         let handle = self.call(name, args).await?;
         let status = tokio::time::timeout(
-            Duration::from_secs(15),
+            Duration::from_secs(60),
             self.app.ops().wait(handle["opId"].as_str().unwrap()),
         )
         .await

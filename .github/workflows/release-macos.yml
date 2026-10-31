@@ -182,6 +182,56 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
         run: npm run -w apps/desktop tauri -- build --target "$TAURI_TARGET" --bundles app,dmg
 
+      # Tauri meldet "Stapling app..." und läuft weiter, auch wenn Apple das Ticket noch nicht ausliefert (Lauf
+      # 41206175241: App angenommen, aber ohne Ticket, auch im DMG). Deshalb hier mit Wiederholungen heften, die App im
+      # DMG ebenso, und das DMG neu packen. Die Signatur des DMG folgt erst im nächsten Schritt.
+      - name: App-Ticket heften (auch im DMG)
+        if: steps.check.outputs.ready == 'true'
+        timeout-minutes: 20
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          staple() {
+            for versuch in 1 2 3 4 5; do
+              if xcrun stapler staple "$1" && xcrun stapler validate "$1"; then
+                return 0
+              fi
+              echo "Anheften an $1 fehlgeschlagen (Versuch $versuch), neuer Versuch in 60 s."
+              sleep 60
+            done
+            echo "Anheften an $1 nach 5 Versuchen fehlgeschlagen." >&2
+            return 1
+          }
+          apps=("$BUNDLE_DIR"/macos/*.app)
+          dmgs=("$BUNDLE_DIR"/dmg/*.dmg)
+          if [[ ${#apps[@]} -ne 1 || ${#dmgs[@]} -ne 1 ]]; then
+            echo "Erwartet genau eine App und ein DMG, gefunden: ${#apps[@]} App(s), ${#dmgs[@]} DMG(s)" >&2
+            exit 1
+          fi
+          staple "${apps[0]}"
+
+          dmg="${dmgs[0]}"
+          rw="$RUNNER_TEMP/openspider-rw.dmg"
+          mnt="$RUNNER_TEMP/openspider-dmg-mnt"
+          hdiutil convert "$dmg" -format UDRW -o "$rw" -quiet
+          # Platz für das Ticket: das Abbild um 20 MB vergrößern (Tauri packt es knapp).
+          cur="$(hdiutil resize -limits "$rw" | awk 'NR == 1 { print $2 }')"
+          hdiutil resize -sectors "$((cur + 40960))" "$rw"
+          mkdir -p "$mnt"
+          hdiutil attach "$rw" -nobrowse -noautoopen -mountpoint "$mnt" -quiet
+          inner=("$mnt"/*.app)
+          ok=1
+          if [[ ${#inner[@]} -ne 1 ]] || ! staple "${inner[0]}"; then
+            ok=0
+          fi
+          hdiutil detach "$mnt" -quiet || hdiutil detach "$mnt" -force -quiet
+          if [[ $ok -ne 1 ]]; then
+            echo "App im DMG nicht geheftet." >&2
+            exit 1
+          fi
+          hdiutil convert "$rw" -format UDZO -imagekey zlib-level=9 -o "$dmg" -ov -quiet
+          rm -f "$rw"
+
       # Das DMG selbst bekommt eine eigene Signatur, Notarisierung und Heftung (Tauri notarisiert nur die App darin).
       - name: DMG signieren, notarisieren, heften
         if: steps.check.outputs.ready == 'true'
