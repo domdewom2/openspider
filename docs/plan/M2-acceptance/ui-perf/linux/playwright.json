@@ -1,0 +1,297 @@
+{
+  "config": {
+    "argv": [
+      "/usr/bin/node",
+      "/home/build/Projects/openspider-wt/m2-u31/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      "e2e/perf/playwright.config.ts",
+      "--project",
+      "webkit",
+      "--grep",
+      "200 URL/s|visualization memory"
+    ],
+    "configFile": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/playwright.config.ts",
+    "rootDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "testIgnore": [],
+        "testMatch": [
+          "*.bench.ts"
+        ],
+        "timeout": 180000
+      },
+      {
+        "outputDir": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "testIgnore": [],
+        "testMatch": [
+          "*.bench.ts"
+        ],
+        "timeout": 180000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "webkit",
+        "testDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "snapshotDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "testIgnore": [],
+        "testMatch": "*.bench.ts",
+        "timeout": 180000,
+        "use": {
+          "baseURL": "http://127.0.0.1:34823",
+          "viewport": {
+            "width": 1280,
+            "height": 800
+          },
+          "browserName": "webkit"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "webkit"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/home/build/Projects/openspider-wt/m2-u31/target/loadtest/playwright.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "/home/build/Projects/openspider-wt/m2-u31/target/loadtest/junit.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": {
+      "command": "npx vite preview --config e2e/perf/vite.config.ts --host 127.0.0.1 --port 34823 --strictPort",
+      "url": "http://127.0.0.1:34823",
+      "reuseExistingServer": false
+    }
+  },
+  "suites": [
+    {
+      "title": "memory.bench.ts",
+      "file": "memory.bench.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "visualization memory: 10000 nodes add at most 300 MiB and closing releases RSS",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 6515,
+                  "error": {
+                    "message": "Error: {\"additionalRssBytes\":{\"value\":549777408,\"budget\":314572800,\"direction\":\"max\",\"passed\":false},\"freedBytes\":{\"value\":63389696,\"budget\":1,\"direction\":\"min\",\"passed\":true}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: {\"additionalRssBytes\":{\"value\":549777408,\"budget\":314572800,\"direction\":\"max\",\"passed\":false},\"freedBytes\":{\"value\":63389696,\"budget\":1,\"direction\":\"min\",\"passed\":true}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/memory.bench.ts:72:59",
+                    "location": {
+                      "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/memory.bench.ts",
+                      "column": 59,
+                      "line": 72
+                    },
+                    "snippet": "  70 |       contentType: \"application/json\",\n  71 |     });\n> 72 |     expect(result.passed, JSON.stringify(result.metrics)).toBe(true);\n     |                                                           ^\n  73 |   } finally {\n  74 |     if (graph && !graph.isClosed()) await graph.close();\n  75 |     await bridge.stop();"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/memory.bench.ts",
+                        "column": 59,
+                        "line": 72
+                      },
+                      "message": "Error: {\"additionalRssBytes\":{\"value\":549777408,\"budget\":314572800,\"direction\":\"max\",\"passed\":false},\"freedBytes\":{\"value\":63389696,\"budget\":1,\"direction\":\"min\",\"passed\":true}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  70 |       contentType: \"application/json\",\n  71 |     });\n> 72 |     expect(result.passed, JSON.stringify(result.metrics)).toBe(true);\n     |                                                           ^\n  73 |   } finally {\n  74 |     if (graph && !graph.isClosed()) await graph.close();\n  75 |     await bridge.stop();\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/memory.bench.ts:72:59"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T16:18:55.643Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "viz-memory",
+                      "contentType": "application/json",
+                      "body": "eyJzY2VuYXJpbyI6InZpei1tZW1vcnkiLCJlbmdpbmUiOiJ3ZWJraXQiLCJzaXplIjoibGFyZ2UiLCJzdGFydGVkX2F0IjoiMjAyNi0xMC0zMVQxNjoxODo1NS45NThaIiwibWV0cmljcyI6eyJhZGRpdGlvbmFsUnNzQnl0ZXMiOnsidmFsdWUiOjU0OTc3NzQwOCwiYnVkZ2V0IjozMTQ1NzI4MDAsImRpcmVjdGlvbiI6Im1heCIsInBhc3NlZCI6ZmFsc2V9LCJmcmVlZEJ5dGVzIjp7InZhbHVlIjo2MzM4OTY5NiwiYnVkZ2V0IjoxLCJkaXJlY3Rpb24iOiJtaW4iLCJwYXNzZWQiOnRydWV9fSwiZGV0YWlscyI6eyJiZWZvcmUiOnsic2NvcGUiOiJyZW5kZXJlci1wcm9jZXNzZXMiLCJjcHVNcyI6MjcwLCJieXRlcyI6MjU2Nzg2NDMyLCJwcm9jZXNzZXMiOlt7InBpZCI6MTk1NDUyLCJieXRlcyI6MjU2Nzg2NDMyfV19LCJvcGVuZWQiOnsic2NvcGUiOiJyZW5kZXJlci1wcm9jZXNzZXMiLCJjcHVNcyI6MTI5MzAsImJ5dGVzIjo4MDY1NjM4NDAsInByb2Nlc3NlcyI6W3sicGlkIjoxOTU0NTIsImJ5dGVzIjoyNzgyNjU4NTZ9LHsicGlkIjoxOTU1MjAsImJ5dGVzIjo1MjgyOTc5ODR9XX0sImNsb3NlZCI6eyJzY29wZSI6InJlbmRlcmVyLXByb2Nlc3NlcyIsImNwdU1zIjoxMjk1MCwiYnl0ZXMiOjc0MzE3NDE0NCwicHJvY2Vzc2VzIjpbeyJwaWQiOjE5NTQ1MiwiYnl0ZXMiOjI3ODI2NTg1Nn0seyJwaWQiOjE5NTUyMCwiYnl0ZXMiOjQ2NDkwODI4OH1dfSwibm9kZXMiOjEwMDAwLCJzY29wZSI6IkUyRS1BIGJyb3dzZXIgaW5kaWNhdGlvbjsgYW5vdGhlciBibGFuayBwYWdlIHJlbWFpbnMgYWxpdmUgZm9yIGF0dHJpYnV0YWJsZSBiYXNlbGluZSJ9LCJwYXNzZWQiOmZhbHNlfQ=="
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/memory.bench.ts-visualizat-c6e5b-iB-and-closing-releases-RSS-webkit/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/memory.bench.ts",
+                    "column": 59,
+                    "line": 72
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "ddd45154b1e5d9cc1ee0-5d69886539512950e0f4",
+          "file": "memory.bench.ts",
+          "line": 11,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "perf.bench.ts",
+      "file": "perf.bench.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "200 URL/s fixture with 20 crawl threads: click latency and event cap",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 80042,
+                  "error": {
+                    "message": "Error: {\"clickP95Ms\":{\"value\":92,\"budget\":100,\"direction\":\"max\",\"passed\":true},\"validClickSamples\":{\"value\":30,\"budget\":30,\"direction\":\"min\",\"passed\":true},\"crawlFps\":{\"value\":59.26469117696077,\"budget\":50,\"direction\":\"min\",\"passed\":true},\"eventsPerSecond\":{\"value\":1.8744600721133238,\"budget\":10,\"direction\":\"max\",\"passed\":true},\"fixtureUrlsPerSecond\":{\"value\":232.82684307484905,\"budget\":200,\"direction\":\"min\",\"passed\":true},\"idleUiCpuPercent\":{\"value\":59.577963163391075,\"budget\":15,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: {\"clickP95Ms\":{\"value\":92,\"budget\":100,\"direction\":\"max\",\"passed\":true},\"validClickSamples\":{\"value\":30,\"budget\":30,\"direction\":\"min\",\"passed\":true},\"crawlFps\":{\"value\":59.26469117696077,\"budget\":50,\"direction\":\"min\",\"passed\":true},\"eventsPerSecond\":{\"value\":1.8744600721133238,\"budget\":10,\"direction\":\"max\",\"passed\":true},\"fixtureUrlsPerSecond\":{\"value\":232.82684307484905,\"budget\":200,\"direction\":\"min\",\"passed\":true},\"idleUiCpuPercent\":{\"value\":59.577963163391075,\"budget\":15,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:103:50)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:388:5",
+                    "location": {
+                      "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                      "column": 50,
+                      "line": 103
+                    },
+                    "snippet": "  101 |     contentType: \"application/json\",\n  102 |   });\n> 103 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);\n      |                                                  ^\n  104 | }\n  105 | const p95 = (v: number[]) =>\n  106 |   [...v].sort((a, b) => a - b)[Math.ceil(v.length * 0.95) - 1];"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                        "column": 50,
+                        "line": 103
+                      },
+                      "message": "Error: {\"clickP95Ms\":{\"value\":92,\"budget\":100,\"direction\":\"max\",\"passed\":true},\"validClickSamples\":{\"value\":30,\"budget\":30,\"direction\":\"min\",\"passed\":true},\"crawlFps\":{\"value\":59.26469117696077,\"budget\":50,\"direction\":\"min\",\"passed\":true},\"eventsPerSecond\":{\"value\":1.8744600721133238,\"budget\":10,\"direction\":\"max\",\"passed\":true},\"fixtureUrlsPerSecond\":{\"value\":232.82684307484905,\"budget\":200,\"direction\":\"min\",\"passed\":true},\"idleUiCpuPercent\":{\"value\":59.577963163391075,\"budget\":15,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  101 |     contentType: \"application/json\",\n  102 |   });\n> 103 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);\n      |                                                  ^\n  104 | }\n  105 | const p95 = (v: number[]) =>\n  106 |   [...v].sort((a, b) => a - b)[Math.ceil(v.length * 0.95) - 1];\n    at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:103:50)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:388:5"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T16:19:02.730Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "crawl-load",
+                      "contentType": "application/json",
+                      "body": "eyJzY2VuYXJpbyI6ImNyYXdsLWxvYWQiLCJzaXplIjoibGFyZ2UiLCJzdGFydGVkX2F0IjoiMjAyNi0xMC0zMVQxNjoxOTowMi43OTZaIiwiZW5naW5lIjoid2Via2l0IiwibWV0cmljcyI6eyJjbGlja1A5NU1zIjp7InZhbHVlIjo5MiwiYnVkZ2V0IjoxMDAsImRpcmVjdGlvbiI6Im1heCIsInBhc3NlZCI6dHJ1ZX0sInZhbGlkQ2xpY2tTYW1wbGVzIjp7InZhbHVlIjozMCwiYnVkZ2V0IjozMCwiZGlyZWN0aW9uIjoibWluIiwicGFzc2VkIjp0cnVlfSwiY3Jhd2xGcHMiOnsidmFsdWUiOjU5LjI2NDY5MTE3Njk2MDc3LCJidWRnZXQiOjUwLCJkaXJlY3Rpb24iOiJtaW4iLCJwYXNzZWQiOnRydWV9LCJldmVudHNQZXJTZWNvbmQiOnsidmFsdWUiOjEuODc0NDYwMDcyMTEzMzIzOCwiYnVkZ2V0IjoxMCwiZGlyZWN0aW9uIjoibWF4IiwicGFzc2VkIjp0cnVlfSwiZml4dHVyZVVybHNQZXJTZWNvbmQiOnsidmFsdWUiOjIzMi44MjY4NDMwNzQ4NDkwNSwiYnVkZ2V0IjoyMDAsImRpcmVjdGlvbiI6Im1pbiIsInBhc3NlZCI6dHJ1ZX0sImlkbGVVaUNwdVBlcmNlbnQiOnsidmFsdWUiOjU5LjU3Nzk2MzE2MzM5MTA3NSwiYnVkZ2V0IjoxNSwiZGlyZWN0aW9uIjoibWF4IiwicGFzc2VkIjpmYWxzZX19LCJkZXRhaWxzIjp7InRpY2tzIjpbeyJhdCI6NTU5MSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NjE4NSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6Njc4MywicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NzI4NSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NzkxMCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6ODM4NSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6ODk4MiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6OTQ4NSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MTAwMTksInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjEwNTgzLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoxMTExNiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MTE1ODMsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjEyMTM3LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoxMjY4NCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MTMyMjIsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjEzNjg3LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoxNDE4OSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MTQ3ODMsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjE1Mjk1LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoxNTg4NCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MTYzODYsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjE2OTM3LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoxNzQ4NCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MTc5ODQsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjE4NDgzLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoxOTA4NCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MTk2ODMsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjIwMTgzLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoyMDY5MCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MjExODcsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjIxNzg1LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoyMjI4NCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MjI4ODIsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjIzMzg2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoyMzg4NCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MjQzOTQsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjI0OTg2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoyNTU4MywicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MjYwODUsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjI2NTkwLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoyNzA4NiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6Mjc1ODMsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjI4MDg0LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoyODY4NCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MjkxODYsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjI5NzgzLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjozMDI4NCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MzA4MDAsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjMxMzg0LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjozMTg4NCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MzIzODQsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjMyOTg0LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjozMzU4MywicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MzQwODQsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjM0Njg2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjozNTE4NCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MzU2ODQsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjM2MTkxLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjozNjcxMCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MzcyODUsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjM3OTA3LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjozODM5MywicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6Mzg4ODUsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjM5Mzg2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjozOTg4MywicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NDAzODUsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjQwODg4LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo0MTM4OCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NDE5ODMsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjQyNDgzLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo0MzA4MywicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NDM1ODMsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjQ0MDg0LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo0NDU4NSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NDUwOTEsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjQ1NjgzLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo0NjE4MywicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NDY2ODMsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjQ3MTk1LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo0Nzc4OSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NDgyODMsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjQ4ODgzLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo0OTM4MywicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NDk4ODMsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjUwNDgzLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo1MDk4MywicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NTE1ODEsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjUyMDg2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo1MjU4NiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NTMwODUsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjUzNjgzLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo1NDE5NywicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NTQ2ODUsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjU1MTg4LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo1NTc4NCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NTYyODQsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjU2Nzg0LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo1NzM4MywicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NTc4ODQsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjU4MzkyLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo1ODg4NCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NTkzODUsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjU5ODg3LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo2MDQ5NywicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NjA5ODMsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjYxNDg0LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo2MjA0OSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NjI1OTYsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjYzMDg1LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo2MzY4MywicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NjQxODQsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjY0Njg0LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo2NTE4NiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NjU2ODYsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjY2MjgzLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo2Njc5NiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NjczODMsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjY3ODgzLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo2ODQ2MCwicGhhc2UiOiJydW5uaW5nIn1dLCJjbGlja3MiOls0Miw5NSw2Miw1Myw3MCw5Miw4NCw2Miw2OCw3MSw4MCw1Niw0OSw0OCw1NCw3NSw1Miw2NSw2MSw1OCw1Myw1NCwzNyw4MSwzNywzNiw3MSw3MCw2OCw3NF0sInN0YXRlIjp7ImFjdGl2ZVRocmVhZHMiOjIwLCJhdmdSYXRlIjoyMzMuNTM2NDMzODI1NTM1NywiYXZnUmVzcG9uc2VUaW1lIjowLjA4MzcxMTE0OTA3NjE4MzI1LCJjcmF3bElkIjoiMDFhMTkyYzEtZTc2NC03OGI2LWI1ODgtYzJkZGVlMTZlZWY3IiwiY3Jhd2xlZCI6MTU4MDQsImRpc2NvdmVyZWQiOjE4NDM0MSwiZWxhcHNlZFMiOjY3LCJlbmRSZWFzb24iOm51bGwsImV0YVMiOjcyNSwiZmlsZUJ5dGVzIjo0MDk2MDAsIm1lbW9yeUxpbWl0Qnl0ZXMiOjMyOTE0NDg3Mjk2LCJtZW1vcnlTdGFnZSI6Im5vcm1hbCIsIm1lbW9yeVVzZWRCeXRlcyI6MjU4NzY4ODk2LCJtb2RlIjoic3BpZGVyIiwib3duZXIiOnsiY29udHJvbGxhYmxlIjp0cnVlLCJraW5kIjoiYXBwIiwibGl2ZSI6dHJ1ZSwicGlkIjoxOTU2Njh9LCJwYXVzZWRTIjowLCJwZXJjZW50Ijo4LCJwaGFzZSI6InJ1bm5pbmciLCJxdWV1ZWQiOjE2ODUxNiwicmF0ZSI6MjMyLjV9LCJsb2FkRnJhbWVzIjp7ImZwcyI6NTkuMjY0NjkxMTc2OTYwNzcsImZyYW1lcyI6WzI4LDIwLDE5LDE5LDE5LDE3LDE3LDEyLDI0LDIzLDQwLDI5LDI3LDMxLDIwLDIyLDIzLDIwLDIwLDE4LDMxLDE3LDMxLDE4LDI0LDI1LDIxLDE4LDI0LDI0LDIyLDIyLDQ3LDIzLDE2LDE4LDMzLDIzLDI1LDM0LDQ4LDIzLDQzLDI1LDIxLDIzLDE4LDIzLDIyLDMwLDIxLDIzLDIxLDIzLDI3LDIyLDE3LDIwLDM0LDM0LDIyLDIwLDIxLDE4LDIwLDI2LDE5LDE2LDE2LDIyLDE4LDIxLDI4LDI5LDIzLDI0LDIzLDIwLDE4LDIxLDE4LDIwLDE3LDIwLDIxLDE1LDIwLDM0LDE5LDIxLDE3LDE4LDIwLDQyLDQxLDI3LDM1LDE3LDIyLDIxLDMwLDE0LDIwLDE1LDE1LDMyLDI2LDM2LDI0LDE1LDI2LDIwLDE5LDE0LDE2LDIzLDMyLDQ0LDE5LDIxLDEwLDIyLDI0LDE1LDEzLDIxLDE0LDE0LDE1LDE1LDE2LDE2LDE2LDE2LDE3LDE2LDE2LDI1LDEzLDEzLDEzLDE2LDE2LDE3LDE2LDE2LDE2LDE2LDE2LDE2LDIxLDE5LDI0LDIyLDI0LDExLDE5LDEwLDE3LDEwLDIzLDEyLDE3LDEzLDE3LDM0LDE4LDIxLDEyLDE5LDEwLDE2LDE1LDE2LDE3LDE2LDE2LDE2LDE2LDE5LDEzLDE2LDE3LDE2LDE4LDE0LDE2LDE2LDE2LDE2LDE2LDE2LDE3LDE2LDE2LDE2LDIyLDE3LDI0LDksMjgsMTAsMTAsMTcsMTIsMTgsMTQsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMjAsMTUsMTQsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTgsMTQsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMjAsMTMsMTUsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTUsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTksMjMsMTAsMTcsMTUsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTcsMTUsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMjMsMTAsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTcsMTUsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTgsMTQsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTcsMTUsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTUsMjIsMTEsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTcsMTUsMTYsMTYsMTYsMTYsMTcsMTksMTUsMTUsMTYsMTYsMTYsMTYsMTYsMTksMTQsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTcsMTUsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTcsMTksMTIsMTYsMTYsMTYsMTYsMTYsMjUsMTYsMTMsMTQsMTMsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTgsMTYsMTcsMTQsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTksMTMsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMjQsMTUsMTAsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTksMTMsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMjAsMTIsMTYsMTYsMTcsMTYsMTYsMTYsMTksMTMsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMjYsMTQsOSwxNiwxNiwxNiwxNiwxNiwxNiwxNiwxNywxNiwxNiwxNiwxNiwxNiwxNiwxNiwxNiwxNiwxNiwxNywxOCwxNCwxNiwxNiwxNiwxNiwxNiwxNiwxNiwxNywxNiwxNiwxNiwxNiwxNiwxNiwxNywxNSwxNiwxNywxNiwxNiwxNiwxNiwxNiwxNiwxNiwxNiwxNiwxNiwxNywxOSwxMywxNiwxNiwxNiwxNiwxNiwxNiwxNiwxNywxNiwxNiwxOSwxNSwxNiwxNiwxNywyNSw3LDE2LDE2LDE3LDE2LDE3LDE3LDE4LDE1LDE2LDE2LDE3LDE2LDE3LDE4LDE2LDE3LDE4LDE1LDE2LDE3LDE1LDE2LDE2LDE5LDE1LDE4LDE1LDE2LDE2LDE2LDE2LDE3LDE2LDE4LDMxLDE2LDE1LDE2LDE2LDE4LDE3LDE2LDE2LDE2LDE2LDE3LDE1LDE2LDIxLDEyLDE4LDE4LDI2LDI1LDE0LDE3LDE2LDE2LDE3LDE2LDE4LDE2LDE5LDE4LDEzLDE3LDE2LDE3LDE1LDE2LDE2LDE2LDE3LDE2LDE3LDE2LDE2LDI3LDYsMTcsMjUsMjksMjIsMTAsMTYsMTYsMTYsMjAsMTMsMTYsMTcsMjAsMTksMTQsMTcsMTYsMTcsMTcsMTYsMTYsMjAsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMjAsMTUsMTMsMTYsMTYsMTYsMTcsMTYsMTcsMTYsMTYsMTcsMjMsMjksMTcsMTUsMTUsMTYsMTcsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTksMTUsMjEsMTksMTYsOSwxNiwxNiwxNiwxNiwxNiwxNywxNiwxNiwxNiwxOCwyMCwxMCwxNywxNywxNCwxOCwxNSwxNiwxNywxNiwxNiwxNiwxNiwxOCwxNiwyNiw3LDE2LDI4LDI1LDE5LDExLDE3LDE2LDE2LDE2LDE2LDE3LDE2LDE2LDE3LDMwLDEsMTYsMTcsMTYsMTYsMjAsMTYsMTYsMTcsMTYsMTcsMTYsMjIsMTIsMTYsMTYsMTYsMTcsMTYsMTgsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTgsMjksMywxNSwxNiwxNywxNiwyMCwxNiwxNiwxNywxNiwxNywxOCwxNiwyNyw4LDE2LDE2LDE4LDE1LDE2LDE2LDE3LDE2LDE2LDE2LDE2LDE2LDE3LDE2LDE4LDE4LDE0LDE2LDE2LDE2LDE2LDE2LDE2LDE2LDE2LDE3LDE2LDE2LDE2LDE3LDE1LDE3LDE2LDE2LDE2LDIwLDE1LDIwLDEyLDE5LDIxLDExLDE0LDE3LDE4LDE0LDE3LDE2LDE2LDE3LDE5LDE1LDE1LDE2LDE2LDE3LDE1LDE2LDE3LDE3LDE1LDE5LDE5LDExLDE2LDE2LDIyLDEwLDE2LDIyLDE1LDIxLDgsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTcsMTcsMTQsMTksMTksMTYsMTIsMTUsMTYsMTYsMTYsMTcsMTcsMTcsMTcsMjQsMTEsMTIsMTgsMjMsMTMsMTMsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTcsMTUsMTksMjQsOSwxNSwxNiwxNiwxNiwxNywxNiwxNiwxNiwxNywxNywxNSwxNiwxNywxOCwxNiwyMCwxNSwxNiwxNiwxNiwyNywxNSwyMCw4LDE2LDE2LDE2LDE3LDE2LDE2LDE3LDE2LDE2LDE3LDE3LDE2LDE2LDE3LDE2LDE2LDE2LDE2LDE2LDE4LDE1LDIxLDExLDE2LDMwLDMsMTYsMTcsMjAsMTQsMTQsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTcsMTYsMTYsMTYsMTYsMTYsMTYsMTksMTYsMTYsMTYsMjIsMTAsMTYsMTgsMTcsMTUsMTYsMTYsMTYsMTYsMTYsMTcsMTYsMTYsMTgsMjEsMTMsMTYsMTcsMTcsMTYsMTksMTgsMTksMTMsMTYsMTcsMTYsMzMsNCwxNSwxNiwxNywyMCwxMiwxNywxNiwxNiwxNywxNiwxNiwxOCwxNiwxNiwxOSwyMiw4LDE2LDE3LDE4LDE2LDE2LDE2LDE2LDE3LDE2LDE4LDE0LDE2LDIxLDEzLDE2LDE3LDE2LDE2LDE2LDE2LDE2LDE2LDE2LDMwLDMsMTYsMTYsMTksMTksMTAsMTYsMTcsMTYsMTcsMTYsMTcsMTYsMTcsMTcsMTYsMTYsMTYsMTYsMjIsMTYsMTYsMjYsMTksMTEsMTMsMTYsMTYsMTYsMTYsMTgsMTQsMTcsMTUsMTgsMjMsOCwxNiwxNiwxNiwxNywxNiwxNiwxNiwxNywxNSwxNiwxNiwxNywxNiwxNiwxOCwxNCwxNywxNiwxNiwyMCwxMywyNywxOSwxNywyLDE1LDE2LDE2LDE5LDE0LDE2LDE2LDE2LDE2LDIyLDE5LDcsMTcsMTYsMTcsMTYsMTYsMjEsMTMsMTYsMTYsMTcsMTYsMTcsMTgsMTQsMTYsMjUsMjEsMTMsMTUsMTYsMTYsMTYsMTYsMTYsMTcsMTUsMTcsMTcsMTYsMTYsMTYsMTUsMTcsMTgsMTcsMTYsMTcsMTcsMTYsMTYsMTYsMTYsMTksMTQsMTYsMTYsMTksMTQsMTcsMTYsMjEsMTcsMTUsMTYsMTcsMTYsMTYsMTgsMTcsMTYsMTYsMTYsMTgsMTksMTYsMTcsMTUsMTcsMTYsMTYsMTYsMTYsMTcsMTUsMTksMTQsMzAsNSwxNiwxNiwxNiwxNiwxNiwxOCwxNCwxNiwxNiwxNywxNiwxNiwxNiwxNiwyMCwyMyw3LDE3LDE2LDE2LDIxLDEzLDE1LDE2LDE3LDE4LDE4LDE2LDE2LDE3LDE2LDI4LDQsMTYsMTcsMjcsNDIsMTUsMTYsMTYsMTYsMTcsMTUsMTYsMTcsMTgsMjAsMTAsMjAsMTIsMTcsMTUsMTYsMTYsMTYsMTcsMTYsMTYsMjEsMjgsNCwxOCwxNSwxOCwxNiwxNywxNiwxOCwxNiwxOSwxNiwxNywxNiwxOCwyNSwyMywxNSwxOSwxNiwxNiwxNywxNiwxNiwxNiwxNiwxNiwxNiwxNiwxNiwxNywxNiwxNiwxNiwxNiwxNiwxOSwxNiwyMywyNCwxNCw0LDE2LDE3LDE2LDE2LDE4LDE3LDE2LDE1LDE2LDE3LDE3LDE1LDE2LDE2LDE3LDE2LDE3LDE2LDE1LDE5LDEzLDE2LDI5LDQsMjgsNiwyNSwxMiwxMiwxNiwxNywxNiwxNywxNSwxNiwxNiwxNywxOSwxMywxNiwxNiwxOCwxNiwxNywxNiwxNiwxNiwxNiwxNiwxNiwxNiwyMywxMywxNiwxMywyNywxMywxNCwxMywxNiwxNywxNiwxNiwyMSwxMywxNiwxNiwxNiwxNiwxNiwyNSwyMCw0LDE2LDE2LDE2LDE2LDE3LDE2LDE4LDE4LDE0LDE2LDE3LDE2LDE2LDE5LDE0LDI1LDEyLDExLDE2LDE4LDE0LDE2LDE3LDE2LDE2LDE2LDE3LDE1LDE4LDE5LDEyLDE2LDE2LDE2LDE2LDE3LDE2LDE3LDE1LDE2LDE3LDE2LDIwLDEzLDE5LDEzLDE5LDE2LDE2LDIzLDEyLDIwLDIyLDQsMTYsMTYsMTYsMTgsMTUsMTksMjIsOSwxNiwxNiwxNiwxNiwxNiwxNiwxNywxNiwxNiwxNiwxNiwxOSwxNSwxNywyMSwxNywxNSwxOCwyMCwxMiwxNiwyOSwyMCwxNCw0LDE3LDE1LDE2LDE3LDE3LDE2LDE2LDE3LDE3LDE1LDE2LDE2LDE2LDE2LDE2LDE3LDE2LDE4LDE1LDIyLDEwLDE2LDE3LDE4LDIzLDgsMTYsMTcsMTYsMTcsMTYsMTYsMjAsMTYsMTQsMTcsMjMsOSwxNiwyMywxNyw5LDIwLDE2LDE2LDE2LDE2LDE2LDIxLDEzLDE2LDE2LDE2LDE2LDE3LDE2LDE2LDE2LDE2LDE2LDE5LDEzLDIwLDE4LDEzLDE1LDE2LDE2LDE2LDE3LDE2LDE2LDE2LDE2LDE2LDE3LDE3LDE2LDE1LDE2LDE2LDE2LDE2LDE2LDE3LDE2LDIwLDEzLDE3LDE4LDE2LDIzLDEyLDIzLDE0LDI3LDE2LDEwLDE1LDE4LDE3LDE2LDE2LDE3LDIwLDE4LDE5LDE0LDE2LDE2LDE2LDE2LDE3LDE4LDE2LDE2LDE3LDE1LDE2LDE3LDE1LDE2LDE2LDE2LDE2LDIzLDEzLDE1LDE4LDE2LDE3LDE1LDE3LDE2LDE2LDE2LDE2LDE2LDE2LDE2LDE2LDE3LDE2LDE2LDE2LDE2LDE2LDE2LDE2LDE2LDE3LDE2LDE2LDE4XX0sImludGVydmFscyI6WzU5NCw1OTgsNTAyLDYyNSw0NzUsNTk3LDUwMyw1MzQsNTY0LDUzMyw0NjcsNTU0LDU0Nyw1MzgsNDY1LDUwMiw1OTQsNTEyLDU4OSw1MDIsNTUxLDU0Nyw1MDAsNDk5LDYwMSw1OTksNTAwLDUwNyw0OTcsNTk4LDQ5OSw1OTgsNTA0LDQ5OCw1MTAsNTkyLDU5Nyw1MDIsNTA1LDQ5Niw0OTcsNTAxLDYwMCw1MDIsNTk3LDUwMSw1MTYsNTg0LDUwMCw1MDAsNjAwLDU5OSw1MDEsNjAyLDQ5OCw1MDAsNTA3LDUxOSw1NzUsNjIyLDQ4Niw0OTIsNTAxLDQ5Nyw1MDIsNTAzLDUwMCw1OTUsNTAwLDYwMCw1MDAsNTAxLDUwMSw1MDYsNTkyLDUwMCw1MDAsNTEyLDU5NCw0OTQsNjAwLDUwMCw1MDAsNjAwLDUwMCw1OTgsNTA1LDUwMCw0OTksNTk4LDUxNCw0ODgsNTAzLDU5Niw1MDAsNTAwLDU5OSw1MDEsNTA4LDQ5Miw1MDEsNTAyLDYxMCw0ODYsNTAxLDU2NSw1NDcsNDg5LDU5OCw1MDEsNTAwLDUwMiw1MDAsNTk3LDUxMyw1ODcsNTAwLDU3N10sImNwdUJlZm9yZSI6eyJzY29wZSI6InJlbmRlcmVyLXByb2Nlc3NlcyIsImNwdU1zIjozOTIxMCwiYnl0ZXMiOjYxMzU2MDMyMCwicHJvY2Vzc2VzIjpbeyJwaWQiOjE5NTcwOCwiYnl0ZXMiOjYxMzU2MDMyMH1dfSwiY3B1QWZ0ZXIiOnsic2NvcGUiOiJyZW5kZXJlci1wcm9jZXNzZXMiLCJjcHVNcyI6NTcxMjAsImJ5dGVzIjo2MTI2NDY5MTIsInByb2Nlc3NlcyI6W3sicGlkIjoxOTU3MDgsImJ5dGVzIjo2MTI2NDY5MTJ9XX0sImNwdVBlcmNlbnQiOjU5LjU3Nzk2MzE2MzM5MTA3NSwidGhyZWFkcyI6MjAsInNlY29uZHMiOjYzLjQ4NDk0Nzg5LCJyZXNwb25zZXMiOjE0NzgxfSwicGFzc2VkIjpmYWxzZX0="
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-webkit/error-context.md"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-webkit/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                    "column": 50,
+                    "line": 103
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-39dd0b883485b915c171",
+          "file": "perf.bench.ts",
+          "line": 298,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-31T16:18:54.189Z",
+    "duration": 88933.93999999999,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

@@ -1,0 +1,448 @@
+<testsuites id="" name="" tests="24" failures="7" skipped="0" errors="10" time="681.118379">
+<testsuite name="gate.bench.ts" timestamp="2026-10-31T15:30:44.802Z" hostname="chromium" tests="2" failures="0" skipped="0" time="0.016" errors="0">
+<testcase name="nightly gate: seven-run median, ten-percent boundary and missing baseline" classname="gate.bench.ts" time="0.011">
+</testcase>
+<testcase name="generator seed, real fixture size and ten-minute budget" classname="gate.bench.ts" time="0.005">
+</testcase>
+</testsuite>
+<testsuite name="memory.bench.ts" timestamp="2026-10-31T15:30:44.802Z" hostname="chromium" tests="1" failures="0" skipped="0" time="6.083" errors="0">
+<testcase name="visualization memory: 10000 nodes add at most 300 MiB and closing releases RSS" classname="memory.bench.ts" time="6.083">
+</testcase>
+</testsuite>
+<testsuite name="perf.bench.ts" timestamp="2026-10-31T15:30:44.802Z" hostname="chromium" tests="5" failures="4" skipped="0" time="164.255" errors="0">
+<testcase name="cold browser context and open to first painted rows" classname="perf.bench.ts" time="12.901">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-cold-browser-0b209--open-to-first-painted-rows-chromium/error-context.md]]
+
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-cold-browser-0b209--open-to-first-painted-rows-chromium/error-context.md]]
+]]>
+</system-out>
+<failure message="{&quot;browserContextToRowsMs&quot;:{&quot;value&quot;:12713.451315999999,&quot;budget&quot;:3000,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;openMs&quot;:{&quot;value&quot;:12567.39999999106,&quot;budget&quot;:3000,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false}}" type="expect.toBe">
+<![CDATA[  [chromium] › perf.bench.ts:104:1 › cold browser context and open to first painted rows ───────────
+
+    Error: {"browserContextToRowsMs":{"value":12713.451315999999,"budget":3000,"direction":"max","passed":false},"openMs":{"value":12567.39999999106,"budget":3000,"direction":"max","passed":false}}
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+       97 |     contentType: "application/json",
+       98 |   });
+    >  99 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);
+          |                                                  ^
+      100 | }
+      101 | const p95 = (v: number[]) =>
+      102 |   [...v].sort((a, b) => a - b)[Math.ceil(v.length * 0.95) - 1];
+        at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:99:50)
+        at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:110:3
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-cold-browser-0b209--open-to-first-painted-rows-chromium/error-context.md
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-cold-browser-0b209--open-to-first-painted-rows-chromium/error-context.md
+]]>
+</failure>
+</testcase>
+<testcase name="real IPC 200 rows × 20 columns p95 and payload" classname="perf.bench.ts" time="15.865">
+</testcase>
+<testcase name="ten seconds vertical and horizontal 65-column scrolling and end jump" classname="perf.bench.ts" time="34.827">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-ten-seconds--c5560-lumn-scrolling-and-end-jump-chromium/error-context.md]]
+
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-ten-seconds--c5560-lumn-scrolling-and-end-jump-chromium/error-context.md]]
+]]>
+</system-out>
+<failure message="{&quot;jumpMs&quot;:{&quot;value&quot;:5058.70000000298,&quot;budget&quot;:150,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;domRows&quot;:{&quot;value&quot;:28,&quot;budget&quot;:299,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:true},&quot;cachedRows&quot;:{&quot;value&quot;:1800,&quot;budget&quot;:20000,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:true},&quot;verticalFps&quot;:{&quot;value&quot;:60.00219641983568,&quot;budget&quot;:55,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true},&quot;verticalMaxFrameMs&quot;:{&quot;value&quot;:16.80000000000291,&quot;budget&quot;:50,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:true},&quot;horizontalFps&quot;:{&quot;value&quot;:60.00219641983568,&quot;budget&quot;:55,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true},&quot;horizontalMaxFrameMs&quot;:{&quot;value&quot;:16.80000000000291,&quot;budget&quot;:50,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:true},&quot;jumpReady&quot;:{&quot;value&quot;:0,&quot;budget&quot;:1,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:false},&quot;jumpVisible&quot;:{&quot;value&quot;:1,&quot;budget&quot;:1,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true},&quot;columns&quot;:{&quot;value&quot;:65,&quot;budget&quot;:65,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true}}" type="expect.toBe">
+<![CDATA[  [chromium] › perf.bench.ts:147:1 › ten seconds vertical and horizontal 65-column scrolling and end jump 
+
+    Error: {"jumpMs":{"value":5058.70000000298,"budget":150,"direction":"max","passed":false},"domRows":{"value":28,"budget":299,"direction":"max","passed":true},"cachedRows":{"value":1800,"budget":20000,"direction":"max","passed":true},"verticalFps":{"value":60.00219641983568,"budget":55,"direction":"min","passed":true},"verticalMaxFrameMs":{"value":16.80000000000291,"budget":50,"direction":"max","passed":true},"horizontalFps":{"value":60.00219641983568,"budget":55,"direction":"min","passed":true},"horizontalMaxFrameMs":{"value":16.80000000000291,"budget":50,"direction":"max","passed":true},"jumpReady":{"value":0,"budget":1,"direction":"min","passed":false},"jumpVisible":{"value":1,"budget":1,"direction":"min","passed":true},"columns":{"value":65,"budget":65,"direction":"min","passed":true}}
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+       97 |     contentType: "application/json",
+       98 |   });
+    >  99 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);
+          |                                                  ^
+      100 | }
+      101 | const p95 = (v: number[]) =>
+      102 |   [...v].sort((a, b) => a - b)[Math.ceil(v.length * 0.95) - 1];
+        at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:99:50)
+        at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:167:3
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-ten-seconds--c5560-lumn-scrolling-and-end-jump-chromium/error-context.md
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-ten-seconds--c5560-lumn-scrolling-and-end-jump-chromium/error-context.md
+]]>
+</failure>
+</testcase>
+<testcase name="tab filter numeric text substring regex and reverse to painted rows" classname="perf.bench.ts" time="21.916">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-tab-filter-n-6f199-and-reverse-to-painted-rows-chromium/error-context.md]]
+
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-tab-filter-n-6f199-and-reverse-to-painted-rows-chromium/error-context.md]]
+]]>
+</system-out>
+<failure message="{&quot;tabMs&quot;:{&quot;value&quot;:1948.2000000029802,&quot;budget&quot;:200,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;tabReturnMs&quot;:{&quot;value&quot;:7216.0999999940395,&quot;budget&quot;:200,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;filterMs&quot;:{&quot;value&quot;:null,&quot;budget&quot;:200,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;numericMs&quot;:{&quot;value&quot;:null,&quot;budget&quot;:5000,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;reverseMs&quot;:{&quot;value&quot;:null,&quot;budget&quot;:200,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;textMs&quot;:{&quot;value&quot;:null,&quot;budget&quot;:8000,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;substringMs&quot;:{&quot;value&quot;:null,&quot;budget&quot;:3000,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;regexMs&quot;:{&quot;value&quot;:null,&quot;budget&quot;:10000,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false}}" type="expect.toBe">
+<![CDATA[  [chromium] › perf.bench.ts:171:1 › tab filter numeric text substring regex and reverse to painted rows 
+
+    Error: {"tabMs":{"value":1948.2000000029802,"budget":200,"direction":"max","passed":false},"tabReturnMs":{"value":7216.0999999940395,"budget":200,"direction":"max","passed":false},"filterMs":{"value":null,"budget":200,"direction":"max","passed":false},"numericMs":{"value":null,"budget":5000,"direction":"max","passed":false},"reverseMs":{"value":null,"budget":200,"direction":"max","passed":false},"textMs":{"value":null,"budget":8000,"direction":"max","passed":false},"substringMs":{"value":null,"budget":3000,"direction":"max","passed":false},"regexMs":{"value":null,"budget":10000,"direction":"max","passed":false}}
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+       97 |     contentType: "application/json",
+       98 |   });
+    >  99 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);
+          |                                                  ^
+      100 | }
+      101 | const p95 = (v: number[]) =>
+      102 |   [...v].sort((a, b) => a - b)[Math.ceil(v.length * 0.95) - 1];
+        at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:99:50)
+        at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:187:3
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-tab-filter-n-6f199-and-reverse-to-painted-rows-chromium/error-context.md
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-tab-filter-n-6f199-and-reverse-to-painted-rows-chromium/error-context.md
+]]>
+</failure>
+</testcase>
+<testcase name="200 URL/s fixture with 20 crawl threads: click latency and event cap" classname="perf.bench.ts" time="78.746">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-chromium/error-context.md]]
+
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-chromium/error-context.md]]
+]]>
+</system-out>
+<failure message="{&quot;clickP95Ms&quot;:{&quot;value&quot;:28.5,&quot;budget&quot;:100,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:true},&quot;crawlFps&quot;:{&quot;value&quot;:60.00267996422894,&quot;budget&quot;:50,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true},&quot;eventsPerSecond&quot;:{&quot;value&quot;:1.8739962482675194,&quot;budget&quot;:10,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:true},&quot;fixtureUrlsPerSecond&quot;:{&quot;value&quot;:239.9676221499485,&quot;budget&quot;:200,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true},&quot;idleUiCpuPercent&quot;:{&quot;value&quot;:16.82390893036451,&quot;budget&quot;:15,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false}}" type="expect.toBe">
+<![CDATA[  [chromium] › perf.bench.ts:291:1 › 200 URL/s fixture with 20 crawl threads: click latency and event cap 
+
+    Error: {"clickP95Ms":{"value":28.5,"budget":100,"direction":"max","passed":true},"crawlFps":{"value":60.00267996422894,"budget":50,"direction":"min","passed":true},"eventsPerSecond":{"value":1.8739962482675194,"budget":10,"direction":"max","passed":true},"fixtureUrlsPerSecond":{"value":239.9676221499485,"budget":200,"direction":"min","passed":true},"idleUiCpuPercent":{"value":16.82390893036451,"budget":15,"direction":"max","passed":false}}
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+       97 |     contentType: "application/json",
+       98 |   });
+    >  99 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);
+          |                                                  ^
+      100 | }
+      101 | const p95 = (v: number[]) =>
+      102 |   [...v].sort((a, b) => a - b)[Math.ceil(v.length * 0.95) - 1];
+        at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:99:50)
+        at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:381:5
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-chromium/error-context.md
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-chromium/error-context.md
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="sidebar.bench.ts" timestamp="2026-10-31T15:30:44.802Z" hostname="chromium" tests="4" failures="0" skipped="0" time="180.694" errors="4">
+<testcase name="sidebar overview: independent RPC latency" classname="sidebar.bench.ts" time="45.187">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/sidebar.bench.ts-sidebar-overview-independent-RPC-latency-chromium/error-context.md]]
+]]>
+</system-out>
+<error message="Test timeout of 45000ms exceeded." type="Error">
+<![CDATA[  [chromium] › sidebar.bench.ts:15:3 › sidebar overview: independent RPC latency ───────────────────
+
+    Test timeout of 45000ms exceeded.
+
+    Error Context: ../../../../target/ui-perf-tests/sidebar.bench.ts-sidebar-overview-independent-RPC-latency-chromium/error-context.md
+]]>
+</error>
+</testcase>
+<testcase name="sidebar issues: independent RPC latency" classname="sidebar.bench.ts" time="45.146">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/sidebar.bench.ts-sidebar-issues-independent-RPC-latency-chromium/error-context.md]]
+]]>
+</system-out>
+<error message="Test timeout of 45000ms exceeded." type="Error">
+<![CDATA[  [chromium] › sidebar.bench.ts:15:3 › sidebar issues: independent RPC latency ─────────────────────
+
+    Test timeout of 45000ms exceeded.
+
+    Error Context: ../../../../target/ui-perf-tests/sidebar.bench.ts-sidebar-issues-independent-RPC-latency-chromium/error-context.md
+]]>
+</error>
+</testcase>
+<testcase name="sidebar siteStructure: independent RPC latency" classname="sidebar.bench.ts" time="45.187">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/sidebar.bench.ts-sidebar-s-f8529-ure-independent-RPC-latency-chromium/error-context.md]]
+]]>
+</system-out>
+<error message="Test timeout of 45000ms exceeded." type="Error">
+<![CDATA[  [chromium] › sidebar.bench.ts:15:3 › sidebar siteStructure: independent RPC latency ──────────────
+
+    Test timeout of 45000ms exceeded.
+
+    Error Context: ../../../../target/ui-perf-tests/sidebar.bench.ts-sidebar-s-f8529-ure-independent-RPC-latency-chromium/error-context.md
+]]>
+</error>
+</testcase>
+<testcase name="sidebar responseTimes: independent RPC latency" classname="sidebar.bench.ts" time="45.174">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/sidebar.bench.ts-sidebar-r-96836-mes-independent-RPC-latency-chromium/error-context.md]]
+]]>
+</system-out>
+<error message="Test timeout of 45000ms exceeded." type="Error">
+<![CDATA[  [chromium] › sidebar.bench.ts:15:3 › sidebar responseTimes: independent RPC latency ──────────────
+
+    Test timeout of 45000ms exceeded.
+
+    Error Context: ../../../../target/ui-perf-tests/sidebar.bench.ts-sidebar-r-96836-mes-independent-RPC-latency-chromium/error-context.md
+]]>
+</error>
+</testcase>
+</testsuite>
+<testsuite name="gate.bench.ts" timestamp="2026-10-31T15:30:44.802Z" hostname="webkit" tests="2" failures="0" skipped="0" time="0.013" errors="0">
+<testcase name="nightly gate: seven-run median, ten-percent boundary and missing baseline" classname="gate.bench.ts" time="0.01">
+</testcase>
+<testcase name="generator seed, real fixture size and ten-minute budget" classname="gate.bench.ts" time="0.003">
+</testcase>
+</testsuite>
+<testsuite name="memory.bench.ts" timestamp="2026-10-31T15:30:44.802Z" hostname="webkit" tests="1" failures="0" skipped="0" time="0.276" errors="1">
+<testcase name="visualization memory: 10000 nodes add at most 300 MiB and closing releases RSS" classname="memory.bench.ts" time="0.276">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/memory.bench.ts-visualizat-c6e5b-iB-and-closing-releases-RSS-webkit/error-context.md]]
+]]>
+</system-out>
+<error message="No attributable renderer process: RSS measurement unavailable" type="Error">
+<![CDATA[  [webkit] › memory.bench.ts:11:1 › visualization memory: 10000 nodes add at most 300 MiB and closing releases RSS 
+
+    Error: No attributable renderer process: RSS measurement unavailable
+
+       at rss.mjs:116
+
+      114 |   }
+      115 |   if (!processes.length)
+    > 116 |     throw new Error(
+          |           ^
+      117 |       "No attributable renderer process: RSS measurement unavailable",
+      118 |     );
+      119 |   return {
+        at rendererRss (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/rss.mjs:116:11)
+        at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/memory.bench.ts:22:20
+
+    Error Context: ../../../../target/ui-perf-tests/memory.bench.ts-visualizat-c6e5b-iB-and-closing-releases-RSS-webkit/error-context.md
+]]>
+</error>
+</testcase>
+</testsuite>
+<testsuite name="perf.bench.ts" timestamp="2026-10-31T15:30:44.802Z" hostname="webkit" tests="5" failures="3" skipped="0" time="135.483" errors="1">
+<testcase name="cold browser context and open to first painted rows" classname="perf.bench.ts" time="11.241">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-cold-browser-0b209--open-to-first-painted-rows-webkit/error-context.md]]
+
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-cold-browser-0b209--open-to-first-painted-rows-webkit/error-context.md]]
+]]>
+</system-out>
+<failure message="{&quot;browserContextToRowsMs&quot;:{&quot;value&quot;:10954.338394999999,&quot;budget&quot;:3000,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;openMs&quot;:{&quot;value&quot;:10853,&quot;budget&quot;:3000,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false}}" type="expect.toBe">
+<![CDATA[  [webkit] › perf.bench.ts:104:1 › cold browser context and open to first painted rows ─────────────
+
+    Error: {"browserContextToRowsMs":{"value":10954.338394999999,"budget":3000,"direction":"max","passed":false},"openMs":{"value":10853,"budget":3000,"direction":"max","passed":false}}
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+       97 |     contentType: "application/json",
+       98 |   });
+    >  99 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);
+          |                                                  ^
+      100 | }
+      101 | const p95 = (v: number[]) =>
+      102 |   [...v].sort((a, b) => a - b)[Math.ceil(v.length * 0.95) - 1];
+        at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:99:50)
+        at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:110:3
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-cold-browser-0b209--open-to-first-painted-rows-webkit/error-context.md
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-cold-browser-0b209--open-to-first-painted-rows-webkit/error-context.md
+]]>
+</failure>
+</testcase>
+<testcase name="real IPC 200 rows × 20 columns p95 and payload" classname="perf.bench.ts" time="15.55">
+</testcase>
+<testcase name="ten seconds vertical and horizontal 65-column scrolling and end jump" classname="perf.bench.ts" time="37.022">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-ten-seconds--c5560-lumn-scrolling-and-end-jump-webkit/error-context.md]]
+
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-ten-seconds--c5560-lumn-scrolling-and-end-jump-webkit/error-context.md]]
+]]>
+</system-out>
+<failure message="{&quot;jumpMs&quot;:{&quot;value&quot;:5043,&quot;budget&quot;:150,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;domRows&quot;:{&quot;value&quot;:28,&quot;budget&quot;:299,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:true},&quot;cachedRows&quot;:{&quot;value&quot;:1200,&quot;budget&quot;:20000,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:true},&quot;verticalFps&quot;:{&quot;value&quot;:27.5,&quot;budget&quot;:55,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:false},&quot;verticalMaxFrameMs&quot;:{&quot;value&quot;:95,&quot;budget&quot;:50,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;horizontalFps&quot;:{&quot;value&quot;:21.76952266826443,&quot;budget&quot;:55,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:false},&quot;horizontalMaxFrameMs&quot;:{&quot;value&quot;:87,&quot;budget&quot;:50,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;jumpReady&quot;:{&quot;value&quot;:0,&quot;budget&quot;:1,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:false},&quot;jumpVisible&quot;:{&quot;value&quot;:1,&quot;budget&quot;:1,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true},&quot;columns&quot;:{&quot;value&quot;:65,&quot;budget&quot;:65,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true}}" type="expect.toBe">
+<![CDATA[  [webkit] › perf.bench.ts:147:1 › ten seconds vertical and horizontal 65-column scrolling and end jump 
+
+    Error: {"jumpMs":{"value":5043,"budget":150,"direction":"max","passed":false},"domRows":{"value":28,"budget":299,"direction":"max","passed":true},"cachedRows":{"value":1200,"budget":20000,"direction":"max","passed":true},"verticalFps":{"value":27.5,"budget":55,"direction":"min","passed":false},"verticalMaxFrameMs":{"value":95,"budget":50,"direction":"max","passed":false},"horizontalFps":{"value":21.76952266826443,"budget":55,"direction":"min","passed":false},"horizontalMaxFrameMs":{"value":87,"budget":50,"direction":"max","passed":false},"jumpReady":{"value":0,"budget":1,"direction":"min","passed":false},"jumpVisible":{"value":1,"budget":1,"direction":"min","passed":true},"columns":{"value":65,"budget":65,"direction":"min","passed":true}}
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+       97 |     contentType: "application/json",
+       98 |   });
+    >  99 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);
+          |                                                  ^
+      100 | }
+      101 | const p95 = (v: number[]) =>
+      102 |   [...v].sort((a, b) => a - b)[Math.ceil(v.length * 0.95) - 1];
+        at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:99:50)
+        at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:167:3
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-ten-seconds--c5560-lumn-scrolling-and-end-jump-webkit/error-context.md
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-ten-seconds--c5560-lumn-scrolling-and-end-jump-webkit/error-context.md
+]]>
+</failure>
+</testcase>
+<testcase name="tab filter numeric text substring regex and reverse to painted rows" classname="perf.bench.ts" time="22.323">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-tab-filter-n-6f199-and-reverse-to-painted-rows-webkit/error-context.md]]
+
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-tab-filter-n-6f199-and-reverse-to-painted-rows-webkit/error-context.md]]
+]]>
+</system-out>
+<failure message="{&quot;tabMs&quot;:{&quot;value&quot;:1828,&quot;budget&quot;:200,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;tabReturnMs&quot;:{&quot;value&quot;:8818,&quot;budget&quot;:200,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;filterMs&quot;:{&quot;value&quot;:null,&quot;budget&quot;:200,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;numericMs&quot;:{&quot;value&quot;:null,&quot;budget&quot;:5000,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;reverseMs&quot;:{&quot;value&quot;:null,&quot;budget&quot;:200,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;textMs&quot;:{&quot;value&quot;:null,&quot;budget&quot;:8000,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;substringMs&quot;:{&quot;value&quot;:null,&quot;budget&quot;:3000,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;regexMs&quot;:{&quot;value&quot;:null,&quot;budget&quot;:10000,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false}}" type="expect.toBe">
+<![CDATA[  [webkit] › perf.bench.ts:171:1 › tab filter numeric text substring regex and reverse to painted rows 
+
+    Error: {"tabMs":{"value":1828,"budget":200,"direction":"max","passed":false},"tabReturnMs":{"value":8818,"budget":200,"direction":"max","passed":false},"filterMs":{"value":null,"budget":200,"direction":"max","passed":false},"numericMs":{"value":null,"budget":5000,"direction":"max","passed":false},"reverseMs":{"value":null,"budget":200,"direction":"max","passed":false},"textMs":{"value":null,"budget":8000,"direction":"max","passed":false},"substringMs":{"value":null,"budget":3000,"direction":"max","passed":false},"regexMs":{"value":null,"budget":10000,"direction":"max","passed":false}}
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+       97 |     contentType: "application/json",
+       98 |   });
+    >  99 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);
+          |                                                  ^
+      100 | }
+      101 | const p95 = (v: number[]) =>
+      102 |   [...v].sort((a, b) => a - b)[Math.ceil(v.length * 0.95) - 1];
+        at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:99:50)
+        at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:187:3
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-tab-filter-n-6f199-and-reverse-to-painted-rows-webkit/error-context.md
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-tab-filter-n-6f199-and-reverse-to-painted-rows-webkit/error-context.md
+]]>
+</failure>
+</testcase>
+<testcase name="200 URL/s fixture with 20 crawl threads: click latency and event cap" classname="perf.bench.ts" time="49.347">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-webkit/error-context.md]]
+
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-webkit/error-context.md]]
+]]>
+</system-out>
+<error message="No attributable renderer process: RSS measurement unavailable" type="Error">
+<![CDATA[  [webkit] › perf.bench.ts:291:1 › 200 URL/s fixture with 20 crawl threads: click latency and event cap 
+
+    Error: No attributable renderer process: RSS measurement unavailable
+
+       at rss.mjs:116
+
+      114 |   }
+      115 |   if (!processes.length)
+    > 116 |     throw new Error(
+          |           ^
+      117 |       "No attributable renderer process: RSS measurement unavailable",
+      118 |     );
+      119 |   return {
+        at rendererRss (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/rss.mjs:116:11)
+        at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:346:23
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-webkit/error-context.md
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-webkit/error-context.md
+]]>
+</error>
+</testcase>
+</testsuite>
+<testsuite name="sidebar.bench.ts" timestamp="2026-10-31T15:30:44.802Z" hostname="webkit" tests="4" failures="0" skipped="0" time="180.665" errors="4">
+<testcase name="sidebar overview: independent RPC latency" classname="sidebar.bench.ts" time="45.189">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/sidebar.bench.ts-sidebar-overview-independent-RPC-latency-webkit/error-context.md]]
+]]>
+</system-out>
+<error message="Test timeout of 45000ms exceeded." type="Error">
+<![CDATA[  [webkit] › sidebar.bench.ts:15:3 › sidebar overview: independent RPC latency ─────────────────────
+
+    Test timeout of 45000ms exceeded.
+
+    Error Context: ../../../../target/ui-perf-tests/sidebar.bench.ts-sidebar-overview-independent-RPC-latency-webkit/error-context.md
+]]>
+</error>
+</testcase>
+<testcase name="sidebar issues: independent RPC latency" classname="sidebar.bench.ts" time="45.199">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/sidebar.bench.ts-sidebar-issues-independent-RPC-latency-webkit/error-context.md]]
+]]>
+</system-out>
+<error message="Test timeout of 45000ms exceeded." type="Error">
+<![CDATA[  [webkit] › sidebar.bench.ts:15:3 › sidebar issues: independent RPC latency ───────────────────────
+
+    Test timeout of 45000ms exceeded.
+
+    Error Context: ../../../../target/ui-perf-tests/sidebar.bench.ts-sidebar-issues-independent-RPC-latency-webkit/error-context.md
+]]>
+</error>
+</testcase>
+<testcase name="sidebar siteStructure: independent RPC latency" classname="sidebar.bench.ts" time="45.17">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/sidebar.bench.ts-sidebar-s-f8529-ure-independent-RPC-latency-webkit/error-context.md]]
+]]>
+</system-out>
+<error message="Test timeout of 45000ms exceeded." type="Error">
+<![CDATA[  [webkit] › sidebar.bench.ts:15:3 › sidebar siteStructure: independent RPC latency ────────────────
+
+    Test timeout of 45000ms exceeded.
+
+    Error Context: ../../../../target/ui-perf-tests/sidebar.bench.ts-sidebar-s-f8529-ure-independent-RPC-latency-webkit/error-context.md
+]]>
+</error>
+</testcase>
+<testcase name="sidebar responseTimes: independent RPC latency" classname="sidebar.bench.ts" time="45.107">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/sidebar.bench.ts-sidebar-r-96836-mes-independent-RPC-latency-webkit/error-context.md]]
+]]>
+</system-out>
+<error message="Test timeout of 45000ms exceeded." type="Error">
+<![CDATA[  [webkit] › sidebar.bench.ts:15:3 › sidebar responseTimes: independent RPC latency ────────────────
+
+    Test timeout of 45000ms exceeded.
+
+    Error Context: ../../../../target/ui-perf-tests/sidebar.bench.ts-sidebar-r-96836-mes-independent-RPC-latency-webkit/error-context.md
+]]>
+</error>
+</testcase>
+</testsuite>
+</testsuites>

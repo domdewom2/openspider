@@ -1,0 +1,16 @@
+{
+  "scenario": "test-failure-197",
+  "engine": "chromium",
+  "size": "large",
+  "started_at": "2026-10-31T15:49:44.512Z",
+  "metrics": {},
+  "passed": false,
+  "details": {
+    "title": "seeded random action soak and attributable renderer RSS",
+    "errors": [
+      "Error: {\"peakRssBytes\":{\"value\":405458944,\"budget\":419430400,\"direction\":\"max\",\"passed\":true},\"growthPercent\":{\"value\":-0.27947103019502206,\"budget\":10,\"direction\":\"max\",\"passed\":true},\"durationSeconds\":{\"value\":121.38247522800002,\"budget\":120,\"direction\":\"min\",\"passed\":true},\"actionViolations\":{\"value\":18,\"budget\":0,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m"
+    ],
+    "original_report_timestamp": "2026-10-31T15:58:34.880Z",
+    "timestamp_alignment": "Playwright TestResult.startTime: playwright-named.json"
+  }
+}

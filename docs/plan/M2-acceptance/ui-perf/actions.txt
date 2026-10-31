@@ -1,0 +1,9 @@
+Resolved with git ls-remote on 2026-10-31 (UTC):
+https://github.com/actions/checkout.git refs/tags/v4
+11d5960a326750d5838078e36cf38b85af677262
+https://github.com/actions/setup-node.git refs/tags/v4
+49933ea5288caeca8642d1e84afbd3f7d6820020
+https://github.com/actions/upload-artifact.git refs/tags/v4
+ea165f8d65b6e75b540449e92b4886f43607fa02
+https://github.com/dtolnay/rust-toolchain.git refs/heads/stable
+b725eda525362e7cf34af9a7243cac1e3f01a7ec

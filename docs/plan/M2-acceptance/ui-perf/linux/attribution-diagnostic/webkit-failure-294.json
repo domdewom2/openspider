@@ -1,0 +1,1 @@
+{"scenario":"test-failure-294","engine":"webkit","size":"large","started_at":"2026-10-31T16:08:07.141Z","metrics":{},"passed":false,"details":{"title":"200 URL/s fixture with 20 crawl threads: click latency and event cap","errors":["Error: No attributable renderer process: RSS measurement unavailable"]}}

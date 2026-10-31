@@ -1,0 +1,204 @@
+{
+  "scenario": "soak-short-functional",
+  "size": "large",
+  "started_at": "2026-10-31T15:49:44.512Z",
+  "engine": "chromium",
+  "metrics": {
+    "peakRssBytes": {
+      "value": 405458944,
+      "budget": 419430400,
+      "direction": "max",
+      "passed": true
+    },
+    "growthPercent": {
+      "value": -0.27947103019502206,
+      "budget": 10,
+      "direction": "max",
+      "passed": true
+    },
+    "durationSeconds": {
+      "value": 121.38247522800002,
+      "budget": 120,
+      "direction": "min",
+      "passed": true
+    },
+    "actionViolations": {
+      "value": 18,
+      "budget": 0,
+      "direction": "max",
+      "passed": false
+    }
+  },
+  "details": {
+    "samples": [
+      {
+        "elapsed": 0,
+        "scope": "renderer-processes",
+        "cpuMs": 10320,
+        "bytes": 404512768,
+        "processes": [
+          {
+            "pid": 123016,
+            "bytes": 140910592
+          },
+          {
+            "pid": 123027,
+            "bytes": 75649024
+          },
+          {
+            "pid": 123029,
+            "bytes": 187953152
+          }
+        ]
+      },
+      {
+        "elapsed": 14445.569276999973,
+        "scope": "renderer-processes",
+        "cpuMs": 10850,
+        "bytes": 404549632,
+        "processes": [
+          {
+            "pid": 123016,
+            "bytes": 140910592
+          },
+          {
+            "pid": 123027,
+            "bytes": 75649024
+          },
+          {
+            "pid": 123029,
+            "bytes": 187990016
+          }
+        ]
+      },
+      {
+        "elapsed": 24712.854881000007,
+        "scope": "renderer-processes",
+        "cpuMs": 11150,
+        "bytes": 405123072,
+        "processes": [
+          {
+            "pid": 123016,
+            "bytes": 140910592
+          },
+          {
+            "pid": 123027,
+            "bytes": 75649024
+          },
+          {
+            "pid": 123029,
+            "bytes": 188563456
+          }
+        ]
+      },
+      {
+        "elapsed": 34729.05537699995,
+        "scope": "renderer-processes",
+        "cpuMs": 11680,
+        "bytes": 405458944,
+        "processes": [
+          {
+            "pid": 123016,
+            "bytes": 140910592
+          },
+          {
+            "pid": 123027,
+            "bytes": 75649024
+          },
+          {
+            "pid": 123029,
+            "bytes": 188899328
+          }
+        ]
+      },
+      {
+        "elapsed": 106929.328951,
+        "scope": "renderer-processes",
+        "cpuMs": 11980,
+        "bytes": 404062208,
+        "processes": [
+          {
+            "pid": 123016,
+            "bytes": 140910592
+          },
+          {
+            "pid": 123027,
+            "bytes": 75649024
+          },
+          {
+            "pid": 123029,
+            "bytes": 187502592
+          }
+        ]
+      },
+      {
+        "elapsed": 121293.30023699993,
+        "scope": "renderer-processes",
+        "cpuMs": 12450,
+        "bytes": 403382272,
+        "processes": [
+          {
+            "pid": 123016,
+            "bytes": 140910592
+          },
+          {
+            "pid": 123027,
+            "bytes": 75649024
+          },
+          {
+            "pid": 123029,
+            "bytes": 186822656
+          }
+        ]
+      },
+      {
+        "elapsed": 121338.81480699993,
+        "scope": "renderer-processes",
+        "cpuMs": 12450,
+        "bytes": 403382272,
+        "processes": [
+          {
+            "pid": 123016,
+            "bytes": 140910592
+          },
+          {
+            "pid": 123027,
+            "bytes": 75649024
+          },
+          {
+            "pid": 123029,
+            "bytes": 186822656
+          }
+        ]
+      }
+    ],
+    "seed": 19,
+    "actions": "random vertical/horizontal scroll/jump and tab changes; cache \u226420000; DOM rows <300",
+    "fullSoak": false,
+    "configuredSeconds": 120,
+    "errorExamples": [
+      "{\"requestedRow\":3325565,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5060.4000000059605,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":19,\"y\":3325565,\"width\":5,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":600,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-3022,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-3022,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":4196727,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5062,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":5,\"y\":4196727,\"width\":7,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":1200,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-496,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-496,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":2581377,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5059.0999999940395,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":56,\"y\":2581377,\"width\":8,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":1800,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-9522,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-9522,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":1062444,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5060.5999999940395,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":2,\"y\":1062444,\"width\":6,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":2200,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":80,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":80,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":4599742,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5062.0999999940395,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":28,\"y\":4599742,\"width\":11,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":2800,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-5134,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-5134,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":4072034,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5059.79999999702,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":22,\"y\":4072034,\"width\":4,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":1000,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-3648,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-3648,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":3866163,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5062.5999999940395,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":19,\"y\":3866163,\"width\":5,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":1800,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-3022,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-3022,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":4936856,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5061.70000000298,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":45,\"y\":4936856,\"width\":6,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":2600,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-7554,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-7554,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":4590561,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5062.29999999702,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":48,\"y\":4590561,\"width\":8,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":3400,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-8322,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-8322,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":3129310,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5061,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":43,\"y\":3129310,\"width\":5,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":4200,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-7042,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-7042,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":2023554,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5061.29999999702,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":29,\"y\":2023554,\"width\":11,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":800,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-5230,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-5230,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":3848452,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5062.79999999702,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":24,\"y\":3848452,\"width\":9,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":1400,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-4558,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-4558,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":1761194,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5062.70000000298,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":42,\"y\":1761194,\"width\":5,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":3400,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-6628,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-6628,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":4105826,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5063.4000000059605,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":25,\"y\":4105826,\"width\":9,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":800,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-4608,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-4608,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":1213092,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5063,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":56,\"y\":1213092,\"width\":8,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":1400,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-9522,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-9522,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":2103581,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5061.4000000059605,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":19,\"y\":2103581,\"width\":5,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":2400,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-3022,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-3022,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":4074584,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5062.70000000298,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":25,\"y\":4074584,\"width\":10,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":2800,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-4750,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-4750,\"y\":36,\"width\":240,\"height\":30}}",
+      "{\"requestedRow\":2305559,\"requestedVisible\":true,\"contentReady\":false,\"contentMs\":5061.29999999702,\"total\":5000000,\"columns\":65,\"visible\":{\"x\":51,\"y\":2305559,\"width\":8,\"height\":28},\"selection\":{\"kind\":\"ids\",\"ids\":[]},\"cachedRows\":3200,\"last\":\"loading\",\"rowCount\":\"5000001\",\"visibility\":\"visible\",\"documentFocus\":true,\"innerWidth\":1280,\"innerHeight\":800,\"domRows\":29,\"dpr\":1,\"zoom\":1,\"canvas\":[{\"width\":1266,\"height\":750,\"cssWidth\":1266,\"cssHeight\":750,\"widthError\":0,\"heightError\":0}],\"cellWidth\":240,\"bounds\":{\"x\":-8754,\"y\":66,\"width\":240,\"height\":26},\"headerBounds\":{\"x\":-8754,\"y\":36,\"width\":240,\"height\":30}}"
+    ],
+    "projectionMode": "named-catalog",
+    "original_report_timestamp": "2026-10-31T15:58:34.864Z",
+    "timestamp_alignment": "Playwright TestResult.startTime: playwright-named.json"
+  },
+  "passed": false
+}

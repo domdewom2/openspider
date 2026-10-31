@@ -1,0 +1,223 @@
+{
+  "config": {
+    "argv": [
+      "/usr/bin/node",
+      "/home/build/Projects/openspider-wt/m2-u31/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      "e2e/perf/playwright.config.ts",
+      "--project",
+      "chromium",
+      "--grep",
+      "cold browser context"
+    ],
+    "configFile": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/playwright.config.ts",
+    "rootDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "testIgnore": [],
+        "testMatch": [
+          "*.bench.ts"
+        ],
+        "timeout": 180000
+      },
+      {
+        "outputDir": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "testIgnore": [],
+        "testMatch": [
+          "*.bench.ts"
+        ],
+        "timeout": 180000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "chromium",
+        "testDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "snapshotDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "testIgnore": [],
+        "testMatch": "*.bench.ts",
+        "timeout": 180000,
+        "use": {
+          "baseURL": "http://127.0.0.1:35029",
+          "viewport": {
+            "width": 1280,
+            "height": 800
+          },
+          "browserName": "chromium",
+          "launchOptions": {
+            "executablePath": "/home/build/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome"
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "chromium"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/home/build/Projects/openspider-wt/m2-u31/target/loadtest/playwright.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "/home/build/Projects/openspider-wt/m2-u31/target/loadtest/junit.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": {
+      "command": "npx vite preview --config e2e/perf/vite.config.ts --host 127.0.0.1 --port 35029 --strictPort",
+      "url": "http://127.0.0.1:35029",
+      "reuseExistingServer": false
+    }
+  },
+  "suites": [
+    {
+      "title": "perf.bench.ts",
+      "file": "perf.bench.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "cold browser context and open to first painted rows",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 21936,
+                  "error": {
+                    "message": "Error: {\"browserContextToRowsMs\":{\"value\":21680.140939,\"budget\":3000,\"direction\":\"max\",\"passed\":false},\"openMs\":{\"value\":21466.19999998808,\"budget\":3000,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: {\"browserContextToRowsMs\":{\"value\":21680.140939,\"budget\":3000,\"direction\":\"max\",\"passed\":false},\"openMs\":{\"value\":21466.19999998808,\"budget\":3000,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:99:50)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:110:3",
+                    "location": {
+                      "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                      "column": 50,
+                      "line": 99
+                    },
+                    "snippet": "   97 |     contentType: \"application/json\",\n   98 |   });\n>  99 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);\n      |                                                  ^\n  100 | }\n  101 | const p95 = (v: number[]) =>\n  102 |   [...v].sort((a, b) => a - b)[Math.ceil(v.length * 0.95) - 1];"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                        "column": 50,
+                        "line": 99
+                      },
+                      "message": "Error: {\"browserContextToRowsMs\":{\"value\":21680.140939,\"budget\":3000,\"direction\":\"max\",\"passed\":false},\"openMs\":{\"value\":21466.19999998808,\"budget\":3000,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n   97 |     contentType: \"application/json\",\n   98 |   });\n>  99 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);\n      |                                                  ^\n  100 | }\n  101 | const p95 = (v: number[]) =>\n  102 |   [...v].sort((a, b) => a - b)[Math.ceil(v.length * 0.95) - 1];\n    at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:99:50)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:110:3"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T14:54:00.962Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "open",
+                      "contentType": "application/json",
+                      "body": "eyJzY2VuYXJpbyI6Im9wZW4iLCJzaXplIjoibGFyZ2UiLCJzdGFydGVkX2F0IjoiMjAyNi0xMC0zMVQxNDo1NDoyMy4wMDRaIiwiZW5naW5lIjoiY2hyb21pdW0iLCJtZXRyaWNzIjp7ImJyb3dzZXJDb250ZXh0VG9Sb3dzTXMiOnsidmFsdWUiOjIxNjgwLjE0MDkzOSwiYnVkZ2V0IjozMDAwLCJkaXJlY3Rpb24iOiJtYXgiLCJwYXNzZWQiOmZhbHNlfSwib3Blbk1zIjp7InZhbHVlIjoyMTQ2Ni4xOTk5OTk5ODgwOCwiYnVkZ2V0IjozMDAwLCJkaXJlY3Rpb24iOiJtYXgiLCJwYXNzZWQiOmZhbHNlfX0sImRldGFpbHMiOnsic2NvcGUiOiJGcmVzaCBicm93c2VyIGNvbnRleHQgdG8gcGFpbnRlZCByZWFsIERhdGFHcmlkOyBPUyBhcHBsaWNhdGlvbiBjb2xkIHN0YXJ0IHJlcXVpcmVzIG5hdGl2ZSBFMkUtQiIsInJvd3MiOjUwMDAwMDB9LCJwYXNzZWQiOmZhbHNlfQ=="
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-cold-browser-0b209--open-to-first-painted-rows-chromium/error-context.md"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-cold-browser-0b209--open-to-first-painted-rows-chromium/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                    "column": 50,
+                    "line": 99
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-3c2d106280e7772672e0",
+          "file": "perf.bench.ts",
+          "line": 104,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-31T14:53:59.361Z",
+    "duration": 23962.381,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

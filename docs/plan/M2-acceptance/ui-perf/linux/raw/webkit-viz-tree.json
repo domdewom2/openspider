@@ -1,0 +1,21 @@
+{
+  "scenario": "viz-tree",
+  "size": "large",
+  "started_at": "2026-10-31T16:11:04.023Z",
+  "engine": "webkit",
+  "metrics": {
+    "collapse": {
+      "value": 76,
+      "budget": 200
+    },
+    "expand": {
+      "value": 45,
+      "budget": 200
+    }
+  },
+  "passed": true,
+  "details": {
+    "original_report_timestamp": "2026-10-31T16:11:04.788Z",
+    "timestamp_alignment": "Playwright TestResult.startTime: playwright-named.json"
+  }
+}

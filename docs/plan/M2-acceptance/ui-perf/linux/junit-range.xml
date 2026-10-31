@@ -1,0 +1,10 @@
+<testsuites id="" name="" tests="2" failures="0" skipped="0" errors="0" time="48.585576">
+<testsuite name="perf.bench.ts" timestamp="2026-10-31T16:11:46.384Z" hostname="chromium" tests="1" failures="0" skipped="0" time="23.041" errors="0">
+<testcase name="real IPC 200 rows × 20 columns p95 and payload" classname="perf.bench.ts" time="23.041">
+</testcase>
+</testsuite>
+<testsuite name="perf.bench.ts" timestamp="2026-10-31T16:11:46.384Z" hostname="webkit" tests="1" failures="0" skipped="0" time="22.758" errors="0">
+<testcase name="real IPC 200 rows × 20 columns p95 and payload" classname="perf.bench.ts" time="22.758">
+</testcase>
+</testsuite>
+</testsuites>

@@ -1,0 +1,69 @@
+<testsuites id="" name="" tests="2" failures="2" skipped="0" errors="0" time="88.93393999999999">
+<testsuite name="memory.bench.ts" timestamp="2026-10-31T16:18:55.202Z" hostname="webkit" tests="1" failures="1" skipped="0" time="6.515" errors="0">
+<testcase name="visualization memory: 10000 nodes add at most 300 MiB and closing releases RSS" classname="memory.bench.ts" time="6.515">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/memory.bench.ts-visualizat-c6e5b-iB-and-closing-releases-RSS-webkit/error-context.md]]
+]]>
+</system-out>
+<failure message="{&quot;additionalRssBytes&quot;:{&quot;value&quot;:549777408,&quot;budget&quot;:314572800,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false},&quot;freedBytes&quot;:{&quot;value&quot;:63389696,&quot;budget&quot;:1,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true}}" type="expect.toBe">
+<![CDATA[  [webkit] › memory.bench.ts:11:1 › visualization memory: 10000 nodes add at most 300 MiB and closing releases RSS 
+
+    Error: {"additionalRssBytes":{"value":549777408,"budget":314572800,"direction":"max","passed":false},"freedBytes":{"value":63389696,"budget":1,"direction":"min","passed":true}}
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      70 |       contentType: "application/json",
+      71 |     });
+    > 72 |     expect(result.passed, JSON.stringify(result.metrics)).toBe(true);
+         |                                                           ^
+      73 |   } finally {
+      74 |     if (graph && !graph.isClosed()) await graph.close();
+      75 |     await bridge.stop();
+        at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/memory.bench.ts:72:59
+
+    Error Context: ../../../../target/ui-perf-tests/memory.bench.ts-visualizat-c6e5b-iB-and-closing-releases-RSS-webkit/error-context.md
+]]>
+</failure>
+</testcase>
+</testsuite>
+<testsuite name="perf.bench.ts" timestamp="2026-10-31T16:18:55.202Z" hostname="webkit" tests="1" failures="1" skipped="0" time="80.042" errors="0">
+<testcase name="200 URL/s fixture with 20 crawl threads: click latency and event cap" classname="perf.bench.ts" time="80.042">
+<system-out>
+<![CDATA[
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-webkit/error-context.md]]
+
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-webkit/error-context.md]]
+]]>
+</system-out>
+<failure message="{&quot;clickP95Ms&quot;:{&quot;value&quot;:92,&quot;budget&quot;:100,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:true},&quot;validClickSamples&quot;:{&quot;value&quot;:30,&quot;budget&quot;:30,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true},&quot;crawlFps&quot;:{&quot;value&quot;:59.26469117696077,&quot;budget&quot;:50,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true},&quot;eventsPerSecond&quot;:{&quot;value&quot;:1.8744600721133238,&quot;budget&quot;:10,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:true},&quot;fixtureUrlsPerSecond&quot;:{&quot;value&quot;:232.82684307484905,&quot;budget&quot;:200,&quot;direction&quot;:&quot;min&quot;,&quot;passed&quot;:true},&quot;idleUiCpuPercent&quot;:{&quot;value&quot;:59.577963163391075,&quot;budget&quot;:15,&quot;direction&quot;:&quot;max&quot;,&quot;passed&quot;:false}}" type="expect.toBe">
+<![CDATA[  [webkit] › perf.bench.ts:298:1 › 200 URL/s fixture with 20 crawl threads: click latency and event cap 
+
+    Error: {"clickP95Ms":{"value":92,"budget":100,"direction":"max","passed":true},"validClickSamples":{"value":30,"budget":30,"direction":"min","passed":true},"crawlFps":{"value":59.26469117696077,"budget":50,"direction":"min","passed":true},"eventsPerSecond":{"value":1.8744600721133238,"budget":10,"direction":"max","passed":true},"fixtureUrlsPerSecond":{"value":232.82684307484905,"budget":200,"direction":"min","passed":true},"idleUiCpuPercent":{"value":59.577963163391075,"budget":15,"direction":"max","passed":false}}
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      101 |     contentType: "application/json",
+      102 |   });
+    > 103 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);
+          |                                                  ^
+      104 | }
+      105 | const p95 = (v: number[]) =>
+      106 |   [...v].sort((a, b) => a - b)[Math.ceil(v.length * 0.95) - 1];
+        at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:103:50)
+        at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:388:5
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-webkit/error-context.md
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-webkit/error-context.md
+]]>
+</failure>
+</testcase>
+</testsuite>
+</testsuites>

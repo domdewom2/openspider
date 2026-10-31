@@ -1,0 +1,2924 @@
+{
+  "scenario": "soak",
+  "size": "large",
+  "started_at": "2026-10-31T14:55:30.098Z",
+  "engine": "chromium",
+  "metrics": {
+    "peakRssBytes": {
+      "value": 425832448,
+      "budget": 419430400,
+      "direction": "max",
+      "passed": false
+    },
+    "growthPercent": {
+      "value": -34.37676824832268,
+      "budget": 10,
+      "direction": "max",
+      "passed": true
+    },
+    "durationSeconds": {
+      "value": 1804.4146650559999,
+      "budget": 1800,
+      "direction": "min",
+      "passed": true
+    },
+    "actionViolations": {
+      "value": 120,
+      "budget": 0,
+      "direction": "max",
+      "passed": false
+    }
+  },
+  "details": {
+    "samples": [
+      {
+        "elapsed": 0,
+        "scope": "renderer-processes",
+        "cpuMs": 11510,
+        "bytes": 405372928,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 188751872
+          }
+        ]
+      },
+      {
+        "elapsed": 10580.281686000002,
+        "scope": "renderer-processes",
+        "cpuMs": 11830,
+        "bytes": 405344256,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 188723200
+          }
+        ]
+      },
+      {
+        "elapsed": 23644.233832999947,
+        "scope": "renderer-processes",
+        "cpuMs": 12260,
+        "bytes": 406425600,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 189804544
+          }
+        ]
+      },
+      {
+        "elapsed": 33813.44616499997,
+        "scope": "renderer-processes",
+        "cpuMs": 12640,
+        "bytes": 408334336,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 191713280
+          }
+        ]
+      },
+      {
+        "elapsed": 49878.423936999985,
+        "scope": "renderer-processes",
+        "cpuMs": 13230,
+        "bytes": 418553856,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 201932800
+          }
+        ]
+      },
+      {
+        "elapsed": 61026.28311799996,
+        "scope": "renderer-processes",
+        "cpuMs": 13540,
+        "bytes": 423034880,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 206413824
+          }
+        ]
+      },
+      {
+        "elapsed": 72176.16982799995,
+        "scope": "renderer-processes",
+        "cpuMs": 13870,
+        "bytes": 404803584,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 188182528
+          }
+        ]
+      },
+      {
+        "elapsed": 86342.29639699997,
+        "scope": "renderer-processes",
+        "cpuMs": 14350,
+        "bytes": 407482368,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 190861312
+          }
+        ]
+      },
+      {
+        "elapsed": 96361.96334799996,
+        "scope": "renderer-processes",
+        "cpuMs": 14690,
+        "bytes": 407711744,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 191090688
+          }
+        ]
+      },
+      {
+        "elapsed": 108225.23516299995,
+        "scope": "renderer-processes",
+        "cpuMs": 15100,
+        "bytes": 408428544,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 191807488
+          }
+        ]
+      },
+      {
+        "elapsed": 119363.24257199996,
+        "scope": "renderer-processes",
+        "cpuMs": 15490,
+        "bytes": 407044096,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 190423040
+          }
+        ]
+      },
+      {
+        "elapsed": 129543.33832699998,
+        "scope": "renderer-processes",
+        "cpuMs": 15880,
+        "bytes": 409681920,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 193060864
+          }
+        ]
+      },
+      {
+        "elapsed": 148556.40693299996,
+        "scope": "renderer-processes",
+        "cpuMs": 16450,
+        "bytes": 422666240,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 206045184
+          }
+        ]
+      },
+      {
+        "elapsed": 163944.26277899998,
+        "scope": "renderer-processes",
+        "cpuMs": 16890,
+        "bytes": 405213184,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 188592128
+          }
+        ]
+      },
+      {
+        "elapsed": 174722.39079099998,
+        "scope": "renderer-processes",
+        "cpuMs": 17150,
+        "bytes": 405729280,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 189108224
+          }
+        ]
+      },
+      {
+        "elapsed": 187690.422272,
+        "scope": "renderer-processes",
+        "cpuMs": 17530,
+        "bytes": 408170496,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 191549440
+          }
+        ]
+      },
+      {
+        "elapsed": 201161.303265,
+        "scope": "renderer-processes",
+        "cpuMs": 17900,
+        "bytes": 408334336,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 191713280
+          }
+        ]
+      },
+      {
+        "elapsed": 214788.64100999996,
+        "scope": "renderer-processes",
+        "cpuMs": 18330,
+        "bytes": 409333760,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 192712704
+          }
+        ]
+      },
+      {
+        "elapsed": 225321.27738600003,
+        "scope": "renderer-processes",
+        "cpuMs": 18640,
+        "bytes": 425832448,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 209211392
+          }
+        ]
+      },
+      {
+        "elapsed": 247053.2511,
+        "scope": "renderer-processes",
+        "cpuMs": 19260,
+        "bytes": 420757504,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 204136448
+          }
+        ]
+      },
+      {
+        "elapsed": 258266.87544600002,
+        "scope": "renderer-processes",
+        "cpuMs": 19510,
+        "bytes": 423112704,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 206491648
+          }
+        ]
+      },
+      {
+        "elapsed": 269456.43347199995,
+        "scope": "renderer-processes",
+        "cpuMs": 19790,
+        "bytes": 405786624,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 189165568
+          }
+        ]
+      },
+      {
+        "elapsed": 280639.33285799995,
+        "scope": "renderer-processes",
+        "cpuMs": 20060,
+        "bytes": 406269952,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 189648896
+          }
+        ]
+      },
+      {
+        "elapsed": 290802.87800299993,
+        "scope": "renderer-processes",
+        "cpuMs": 20330,
+        "bytes": 406691840,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 190070784
+          }
+        ]
+      },
+      {
+        "elapsed": 305135.75070999993,
+        "scope": "renderer-processes",
+        "cpuMs": 20720,
+        "bytes": 405946368,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 189325312
+          }
+        ]
+      },
+      {
+        "elapsed": 315568.265259,
+        "scope": "renderer-processes",
+        "cpuMs": 21010,
+        "bytes": 408313856,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 191692800
+          }
+        ]
+      },
+      {
+        "elapsed": 326723.8723899999,
+        "scope": "renderer-processes",
+        "cpuMs": 21290,
+        "bytes": 407212032,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 190590976
+          }
+        ]
+      },
+      {
+        "elapsed": 337187.40975500003,
+        "scope": "renderer-processes",
+        "cpuMs": 21690,
+        "bytes": 408944640,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 192323584
+          }
+        ]
+      },
+      {
+        "elapsed": 360060.25308199995,
+        "scope": "renderer-processes",
+        "cpuMs": 22320,
+        "bytes": 407621632,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141381632
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 191000576
+          }
+        ]
+      },
+      {
+        "elapsed": 370183.31978399993,
+        "scope": "renderer-processes",
+        "cpuMs": 22610,
+        "bytes": 406761472,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141373440
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 190148608
+          }
+        ]
+      },
+      {
+        "elapsed": 380383.421583,
+        "scope": "renderer-processes",
+        "cpuMs": 22870,
+        "bytes": 405573632,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141275136
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 189059072
+          }
+        ]
+      },
+      {
+        "elapsed": 391553.499799,
+        "scope": "renderer-processes",
+        "cpuMs": 23140,
+        "bytes": 404680704,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141275136
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 188166144
+          }
+        ]
+      },
+      {
+        "elapsed": 401853.27486899996,
+        "scope": "renderer-processes",
+        "cpuMs": 23430,
+        "bytes": 406376448,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141275136
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 189861888
+          }
+        ]
+      },
+      {
+        "elapsed": 413049.11289,
+        "scope": "renderer-processes",
+        "cpuMs": 23700,
+        "bytes": 405893120,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141275136
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 189378560
+          }
+        ]
+      },
+      {
+        "elapsed": 423281.21969399997,
+        "scope": "renderer-processes",
+        "cpuMs": 24000,
+        "bytes": 407199744,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141275136
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 190685184
+          }
+        ]
+      },
+      {
+        "elapsed": 434434.48964399996,
+        "scope": "renderer-processes",
+        "cpuMs": 24290,
+        "bytes": 407310336,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 141275136
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75239424
+          },
+          {
+            "pid": 4097447,
+            "bytes": 190795776
+          }
+        ]
+      },
+      {
+        "elapsed": 447152.87540699996,
+        "scope": "renderer-processes",
+        "cpuMs": 24620,
+        "bytes": 405753856,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 140656640
+          },
+          {
+            "pid": 4097446,
+            "bytes": 75018240
+          },
+          {
+            "pid": 4097447,
+            "bytes": 190078976
+          }
+        ]
+      },
+      {
+        "elapsed": 474338.35232099995,
+        "scope": "renderer-processes",
+        "cpuMs": 25450,
+        "bytes": 402993152,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 140558336
+          },
+          {
+            "pid": 4097446,
+            "bytes": 74981376
+          },
+          {
+            "pid": 4097447,
+            "bytes": 187453440
+          }
+        ]
+      },
+      {
+        "elapsed": 485550.267782,
+        "scope": "renderer-processes",
+        "cpuMs": 25730,
+        "bytes": 401285120,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 140402688
+          },
+          {
+            "pid": 4097446,
+            "bytes": 74948608
+          },
+          {
+            "pid": 4097447,
+            "bytes": 185933824
+          }
+        ]
+      },
+      {
+        "elapsed": 496766.901145,
+        "scope": "renderer-processes",
+        "cpuMs": 26010,
+        "bytes": 403365888,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 140361728
+          },
+          {
+            "pid": 4097446,
+            "bytes": 74948608
+          },
+          {
+            "pid": 4097447,
+            "bytes": 188055552
+          }
+        ]
+      },
+      {
+        "elapsed": 507951.4509129999,
+        "scope": "renderer-processes",
+        "cpuMs": 26320,
+        "bytes": 320413696,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 107974656
+          },
+          {
+            "pid": 4097446,
+            "bytes": 59969536
+          },
+          {
+            "pid": 4097447,
+            "bytes": 152469504
+          }
+        ]
+      },
+      {
+        "elapsed": 519163.641908,
+        "scope": "renderer-processes",
+        "cpuMs": 26620,
+        "bytes": 259682304,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 82739200
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49516544
+          },
+          {
+            "pid": 4097447,
+            "bytes": 127426560
+          }
+        ]
+      },
+      {
+        "elapsed": 530308.3189879999,
+        "scope": "renderer-processes",
+        "cpuMs": 26910,
+        "bytes": 257236992,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 82739200
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49516544
+          },
+          {
+            "pid": 4097447,
+            "bytes": 124981248
+          }
+        ]
+      },
+      {
+        "elapsed": 541531.717282,
+        "scope": "renderer-processes",
+        "cpuMs": 27200,
+        "bytes": 257654784,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 82341888
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49479680
+          },
+          {
+            "pid": 4097447,
+            "bytes": 125833216
+          }
+        ]
+      },
+      {
+        "elapsed": 552696.391398,
+        "scope": "renderer-processes",
+        "cpuMs": 27490,
+        "bytes": 256741376,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81473536
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49164288
+          },
+          {
+            "pid": 4097447,
+            "bytes": 126103552
+          }
+        ]
+      },
+      {
+        "elapsed": 564762.370292,
+        "scope": "renderer-processes",
+        "cpuMs": 27780,
+        "bytes": 271560704,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 80887808
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49106944
+          },
+          {
+            "pid": 4097447,
+            "bytes": 141565952
+          }
+        ]
+      },
+      {
+        "elapsed": 585689.271631,
+        "scope": "renderer-processes",
+        "cpuMs": 28400,
+        "bytes": 254783488,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 80863232
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 124833792
+          }
+        ]
+      },
+      {
+        "elapsed": 600271.22807,
+        "scope": "renderer-processes",
+        "cpuMs": 28730,
+        "bytes": 254341120,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 80863232
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 124391424
+          }
+        ]
+      },
+      {
+        "elapsed": 610605.166401,
+        "scope": "renderer-processes",
+        "cpuMs": 29000,
+        "bytes": 256401408,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 80863232
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 126451712
+          }
+        ]
+      },
+      {
+        "elapsed": 623172.217588,
+        "scope": "renderer-processes",
+        "cpuMs": 29370,
+        "bytes": 257794048,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 80863232
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 127844352
+          }
+        ]
+      },
+      {
+        "elapsed": 638090.1894469999,
+        "scope": "renderer-processes",
+        "cpuMs": 29740,
+        "bytes": 258093056,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 80863232
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 128143360
+          }
+        ]
+      },
+      {
+        "elapsed": 649873.17881,
+        "scope": "renderer-processes",
+        "cpuMs": 30110,
+        "bytes": 259694592,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 80863232
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 129744896
+          }
+        ]
+      },
+      {
+        "elapsed": 660954.1550169999,
+        "scope": "renderer-processes",
+        "cpuMs": 30380,
+        "bytes": 272994304,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 142700544
+          }
+        ]
+      },
+      {
+        "elapsed": 681419.016373,
+        "scope": "renderer-processes",
+        "cpuMs": 31000,
+        "bytes": 272646144,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 142352384
+          }
+        ]
+      },
+      {
+        "elapsed": 696035.530007,
+        "scope": "renderer-processes",
+        "cpuMs": 31360,
+        "bytes": 258641920,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 128348160
+          }
+        ]
+      },
+      {
+        "elapsed": 711035.1867559999,
+        "scope": "renderer-processes",
+        "cpuMs": 31760,
+        "bytes": 260673536,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 130379776
+          }
+        ]
+      },
+      {
+        "elapsed": 725652.262432,
+        "scope": "renderer-processes",
+        "cpuMs": 32220,
+        "bytes": 261124096,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 130830336
+          }
+        ]
+      },
+      {
+        "elapsed": 736817.216566,
+        "scope": "renderer-processes",
+        "cpuMs": 32479.999999999996,
+        "bytes": 261963776,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 131670016
+          }
+        ]
+      },
+      {
+        "elapsed": 747466.212936,
+        "scope": "renderer-processes",
+        "cpuMs": 32800,
+        "bytes": 263360512,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133066752
+          }
+        ]
+      },
+      {
+        "elapsed": 757983.2509989999,
+        "scope": "renderer-processes",
+        "cpuMs": 33140,
+        "bytes": 263901184,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133607424
+          }
+        ]
+      },
+      {
+        "elapsed": 776147.1622949999,
+        "scope": "renderer-processes",
+        "cpuMs": 33650,
+        "bytes": 261869568,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 131575808
+          }
+        ]
+      },
+      {
+        "elapsed": 788583.2670809999,
+        "scope": "renderer-processes",
+        "cpuMs": 33980,
+        "bytes": 260182016,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 129888256
+          }
+        ]
+      },
+      {
+        "elapsed": 803901.163706,
+        "scope": "renderer-processes",
+        "cpuMs": 34380,
+        "bytes": 261124096,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 130830336
+          }
+        ]
+      },
+      {
+        "elapsed": 815031.203275,
+        "scope": "renderer-processes",
+        "cpuMs": 34700,
+        "bytes": 259989504,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 129695744
+          }
+        ]
+      },
+      {
+        "elapsed": 825679.134849,
+        "scope": "renderer-processes",
+        "cpuMs": 35020,
+        "bytes": 262397952,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 132104192
+          }
+        ]
+      },
+      {
+        "elapsed": 839931.2200829999,
+        "scope": "renderer-processes",
+        "cpuMs": 35390,
+        "bytes": 263221248,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 132927488
+          }
+        ]
+      },
+      {
+        "elapsed": 850280.23279,
+        "scope": "renderer-processes",
+        "cpuMs": 35800,
+        "bytes": 258912256,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 128618496
+          }
+        ]
+      },
+      {
+        "elapsed": 863479.2862440001,
+        "scope": "renderer-processes",
+        "cpuMs": 36080,
+        "bytes": 269508608,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 139214848
+          }
+        ]
+      },
+      {
+        "elapsed": 878211.005166,
+        "scope": "renderer-processes",
+        "cpuMs": 36490,
+        "bytes": 256966656,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 126672896
+          }
+        ]
+      },
+      {
+        "elapsed": 889361.58139,
+        "scope": "renderer-processes",
+        "cpuMs": 36730,
+        "bytes": 258035712,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49086464
+          },
+          {
+            "pid": 4097447,
+            "bytes": 127741952
+          }
+        ]
+      },
+      {
+        "elapsed": 903844.2230390001,
+        "scope": "renderer-processes",
+        "cpuMs": 37140,
+        "bytes": 261259264,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 130822144
+          }
+        ]
+      },
+      {
+        "elapsed": 916927.2583580001,
+        "scope": "renderer-processes",
+        "cpuMs": 37490,
+        "bytes": 263139328,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 132702208
+          }
+        ]
+      },
+      {
+        "elapsed": 928067.1826239999,
+        "scope": "renderer-processes",
+        "cpuMs": 37800,
+        "bytes": 262017024,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 131579904
+          }
+        ]
+      },
+      {
+        "elapsed": 939029.2380959999,
+        "scope": "renderer-processes",
+        "cpuMs": 38080,
+        "bytes": 263905280,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133468160
+          }
+        ]
+      },
+      {
+        "elapsed": 949141.2557949999,
+        "scope": "renderer-processes",
+        "cpuMs": 38480,
+        "bytes": 263458816,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133021696
+          }
+        ]
+      },
+      {
+        "elapsed": 963140.284313,
+        "scope": "renderer-processes",
+        "cpuMs": 38820,
+        "bytes": 261476352,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 131039232
+          }
+        ]
+      },
+      {
+        "elapsed": 974140.2451790001,
+        "scope": "renderer-processes",
+        "cpuMs": 39120,
+        "bytes": 260218880,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 129781760
+          }
+        ]
+      },
+      {
+        "elapsed": 987690.521774,
+        "scope": "renderer-processes",
+        "cpuMs": 39470,
+        "bytes": 263626752,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133189632
+          }
+        ]
+      },
+      {
+        "elapsed": 1002409.0294989999,
+        "scope": "renderer-processes",
+        "cpuMs": 39870,
+        "bytes": 260829184,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 130392064
+          }
+        ]
+      },
+      {
+        "elapsed": 1016426.389823,
+        "scope": "renderer-processes",
+        "cpuMs": 40230,
+        "bytes": 263704576,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133267456
+          }
+        ]
+      },
+      {
+        "elapsed": 1028658.248102,
+        "scope": "renderer-processes",
+        "cpuMs": 40550,
+        "bytes": 264318976,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133881856
+          }
+        ]
+      },
+      {
+        "elapsed": 1042590.288744,
+        "scope": "renderer-processes",
+        "cpuMs": 40880,
+        "bytes": 267218944,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 136781824
+          }
+        ]
+      },
+      {
+        "elapsed": 1062921.53609,
+        "scope": "renderer-processes",
+        "cpuMs": 41540,
+        "bytes": 264679424,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134242304
+          }
+        ]
+      },
+      {
+        "elapsed": 1073053.2187949999,
+        "scope": "renderer-processes",
+        "cpuMs": 41790,
+        "bytes": 264019968,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81207296
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133582848
+          }
+        ]
+      },
+      {
+        "elapsed": 1087735.457472,
+        "scope": "renderer-processes",
+        "cpuMs": 42220,
+        "bytes": 263737344,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133177344
+          }
+        ]
+      },
+      {
+        "elapsed": 1100719.476426,
+        "scope": "renderer-processes",
+        "cpuMs": 42570,
+        "bytes": 264667136,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134107136
+          }
+        ]
+      },
+      {
+        "elapsed": 1111837.195252,
+        "scope": "renderer-processes",
+        "cpuMs": 42890,
+        "bytes": 263102464,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 132542464
+          }
+        ]
+      },
+      {
+        "elapsed": 1124852.40508,
+        "scope": "renderer-processes",
+        "cpuMs": 43230,
+        "bytes": 265953280,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 135393280
+          }
+        ]
+      },
+      {
+        "elapsed": 1137318.341705,
+        "scope": "renderer-processes",
+        "cpuMs": 43570,
+        "bytes": 281735168,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 151175168
+          }
+        ]
+      },
+      {
+        "elapsed": 1156051.511399,
+        "scope": "renderer-processes",
+        "cpuMs": 44210,
+        "bytes": 264724480,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134164480
+          }
+        ]
+      },
+      {
+        "elapsed": 1166448.417275,
+        "scope": "renderer-processes",
+        "cpuMs": 44490,
+        "bytes": 263536640,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 132976640
+          }
+        ]
+      },
+      {
+        "elapsed": 1176582.861837,
+        "scope": "renderer-processes",
+        "cpuMs": 44760,
+        "bytes": 263327744,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 132767744
+          }
+        ]
+      },
+      {
+        "elapsed": 1190116.2954509999,
+        "scope": "renderer-processes",
+        "cpuMs": 45130,
+        "bytes": 265719808,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 135159808
+          }
+        ]
+      },
+      {
+        "elapsed": 1200382.129412,
+        "scope": "renderer-processes",
+        "cpuMs": 45410,
+        "bytes": 265170944,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134610944
+          }
+        ]
+      },
+      {
+        "elapsed": 1211665.35956,
+        "scope": "renderer-processes",
+        "cpuMs": 45800,
+        "bytes": 265089024,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134529024
+          }
+        ]
+      },
+      {
+        "elapsed": 1222315.199999,
+        "scope": "renderer-processes",
+        "cpuMs": 46230,
+        "bytes": 282501120,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 151941120
+          }
+        ]
+      },
+      {
+        "elapsed": 1240865.0708609999,
+        "scope": "renderer-processes",
+        "cpuMs": 47150,
+        "bytes": 262492160,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 131932160
+          }
+        ]
+      },
+      {
+        "elapsed": 1253147.395314,
+        "scope": "renderer-processes",
+        "cpuMs": 47590,
+        "bytes": 263880704,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133320704
+          }
+        ]
+      },
+      {
+        "elapsed": 1267612.001309,
+        "scope": "renderer-processes",
+        "cpuMs": 48130,
+        "bytes": 264437760,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133877760
+          }
+        ]
+      },
+      {
+        "elapsed": 1281279.203617,
+        "scope": "renderer-processes",
+        "cpuMs": 48600,
+        "bytes": 265363456,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134803456
+          }
+        ]
+      },
+      {
+        "elapsed": 1292113.930509,
+        "scope": "renderer-processes",
+        "cpuMs": 48960,
+        "bytes": 265392128,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134832128
+          }
+        ]
+      },
+      {
+        "elapsed": 1305945.468017,
+        "scope": "renderer-processes",
+        "cpuMs": 49440,
+        "bytes": 266354688,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 135794688
+          }
+        ]
+      },
+      {
+        "elapsed": 1316428.705358,
+        "scope": "renderer-processes",
+        "cpuMs": 49980,
+        "bytes": 264441856,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133881856
+          }
+        ]
+      },
+      {
+        "elapsed": 1328243.323172,
+        "scope": "renderer-processes",
+        "cpuMs": 50360,
+        "bytes": 264503296,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133943296
+          }
+        ]
+      },
+      {
+        "elapsed": 1342543.3493289999,
+        "scope": "renderer-processes",
+        "cpuMs": 50820,
+        "bytes": 265162752,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134602752
+          }
+        ]
+      },
+      {
+        "elapsed": 1356341.2699509999,
+        "scope": "renderer-processes",
+        "cpuMs": 51290,
+        "bytes": 264589312,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134029312
+          }
+        ]
+      },
+      {
+        "elapsed": 1366594.406347,
+        "scope": "renderer-processes",
+        "cpuMs": 51590,
+        "bytes": 265621504,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 135061504
+          }
+        ]
+      },
+      {
+        "elapsed": 1378060.4202979999,
+        "scope": "renderer-processes",
+        "cpuMs": 51980,
+        "bytes": 266260480,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 135700480
+          }
+        ]
+      },
+      {
+        "elapsed": 1392689.962256,
+        "scope": "renderer-processes",
+        "cpuMs": 52550,
+        "bytes": 266686464,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 136126464
+          }
+        ]
+      },
+      {
+        "elapsed": 1402974.146524,
+        "scope": "renderer-processes",
+        "cpuMs": 52970,
+        "bytes": 268075008,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 137515008
+          }
+        ]
+      },
+      {
+        "elapsed": 1419640.324373,
+        "scope": "renderer-processes",
+        "cpuMs": 53660,
+        "bytes": 259932160,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 129372160
+          }
+        ]
+      },
+      {
+        "elapsed": 1432856.250458,
+        "scope": "renderer-processes",
+        "cpuMs": 54150,
+        "bytes": 265179136,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134619136
+          }
+        ]
+      },
+      {
+        "elapsed": 1447289.210194,
+        "scope": "renderer-processes",
+        "cpuMs": 54640,
+        "bytes": 265592832,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 135032832
+          }
+        ]
+      },
+      {
+        "elapsed": 1460339.1841199999,
+        "scope": "renderer-processes",
+        "cpuMs": 55120,
+        "bytes": 265629696,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 135069696
+          }
+        ]
+      },
+      {
+        "elapsed": 1471336.490253,
+        "scope": "renderer-processes",
+        "cpuMs": 55470,
+        "bytes": 266039296,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 135479296
+          }
+        ]
+      },
+      {
+        "elapsed": 1482672.216482,
+        "scope": "renderer-processes",
+        "cpuMs": 55880,
+        "bytes": 267378688,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 136818688
+          }
+        ]
+      },
+      {
+        "elapsed": 1492788.448091,
+        "scope": "renderer-processes",
+        "cpuMs": 56350,
+        "bytes": 265748480,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 135188480
+          }
+        ]
+      },
+      {
+        "elapsed": 1504986.654012,
+        "scope": "renderer-processes",
+        "cpuMs": 56690,
+        "bytes": 279879680,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 149319680
+          }
+        ]
+      },
+      {
+        "elapsed": 1517352.257919,
+        "scope": "renderer-processes",
+        "cpuMs": 57040,
+        "bytes": 264548352,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133988352
+          }
+        ]
+      },
+      {
+        "elapsed": 1531535.664685,
+        "scope": "renderer-processes",
+        "cpuMs": 57440,
+        "bytes": 265375744,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134815744
+          }
+        ]
+      },
+      {
+        "elapsed": 1543200.125271,
+        "scope": "renderer-processes",
+        "cpuMs": 57790,
+        "bytes": 265105408,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134545408
+          }
+        ]
+      },
+      {
+        "elapsed": 1554849.932544,
+        "scope": "renderer-processes",
+        "cpuMs": 58150,
+        "bytes": 266280960,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 135720960
+          }
+        ]
+      },
+      {
+        "elapsed": 1568317.625219,
+        "scope": "renderer-processes",
+        "cpuMs": 58530,
+        "bytes": 267104256,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 136544256
+          }
+        ]
+      },
+      {
+        "elapsed": 1578667.482775,
+        "scope": "renderer-processes",
+        "cpuMs": 59020,
+        "bytes": 267153408,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 136593408
+          }
+        ]
+      },
+      {
+        "elapsed": 1589481.180373,
+        "scope": "renderer-processes",
+        "cpuMs": 59410,
+        "bytes": 264048640,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133488640
+          }
+        ]
+      },
+      {
+        "elapsed": 1599632.944865,
+        "scope": "renderer-processes",
+        "cpuMs": 59740,
+        "bytes": 264675328,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134115328
+          }
+        ]
+      },
+      {
+        "elapsed": 1611315.076969,
+        "scope": "renderer-processes",
+        "cpuMs": 60110,
+        "bytes": 265179136,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134619136
+          }
+        ]
+      },
+      {
+        "elapsed": 1622930.21903,
+        "scope": "renderer-processes",
+        "cpuMs": 60470,
+        "bytes": 265256960,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134696960
+          }
+        ]
+      },
+      {
+        "elapsed": 1635947.984717,
+        "scope": "renderer-processes",
+        "cpuMs": 60840,
+        "bytes": 267001856,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 136441856
+          }
+        ]
+      },
+      {
+        "elapsed": 1651214.485478,
+        "scope": "renderer-processes",
+        "cpuMs": 61290,
+        "bytes": 265908224,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 135348224
+          }
+        ]
+      },
+      {
+        "elapsed": 1661231.011523,
+        "scope": "renderer-processes",
+        "cpuMs": 61850,
+        "bytes": 266317824,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 135757824
+          }
+        ]
+      },
+      {
+        "elapsed": 1672918.516916,
+        "scope": "renderer-processes",
+        "cpuMs": 62170,
+        "bytes": 265064448,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134504448
+          }
+        ]
+      },
+      {
+        "elapsed": 1684781.687014,
+        "scope": "renderer-processes",
+        "cpuMs": 62520,
+        "bytes": 265187328,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134627328
+          }
+        ]
+      },
+      {
+        "elapsed": 1695263.3933309999,
+        "scope": "renderer-processes",
+        "cpuMs": 62810,
+        "bytes": 264417280,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133857280
+          }
+        ]
+      },
+      {
+        "elapsed": 1707894.236091,
+        "scope": "renderer-processes",
+        "cpuMs": 63200,
+        "bytes": 263745536,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133185536
+          }
+        ]
+      },
+      {
+        "elapsed": 1719043.293164,
+        "scope": "renderer-processes",
+        "cpuMs": 63530,
+        "bytes": 266379264,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 135819264
+          }
+        ]
+      },
+      {
+        "elapsed": 1729078.688762,
+        "scope": "renderer-processes",
+        "cpuMs": 63810,
+        "bytes": 265965568,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 135405568
+          }
+        ]
+      },
+      {
+        "elapsed": 1743112.483118,
+        "scope": "renderer-processes",
+        "cpuMs": 64240,
+        "bytes": 267534336,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 136974336
+          }
+        ]
+      },
+      {
+        "elapsed": 1753228.387585,
+        "scope": "renderer-processes",
+        "cpuMs": 64680,
+        "bytes": 264077312,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133517312
+          }
+        ]
+      },
+      {
+        "elapsed": 1764444.418011,
+        "scope": "renderer-processes",
+        "cpuMs": 64999.99999999999,
+        "bytes": 264929280,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134369280
+          }
+        ]
+      },
+      {
+        "elapsed": 1777459.795508,
+        "scope": "renderer-processes",
+        "cpuMs": 65410.00000000001,
+        "bytes": 264585216,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134025216
+          }
+        ]
+      },
+      {
+        "elapsed": 1787909.207441,
+        "scope": "renderer-processes",
+        "cpuMs": 65710,
+        "bytes": 264814592,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 134254592
+          }
+        ]
+      },
+      {
+        "elapsed": 1798807.269832,
+        "scope": "renderer-processes",
+        "cpuMs": 66030,
+        "bytes": 264519680,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 133959680
+          }
+        ]
+      },
+      {
+        "elapsed": 1804389.349983,
+        "scope": "renderer-processes",
+        "cpuMs": 66180,
+        "bytes": 266018816,
+        "processes": [
+          {
+            "pid": 4097434,
+            "bytes": 81330176
+          },
+          {
+            "pid": 4097446,
+            "bytes": 49229824
+          },
+          {
+            "pid": 4097447,
+            "bytes": 135458816
+          }
+        ]
+      }
+    ],
+    "seed": 19,
+    "actions": "random vertical/horizontal scroll/jump and tab changes; cache \u226420000; DOM rows <300",
+    "fullSoak": true,
+    "configuredSeconds": 1800,
+    "projectionMode": "default-empty",
+    "original_report_timestamp": "2026-10-31T15:30:41.193Z",
+    "timestamp_alignment": "Playwright TestResult.startTime: playwright-soak.json"
+  },
+  "passed": false
+}

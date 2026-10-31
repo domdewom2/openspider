@@ -1,0 +1,79 @@
+{
+  "scenario": "operations",
+  "size": "large",
+  "started_at": "2026-10-31T15:48:51.105Z",
+  "engine": "chromium",
+  "metrics": {
+    "tabMs": {
+      "value": 2029,
+      "budget": 200,
+      "direction": "max",
+      "passed": false
+    },
+    "tabReturnMs": {
+      "value": 19415.39999999106,
+      "budget": 200,
+      "direction": "max",
+      "passed": false
+    },
+    "filterMs": {
+      "value": null,
+      "budget": 200,
+      "direction": "max",
+      "passed": false
+    },
+    "numericMs": {
+      "value": null,
+      "budget": 5000,
+      "direction": "max",
+      "passed": false
+    },
+    "reverseMs": {
+      "value": null,
+      "budget": 200,
+      "direction": "max",
+      "passed": false
+    },
+    "textMs": {
+      "value": null,
+      "budget": 8000,
+      "direction": "max",
+      "passed": false
+    },
+    "substringMs": {
+      "value": null,
+      "budget": 3000,
+      "direction": "max",
+      "passed": false
+    },
+    "regexMs": {
+      "value": null,
+      "budget": 10000,
+      "direction": "max",
+      "passed": false
+    }
+  },
+  "details": {
+    "times": {
+      "tabMs": 2029,
+      "tabReturnMs": 19415.39999999106,
+      "filterMs": null,
+      "numericMs": null,
+      "reverseMs": null,
+      "textMs": null,
+      "substringMs": null,
+      "regexMs": null
+    },
+    "errors": [
+      "filterMs: IpcError: err-stale",
+      "numericMs: IpcError: err-stale",
+      "reverseMs: IpcError: err-stale",
+      "textMs: IpcError: err-stale",
+      "substringMs: IpcError: err-stale",
+      "regexMs: IpcError: err-stale"
+    ],
+    "original_report_timestamp": "2026-10-31T15:49:43.752Z",
+    "timestamp_alignment": "Playwright TestResult.startTime: playwright-named.json"
+  },
+  "passed": false
+}

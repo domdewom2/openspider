@@ -1,0 +1,47 @@
+{
+  "scenario": "viz",
+  "size": "large",
+  "started_at": "2026-10-31T16:02:59.049Z",
+  "engine": "chromium",
+  "metrics": {
+    "firstFrameMs": {
+      "value": 189.20000000298023,
+      "budget": 2000
+    },
+    "layoutMs": {
+      "value": 2742.5,
+      "budget": 10000
+    },
+    "fps": {
+      "value": 60.001325996154605,
+      "budget": 30,
+      "direction": "min"
+    },
+    "svgMs": {
+      "value": 21.299999997019768,
+      "budget": 5000
+    },
+    "svgBytes": {
+      "value": 1174006,
+      "budget": 20971520
+    }
+  },
+  "details": {
+    "firstFrameMs": 189.20000000298023,
+    "layoutMs": 2742.5,
+    "layoutSteps": 184,
+    "layoutReason": "converged",
+    "fps": 60.001325996154605,
+    "p95FrameMs": 16.700000000000728,
+    "maxFrameMs": 16.800000000000182,
+    "svg": {
+      "ms": 21.299999997019768,
+      "bytes": 1174006,
+      "circles": 10000
+    },
+    "strict": true,
+    "original_report_timestamp": "2026-10-31T16:03:05.713Z",
+    "timestamp_alignment": "Playwright TestResult.startTime: playwright-named.json"
+  },
+  "passed": true
+}
