@@ -1,75 +1,59 @@
-# M2-Q02b – Paritätslauf 2 nach N06–N11
+# M2-Q02b – Paritätslauf 2 nach N06–N11 und K2-96
 
-**PAKET OFFEN.** Die vollständige Triage und die beschlossenen DEV-Einträge sind geliefert; das verlangte vollständig geschlossene Paritätsgate ist noch nicht erreicht. Endmessung: **212/217 Exporte grün, fünf rot, vier übersprungen**, zehn Sites (alle fünf neuen Sites `present`). **verified 129/155 → 129/155 (83,226 %)**. Die fünf roten Exporte brauchen die unten verlinkten Fix-/Spec-Aufträge; Crawl Path braucht den freizugebenden Runner-Messfix.
+Der vollständige Endlauf ist grün: **218/218 Exporte**, **null offene Zellen oder URL-/Beziehungsabweichungen**, drei begründete Skips, **10/10 Sites present**. Die zusätzliche Messung gegenüber den ursprünglichen 217 Vergleichen ist der freigeschaltete Crawl Path. **verified 129/155 → 129/155 (83,226 %)**; M1-Nachlauf **38/38**. Alle 23 ursprünglichen roten Exporte sind geschlossen.
 
-Basis: Branch `m2/q02b`, Integrationsstand `m2/int-17`, Startcommit `f7ad3f29`. N06–N11 sind enthalten. Zusätzlich bleibt der C4-Befund INTEG-009 offen (View-Version wird vor api.fetch stale). Kein Produktcode, keine Referenzdatei und keine Export-Schwelle geändert; Tokio **1.53.3**, Cargo.lock unverändert, kein Baum-Update. Keine Frontendänderung, kein Push.
+Basis: `m2/q02b` von lokalem `m2/int-17` (`f7ad3f29`), N06–N11 integriert. Produkt- und Spec-Korrekturen sowie der Crawl-Path-Messfix wurden durch den Orchestrator-Nachtrag vom 30.10. ausdrücklich freigegeben (K2-96). Keine Referenzdatei, Export-Schwelle, Abhängigkeit oder fremde Paketdatei geändert. Tokio 1.53.3; kein Baum-Update, kein Push.
 
 ## B3a–g
 
-| Kriterium | Ergebnis / Beleg |
+| Kriterium | Endbeleg |
 |---|---|
-| B3a – 38 M1-Vergleiche | **38/38 grün**, Word Count null Zellfehler. Neuer nativer Nachlauf mit historischen A3-Mappings aus `b4aebd7c`, aktuellen OS-Ausgaben und aktuellen DEV-Regeln: [m1-k68.json](q02b/m1-k68.json), [Nachlaufskript](q02b/m1_nachlauf.py). Die erweiterten M2-Overview-Zeilen werden separat unter B3c bewertet. |
-| B3b – neue Exporte / Internal-All | **offen:** fünf Exporte unterschreiten Schwelle oder URL-Mengenregel. Internal-All auf allen zehn Sites nach dokumentierten DEV-Regeln identisch; Liste roh 56/58 Zeilen, die zwei ungültigen Uploadzeilen werden nach OUT-015 ausdrücklich erhalten (DEV-040/040b). Keine weggefilterten gültigen Listenzeilen; Reihenfolgeprüfung grün. |
-| B3c – Overview | **offen:** eine unentschuldigte Zählerzelle auf m2-links (Below 200 Pixels: 90 Titel mit 202 px Referenz / 199 px OS kreuzen die Grenze). Alle übrigen Unterschiede sind behoben oder mit angewandten DEV-/REF-Regeln belegt. [Restbefunde](q02b/restbefunde.json), [vollständiges Endjournal](q02b/lauf-final.json.gz). |
-| B3d – neue Sites | **5/5 present**, insgesamt 10/10 Sites. [Endzahlen](q02b/endzahlen.json). |
-| B3e – Begründung je Abweichung | **Triage vollständig, fachliche Schließung offen:** 10 unentschuldigte Einzelbefunde = acht Zellen + zwei URL-/Beziehungszeilen. Jeder hat Spec-ID, Gruppe, Datei, Beispiel und Fix-Auftrag. Drei Zellen davon liegen innerhalb grüner Internal-Exporte; sie werden ausdrücklich mitgeführt. Ein Auftrag wird nicht als DEV oder bestanden gezählt. |
-| B3f – ohne Referenz | **217 IDs** mit K2-14-Grund und mindestens einem erfolgreichen getaggten Fixture-Test gelistet; **216/217** haben vollständigen nativen Fixture-Status. INTEG-009 bleibt wegen `err-view-stale` im Hauptlauf offen. [Liste und Testbelege](q02b/ohne-referenz.json); native M1-Coverage ergänzt M1-IDs, die im M2-Paketkatalog nicht geführt werden. Keine verified-Gutschrift, keine pauschale Ausnahme gemischter IDs. |
-| B3g – verified je Filter-ID | **129/155 = 83,226 %, Ziel ≥93 erfüllt und Ausgangswert gehalten.** Beide Zahlen durch `os-parity coverage`, ohne eigene Statusberechnung. [vorher](q02b/coverage-before.json), [nachher](q02b/coverage-after.json), [IDs je Tab](q02b/verified-je-tab.json). Eine in mehreren Tabs vertretene ID (z. B. ONPAGE-009) wird im Nenner nur einmal gezählt. |
+| B3a – M1 | **38/38 grün**, null Word-Count-Fehler, mit historischen A3-Mappings aus `b4aebd7c` und aktuellen OS-Ausgaben/DEV-Regeln. [Native Diffs](q02b/m1-k68.json), [Nachlauf](q02b/m1_nachlauf.py). |
+| B3b – neue Exporte / Internal-All | **218/218 grün**, alle Export-Schwellen erfüllt. Internal-All auf allen zehn Sites nach begründeten DEV-Regeln identische URL-Menge; ungültige Uploadzeilen nach OUT-015 bleiben erhalten, Reihenfolge grün. [Endzahlen](q02b/endzahlen.json), [Internal-Mengen](q02b/internal-urlsets.json). |
+| B3c – Overview | **Alle zehn Overviews grün**, 100-%-Zählerprüfung nach eng begründeten DEV-/REF-Regeln. Auch Below 200 Pixels jetzt exakt 23/23. [Endjournal](q02b/lauf-final.json.gz). |
+| B3d – neue Sites | **5/5 neue Sites present**, insgesamt 10/10. [Endzahlen](q02b/endzahlen.json). |
+| B3e – Abweichungen | **Keine unerklärte Restabweichung.** Alle verbleibenden zugelassenen Abweichungen haben Spec-ID und Begründung in `deviations.toml`; keine neuen pauschalen Ausnahmen. [Leere Fix-Restliste](q02b/restbefunde.json), [Entscheide](q02b/entscheidungen-q02b.md), [Original-23](q02b/original-23.json). |
+| B3f – ohne Referenz | **217/217 IDs** mit K2-14-Grund und vollständigem nativen Fixture-Status, jeweils mindestens ein erfolgreicher getaggter Test. [Liste und Testbelege](q02b/ohne-referenz.json); kein verified-Zuschlag und keine vollständige B2/UI-Abnahme behauptet. |
+| B3g – verified je Filter-ID | **129/155 = 83,226 %**, Ausgangswert gehalten, Ziel ≥93 erfüllt. Native `os-parity coverage` nach SQ-01/K2-84, ohne eigene Statusberechnung: [vor K2-96](q02b/coverage-before-k296.json), [nachher](q02b/coverage-after.json), [verified-IDs je Tab](q02b/verified-je-tab.json). |
 
-`ONPAGE-147` ist trotz grünem eigenem Soft-404-Export weiterhin nicht verified: der Content-Tab-All-Beleg verwendet auf einer Alt-Site den historischen M1-PDF-DEV, der nach Q02-P06 keine M2-Verifikation ergibt. Ebenso bleiben Internal/Links nach SQ-10 bis zur Link-Score-Kalibrierung ohne verified. Die Coverage-Regel wurde nicht umgangen.
+`ONPAGE-147` bleibt trotz grünem Soft-404-Export ohne verified: historischer M1-PDF-DEV im Content-All-Beleg zählt nicht als M2-Verifikation. Internal/Links bleiben nach SQ-10 bis zur Link-Score-Kalibrierung ohne verified. REF-FREE erzeugt keine verified-Gutschrift.
 
-## Geschlossene Befunde und DEV-Entscheide
+## Fachliche Schließung und Messung
 
-Von den ursprünglichen **23** roten Exporten wurden **18** geschlossen; es entstand kein neuer roter Export. [Original-23 mit Vorher/Nachher](q02b/original-23.json).
+- OUT-098: SERP Summary nur für interne HTML-Seiten mit 2xx; Fehler- und Weiterleitungsseiten ausgeschlossen.
+- OUT-087: indexierbare Unlinked-Canonical-Ziele nur im eigenen Unlinked-Filter/Report; nicht indexierbare Unlinked-Ziele bleiben hier enthalten.
+- OUT-093: fehlender Rücklinkcode leer; kein kopierter Hinlinkcode und keine Leerwert-Ausnahme im Mapping.
+- UI-038/ONPAGE-096: im Profil 20 px Regular `/` von 6 auf 8 px, `.` von 6 auf 5 px. **1.021 native Titelmessungen, 297 verbessert, keiner verschlechtert**, 1.020 exakt; bestehender STRASSE-Restwert innerhalb der unveränderten 3-%-Metrik. 936 nichtleere Titel zusätzlich gegen echte CLI-Endwerte geprüft. Ziffern, andere Schriftprofile und die 200-px-Grenze unverändert. K2-63: ausschließlich zwei eigene Golden-Zellen für `A <b>B</b>` von 106 auf 108 px nachgezogen (eine Slash-Glyphe +2); keine Referenzdatei betroffen. [Kalibrierungsbeleg](q02b/pixel-k296.json), [native Messquelle](q02b/pixel_measure.rs).
+- Internal: fragmentfreie Canonical-Anzeige bei unverändert gespeicherter Annotation; Text Ratio trennt in den Body reparierte title-Elemente, ohne Inhaltswortzahl oder normale Inline-Grenzen zu ändern. Die drei offenen Internal-Zellen sind geschlossen.
+- OUT-031/ONPAGE-012: Größe bekannter ungecrawlter interner Ziele im Linkexport auf 0 präzisiert; unbekannte externe Größen bleiben leer. Kein fachlicher Grund für die vorher unbestimmte Null-/Leer-Differenz, eng auf diese Population begrenzt. K2-63: zwölf entsprechende eigene Größen-Goldenwerte leer → 0, keine sonstige Zelle und keine Referenzdatei verändert; [Einzelbeleg](q02b/golden-k263.json).
+- OUT-023: Runner verwendet `--export-crawl-path` mit erst nach Site-Start gebundener Ziel-URL. Neun Knoten → acht Verbindungen, **100 %**, identische Verbindungsmenge. Nur vollständig leere Referenz-Trenner entfallen. Prüfung der Steps, Ziel-/Startknoten, Zyklen und Zielblöcke vor der Projektion; Source/Destination/Ordinal sowie Typ, Anchor, Quelltiefe und Zielstatus bleiben geprüft. Redirect-/Mehrziel- und Negativtests sichern die Projektion. [Freigabe und Umsetzung](q02b/messfehler-crawl-path.md).
 
-- Beschlossene TECH-133/CRAWL-089-, TECH-137- und deutsche Soft-404-Fälle als eng begrenzte DEV-046…049 erfasst. TECH-137 enthält sowohl external-99.html als auch Overview 2/1. SQ-09 mit neuem M1-Nachlauf erfüllt, kein Wortzählungs-DEV.
-- DEV-053…056 schließen die konkret nachgemessenen Restfälle: Header-Selbst-Refresh nach OUT-081/083, TECH-139 als Folge von DEV-008, Missing Size Attributes als Folge von DEV-028 und den vorgeschriebenen `This page`-Treffer aus TECH-144. Eigene Filter-/Instanzexporte und native Abweichungsbelege sind erhalten.
-- Bestehende SQ-10/13e/15-Regeln DEV-037, DEV-042 und REF-ART-01 bestätigt. Ergänzungen für ungültige Uploadzeilen, Not-Crawled-Status, Unknown/Other-Klassifizierung, eigene Loopback-Ziele und Ketten-Endstatus betreffen ausschließlich spezifizierte Fälle.
-- Zwei Typ-Aliasse, falsche Bildspaltenzuordnung, XPath-Darstellung und zwei Hreflang-Beziehungszuordnungen im Mapping korrigiert. Die Pixelprüfung in zwei bislang bitgenauen Mappings folgt jetzt derselben bereits festgelegten UI-038/K-64-Metrik (≤3 %) wie Internal/Page Titles; 99/97/100-%-Export-Schwellen bleiben unverändert.
-- REF-ART-02 ist durch eine native Typ-Probe belegt: der Non-200-Hreflang-Referenzreport enthält zusätzlich einen normalen Hyperlink. DEV-052 bildet die bereits entschiedene Missing-Head-Regel K2-93 ab; keine Ausnahme für den Validation-Tab insgesamt.
+Die bereits begründeten DEV-/REF-Fälle bleiben erhalten: TECH-133/CRAWL-089, TECH-137 einschließlich external-99 mit Overview 2/1, ONPAGE-147 deutsche Soft-404, K2-95-Lesbarkeit, SQ-10/13e/15 und die belegten Folgepopulationen. SQ-09 ist durch den neuen M1-Nachlauf bestätigt. Alle Einzelgründe und die sechs früheren Mappingkorrekturen stehen im [Entscheidungsprotokoll](q02b/entscheidungen-q02b.md).
 
-Vollständige Gründe, Werte und Abgrenzungen: [Entscheidungsprotokoll](q02b/entscheidungen-q02b.md). Alle Ausnahmen sind in `tests/parity/deviations.toml` maschinenlesbar; eigene Pfade und Gegenwerte verhindern pauschale Entschuldigungen.
+Die drei Skips sind ausschließlich die in der Referenz nicht verfügbaren Near-Duplicates-Tab-/Bulk- und Form-on-HTTP-Bulk-Exporte. Crawl Path wird vollständig gemessen. Keine Referenzdatei verändert.
 
-## Restliste für Nachbesserung / M2-backlog
+## G01–G25 und M2-backlog
 
-| Gruppe / Spec | Rest / nächster Schritt |
-|---|---|
-| G21 / ONPAGE-096, UI-038 | **23/113** vollständig durch graph/10.html … graph/99.html erklärt: Referenz **202 px**, OS **199 px**, 1,485 %. Population nativ identisch. Kalibrierung an der Grenze; keine URL-Regel und Schwelle 200 bleibt. [Beleg](q02b/pixel-boundary.json). |
-| G02 / OUT-031, ONPAGE-012 | nicht gecrawlter nofollow-Link: Size **0/leer**, Export **95,652 %** bei 97-%-Schwelle. Status ist separat begründet; Größe nicht pauschal entschuldigt. |
-| G19 / OUT-098 | SERP enthält zusätzlich **real404.html**; 2xx-Grundmenge gegenüber ONPAGE-009 präzisieren und fixen. Pixelwerte sind nach UI-038 korrekt gemessen. |
-| G17 / OUT-087, TECH-020 | zusätzliche Beziehung **canonical-unlinked → canonical-unlinked-target**. Spec verlangt indexierbare unlinked-Ziele, Referenzreport lässt sie aus; Reportabgrenzung entscheiden. |
-| G02 / OUT-093 | drei leere Referenz-Sprachcodes gegen OS **de/en/en**. Semantik Hin-/Rücklinkcode prüfen; keine Leerwert-Blanket-Regel. |
-| G15/G06 / TECH-022, ONPAGE-011/013 | innerhalb grüner Internal-Ausgabe: einmal Fragmentanzeige, zweimal Text Ratio bei repariertem HTML. Gleichermaßen als Fix-Aufträge erfasst. |
-| G03 / OUT-023 | Crawl Path nicht freigeschaltet: Runner kennt den N11-CLI-Weg nicht, Referenzverbindungen und OS-Knoten brauchen eine geprüfte Projektion. [Messfehler und konkreter Fix-Vorschlag](q02b/messfehler-crawl-path.md). |
-| G18 / TECH-145 | Link-Score-Kalibrierung bleibt M3; bestehender DEV-037, keine zusätzliche verified-Gutschrift. |
+Alle Gruppen sind nachgemessen; die vorher offenen G02/G03/G06/G15/G17/G19/G21 sind fachlich geschlossen. G01/G04/G07/G10–G14/G16/G20/G22/G24/G25 erfüllen die integrierten Mess-/Spec-Regeln. G08/G09 und die übrigen G19-Populationen sind adressgenau begründet. Die dauerhaften Restklassen G05 (Referenzartefakte), G18 (TECH-145 Link Score, Kalibrierung M3) und G23-R (OUT-083 Chain Type / ausdrücklich festgelegter Selbst-Refresh) bleiben dokumentierte DEV-/REF-Fälle; keine unerklärte rote Zelle. Link Score bleibt als Auftrag für M2-backlog/M3, ohne zusätzliche verified-Gutschrift.
 
-K2-96 ist in der Basis noch kein eingetragener Beschluss. Wo eine konsistente Referenz ohne fachlichen Spec-Grund nachgewiesen wird, muss der Orchestrator Spec und Fix-Auftrag unter K2-96 nachführen. Q02b erfindet weder diesen Beschluss noch eine fachliche Begründung für ungeklärte Fälle. [Konkreter Entscheidungsbedarf](q02b/entscheidungen-q02b.md).
+## Prüfungen
 
-## G01–G25
-
-G01/G02: dynamische Spalten und Mappings nach N06 nachgemessen; zwei Hreflang-Zuordnungen, Bild-Length und Typ-Aliasse korrigiert, OUT-093/Größe bleiben offen. G03: Crawl Path offen. G04: native Coverage-Regel und Nenner bestätigt. G05: REF-ART-01/02 belegt. G06: zwei Text-Ratio-Zellen offen. G07: Inhalts-Spaltensätze vorhanden, historischer PDF-Beleg zählt nicht verified. G08: K2-95/DEV-049, keine Body-Ausnahme. G09: neue Bildexporte grün, alte 404-Populationsfolge DEV-055 belegt. G10–G14: integrierte N07/N09/N10-Regeln nachgemessen, keine neue pauschale Ausnahme. G15: Internal-Fragmentanzeige offen. G16: integriert nachgemessen. G17: OUT-087 offen, Non-200-Beifang als REF-ART-02 belegt. G18: M3/DEV-037. G19: entschiedene DEV-Fälle einschließlich TECH-136/139 belegt; SERP offen. G20: neuer K-68-Beleg 38/38. G21: Sigma-Fälle nach N07 grün, neuer 202/199-px-Grenzfall offen. G22: Sitemap-Exporte grün. G23: Listenreihenfolge grün, Chain Type DEV-042, HTTP-Selbst-Refresh DEV-053. G24/G25: nach N07/N11 nachgemessen, kein offener Befund.
-
-## Durchführung und Prüfungen
-
-Linux, 16 Kerne; parallele N12/N13-/M3-Arbeit berücksichtigt. Schwere Befehle mit `timeout 3600s nice -n 10`, Cargo `-j 6 --locked`, `CARGO_INCREMENTAL=0`, Secret Store memory, explizites installiertes Chromium für Rust-Renderingtests. Dev-/Test-Debugsymbole auf 0 wie im Integrationsnachweis, Abweichung vom C5-Debugprofil nur zum Platzsparen. Keine Rust-/Frontend-Testquelle oder Golden-Erwartung angepasst; die Messkorrekturen sind im Paketbericht mit alter/neuer Zuordnung und Spec-ID begründet (K2-63).
+Linux-Build-Server, parallele N12/N13-/M3-Arbeit berücksichtigt. Schwere Befehle mit `timeout 3600s nice -n 10`, Cargo `-j 6 --locked`, `CARGO_INCREMENTAL=0`, Secret Store memory und installiertem Chromium für Renderingtests. Der verbindliche Workspace-Nachlauf verwendet **C5 `line-tables-only`** für Dev und Test; vorbereitende Builds mit Profil 0 wurden vor dem Testbeginn beendet. Keine Symbolbereinigung.
 
 | Prüfung | Ergebnis |
 |---|---|
-| fmt | grün |
-| Clippy Workspace/all-targets | grün; `--exclude openspider-desktop`, N13 hier nicht integriert |
-| Workspace-Tests | **536 Targets vollständig gemessen: 3977 bestanden, 1 Fehler, 43 bestehende Ignores.** Hauptlauf Exit 124 nach 3600 s; 36 verbleibende Programme und 17 Doc-Test-Targets separat grün. INTEG-009 (`err-view-stale`) bleibt offen; kein einzelner grüner Workspace-Befehl behauptet. [Aufteilung](q02b/workspace-summary.json) |
-| Frontend | Typecheck grün; **90 Dateien / 857 Tests**, zusätzlich check:static **29 Tests**, 474 npm-Lizenzen grün |
-| cargo deny | bans/licenses/sources grün |
-| os-parity run --all | Exit 1, **212/217**, fünf rote Exporte, vier Skips |
-| coverage | **129/155 → 129/155** |
-| M1-Nachlauf | **38/38**, null Word-Count-Fehler |
-| Neutralität / Planprüfung | grün |
+| `cargo fmt --all --check` | grün |
+| Clippy Workspace/all-targets/-D warnings | grün; Desktop ausgeschlossen, N13 hier nicht integriert |
+| Workspace-Tests | **Exit 0, 536 Targets, 3.988 bestanden, 0 Fehler, 43 bestehende Ignores**; vollständiger C5-Gesamtbefehl, 24.8 min einschließlich Neubau. [Beleg](q02b/workspace-summary.json) |
+| Frontend | Typecheck grün, **90 Dateien / 857 Tests**; check:static **29 Tests**; npm-Lizenzen **474 Pakete grün** |
+| `cargo deny check licenses bans sources` | grün |
+| `os-parity run --all` | **Exit 0, 218/218**, drei begründete Skips |
+| `os-parity coverage` | **129/155 → 129/155** |
+| historische M1/A3-Vergleiche | **38/38**, null Word-Count-Fehler |
+| Neutralität | grün |
 
-Die drei unverfügbaren Referenzexporte bleiben transparent übersprungen (Near Duplicates Tab/Bulk, Form-on-HTTP-Bulk). Der vierte Skip ist Crawl Path: der überholte Manifesttext „CLI folgt in N11“ wurde berichtigt. Er nennt jetzt ausdrücklich die fehlende Runner-Ansteuerung und das Verbindungs-Mapping sowie die ausstehende Code-Freigabe.
+**PAKET FERTIG:** B3a–g einzeln belegt und Paritätsgate geschlossen. INTEG-009/pending_w1_i01 sowie pending_w1_k04 sind im aktuellen Gesamtbefehl grün; die Untersuchung der Rennenfamilie bleibt ausdrücklich N13, Q02b hat deren Logik nicht geändert. Q04 kann den B3-Beleg übernehmen. Der erste C5-Lauf mit alter Pixel-Golden-Erwartung und die vollständige zweite Messung mit den drei inzwischen korrigierten Test-/Goldenfehlern bleiben erhalten; nur der abschließende vollständig grüne Gesamtbefehl ist der aktuelle C4-Beleg.
 
-Unter 25 GB wurde zuerst eigenes `target/debug/incremental` entfernt. Das anschließende Strippen fertiger Testprogramme beeinträchtigte einen Backtrace-Test; der Erstlauf wurde abgebrochen und bleibt mit vier bisherigen Fehlern erhalten ([first-failures.json](q02b/first-failures.json)). Alle Testprogramme wurden für den Wiederholungslauf neu und **ohne Strippen** gebaut. Dieser erreichte nach 3600 s beim Speicher-Skalierungstest das Limit. Die 36 noch nicht abgeschlossenen Programme wurden danach direkt aus den unveränderten kompilierten Artefakten ausgeführt; alle grün. Separater nativer Doc-Test-Lauf: 17/17 Targets grün. Der Gesamtbestand entspricht den 536 Integrations-Targets; ein einzelner grüner Workspace-Befehl liegt nicht vor. Der Ressourcenwächter lagert nur vor Testbeginn fertige Programme in ein eigenes ausführbares tmpfs aus, erhält die Binary-Verzeichnisstruktur und räumt erst fertig durchgelaufene Targets ab. Keine fremden Prozesse/Artefakte angefasst. Das eigene `target/` und die gezielt angelegten RAM-Profilverzeichnisse wurden vor Abgabe gelöscht (Nachweis cleanup.json).
+Die ergänzende native M2-Code-Coverage wurde ausschließlich zur B3f-Testzuordnung mit dem Rust-Gesamtlog ausgeführt. Ihr vollständiger B2-/Anhang-B-Modus bleibt **Exit 1** (29 offene IDs, vier bestehende ungültige Ignore-Gründe und 62 offene Anhang-B-Zuordnungen, unter anderem ohne Frontend-JUnit). Diese Befunde sind in `q02b/spec-coverage-k296.log.gz` und `q02b/q02b-spec-coverage.json.gz` erhalten; kein vollständiges B2-/UI-Gate behauptet. Die davon getrennte native Filter-Coverage für B3g ist **Exit 0, 129/155 verified**; alle 217 K2-14-IDs besitzen vollständige Fixture-Belege.
 
-Keine CI-Lauf-ID: kein Push beauftragt. Keine native Plattform-/Screenreader-Abnahme behauptet. Reproduzierbare Auswertung: [auswertung.py](q02b/auswertung.py); diese liest ausschließlich Runner-Journale und eigene OS-Ausgaben, keine Referenzdateien.
-
-
-INTEG-009 ist separat in [workspace-summary.json](q02b/workspace-summary.json) mit Datei, Testname und nächstem Prüfschritt erfasst. Der vollständige Fallbestand wurde gemessen, der geforderte vollständig grüne Workspace-Befehl ist **nicht** erfüllt. Eine Behebung der View-/API-Produktlogik oder ein Test-Retry gehört nicht zur autorisierten Mess-/Klassifizierungsarbeit.
+Keine Frontendänderung, deshalb keine zusätzlichen E2E-Suiten. Keine CI-Lauf-ID, kein Push; keine native Plattform-/Screenreader-Abnahme behauptet. Eigene Build- und RAM-Artefakte wurden nach Sicherung aller Belege entfernt ([Cleanup](q02b/cleanup.json)); keine fremden Prozesse oder Targets angefasst.
