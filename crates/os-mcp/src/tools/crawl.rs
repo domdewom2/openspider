@@ -130,88 +130,10 @@ impl Tool for CrawlTool {
         }
     }
     fn call(&self, ctx: &ToolContext, args: Value) -> Result<ToolOutput, ToolError> {
+        // Each tool keeps its own frame: the start path's configuration copies do not sit below
+        // the status path's crawl-file reads on the blocking thread (AGENT-020).
         let summary = if self.0 == "start_crawl" {
-            reject_unknown(
-                &args,
-                &[
-                    "url",
-                    "start_url",
-                    "url_list",
-                    "urls",
-                    "config_profile",
-                    "overrides",
-                ],
-            )?;
-            let sources = ["url", "start_url", "url_list", "urls"]
-                .iter()
-                .filter(|k| args.get(**k).is_some())
-                .count();
-            if sources != 1 {
-                return Err(ToolError::InvalidArguments(
-                    "Supply exactly one of url, start_url, url_list or urls".into(),
-                ));
-            }
-            let source = if let Some(items) = args.get("url_list").or_else(|| args.get("urls")) {
-                let items = items.as_array().filter(|a| !a.is_empty()).ok_or_else(|| {
-                    ToolError::InvalidArguments("url_list must be a nonempty list of URLs".into())
-                })?;
-                let items = items
-                    .iter()
-                    .map(|v| {
-                        v.as_str().map(str::to_owned).ok_or_else(|| {
-                            ToolError::InvalidArguments("url_list entries must be strings".into())
-                        })
-                    })
-                    .collect::<Result<Vec<_>, _>>()?;
-                for url in &items {
-                    ctx.target_policy
-                        .check_url(url)
-                        .map_err(ToolError::InvalidArguments)?;
-                }
-                CrawlSource::List {
-                    items,
-                    label: "MCP".into(),
-                }
-            } else {
-                let url = opt_str(&args, "url")?
-                    .or(opt_str(&args, "start_url")?)
-                    .ok_or_else(|| ToolError::InvalidArguments("url required".into()))?;
-                ctx.target_policy
-                    .check_url(url)
-                    .map_err(ToolError::InvalidArguments)?;
-                CrawlSource::Spider {
-                    start_url: url.to_owned(),
-                }
-            };
-            let cfg = config(ctx, &args)?;
-            if let Some(session) = &ctx.session {
-                let source = match source {
-                    CrawlSource::Spider { start_url } => {
-                        crate::SessionSource::Spider { url: start_url }
-                    }
-                    CrawlSource::List { items, label } => {
-                        crate::SessionSource::List { items, label }
-                    }
-                    CrawlSource::Serp { .. } => {
-                        return Err(ToolError::InvalidArguments(
-                            "SERP inputs are not supported by start_crawl".into(),
-                        ));
-                    }
-                };
-                let crawl = session
-                    .start_configured(
-                        crate::SessionStart {
-                            source,
-                            profile: opt_str(&args, "config_profile")?.map(str::to_owned),
-                        },
-                        cfg,
-                        ctx.target_policy.clone(),
-                    )
-                    .map_err(internal)?;
-                json!({"crawl_id":crawl.crawl_id,"state":crawl.state.as_str()})
-            } else {
-                ctx.crawls.start(ctx, source, cfg)?
-            }
+            start(ctx, &args)?
         } else {
             reject_unknown(&args, &["crawl_id", "id"])?;
             let id = opt_str(&args, "crawl_id")?
@@ -238,35 +160,7 @@ impl Tool for CrawlTool {
                         ctx.crawls.resume(ctx, id)?
                     }
                 }
-                _ => {
-                    let crawl = open_crawl(ctx, &json!({"crawl_id":id}))?;
-                    let errors: i64 = crawl
-                        .file
-                        .conn()
-                        .query_row(
-                            "SELECT count(*) FROM urls WHERE status_code=0 OR status_code>=400",
-                            [],
-                            |r| r.get(0),
-                        )
-                        .map_err(internal)?;
-                    let mut status = ctx
-                        .session
-                        .as_ref()
-                        .and_then(|s| s.status(id))
-                        .map(|s| json!({"crawl_id":id,"progress":s.progress}))
-                        .or_else(|| ctx.crawls.status(id))
-                        .unwrap_or_else(|| json!({"crawl_id":id}));
-                    let state = match ctx.session.as_ref().and_then(|s| s.status(id)) {
-                        Some(live) => live.state,
-                        None => crawl
-                            .file
-                            .effective_state(&os_model::SystemClock)
-                            .map_err(internal)?,
-                    };
-                    status["state"] = json!(state.as_str());
-                    status["errors"] = json!(errors);
-                    status
-                }
+                _ => status(ctx, id)?,
             }
         };
         Ok(ToolOutput {
@@ -276,6 +170,116 @@ impl Tool for CrawlTool {
             next_cursor: None,
         })
     }
+}
+
+fn start(ctx: &ToolContext, args: &Value) -> Result<Value, ToolError> {
+    reject_unknown(
+        args,
+        &[
+            "url",
+            "start_url",
+            "url_list",
+            "urls",
+            "config_profile",
+            "overrides",
+        ],
+    )?;
+    let sources = ["url", "start_url", "url_list", "urls"]
+        .iter()
+        .filter(|k| args.get(**k).is_some())
+        .count();
+    if sources != 1 {
+        return Err(ToolError::InvalidArguments(
+            "Supply exactly one of url, start_url, url_list or urls".into(),
+        ));
+    }
+    let source = if let Some(items) = args.get("url_list").or_else(|| args.get("urls")) {
+        let items = items.as_array().filter(|a| !a.is_empty()).ok_or_else(|| {
+            ToolError::InvalidArguments("url_list must be a nonempty list of URLs".into())
+        })?;
+        let items = items
+            .iter()
+            .map(|v| {
+                v.as_str().map(str::to_owned).ok_or_else(|| {
+                    ToolError::InvalidArguments("url_list entries must be strings".into())
+                })
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        for url in &items {
+            ctx.target_policy
+                .check_url(url)
+                .map_err(ToolError::InvalidArguments)?;
+        }
+        CrawlSource::List {
+            items,
+            label: "MCP".into(),
+        }
+    } else {
+        let url = opt_str(args, "url")?
+            .or(opt_str(args, "start_url")?)
+            .ok_or_else(|| ToolError::InvalidArguments("url required".into()))?;
+        ctx.target_policy
+            .check_url(url)
+            .map_err(ToolError::InvalidArguments)?;
+        CrawlSource::Spider {
+            start_url: url.to_owned(),
+        }
+    };
+    let cfg = config(ctx, args)?;
+    if let Some(session) = &ctx.session {
+        let source = match source {
+            CrawlSource::Spider { start_url } => crate::SessionSource::Spider { url: start_url },
+            CrawlSource::List { items, label } => crate::SessionSource::List { items, label },
+            CrawlSource::Serp { .. } => {
+                return Err(ToolError::InvalidArguments(
+                    "SERP inputs are not supported by start_crawl".into(),
+                ));
+            }
+        };
+        let crawl = session
+            .start_configured(
+                crate::SessionStart {
+                    source,
+                    profile: opt_str(args, "config_profile")?.map(str::to_owned),
+                },
+                cfg,
+                ctx.target_policy.clone(),
+            )
+            .map_err(internal)?;
+        Ok(json!({"crawl_id":crawl.crawl_id,"state":crawl.state.as_str()}))
+    } else {
+        ctx.crawls.start(ctx, source, cfg)
+    }
+}
+
+fn status(ctx: &ToolContext, id: &str) -> Result<Value, ToolError> {
+    let crawl = open_crawl(ctx, &json!({"crawl_id":id}))?;
+    let errors: i64 = crawl
+        .file
+        .conn()
+        .query_row(
+            "SELECT count(*) FROM urls WHERE status_code=0 OR status_code>=400",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(internal)?;
+    let mut status = ctx
+        .session
+        .as_ref()
+        .and_then(|s| s.status(id))
+        .map(|s| json!({"crawl_id":id,"progress":s.progress}))
+        .or_else(|| ctx.crawls.status(id))
+        .unwrap_or_else(|| json!({"crawl_id":id}));
+    let state = match ctx.session.as_ref().and_then(|s| s.status(id)) {
+        Some(live) => live.state,
+        None => crawl
+            .file
+            .effective_state(&os_model::SystemClock)
+            .map_err(internal)?,
+    };
+    status["state"] = json!(state.as_str());
+    status["errors"] = json!(errors);
+    Ok(status)
 }
 
 #[cfg(test)]
