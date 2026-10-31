@@ -46,6 +46,7 @@ fn spec(column: Option<&str>, descending: bool, search: Option<SearchSpec>) -> S
 fn main() {
     let args: Vec<_> = std::env::args().collect();
     let rows: u64 = args[2].parse().unwrap();
+    let seed: u64 = args.get(4).map(|s| s.parse().unwrap()).unwrap_or(19);
     let file = CrawlFile::open(Path::new(&args[1]), OpenMode::ReadOnly).unwrap();
     let cfg = CrawlConfig::default();
     let mut view =
@@ -154,6 +155,6 @@ fn main() {
         }
         record(name, at.elapsed().as_secs_f64() * 1000.0, budget, completed);
     }
-    println!("{{\"scenario\":\"core\",\"size\":\"{}\",\"started_at\":\"{}\",\"engine\":\"core\",\"metrics\":{{{}}},\"details\":{{\"rows\":{},\"seed\":19,\"samples\":{:?},\"offsets\":{:?},\"retained_bytes\":{},\"errors\":{:?}}},\"passed\":{}}}",
-        if rows == 5_000_000 { "large" } else { "small" }, args[3], metrics.join(","), rows, raw, offsets, view.memory_bytes(), errors, passed && errors.is_empty());
+    println!("{{\"scenario\":\"core\",\"size\":\"{}\",\"started_at\":\"{}\",\"engine\":\"core\",\"metrics\":{{{}}},\"details\":{{\"rows\":{},\"seed\":{},\"samples\":{:?},\"offsets\":{:?},\"retained_bytes\":{},\"errors\":{:?}}},\"passed\":{}}}",
+        if rows == 5_000_000 { "large" } else { "small" }, args[3], metrics.join(","), rows, seed, raw, offsets, view.memory_bytes(), errors, passed && errors.is_empty());
 }

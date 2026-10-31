@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { readdirSync, writeFileSync, mkdirSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 const deps = "target/release/deps";
 const artifacts = (name) =>
@@ -46,18 +46,28 @@ for (const model of artifacts("os_model"))
 if (!built) throw new Error(last);
 if (process.argv.includes("--compile-only")) process.exit(0);
 mkdirSync("target/loadtest/raw", { recursive: true });
+const label = process.env.OS_PERF_CORE_LABEL ?? "core";
+if (!/^core(?:-\d+)?$/.test(label))
+  throw new Error("Invalid core benchmark label");
+const fixture = resolve(
+  process.env.OS_PERF_FIXTURE ?? "target/ui-perf.ospider",
+);
+const seed = JSON.parse(readFileSync(`${fixture}.json`)).seed;
+if (!Number.isSafeInteger(seed)) throw new Error("Invalid fixture seed");
+const output = `target/loadtest/raw/${label}.json`;
 const result = spawnSync(
   binary,
   [
-    resolve(process.env.OS_PERF_FIXTURE ?? "target/ui-perf.ospider"),
+    fixture,
     process.env.OS_PERF_ROWS ?? "100000",
     new Date().toISOString(),
+    String(seed),
   ],
   { encoding: "utf8", timeout: 600000 },
 );
 if (result.status !== 0) {
   const failure = {
-    scenario: "core",
+    scenario: label,
     size: process.env.OS_PERF_ROWS === "5000000" ? "large" : "small",
     started_at: new Date().toISOString(),
     engine: "core",
@@ -65,11 +75,12 @@ if (result.status !== 0) {
     details: { error: result.stderr, errorStatus: result.status },
     passed: false,
   };
-  writeFileSync(
-    "target/loadtest/raw/core.json",
-    JSON.stringify(failure, null, 2),
-  );
+  writeFileSync(output, JSON.stringify(failure, null, 2));
   throw new Error(`Core runner failed: ${result.stderr}`);
 }
-writeFileSync("target/loadtest/raw/core.json", result.stdout);
-console.log(result.stdout);
+const report = JSON.parse(result.stdout);
+report.scenario = label;
+if (process.env.OS_PERF_CORE_SUITE_SIZE)
+  report.size = process.env.OS_PERF_CORE_SUITE_SIZE;
+writeFileSync(output, JSON.stringify(report, null, 2));
+console.log(JSON.stringify(report));

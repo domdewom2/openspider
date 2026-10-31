@@ -66,6 +66,20 @@ export function report(directory = "target/loadtest") {
     details: generator,
     passed: generator.elapsed_ms <= 600000,
   });
+  for (const required of [
+    "core",
+    ...(generator.rows === 5000000 ? ["core-1000000"] : []),
+  ]) {
+    if (!reports.some((r) => r.scenario === required))
+      reports.push({
+        scenario: `${required}-missing`,
+        engine: "core",
+        size: reports[0].size,
+        started_at: reports[0].started_at,
+        metrics: {},
+        passed: false,
+      });
+  }
   if (
     process.env.OS_PERF_REQUIRE_NATIVE === "1" &&
     !reports.some((r) => r.scenario === "native")
@@ -128,6 +142,7 @@ export function report(directory = "target/loadtest") {
               (p) =>
                 p.scenario === r.scenario &&
                 p.engine === r.engine &&
+                p.details?.seed === r.details?.seed &&
                 p.details?.fullSoak === r.details?.fullSoak &&
                 p.details?.configuredSeconds === r.details?.configuredSeconds,
             )

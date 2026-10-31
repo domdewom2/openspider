@@ -102,6 +102,18 @@ try {
 } catch {
   failed = true;
 }
+if (rows === "5000000") {
+  try {
+    run(process.execPath, ["apps/desktop/e2e/perf/core.mjs"], root, {
+      OS_PERF_FIXTURE: importFixture,
+      OS_PERF_ROWS: "1000000",
+      OS_PERF_CORE_LABEL: "core-1000000",
+      OS_PERF_CORE_SUITE_SIZE: "large",
+    });
+  } catch {
+    failed = true;
+  }
+}
 try {
   run(
     "npm",
