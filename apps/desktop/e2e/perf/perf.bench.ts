@@ -408,9 +408,7 @@ test("200 URL/s fixture with 20 crawl threads: click latency and event cap", asy
           200,
           "min",
         ),
-        ...(cpuPercent !== null
-          ? { idleUiCpuPercent: metric(cpuPercent, 15) }
-          : {}),
+        idleUiCpuPercent: metric(cpuPercent ?? NaN, 15),
       },
       {
         ...observed,
