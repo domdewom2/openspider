@@ -54,7 +54,10 @@ export function DetailFrame(props: DetailFrameProps) {
 }
 function RegularDetailFrame(props: DetailFrameProps) {
   const t = useT(); const shared = useDetailSelection(s => s.selection); const selection = props.selection ?? shared;
-  const crawl = useSession(s => s.crawl);
+  // Progress ticks do not change the detail selection or its configuration.
+  // Avoid rebuilding all retained grids for every new CrawlStatus object.
+  const crawlId = useSession(s => s.crawl?.crawlId);
+  const crawlMode = useSession(s => s.crawl?.mode);
   const [active, setActive] = useState<DetailTabId>("urlDetails"); const [error, setError] = useState<unknown>();
   const [showCrawlPath, setShowCrawlPath] = useState(false);
   const [features, setFeatures] = useState({ rendering: false, htmlStored: false, storeUncrawlable: false, positions: DEFAULT_POSITIONS });
@@ -85,7 +88,7 @@ function RegularDetailFrame(props: DetailFrameProps) {
         positions: [...new Set([...DEFAULT_POSITIONS, ...(cfg.link_positions?.rules ?? []).map(p => p.position)])] });
     }).catch(() => undefined);
     return () => controller.abort();
-  }, [selection.crawlId, crawl?.crawlId, configVersion]);
+  }, [selection.crawlId, crawlId, configVersion]);
   const actions: DetailActions = useMemo(() => ({
     navigate: requestNavigation,
     back: () => { document.dispatchEvent(new CustomEvent(DETAIL_BACK_EVENT)); },
@@ -100,16 +103,16 @@ function RegularDetailFrame(props: DetailFrameProps) {
   const tab = preferences.hidden.includes(active) ? "urlDetails" : active;
   // Retain only visited, bounded table panels for the current selection. Changing the
   // selection/crawl releases every old handle. Hidden panels do not poll for updates.
-  const retentionKey = JSON.stringify([selection.crawlId ?? crawl?.crawlId, selection.urlIds, selection.focus, selection.topTab]);
+  const retentionKey = JSON.stringify([selection.crawlId ?? crawlId, selection.urlIds, selection.focus, selection.topTab]);
   const [retained, setRetained] = useState<{ key: string; tabs: DetailTabId[] }>({ key: retentionKey, tabs: [] });
   const cacheable = ["inlinks", "outlinks", "images", "resources", "duplicates"].includes(tab);
   const visited = retained.key === retentionKey ? retained.tabs : [];
   const shown = [...new Set([...visited, ...(cacheable ? [tab] : [])])];
   useEffect(() => { setRetained({ key: retentionKey, tabs: shown }); }, [retentionKey, tab]);
   const Panel = panels[tab];
-  const effectiveSelection = { ...selection, crawlId: selection.crawlId ?? crawl?.crawlId };
+  const effectiveSelection = { ...selection, crawlId: selection.crawlId ?? crawlId };
   const panelProps: DetailPanelProps = { selection: effectiveSelection, actions, rendering: props.rendering ?? features.rendering,
-    htmlStored: props.htmlStored ?? features.htmlStored, storeUncrawlable: props.storeUncrawlable ?? features.storeUncrawlable, positions: props.positions ?? features.positions, listMode: props.listMode ?? crawl?.mode === "list" };
+    htmlStored: props.htmlStored ?? features.htmlStored, storeUncrawlable: props.storeUncrawlable ?? features.storeUncrawlable, positions: props.positions ?? features.positions, listMode: props.listMode ?? crawlMode === "list" };
   const [configure, setConfigure] = useState(false);
   const layout = { order: preferences.order, hidden: preferences.hidden, mandatory: "urlDetails" };
   const reset = () => { if (!loaded) return; savePreferences({ order: [], hidden: [] }); setActive("urlDetails"); };

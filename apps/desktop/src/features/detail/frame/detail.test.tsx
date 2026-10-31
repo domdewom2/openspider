@@ -56,6 +56,29 @@ beforeEach(async () => {
 afterEach(async () => { cleanup(); await settle(0); setClient(null); vi.useRealTimers(); vi.restoreAllMocks(); setDetailSelection({ urlIds: [] }); useSession.setState({ seq: -1, crawl: null, views: {} }); });
 
 describe("detail frame and URL properties", () => {
+  // spec: UI-018
+  // spec: UI-145
+  it("keeps detail panels stable across crawl progress ticks", async () => {
+    const crawl = { crawlId: "fixture", mode: "spider" as const, phase: "running" as const,
+      crawled: 10, queued: 90, discovered: 100, percent: 10, rate: 10, avgRate: 10,
+      elapsedS: 1, pausedS: 0, activeThreads: 4,
+      owner: { kind: "app" as const, live: true, controllable: true, pid: 1 } };
+    act(() => useSession.setState({ crawl }));
+    const panel = vi.fn(() => <p>Selected URL fixture</p>);
+    render(<DetailFrame selection={selection} actions={actions} plugins={[{ id: "urlDetails", Component: panel }]} />);
+    await settle();
+    const before = panel.mock.calls.length;
+    for (let i = 1; i <= 10; i++) {
+      act(() => useSession.setState({ crawl: { ...crawl, crawled: 10 + i, percent: 10 + i, elapsedS: 1 + i } }));
+      await settle(0);
+    }
+    expect(panel).toHaveBeenCalledTimes(before);
+    // A new crawl still updates the panel and reloads its configuration.
+    act(() => useSession.setState({ crawl: { ...crawl, crawlId: "next-fixture" } }));
+    await settle();
+    expect(panel.mock.calls.length).toBeGreaterThan(before);
+  });
+
   // spec: UI-030
   it("keeps the shell default and registers details as a separate region outside the upper table", async () => {
     const scaffold = render(<App />); await settle();
