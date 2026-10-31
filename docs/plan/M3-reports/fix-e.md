@@ -530,3 +530,50 @@ Playwright-Ausgaben im Server-Worktree danach entfernt.
 
 **Offen:** Windows-x64-Bestätigung von `cmd_mcp_service` und linux-webkit-ui-e2e
 im CI des Orchestrators.
+
+### Nachtrag: Pause-Latenz (CI 41239868087)
+
+CI auf `2f4a4cab`: windows-x64 `cmd_mcp_service` grün. In ui-e2e scheiterte
+`beta/control.spec.ts:6` jedoch auf windows-chromium und linux-webkit, jeweils auch im
+Retry. Die Anhänge `pause-ack-ms` aus den Traces: Chromium/Windows 3.391 und 3.648 ms
+(IPC 2.439 und 2.558 ms), WebKit/Linux 3.111 und 3.159 ms (IPC 1.549 und 1.622 ms).
+
+**Abgleich mit `e4fb1fe1`.** Gleiche UI, nur die Bridge ausgetauscht; die Binärdateien
+wurden abwechselnd gemessen (Server, kein Retry). Seriell, 10× je Engine: alt
+Chromium Median 1.126 ms (IPC 410), WebKit 1.224 ms (IPC 636); Stand `2f4a4cab`
+Chromium 1.146 ms (IPC 477), WebKit 1.236 ms (IPC 594). Unter Last (6 Worker,
+3 Runden à 8, abwechselnd) gab es keinen systematischen Unterschied; die Mediane
+überlappen. Ein Lauf von `2f4a4cab` lag bei 3.032 ms; alte Läufe erreichten bis zu
+2.834 ms. Die Stack-Commits verursachen also keine messbare Regression; das
+3-s-Budget war schon vorher auf langsamen Runnern knapp.
+
+**Ursache des großen Anteils.** Eine temporäre Zeitmessung im Pause-Pfad (nicht
+committet) zeigte: Der größte Block liegt zwischen Schleifenende und dem Ende des
+laufenden Workers. Bei gesetztem `max_urls_per_sec` lässt der Host-Pacer die nächste
+URL durch. Danach wartete der Worker in jedem Intervall rund 440 ms im Rate-Limiter
+des Fetchers (der robots.txt-Abruf belegt dort einen Slot zusätzlich). Diese Wartezeit
+kann eine Pause nicht abbrechen: Die Quittung wartete bis zum nächsten Slot, und
+**danach begann der Abruf noch**, obwohl die Pause schon angefordert war (CRAWL-126).
+
+**Änderung (`94db9704`).** `Fetch::start_delay()` ist eine additive Trait-Methode
+(Vorgabe: null). `HttpFetcher` meldet darüber die offene Wartezeit seines Limiters,
+ohne einen Slot zu reservieren; `ProtectedFetcher` und `PrimedFetch` reichen sie durch.
+Der Worker wartet diese Zeit mit dem abbrechbaren Schlaf des Host-Pacers und stellt
+die URL bei Pause oder Stopp zurück. Rate, Test und 3-s-Budget bleiben unverändert.
+Neue Regression `pause_cancels_the_wait_for_the_shared_start_slot`
+(CRAWL-126/-113): Vorher startet die zurückgestellte Seite 3 s nach der Pause (rot),
+nachher startet nach der Pause kein Abruf (grün).
+
+**Messung nachher** (seriell, 10× je Engine): Chromium Median 932 ms (IPC 301,
+max. 1.680), WebKit 1.166 ms (IPC 410, max. 1.559). Unter Last, abwechselnd mit alt:
+Chromium-IPC-Median 292/329 statt 810/1.001 ms. Der IPC-Wert von WebKit unter Last
+blieb ähnlich (893–1.234 ms). Laut Backendmessung dauerte die Pause dort nur
+150–550 ms; den Rest verbringt die Antwort im Browser bei sechs parallelen
+WebKit-Instanzen, außerhalb des Pause-Pfads.
+
+| Prüfung (Stand `94db9704`) | Ergebnis |
+| --- | --- |
+| fmt, clippy `-D warnings` | grün |
+| `cargo test --workspace` | 4.095 bestanden, 0 Fehler, 49 Ignores |
+| `e2e/beta` Chromium + WebKit, 2 Worker | 28/28 |
+| `control.spec.ts` 10× seriell je Engine | 10/10 und 10/10 |
