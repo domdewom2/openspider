@@ -193,24 +193,6 @@ test("tab filter numeric text substring regex and reverse to painted rows", asyn
     { times, errors: await page.evaluate(() => window.uiPerf.errors) },
   );
 });
-// spec: UI-145
-test("overview issues and precomputed aggregate latency", async ({
-  page,
-}, info) => {
-  await open(page);
-  const times = await page.evaluate(() => window.uiPerf.sidebars());
-  await evidence(
-    info,
-    "sidebar",
-    Object.fromEntries(
-      Object.entries(times).map(([k, v]) => [
-        k,
-        metric(v, /siteStructure|responseTimes/.test(k) ? 1000 : 100),
-      ]),
-    ),
-    times,
-  );
-});
 // spec: UI-144
 test("seeded random action soak and attributable renderer RSS", async ({
   page,

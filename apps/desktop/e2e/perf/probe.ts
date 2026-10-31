@@ -152,22 +152,18 @@ export function installPerf({
       );
       return result;
     },
-    async sidebars() {
-      const times: Record<string, number> = {};
-      for (const [cmd, args] of [
-        ["sidebar.overview", {}],
-        ["sidebar.issues", {}],
-        [
-          "sidebar.siteStructure",
-          { view: "responseCodes", offset: 0, limit: 200 },
-        ],
-        ["sidebar.responseTimes", { scope: "all" }],
-      ] as const) {
-        const start = performance.now();
-        await client.invoke(cmd, args);
-        times[cmd] = performance.now() - start;
-      }
-      return times;
+    async rpcLatency(
+      name: "overview" | "issues" | "siteStructure" | "responseTimes",
+    ) {
+      const args =
+        name === "siteStructure"
+          ? { view: "responseCodes", offset: 0, limit: 200 }
+          : name === "responseTimes"
+            ? { scope: "all" }
+            : {};
+      const start = performance.now();
+      await client.invoke(`sidebar.${name}`, args);
+      return performance.now() - start;
     },
     async action(seed: number) {
       const row = (seed >>> 0) % Math.max(1, api.snapshot().total);
@@ -214,7 +210,9 @@ declare global {
       record: Window["perfGrid"]["record"];
       jump(row: number): ReturnType<Window["perfGrid"]["jump"]>;
       operations(): Promise<Record<string, number>>;
-      sidebars(): Promise<Record<string, number>>;
+      rpcLatency(
+        name: "overview" | "issues" | "siteStructure" | "responseTimes",
+      ): Promise<number>;
       violations(): number;
       action(seed: number): ReturnType<Window["perfGrid"]["jump"]>;
       ticks(): number[];
