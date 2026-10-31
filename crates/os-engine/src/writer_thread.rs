@@ -870,11 +870,12 @@ mod tests {
             release: std::sync::mpsc::Receiver<()>,
         }
         impl CrawlSink for GatedSink {
-            fn write(&mut self, _: WriteBatch) -> Result<(), StoreError> {
+            fn write(&mut self, batch: WriteBatch) -> Result<(), StoreError> {
                 if let Some(entered) = self.entered.take() {
                     let _ = entered.send(());
                     self.release.recv().unwrap();
                 }
+                drop(batch);
                 Ok(())
             }
             fn checkpoint(&mut self) -> Result<(), StoreError> {
@@ -882,12 +883,12 @@ mod tests {
             }
         }
         fn fixture(bytes: u64) -> WriteBatch {
-            let mut batch = WriteBatch {
-                meta: vec![(String::new(), String::new())],
-                ..Default::default()
-            };
+            let mut batch = page_batch(1);
             let overhead = estimate_bytes(&batch);
-            batch.meta[0].1 = "x".repeat((bytes - overhead) as usize);
+            batch.pages[0].html = Some(os_model::PageHtml {
+                encoding: None,
+                body: vec![b'x'; (bytes - overhead) as usize],
+            });
             assert_eq!(estimate_bytes(&batch), bytes);
             batch
         }
@@ -922,7 +923,7 @@ mod tests {
         tx.flush().await.unwrap();
         assert_eq!(tx.shared.budget.bytes.load(Ordering::SeqCst), 0);
         drop(tx);
-        writer.finish().unwrap();
+        assert_eq!(writer.finish().unwrap().pages, 1);
     }
 
     // spec: PERF-003, PERF-005
