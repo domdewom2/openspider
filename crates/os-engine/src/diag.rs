@@ -102,6 +102,26 @@ series!(
 );
 
 counters!(
+    mem_in_flight_bytes_max,
+    mem_in_flight_limit_bytes,
+    mem_writer_batch_limit_bytes,
+    byte_wait_ns,
+    mem_fetch_entries,
+    mem_fetch_bytes,
+    mem_fetch_entries_max,
+    mem_fetch_bytes_max,
+    mem_parse_entries,
+    mem_parse_bytes,
+    mem_parse_entries_max,
+    mem_parse_bytes_max,
+    mem_render_entries,
+    mem_render_bytes,
+    mem_render_entries_max,
+    mem_render_bytes_max,
+    mem_writer_backlog_entries,
+    mem_writer_backlog_bytes,
+    mem_writer_backlog_bytes_max,
+    mem_writer_backlog_entries_max,
     items,
     item_ns,
     host_wait_ns,
@@ -321,6 +341,56 @@ pub fn record_batch_pages(pages: usize) {
         _ => &STATS.w_b_gt1000,
     };
     inc(bucket);
+}
+
+/// Scoped live-stage accounting, sampled on every entry and exit (not a timer).
+pub(crate) struct StageGuard {
+    entries: &'static AtomicU64,
+    bytes_counter: &'static AtomicU64,
+    bytes: u64,
+    bytes_max: &'static AtomicU64,
+}
+impl StageGuard {
+    pub(crate) fn new(
+        entries: &'static AtomicU64,
+        bytes_counter: &'static AtomicU64,
+        entries_max: &AtomicU64,
+        bytes_max: &'static AtomicU64,
+        bytes: u64,
+    ) -> Self {
+        peak(entries_max, entries.fetch_add(1, Ordering::Relaxed) + 1);
+        peak(
+            bytes_max,
+            bytes_counter.fetch_add(bytes, Ordering::Relaxed) + bytes,
+        );
+        Self {
+            entries,
+            bytes_counter,
+            bytes,
+            bytes_max,
+        }
+    }
+    pub(crate) fn resize(&mut self, bytes: u64) {
+        if bytes > self.bytes {
+            peak(
+                self.bytes_max,
+                self.bytes_counter
+                    .fetch_add(bytes - self.bytes, Ordering::Relaxed)
+                    + bytes
+                    - self.bytes,
+            );
+        } else {
+            self.bytes_counter
+                .fetch_sub(self.bytes - bytes, Ordering::Relaxed);
+        }
+        self.bytes = bytes;
+    }
+}
+impl Drop for StageGuard {
+    fn drop(&mut self) {
+        self.entries.fetch_sub(1, Ordering::Relaxed);
+        self.bytes_counter.fetch_sub(self.bytes, Ordering::Relaxed);
+    }
 }
 
 #[cfg(test)]
