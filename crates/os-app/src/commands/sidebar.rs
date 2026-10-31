@@ -127,6 +127,36 @@ pub(crate) async fn overview_facts(
     }
     Ok(facts)
 }
+
+/// Background precomputation after opening: a few tabs per step, each step stored before the
+/// next one starts, so an interrupted pass (closed crawl, ended process) resumes where it stopped.
+pub(crate) async fn precompute_overview(
+    app: &App,
+    s: &crate::runtime::sessions::SessionInfo,
+    cancel: os_model::CancelToken,
+) -> Result<(), CmdError> {
+    loop {
+        let cfg = s.config.clone();
+        let done = app
+            .read_pool()
+            .run_cached(
+                s.key.clone(),
+                "overview",
+                cancel.clone(),
+                move |file, cancel| Ok(os_analyze::views::overview_progress(file, &cfg, cancel, 2)),
+            )
+            .await?
+            .map_err(view_error)?;
+        app.write_queue()
+            .submit_file(&s.key, |file| {
+                os_analyze::views::persist_facts(file).map_err(view_error)
+            })
+            .await?;
+        if done || cancel.is_cancelled() {
+            return Ok(());
+        }
+    }
+}
 fn explain<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let args: IssueExplainArgs = parse_args(args)?;

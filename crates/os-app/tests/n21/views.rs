@@ -288,12 +288,22 @@ async fn opening_a_saved_crawl_stores_derivable_view_facts_for_the_next_open() {
         json!({"view":"responseCodes","offset":0,"limit":200}),
     )
     .await;
-    let expected = ["n21:membership", "n21:overview", "n21:sidebar"];
+    // Every tab's counts, the summary, the shared memberships and the sidebar aggregates.
+    let tabs = {
+        let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+        os_analyze::tabs::configured_for_file(&CrawlConfig::default(), &file).len()
+    };
+    let complete = |keys: &[String]| {
+        keys.iter().filter(|k| k.starts_with("n21:counts:")).count() == tabs
+            && ["n21:membership", "n21:sidebar", "n21:summary"]
+                .iter()
+                .all(|k| keys.iter().any(|s| s == k))
+    };
     let deadline = std::time::Instant::now() + Duration::from_secs(20);
-    while stored_keys(&path) != expected && std::time::Instant::now() < deadline {
+    while !complete(&stored_keys(&path)) && std::time::Instant::now() < deadline {
         tokio::time::sleep(Duration::from_millis(20)).await;
     }
-    assert_eq!(stored_keys(&path), expected);
+    assert!(complete(&stored_keys(&path)), "{:?}", stored_keys(&path));
 
     // A second app serves the same answers for the stored data version.
     let dir = tempfile::tempdir().unwrap();

@@ -262,7 +262,7 @@ pub fn on_startup(app: &App) {
             }
             if overview && !token.is_cancelled() {
                 if let Err(error) =
-                    super::sidebar::overview_facts(&app, &session, token.clone()).await
+                    super::sidebar::precompute_overview(&app, &session, token.clone()).await
                 {
                     tracing::debug!(?error, "Vorberechnung der Übersicht nicht abgeschlossen");
                 }
