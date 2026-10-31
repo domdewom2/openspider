@@ -81,5 +81,15 @@
     "completed": false,
     "log": "workspace-v2.log.gz",
     "last_test_binary": "pending_w1_e04"
+  },
+  "compact_workspace": {
+    "exit_status": 0,
+    "passed": 4029,
+    "failed": 0,
+    "ignored": 49,
+    "test_binary_elapsed_seconds_sum": 1218.05,
+    "workspace": true,
+    "exclusions": [],
+    "source_commit": "68bbc2320598b6ae15cce6107ab26b53d98cdc8f"
   }
 }
