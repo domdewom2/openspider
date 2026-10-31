@@ -55,6 +55,10 @@ pub const BATCH_MAX_WAIT_BACKLOG: Duration = Duration::from_millis(500);
 /// Nachrichten, die im Kanal warten dürfen, bevor die Worker blockieren.
 pub const CHANNEL_CAPACITY: usize = 256;
 
+/// Nach großen Batches ungenutzte Allocator-Seiten zurückgeben (PERF-003).
+/// Kleine normale Commits benötigen diesen zusätzlichen Systemaufruf nicht.
+const HEAP_RECLAIM_MIN_BATCH_BYTES: u64 = 8 * 1024 * 1024;
+
 enum Msg {
     Batch(Box<WriteBatch>),
     /// Antwort: `true` = alles geschrieben, `false` = die Senke hat einen Fehler gemeldet.
@@ -432,13 +436,26 @@ fn write_out(
         return; // nach einem Fehler nur noch verwerfen
     }
     diag::peak(&diag::STATS.w_pages_max, n as u64);
-    diag::peak(
-        &diag::STATS.mem_writer_batch_bytes_max,
-        estimate_bytes(&taken),
-    );
+    let heap_bytes = estimate_bytes(&taken);
+    diag::peak(&diag::STATS.mem_writer_batch_bytes_max, heap_bytes);
     let completes = completes_crawl(&taken);
     let t = Instant::now();
     let written = sink.write(taken);
+    if heap_bytes >= HEAP_RECLAIM_MIN_BATCH_BYTES {
+        // Die Senke hat den Batch konsumiert; dessen freigegebene Puffer können
+        // jetzt zurückgegeben werden, ohne laufende Seiten oder Caches zu ändern.
+        let reclaim_at = Instant::now();
+        let released = os_store::profile::reclaim_batch_heap();
+        diag::inc(&diag::STATS.w_heap_reclaims);
+        if released {
+            diag::inc(&diag::STATS.w_heap_reclaim_successes);
+        }
+        diag::add_max(
+            &diag::STATS.w_heap_reclaim_ns,
+            &diag::STATS.w_heap_reclaim_max_ns,
+            reclaim_at,
+        );
+    }
     let write_ns = diag::add_max(&diag::STATS.w_write_ns, &diag::STATS.w_write_max_ns, t);
     if completes {
         // Der Schreibaufruf mit `Completed` (Endbatch, K-80): Daten, Indexaufbau und Commit.
