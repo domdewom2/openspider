@@ -1,0 +1,161 @@
+name: Installed build smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'Release run ID (empty = this run; use platform IDs for separate builds)'
+        type: string
+        default: ''
+      macos_run_id:
+        description: 'Optional release-macos run ID'
+        type: string
+        default: ''
+      windows_run_id:
+        description: 'Optional release-windows run ID'
+        type: string
+        default: ''
+      macos_arm_artifact:
+        description: 'macOS arm64 DMG artifact'
+        type: string
+        default: openspider-macos-aarch64
+      macos_intel_artifact:
+        description: 'macOS x64 DMG artifact'
+        type: string
+        default: openspider-macos-x86_64
+      windows_artifact:
+        description: 'Windows x64 artifact containing MSI and NSIS'
+        type: string
+        default: openspider-windows-x86_64
+  workflow_call:
+    inputs:
+      run_id:
+        type: string
+        default: ''
+      macos_run_id:
+        type: string
+        default: ''
+      windows_run_id:
+        type: string
+        default: ''
+      macos_arm_artifact:
+        type: string
+        default: openspider-macos-aarch64
+      macos_intel_artifact:
+        type: string
+        default: openspider-macos-x86_64
+      windows_artifact:
+        type: string
+        default: openspider-windows-x86_64
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  CARGO_INCREMENTAL: '0'
+  CARGO_BUILD_JOBS: '4'
+  OPENSPIDER_SECRET_STORE: memory
+  OPENSPIDER_DISABLE_UPDATE_CHECK: '1'
+
+jobs:
+  installed:
+    name: Installed smoke (${{ matrix.runner }})
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel, windows-latest, windows-11-arm]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+          # Windows: bewusst x64, einheitlich mit emulierter CLI.
+          architecture: ${{ runner.os == 'Windows' && 'x64' || runner.arch == 'ARM64' && 'arm64' || 'x64' }}
+      - name: Release artifact (DMG or both x64 Windows installers)
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ startsWith(matrix.runner, 'macos') && (inputs.macos_run_id || inputs.run_id || github.run_id) || (inputs.windows_run_id || inputs.run_id || github.run_id) }}
+          name: ${{ matrix.runner == 'macos-15' && inputs.macos_arm_artifact || matrix.runner == 'macos-15-intel' && inputs.macos_intel_artifact || inputs.windows_artifact }}
+          path: incoming
+      - name: Unsignierte Builds zulässig (keine Schlüssel erforderlich)
+        run: echo 'Signatur-Gate separat; unsigniert erlaubt. Diese Suite prüft Installation und Laufzeit.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Fixture server bauen (kein Ersatz für die installierte CLI)
+        run: |
+          rustup show active-toolchain
+          cargo build -p os-testsite -j 4 --locked
+      - name: System-Chromium bestimmen (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          set -euo pipefail
+          # Runner-provided browser, never part of the OpenSpider bundle.
+          chrome=$(mdfind 'kMDItemCFBundleIdentifier == "com.google.Chrome"' | head -n 1)
+          if [[ -z "$chrome" ]]; then
+            chrome=$(find /Applications -maxdepth 1 -name 'Google Chrome.app' -print -quit)
+          fi
+          test -n "$chrome"
+          test -x "$chrome/Contents/MacOS/Google Chrome"
+          echo "OPENSPIDER_CHROMIUM=$chrome/Contents/MacOS/Google Chrome" >> "$GITHUB_ENV"
+      - name: System-Chromium bestimmen (Windows, auch ARM)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $paths = @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\chrome.exe',
+                     'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe',
+                     'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\App Paths\msedge.exe')
+          $browser = @($paths | Where-Object { Test-Path $_ } | ForEach-Object { (Get-Item $_).GetValue('') } |
+                       Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1)
+          if ($browser.Count -ne 1) { throw 'No runner-provided Chromium/Edge in App Paths' }
+          "OPENSPIDER_CHROMIUM=$($browser[0])" >> $env:GITHUB_ENV
+      - name: DMG installieren, Smoke, deinstallieren
+        if: runner.os == 'macOS'
+        run: bash scripts/smoke/macos.sh incoming "$OPENSPIDER_CHROMIUM" smoke-results
+      - name: x64 MSI und NSIS installieren, Smoke, deinstallieren (ARM unter Emulation)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/smoke/windows.ps1 -Artifacts incoming -Testsite target/debug/os-testsite.exe -Chromium $env:OPENSPIDER_CHROMIUM
+      - name: Durchsatz im Job-Summary
+        if: success()
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as out:
+              for path in Path('smoke-results').glob('*/result.json'):
+                  r = json.loads(path.read_text())
+                  out.write(f"\n{path.parent.name}: {r['median_urls_per_second']:.2f} URLs/s (Median, 3 Läufe); {r['platform']}, {r['processor']}, {r['cpus']} CPUs.\n")
+              out.write('\nARM/x64-Vergleich folgt im compare-Job; ≥50 % nur bei vergleichbarer Hardware (K3-10).\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: installed-smoke-${{ matrix.runner }}
+          path: smoke-results/
+          if-no-files-found: warn
+
+  compare:
+    needs: installed
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: installed-smoke-*
+          path: results
+      - name: Smoke-Suite Unit-Tests
+        run: python3 -m unittest discover -s tests/smoke -v
+      - name: Artifact-Verzeichnisse auf Runner-Namen abbilden
+        run: |
+          for folder in results/installed-smoke-*; do
+            mv "$folder" "results/${folder##*/installed-smoke-}"
+          done
+      - name: Bytevergleich zur x64-Referenz und Emulationsdurchsatz
+        run: python3 scripts/smoke/compare.py results --summary "$GITHUB_STEP_SUMMARY"
