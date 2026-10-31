@@ -58,6 +58,7 @@ NICHT_M2 = {
 
 # Gewollte Überschneidungen innerhalb einer Welle (Paar → Grund).
 ERLAUBT = {
+    frozenset({"M2-N04", "M2-N12"}): "Integrationsrunde 17: N04 bereits integriert; N12-Owns-Ausweitung auf UpperTable und e2e/* vom Orchestrator ausdrücklich bestätigt",
     frozenset({"M2-U31", "M2-U32"}): "e2e-b/** ohne perf (U32) vs. e2e-b/perf/** (U31)",
     frozenset({"M2-N07", "M2-N08"}): "os-model config.rs nur SpiderConfig (N07) vs. nur ContentAreaConfig (N08); Schema und default.osconfig nur Neuerzeugung (K2-83)",
 }
