@@ -70,6 +70,28 @@ Schreibpfad großer Crawls (M1-P32, K-74 bis K-77; Messwerte in `docs/plan/M1-ac
 
 **Diagnosezähler des Schreibpfads (M1-N22).** `os_store::sink::diag` zählt je 100 Batches (16 Eimer, der letzte nimmt den Rest) Aufbau- und Commitdauer (Summe, Maximum), die Aufbauzeit je Anweisungsgruppe (`urls` einfügen, `urls` aktualisieren, `links`, `url_counters`, `queue`, Rest), die Länge der `-wal`-Datei und die Seiten, die der Cache nachlud oder ins WAL schrieb (`sqlite3_db_status`): `commit_ns_h00` … `h15`, `g_links_ns_h00` … (Tabelle im Kopf von `sink.rs`). `os_engine::diag` zählt je Nachladevorgang der Warteschlange Dauer, Zeilen und Wartezeit auf `writer.flush()` (Summe, Maximum, Verlauf je 10 Nachladevorgänge `q_refill_*_r00` … `r15`) sowie die Zeit, in der ein Pop wegen fehlendem Block leer ausging (`q_starved_*`). `os-loadtest` gibt beide ohne Änderung im `diag`-Block aus; `docs/plan/M1-acceptance/loadtest/probe-n22/summarize.py` liest sie. Diagnoseschalter (Standard aus): `OS_STORE_WAL_EXPLICIT=1`, `OS_STORE_WAL_BOUNDS=min:max`, `OS_STORE_BACKGROUND_CHECKPOINT=1` (K-76), `OS_ENGINE_REFILL_NOFLUSH=1` (das Nachladen wartet nicht auf `writer.flush()`; die Messung zeigt keinen Unterschied: 0 Starvation, Wartezeit 0,3 bis 0,5 s je Nachladevorgang laufen im Hintergrund).
 
+**Near-Duplicates (M2-N16, PERF-007/ONPAGE-144).** Bis einschließlich
+1.048.576 gespeicherten Signaturen und 64 MiB HTML-Hashtext nutzt die Analyse
+kompakte Page-Records und höchstens `min(8, available_parallelism())` LSH-Worker.
+`OPENSPIDER_NEAR_DUP_THREADS` ist ausschließlich ein Test-/Mess-Override nach
+unten; `RAYON_NUM_THREADS` hat keinen Einfluss. Überschreitet bereits die Anzahl
+aller `minhash`-Zeilen die Grenze (auch vor dem HTML-/Indexierbarkeitsfilter),
+oder überschreiten die geladenen Hashtexte 64 MiB, wird auf SQLite-TEMP-Banding
+zurückgefallen. Bei 90 % Schwelle entstehen dort 16 Bandzeilen je Seite samt
+Lookup-Index: allein Bandbytes plus 32-Byte-Hash ergeben 1.024 Byte je Seite,
+noch ohne IDs, SQLite-Records, B-Baum-Seiten und die Kopie im Lookup-Index.
+Daher mehrere GB freien Platz im SQLite-Tempbereich für Millionenbestände
+vorsehen; hinzu kommen temporäre Ergebnispaare und die Publikation im Crawl-WAL.
+Auch der schnelle Pfad hält Ergebnispaare in SQLite TEMP. Der tatsächliche Bedarf
+hängt von Schwelle, Hashlängen und Paarzahl ab und wurde nicht als Plattenbudget
+vermessen. Beide Pfade publizieren atomar mit `ORDER BY url_id, other_id`.
+Der Disk-Fallback erhält die Ergebnisse, garantiert aber weder <600 s noch
+<2 GB für beliebige Bestände oberhalb der Cachegrenze: Kandidaten je Seite und
+Ergebnispaare können stark wachsen, letztere bis quadratisch. Backlog-Vorschlag:
+blockweises externes Sortieren der Bänder mit begrenzten Merge-Puffern und
+blockweiser Kandidatenprüfung; dabei die exakte Paarmenge und f64-Bits weiterhin
+gegen das N14-Orakel prüfen. Siehe `docs/plan/M2-reports/n16.md`.
+
 ## Desktop-App
 
 `apps/desktop`: Tauri v2 + React + TypeScript + Vite; Konzept und Entscheidungen: `docs/plan/M2-ui-concept.md`.
