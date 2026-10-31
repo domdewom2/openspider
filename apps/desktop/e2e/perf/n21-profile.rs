@@ -22,6 +22,15 @@ fn main() {
         println!("filters={}", c.len());
         return;
     }
+    if args.get(2).is_some_and(|v| v == "counts-tabs") {
+        let tabs = os_analyze::tabs::configured_for_file(&cfg, &file);
+        for tab in &tabs {
+            let at = Instant::now();
+            let c = views::filter_counts_in(std::slice::from_ref(tab), &file, &cfg).unwrap();
+            mark(&format!("counts.{}[{}]", tab.id, c.len()), at);
+        }
+        return;
+    }
     if args.get(2).is_some_and(|v| v == "sidebar") {
         let at = Instant::now();
         os_analyze::aggregates::live::refresh(&file, &cfg).unwrap();
