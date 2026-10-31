@@ -14,7 +14,7 @@ Alle folgenden Quellen stammen aus Commit
 | `schema-v3/crawl.ospider` | Migrationen 0001–0003, Konfiguration v2, Zusatzfakt `head.title_outside=1` |
 | `schema-v4/crawl.ospider` | Migrationen 0001–0004, Konfiguration v2, gleicher Zusatzfakt |
 | `schema-v5/crawl.ospider` | Migrationen 0001–0005, Konfiguration v2, gleicher Zusatzfakt in kompakter Speicherung |
-| `schema-v*/internal_all.csv` | Einmalig mit aktueller CLI aus obigen Dateien exportiert; eingecheckte Sollwerte, Normalisierung gemäß Spec 06 Abschnitt 0 durch `os_testsite::golden::normalize` |
+| `schema-v*/internal_all.csv` | Einmalig mit aktueller CLI aus obigen Dateien exportiert; Erwartung nach M2-Integration (int-e), K2-63; eingecheckte Sollwerte, Normalisierung gemäß Spec 06 Abschnitt 0 durch `os_testsite::golden::normalize` |
 | `config-v1/profile.osconfig` | Unverändert aus `tests/fixtures/config/v1/default.osconfig` |
 | `config-v2/profile.osconfig` | Unverändert aus `tests/fixtures/config/default.osconfig` |
 | `app-v1/basic.ospreset` | Unverändert aus `tests/fixtures/out-m2-export/basic.ospreset` |
@@ -31,6 +31,10 @@ python3 tests/fixtures/migrations/generate.py
 CARGO_INCREMENTAL=0 timeout 3600s nice -n 10 cargo test --locked -j 4 -p os-store -p os-model --test compat_archive
 CARGO_INCREMENTAL=0 UPDATE_GOLDEN=1 timeout 3600s nice -n 10 cargo test --locked -j 4 -p os-cli --test compat_archive
 ```
+
+Die CSV-Erwartung nach M2-Integration (int-e), K2-63 ergänzt gemäß ONPAGE-019
+vier leere Inhaltsspalten und setzt gemäß ONPAGE-110 `Meta Keywords 2 Length`
+für die HTML-200-Seite von leer auf `0`. Die Archivdatenbanken bleiben unverändert.
 
 Goldens nur mit begründeter Prüfung neu erzeugen. Normaler Testlauf schreibt keine
 Sollwerte. SQLite-Dateien sind jeweils ≤1 MiB; die Erzeugung prüft diese Grenze.
