@@ -195,6 +195,60 @@ mod imp {
     }
 }
 
+/// First observation of the final sampled process high-water mark. This is a
+/// diagnostic timestamp (25 ms resolution), independent of the runner RSS gate.
+pub(crate) struct PeakMonitor {
+    stop: std::sync::mpsc::Sender<()>,
+    thread: std::thread::JoinHandle<Vec<(&'static str, u64)>>,
+}
+impl PeakMonitor {
+    pub(crate) fn start() -> Self {
+        let (stop, rx) = std::sync::mpsc::channel();
+        let thread = std::thread::spawn(move || {
+            let started = std::time::Instant::now();
+            let mut peak = 0;
+            let mut at = 0;
+            let mut stages = Vec::new();
+            loop {
+                if let Some(bytes) = peak_rss_self().filter(|&bytes| bytes > peak) {
+                    peak = bytes;
+                    at = started.elapsed().as_millis() as u64;
+                    stages = os_engine::diag::snapshot()
+                        .into_iter()
+                        .filter(|(name, _)| {
+                            matches!(
+                                *name,
+                                "mem_fetch_entries"
+                                    | "mem_fetch_bytes"
+                                    | "mem_parse_entries"
+                                    | "mem_parse_bytes"
+                                    | "mem_render_entries"
+                                    | "mem_render_bytes"
+                                    | "mem_writer_backlog_entries"
+                                    | "mem_writer_backlog_bytes"
+                            )
+                        })
+                        .collect();
+                }
+                if rx.recv_timeout(std::time::Duration::from_millis(25))
+                    != Err(std::sync::mpsc::RecvTimeoutError::Timeout)
+                {
+                    break;
+                }
+            }
+            stages.push(("sampled_peak_rss_bytes", peak));
+            stages.push(("sampled_peak_at_ms", at));
+            stages.push(("sample_interval_ms", 25));
+            stages
+        });
+        Self { stop, thread }
+    }
+    pub(crate) fn finish(self) -> Vec<(&'static str, u64)> {
+        let _ = self.stop.send(());
+        self.thread.join().unwrap_or_default()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

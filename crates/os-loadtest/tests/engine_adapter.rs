@@ -341,3 +341,39 @@ fn a_child_process_reports_its_peak_rss_to_the_parent() {
     let rss = exit.peak_rss_bytes.expect("Spitzen-RSS des Kindes");
     assert!((1_000_000..2_000_000_000).contains(&rss), "{rss}");
 }
+
+// spec: PERF-003
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn n20_slow_fixture_emits_additive_stage_watermarks_and_peak_observation() {
+    fn fixture(config: &mut SyntheticConfig) {
+        config.links_per_page = 30;
+    }
+    let d = def("perf-003", "PERF-003", 64, fixture);
+    let rep = runner::run(&d, Size::Small, TINY, &crawler())
+        .await
+        .unwrap();
+    assert_eq!(metric(&rep, "crawler_urls_crawled"), 64);
+    let diag = metric(&rep, "crawler_diag");
+    for name in [
+        "engine_mem_fetch_entries_max",
+        "engine_mem_fetch_bytes_max",
+        "engine_mem_parse_entries_max",
+        "engine_mem_parse_bytes_max",
+        "engine_mem_writer_backlog_entries_max",
+        "engine_mem_writer_backlog_bytes_max",
+        "engine_mem_in_flight_limit_bytes",
+        "memory_sampled_peak_rss_bytes",
+    ] {
+        assert!(
+            diag[name]
+                .as_u64()
+                .unwrap_or_else(|| panic!("{name}: {diag}"))
+                > 0,
+            "{name}"
+        );
+    }
+    assert_eq!(diag["engine_mem_render_entries_max"], 0);
+    assert_eq!(diag["memory_sample_interval_ms"], 25);
+    assert!(diag["memory_sampled_peak_at_ms"].is_u64());
+    assert!(diag["memory_mem_writer_backlog_bytes"].is_u64());
+}

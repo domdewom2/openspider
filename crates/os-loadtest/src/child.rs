@@ -133,6 +133,7 @@ pub async fn run(args: ChildArgs) -> Result<i32, String> {
     let fetch_cfg = FetchConfig::from_crawl_config(&cfg, &*deps.secrets, deps.clock.clone())
         .map_err(|e| e.to_string())?;
     let fetcher = Arc::new(HttpFetcher::new(fetch_cfg).map_err(|e| e.to_string())?);
+    let peak_monitor = crate::rss::PeakMonitor::start();
     let handle = start_crawl(
         fetcher,
         CrawlRequest {
@@ -174,6 +175,7 @@ pub async fn run(args: ChildArgs) -> Result<i32, String> {
             say(&diag_line(group, &values));
         }
     }
+    say(&diag_line("memory", &peak_monitor.finish()));
     say(&diag_line("engine", &os_engine::diag::snapshot()));
     say(&diag_line("store", &os_store::sink::diag::snapshot()));
     if args.slow_sink_ms.is_some() {
