@@ -86,10 +86,15 @@ fn plan_tab<'a>(
     }
     // UI-145: the ID range lets disjoint parts of the crawl be counted on several connections.
     let query = population.map(|population| {
-        let sql = format!(
-            "SELECT {} FROM {URLS_FROM} WHERE {population}",
-            sums.join(", ")
-        );
+        let sums = sums.join(", ");
+        // UI-145: the counter join costs a primary-key probe per URL; only tabs whose
+        // population or filters read `c` need it (conservative textual test).
+        let from = if sums.contains("c.") || population.contains("c.") {
+            URLS_FROM
+        } else {
+            "urls u"
+        };
+        let sql = format!("SELECT {sums} FROM {from} WHERE {population}");
         SumQuery {
             ranged: format!("{sql} AND u.id > :os_count_after AND u.id <= :os_count_last"),
             sql,

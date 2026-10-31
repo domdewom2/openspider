@@ -35,7 +35,8 @@ pub use build::column_name_resolves;
 pub const URLS_FROM: &str = "urls u LEFT JOIN url_counters c ON c.url_id = u.id";
 pub use counts::percent;
 pub use facts::{
-    overview_facts, persist as persist_overview_facts, persist_all as persist_facts, OverviewFacts,
+    overview_facts, overview_progress, persist as persist_overview_facts,
+    persist_all as persist_facts, OverviewFacts,
 };
 
 #[cfg(test)]

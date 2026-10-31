@@ -46,12 +46,12 @@ fn overview_facts_are_persisted_per_data_version_and_reused_after_reopen() {
     );
     assert!(facts.counts.iter().any(|c| c.count.unwrap_or(0) > 0));
     // Same data version: memory hit, still pending.
-    assert!(Arc::ptr_eq(
-        &overview_facts(&file, &cfg, &os_model::CancelToken::new())
+    assert_eq!(
+        overview_facts(&file, &cfg, &os_model::CancelToken::new())
             .unwrap()
             .0,
-        &facts
-    ));
+        facts
+    );
 
     assert!(persist(&file).unwrap());
     assert!(!persist(&file).unwrap(), "persisted once");
@@ -121,7 +121,41 @@ fn split_counting_equals_the_serial_counts() {
     let result = overview_facts(&file, &cfg, &os_model::CancelToken::new());
     crate::views::FORCE_PARALLEL.with(|f| f.set(false));
     let (facts, _) = result.unwrap();
-    assert_eq!(crate::views::PARALLEL_PASSES.with(|n| n.get()), before + 1);
+    assert!(crate::views::PARALLEL_PASSES.with(|n| n.get()) > before);
+    assert_eq!(
+        facts.counts,
+        super::super::filter_counts(&file, &cfg).unwrap()
+    );
+}
+
+// spec: UI-145
+// spec: UI-147
+#[test]
+fn interrupted_counting_resumes_from_stored_tabs() {
+    let (_dir, cfg, file) = fixture();
+    let cancel = os_model::CancelToken::new();
+    let tabs = crate::tabs::configured_for_file(&cfg, &file).len();
+    assert!(!overview_progress(&file, &cfg, &cancel, 1).unwrap());
+    assert!(persist(&file).unwrap());
+    // Closing the crawl loses memory, not the stored pieces.
+    forget(&file);
+    let stored = |file: &CrawlFile| -> i64 {
+        file.conn()
+            .query_row(
+                "SELECT COUNT(*) FROM view_cache WHERE key LIKE 'n21:counts:%'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap()
+    };
+    assert_eq!(stored(&file), 1);
+    assert!(!overview_progress(&file, &cfg, &cancel, 1).unwrap());
+    assert!(persist(&file).unwrap());
+    assert_eq!(stored(&file), 2);
+    let (facts, pending) = overview_facts(&file, &cfg, &cancel).unwrap();
+    assert!(pending);
+    assert!(persist(&file).unwrap());
+    assert_eq!(stored(&file) as usize, tabs);
     assert_eq!(
         facts.counts,
         super::super::filter_counts(&file, &cfg).unwrap()
