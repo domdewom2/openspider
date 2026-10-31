@@ -39,6 +39,13 @@ pub trait Fetch: Send + Sync + 'static {
         Box::pin(async { None })
     }
 
+    /// Time until the transport's shared rate limit admits the next request start (CRAWL-113).
+    /// Callers may wait for it where pause and stop can still cancel the wait (CRAWL-126);
+    /// `fetch` itself waits for the slot without cancellation. Default: no limit.
+    fn start_delay(&self) -> std::time::Duration {
+        std::time::Duration::ZERO
+    }
+
     /// Ruft die URL ab.
     fn fetch(&self, req: FetchRequest) -> Pin<Box<dyn Future<Output = FetchResult> + Send + '_>>;
 }

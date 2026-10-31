@@ -150,6 +150,10 @@ impl Fetch for ProtectedFetcher {
         self.inner.render_config()
     }
 
+    fn start_delay(&self) -> std::time::Duration {
+        self.inner.start_delay()
+    }
+
     fn target_denial<'a>(
         &'a self,
         url: &'a os_fetch::http::FetchUrl,

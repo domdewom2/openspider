@@ -1043,6 +1043,11 @@ impl Fetch for HttpFetcher {
     fn network_settings(&self) -> Option<os_model::settings::NetworkSettings> {
         Some(self.cfg.network.clone())
     }
+    fn start_delay(&self) -> Duration {
+        self.limiter
+            .as_ref()
+            .map_or(Duration::ZERO, RateLimiter::pending)
+    }
     fn fetch(&self, req: FetchRequest) -> Pin<Box<dyn Future<Output = FetchResult> + Send + '_>> {
         Box::pin(self.fetch_impl(req))
     }
