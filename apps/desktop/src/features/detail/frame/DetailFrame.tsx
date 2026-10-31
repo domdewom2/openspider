@@ -25,7 +25,7 @@ import { Resources } from "../resources/Resources";
 import { Headers } from "../headers/Headers";
 import { Cookies } from "../cookies/Cookies";
 import { CrawlPath } from "../crawl-path/CrawlPath";
-import { DetailVisible } from "./request";
+import { DetailRequestUrgent, DetailVisible } from "./request";
 import { DetailEmpty, DetailError } from "./Feedback";
 import { useDetailPreferences } from "./preferences";
 import { DETAIL_BACK_EVENT, DETAIL_SHOW_TAB_EVENT, requestNavigation, useDetailSelection } from "./selection";
@@ -104,6 +104,8 @@ function RegularDetailFrame(props: DetailFrameProps) {
   // Retain only visited, bounded table panels for the current selection. Changing the
   // selection/crawl releases every old handle. Hidden panels do not poll for updates.
   const retentionKey = JSON.stringify([selection.crawlId ?? crawlId, selection.urlIds, selection.focus, selection.topTab]);
+  const selectionToken = useMemo(() => ({ key: retentionKey }), [retentionKey]);
+  const [urgentSelection, setUrgentSelection] = useState<typeof selectionToken>();
   const [retained, setRetained] = useState<{ key: string; tabs: DetailTabId[] }>({ key: retentionKey, tabs: [] });
   const cacheable = ["inlinks", "outlinks", "images", "resources", "duplicates"].includes(tab);
   const visited = retained.key === retentionKey ? retained.tabs : [];
@@ -129,7 +131,7 @@ function RegularDetailFrame(props: DetailFrameProps) {
     <TabContextMenuHost className="os-detail-tabs" label={t("detail-configure-tabs")} entriesFor={id => tabContextEntries(t, id, layout, {
       hide: ids => { if (loaded) savePreferences({ ...preferences, hidden: [...new Set([...preferences.hidden, ...ids as DetailTabId[]])] }); },
       configure: () => setConfigure(true), reset })}>
-      <TabBar panelId="detail-panel" tabs={tabs} selected={tab} onSelect={id => setActive(id as DetailTabId)} label={t("detail-tabs")} overflowLabel={t("detail-more-tabs")}
+      <TabBar panelId="detail-panel" tabs={tabs} selected={tab} onSelect={id => { setUrgentSelection(selectionToken); setActive(id as DetailTabId); }} label={t("detail-tabs")} overflowLabel={t("detail-more-tabs")}
         onReorder={ids => { if (loaded) savePreferences({ ...preferences, order: [...ids, ...preferences.hidden] as DetailTabId[] }); }}
         config={{ all: preferences.order.map(id => ({ id, label: t(`detail-tab-${id}`) })), hidden: preferences.hidden, mandatory: "urlDetails",
           mandatoryReason: t("u20-tab-mandatory"), isDisabled: !loaded, configureLabel: t("u20-tabs-configure"), resetLabel: t("u20-tabs-reset"),
@@ -141,6 +143,7 @@ function RegularDetailFrame(props: DetailFrameProps) {
     {error ? <DetailError error={error} /> : null}
     {op && <Banner kind={op.error ? "error" : "info"}>{op.error ? t(`err-code-${op.error.code.toLowerCase()}`) : t("detail-export-status", { status: op.state })}</Banner>}
     <div className="os-detail-body" role="tabpanel" id="detail-panel" aria-labelledby={tabId("detail-panel", tab)}>
+      <DetailRequestUrgent.Provider value={urgentSelection === selectionToken}>
       {!selected ? <DetailEmpty state={{ code: "NO_SELECTION" }} /> : showCrawlPath ? null : <>
         {multiFocus && <Banner>{t("detail-focus", { id: selection.focus ?? selection.urlIds[0] })}</Banner>}
         {shown.map(id => {
@@ -151,6 +154,7 @@ function RegularDetailFrame(props: DetailFrameProps) {
         })}
         {!cacheable && (Panel ? <RegionBoundary key={`${tab}:${retentionKey}`} name="detail"><Panel {...panelProps} /></RegionBoundary> : <DetailEmpty state={{ code: "NO_DATA_YET" }} />)}
       </>}
+      </DetailRequestUrgent.Provider>
     </div>
     <Dialog title={t("detail-tab-crawlPath")} isOpen={showCrawlPath} onOpenChange={setShowCrawlPath} size="large"
       footer={close => <Button onPress={close}>{t("detail-close")}</Button>}>
