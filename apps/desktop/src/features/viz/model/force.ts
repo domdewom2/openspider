@@ -78,6 +78,7 @@ export class ForceSim {
   private ccomx = new Float64Array(0);
   private ccomy = new Float64Array(0);
   private cells = 0;
+  private traversal = new Int32Array(0);
   private readonly nextPoint: Int32Array;
 
   constructor(input: ForceInput) {
@@ -355,7 +356,8 @@ export class ForceSim {
     const pos = this.pos;
     const vel = this.vel;
     const strength = -this.params.repulsion * this.alpha;
-    const stack = new Int32Array(this.cells);
+    if (this.traversal.length < this.cells) this.traversal = new Int32Array(this.cap);
+    const stack = this.traversal;
     for (let i = 0; i < this.n; i++) {
       const xi = pos[i * 2] as number;
       const yi = pos[i * 2 + 1] as number;
