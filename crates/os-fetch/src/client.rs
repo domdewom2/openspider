@@ -187,10 +187,18 @@ pub struct HttpFetcher {
     digest: crate::auth::digest::DigestAuth,
     challenge_digest: AuthMatcher,
     challenge_ntlm: AuthMatcher,
+    ntlm_clients:
+        std::sync::Mutex<std::collections::HashMap<(url::Origin, String), Arc<NtlmClient>>>,
     auth_ids: Arc<dyn os_model::IdSource>,
     limiter: Option<RateLimiter>,
     /// Gemeinsamer Speicher für `CookieMode::Persistent`, wenn die Anfrage keinen mitbringt.
     global_jar: Arc<CookieJar>,
+}
+
+// Deliberately has no Debug implementation: it owns authenticated connections.
+struct NtlmClient {
+    client: reqwest::Client,
+    exchange: tokio::sync::Mutex<()>,
 }
 
 impl std::fmt::Debug for HttpFetcher {
@@ -211,6 +219,10 @@ impl HttpFetcher {
     ) -> Result<Self, FetchError> {
         self.challenge_digest = AuthMatcher::new(digest).map_err(FetchError::Config)?;
         self.challenge_ntlm = AuthMatcher::new(ntlm).map_err(FetchError::Config)?;
+        self.ntlm_clients
+            .get_mut()
+            .expect("NTLM cache lock")
+            .clear();
         Ok(self)
     }
 
@@ -283,6 +295,7 @@ impl HttpFetcher {
             digest: crate::auth::digest::DigestAuth::default(),
             challenge_digest: AuthMatcher::default(),
             challenge_ntlm: AuthMatcher::default(),
+            ntlm_clients: std::sync::Mutex::default(),
             auth_ids: Arc::new(os_model::RandomIds),
             limiter,
             global_jar: Arc::new(CookieJar::new()),
@@ -331,6 +344,7 @@ impl HttpFetcher {
             digest: crate::auth::digest::DigestAuth::default(),
             challenge_digest: AuthMatcher::default(),
             challenge_ntlm: AuthMatcher::default(),
+            ntlm_clients: std::sync::Mutex::default(),
             auth_ids: Arc::new(os_model::RandomIds),
             hsts: hsts::Policies::default(),
             limiter: None,
@@ -379,6 +393,7 @@ impl HttpFetcher {
             digest: crate::auth::digest::DigestAuth::default(),
             challenge_digest: AuthMatcher::default(),
             challenge_ntlm: AuthMatcher::default(),
+            ntlm_clients: std::sync::Mutex::default(),
             auth_ids: Arc::new(os_model::RandomIds),
             hsts: hsts::Policies::default(),
             limiter: None,
@@ -637,19 +652,36 @@ impl HttpFetcher {
                 );
             }
         }
-        // NTLM is connection-bound: each exchange owns a fresh HTTP/1 client/pool.
-        // Parallel crawl requests cannot mix identities or handshake messages.
+        // NTLM is connection-bound. Reuse one HTTP/1 pool per origin and
+        // credential scope; serialize its exchanges through the response body.
         let ntlm = self.challenge_ntlm.rendering_credentials(url);
-        let dedicated = if ntlm.is_some() {
-            let mut cfg = self.cfg.clone();
-            cfg.http.version = os_model::HttpVersion::Http1;
-            Some(Self::new(cfg).map_err(|_| Failure {
-                proxy_auth_required: false,
-                reason: NoResponseReason::Malformed,
-                detail: "NTLM-Client konnte nicht erstellt werden".into(),
-            })?)
+        let dedicated = if let Some(credentials) = &ntlm {
+            let mut clients = self.ntlm_clients.lock().expect("NTLM cache lock");
+            let key = (url.origin(), credentials.prefix.clone());
+            if let Some(client) = clients.get(&key) {
+                Some(client.clone())
+            } else {
+                let mut cfg = self.cfg.clone();
+                cfg.http.version = os_model::HttpVersion::Http1;
+                let client = Arc::new(NtlmClient {
+                    client: Self::new(cfg)
+                        .map_err(|_| Failure {
+                            proxy_auth_required: false,
+                            reason: NoResponseReason::Malformed,
+                            detail: "NTLM-Client konnte nicht erstellt werden".into(),
+                        })?
+                        .client,
+                    exchange: tokio::sync::Mutex::new(()),
+                });
+                clients.insert(key, client.clone());
+                Some(client)
+            }
         } else {
             None
+        };
+        let _exchange_guard = match &dedicated {
+            Some(client) => Some(client.exchange.lock().await),
+            None => None,
         };
         let client = dedicated.as_ref().map_or(&self.client, |f| &f.client);
         if ntlm.is_some() {
