@@ -91,5 +91,35 @@
     "workspace": true,
     "exclusions": [],
     "source_commit": "68bbc2320598b6ae15cce6107ab26b53d98cdc8f"
+  },
+  "quiet_core_final": {
+    "1000000": {
+      "owned_operations": [
+        "numericMs",
+        "reverseMs",
+        "textMs",
+        "substringMs",
+        "regexMs"
+      ],
+      "completed": true,
+      "reserve_at_least_20_percent": true,
+      "runner_passed": false,
+      "filter_passed": false,
+      "peak_load_1m": 2.94140625
+    },
+    "5000000": {
+      "owned_operations": [
+        "numericMs",
+        "reverseMs",
+        "textMs",
+        "substringMs",
+        "regexMs"
+      ],
+      "completed": true,
+      "reserve_at_least_20_percent": true,
+      "runner_passed": false,
+      "filter_passed": false,
+      "peak_load_1m": 3.03515625
+    }
   }
 }
