@@ -22,6 +22,20 @@ fn main() {
         println!("filters={}", c.len());
         return;
     }
+    if args.get(2).is_some_and(|v| v == "facts") {
+        // Cold Overview/Issues facts with the product's split counting, stored in view_cache.
+        let writer = CrawlFile::open(Path::new(&args[1]), OpenMode::ReadWrite).unwrap();
+        let at = Instant::now();
+        let cancel = os_model::CancelToken::new();
+        while !views::overview_progress(&writer, &cfg, &cancel, 2).unwrap() {
+            views::persist_facts(&writer).unwrap();
+        }
+        let (facts, _) = views::overview_facts(&writer, &cfg, &cancel).unwrap();
+        views::persist_facts(&writer).unwrap();
+        mark("overview_facts.cold", at);
+        println!("filters={}", facts.counts.len());
+        return;
+    }
     if args.get(2).is_some_and(|v| v == "counts-tabs") {
         let tabs = os_analyze::tabs::configured_for_file(&cfg, &file);
         for tab in &tabs {

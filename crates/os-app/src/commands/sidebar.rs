@@ -114,6 +114,9 @@ pub(crate) async fn overview_facts(
     s: &crate::runtime::sessions::SessionInfo,
     cancel: os_model::CancelToken,
 ) -> Result<std::sync::Arc<os_analyze::views::OverviewFacts>, CmdError> {
+    // A waiting request also stores every finished step: an interrupted request
+    // (closed window, ended process) keeps the tabs counted so far.
+    precompute_overview(app, s, cancel.clone()).await?;
     let cfg = s.config.clone();
     let (facts, pending) = app
         .read_pool()
@@ -128,7 +131,7 @@ pub(crate) async fn overview_facts(
     Ok(facts)
 }
 
-/// Background precomputation after opening: a few tabs per step, each step stored before the
+/// Background precomputation after opening: up to four tabs per step (counted at once), each step stored before the
 /// next one starts, so an interrupted pass (closed crawl, ended process) resumes where it stopped.
 pub(crate) async fn precompute_overview(
     app: &App,
@@ -143,7 +146,7 @@ pub(crate) async fn precompute_overview(
                 s.key.clone(),
                 "overview",
                 cancel.clone(),
-                move |file, cancel| Ok(os_analyze::views::overview_progress(file, &cfg, cancel, 2)),
+                move |file, cancel| Ok(os_analyze::views::overview_progress(file, &cfg, cancel, 4)),
             )
             .await?
             .map_err(view_error)?;
