@@ -746,7 +746,7 @@ fn on_change(app: &App, change: &ChangeSet) {
 }
 
 /// Wartet auf `work`, gibt bei Abbruch aber sofort `Cancelled` zurück; die unterbrochene Arbeit endet im Hintergrund.
-async fn until_cancelled<T>(
+pub(crate) async fn until_cancelled<T>(
     token: &CancelToken,
     work: impl std::future::Future<Output = T>,
 ) -> Result<T, CmdError> {

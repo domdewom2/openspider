@@ -215,6 +215,7 @@ pub fn on_startup(app: &App) {
                 if let Some(token) = lock(&app.ext::<Precompute>().0).remove(key) {
                     token.cancel();
                 }
+                super::sidebar::cancel_count(app, key);
                 return;
             }
             _ => return,
@@ -222,6 +223,10 @@ pub fn on_startup(app: &App) {
         let Some(session) = app.sessions().all().into_iter().find(|s| &s.key == key) else {
             return;
         };
+        if !overview {
+            // A started crawl changes the data: an older count would be discarded anyway.
+            super::sidebar::cancel_count(app, key);
+        }
         let token = os_model::CancelToken::new();
         if let Some(previous) = lock(&app.ext::<Precompute>().0).insert(key.clone(), token.clone())
         {
@@ -261,11 +266,8 @@ pub fn on_startup(app: &App) {
                 Err(error) => tracing::warn!(?error, "Vorberechnung der Sidebar fehlgeschlagen"),
             }
             if overview && !token.is_cancelled() {
-                if let Err(error) =
-                    super::sidebar::precompute_overview(&app, &session, token.clone()).await
-                {
-                    tracing::debug!(?error, "Vorberechnung der Übersicht nicht abgeschlossen");
-                }
+                // UI-141: visible, cancellable operation with progress (tabs counted).
+                super::sidebar::count_op(&app, &session);
             }
         });
     }));

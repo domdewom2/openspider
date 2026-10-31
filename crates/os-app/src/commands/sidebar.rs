@@ -8,6 +8,7 @@ use crate::{
         App, CallCtx,
     },
 };
+use crate::pool::CrawlKey;
 use futures_util::future::BoxFuture;
 /// UI-061 summary shares one denominator and rounding rule with its export.
 pub(crate) fn summary_rows(summary: Vec<(String, u64)>) -> Vec<SummaryRow> {
@@ -106,17 +107,34 @@ fn issues<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
     })
 }
 
-/// UI-145/UI-147: Overview and Issues share one fact set per data version. A dedicated lane
-/// serializes its computation with the precomputation after opening, so a request waits for
-/// the running pass instead of scanning the crawl a second time.
+/// UI-145/UI-147: Overview and Issues share one fact set per data version. Missing pieces are
+/// counted by one cancellable operation per crawl ([`count_op`], progress in `Tick.ops`, UI-141);
+/// a request joins it instead of scanning the crawl a second time. Cancelling the operation ends
+/// the waiting requests with `Cancelled`; the next request resumes from the stored pieces.
 pub(crate) async fn overview_facts(
     app: &App,
     s: &crate::runtime::sessions::SessionInfo,
     cancel: os_model::CancelToken,
 ) -> Result<std::sync::Arc<os_analyze::views::OverviewFacts>, CmdError> {
-    // A waiting request also stores every finished step: an interrupted request
-    // (closed window, ended process) keeps the tabs counted so far.
-    precompute_overview(app, s, cancel.clone()).await?;
+    let cfg = s.config.clone();
+    let progress = app
+        .read_pool()
+        .run_cached(s.key.clone(), "overview", cancel.clone(), move |file, cancel| {
+            Ok(os_analyze::views::overview_progress(file, &cfg, cancel, 0))
+        })
+        .await?
+        .map_err(view_error)?;
+    if !progress.complete() {
+        let op = count_op(app, s);
+        let status = crate::views::until_cancelled(&cancel, app.ops().wait(&op)).await?;
+        match status.map(|st| (st.state, st.error)) {
+            Some((OpState::Cancelled, _)) => {
+                return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"))
+            }
+            Some((OpState::Failed, Some(error))) => return Err(error),
+            _ => {}
+        }
+    }
     let cfg = s.config.clone();
     let (facts, pending) = app
         .read_pool()
@@ -131,34 +149,83 @@ pub(crate) async fn overview_facts(
     Ok(facts)
 }
 
-/// Background precomputation after opening: up to four tabs per step (counted at once), each step stored before the
-/// next one starts, so an interrupted pass (closed crawl, ended process) resumes where it stopped.
-pub(crate) async fn precompute_overview(
-    app: &App,
-    s: &crate::runtime::sessions::SessionInfo,
-    cancel: os_model::CancelToken,
-) -> Result<(), CmdError> {
-    loop {
-        let cfg = s.config.clone();
-        let done = app
-            .read_pool()
-            .run_cached(
-                s.key.clone(),
-                "overview",
-                cancel.clone(),
-                move |file, cancel| Ok(os_analyze::views::overview_progress(file, &cfg, cancel, 4)),
-            )
-            .await?
-            .map_err(view_error)?;
-        app.write_queue()
-            .submit_file(&s.key, |file| {
-                os_analyze::views::persist_facts(file).map_err(view_error)
-            })
-            .await?;
-        if done || cancel.is_cancelled() {
-            return Ok(());
+/// Label (i18n key) of the counting operation.
+pub(crate) const COUNT_LABEL: &str = "sidebar-op-count";
+
+/// Running counting operation per crawl.
+#[derive(Default)]
+pub(crate) struct CountOps(std::sync::Mutex<std::collections::HashMap<CrawlKey, String>>);
+impl CountOps {
+    fn lock(&self) -> std::sync::MutexGuard<'_, std::collections::HashMap<CrawlKey, String>> {
+        self.0.lock().unwrap_or_else(|p| p.into_inner())
+    }
+}
+
+/// Cancels the crawl's counting operation (closed, cleared or started crawl).
+pub(crate) fn cancel_count(app: &App, key: &CrawlKey) {
+    if let Some(op) = app.ext::<CountOps>().lock().remove(key) {
+        app.ops().cancel(&op);
+    }
+}
+
+/// Starts the one-time count of the missing Overview/Issues pieces as a cancellable operation, or
+/// joins the running one. Up to four tabs per step (counted at once); every step is stored before
+/// the next, so an interrupted count (cancel, closed crawl, ended process) resumes where it stopped.
+/// Progress: counted tabs of all tabs.
+pub(crate) fn count_op(app: &App, s: &crate::runtime::sessions::SessionInfo) -> String {
+    let registry = app.ext::<CountOps>();
+    let mut running = registry.lock();
+    if let Some(op) = running.get(&s.key) {
+        if app
+            .ops()
+            .status(op)
+            .is_some_and(|st| st.state == OpState::Running)
+        {
+            return op.clone();
         }
     }
+    let (worker, session) = (app.clone(), s.clone());
+    let handle = app.ops().spawn(COUNT_LABEL, true, move |token, sink| {
+        Box::pin(async move {
+            let mut step = 0;
+            loop {
+                let cfg = session.config.clone();
+                let progress = worker
+                    .read_pool()
+                    .run_cached(
+                        session.key.clone(),
+                        "overview",
+                        token.clone(),
+                        move |file, cancel| {
+                            Ok(os_analyze::views::overview_progress(file, &cfg, cancel, step))
+                        },
+                    )
+                    .await?
+                    .map_err(view_error)?;
+                sink.report(progress.done as u64, Some(progress.total as u64));
+                // Stored pieces are an optional cache: a read-only crawl keeps them in memory.
+                let stored = worker
+                    .write_queue()
+                    .submit_file(&session.key, |file| {
+                        os_analyze::views::persist_facts(file).map_err(view_error)
+                    })
+                    .await;
+                if let Err(error) = stored {
+                    tracing::debug!(?error, "Overview-Zähler nicht gespeichert");
+                }
+                if progress.complete() {
+                    return Ok(serde_json::Value::Null);
+                }
+                if token.is_cancelled() {
+                    return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
+                }
+                // First report immediately (stored pieces only), then four tabs per step.
+                step = 4;
+            }
+        })
+    });
+    running.insert(s.key.clone(), handle.op_id.clone());
+    handle.op_id
 }
 fn explain<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
