@@ -39,3 +39,10 @@ export function textGeometry(elements: Element[]) {
       textRects: rects.map(b => ({ left: b.left, right: b.right, top: b.top, bottom: b.bottom })), tolerance };
   });
 }
+
+/** Verbindet ausschließlich statische Testfunktionen für einen atomaren Browser-Aufruf.
+ * Der Helfer wird wie evaluateAll serialisiert und funktioniert auch auf about:blank.
+ */
+export function withTextGeometry<A, R>(measure: (arg: A, geometry: typeof textGeometry) => R): (arg: A) => R {
+  return new Function("arg", `return (${measure.toString()})(arg, ${textGeometry.toString()});`) as (arg: A) => R;
+}

@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { withTextGeometry } from "../n12/textGeometry";
 export const sizes = [{ width: 1024, height: 640 }, { width: 1440, height: 900 }, { width: 1920, height: 1080 }];
 export async function prepare(page: Page, lang: string, theme: string, density = "compact", scene = "shell") {
   const platform = page.context().browser()?.browserType().name() === "webkit" ? "mac" : "win";
@@ -31,9 +32,7 @@ export async function prepare(page: Page, lang: string, theme: string, density =
 /** K2-75: inspect actual label nodes as well as their controls. Keep full diagnostics. */
 export async function audit(page: Page) {
   const selector = '.os-tab-label, button, button span, [role^=menuitem] span, a[href], summary, [role=tab], [role=button], [role^=menuitem], [role=dialog] h1, [role=dialog] h2, [role=alertdialog] h2';
-  return page.evaluate(async (selector) => {
-    const path = "/e2e/n12/textGeometry.ts";
-    const { textGeometry } = await import(/* @vite-ignore */ path);
+  return page.evaluate(withTextGeometry((selector: string, textGeometry) => {
     const visible = (e: HTMLElement) => {
       const r = e.getBoundingClientRect();
       return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== "hidden" && !e.closest('[aria-hidden="true"]');
@@ -80,5 +79,5 @@ export async function audit(page: Page) {
       if (Math.min(x.right, y.right) - Math.max(x.left, y.left) > 0 && Math.min(x.bottom, y.bottom) - Math.max(x.top, y.top) > 0) collisions.push(`${name(a)} × ${name(b)}`);
     }
     return { controls: controls.length, labels: labels.length, tabs: document.querySelectorAll('[role=tab]').length, text, outside, collisions };
-  }, selector);
+  }), selector);
 }

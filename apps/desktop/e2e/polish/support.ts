@@ -5,6 +5,8 @@ import { join } from "node:path";
 import type { Page } from "@playwright/test";
 import { expect, type Alpha } from "../alpha/fixture";
 
+import { withTextGeometry } from "../n12/textGeometry";
+
 export type Bar = "top" | "detail" | "sidebar";
 export const SIZES = [
   { width: 1024, height: 640 },
@@ -82,9 +84,7 @@ export interface TabMeasure {
 export async function measureBar(page: Page, bar: Bar): Promise<{ tabs: TabMeasure[]; hasTrigger: boolean }> {
   const list = page.getByRole("tablist", { name: BAR_LISTS[bar] });
   await expect(list).toBeVisible();
-  return list.evaluate(async (el) => {
-    const path = "/e2e/n12/textGeometry.ts";
-    const { textGeometry } = await import(/* @vite-ignore */ path);
+  return list.evaluate(withTextGeometry((el: HTMLElement | SVGElement, textGeometry) => {
     const root = el.closest(".os-tabbar") as HTMLElement;
     const trigger = root.querySelector<HTMLElement>(":scope > [data-tabbar-overflow]");
     const t = trigger?.getBoundingClientRect();
@@ -107,7 +107,7 @@ export async function measureBar(page: Page, bar: Bar): Promise<{ tabs: TabMeasu
         };
       }),
     };
-  });
+  }));
 }
 
 /** Öffnet das Überlaufmenü einer Leiste; gibt die Einträge zurück und schließt es wieder. */
