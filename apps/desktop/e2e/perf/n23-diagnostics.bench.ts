@@ -7,6 +7,7 @@ import { genUiLarge } from "../../src/features/viz/fixtures/synthetic";
 import { openViz, layoutDone } from "../viz/support";
 import { startVizBridge } from "../viz/viz-bridge";
 import { rendererRss } from "./rss.mjs";
+import { startWebKitCapture } from "./n23-webkit";
 
 test.skip(!process.env.N23_PHASE, "Benchmark: opt-in renderer diagnostics via N23_PHASE");
 
@@ -53,6 +54,7 @@ test("N23 diagnostic: canvas costs and heap with 10000-node fixture", async ({ p
   try {
     const before = rendererRss();
     await openViz(page, bridge, "crawlGraph");
+    const stopWebKit = info.project.name === "webkit" ? await startWebKitCapture(page, out, "viz") : null;
     await layoutDone(page, 30000);
     expect(await page.evaluate(() => window.__osViz!.nodes)).toBe(10000);
     const opened = rendererRss();
@@ -68,8 +70,9 @@ test("N23 diagnostic: canvas costs and heap with 10000-node fixture", async ({ p
       await done;
       await writeFile(resolve(out, "trace.json"), JSON.stringify({ traceEvents: events }));
     }
+    await stopWebKit?.(true);
     const canvas = await page.evaluate(() => (window as unknown as { n23Canvas: unknown }).n23Canvas);
-    await writeFile(resolve(out, "diagnostic.json"), JSON.stringify({ before, opened, canvas, webkitInspector: session ? "CDP trace + heap" : "Canvas API timings only; WPE Inspector not exposed by Playwright", load: (await import("node:os")).loadavg() }, null, 2));
+    await writeFile(resolve(out, "diagnostic.json"), JSON.stringify({ before, opened, canvas, webkitInspector: session ? "CDP trace + heap" : "WebKit Inspector timeline, script/CPU samples and heap via locked internal adapter", load: (await import("node:os")).loadavg() }, null, 2));
   } finally { await bridge.stop(); }
 });
 
@@ -92,6 +95,7 @@ test("N23 diagnostic: scroll layout costs with real U31 fixture", async ({ page,
       session.on("Tracing.dataCollected", e => events.push(...e.value));
       await session.send("Tracing.start", { categories: "devtools.timeline,v8,blink", transferMode: "ReportEvents" });
     }
+    const stopWebKit = info.project.name === "webkit" ? await startWebKitCapture(page, out, "scroll") : null;
     const before = rendererRss();
     const vertical = await page.evaluate(() => window.uiPerf.record("vertical"));
     const horizontal = await page.evaluate(() => window.uiPerf.record("horizontal"));
@@ -106,6 +110,7 @@ test("N23 diagnostic: scroll layout costs with real U31 fixture", async ({ page,
       await session.send("HeapProfiler.takeHeapSnapshot");
       await writeFile(resolve(out, "grid.heapsnapshot"), chunks.join(""));
     }
+    await stopWebKit?.(true);
     await writeFile(resolve(out, "scroll.json"), JSON.stringify({ vertical, horizontal, layout, before, after: rendererRss(), load: (await import("node:os")).loadavg() }, null, 2));
   } finally { await bridge.stop(); }
 });
@@ -139,6 +144,7 @@ test("N23 diagnostic: renderer trace under crawl load", async ({ page, context }
       session.on("Tracing.dataCollected", e => events.push(...e.value));
       await session.send("Tracing.start", { categories: "devtools.timeline,v8,blink,disabled-by-default-v8.cpu_profiler", transferMode: "ReportEvents" });
     }
+    const stopWebKit = info.project.name === "webkit" ? await startWebKitCapture(page, out, "crawl") : null;
     const before = rendererRss();
     await page.waitForTimeout(15000);
     const after = rendererRss();
@@ -147,6 +153,7 @@ test("N23 diagnostic: renderer trace under crawl load", async ({ page, context }
       await session.send("Tracing.end"); await done;
       await writeFile(resolve(out, "crawl-trace.json"), JSON.stringify({ traceEvents: events }));
     }
+    await stopWebKit?.();
     await writeFile(resolve(out, "crawl.json"), JSON.stringify({ before, after, state: await page.evaluate(() => window.perfShell.state()), layout: await page.evaluate(() => (window as unknown as { n23Layout: unknown }).n23Layout), load: (await import("node:os")).loadavg() }, null, 2));
   } finally {
     await page.evaluate(() => window.perfShell?.stop()).catch(() => {});
