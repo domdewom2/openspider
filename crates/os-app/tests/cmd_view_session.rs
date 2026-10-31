@@ -560,9 +560,9 @@ async fn idle_views_release_their_memory_after_60_seconds_and_rebuild_lazily() {
     // Same data: the next access rebuilds the identical version.
     assert_eq!(fx.rows(&h, 0, 500, json!([])).await, before);
     assert!(os_app::views::retained_bytes(&fx.app) > 0);
-    // Closing releases immediately.
+    // UI-142: closing retains the reusable tab for the idle window.
     fx.call("view.close", json!({"viewId":h["viewId"]})).await;
-    assert_eq!(os_app::views::retained_bytes(&fx.app), 0);
+    assert!(os_app::views::retained_bytes(&fx.app) > 0);
 }
 
 // spec: UI-142

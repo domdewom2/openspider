@@ -45,6 +45,10 @@ use std::{
     time::Duration,
 };
 
+#[cfg(test)]
+#[path = "../../tests/n21/views.rs"]
+mod n21_tests;
+
 /// Bitmap-Lieferant für Segment- (K-14) und Vergleichseinschränkungen (K-15) einer Tab-View.
 pub trait RestrictProvider: Send + Sync {
     /// Einschränkungen für `crawl`; ein Fehler lehnt `view.open`/`view.update` ab.
@@ -87,6 +91,7 @@ pub(crate) fn restrictions(
 /// Gibt Views frei, die länger als ihr Leerlaufbudget nicht benutzt wurden, und setzt danach das Gesamtbudget durch.
 /// Läuft sekündlich im Hintergrund; öffentlich für Tests und Wartung.
 pub fn release_idle(app: &App) {
+    crate::commands::view::release_closed(app);
     let shared = shared(app);
     let views = live(&shared);
     let now = app.config().clock.monotonic();
@@ -192,6 +197,8 @@ pub(crate) struct Published {
     pub meta: Vec<ColumnMeta>,
     pub version: u64,
     pub total: u64,
+    pub state: FilterState,
+    cache_stamp: String,
 }
 /// Ergebnis eines Aufbaus.
 pub(crate) struct Built {
@@ -226,7 +233,7 @@ struct Pending {
 
 /// Sitzung einer Tab-View der App.
 pub(crate) struct TabView {
-    view_id: String,
+    view_id: Mutex<String>,
     key: CrawlKey,
     clock: Arc<dyn Clock>,
     budget: Budget,
@@ -243,7 +250,7 @@ impl TabView {
         let shared = shared(app);
         let budget = lock(&shared.budget).unwrap_or_default();
         let view = Arc::new(TabView {
-            view_id,
+            view_id: Mutex::new(view_id),
             key,
             clock: app.config().clock.clone(),
             budget,
@@ -265,6 +272,51 @@ impl TabView {
 
     pub fn published(&self) -> Option<Published> {
         lock(&self.state).published.clone()
+    }
+
+    /// A reused session gets a fresh public handle; closed IDs stay revoked.
+    pub fn rebind(&self, view_id: String) {
+        *lock(&self.view_id) = view_id;
+    }
+
+    /// Reuse a published snapshot only while its file version and idle lease
+    /// remain valid. A missed feed notification must never resurrect old rows.
+    pub async fn cached(&self, app: &App) -> Result<Option<Built>, CmdError> {
+        let _builder = self.builder.lock().await;
+        let (seq, stamp) = app
+            .read_pool()
+            .run_cached(
+                self.key.clone(),
+                "table-cache",
+                crate::runtime::current_cancel(),
+                |file, _| {
+                    let _snapshot = file.conn().unchecked_transaction()?;
+                    Ok((
+                        os_store::queries::change_seq(file.conn())?,
+                        os_analyze::views::filter_cache_stamp(file)?,
+                    ))
+                },
+            )
+            .await?;
+        let mut st = lock(&self.state);
+        if st.snapshot.is_none()
+            || self.clock.monotonic().saturating_sub(st.used) >= self.budget.idle_release
+        {
+            return Ok(None);
+        }
+        let Some(p) = st.published.as_ref().filter(|p| {
+            p.version == seq && p.cache_stamp == stamp && p.state == FilterState::Ready
+        }) else {
+            return Ok(None);
+        };
+        let built = Built {
+            version: p.version,
+            total: p.total,
+            meta: p.meta.clone(),
+            state: p.state.clone(),
+        };
+        st.used = self.clock.monotonic();
+        Ok(Some(built))
     }
 
     /// Baut `spec` privat auf und veröffentlicht erst bei Erfolg (Doppelpuffer). Ein Abbruch über `token` gibt
@@ -329,18 +381,19 @@ impl TabView {
                         head.total,
                         meta,
                         state,
+                        os_analyze::views::filter_cache_stamp(file)?,
                     ))
                 })();
                 Ok(result)
             },
         );
-        let (snapshot, core, version, total, meta, state) =
+        let (snapshot, core, version, total, meta, state, cache_stamp) =
             until_cancelled(&token, work).await??.map_err(view_error)?;
         let built = Built {
             version,
             total,
             meta: meta.clone(),
-            state,
+            state: state.clone(),
         };
         let mut st = lock(&self.state);
         st.snapshot = Some(snapshot);
@@ -354,6 +407,8 @@ impl TabView {
             meta,
             version,
             total,
+            state,
+            cache_stamp,
         });
         Ok(built)
     }
@@ -521,7 +576,7 @@ impl TabView {
 
     fn announce(&self, app: &App, version: u64, total: u64) {
         lock(&shared(app).changed).push(ViewChanged {
-            view_id: self.view_id.clone(),
+            view_id: lock(&self.view_id).clone(),
             version,
             total: Some(total),
         });
@@ -557,7 +612,7 @@ impl TabView {
                     break;
                 };
                 if let Err(e) = view.maintain(&app, next).await {
-                    tracing::warn!(error = ?e, view = %view.view_id, "View maintenance failed");
+                    tracing::warn!(error = ?e, view = %*lock(&view.view_id), "View maintenance failed");
                 }
             }
         });
