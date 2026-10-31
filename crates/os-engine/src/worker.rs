@@ -217,6 +217,12 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
     }
 
     // 2. Abruf: Tempo-Fachmodul erhält die inzwischen geladene robots.txt sowie die injizierte Uhr.
+    sh.writer.wait_for_bytes().await;
+    // Stop is checked again after byte backpressure, before opening a request.
+    if sh.ctl.stop.load(Ordering::SeqCst) != STOP_NONE {
+        sh.lock_core().requeue(item.clone());
+        return Ok(());
+    }
     sh.host_pacer
         .before_fetch(
             &url,
@@ -225,12 +231,6 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
             &*sh.clock,
         )
         .await;
-    if sh.ctl.stop.load(Ordering::SeqCst) != STOP_NONE {
-        sh.lock_core().requeue(item.clone());
-        return Ok(());
-    }
-    sh.writer.wait_for_bytes().await;
-    // Stop is checked again after byte backpressure, before opening a request.
     if sh.ctl.stop.load(Ordering::SeqCst) != STOP_NONE {
         sh.lock_core().requeue(item.clone());
         return Ok(());
