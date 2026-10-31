@@ -1,6 +1,8 @@
 name: Installed build smoke
 
 on:
+  push:
+    branches: [m3/r03-test]
   workflow_dispatch:
     inputs:
       run_id:
@@ -81,8 +83,8 @@ jobs:
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           github-token: ${{ github.token }}
-          run-id: ${{ startsWith(matrix.runner, 'macos') && (inputs.macos_run_id || inputs.run_id || github.run_id) || (inputs.windows_run_id || inputs.run_id || github.run_id) }}
-          name: ${{ matrix.runner == 'macos-15' && inputs.macos_arm_artifact || matrix.runner == 'macos-15-intel' && inputs.macos_intel_artifact || inputs.windows_artifact }}
+          run-id: ${{ startsWith(matrix.runner, 'macos') && (inputs.macos_run_id || '41144614048') || (inputs.windows_run_id || '41156343476') }}
+          name: ${{ matrix.runner == 'macos-15' && (inputs.macos_arm_artifact || 'openspider-macos-aarch64') || matrix.runner == 'macos-15-intel' && (inputs.macos_intel_artifact || 'openspider-macos-x86_64') || (inputs.windows_artifact || 'openspider-windows-x86_64') }}
           path: incoming
       - name: Unsignierte Builds zulässig (keine Schlüssel erforderlich)
         run: echo 'Signatur-Gate separat; unsigniert erlaubt. Diese Suite prüft Installation und Laufzeit.' >> "$GITHUB_STEP_SUMMARY"
