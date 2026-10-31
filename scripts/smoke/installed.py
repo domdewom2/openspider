@@ -13,6 +13,7 @@ import re
 import shutil
 import statistics
 import subprocess
+import sys
 import tempfile
 import time
 import uuid
@@ -21,8 +22,8 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def run(args, **kwargs):
-    result = subprocess.run([str(x) for x in args], timeout=300,
+def run(args, timeout=300, **kwargs):
+    result = subprocess.run([str(x) for x in args], timeout=timeout,
                             text=True, capture_output=True, **kwargs)
     if result.returncode:
         raise RuntimeError(f'{args}: exit {result.returncode}\n{result.stdout}\n{result.stderr}')
@@ -87,6 +88,34 @@ def psquote(value):
     return "'" + str(value).replace("'", "''") + "'"
 
 
+def scheduler_diagnostics(system, domain, label, evidence):
+    """Capture scheduler state before cleanup without hiding the original failure."""
+    commands = []
+    if system == 'Darwin':
+        commands.append(('launchctl-print', ['launchctl', 'print', f'{domain}/{label}']))
+    elif system == 'Windows':
+        commands.append(('scheduled-task-info', ['powershell.exe', '-NoProfile', '-NonInteractive',
+            '-Command', f'''$ErrorActionPreference='Stop'
+$t=Get-ScheduledTask -TaskName {psquote(label)}
+$i=$t | Get-ScheduledTaskInfo
+[pscustomobject]@{{State=$t.State; LastRunTime=$i.LastRunTime; LastTaskResult=$i.LastTaskResult}} | Format-List
+''']))
+        commands.append(('scheduled-task-definition.xml', ['powershell.exe', '-NoProfile', '-NonInteractive',
+            '-Command', f'Export-ScheduledTask -TaskName {psquote(label)}']))
+    for name, command in commands:
+        try:
+            result = subprocess.run(command, text=True, capture_output=True, timeout=30)
+            (evidence / name).write_text(result.stdout, encoding='utf-8')
+            (evidence / (name + '.stderr')).write_text(
+                f'exit={result.returncode}\n{result.stderr}', encoding='utf-8')
+        except Exception as error:
+            (evidence / (name + '.error')).write_text(str(error), encoding='utf-8')
+    for name in ('task.stdout', 'task.stderr'):
+        path = evidence / name
+        if not path.exists():
+            path.write_text('No task output captured (task may not have started).\n', encoding='utf-8')
+
+
 def scheduled(cli, home, base, evidence, env, dry_run):
     task_id = 'r03-' + uuid.uuid4().hex[:12]
     label = 'de.openspider.task.' + task_id
@@ -135,7 +164,14 @@ dir = {q(output)}
             plist.write_bytes(plistlib.dumps(payload))
             # Set before invoking so cleanup also covers a partially successful registration.
             registered = True
-            run(['launchctl', 'bootstrap', domain, plist])
+            try:
+                run(['launchctl', 'bootstrap', domain, plist])
+            except RuntimeError as error:
+                fallback = f'user/{os.getuid()}'
+                (evidence / 'bootstrap-fallback.log').write_text(
+                    f'{error}\nRetry bootstrap in {fallback}\n', encoding='utf-8')
+                domain = fallback
+                run(['launchctl', 'bootstrap', domain, plist])
             run(['launchctl', 'print', f'{domain}/{label}'])
         elif system == 'Windows':
             # Task Scheduler does not inherit the caller's OPENSPIDER_HOME.
@@ -143,14 +179,17 @@ dir = {q(output)}
             wrapper = evidence / 'scheduled.ps1'
             wrapper.write_text('\n'.join(f'$env:{k} = {psquote(env[k])}' for k in
                 ('OPENSPIDER_HOME', 'OPENSPIDER_SECRET_STORE', 'OPENSPIDER_DISABLE_UPDATE_CHECK')) +
-                f'\n& {psquote(cli)} --run-task {psquote(task_id)}\nexit $LASTEXITCODE\n', encoding='utf-8')
+                f'\n& {psquote(cli)} --run-task {psquote(task_id)} '
+                f'1> {psquote(evidence / "task.stdout")} 2> {psquote(evidence / "task.stderr")}\n'
+                'exit $LASTEXITCODE\n', encoding='utf-8')
             args = f'-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{wrapper}"'
             registered = True
             powershell(f'''$ErrorActionPreference='Stop'
 $a=New-ScheduledTaskAction -Execute 'powershell.exe' -Argument {psquote(args)}
 $t=New-ScheduledTaskTrigger -Once -At ([datetime]{psquote(at.isoformat())})
 $s=New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-Register-ScheduledTask -TaskName {psquote(label)} -Action $a -Trigger $t -Settings $s | Out-Null
+$p=New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive
+Register-ScheduledTask -TaskName {psquote(label)} -Action $a -Trigger $t -Settings $s -Principal $p | Out-Null
 ''')
         else:
             raise AssertionError('Native scheduler requires macOS or Windows; use --dry-run on Linux')
@@ -163,7 +202,12 @@ Register-ScheduledTask -TaskName {psquote(label)} -Action $a -Trigger $t -Settin
                 if record['result'] != 'running':
                     break
             time.sleep(1)
-        assert record and record['result'] in ('completed', 'completed_with_warnings'), record
+        if not record or record['result'] == 'running':
+            raise RuntimeError(f'Scheduled task {label} did not finish before the deadline; '
+                               f'expected start {at.isoformat()}, last record={record!r}; '
+                               f'diagnostics: {evidence}')
+        if record['result'] not in ('completed', 'completed_with_warnings'):
+            raise RuntimeError(f'Scheduled task {label} failed: {record!r}; diagnostics: {evidence}')
         assert record.get('exit_code') == 0, record
         exports = [Path(p) for p in record.get('exports', [])]
         assert exports and all(p.is_relative_to(output) and p.is_file() for p in exports), record
@@ -176,17 +220,27 @@ Register-ScheduledTask -TaskName {psquote(label)} -Action $a -Trigger $t -Settin
             assert abs(delta) <= 60, f'Scheduler deviation {delta}s'
         (evidence / 'schedule.json').write_text(json.dumps(dict(dry_run=dry_run,
             expected=at.isoformat(), deviation_seconds=delta, record=record), indent=2), encoding='utf-8')
+    except Exception:
+        scheduler_diagnostics(system, domain, label, evidence)
+        raise
     finally:
-        if registered and system == 'Darwin':
-            run(['launchctl', 'bootout', f'{domain}/{label}'])
-            result = subprocess.run(['launchctl', 'print', f'{domain}/{label}'], capture_output=True)
-            assert result.returncode != 0, 'LaunchAgent still registered'
-        elif registered and system == 'Windows':
-            powershell(f'''$ErrorActionPreference='Stop'
+        primary_error = sys.exc_info()[0] is not None
+        try:
+            if registered and system == 'Darwin':
+                run(['launchctl', 'bootout', f'{domain}/{label}'])
+                result = subprocess.run(['launchctl', 'print', f'{domain}/{label}'], capture_output=True)
+                assert result.returncode != 0, 'LaunchAgent still registered'
+            elif registered and system == 'Windows':
+                powershell(f'''$ErrorActionPreference='Stop'
 Unregister-ScheduledTask -TaskName {psquote(label)} -Confirm:$false
 if (Get-ScheduledTask -TaskName {psquote(label)} -ErrorAction SilentlyContinue) {{ throw 'Task remains' }}
 ''')
-        task.unlink(missing_ok=True)
+        except Exception as error:
+            (evidence / 'scheduler-cleanup.error').write_text(str(error), encoding='utf-8')
+            if not primary_error:
+                raise
+        finally:
+            task.unlink(missing_ok=True)
 
 
 def main():
@@ -232,7 +286,7 @@ def main():
                 result = run([cli, '--crawl', base + '/', '--set', 'threads=1', '--set', 'robots.retries=0',
                     '--set', 'extraction.http_headers=true', '--set', f'rendering.mode={mode}',
                     '--set', 'rendering.ajax_timeout_s=0.1', '--export-tabs', 'Internal:All',
-                    '--create-sitemap', '--output-folder', out], env=env)
+                    '--create-sitemap', '--output-folder', out], env=env, timeout=600)
                 (evidence / (mode + '.log')).write_text(result.stdout + result.stderr, encoding='utf-8')
                 normalized = normalize(out / 'internal_all.csv', base)
                 (evidence / (mode + '.csv')).write_bytes(normalized)
@@ -249,7 +303,7 @@ def main():
                 out = evidence / f'benchmark-{index}'
                 started = time.monotonic()
                 run([cli, '--crawl', base + '/', '--set', 'threads=1', '--set', 'robots.retries=0',
-                     '--export-tabs', 'Internal:All', '--output-folder', out], env=env)
+                     '--export-tabs', 'Internal:All', '--output-folder', out], env=env, timeout=600)
                 elapsed = time.monotonic() - started
                 count = len(list(csv.reader(io.StringIO((out / 'internal_all.csv').read_text(encoding='utf-8-sig'))))) - 1
                 assert count > 0
@@ -257,7 +311,7 @@ def main():
             probe = evidence / 'js-proof'
             run([cli, '--crawl', base + '/__smoke_js_probe', '--max-urls', '1',
                  '--set', 'rendering.mode=javascript', '--set', 'rendering.ajax_timeout_s=0.1',
-                 '--export-tabs', 'Internal:All', '--output-folder', probe], env=env)
+                 '--export-tabs', 'Internal:All', '--output-folder', probe], env=env, timeout=600)
             with (probe / 'internal_all.csv').open(encoding='utf-8-sig', newline='') as source:
                 rows = list(csv.DictReader(source))
             assert len(rows) == 1 and rows[0]['Title 1'] == 'R03 rendered', rows
@@ -265,6 +319,11 @@ def main():
             report = dict(platform=platform.platform(), machine=platform.machine(), cli=str(cli),
                           version=run([cli, '--version']).stdout.strip(),
                           processor=platform.processor(), cpus=os.cpu_count(), dry_run=options.dry_run,
+                          PROCESSOR_ARCHITEW6432=os.environ.get('PROCESSOR_ARCHITEW6432'),
+                          RUNNER_ARCH=os.environ.get('RUNNER_ARCH'),
+                          browser_path=str(chromium),
+                          browser_version=(powershell(f'(Get-Item -LiteralPath {psquote(chromium)}).VersionInfo.ProductVersion')
+                              if platform.system() == 'Windows' else run([chromium, '--version'])).stdout.strip(),
                           measurements=measurements,
                           median_urls_per_second=statistics.median(m['urls_per_second'] for m in measurements))
             (evidence / 'result.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
