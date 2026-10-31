@@ -16,12 +16,24 @@ pub fn export_detail(
     path: &Path,
     format: Format,
 ) -> Result<ExportFileInfo, ExportError> {
-    let mut writer = crate::output::open_writer(
+    export_detail_with_options(
+        job,
+        req,
         path,
         format,
-        "Crawl Path Report",
         &crate::pipeline::writer_options(job.cfg),
-    )?;
+    )
+}
+
+/// Exports the selected paths with explicit presentation header labels.
+pub fn export_detail_with_options(
+    job: &TableJob<'_>,
+    req: &DetailReq<'_>,
+    path: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<ExportFileInfo, ExportError> {
+    let mut writer = crate::output::open_writer(path, format, "Crawl Path Report", opts)?;
     writer.header(
         &os_store::queries::crawl_path::HEADER
             .iter()

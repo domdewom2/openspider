@@ -816,9 +816,7 @@ async fn export_phase(
     }
 
     if !plan.crawl_path_urls.is_empty() {
-        let result = os_export::csv::with_header_labels(&plan.header_labels, || {
-            export_crawl_paths(&file, &cfg, plan, out, rep)
-        });
+        let result = export_crawl_paths(&file, &cfg, plan, out, rep);
         match result {
             Ok(info) => {
                 report_file(rep, &info);
@@ -1008,12 +1006,12 @@ fn export_crawl_paths(
     } else {
         "csv"
     };
-    os_export::detail_export::export_detail(
-        os_analyze::details::DetailKind::CrawlPath,
+    os_export::reports::crawl_path::export_detail_with_options(
         &job,
         &req,
         &out.join(format!("crawl_path_report.{extension}")),
         plan.format,
+        &labeled_writer_options(cfg, &plan.header_labels),
     )
     .map_err(|e| e.to_string())
 }
