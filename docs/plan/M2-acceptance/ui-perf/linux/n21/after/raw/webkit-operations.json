@@ -1,0 +1,72 @@
+{
+  "scenario": "operations",
+  "size": "large",
+  "started_at": "2026-10-31T17:51:07.368Z",
+  "engine": "webkit",
+  "metrics": {
+    "tabMs": {
+      "value": 2231,
+      "budget": 200,
+      "direction": "max",
+      "passed": false
+    },
+    "tabReturnMs": {
+      "value": 101,
+      "budget": 200,
+      "direction": "max",
+      "passed": true
+    },
+    "filterMs": {
+      "value": 110,
+      "budget": 200,
+      "direction": "max",
+      "passed": true
+    },
+    "numericMs": {
+      "value": 4648,
+      "budget": 5000,
+      "direction": "max",
+      "passed": true
+    },
+    "reverseMs": {
+      "value": 128,
+      "budget": 200,
+      "direction": "max",
+      "passed": true
+    },
+    "textMs": {
+      "value": 14068,
+      "budget": 8000,
+      "direction": "max",
+      "passed": false
+    },
+    "substringMs": {
+      "value": null,
+      "budget": 3000,
+      "direction": "max",
+      "passed": false
+    },
+    "regexMs": {
+      "value": 3833,
+      "budget": 10000,
+      "direction": "max",
+      "passed": true
+    }
+  },
+  "details": {
+    "times": {
+      "tabMs": 2231,
+      "tabReturnMs": 101,
+      "filterMs": 110,
+      "numericMs": 4648,
+      "reverseMs": 128,
+      "textMs": 14068,
+      "substringMs": null,
+      "regexMs": 3833
+    },
+    "errors": [
+      "substringMs: Error: {\"done\":0,\"error\":{\"args\":{},\"code\":\"Timeout\",\"detail\":null,\"field\":null,\"messageKey\":\"err-search-timeout\",\"retryable\":false},\"labelKey\":\"view-build\",\"opId\":\"01a19316-86ea-7dac-ac40-8229cb9df7ef\",\"result\":null,\"state\":\"failed\",\"total\":null}"
+    ]
+  },
+  "passed": false
+}
