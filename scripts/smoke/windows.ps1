@@ -43,7 +43,15 @@ foreach ($kind in @('msi', 'nsis')) {
                 }
                 if (Test-Path (Join-Path $install 'openspider.exe')) { throw 'CLI remains after uninstall' }
                 # NSIS _?= leaves its own executable. Remove only the test installation directory.
-                if (Test-Path -LiteralPath $install) { Remove-Item -LiteralPath $install -Recurse -Force }
+                # The uninstaller can stay locked briefly after exit (virus scan, emulation): retry.
+                for ($attempt = 1; Test-Path -LiteralPath $install; $attempt++) {
+                    try {
+                        Remove-Item -LiteralPath $install -Recurse -Force -ErrorAction Stop
+                    } catch {
+                        if ($attempt -ge 10) { throw }
+                        Start-Sleep -Seconds 3
+                    }
+                }
             } catch {
                 if ($null -ne $primaryError) {
                     Write-Warning "Uninstall also failed; original smoke error retained: $_"
