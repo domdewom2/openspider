@@ -34,11 +34,11 @@ To collect both sizes and variants on the shared server:
 timeout 3600s nice -n 10 python3 crates/os-loadtest/diagnostics/n22-measure.py
 ```
 
-This additive coordinator starts below load 2 and samples load throughout each
+This additive coordinator starts below load 3.5 and samples load throughout each
 run. Every attempt is retained; only attempts whose peak one-minute load stayed
 below 4 become the primary result. **Budget failures never trigger a retry or
 change their verdict.** Linux also records GNU time's process peak RSS. `--rows`
-and `--phase` can select a block; `--output` keeps later candidate runs separate.
+and `--phase` can select a block; `--start-load` selects a stricter start limit; `--output` keeps later candidate runs separate.
 The compiler uses the newest analyze artifact and checks compatible model/store
 metadata, so a stale analyze variant cannot silently become the candidate.
 
