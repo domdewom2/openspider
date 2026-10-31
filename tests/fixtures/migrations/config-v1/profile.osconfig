@@ -1,0 +1,245 @@
+schema_version = 1
+generator = "openspider 0.1.0"
+mode = "spider"
+
+[scope]
+all_subdomains = false
+subfolder_only = false
+crawl_outside_start_folder = false
+regex_partial_match = false
+include = []
+exclude = []
+
+[spider]
+follow_internal_nofollow = false
+follow_external_nofollow = false
+
+[spider.images]
+store = true
+crawl = true
+
+[spider.css]
+store = true
+crawl = true
+
+[spider.javascript]
+store = true
+crawl = true
+
+[spider.media]
+store = true
+crawl = true
+
+[spider.internal]
+store = true
+crawl = true
+
+[spider.external]
+store = true
+crawl = true
+
+[spider.canonicals]
+store = true
+crawl = true
+
+[spider.hreflang]
+store = true
+crawl = false
+
+[spider.pagination]
+store = true
+crawl = false
+
+[spider.meta_refresh]
+store = true
+crawl = true
+
+[spider.iframes]
+store = true
+crawl = true
+
+[spider.amp]
+store = false
+crawl = false
+
+[spider.mobile_alternate]
+store = true
+crawl = false
+
+[limits]
+max_urls = 5000000
+max_redirects = 10
+max_page_kb = 51200
+
+[speed]
+threads = 5
+
+[user_agent]
+preset = "openspider"
+
+[robots]
+mode = "respect"
+unreachable_policy = "block_host"
+retries = 2
+retry_delay_s = 5
+
+[advanced]
+cookies = "session_only"
+response_timeout_s = 20
+assume_html = false
+respect_self_ref_meta_refresh = false
+
+[auth]
+basic = []
+
+[network]
+resolve = []
+
+[rendering]
+mode = "text"
+
+[extraction]
+page_titles = true
+meta_description = true
+meta_keywords = true
+h1 = true
+h2 = true
+hash = true
+response_time = true
+last_modified = true
+http_headers = true
+store_html = false
+
+[content]
+low_word_count = 200
+soft404_phrases = [
+    "page not found",
+    "404 not found",
+    "error 404",
+    "404 error",
+    "page cannot be found",
+    "page can't be found",
+    "page could not be found",
+    "seite nicht gefunden",
+    "seite wurde nicht gefunden",
+    "fehler 404",
+    "404 fehler",
+    "page introuvable",
+    "página no encontrada",
+    "pagina non trovata",
+    "pagina niet gevonden",
+]
+
+[content.area]
+include_elements = []
+include_classes = []
+include_ids = []
+exclude_elements = [
+    "nav",
+    "footer",
+]
+exclude_classes = []
+exclude_ids = []
+
+[title]
+max_chars = 60
+min_chars = 30
+max_px = 561
+min_px = 200
+
+[meta_description]
+max_chars = 155
+min_chars = 70
+max_px = 985
+min_px = 400
+
+[url]
+max_chars = 115
+
+[h1]
+max_chars = 70
+
+[h2]
+max_chars = 70
+
+[image]
+max_kb = 100
+alt_max_chars = 100
+
+[duplicates]
+only_indexable = true
+ignore_paginated = true
+exact_enabled = true
+near_enabled = false
+near_threshold_pct = 90
+
+[issues]
+ignore_non_indexable = true
+
+[pdf]
+store = false
+
+[links]
+high_crawl_depth = 4
+high_internal_outlinks = 1000
+high_external_outlinks = 100
+non_descriptive_anchors = [
+    "click here",
+    "click",
+    "here",
+    "this",
+    "this page",
+    "link",
+    "more",
+    "read more",
+    "learn more",
+    "more info",
+    "more information",
+    "find out more",
+    "details",
+    "continue",
+    "go",
+    "start",
+    "hier",
+    "hier klicken",
+    "klicken sie hier",
+    "mehr",
+    "weiter",
+    "weiterlesen",
+    "mehr erfahren",
+    "mehr lesen",
+    "mehr info",
+    "details ansehen",
+]
+
+[hreflang]
+over_limit = "truncate"
+allow_script_subtag = true
+
+[sitemaps]
+crawl_linked = false
+auto_discover_robots = true
+urls = []
+
+[analysis]
+auto_at_end = true
+link_score = true
+canonicals = true
+pagination = true
+hreflang = true
+links = true
+sitemaps = true
+content = true
+images = true
+analytics = true
+search_console = true
+link_metrics = true
+amp = true
+
+[validation]
+html_doc_max_bytes = 2097152
+resource_max_bytes = 2097152
+
+[export]
+utf8_bom = true
+line_ending = "crlf"

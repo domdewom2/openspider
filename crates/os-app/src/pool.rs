@@ -111,7 +111,12 @@ impl ReadPool {
                 }),
                 Err(StoreError::MigrationRequired { .. }) => {
                     let name = path.file_stem().unwrap_or_default().to_string_lossy();
-                    let dest = path.with_file_name(format!("{name}.migrated.ospider"));
+                    let mut dest = path.with_file_name(format!("{name}.migrated.ospider"));
+                    let mut suffix = 2u64;
+                    while dest.exists() {
+                        dest = path.with_file_name(format!("{name}.migrated-{suffix}.ospider"));
+                        suffix += 1;
+                    }
                     CrawlFile::migrate_copy(&path, &dest).map_err(|e| store_error(&e))?;
                     Ok(OpenReport {
                         path: dest,
