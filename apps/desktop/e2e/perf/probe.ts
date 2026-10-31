@@ -66,26 +66,35 @@ export function installPerf({
     },
     async ipc() {
       const samples = [];
-      // Warm view before timing; record wrapper roundtrip and serialized response bytes.
-      for (let i = 0; i < 55; i++) {
-        const start = performance.now();
-        const result = await view.rows({
-          viewId: handle.viewId,
-          version: handle.version,
-          offset: (i * 200) % Math.max(200, source.total - 200),
-          limit: 200,
-          columns,
-        });
-        const ms = performance.now() - start;
-        if (result.cells.length !== 200 || result.columns.length !== 20)
-          throw new Error("Expected 200 × 20 response");
-        if (i >= 5)
-          samples.push({
-            ms,
-            bytes: new TextEncoder().encode(JSON.stringify(result)).byteLength,
+      // Build the exact 20-column view before warmup/timing. Measuring a different
+      // projection on the 65-column grid view also includes projection rebuilds.
+      const ipcHandle = await settled(
+        await view.open({ spec: tab(), columns }),
+      );
+      try {
+        for (let i = 0; i < 55; i++) {
+          const start = performance.now();
+          const result = await view.rows({
+            viewId: ipcHandle.viewId,
+            version: ipcHandle.version,
+            offset: (i * 200) % Math.max(200, source.total - 200),
+            limit: 200,
+            columns,
           });
+          const ms = performance.now() - start;
+          if (result.cells.length !== 200 || result.columns.length !== 20)
+            throw new Error("Expected 200 × 20 response");
+          if (i >= 5)
+            samples.push({
+              ms,
+              bytes: new TextEncoder().encode(JSON.stringify(result))
+                .byteLength,
+            });
+        }
+        return { samples, columns, rows: 200 };
+      } finally {
+        await view.close({ viewId: ipcHandle.viewId });
       }
-      return { samples, columns, rows: 200 };
     },
     record: api.record,
     jump: (row: number) => api.jump(row),
