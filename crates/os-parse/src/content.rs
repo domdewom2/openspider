@@ -119,6 +119,8 @@ struct Rules {
     count_list_items: bool,
     /// Ankergrenzen als Wortgrenzen behandeln (SQ-09), unabhängig von Listenpunkten.
     separate_anchors: bool,
+    /// Titel als Blockgrenze behandeln (Text Ratio).
+    title_boundary: bool,
 }
 
 fn lower_list(list: &[String]) -> Vec<String> {
@@ -147,6 +149,7 @@ impl Rules {
             drop_svg: true,
             count_list_items: true,
             separate_anchors: true,
+            title_boundary: false,
         }
     }
 
@@ -162,6 +165,7 @@ impl Rules {
             drop_svg: false,
             count_list_items: false,
             separate_anchors: false,
+            title_boundary: true,
         }
     }
 
@@ -260,7 +264,7 @@ fn walk_into(body: ElementRef, rules: &Rules, mut counter: TokenCounter) -> Toke
                         continue;
                     }
                     let name = el.name();
-                    let block = is_block(name) || (name == "title" && !rules.count_list_items);
+                    let block = is_block(name) || (name == "title" && rules.title_boundary);
                     if rules.separate_anchors && name == "a" {
                         counter.inline_boundary();
                     }
@@ -307,7 +311,7 @@ fn walk_into(body: ElementRef, rules: &Rules, mut counter: TokenCounter) -> Toke
                     if rules.separate_anchors && el.name() == "a" {
                         counter.inline_boundary();
                     }
-                    if is_block(el.name()) || (el.name() == "title" && !rules.count_list_items) {
+                    if is_block(el.name()) || (el.name() == "title" && rules.title_boundary) {
                         counter.boundary();
                     }
                 }
