@@ -16,7 +16,7 @@ function descendants(rows, rootPid) {
 }
 export function rendererProcesses(rows, rootPid) {
   return descendants(rows, rootPid).filter((p) =>
-    /--type=renderer|WebKitWebProcess|com\.apple\.WebKit\.WebContent|msedgewebview2\.exe/i.test(
+    /--type=renderer|WebKitWebProcess|WPEWebProcess|com\.apple\.WebKit\.WebContent|msedgewebview2\.exe/i.test(
       p.command,
     ),
   );

@@ -88,4 +88,11 @@ test("RSS attribution excludes another workspace and the Rust backend", () => {
     [102, 104],
   );
   assert.deepEqual(rendererProcesses(processes, 999), []);
+  assert.deepEqual(
+    rendererProcesses(
+      [{ pid: 105, parent: 100, command: "WPEWebProcess", bytes: 100 }],
+      100,
+    ).map((p) => p.pid),
+    [105],
+  );
 });
