@@ -161,6 +161,30 @@ describe("detail frame and URL properties", () => {
 });
 
 describe("paged tables", () => {
+  // spec: UI-145
+  // spec: UI-030
+  it("loads an explicit tab immediately but still debounces a new URL selection", async () => {
+    const { rerender } = render(<DetailFrame selection={selection} actions={actions} />); await settle();
+    fireEvent.click(screen.getByRole("tab", { name: "Inlinks", hidden: true }));
+    await settle(0);
+    expect(opens()).toHaveLength(1);
+    const next = { ...selection, urlIds: [8], focus: 8 };
+    rerender(<DetailFrame selection={next} actions={actions} />);
+    await settle(99); expect(opens()).toHaveLength(1);
+    await settle(1); expect(opens()).toHaveLength(2);
+    expect(lastSpec()).toMatchObject({ urlIds: [8] });
+    fireEvent.click(screen.getByRole("tab", { name: "Outlinks", hidden: true })); await settle(0);
+    expect(opens()).toHaveLength(3);
+    // Changing request urgency must not dispose an already retained panel.
+    fireEvent.click(screen.getByRole("tab", { name: "Inlinks", hidden: true })); await settle(0);
+    expect(opens()).toHaveLength(3);
+    expect(screen.getByRole("table", { name: "Inlinks" })).toHaveTextContent("https://site.test/source");
+    // Revisiting a previously urgent selection is still a new URL selection.
+    rerender(<DetailFrame selection={selection} actions={actions} />);
+    await settle(99); expect(opens()).toHaveLength(3);
+    await settle(1); expect(opens()).toHaveLength(4);
+  });
+
   // spec: UI-032
   it("loads the union of selected URLs and keeps repeated inlinks as separate rows", async () => {
     render(<DetailFrame selection={selection} actions={actions} />); await settle(); await selectTab("Inlinks");
