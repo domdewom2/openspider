@@ -75,9 +75,15 @@ Der Download fehlender/abgelaufener Artefakte schlägt absichtlich fehl.
   Zusätzliche isolierte JS-Probe: Titel wird erst durch JavaScript zu `R03 rendered`.
 - Echte `.ostask` über `--run-task`: Windows-Aufgabenplanung bzw. LaunchAgent startet
   zur nächsten übernächsten Minute; Historie bestätigt Startabweichung ≤ 60 s,
-  erfolgreichen Abschluss und Export. Registrierungen werden im `finally` entfernt
-  und Abwesenheit geprüft. Danach Installer-Deinstallation auch bei Smoke-Fehlern.
-- `compare`: beide normalisierten Exporte jeder Installation byte-gleich mit dem
+  erfolgreichen Abschluss und Export. Registrierung erfolgt durch die Suite, nicht
+  über den Produkt-Planer (OUT-166 bleibt anderen Paketen vorbehalten).
+  Registrierungen werden im `finally` entfernt
+  und Abwesenheit geprüft. Danach Installer-Deinstallation auch bei Smoke-Fehlern,
+  jedoch nur nach erfolgreicher Installation (Exit 0/3010). Folgefehler beim
+  Aufräumen verdecken den ursprünglichen Fehler nicht. Alle `--crawl`-Aufrufe
+  haben 600 s Timeout.
+- `compare` führt zuerst `python3 -m unittest discover -s tests/smoke -v` aus.
+  Danach: beide normalisierten Exporte jeder Installation byte-gleich mit dem
   installierten Windows-x64-MSI-Build. Keine Sortierung/Entfernung fachlicher Spalten.
   Spec 06 §0: Basis-URL → `{BASE}`, Zeitspalten → `<TS>`, Antwortzeit → `<MS>`,
   Crawl-ID → `<ID>`, BOM/CSV-Zeilenenden vereinheitlicht. Hash bleibt erhalten.
@@ -86,7 +92,9 @@ Der Download fehlender/abgelaufener Artefakte schlägt absichtlich fehl.
   Portkonflikt ist ein Fehler; keine fremden Prozesse beenden. Die Suite kopiert die
   Fixture temporär und ergänzt nur eine vom Hauptcrawl unerreichbare JS-Proberoute.
 - Drei zusätzliche Text-Crawls je Installation: Median URLs/s, Einzelzeiten, CPU-
-  Angaben in `result.json`; Job-Summary und Vergleichsjob zeigen ARM/x64-Quotienten
+  Angaben, `PROCESSOR_ARCHITEW6432` und `RUNNER_ARCH` (wenn gesetzt), Browserpfad
+  und Browser-Version in `result.json`; Job-Summary und Vergleichsjob zeigen
+  ARM/x64-Quotienten
   pro Installer. K3-10: Richtwert ≥ 50 % nur auf vergleichbarer Hardware. Hosted
   Runner sind unterschiedlich; Unterschreitung meldet Hardware-Prüfbedarf und ist
   kein künstlicher CI-Fehler. Die kleine Fixture misst inklusive Prozessstart.
@@ -94,6 +102,16 @@ Der Download fehlender/abgelaufener Artefakte schlägt absichtlich fehl.
 Artefakte `installed-smoke-<runner>` enthalten rohe CSVs, normalisierte CSVs,
 Crawl-Logs, Sitemaps, Scheduler-Historie/-Definition und Messwerte. Lauf-IDs und
 Quotienten nach den echten Läufen im Paketbericht ergänzen; keine Werte schätzen.
+
+Bei Planerfehlern/Timeout liegen vor der Abmeldung erfasste Diagnosen im jeweiligen
+Installationsordner der Evidence: `launchctl-print` samt stderr (aktive Domain
+`gui/<uid>` bzw. `user/<uid>`), unter Windows `scheduled-task-info` mit
+State/LastRunTime/LastTaskResult und `scheduled-task-definition.xml`. `task.stdout`
+und `task.stderr` enthalten die Aufgabenausgabe; fehlt die Ausgabe, steht dort ein
+Hinweis auf einen möglichen Nichtstart. Der macOS-Bootstrap versucht nach einem
+Fehler in `gui/<uid>` die Domain `user/<uid>` und protokolliert dies in
+`bootstrap-fallback.log`. Windows registriert explizit den aktuellen Benutzer mit
+`LogonType Interactive`; die Runner-Sitzung muss dafür angemeldet sein.
 
 ## Linux-Trockenlauf
 
