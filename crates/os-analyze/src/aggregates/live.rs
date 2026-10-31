@@ -6,12 +6,11 @@
 use os_model::{CrawlConfig, UrlId};
 use os_store::{CrawlFile, StoreError};
 use rusqlite::{params, OptionalExtension};
-use serde::{Deserialize, Serialize};
 
 pub(crate) const SELECT: &str = "SELECT id, url, is_internal, content_class, indexability, crawl_depth,
     status_code, robots_blocked, response_time_ms, state, no_response_reason, in_tables FROM main.urls";
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub(crate) struct Contribution {
     pub(crate) paths: Vec<(String, String, String)>, // path, parent, name
     pub(crate) depth: Option<u32>,
@@ -100,25 +99,103 @@ fn directory_paths(url: &str) -> Vec<(String, String, String)> {
 }
 
 fn init(file: &CrawlFile) -> Result<(), StoreError> {
-    file.conn().execute_batch(
+    file.conn().execute_batch(&format!(
         "PRAGMA temp.cache_size=-4096;
-         CREATE TEMP TABLE IF NOT EXISTS k03_rows(id INTEGER PRIMARY KEY, contribution TEXT NOT NULL);
+         CREATE TEMP TABLE IF NOT EXISTS k03_rows AS {SELECT} WHERE 0;
+         CREATE UNIQUE INDEX IF NOT EXISTS temp.k03_rows_id ON k03_rows(id);
          CREATE TEMP TABLE IF NOT EXISTS k03_meta(id INTEGER PRIMARY KEY CHECK(id=1), seq INTEGER NOT NULL, reset TEXT NOT NULL);
+         CREATE TEMP TABLE IF NOT EXISTS k03_rowless(id INTEGER PRIMARY KEY CHECK(id=1), stored INTEGER NOT NULL);
          CREATE TEMP TABLE IF NOT EXISTS k03_counts(
            kind TEXT NOT NULL, key TEXT NOT NULL, parent TEXT NOT NULL, name TEXT NOT NULL,
            n INTEGER NOT NULL, idx INTEGER NOT NULL, nonidx INTEGER NOT NULL,
            s2 INTEGER NOT NULL, s3 INTEGER NOT NULL, s4 INTEGER NOT NULL, s5 INTEGER NOT NULL,
            blocked INTEGER NOT NULL, noresp INTEGER NOT NULL, PRIMARY KEY(kind,key)) WITHOUT ROWID;
          CREATE INDEX IF NOT EXISTS temp.k03_parent ON k03_counts(kind,parent,key);",
-    )?;
+    ))?;
     Ok(())
 }
 
-fn json_error(e: serde_json::Error) -> StoreError {
-    StoreError::InvalidInput(format!("Aggregate: {e}"))
+// Bounded batches combine common paths/depth/time buckets before touching
+// SQLite. Old raw facts are copied by SQLite, rather than serialized per URL.
+// UI-145: keys are looked up without allocating; only a new bucket allocates.
+#[derive(Default)]
+struct Totals {
+    // "kind\0key" → (parent, name, counts)
+    map: std::collections::HashMap<String, (String, String, [i64; 9])>,
+    buf: String,
 }
 
-fn add(file: &CrawlFile, c: &Contribution, sign: i64) -> Result<(), StoreError> {
+impl Totals {
+    fn put(
+        &mut self,
+        kind: &str,
+        key: &str,
+        parent: &str,
+        name: &str,
+        c: &Contribution,
+        sign: i64,
+    ) {
+        self.buf.clear();
+        self.buf.push_str(kind);
+        self.buf.push('\0');
+        self.buf.push_str(key);
+        if !self.map.contains_key(self.buf.as_str()) {
+            self.map.insert(
+                self.buf.clone(),
+                (parent.to_owned(), name.to_owned(), [0; 9]),
+            );
+        }
+        let Some((_, _, counts)) = self.map.get_mut(self.buf.as_str()) else {
+            return;
+        };
+        counts[0] += sign;
+        counts[1] += sign * i64::from(c.indexable);
+        counts[2] += sign * i64::from(c.non_indexable);
+        counts[3 + c.response_class] += sign;
+    }
+
+    fn merge(&mut self, other: Totals) {
+        for (key, (parent, name, counts)) in other.map {
+            let entry = self.map.entry(key).or_insert((parent, name, [0; 9]));
+            for (total, n) in entry.2.iter_mut().zip(counts) {
+                *total += n;
+            }
+        }
+    }
+}
+
+fn accumulate(totals: &mut Totals, c: &Contribution, sign: i64) {
+    for (path, parent, name) in &c.paths {
+        totals.put("path", path, parent, name, c, sign);
+    }
+    let mut number = itoa_buf();
+    if let Some(depth) = c.depth {
+        totals.put("depth", number.format(i64::from(depth)), "", "", c, sign);
+    }
+    if let Some(time) = c.time {
+        totals.put("time_all", number.format(i64::from(time)), "", "", c, sign);
+        if c.internal_html {
+            totals.put("time_html", number.format(i64::from(time)), "", "", c, sign);
+        }
+    }
+}
+
+/// Small reusable decimal formatter (no allocation per bucket key).
+struct Number([u8; 24], usize);
+fn itoa_buf() -> Number {
+    Number([0; 24], 0)
+}
+impl Number {
+    fn format(&mut self, value: i64) -> &str {
+        use std::io::Write;
+        let mut cursor = std::io::Cursor::new(&mut self.0[..]);
+        let _ = write!(cursor, "{value}");
+        self.1 = cursor.position() as usize;
+        std::str::from_utf8(&self.0[..self.1]).unwrap_or("")
+    }
+}
+
+fn flush(file: &CrawlFile, totals: &mut Totals) -> Result<(), StoreError> {
     let mut stmt = file.conn().prepare_cached(
         "INSERT INTO temp.k03_counts(kind,key,parent,name,n,idx,nonidx,s2,s3,s4,s5,blocked,noresp)
          VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)
@@ -126,52 +203,28 @@ fn add(file: &CrawlFile, c: &Contribution, sign: i64) -> Result<(), StoreError> 
            s2=s2+excluded.s2,s3=s3+excluded.s3,s4=s4+excluded.s4,s5=s5+excluded.s5,
            blocked=blocked+excluded.blocked,noresp=noresp+excluded.noresp",
     )?;
-    let mut put = |kind: &str, key: &str, parent: &str, name: &str| -> Result<(), StoreError> {
-        let classes: [i64; 6] =
-            std::array::from_fn(|i| if c.response_class == i { sign } else { 0 });
+    for (composite, (parent, name, n)) in std::mem::take(&mut totals.map) {
+        let (kind, key) = composite
+            .split_once('\0')
+            .unwrap_or((composite.as_str(), ""));
         stmt.execute(params![
-            kind,
-            key,
-            parent,
-            name,
-            sign,
-            sign * i64::from(c.indexable),
-            sign * i64::from(c.non_indexable),
-            classes[0],
-            classes[1],
-            classes[2],
-            classes[3],
-            classes[4],
-            classes[5]
+            kind, key, parent, name, n[0], n[1], n[2], n[3], n[4], n[5], n[6], n[7], n[8]
         ])?;
-        Ok(())
-    };
-    for (path, parent, name) in &c.paths {
-        put("path", path, parent, name)?;
-    }
-    if let Some(depth) = c.depth {
-        put("depth", &depth.to_string(), "", "")?;
-    }
-    if let Some(time) = c.time {
-        put("time_all", &time.to_string(), "", "")?;
-        if c.internal_html {
-            put("time_html", &time.to_string(), "", "")?;
-        }
     }
     Ok(())
 }
 
+fn add(file: &CrawlFile, c: &Contribution, sign: i64) -> Result<(), StoreError> {
+    let mut totals = Totals::default();
+    accumulate(&mut totals, c, sign);
+    flush(file, &mut totals)
+}
+
 fn remove(file: &CrawlFile, id: i64) -> Result<(), StoreError> {
-    let old: Option<String> = file
-        .conn()
-        .query_row(
-            "SELECT contribution FROM temp.k03_rows WHERE id=?1",
-            [id],
-            |r| r.get(0),
-        )
-        .optional()?;
-    if let Some(old) = old {
-        add(file, &serde_json::from_str(&old).map_err(json_error)?, -1)?;
+    let sql = format!("{SELECT} WHERE id=?1").replace("main.urls", "temp.k03_rows");
+    let old = file.conn().query_row(&sql, [id], contribution).optional()?;
+    if let Some((_, old)) = old {
+        add(file, &old, -1)?;
         file.conn()
             .execute("DELETE FROM temp.k03_rows WHERE id=?1", [id])?;
     }
@@ -182,10 +235,247 @@ fn replace(file: &CrawlFile, id: i64, c: Contribution) -> Result<(), StoreError>
     remove(file, id)?;
     add(file, &c, 1)?;
     file.conn().execute(
-        "INSERT INTO temp.k03_rows(id,contribution) VALUES(?1,?2)",
-        params![id, serde_json::to_string(&c).map_err(json_error)?],
+        &format!("INSERT INTO temp.k03_rows {SELECT} WHERE id=?1"),
+        [id],
     )?;
     Ok(())
+}
+
+/// UI-145: the first build of a connection keeps only the aggregates. Per-URL raw facts are needed
+/// solely to subtract old contributions; the first later change rebuilds once with them. Large
+/// crawls are aggregated in disjoint ID ranges on further read connections of the same version.
+fn cold_build(
+    file: &CrawlFile,
+    cancel: &os_model::CancelToken,
+    with_rows: bool,
+) -> Result<(), StoreError> {
+    let interrupt = file.conn().get_interrupt_handle();
+    let _registration = cancel.on_cancel(move || interrupt.interrupt());
+    check_cancel(cancel)?;
+    let mut totals = Totals::default();
+    if with_rows {
+        file.conn()
+            .execute(&format!("INSERT INTO temp.k03_rows {SELECT}"), [])?;
+        let sql = SELECT.replace("main.urls", "temp.k03_rows");
+        scan_range(file.conn(), &sql, None, &mut totals, cancel)?;
+    } else {
+        file.conn()
+            .execute("INSERT INTO temp.k03_rowless(id, stored) VALUES(1, 0)", [])?;
+        match parallel_totals(file, cancel)? {
+            Some(parallel) => {
+                crate::views::parallel_pass_done();
+                totals = parallel;
+            }
+            None => scan_range(file.conn(), SELECT, None, &mut totals, cancel)?,
+        }
+    }
+    flush(file, &mut totals)
+}
+
+fn scan_range(
+    conn: &rusqlite::Connection,
+    select: &str,
+    range: Option<(i64, i64)>,
+    totals: &mut Totals,
+    cancel: &os_model::CancelToken,
+) -> Result<(), StoreError> {
+    let mut stmt = match range {
+        Some(_) => conn.prepare(&format!("{select} WHERE id > ?1 AND id <= ?2"))?,
+        None => conn.prepare(select)?,
+    };
+    let mut rows = match range {
+        Some((after, last)) => stmt.query([after, last])?,
+        None => stmt.query([])?,
+    };
+    let mut seen = 0u32;
+    while let Some(row) = rows.next()? {
+        seen = seen.wrapping_add(1);
+        if seen.is_multiple_of(1024) {
+            check_cancel(cancel)?;
+        }
+        let (_, c) = contribution(row)?;
+        accumulate(totals, &c, 1);
+    }
+    check_cancel(cancel)
+}
+
+/// `None` for small crawls or when another connection sees a different data version.
+fn parallel_totals(
+    file: &CrawlFile,
+    cancel: &os_model::CancelToken,
+) -> Result<Option<Totals>, StoreError> {
+    let max_id: i64 =
+        file.conn()
+            .query_row("SELECT COALESCE(MAX(id), 0) FROM main.urls", [], |r| {
+                r.get(0)
+            })?;
+    let workers = crate::views::parallel_workers(max_id, 4);
+    if workers < 2 {
+        return Ok(None);
+    }
+    let seq = os_store::queries::change_seq(file.conn())?;
+    let reset = file.get_meta("reset_seq")?.unwrap_or_default();
+    let step = max_id / workers as i64 + 1;
+    let path = file.path();
+    let parts: Vec<Result<Option<Totals>, StoreError>> = std::thread::scope(|scope| {
+        let handles: Vec<_> = (0..workers as i64)
+            .map(|i| {
+                let reset = &reset;
+                scope.spawn(move || -> Result<Option<Totals>, StoreError> {
+                    let after = if i == 0 { i64::MIN } else { i * step };
+                    let last = if i + 1 == workers as i64 {
+                        i64::MAX
+                    } else {
+                        (i + 1) * step
+                    };
+                    let worker = CrawlFile::open(path, os_store::OpenMode::ReadOnly)?;
+                    let interrupt = worker.conn().get_interrupt_handle();
+                    let _registration = cancel.on_cancel(move || interrupt.interrupt());
+                    let _snapshot = worker.conn().unchecked_transaction()?;
+                    if os_store::queries::change_seq(worker.conn())? != seq
+                        || worker.get_meta("reset_seq")?.unwrap_or_default() != *reset
+                    {
+                        return Ok(None);
+                    }
+                    let mut totals = Totals::default();
+                    scan_range(
+                        worker.conn(),
+                        SELECT,
+                        Some((after, last)),
+                        &mut totals,
+                        cancel,
+                    )?;
+                    Ok(Some(totals))
+                })
+            })
+            .collect();
+        handles
+            .into_iter()
+            .map(|h| {
+                h.join().unwrap_or_else(|_| {
+                    Err(StoreError::InvalidInput(
+                        "Aggregatdurchlauf abgebrochen".into(),
+                    ))
+                })
+            })
+            .collect()
+    });
+    let mut merged = Totals::default();
+    for part in parts {
+        match part? {
+            Some(part) => merged.merge(part),
+            None => return Ok(None),
+        }
+    }
+    Ok(Some(merged))
+}
+
+fn rowless(file: &CrawlFile) -> Result<bool, StoreError> {
+    Ok(file
+        .conn()
+        .query_row("SELECT EXISTS(SELECT 1 FROM temp.k03_rowless)", [], |r| {
+            r.get(0)
+        })?)
+}
+
+/// Drops raw facts and aggregates; the caller rebuilds and writes the watermark.
+fn clear(file: &CrawlFile) -> Result<(), StoreError> {
+    file.conn().execute_batch(
+        "DELETE FROM temp.k03_rows; DELETE FROM temp.k03_counts; DELETE FROM temp.k03_rowless;",
+    )?;
+    Ok(())
+}
+
+const CACHE_KEY: &str = "n21:sidebar";
+type StoredRow = (String, String, String, String, [i64; 9]);
+fn params_hash() -> String {
+    crate::cursor::query_hash(&["sidebar-v1", env!("CARGO_PKG_VERSION"), SELECT])
+}
+
+/// K-1a: aggregates persisted for exactly this data version replace the cold build
+/// of a reopened saved crawl. Raw facts follow with the first change.
+fn restore(file: &CrawlFile, seq: u64, reset: &str) -> Result<bool, StoreError> {
+    let Some(rows) = os_store::view_cache::load(file, CACHE_KEY, &params_hash())?
+        .filter(|e| e.built_seq == seq && e.step_stamp == reset)
+        .and_then(|e| serde_json::from_slice::<Vec<StoredRow>>(&e.data).ok())
+    else {
+        return Ok(false);
+    };
+    let mut stmt = file.conn().prepare_cached(
+        "INSERT INTO temp.k03_counts(kind,key,parent,name,n,idx,nonidx,s2,s3,s4,s5,blocked,noresp)
+         VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)",
+    )?;
+    for (kind, key, parent, name, n) in rows {
+        stmt.execute(params![
+            kind, key, parent, name, n[0], n[1], n[2], n[3], n[4], n[5], n[6], n[7], n[8]
+        ])?;
+    }
+    file.conn()
+        .execute("INSERT INTO temp.k03_rowless(id, stored) VALUES(1, 1)", [])?;
+    file.conn().execute(
+        "INSERT OR REPLACE INTO temp.k03_meta(id,seq,reset) VALUES(1,?1,?2)",
+        params![seq, reset],
+    )?;
+    Ok(true)
+}
+
+/// Aggregates of a cold build, ready for a writer (see [`persist`]).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Export {
+    pub seq: u64,
+    pub reset: String,
+    pub data: Vec<u8>,
+}
+
+/// Takes the aggregates of a cold build on this connection once; `None` if they came from
+/// `view_cache`, were taken already or follow live changes.
+pub fn take_export(file: &CrawlFile) -> Result<Option<Export>, StoreError> {
+    init(file)?;
+    let pending: bool = file.conn().query_row(
+        "SELECT EXISTS(SELECT 1 FROM temp.k03_rowless WHERE stored=0)",
+        [],
+        |r| r.get(0),
+    )?;
+    let Some((seq, reset)) = file
+        .conn()
+        .query_row("SELECT seq,reset FROM temp.k03_meta WHERE id=1", [], |r| {
+            Ok((r.get::<_, u64>(0)?, r.get::<_, String>(1)?))
+        })
+        .optional()?
+        .filter(|_| pending)
+    else {
+        return Ok(None);
+    };
+    let mut stmt = file.conn().prepare(
+        "SELECT kind,key,parent,name,n,idx,nonidx,s2,s3,s4,s5,blocked,noresp FROM temp.k03_counts ORDER BY kind,key",
+    )?;
+    let rows = stmt
+        .query_map([], |r| {
+            let mut n = [0i64; 9];
+            for (i, v) in n.iter_mut().enumerate() {
+                *v = r.get(4 + i)?;
+            }
+            Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, n))
+        })?
+        .collect::<Result<Vec<StoredRow>, _>>()?;
+    let data = serde_json::to_vec(&rows).map_err(|e| StoreError::InvalidInput(e.to_string()))?;
+    file.conn()
+        .execute("UPDATE temp.k03_rowless SET stored=1", [])?;
+    Ok(Some(Export { seq, reset, data }))
+}
+
+/// Stores an [`Export`] with a writable connection; read-only and running crawls store nothing.
+pub fn persist(file: &CrawlFile, export: &Export) -> Result<bool, StoreError> {
+    os_store::view_cache::save(
+        file,
+        CACHE_KEY,
+        &params_hash(),
+        &os_store::view_cache::Entry {
+            step_stamp: export.reset.clone(),
+            built_seq: export.seq,
+            data: export.data.clone(),
+        },
+    )
 }
 
 fn check_cancel(cancel: &os_model::CancelToken) -> Result<(), StoreError> {
@@ -229,9 +519,15 @@ pub fn refresh_with_cancel(
     {
         return Ok(());
     }
-    if previous.as_ref().is_some_and(|(old, _)| *old > seq) {
-        file.conn()
-            .execute_batch("DELETE FROM temp.k03_rows; DELETE FROM temp.k03_counts;")?;
+    let rowless = rowless(file)?;
+    let mut previous = previous;
+    if previous.as_ref().is_some_and(|(old, _)| *old > seq) || rowless {
+        clear(file)?;
+        previous = None;
+    }
+    if previous.is_none() && !rowless && restore(file, seq, &reset)? {
+        tx.commit()?;
+        return Ok(());
     }
     let since = previous
         .as_ref()
@@ -255,20 +551,18 @@ pub fn refresh_with_cancel(
             }
         }
     }
-    let sql = if since.is_some() {
-        format!("{SELECT} WHERE change_seq > ?1")
-    } else {
-        SELECT.to_owned()
-    };
-    let mut stmt = file.conn().prepare(&sql)?;
     if let Some(since) = since {
-        stmt.raw_bind_parameter(1, since)?;
-    }
-    let mut rows = stmt.raw_query();
-    while let Some(row) = rows.next()? {
-        check_cancel(cancel)?;
-        let (id, c) = contribution(row)?;
-        replace(file, id, c)?;
+        let mut stmt = file
+            .conn()
+            .prepare(&format!("{SELECT} WHERE change_seq > ?1"))?;
+        let mut rows = stmt.query([since])?;
+        while let Some(row) = rows.next()? {
+            check_cancel(cancel)?;
+            let (id, c) = contribution(row)?;
+            replace(file, id, c)?;
+        }
+    } else {
+        cold_build(file, cancel, rowless)?;
     }
     file.conn().execute(
         "INSERT OR REPLACE INTO temp.k03_meta(id,seq,reset) VALUES(1,?1,?2)",
@@ -294,6 +588,16 @@ pub fn apply_changes(
             })?;
     if !initialized {
         refresh(file, cfg)?;
+        return Ok(());
+    }
+    if rowless(file)? {
+        // Without raw facts the named changes cannot be subtracted: rebuild the
+        // current state once and keep raw facts from now on. The feed watermark
+        // stays; replaying later changes is idempotent.
+        let tx = file.conn().unchecked_transaction()?;
+        clear(file)?;
+        cold_build(file, &os_model::CancelToken::new(), true)?;
+        tx.commit().map_err(StoreError::from)?;
         return Ok(());
     }
     let tx = file.conn().unchecked_transaction()?;
