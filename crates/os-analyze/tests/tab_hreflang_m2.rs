@@ -106,7 +106,6 @@ fn unlinked_is_postcrawl_repeatable_and_stamps_sources() {
         [
             "https://site.test/3",
             "https://site.test/4",
-            "https://site.test/5",
             "https://site.test/8",
             "https://site.test/16"
         ]
@@ -115,7 +114,7 @@ fn unlinked_is_postcrawl_repeatable_and_stamps_sources() {
     analysis::steps::hreflang::run(&file, &cfg, &cancel).unwrap();
     assert_eq!(file.get_meta("change_seq").unwrap(), seq);
     file.conn()
-        .execute("UPDATE url_counters SET inlinks=1 WHERE url_id=3", [])
+        .execute("INSERT INTO links(source_id,target_id,target_raw,link_type,position,follow) VALUES (17,3,'/3','Hyperlink',100,1)", [])
         .unwrap();
     analysis::steps::hreflang::run(&file, &cfg, &cancel).unwrap();
     assert!(file
@@ -200,12 +199,12 @@ fn inconsistency_uses_source_selfcode_and_backlink_case_insensitively() {
 #[test]
 fn canonical_alternates_exclude_selfcanon_and_uncrawled() {
     let (_dir, file, cfg) = fixture();
-    assert!(has(&file, &cfg, "Non-Canonical Return Links", 1));
+    assert!(has(&file, &cfg, "Non-Canonical Return Links", 7));
     assert!(!has(&file, &cfg, "Non-Canonical Return Links", 2));
     file.conn()
         .execute("UPDATE urls SET state='queued' WHERE id IN (6,7)", [])
         .unwrap();
-    assert!(!has(&file, &cfg, "Non-Canonical Return Links", 1));
+    assert!(!has(&file, &cfg, "Non-Canonical Return Links", 7));
 }
 // spec: TECH-079
 #[test]
@@ -310,7 +309,7 @@ fn outside_head_requires_validation_coverage_and_preserves_other_columns() {
         state_of(&file, &cfg, "Hreflang", "Outside <head>").unwrap(),
         FilterState::NeedsConfig(_)
     ));
-    assert_eq!(detail(&file, &cfg, &[UrlId(13)]).rows.len(), 1);
+    assert_eq!(detail(&file, &cfg, &[UrlId(13)]).rows.len(), 0);
     cfg.advanced.html_validation = true;
     file.conn()
         .execute("DELETE FROM url_ext WHERE key='validation.checked'", [])

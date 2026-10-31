@@ -232,9 +232,13 @@ async fn store_crawl_matrix_all_four_combinations_per_link_type() {
                 }
                 (true, false) => {
                     // Speichern an, Crawlen aus: in den Tabellen, ohne Statuscode, nicht angefragt. Ausnahme
-                    // hreflang (K-62): die URL hat eine Zeile, aber keine Tabellen-Sichtbarkeit.
+                    // hreflang (K-62) und Paginierung (SQ-12): keine Tabellen-Sichtbarkeit.
                     let row = url_row(&fx, &url).unwrap_or_else(|| panic!("{what}: Zeile fehlt"));
-                    assert_eq!(row.in_tables, case.name != "hreflang", "{what}");
+                    assert_eq!(
+                        row.in_tables,
+                        !matches!(case.name, "hreflang" | "rel=next"),
+                        "{what}"
+                    );
                     assert_ne!(row.state, "done", "{what}");
                     assert_eq!(row.status, None, "{what}");
                     let expected = if case.external {
@@ -458,7 +462,6 @@ async fn canonical_targets_are_fetched_by_default() {
         "/nur-header-canonical",
         "/nur-canonical-a",
         "/nur-canonical-b",
-        "/nur-body-canonical",
         "/nur-canonical-gross",
         "/nur-canonical-multi",
     ] {
@@ -485,15 +488,18 @@ async fn canonical_targets_are_fetched_by_default() {
     assert_eq!(canon("/c3"), 2);
     assert_eq!(canon("/c5"), 1, "rel=\"Canonical\" in Großbuchstaben");
     assert_eq!(canon("/c6"), 1, "rel=\"canonical nofollow\"");
+    // SQ-04: Body-Canonicals hinterlassen nur den Problembeleg.
+    assert_eq!(hits(&fx, "/nur-body-canonical"), 0);
+    assert_eq!(canon("/c4"), 0);
     assert_eq!(
         count(
             &fx,
             &format!(
-                "SELECT in_head FROM canonicals WHERE url_id = {}",
+                "SELECT v_int FROM url_ext WHERE url_id = {} AND key = 'canonical.outside_head'",
                 id("/c4")
             )
         ),
-        0
+        1
     );
 }
 
@@ -509,7 +515,6 @@ async fn canonical_crawl_off_keeps_the_column_but_requests_nothing() {
         "/nur-canonical",
         "/nur-header-canonical",
         "/nur-canonical-a",
-        "/nur-body-canonical",
     ] {
         assert_eq!(hits(&fx, path), 0, "{path}");
         let row = url_row(&fx, &fx.site.url(path)).expect("Canonical-Ziel bleibt gespeichert");
@@ -712,14 +717,14 @@ const INTERNAL_NOFOLLOW: [&str; 4] = [
 ];
 const EXTERNAL_NOFOLLOW: [&str; 3] = ["/ext-nofollow", "/ext-sponsored", "/ext-ugc"];
 
-// spec: CRAWL-056
+// spec: CRAWL-056, ONPAGE-025
 #[tokio::test]
 async fn nofollow_links_are_stored_with_follow_false_but_not_requested() {
     let fx = crawl_fixture("crawl-nofollow", CrawlConfig::default()).await;
     for path in INTERNAL_NOFOLLOW {
         assert_eq!(hits(&fx, path), 0, "{path}");
         let row = url_row(&fx, &fx.site.url(path)).expect("nofollow-Ziel bleibt gespeichert");
-        assert!(row.in_tables, "{path}");
+        assert!(!row.in_tables, "{path}");
         assert_eq!(row.status, None, "{path}");
         assert_eq!(row.reason.as_deref(), Some("nofollow"), "{path}");
         assert_eq!(
@@ -733,6 +738,10 @@ async fn nofollow_links_are_stored_with_follow_false_but_not_requested() {
     }
     for path in EXTERNAL_NOFOLLOW {
         assert_eq!(ext_hits(&fx, path), 0, "{path}");
+        assert!(
+            in_tables(&fx, &format!("http://external.test{path}")),
+            "{path}"
+        );
     }
     // Links ohne rel und die Gegenprobe werden angefragt.
     assert_eq!(hits(&fx, "/frei"), 1);
@@ -758,7 +767,7 @@ async fn nofollow_links_are_stored_with_follow_false_but_not_requested() {
     }
 }
 
-// spec: CRAWL-056
+// spec: CRAWL-056, ONPAGE-025
 #[tokio::test]
 async fn follow_internal_nofollow_requests_internal_targets_only() {
     let fx = crawl_fixture(
@@ -774,6 +783,10 @@ async fn follow_internal_nofollow_requests_internal_targets_only() {
     }
     for path in EXTERNAL_NOFOLLOW {
         assert_eq!(ext_hits(&fx, path), 0, "{path}");
+        assert!(
+            in_tables(&fx, &format!("http://external.test{path}")),
+            "{path}"
+        );
     }
     // Die Anzeige bleibt: Folgen = false.
     assert_eq!(

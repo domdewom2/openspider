@@ -40,7 +40,7 @@ M1_SPERRE = ("crates/os-store", "crates/os-engine", "crates/os-analyze")
 M1_SPERRE_BIS = "M1-N27"
 SPERR_WELLEN = ["0a"]
 SPERR_PROBEN = ("Cargo.toml", "src/lib.rs", "src/q.rs", "src/q/z.rs", "tests/q.rs", "migrations/q.sql", "benches/q.rs")
-WELLEN = ["0a", "0b", "0c", "0d", "0e", "1", "2", "2b", "3", "3h", "3f", "4a", "4p", "4", "4h", "4n", "4b", "5"]  # 2b: M2-N01b (K2-68); 4a: M2-E07 vor Q03 (K2-74), M2-U34 vor U32/U33 (K2-75); 3h/4h: Nutzer-Abnahmen A02/A03, 4n: N-Paket aus A03 vor Q04 (K2-75); 3f: M2-N03 Funktionsfehler aus A02, 4p: M2-U35 visueller Polish nach U34 und N03 (K2-75a)
+WELLEN = ["0a", "0b", "0c", "0d", "0e", "1", "2", "2b", "3", "3h", "3f", "4a", "4p", "4", "4q", "4r", "4s", "4h", "4n", "4b", "5"]  # 2b: M2-N01b (K2-68); 4a: M2-E07 vor Q03 (K2-74), M2-U34 vor U32/U33 (K2-75); 3h/4h: Nutzer-Abnahmen A02/A03, 4n: N-Paket aus A03 vor Q04 (K2-75); 3f: M2-N03 Funktionsfehler aus A02, 4p: M2-U35 visueller Polish nach U34 und N03 (K2-75a); 4q/4r/4s: Q02-Nachbesserung M2-N06 → N07 … N11 → Q02b (K2-83); 4n zusätzlich M2-N12/N13 (K2-91)
 ID_RE = r"\b(?:CRAWL|ONPAGE|TECH|OUT|AGENT|UI|INTEG|PERF)-\d{3}\b"
 
 # M2.md Abschnitt 9: bewusst nicht in M2 (Grund in Klammern). Wird von P5/P6 als Ausnahme gelesen.
@@ -58,7 +58,9 @@ NICHT_M2 = {
 
 # Gewollte Überschneidungen innerhalb einer Welle (Paar → Grund).
 ERLAUBT = {
+    frozenset({"M2-N04", "M2-N12"}): "Integrationsrunde 17: N04 bereits integriert; N12-Owns-Ausweitung auf UpperTable und e2e/* vom Orchestrator ausdrücklich bestätigt",
     frozenset({"M2-U31", "M2-U32"}): "e2e-b/** ohne perf (U32) vs. e2e-b/perf/** (U31)",
+    frozenset({"M2-N07", "M2-N08"}): "os-model config.rs nur SpiderConfig (N07) vs. nur ContentAreaConfig (N08); Schema und default.osconfig nur Neuerzeugung (K2-83)",
 }
 
 B2_HINWEIS = "B2: je [P1]-/7.3-Kriterium"

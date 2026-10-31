@@ -3,6 +3,11 @@ key = ["Address"]
 drop_ref_columns = ["Description", "How To Fix"]
 
 [columns]
+"Carbon Rating" = { ignore = true, reason = "SQ-13f / TECH-281: Zusatzspalte der Referenz außerhalb des Validation-Spaltensatzes" }
+"CO2 (mg)" = { ignore = true, reason = "SQ-13f / TECH-281: Zusatzspalte der Referenz außerhalb des Validation-Spaltensatzes" }
+"Total Transferred (Bytes)" = { ignore = true, reason = "SQ-13f / TECH-281: Zusatzspalte der Referenz außerhalb des Validation-Spaltensatzes" }
+"Transferred (Bytes)" = { ignore = true, reason = "SQ-13f / TECH-281: Zusatzspalte der Referenz außerhalb des Validation-Spaltensatzes" }
+"Size (Bytes)" = { ignore = true, reason = "SQ-13f / TECH-281: Zusatzspalte der Referenz außerhalb des Validation-Spaltensatzes" }
 "Address" = "Address"
 "Content Type" = "Content Type"
 "Status Code" = "Status Code"

@@ -450,6 +450,7 @@ fn random_config(
             exclude: list!(),
         },
         spider: SpiderConfig {
+            css_style_attributes: b!(),
             images: sc!(),
             css: sc!(),
             javascript: sc!(),

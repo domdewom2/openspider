@@ -1,19 +1,30 @@
-# M2-P01: Spec-abgeleitete Spalten; keine Referenzwerte oder Beschreibungstexte.
-key = ["Source", "Canonical"]
+# N06: Spaltensatz nach Referenzkopfzeile; Soll und Ignoriergründe aus der Spec.
+key = ["Source", "Destination", "#"]
 drop_ref_columns = ["Description", "How To Fix"]
 
 [columns]
 "Source" = "Source"
-"Canonical" = "Canonical"
+"Destination" = "Canonical"
 "Status Code" = "Status Code"
-"Status" = "Status"
+"Status" = { os = "Status", transform = ["ignore_case"] }
 "Indexability" = "Indexability"
 "Indexability Status" = "Indexability Status"
 "Unlinked" = "Unlinked"
+"Type" = { ignore = true, reason = "OUT-087: Link-Metadaten der Referenz außerhalb des Non-Indexable-Canonicals-Reportvertrags" }
+"Size (Bytes)" = { ignore = true, reason = "OUT-087: Link-Metadaten der Referenz außerhalb des Non-Indexable-Canonicals-Reportvertrags" }
+"Alt Text" = { ignore = true, reason = "OUT-087: Link-Metadaten der Referenz außerhalb des Non-Indexable-Canonicals-Reportvertrags" }
+"Anchor" = { ignore = true, reason = "OUT-087: Link-Metadaten der Referenz außerhalb des Non-Indexable-Canonicals-Reportvertrags" }
+"Follow" = { ignore = true, reason = "OUT-087: Link-Metadaten der Referenz außerhalb des Non-Indexable-Canonicals-Reportvertrags" }
+"Target" = { ignore = true, reason = "OUT-087: Link-Metadaten der Referenz außerhalb des Non-Indexable-Canonicals-Reportvertrags" }
+"Rel" = { ignore = true, reason = "OUT-087: Link-Metadaten der Referenz außerhalb des Non-Indexable-Canonicals-Reportvertrags" }
+"Path Type" = { ignore = true, reason = "OUT-087: Link-Metadaten der Referenz außerhalb des Non-Indexable-Canonicals-Reportvertrags" }
+"Link Path" = { ignore = true, reason = "OUT-087: Link-Metadaten der Referenz außerhalb des Non-Indexable-Canonicals-Reportvertrags" }
+"Link Position" = { ignore = true, reason = "OUT-087: Link-Metadaten der Referenz außerhalb des Non-Indexable-Canonicals-Reportvertrags" }
+"Link Origin" = { ignore = true, reason = "OUT-087: Link-Metadaten der Referenz außerhalb des Non-Indexable-Canonicals-Reportvertrags" }
 
 [normalize]
+bool = "case-insensitive"
 base_url = true
 trim = true
-bool = "case-insensitive"
 number_decimals = 3
 empty_equals_null = true

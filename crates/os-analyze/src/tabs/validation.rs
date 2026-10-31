@@ -43,9 +43,7 @@ pub fn tab() -> TabDef {
     register_coverage_domain("Validation", "validation.checked", HTML);
     TabDef {
         id: "Validation",
-        population: "u.is_internal = 1 AND u.in_tables = 1 AND \
-            ((u.content_class = 'HTML' AND u.status_code = 200) OR \
-            u.content_class IN ('JavaScript', 'CSS'))",
+        population: "u.is_internal = 1 AND u.in_tables = 1",
         columns: vec![
             ColumnDef::new("Address", "u.address", ColumnKind::Url, true),
             ColumnDef::new("Content Type", "u.content_type", ColumnKind::Text, true),
@@ -55,7 +53,7 @@ pub fn tab() -> TabDef {
             ColumnDef::new("Indexability Status", "u.indexability_status", ColumnKind::Text, true),
         ],
         filters: vec![
-            filter("All", HTML, false),
+            filter("All", "1", false),
             filter("Invalid HTML Elements In <head>", fact!("invalid_head_elements", "e.v_text <> ''"), true),
             filter("<head> Not First In <html> Element", fact!("head_not_first", "e.v_text <> ''"), true),
             filter("Missing <head> Tag", fact!("head_count", "e.v_int = 0"), true),

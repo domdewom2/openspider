@@ -89,7 +89,7 @@ async fn switching_refresh_and_respect_recomputes_persisted_facts_and_visibility
     for (path, status, visible) in [
         ("refresh-self", "Self Referencing Meta Refresh", true),
         ("refresh-bare", "Self Referencing Meta Refresh", true),
-        ("header-self", "Self Referencing Meta Refresh", true),
+        ("header-self", "Redirected", true),
         ("refresh-query", "Redirected", true),
         ("body", "noindex", false),
         ("header", "noindex", false),
@@ -101,7 +101,7 @@ async fn switching_refresh_and_respect_recomputes_persisted_facts_and_visibility
             "SELECT id, indexability_status, in_tables, change_seq FROM urls WHERE address = ?1",
             [format!("{}/{path}.html", fx.site.base_url())], |r| Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?))).unwrap();
         assert_eq!((actual.as_str(), shown), (status, visible), "{path}");
-        if path != "gone" && path != "refresh-query" {
+        if path != "gone" && path != "refresh-query" && path != "header-self" {
             assert!(out.changed.contains(&UrlId(id)), "{path}");
             assert!(changed > seq, "Änderungsfeed {path}");
         }

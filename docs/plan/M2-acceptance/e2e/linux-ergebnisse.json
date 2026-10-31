@@ -1,0 +1,81 @@
+{
+  "platform": "linux",
+  "base": "233d00de3ebbf454bbc76ac5f263304ab3260a3e",
+  "source_commit": "381d7c52b8fff763169b3101280e3da16f313bb5",
+  "branch": "m2/int-17",
+  "playwright": "1.64.1",
+  "suites": {
+    "visual": {
+      "stats": {
+        "startTime": "2026-10-30T20:31:04.416Z",
+        "duration": 234175.784,
+        "expected": 168,
+        "skipped": 5,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "projects": {
+        "chromium-1": {
+          "passed": 39,
+          "expected_failure": 0,
+          "skipped": 1,
+          "unexpected": 0
+        },
+        "chromium-1.25": {
+          "passed": 30,
+          "expected_failure": 0,
+          "skipped": 1,
+          "unexpected": 0
+        },
+        "chromium-1.5": {
+          "passed": 30,
+          "expected_failure": 0,
+          "skipped": 1,
+          "unexpected": 0
+        },
+        "chromium-2": {
+          "passed": 30,
+          "expected_failure": 0,
+          "skipped": 1,
+          "unexpected": 0
+        },
+        "webkit-2": {
+          "passed": 27,
+          "expected_failure": 12,
+          "skipped": 1,
+          "unexpected": 0
+        }
+      }
+    },
+    "keyboard": {
+      "stats": {
+        "startTime": "2026-10-30T20:29:20.362Z",
+        "duration": 131504.495,
+        "expected": 178,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "projects": {
+        "chromium": {
+          "passed": 89,
+          "expected_failure": 0,
+          "skipped": 0,
+          "unexpected": 0
+        },
+        "webkit": {
+          "passed": 89,
+          "expected_failure": 0,
+          "skipped": 0,
+          "unexpected": 0
+        }
+      }
+    }
+  },
+  "notes": [
+    "U30 behebt alle 48 Chromium-Textfälle; deren test.fail-Markierungen nach K2-63 entfernt.",
+    "Final Visual: 156 bestanden, 12 erwartete WebKit-Fehler U32-003, fünf M3-fixme nach K2-79.",
+    "Ursprüngliche Auflagenzahl 60 erwartete Fehler ist durch den integrierten U30-Fix überholt.",
+    "Native Erstläufe sind Werkzeugprüfung; N12 vor macOS/Windows-Baselines, macOS --workers=1."
+  ]
+}

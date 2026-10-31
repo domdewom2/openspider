@@ -1,0 +1,2801 @@
+{
+  "stats": {
+    "startTime": "2026-10-30T20:31:04.416Z",
+    "duration": 234175.784,
+    "expected": 168,
+    "skipped": 5,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "tests": [
+    {
+      "project": "chromium-1",
+      "file": "audit.spec.ts",
+      "title": "Prüfer erkennt Kappen innerhalb einer Box, Überlappung und fehlenden Ellipsen-Tooltip",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 371,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "audit.spec.ts",
+      "title": "Prüfer erkennt Kappen innerhalb einer Box, Überlappung und fehlenden Ellipsen-Tooltip",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 159,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "audit.spec.ts",
+      "title": "Prüfer erkennt Kappen innerhalb einer Box, Überlappung und fehlenden Ellipsen-Tooltip",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 140,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "audit.spec.ts",
+      "title": "Prüfer erkennt Kappen innerhalb einer Box, Überlappung und fehlenden Ellipsen-Tooltip",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 223,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "audit.spec.ts",
+      "title": "Prüfer erkennt Kappen innerhalb einer Box, Überlappung und fehlenden Ellipsen-Tooltip",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 341,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "../compare/bridge.spec.ts",
+      "title": "real crawl pair: clickable classes, swap, mappings, link changes, source and Change Detection",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 30721,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "../compare/bridge.spec.ts",
+      "title": "real crawl pair: clickable classes, swap, mappings, link changes, source and Change Detection",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 29510,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "language.spec.ts",
+      "title": "es/fr/it vollständig, wählbar und per Systemsprache erkannt",
+      "status": "skipped",
+      "expectedStatus": "skipped",
+      "annotations": [
+        {
+          "type": "fixme",
+          "description": "M3: vollständige es/fr/it-Kataloge nach K2-79 zurückgestellt; M2 prüft das Community-Kriterium",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/language.spec.ts",
+            "line": 5,
+            "column": 8
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "skipped",
+          "duration": 127,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "language.spec.ts",
+      "title": "Community-Ressource ohne Codeänderung: Auswahl, Prozent und englischer Fallback",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2746,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "language.spec.ts",
+      "title": "Community-Datei erscheint in der echten Sprachauswahl mit Prozent und wirkt ohne Neustart",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3556,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "language.spec.ts",
+      "title": "es/fr/it vollständig, wählbar und per Systemsprache erkannt",
+      "status": "skipped",
+      "expectedStatus": "skipped",
+      "annotations": [
+        {
+          "type": "fixme",
+          "description": "M3: vollständige es/fr/it-Kataloge nach K2-79 zurückgestellt; M2 prüft das Community-Kriterium",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/language.spec.ts",
+            "line": 5,
+            "column": 8
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "skipped",
+          "duration": 70,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "language.spec.ts",
+      "title": "Community-Ressource ohne Codeänderung: Auswahl, Prozent und englischer Fallback",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1469,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "language.spec.ts",
+      "title": "Community-Datei erscheint in der echten Sprachauswahl mit Prozent und wirkt ohne Neustart",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2004,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "language.spec.ts",
+      "title": "es/fr/it vollständig, wählbar und per Systemsprache erkannt",
+      "status": "skipped",
+      "expectedStatus": "skipped",
+      "annotations": [
+        {
+          "type": "fixme",
+          "description": "M3: vollständige es/fr/it-Kataloge nach K2-79 zurückgestellt; M2 prüft das Community-Kriterium",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/language.spec.ts",
+            "line": 5,
+            "column": 8
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "skipped",
+          "duration": 77,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "language.spec.ts",
+      "title": "Community-Ressource ohne Codeänderung: Auswahl, Prozent und englischer Fallback",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1608,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "language.spec.ts",
+      "title": "Community-Datei erscheint in der echten Sprachauswahl mit Prozent und wirkt ohne Neustart",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1697,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "language.spec.ts",
+      "title": "es/fr/it vollständig, wählbar und per Systemsprache erkannt",
+      "status": "skipped",
+      "expectedStatus": "skipped",
+      "annotations": [
+        {
+          "type": "fixme",
+          "description": "M3: vollständige es/fr/it-Kataloge nach K2-79 zurückgestellt; M2 prüft das Community-Kriterium",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/language.spec.ts",
+            "line": 5,
+            "column": 8
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "skipped",
+          "duration": 94,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "language.spec.ts",
+      "title": "Community-Ressource ohne Codeänderung: Auswahl, Prozent und englischer Fallback",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1850,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "language.spec.ts",
+      "title": "Community-Datei erscheint in der echten Sprachauswahl mit Prozent und wirkt ohne Neustart",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1946,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "language.spec.ts",
+      "title": "es/fr/it vollständig, wählbar und per Systemsprache erkannt",
+      "status": "skipped",
+      "expectedStatus": "skipped",
+      "annotations": [
+        {
+          "type": "fixme",
+          "description": "M3: vollständige es/fr/it-Kataloge nach K2-79 zurückgestellt; M2 prüft das Community-Kriterium",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/language.spec.ts",
+            "line": 5,
+            "column": 8
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "skipped",
+          "duration": 217,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "language.spec.ts",
+      "title": "Community-Ressource ohne Codeänderung: Auswahl, Prozent und englischer Fallback",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1849,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "language.spec.ts",
+      "title": "Community-Datei erscheint in der echten Sprachauswahl mit Prozent und wirkt ohne Neustart",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2296,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 6821,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 6339,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5271,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5273,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4615,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4305,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4898,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4873,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5652,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U32-003: natives Select scrollHeight/clientHeight",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/layout.spec.ts",
+            "line": 49,
+            "column": 60
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 5586,
+          "errors": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"main: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"main: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  49 |           if (info.project.name.startsWith(\"webkit\")) test.fail(true, \"U32-003: natives Select scrollHeight/clientHeight\");\n  50 |         }\n> 51 |         expect(hits).toEqual([]);\n     |                      ^\n  52 |       }\n  53 |     });\n  54 |     }\n    at {REPO}/apps/desktop/e2e/visual/layout.spec.ts:51:22"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 6504,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 6890,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5620,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5383,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4585,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4526,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5191,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4850,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 6255,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U32-003: natives Select scrollHeight/clientHeight",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/layout.spec.ts",
+            "line": 49,
+            "column": 60
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 6868,
+          "errors": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"main: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"main: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  49 |           if (info.project.name.startsWith(\"webkit\")) test.fail(true, \"U32-003: natives Select scrollHeight/clientHeight\");\n  50 |         }\n> 51 |         expect(hits).toEqual([]);\n     |                      ^\n  52 |       }\n  53 |     });\n  54 |     }\n    at {REPO}/apps/desktop/e2e/visual/layout.spec.ts:51:22"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 7225,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 6984,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5560,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5330,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4696,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4742,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4951,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5061,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 7868,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U32-003: natives Select scrollHeight/clientHeight",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/layout.spec.ts",
+            "line": 49,
+            "column": 60
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 7527,
+          "errors": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"main: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"main: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  49 |           if (info.project.name.startsWith(\"webkit\")) test.fail(true, \"U32-003: natives Select scrollHeight/clientHeight\");\n  50 |         }\n> 51 |         expect(hits).toEqual([]);\n     |                      ^\n  52 |       }\n  53 |     });\n  54 |     }\n    at {REPO}/apps/desktop/e2e/visual/layout.spec.ts:51:22"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 6596,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 6615,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4918,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4873,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4358,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4137,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4640,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4748,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5763,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U32-003: natives Select scrollHeight/clientHeight",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/layout.spec.ts",
+            "line": 49,
+            "column": 60
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 5999,
+          "errors": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"main: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"main: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  49 |           if (info.project.name.startsWith(\"webkit\")) test.fail(true, \"U32-003: natives Select scrollHeight/clientHeight\");\n  50 |         }\n> 51 |         expect(hits).toEqual([]);\n     |                      ^\n  52 |       }\n  53 |     });\n  54 |     }\n    at {REPO}/apps/desktop/e2e/visual/layout.spec.ts:51:22"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 6772,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 6189,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4745,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4759,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4822,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4762,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4639,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4636,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 6478,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U32-003: natives Select scrollHeight/clientHeight",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/layout.spec.ts",
+            "line": 49,
+            "column": 60
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 6705,
+          "errors": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"main: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"main: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  49 |           if (info.project.name.startsWith(\"webkit\")) test.fail(true, \"U32-003: natives Select scrollHeight/clientHeight\");\n  50 |         }\n> 51 |         expect(hits).toEqual([]);\n     |                      ^\n  52 |       }\n  53 |     });\n  54 |     }\n    at {REPO}/apps/desktop/e2e/visual/layout.spec.ts:51:22"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5661,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5353,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5185,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5102,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4922,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5171,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4876,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4860,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 7517,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U32-003: natives Select scrollHeight/clientHeight",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/layout.spec.ts",
+            "line": 49,
+            "column": 60
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 8125,
+          "errors": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"main: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"main: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] SpiderListeAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] Diese SubdomainAlle SubdomainsUnterordner: scroll=142×23, client=141×22, ellipsis=false\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  49 |           if (info.project.name.startsWith(\"webkit\")) test.fail(true, \"U32-003: natives Select scrollHeight/clientHeight\");\n  50 |         }\n> 51 |         expect(hits).toEqual([]);\n     |                      ^\n  52 |       }\n  53 |     });\n  54 |     }\n    at {REPO}/apps/desktop/e2e/visual/layout.spec.ts:51:22"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4520,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4328,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4446,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4314,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4408,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4184,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5039,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5272,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 6294,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U32-003: natives Select scrollHeight/clientHeight",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/layout.spec.ts",
+            "line": 49,
+            "column": 60
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 6381,
+          "errors": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"main: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"main: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  49 |           if (info.project.name.startsWith(\"webkit\")) test.fail(true, \"U32-003: natives Select scrollHeight/clientHeight\");\n  50 |         }\n> 51 |         expect(hits).toEqual([]);\n     |                      ^\n  52 |       }\n  53 |     });\n  54 |     }\n    at {REPO}/apps/desktop/e2e/visual/layout.spec.ts:51:22"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4437,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4248,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4284,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4285,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4474,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4413,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5707,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5411,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 6927,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U32-003: natives Select scrollHeight/clientHeight",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/layout.spec.ts",
+            "line": 49,
+            "column": 60
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 6965,
+          "errors": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"main: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"main: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  49 |           if (info.project.name.startsWith(\"webkit\")) test.fail(true, \"U32-003: natives Select scrollHeight/clientHeight\");\n  50 |         }\n> 51 |         expect(hits).toEqual([]);\n     |                      ^\n  52 |       }\n  53 |     });\n  54 |     }\n    at {REPO}/apps/desktop/e2e/visual/layout.spec.ts:51:22"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4402,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4833,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4607,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4292,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4751,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4535,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5438,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5249,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 7126,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U32-003: natives Select scrollHeight/clientHeight",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/layout.spec.ts",
+            "line": 49,
+            "column": 60
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 7669,
+          "errors": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"main: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"main: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  49 |           if (info.project.name.startsWith(\"webkit\")) test.fail(true, \"U32-003: natives Select scrollHeight/clientHeight\");\n  50 |         }\n> 51 |         expect(hits).toEqual([]);\n     |                      ^\n  52 |       }\n  53 |     });\n  54 |     }\n    at {REPO}/apps/desktop/e2e/visual/layout.spec.ts:51:22"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4715,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5136,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4207,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4069,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4241,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4451,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4714,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4909,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5887,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U32-003: natives Select scrollHeight/clientHeight",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/layout.spec.ts",
+            "line": 49,
+            "column": 60
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 6124,
+          "errors": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"main: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"main: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  49 |           if (info.project.name.startsWith(\"webkit\")) test.fail(true, \"U32-003: natives Select scrollHeight/clientHeight\");\n  50 |         }\n> 51 |         expect(hits).toEqual([]);\n     |                      ^\n  52 |       }\n  53 |     });\n  54 |     }\n    at {REPO}/apps/desktop/e2e/visual/layout.spec.ts:51:22"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5358,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4945,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4456,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4377,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4523,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4487,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4812,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4909,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 7684,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U32-003: natives Select scrollHeight/clientHeight",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/layout.spec.ts",
+            "line": 49,
+            "column": 60
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 7150,
+          "errors": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"main: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"main: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  49 |           if (info.project.name.startsWith(\"webkit\")) test.fail(true, \"U32-003: natives Select scrollHeight/clientHeight\");\n  50 |         }\n> 51 |         expect(hits).toEqual([]);\n     |                      ^\n  52 |       }\n  53 |     });\n  54 |     }\n    at {REPO}/apps/desktop/e2e/visual/layout.spec.ts:51:22"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5123,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4686,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4462,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4235,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5009,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5057,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5180,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5195,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: Kollisionen, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 8315,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "layout.spec.ts",
+      "title": "K2-75: abgeschnittener Text, drei Tab-Leisten, Überlaufmenüs und Dialog",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U32-003: natives Select scrollHeight/clientHeight",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/visual/layout.spec.ts",
+            "line": 49,
+            "column": 60
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 8292,
+          "errors": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"main: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"main: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-content: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-technical: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-links: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-performance: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"group-custom: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"overflow: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] SpiderListAPIs: scroll=75×23, client=74×22, ellipsis=false\",\u001b[39m\n\u001b[31m+   \"shortcuts-dialog: SELECT. [] This subdomainAll subdomainsSubfolder: scroll=133×23, client=132×22, ellipsis=false\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  49 |           if (info.project.name.startsWith(\"webkit\")) test.fail(true, \"U32-003: natives Select scrollHeight/clientHeight\");\n  50 |         }\n> 51 |         expect(hits).toEqual([]);\n     |                      ^\n  52 |       }\n  53 |     });\n  54 |     }\n    at {REPO}/apps/desktop/e2e/visual/layout.spec.ts:51:22"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "screenshots.spec.ts",
+      "title": "de/light/compact: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 9276,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "screenshots.spec.ts",
+      "title": "de/light/normal: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 9661,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "screenshots.spec.ts",
+      "title": "de/dark/compact: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 9567,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "screenshots.spec.ts",
+      "title": "de/dark/normal: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 9435,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "screenshots.spec.ts",
+      "title": "en/light/compact: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 9196,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "screenshots.spec.ts",
+      "title": "en/light/normal: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 9215,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "screenshots.spec.ts",
+      "title": "en/dark/compact: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 9043,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "screenshots.spec.ts",
+      "title": "en/dark/normal: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 8888,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "screenshots.spec.ts",
+      "title": "de/light/compact: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 10995,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "screenshots.spec.ts",
+      "title": "de/light/normal: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 10519,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "screenshots.spec.ts",
+      "title": "de/dark/compact: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 9909,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "screenshots.spec.ts",
+      "title": "de/dark/normal: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 10082,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "screenshots.spec.ts",
+      "title": "en/light/compact: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 9181,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "screenshots.spec.ts",
+      "title": "en/light/normal: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 9431,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "screenshots.spec.ts",
+      "title": "en/dark/compact: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 10668,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "screenshots.spec.ts",
+      "title": "en/dark/normal: Plattform-Baselines",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 10319,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "states.spec.ts",
+      "title": "de: alle registrierten Leerzustände zeigen lesbare Erklärung und Code",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1465,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "states.spec.ts",
+      "title": "en: alle registrierten Leerzustände zeigen lesbare Erklärung und Code",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1456,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1",
+      "file": "states.spec.ts",
+      "title": "System-Theme folgt OS-Wechsel, explizite Themes und Dichte wirken ohne Neustart",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1917,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "states.spec.ts",
+      "title": "de: alle registrierten Leerzustände zeigen lesbare Erklärung und Code",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1669,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "states.spec.ts",
+      "title": "en: alle registrierten Leerzustände zeigen lesbare Erklärung und Code",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1626,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.25",
+      "file": "states.spec.ts",
+      "title": "System-Theme folgt OS-Wechsel, explizite Themes und Dichte wirken ohne Neustart",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1978,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "states.spec.ts",
+      "title": "de: alle registrierten Leerzustände zeigen lesbare Erklärung und Code",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2239,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "states.spec.ts",
+      "title": "en: alle registrierten Leerzustände zeigen lesbare Erklärung und Code",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2350,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-1.5",
+      "file": "states.spec.ts",
+      "title": "System-Theme folgt OS-Wechsel, explizite Themes und Dichte wirken ohne Neustart",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2740,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "states.spec.ts",
+      "title": "de: alle registrierten Leerzustände zeigen lesbare Erklärung und Code",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1663,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "states.spec.ts",
+      "title": "en: alle registrierten Leerzustände zeigen lesbare Erklärung und Code",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1566,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium-2",
+      "file": "states.spec.ts",
+      "title": "System-Theme folgt OS-Wechsel, explizite Themes und Dichte wirken ohne Neustart",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2095,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "states.spec.ts",
+      "title": "de: alle registrierten Leerzustände zeigen lesbare Erklärung und Code",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2468,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "states.spec.ts",
+      "title": "en: alle registrierten Leerzustände zeigen lesbare Erklärung und Code",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2490,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit-2",
+      "file": "states.spec.ts",
+      "title": "System-Theme folgt OS-Wechsel, explizite Themes und Dichte wirken ohne Neustart",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2795,
+          "errors": []
+        }
+      ]
+    }
+  ]
+}

@@ -2,7 +2,7 @@ import { ComparisonSidebar } from "../../compare/ComparisonSidebar";
 import { useComparison } from "../../compare/model";
 import { useCallback, useDeferredValue, useMemo, useState, type ComponentType } from "react";
 import { useT } from "../../../i18n";
-import { TabBar } from "../../../ui/primitives/TabBar";
+import { TabBar, tabId } from "../../../ui/primitives/TabBar";
 import { TabContextMenuHost, TabsConfigDialog, tabContextEntries } from "../../table-advanced/TabControls";
 import { useSession } from "../../../state/session";
 import { useOverview, useAnalysis } from "./useSidebarQuery";
@@ -58,7 +58,7 @@ export function SidebarFrame({ panels = Object.values(modules).flatMap(m => m.pa
     <AnalysisNotice status={analysis.data} controls={controls} />
     {/* UI-060/UI-112, A02-03/A02-06: one-line tabs with the shared overflow menu and tab context menu; Overview is the mandatory tab. */}
     <TabContextMenuHost className="os-sidebar-tabs" label={t("u20-tab-menu")} entriesFor={id => tabContextEntries(t, id, tabLayout, { hide, configure: () => setConfigure(true), reset })}>
-      <TabBar tabs={shown.map(id => ({ id, label: title(id) }))} selected={selected} onSelect={id => setLayout(l => ({ ...l, selected: id }))}
+      <TabBar panelId="sidebar-panel" tabs={shown.map(id => ({ id, label: title(id) }))} selected={selected} onSelect={id => setLayout(l => ({ ...l, selected: id }))}
         label={t("sidebar-tabs")} overflowLabel={t("sidebar-more-tabs")}
         onReorder={ids => setLayout(l => ({ ...l, order: [...ids, ...ordered.filter(id => !ids.includes(id))] }))}
         config={{ all: ordered.map(id => ({ id, label: title(id) })), hidden: hiddenTabs, mandatory: MANDATORY,
@@ -66,7 +66,7 @@ export function SidebarFrame({ panels = Object.values(modules).flatMap(m => m.pa
           onToggle: (id, visible) => visible ? setLayout(l => ({ ...l, hidden: l.hidden.filter(x => x !== id) })) : hide([id]),
           onConfigure: () => setConfigure(true), onReset: reset }} />
     </TabContextMenuHost>
-    <div className="os-sidebar-panel" role="tabpanel" aria-label={title(selected)}>
+    <div className="os-sidebar-panel" role="tabpanel" id="sidebar-panel" aria-labelledby={tabId("sidebar-panel", selected)}>
       <RegionBoundary key={selected} name={`sidebar-${selected}`}>{content(selected)}</RegionBoundary>
     </div>
     <TabsConfigDialog isOpen={configure} onOpenChange={setConfigure} layout={tabLayout} label={title}

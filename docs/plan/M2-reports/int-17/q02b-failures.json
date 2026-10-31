@@ -1,0 +1,30 @@
+{
+  "sites": 10,
+  "compared": 217,
+  "skipped": 4,
+  "failures": [
+    "parity-m2-links/crawl_overview.csv: Zellübereinstimmung 98.605 % liegt unter 100.000 %",
+    "parity-m2-links/links_pages_with_high_external_outlinks.csv: URL-Menge nicht identisch: 1 fehlen in OpenSpider, 0 zusätzlich",
+    "parity-m2-links/bulk_links_internal_nofollow_outlinks.csv: Zellübereinstimmung 91.667 % liegt unter 97.000 %",
+    "parity-m2-links/bulk_links_outlinks_to_localhost.csv: URL-Menge nicht identisch: 2392 fehlen in OpenSpider, 0 zusätzlich",
+    "parity-m2-list/internal_all.csv: Zeilenfolge weicht von der Upload-Reihenfolge ab (OUT-015); URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich",
+    "parity-m2-list/crawl_overview.csv: Zellübereinstimmung 99.061 % liegt unter 100.000 %",
+    "parity-m2-onpage/crawl_overview.csv: Zellübereinstimmung 99.533 % liegt unter 100.000 %",
+    "parity-m2-onpage/content_soft_404_pages.csv: Zellübereinstimmung 90.000 % liegt unter 99.000 %; URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich",
+    "parity-m2-onpage/bulk_images_images_missing_size_attributes.csv: Zellübereinstimmung 77.778 % liegt unter 97.000 %",
+    "parity-m2-onpage/serp_summary.csv: Zellübereinstimmung 88.000 % liegt unter 97.000 %; URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich",
+    "parity-m2-security/crawl_overview.csv: Zellübereinstimmung 99.528 % liegt unter 100.000 %",
+    "parity-m2-technical/crawl_overview.csv: Zellübereinstimmung 99.052 % liegt unter 100.000 %",
+    "parity-m2-technical/redirects_redirect_canonical_chains.csv: URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich",
+    "parity-m2-technical/canonicals_non_indexable_canonicals.csv: URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich",
+    "parity-m2-technical/report_hreflang_non_200_hreflang_urls.csv: URL-Menge nicht identisch: 1 fehlen in OpenSpider, 0 zusätzlich",
+    "parity-m2-technical/report_hreflang_missing_return_links.csv: Zellübereinstimmung 66.667 % liegt unter 97.000 %",
+    "parity-m2-technical/report_hreflang_inconsistent_language_region_return_links.csv: Zellübereinstimmung 0.000 % liegt unter 97.000 %; URL-Menge nicht identisch: 2 fehlen in OpenSpider, 2 zusätzlich",
+    "parity-m2-technical/report_hreflang_non_canonical_return_links.csv: Zellübereinstimmung 0.000 % liegt unter 97.000 %; URL-Menge nicht identisch: 1 fehlen in OpenSpider, 1 zusätzlich",
+    "parity-m2-technical/bulk_canonicals_missing_inlinks.csv: URL-Menge nicht identisch: 11 fehlen in OpenSpider, 11 zusätzlich",
+    "parity-onpage/crawl_overview.csv: Zellübereinstimmung 99.034 % liegt unter 100.000 %",
+    "parity-response/redirects_to_error.csv: URL-Menge nicht identisch: 0 fehlen in OpenSpider, 1 zusätzlich",
+    "parity-response/crawl_overview.csv: Zellübereinstimmung 99.519 % liegt unter 100.000 %",
+    "parity-technical/crawl_overview.csv: Zellübereinstimmung 98.571 % liegt unter 100.000 %"
+  ]
+}

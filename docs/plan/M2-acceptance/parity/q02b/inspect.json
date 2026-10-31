@@ -1,0 +1,276 @@
+{
+  "export": "inspect",
+  "site": null,
+  "ref_rows": 17,
+  "os_rows": 17,
+  "matched": 17,
+  "missing_in_os": [],
+  "extra_in_os": [],
+  "cells_compared": 102,
+  "cells_equal": 62,
+  "agreement_pct": 60.784,
+  "columns": [
+    {
+      "ref_column": "Crawl Depth",
+      "os_column": "Crawl Depth",
+      "compared": 17,
+      "errors": 8,
+      "examples": [
+        {
+          "key": "Hyperlink | {BASE}/deep/7.html | {BASE}/deep/8.html | #1",
+          "ref": "7",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/6.html | {BASE}/deep/7.html | #1",
+          "ref": "6",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/5.html | {BASE}/deep/6.html | #1",
+          "ref": "5",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/4.html | {BASE}/deep/5.html | #1",
+          "ref": "4",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/3.html | {BASE}/deep/4.html | #1",
+          "ref": "3",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/2.html | {BASE}/deep/3.html | #1",
+          "ref": "2",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/1.html | {BASE}/deep/2.html | #1",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/ | {BASE}/deep/1.html | #1",
+          "ref": "0",
+          "os": ""
+        }
+      ]
+    },
+    {
+      "ref_column": "Alt Text",
+      "os_column": "Alt Text",
+      "compared": 17,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Anchor",
+      "os_column": "Anchor",
+      "compared": 17,
+      "errors": 8,
+      "examples": [
+        {
+          "key": "Hyperlink | {BASE}/deep/7.html | {BASE}/deep/8.html | #1",
+          "ref": "Next depth",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/6.html | {BASE}/deep/7.html | #1",
+          "ref": "Next depth",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/5.html | {BASE}/deep/6.html | #1",
+          "ref": "Next depth",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/4.html | {BASE}/deep/5.html | #1",
+          "ref": "Next depth",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/3.html | {BASE}/deep/4.html | #1",
+          "ref": "Next depth",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/2.html | {BASE}/deep/3.html | #1",
+          "ref": "Next depth",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/1.html | {BASE}/deep/2.html | #1",
+          "ref": "Next depth",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/ | {BASE}/deep/1.html | #1",
+          "ref": "/deep/1.html",
+          "os": ""
+        }
+      ]
+    },
+    {
+      "ref_column": "Status Code",
+      "os_column": "Status Code",
+      "compared": 17,
+      "errors": 8,
+      "examples": [
+        {
+          "key": "Hyperlink | {BASE}/deep/7.html | {BASE}/deep/8.html | #1",
+          "ref": "200",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/6.html | {BASE}/deep/7.html | #1",
+          "ref": "200",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/5.html | {BASE}/deep/6.html | #1",
+          "ref": "200",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/4.html | {BASE}/deep/5.html | #1",
+          "ref": "200",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/3.html | {BASE}/deep/4.html | #1",
+          "ref": "200",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/2.html | {BASE}/deep/3.html | #1",
+          "ref": "200",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/1.html | {BASE}/deep/2.html | #1",
+          "ref": "200",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/ | {BASE}/deep/1.html | #1",
+          "ref": "200",
+          "os": ""
+        }
+      ]
+    },
+    {
+      "ref_column": "Status",
+      "os_column": "Status",
+      "compared": 17,
+      "errors": 8,
+      "examples": [
+        {
+          "key": "Hyperlink | {BASE}/deep/7.html | {BASE}/deep/8.html | #1",
+          "ref": "OK",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/6.html | {BASE}/deep/7.html | #1",
+          "ref": "OK",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/5.html | {BASE}/deep/6.html | #1",
+          "ref": "OK",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/4.html | {BASE}/deep/5.html | #1",
+          "ref": "OK",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/3.html | {BASE}/deep/4.html | #1",
+          "ref": "OK",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/2.html | {BASE}/deep/3.html | #1",
+          "ref": "OK",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/1.html | {BASE}/deep/2.html | #1",
+          "ref": "OK",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/ | {BASE}/deep/1.html | #1",
+          "ref": "OK",
+          "os": ""
+        }
+      ]
+    },
+    {
+      "ref_column": "Follow",
+      "os_column": "Follow",
+      "compared": 17,
+      "errors": 8,
+      "examples": [
+        {
+          "key": "Hyperlink | {BASE}/deep/7.html | {BASE}/deep/8.html | #1",
+          "ref": "true",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/6.html | {BASE}/deep/7.html | #1",
+          "ref": "true",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/5.html | {BASE}/deep/6.html | #1",
+          "ref": "true",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/4.html | {BASE}/deep/5.html | #1",
+          "ref": "true",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/3.html | {BASE}/deep/4.html | #1",
+          "ref": "true",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/2.html | {BASE}/deep/3.html | #1",
+          "ref": "true",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/deep/1.html | {BASE}/deep/2.html | #1",
+          "ref": "true",
+          "os": ""
+        },
+        {
+          "key": "Hyperlink | {BASE}/ | {BASE}/deep/1.html | #1",
+          "ref": "true",
+          "os": ""
+        }
+      ]
+    }
+  ],
+  "applied_deviations": [],
+  "dropped_ref_columns": [],
+  "ignored_columns": [],
+  "unmapped_ref_columns": [],
+  "unmapped_os_columns": [],
+  "missing_ref_columns": [],
+  "missing_os_columns": [],
+  "ignored_ref_rows": [],
+  "os_only_rows": [],
+  "threshold_pct": 97.0,
+  "url_set_identical": true,
+  "passed": false,
+  "failures": [
+    "Zellübereinstimmung 60.784 % liegt unter 97.000 %"
+  ]
+}

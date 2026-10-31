@@ -213,6 +213,25 @@ pub struct Cand<'a> {
     pub purpose: Purpose,
 }
 
+impl Cand<'_> {
+    /// Relations remain stored, but an unfollowed internal navigation/alternate edge does
+    /// not discover a table row or a shorter crawl path (CRAWL-038/047/056).
+    fn hidden_edge(&self) -> bool {
+        self.internal
+            && !self.crawl
+            && (self.reason == Some(NotCrawledReason::Nofollow)
+                || self.source.as_ref().is_some_and(|(_, kind, _)| {
+                    matches!(
+                        kind,
+                        os_model::LinkType::RelNext
+                            | os_model::LinkType::RelPrev
+                            | os_model::LinkType::Hreflang
+                            | os_model::LinkType::HttpHreflang
+                    )
+                }))
+    }
+}
+
 /// Ergebnis der Zulassung einer URL.
 struct Admission {
     enqueue: bool,
@@ -529,7 +548,7 @@ impl Core {
         if !c.crawl {
             return Admission {
                 enqueue: false,
-                in_tables: c.store,
+                in_tables: c.store && !c.hidden_edge(),
                 reason: c.reason.or(Some(NotCrawledReason::CrawlDisabled)),
                 rule_flag,
             };
@@ -653,6 +672,7 @@ impl Core {
         rules: &RuleSet,
         batch: &mut WriteBatch,
     ) -> UrlId {
+        let depth = depth.filter(|_| !c.hidden_edge());
         let kf = self.seen.key_fp(&c.norm.encoded);
         // Ohne Tiefe (nur über eine Sitemap erreichbar) gilt Priorität 1: hinter allen Link-URLs.
         let priority = u8::from(depth.is_none());
@@ -687,6 +707,7 @@ impl Core {
                     }
                 }
                 if c.store
+                    && !c.hidden_edge()
                     && e.flags & F_IN_TABLES == 0
                     && e.flags & F_RULE_BLOCKED == 0
                     && !self.respect_hidden.contains(&id)

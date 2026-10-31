@@ -96,10 +96,18 @@ fn population_and_numbered_columns_follow_the_pagination_contract() {
     let (_dir, file) = fixture();
     let cfg = CrawlConfig::default();
     let all = names(&file, &cfg, "All");
-    for present in ["about", "not-found", "redirect", "blocked", "document.pdf"] {
+    for present in ["about", "created"] {
         assert!(all.contains(&present.into()), "{present}");
     }
-    for absent in ["unknown", "created", "external-html", "external-target"] {
+    for absent in [
+        "unknown",
+        "not-found",
+        "redirect",
+        "blocked",
+        "document.pdf",
+        "external-html",
+        "external-target",
+    ] {
         assert!(!all.contains(&absent.into()), "{absent}");
     }
     // Only Respect Next/Prev grants an exception to table hiding.

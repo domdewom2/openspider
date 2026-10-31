@@ -91,10 +91,10 @@ fn unlinked_ignores_annotation_redirect_and_external_inlinks_but_counts_noindex_
     );
     analyse(&fx);
     let unlinked = addresses(&fx, "Unlinked");
-    for name in ["a", "annotation", "external-source", "to-error"] {
+    for name in ["b", "c", "hidden", "external-only-target"] {
         assert!(unlinked.contains(&name.into()), "{name}");
     }
-    for name in ["c", "linked-source", "to-unknown", "not-followed"] {
+    for name in ["linked-source", "to-unknown", "not-followed"] {
         assert!(!unlinked.contains(&name.into()), "{name}");
     }
     let seq = os_store::queries::change_seq(fx.file.conn()).unwrap();
@@ -102,17 +102,17 @@ fn unlinked_ignores_annotation_redirect_and_external_inlinks_but_counts_noindex_
     assert_eq!(os_store::queries::change_seq(fx.file.conn()).unwrap(), seq);
     fx.file.conn().execute("INSERT INTO links(source_id,target_id,target_raw,link_type,position,follow) VALUES (1,13,'/hidden','Hyperlink',100,1)",[]).unwrap();
     analyse(&fx);
-    assert!(!addresses(&fx, "Unlinked").contains(&"annotation".into()));
+    assert!(!addresses(&fx, "Unlinked").contains(&"hidden".into()));
     fx.cfg.spider.canonicals.crawl = false;
     analyse(&fx);
-    assert!(addresses(&fx, "Unlinked").contains(&"external-source".into()));
+    assert!(addresses(&fx, "Unlinked").contains(&"external-only-target".into()));
     assert!(!addresses(&fx, "Unlinked").contains(&"to-unknown".into()));
 }
 
 // spec: TECH-021
 // spec: TECH-022
 #[test]
-fn live_attribute_and_fragment_filters_keep_the_display_fragment() {
+fn live_attribute_and_fragment_filters_strip_the_display_fragment() {
     let fx = fixture();
     assert_eq!(
         addresses(&fx, "Invalid Attribute In Annotation"),
@@ -124,7 +124,7 @@ fn live_attribute_and_fragment_filters_keep_the_display_fragment() {
     let result = query_view(&fx.file, &fx.cfg, &q).unwrap();
     assert_eq!(
         result.rows[0][0],
-        Value::Text("https://site.test/hidden#top".into())
+        Value::Text("https://site.test/hidden".into())
     );
 }
 
@@ -312,6 +312,6 @@ async fn real_crawl_marks_canonical_coverage_only_when_validation_is_enabled() {
                 |r| r.get(0),
             )
             .unwrap();
-        assert_eq!(count, 1);
+        assert_eq!(count, 0);
     }
 }

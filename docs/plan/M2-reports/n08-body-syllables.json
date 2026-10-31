@@ -1,0 +1,2122 @@
+[
+  {
+    "site": "out-basic-site",
+    "compared": 12,
+    "area_errors": 0,
+    "body_errors": 12,
+    "fixed": 0,
+    "regressed": 12,
+    "examples": [
+      {
+        "url": "http://127.0.0.1:8900/",
+        "reference": 80.186,
+        "w": 19,
+        "s": 3,
+        "area_syl": 27,
+        "body_syl": 48,
+        "area_f": 80.186,
+        "body_f": 0.0
+      },
+      {
+        "url": "http://127.0.0.1:8900/contact.html",
+        "reference": 66.653,
+        "w": 8,
+        "s": 3,
+        "area_syl": 13,
+        "body_syl": 18,
+        "area_f": 66.653,
+        "body_f": 13.778
+      },
+      {
+        "url": "http://127.0.0.1:8900/services.html",
+        "reference": 45.503,
+        "w": 8,
+        "s": 3,
+        "area_syl": 15,
+        "body_syl": 20,
+        "area_f": 45.503,
+        "body_f": 0.0
+      },
+      {
+        "url": "http://127.0.0.1:8900/imprint.html",
+        "reference": 7.405,
+        "w": 6,
+        "s": 3,
+        "area_syl": 14,
+        "body_syl": 19,
+        "area_f": 7.405,
+        "body_f": 0.0
+      },
+      {
+        "url": "http://127.0.0.1:8900/about.html",
+        "reference": 81.59,
+        "w": 9,
+        "s": 3,
+        "area_syl": 13,
+        "body_syl": 18,
+        "area_f": 81.59,
+        "body_f": 34.59
+      },
+      {
+        "url": "http://127.0.0.1:8900/faq.html",
+        "reference": 52.863,
+        "w": 5,
+        "s": 3,
+        "area_syl": 9,
+        "body_syl": 14,
+        "area_f": 52.863,
+        "body_f": 0.0
+      },
+      {
+        "url": "http://127.0.0.1:8900/blog/",
+        "reference": 69.783,
+        "w": 5,
+        "s": 3,
+        "area_syl": 8,
+        "body_syl": 13,
+        "area_f": 69.783,
+        "body_f": 0.0
+      },
+      {
+        "url": "http://127.0.0.1:8900/products.html",
+        "reference": 81.59,
+        "w": 9,
+        "s": 3,
+        "area_syl": 13,
+        "body_syl": 18,
+        "area_f": 81.59,
+        "body_f": 34.59
+      },
+      {
+        "url": "http://127.0.0.1:8900/orphan.html",
+        "reference": 98.253,
+        "w": 16,
+        "s": 2,
+        "area_syl": 19,
+        "body_syl": 24,
+        "area_f": 98.253,
+        "body_f": 71.815
+      },
+      {
+        "url": "http://127.0.0.1:8900/privat/intern.html",
+        "reference": 59.438,
+        "w": 7,
+        "s": 3,
+        "area_syl": 12,
+        "body_syl": 17,
+        "area_f": 59.438,
+        "body_f": 0.0
+      },
+      {
+        "url": "http://127.0.0.1:8900/blog/post-1.html",
+        "reference": 100.0,
+        "w": 8,
+        "s": 3,
+        "area_syl": 8,
+        "body_syl": 13,
+        "area_f": 100.0,
+        "body_f": 66.653
+      },
+      {
+        "url": "http://127.0.0.1:8900/products/widget.html",
+        "reference": 72.19,
+        "w": 9,
+        "s": 3,
+        "area_syl": 14,
+        "body_syl": 19,
+        "area_f": 72.19,
+        "body_f": 25.19
+      }
+    ]
+  },
+  {
+    "site": "parity-m2-links",
+    "compared": 140,
+    "area_errors": 1,
+    "body_errors": 0,
+    "fixed": 1,
+    "regressed": 0,
+    "examples": [
+      {
+        "url": "http://127.0.0.1:8908/positions.html",
+        "reference": 0.0,
+        "w": 1,
+        "s": 1,
+        "area_syl": 1,
+        "body_syl": 8,
+        "area_f": 100.0,
+        "body_f": 0.0
+      }
+    ]
+  },
+  {
+    "site": "parity-m2-list",
+    "compared": 50,
+    "area_errors": 0,
+    "body_errors": 0,
+    "fixed": 0,
+    "regressed": 0,
+    "examples": []
+  },
+  {
+    "site": "parity-m2-onpage",
+    "compared": 48,
+    "area_errors": 0,
+    "body_errors": 0,
+    "fixed": 0,
+    "regressed": 0,
+    "examples": []
+  },
+  {
+    "site": "parity-m2-security",
+    "compared": 6,
+    "area_errors": 0,
+    "body_errors": 0,
+    "fixed": 0,
+    "regressed": 0,
+    "examples": []
+  },
+  {
+    "site": "parity-m2-technical",
+    "compared": 16,
+    "area_errors": 0,
+    "body_errors": 0,
+    "fixed": 0,
+    "regressed": 0,
+    "examples": []
+  },
+  {
+    "site": "parity-onpage",
+    "compared": 80,
+    "area_errors": 19,
+    "body_errors": 79,
+    "fixed": 0,
+    "regressed": 60,
+    "examples": [
+      {
+        "url": "http://127.0.0.1:8902/",
+        "reference": 56.426,
+        "w": 87,
+        "s": 16,
+        "area_syl": 147,
+        "body_syl": 157,
+        "area_f": 58.371,
+        "body_f": 48.647
+      },
+      {
+        "url": "http://127.0.0.1:8902/urls/",
+        "reference": 68.548,
+        "w": 103,
+        "s": 20,
+        "area_syl": 162,
+        "body_syl": 175,
+        "area_f": 68.548,
+        "body_f": 57.87
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/",
+        "reference": 67.5,
+        "w": 102,
+        "s": 25,
+        "area_syl": 161,
+        "body_syl": 174,
+        "area_f": 69.159,
+        "body_f": 58.376
+      },
+      {
+        "url": "http://127.0.0.1:8902/meta/",
+        "reference": 72.862,
+        "w": 96,
+        "s": 22,
+        "area_syl": 147,
+        "body_syl": 160,
+        "area_f": 72.862,
+        "body_f": 61.406
+      },
+      {
+        "url": "http://127.0.0.1:8902/h2/",
+        "reference": 75.227,
+        "w": 87,
+        "s": 17,
+        "area_syl": 130,
+        "body_syl": 143,
+        "area_f": 75.227,
+        "body_f": 62.585
+      },
+      {
+        "url": "http://127.0.0.1:8902/h1/",
+        "reference": 64.53,
+        "w": 87,
+        "s": 17,
+        "area_syl": 141,
+        "body_syl": 154,
+        "area_f": 64.53,
+        "body_f": 51.889
+      },
+      {
+        "url": "http://127.0.0.1:8902/images/",
+        "reference": 48.768,
+        "w": 73,
+        "s": 10,
+        "area_syl": 130,
+        "body_syl": 143,
+        "area_f": 48.768,
+        "body_f": 33.702
+      },
+      {
+        "url": "http://127.0.0.1:8902/ctype/",
+        "reference": 96.6,
+        "w": 122,
+        "s": 45,
+        "area_syl": 155,
+        "body_syl": 168,
+        "area_f": 96.6,
+        "body_f": 87.585
+      },
+      {
+        "url": "http://127.0.0.1:8902/content/",
+        "reference": 65.139,
+        "w": 93,
+        "s": 18,
+        "area_syl": 150,
+        "body_syl": 163,
+        "area_f": 65.139,
+        "body_f": 53.313
+      },
+      {
+        "url": "http://127.0.0.1:8902/h2/dup-b.html",
+        "reference": 40.339,
+        "w": 241,
+        "s": 23,
+        "area_syl": 444,
+        "body_syl": 457,
+        "area_f": 40.339,
+        "body_f": 35.775
+      },
+      {
+        "url": "http://127.0.0.1:8902/h1/dup-b.html",
+        "reference": 42.796,
+        "w": 241,
+        "s": 23,
+        "area_syl": 437,
+        "body_syl": 450,
+        "area_f": 42.796,
+        "body_f": 38.233
+      },
+      {
+        "url": "http://127.0.0.1:8902/images/alt.html",
+        "reference": 40.205,
+        "w": 68,
+        "s": 8,
+        "area_syl": 127,
+        "body_syl": 140,
+        "area_f": 40.205,
+        "body_f": 24.031
+      },
+      {
+        "url": "http://127.0.0.1:8902/content/footer-heavy.html",
+        "reference": 43.277,
+        "w": 150,
+        "s": 15,
+        "area_syl": 272,
+        "body_syl": 816,
+        "area_f": 43.277,
+        "body_f": 0.0
+      },
+      {
+        "url": "http://127.0.0.1:8902/content/dupe-c.html",
+        "reference": 41.098,
+        "w": 237,
+        "s": 23,
+        "area_syl": 435,
+        "body_syl": 448,
+        "area_f": 41.098,
+        "body_f": 36.457
+      },
+      {
+        "url": "http://127.0.0.1:8902/content/short-50.html",
+        "reference": 46.097,
+        "w": 50,
+        "s": 6,
+        "area_syl": 90,
+        "body_syl": 103,
+        "area_f": 46.097,
+        "body_f": 24.101
+      },
+      {
+        "url": "http://127.0.0.1:8902/content/words-200.html",
+        "reference": 50.216,
+        "w": 200,
+        "s": 19,
+        "area_syl": 345,
+        "body_syl": 358,
+        "area_f": 50.216,
+        "body_f": 44.717
+      },
+      {
+        "url": "http://127.0.0.1:8902/content/dupe-a.html?ref=x",
+        "reference": 41.098,
+        "w": 237,
+        "s": 23,
+        "area_syl": 435,
+        "body_syl": 448,
+        "area_f": 41.098,
+        "body_f": 36.457
+      },
+      {
+        "url": "http://127.0.0.1:8902/content/words-199.html",
+        "reference": 38.908,
+        "w": 199,
+        "s": 19,
+        "area_syl": 370,
+        "body_syl": 383,
+        "area_f": 38.908,
+        "body_f": 33.381
+      },
+      {
+        "url": "http://127.0.0.1:8902/content/noindex-50.html",
+        "reference": 34.253,
+        "w": 50,
+        "s": 6,
+        "area_syl": 97,
+        "body_syl": 110,
+        "area_f": 34.253,
+        "body_f": 12.257
+      },
+      {
+        "url": "http://127.0.0.1:8902/content/dupe-a.html",
+        "reference": 41.098,
+        "w": 237,
+        "s": 23,
+        "area_syl": 435,
+        "body_syl": 448,
+        "area_f": 41.098,
+        "body_f": 36.457
+      },
+      {
+        "url": "http://127.0.0.1:8902/content/dupe-b.html",
+        "reference": 41.098,
+        "w": 237,
+        "s": 23,
+        "area_syl": 435,
+        "body_syl": 448,
+        "area_f": 41.098,
+        "body_f": 36.457
+      },
+      {
+        "url": "http://127.0.0.1:8902/content/dupe-noindex.html",
+        "reference": 41.098,
+        "w": 237,
+        "s": 23,
+        "area_syl": 435,
+        "body_syl": 448,
+        "area_f": 41.098,
+        "body_f": 36.457
+      },
+      {
+        "url": "http://127.0.0.1:8902/images/gallery.html",
+        "reference": 33.107,
+        "w": 66,
+        "s": 8,
+        "area_syl": 129,
+        "body_syl": 142,
+        "area_f": 33.107,
+        "body_f": 16.443
+      },
+      {
+        "url": "http://127.0.0.1:8902/h1/len-70.html",
+        "reference": 40.29,
+        "w": 245,
+        "s": 23,
+        "area_syl": 451,
+        "body_syl": 464,
+        "area_f": 40.29,
+        "body_f": 35.801
+      },
+      {
+        "url": "http://127.0.0.1:8902/h1/missing-empty.html",
+        "reference": 39.131,
+        "w": 234,
+        "s": 22,
+        "area_syl": 434,
+        "body_syl": 447,
+        "area_f": 39.131,
+        "body_f": 34.431
+      },
+      {
+        "url": "http://127.0.0.1:8902/h1/multi-two.html",
+        "reference": 44.669,
+        "w": 240,
+        "s": 23,
+        "area_syl": 430,
+        "body_syl": 443,
+        "area_f": 44.669,
+        "body_f": 40.086
+      },
+      {
+        "url": "http://127.0.0.1:8902/h1/len-71.html",
+        "reference": 50.703,
+        "w": 246,
+        "s": 22,
+        "area_syl": 421,
+        "body_syl": 434,
+        "area_f": 50.703,
+        "body_f": 46.232
+      },
+      {
+        "url": "http://127.0.0.1:8902/h1/five-h1.html",
+        "reference": 42.647,
+        "w": 255,
+        "s": 27,
+        "area_syl": 466,
+        "body_syl": 479,
+        "area_f": 42.647,
+        "body_f": 38.334
+      },
+      {
+        "url": "http://127.0.0.1:8902/h1/dup-a.html",
+        "reference": 37.18,
+        "w": 241,
+        "s": 23,
+        "area_syl": 453,
+        "body_syl": 466,
+        "area_f": 37.18,
+        "body_f": 32.616
+      },
+      {
+        "url": "http://127.0.0.1:8902/h1/ok-1.html",
+        "reference": 47.136,
+        "w": 240,
+        "s": 23,
+        "area_syl": 423,
+        "body_syl": 436,
+        "area_f": 47.136,
+        "body_f": 42.554
+      },
+      {
+        "url": "http://127.0.0.1:8902/h1/missing-none.html",
+        "reference": 37.324,
+        "w": 234,
+        "s": 22,
+        "area_syl": 439,
+        "body_syl": 452,
+        "area_f": 37.324,
+        "body_f": 32.624
+      },
+      {
+        "url": "http://127.0.0.1:8902/h2/missing-empty.html",
+        "reference": 35.262,
+        "w": 234,
+        "s": 23,
+        "area_syl": 446,
+        "body_syl": 459,
+        "area_f": 35.262,
+        "body_f": 30.562
+      },
+      {
+        "url": "http://127.0.0.1:8902/h2/twelve.html",
+        "reference": 46.016,
+        "w": 282,
+        "s": 34,
+        "area_syl": 508,
+        "body_syl": 521,
+        "area_f": 46.016,
+        "body_f": 42.116
+      },
+      {
+        "url": "http://127.0.0.1:8902/h2/ok-1.html",
+        "reference": 40.086,
+        "w": 240,
+        "s": 23,
+        "area_syl": 443,
+        "body_syl": 456,
+        "area_f": 40.086,
+        "body_f": 35.504
+      },
+      {
+        "url": "http://127.0.0.1:8902/h2/missing-none.html",
+        "reference": 36.601,
+        "w": 234,
+        "s": 22,
+        "area_syl": 441,
+        "body_syl": 454,
+        "area_f": 36.601,
+        "body_f": 31.901
+      },
+      {
+        "url": "http://127.0.0.1:8902/h2/multi-two.html",
+        "reference": 47.578,
+        "w": 240,
+        "s": 24,
+        "area_syl": 423,
+        "body_syl": 436,
+        "area_f": 47.578,
+        "body_f": 42.995
+      },
+      {
+        "url": "http://127.0.0.1:8902/h2/len-70.html",
+        "reference": 38.815,
+        "w": 246,
+        "s": 23,
+        "area_syl": 457,
+        "body_syl": 470,
+        "area_f": 38.815,
+        "body_f": 34.345
+      },
+      {
+        "url": "http://127.0.0.1:8902/h2/len-71.html",
+        "reference": 40.635,
+        "w": 245,
+        "s": 23,
+        "area_syl": 450,
+        "body_syl": 463,
+        "area_f": 40.635,
+        "body_f": 36.146
+      },
+      {
+        "url": "http://127.0.0.1:8902/h2/dup-a.html",
+        "reference": 42.094,
+        "w": 241,
+        "s": 23,
+        "area_syl": 439,
+        "body_syl": 452,
+        "area_f": 42.094,
+        "body_f": 37.531
+      },
+      {
+        "url": "http://127.0.0.1:8902/meta/dup-case.html",
+        "reference": 38.862,
+        "w": 238,
+        "s": 23,
+        "area_syl": 443,
+        "body_syl": 456,
+        "area_f": 38.862,
+        "body_f": 34.241
+      },
+      {
+        "url": "http://127.0.0.1:8902/meta/len-69.html",
+        "reference": 36.914,
+        "w": 240,
+        "s": 23,
+        "area_syl": 452,
+        "body_syl": 465,
+        "area_f": 36.914,
+        "body_f": 32.331
+      },
+      {
+        "url": "http://127.0.0.1:8902/meta/dup-canonical.html",
+        "reference": 33.968,
+        "w": 238,
+        "s": 24,
+        "area_syl": 458,
+        "body_syl": 471,
+        "area_f": 33.968,
+        "body_f": 29.347
+      },
+      {
+        "url": "http://127.0.0.1:8902/meta/len-156.html",
+        "reference": 40.893,
+        "w": 239,
+        "s": 23,
+        "area_syl": 439,
+        "body_syl": 452,
+        "area_f": 40.893,
+        "body_f": 36.291
+      },
+      {
+        "url": "http://127.0.0.1:8902/meta/multi-two.html",
+        "reference": 31.835,
+        "w": 238,
+        "s": 24,
+        "area_syl": 464,
+        "body_syl": 477,
+        "area_f": 31.835,
+        "body_f": 27.214
+      },
+      {
+        "url": "http://127.0.0.1:8902/meta/ok-1.html",
+        "reference": 40.791,
+        "w": 240,
+        "s": 23,
+        "area_syl": 441,
+        "body_syl": 454,
+        "area_f": 40.791,
+        "body_f": 36.209
+      },
+      {
+        "url": "http://127.0.0.1:8902/meta/len-155.html",
+        "reference": 38.061,
+        "w": 239,
+        "s": 23,
+        "area_syl": 447,
+        "body_syl": 460,
+        "area_f": 38.061,
+        "body_f": 33.459
+      },
+      {
+        "url": "http://127.0.0.1:8902/meta/missing-empty.html",
+        "reference": 38.862,
+        "w": 238,
+        "s": 23,
+        "area_syl": 443,
+        "body_syl": 456,
+        "area_f": 38.862,
+        "body_f": 34.241
+      },
+      {
+        "url": "http://127.0.0.1:8902/meta/dup-a.html",
+        "reference": 40.791,
+        "w": 240,
+        "s": 23,
+        "area_syl": 441,
+        "body_syl": 454,
+        "area_f": 40.791,
+        "body_f": 36.209
+      },
+      {
+        "url": "http://127.0.0.1:8902/meta/missing-none.html",
+        "reference": 44.194,
+        "w": 238,
+        "s": 23,
+        "area_syl": 428,
+        "body_syl": 441,
+        "area_f": 44.194,
+        "body_f": 39.573
+      },
+      {
+        "url": "http://127.0.0.1:8902/meta/ok-2.html",
+        "reference": 40.439,
+        "w": 240,
+        "s": 23,
+        "area_syl": 442,
+        "body_syl": 455,
+        "area_f": 40.439,
+        "body_f": 35.856
+      },
+      {
+        "url": "http://127.0.0.1:8902/meta/dup-b.html",
+        "reference": 40.086,
+        "w": 240,
+        "s": 23,
+        "area_syl": 443,
+        "body_syl": 456,
+        "area_f": 40.086,
+        "body_f": 35.504
+      },
+      {
+        "url": "http://127.0.0.1:8902/meta/len-70.html",
+        "reference": 37.971,
+        "w": 240,
+        "s": 23,
+        "area_syl": 449,
+        "body_syl": 462,
+        "area_f": 37.971,
+        "body_f": 33.389
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/missing-spaces.html",
+        "reference": 43.239,
+        "w": 237,
+        "s": 23,
+        "area_syl": 427,
+        "body_syl": 440,
+        "area_f": 43.953,
+        "body_f": 39.313
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/dup-a.html",
+        "reference": 35.937,
+        "w": 239,
+        "s": 23,
+        "area_syl": 451,
+        "body_syl": 464,
+        "area_f": 36.645,
+        "body_f": 32.043
+      },
+      {
+        "url": "http://127.0.0.1:8902/meta/og-only.html",
+        "reference": 40.539,
+        "w": 239,
+        "s": 23,
+        "area_syl": 440,
+        "body_syl": 453,
+        "area_f": 40.539,
+        "body_f": 35.937
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/multi-two.html",
+        "reference": 39.573,
+        "w": 238,
+        "s": 23,
+        "area_syl": 439,
+        "body_syl": 452,
+        "area_f": 40.284,
+        "body_f": 35.663
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/len-58-padded.html",
+        "reference": 42.663,
+        "w": 239,
+        "s": 23,
+        "area_syl": 432,
+        "body_syl": 445,
+        "area_f": 43.371,
+        "body_f": 38.769
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/len-60.html",
+        "reference": 45.616,
+        "w": 238,
+        "s": 23,
+        "area_syl": 422,
+        "body_syl": 435,
+        "area_f": 46.327,
+        "body_f": 41.706
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/ok-2.html",
+        "reference": 43.259,
+        "w": 240,
+        "s": 23,
+        "area_syl": 432,
+        "body_syl": 445,
+        "area_f": 43.964,
+        "body_f": 39.381
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/len-30.html",
+        "reference": 35.583,
+        "w": 239,
+        "s": 23,
+        "area_syl": 452,
+        "body_syl": 465,
+        "area_f": 36.291,
+        "body_f": 31.689
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/pixel-i70.html",
+        "reference": 44.55,
+        "w": 238,
+        "s": 23,
+        "area_syl": 425,
+        "body_syl": 438,
+        "area_f": 45.261,
+        "body_f": 40.64
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/dup-case.html",
+        "reference": 43.128,
+        "w": 238,
+        "s": 23,
+        "area_syl": 429,
+        "body_syl": 442,
+        "area_f": 43.839,
+        "body_f": 39.218
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/len-61.html",
+        "reference": 42.417,
+        "w": 238,
+        "s": 23,
+        "area_syl": 431,
+        "body_syl": 444,
+        "area_f": 43.128,
+        "body_f": 38.507
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/pixel-W60.html",
+        "reference": 36.019,
+        "w": 238,
+        "s": 23,
+        "area_syl": 449,
+        "body_syl": 462,
+        "area_f": 36.729,
+        "body_f": 32.108
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/len-29.html",
+        "reference": 37.707,
+        "w": 239,
+        "s": 23,
+        "area_syl": 446,
+        "body_syl": 459,
+        "area_f": 38.415,
+        "body_f": 33.813
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/dup-b.html",
+        "reference": 43.483,
+        "w": 238,
+        "s": 23,
+        "area_syl": 428,
+        "body_syl": 441,
+        "area_f": 44.194,
+        "body_f": 39.573
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/missing-none.html",
+        "reference": 39.929,
+        "w": 238,
+        "s": 23,
+        "area_syl": 438,
+        "body_syl": 451,
+        "area_f": 40.64,
+        "body_f": 36.019
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/dup-canonical.html",
+        "reference": 35.029,
+        "w": 237,
+        "s": 23,
+        "area_syl": 450,
+        "body_syl": 463,
+        "area_f": 35.743,
+        "body_f": 31.103
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/missing-empty.html",
+        "reference": 38.599,
+        "w": 237,
+        "s": 23,
+        "area_syl": 440,
+        "body_syl": 453,
+        "area_f": 39.313,
+        "body_f": 34.672
+      },
+      {
+        "url": "http://127.0.0.1:8902/titles/ok-1.html",
+        "reference": 44.54,
+        "w": 240,
+        "s": 22,
+        "area_syl": 427,
+        "body_syl": 440,
+        "area_f": 45.245,
+        "body_f": 40.662
+      },
+      {
+        "url": "http://127.0.0.1:8902/urls/mein_artikel.html",
+        "reference": 35.854,
+        "w": 126,
+        "s": 13,
+        "area_syl": 240,
+        "body_syl": 253,
+        "area_f": 35.854,
+        "body_f": 27.126
+      },
+      {
+        "url": "http://127.0.0.1:8902/urls/lang-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.html",
+        "reference": 42.647,
+        "w": 129,
+        "s": 13,
+        "area_syl": 235,
+        "body_syl": 248,
+        "area_f": 42.647,
+        "body_f": 34.121
+      },
+      {
+        "url": "http://127.0.0.1:8902/urls/Produkte.html",
+        "reference": 43.912,
+        "w": 126,
+        "s": 13,
+        "area_syl": 228,
+        "body_syl": 241,
+        "area_f": 43.912,
+        "body_f": 35.183
+      },
+      {
+        "url": "http://127.0.0.1:8902/urls/folder/clean-two.html",
+        "reference": 38.216,
+        "w": 128,
+        "s": 13,
+        "area_syl": 240,
+        "body_syl": 253,
+        "area_f": 38.216,
+        "body_f": 29.624
+      },
+      {
+        "url": "http://127.0.0.1:8902/urls/lang-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.html",
+        "reference": 48.13,
+        "w": 128,
+        "s": 13,
+        "area_syl": 225,
+        "body_syl": 238,
+        "area_f": 48.13,
+        "body_f": 39.538
+      },
+      {
+        "url": "http://127.0.0.1:8902/urls/clean-page.html",
+        "reference": 44.826,
+        "w": 128,
+        "s": 13,
+        "area_syl": 230,
+        "body_syl": 243,
+        "area_f": 44.826,
+        "body_f": 36.233
+      },
+      {
+        "url": "http://127.0.0.1:8902/urls/params.html?sort_by=x",
+        "reference": 36.894,
+        "w": 128,
+        "s": 13,
+        "area_syl": 242,
+        "body_syl": 255,
+        "area_f": 36.894,
+        "body_f": 28.302
+      },
+      {
+        "url": "http://127.0.0.1:8902/urls/params.html?a=1&b=2",
+        "reference": 36.894,
+        "w": 128,
+        "s": 13,
+        "area_syl": 242,
+        "body_syl": 255,
+        "area_f": 36.894,
+        "body_f": 28.302
+      },
+      {
+        "url": "http://127.0.0.1:8902/urls/params.html?id=1",
+        "reference": 36.894,
+        "w": 128,
+        "s": 13,
+        "area_syl": 242,
+        "body_syl": 255,
+        "area_f": 36.894,
+        "body_f": 28.302
+      }
+    ]
+  },
+  {
+    "site": "parity-response",
+    "compared": 13,
+    "area_errors": 2,
+    "body_errors": 7,
+    "fixed": 0,
+    "regressed": 5,
+    "examples": [
+      {
+        "url": "http://127.0.0.1:8904/",
+        "reference": 96.144,
+        "w": 234,
+        "s": 54,
+        "area_syl": 293,
+        "body_syl": 303,
+        "area_f": 96.506,
+        "body_f": 92.891
+      },
+      {
+        "url": "http://127.0.0.1:8904/pages/p2.html",
+        "reference": 53.014,
+        "w": 117,
+        "s": 14,
+        "area_syl": 201,
+        "body_syl": 214,
+        "area_f": 53.014,
+        "body_f": 43.614
+      },
+      {
+        "url": "http://127.0.0.1:8904/pages/p3.html",
+        "reference": 49.241,
+        "w": 117,
+        "s": 15,
+        "area_syl": 207,
+        "body_syl": 220,
+        "area_f": 49.241,
+        "body_f": 39.841
+      },
+      {
+        "url": "http://127.0.0.1:8904/pages/p4.html",
+        "reference": 50.845,
+        "w": 117,
+        "s": 14,
+        "area_syl": 204,
+        "body_syl": 217,
+        "area_f": 50.845,
+        "body_f": 41.445
+      },
+      {
+        "url": "http://127.0.0.1:8904/pages/p1.html",
+        "reference": 47.953,
+        "w": 117,
+        "s": 14,
+        "area_syl": 208,
+        "body_syl": 221,
+        "area_f": 47.953,
+        "body_f": 38.553
+      },
+      {
+        "url": "http://127.0.0.1:8904/meta-refresh-5.html",
+        "reference": 62.79,
+        "w": 3,
+        "s": 1,
+        "area_syl": 6,
+        "body_syl": 6,
+        "area_f": 34.59,
+        "body_f": 34.59
+      },
+      {
+        "url": "http://127.0.0.1:8904/ok.html",
+        "reference": 37.555,
+        "w": 128,
+        "s": 13,
+        "area_syl": 241,
+        "body_syl": 254,
+        "area_f": 37.555,
+        "body_f": 28.963
+      }
+    ]
+  },
+  {
+    "site": "parity-synthetic",
+    "examples": []
+  },
+  {
+    "site": "parity-technical",
+    "compared": 106,
+    "area_errors": 5,
+    "body_errors": 104,
+    "fixed": 0,
+    "regressed": 99,
+    "examples": [
+      {
+        "url": "http://127.0.0.1:8903/",
+        "reference": 53.313,
+        "w": 93,
+        "s": 18,
+        "area_syl": 162,
+        "body_syl": 172,
+        "area_f": 54.223,
+        "body_f": 45.126
+      },
+      {
+        "url": "http://127.0.0.1:8903/dir/",
+        "reference": 58.292,
+        "w": 94,
+        "s": 21,
+        "area_syl": 160,
+        "body_syl": 173,
+        "area_f": 58.292,
+        "body_f": 46.592
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/",
+        "reference": 47.14,
+        "w": 86,
+        "s": 14,
+        "area_syl": 156,
+        "body_syl": 169,
+        "area_f": 47.14,
+        "body_f": 34.351
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/",
+        "reference": 85.627,
+        "w": 110,
+        "s": 22,
+        "area_syl": 150,
+        "body_syl": 163,
+        "area_f": 86.396,
+        "body_f": 76.398
+      },
+      {
+        "url": "http://127.0.0.1:8903/map/",
+        "reference": 66.65,
+        "w": 93,
+        "s": 17,
+        "area_syl": 148,
+        "body_syl": 161,
+        "area_f": 66.65,
+        "body_f": 54.824
+      },
+      {
+        "url": "http://127.0.0.1:8903/canon/",
+        "reference": 60.092,
+        "w": 94,
+        "s": 21,
+        "area_syl": 158,
+        "body_syl": 171,
+        "area_f": 60.092,
+        "body_f": 48.392
+      },
+      {
+        "url": "http://127.0.0.1:8903/hl/",
+        "reference": 72.958,
+        "w": 82,
+        "s": 14,
+        "area_syl": 123,
+        "body_syl": 136,
+        "area_f": 73.99,
+        "body_f": 60.578
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/target-f.html",
+        "reference": 38.636,
+        "w": 108,
+        "s": 12,
+        "area_syl": 202,
+        "body_syl": 215,
+        "area_f": 39.467,
+        "body_f": 29.283
+      },
+      {
+        "url": "http://127.0.0.1:8903/map/post-1.html",
+        "reference": 39.646,
+        "w": 160,
+        "s": 16,
+        "area_syl": 297,
+        "body_syl": 310,
+        "area_f": 39.646,
+        "body_f": 32.773
+      },
+      {
+        "url": "http://127.0.0.1:8903/canon/to-301.html",
+        "reference": 42.604,
+        "w": 158,
+        "s": 16,
+        "area_syl": 288,
+        "body_syl": 301,
+        "area_f": 42.604,
+        "body_f": 35.644
+      },
+      {
+        "url": "http://127.0.0.1:8903/hl/de/",
+        "reference": 39.786,
+        "w": 159,
+        "s": 16,
+        "area_syl": 295,
+        "body_syl": 308,
+        "area_f": 39.786,
+        "body_f": 32.869
+      },
+      {
+        "url": "http://127.0.0.1:8903/hl/bad-codes.html",
+        "reference": 43.675,
+        "w": 158,
+        "s": 16,
+        "area_syl": 284,
+        "body_syl": 297,
+        "area_f": 44.746,
+        "body_f": 37.785
+      },
+      {
+        "url": "http://127.0.0.1:8903/hl/about.html",
+        "reference": 36.179,
+        "w": 158,
+        "s": 16,
+        "area_syl": 300,
+        "body_syl": 313,
+        "area_f": 36.179,
+        "body_f": 29.218
+      },
+      {
+        "url": "http://127.0.0.1:8903/hl/fr/",
+        "reference": 43.511,
+        "w": 159,
+        "s": 16,
+        "area_syl": 288,
+        "body_syl": 301,
+        "area_f": 43.511,
+        "body_f": 36.594
+      },
+      {
+        "url": "http://127.0.0.1:8903/hl/en/",
+        "reference": 37.658,
+        "w": 159,
+        "s": 16,
+        "area_syl": 299,
+        "body_syl": 312,
+        "area_f": 37.658,
+        "body_f": 30.741
+      },
+      {
+        "url": "http://127.0.0.1:8903/canon/to-external.html",
+        "reference": 37.25,
+        "w": 158,
+        "s": 16,
+        "area_syl": 298,
+        "body_syl": 311,
+        "area_f": 37.25,
+        "body_f": 30.289
+      },
+      {
+        "url": "http://127.0.0.1:8903/canon/to-other.html",
+        "reference": 35.108,
+        "w": 158,
+        "s": 16,
+        "area_syl": 302,
+        "body_syl": 315,
+        "area_f": 35.108,
+        "body_f": 28.147
+      },
+      {
+        "url": "http://127.0.0.1:8903/canon/none.html",
+        "reference": 38.856,
+        "w": 158,
+        "s": 16,
+        "area_syl": 295,
+        "body_syl": 308,
+        "area_f": 38.856,
+        "body_f": 31.895
+      },
+      {
+        "url": "http://127.0.0.1:8903/canon/multi-same.html",
+        "reference": 43.007,
+        "w": 158,
+        "s": 15,
+        "area_syl": 286,
+        "body_syl": 299,
+        "area_f": 43.007,
+        "body_f": 36.046
+      },
+      {
+        "url": "http://127.0.0.1:8903/canon/to-404.html",
+        "reference": 44.575,
+        "w": 159,
+        "s": 16,
+        "area_syl": 286,
+        "body_syl": 299,
+        "area_f": 44.575,
+        "body_f": 37.658
+      },
+      {
+        "url": "http://127.0.0.1:8903/canon/header-only.html",
+        "reference": 36.179,
+        "w": 158,
+        "s": 16,
+        "area_syl": 300,
+        "body_syl": 313,
+        "area_f": 36.179,
+        "body_f": 29.218
+      },
+      {
+        "url": "http://127.0.0.1:8903/canon/multi-mixed-same.html",
+        "reference": 37.658,
+        "w": 159,
+        "s": 16,
+        "area_syl": 299,
+        "body_syl": 312,
+        "area_f": 37.658,
+        "body_f": 30.741
+      },
+      {
+        "url": "http://127.0.0.1:8903/canon/multi-conflict.html",
+        "reference": 34.68,
+        "w": 157,
+        "s": 16,
+        "area_syl": 301,
+        "body_syl": 314,
+        "area_f": 34.68,
+        "body_f": 27.675
+      },
+      {
+        "url": "http://127.0.0.1:8903/canon/noindex-target.html",
+        "reference": 48.152,
+        "w": 157,
+        "s": 16,
+        "area_syl": 276,
+        "body_syl": 289,
+        "area_f": 48.152,
+        "body_f": 41.147
+      },
+      {
+        "url": "http://127.0.0.1:8903/canon/to-noindex.html",
+        "reference": 39.392,
+        "w": 158,
+        "s": 16,
+        "area_syl": 294,
+        "body_syl": 307,
+        "area_f": 39.392,
+        "body_f": 32.431
+      },
+      {
+        "url": "http://127.0.0.1:8903/canon/target.html",
+        "reference": 34.789,
+        "w": 156,
+        "s": 16,
+        "area_syl": 299,
+        "body_syl": 312,
+        "area_f": 34.789,
+        "body_f": 27.739
+      },
+      {
+        "url": "http://127.0.0.1:8903/canon/self.html",
+        "reference": 40.069,
+        "w": 157,
+        "s": 16,
+        "area_syl": 291,
+        "body_syl": 304,
+        "area_f": 40.069,
+        "body_f": 33.064
+      },
+      {
+        "url": "http://127.0.0.1:8903/map/not-in-sitemap.html",
+        "reference": 33.301,
+        "w": 160,
+        "s": 16,
+        "area_syl": 309,
+        "body_syl": 322,
+        "area_f": 33.301,
+        "body_f": 26.428
+      },
+      {
+        "url": "http://127.0.0.1:8903/map/linked-and-listed.html",
+        "reference": 40.318,
+        "w": 159,
+        "s": 16,
+        "area_syl": 294,
+        "body_syl": 307,
+        "area_f": 40.318,
+        "body_f": 33.401
+      },
+      {
+        "url": "http://127.0.0.1:8903/map/post-2.html",
+        "reference": 37.531,
+        "w": 160,
+        "s": 16,
+        "area_syl": 301,
+        "body_syl": 314,
+        "area_f": 37.531,
+        "body_f": 30.658
+      },
+      {
+        "url": "http://127.0.0.1:8903/map/canonicalised.html",
+        "reference": 40.212,
+        "w": 156,
+        "s": 16,
+        "area_syl": 289,
+        "body_syl": 302,
+        "area_f": 40.212,
+        "body_f": 33.162
+      },
+      {
+        "url": "http://127.0.0.1:8903/map/noindex.html",
+        "reference": 45.281,
+        "w": 158,
+        "s": 16,
+        "area_syl": 283,
+        "body_syl": 296,
+        "area_f": 45.281,
+        "body_f": 38.321
+      },
+      {
+        "url": "http://127.0.0.1:8903/map/in-sitemap.html",
+        "reference": 37.658,
+        "w": 159,
+        "s": 16,
+        "area_syl": 299,
+        "body_syl": 312,
+        "area_f": 37.658,
+        "body_f": 30.741
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/target-b.html",
+        "reference": 47.757,
+        "w": 109,
+        "s": 11,
+        "area_syl": 192,
+        "body_syl": 205,
+        "area_f": 47.757,
+        "body_f": 37.667
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/target-e.html",
+        "reference": 44.12,
+        "w": 108,
+        "s": 11,
+        "area_syl": 195,
+        "body_syl": 208,
+        "area_f": 44.12,
+        "body_f": 33.936
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/target-c.html",
+        "reference": 41.033,
+        "w": 108,
+        "s": 12,
+        "area_syl": 200,
+        "body_syl": 213,
+        "area_f": 41.033,
+        "body_f": 30.85
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/target-h.html",
+        "reference": 47.253,
+        "w": 108,
+        "s": 11,
+        "area_syl": 191,
+        "body_syl": 204,
+        "area_f": 47.253,
+        "body_f": 37.07
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/attrs.html",
+        "reference": 39.842,
+        "w": 118,
+        "s": 12,
+        "area_syl": 219,
+        "body_syl": 232,
+        "area_f": 39.842,
+        "body_f": 30.522
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/l1.html",
+        "reference": 43.799,
+        "w": 113,
+        "s": 12,
+        "area_syl": 205,
+        "body_syl": 218,
+        "area_f": 43.799,
+        "body_f": 34.066
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/multi.html",
+        "reference": 45.957,
+        "w": 126,
+        "s": 14,
+        "area_syl": 226,
+        "body_syl": 239,
+        "area_f": 45.957,
+        "body_f": 37.229
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/no-anchor.html",
+        "reference": 44.12,
+        "w": 108,
+        "s": 11,
+        "area_syl": 195,
+        "body_syl": 208,
+        "area_f": 44.12,
+        "body_f": 33.936
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/target-a.html",
+        "reference": 37.729,
+        "w": 109,
+        "s": 12,
+        "area_syl": 206,
+        "body_syl": 219,
+        "area_f": 37.729,
+        "body_f": 27.639
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/target-d.html",
+        "reference": 43.336,
+        "w": 108,
+        "s": 11,
+        "area_syl": 196,
+        "body_syl": 209,
+        "area_f": 43.336,
+        "body_f": 33.153
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c6/",
+        "reference": 68.686,
+        "w": 108,
+        "s": 22,
+        "area_syl": 170,
+        "body_syl": 183,
+        "area_f": 68.686,
+        "body_f": 58.502
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/target-g.html",
+        "reference": 53.52,
+        "w": 108,
+        "s": 11,
+        "area_syl": 183,
+        "body_syl": 196,
+        "area_f": 53.52,
+        "body_f": 43.336
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c1/",
+        "reference": 55.586,
+        "w": 108,
+        "s": 23,
+        "area_syl": 187,
+        "body_syl": 200,
+        "area_f": 55.586,
+        "body_f": 45.402
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c4/",
+        "reference": 58.719,
+        "w": 108,
+        "s": 23,
+        "area_syl": 183,
+        "body_syl": 196,
+        "area_f": 58.719,
+        "body_f": 48.536
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c5/",
+        "reference": 59.502,
+        "w": 108,
+        "s": 23,
+        "area_syl": 182,
+        "body_syl": 195,
+        "area_f": 59.502,
+        "body_f": 49.319
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c2/",
+        "reference": 64.202,
+        "w": 108,
+        "s": 23,
+        "area_syl": 176,
+        "body_syl": 189,
+        "area_f": 64.202,
+        "body_f": 54.019
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c3/",
+        "reference": 58.719,
+        "w": 108,
+        "s": 23,
+        "area_syl": 183,
+        "body_syl": 196,
+        "area_f": 58.719,
+        "body_f": 48.536
+      },
+      {
+        "url": "http://127.0.0.1:8903/dir/refresh-0.html",
+        "reference": 42.604,
+        "w": 158,
+        "s": 16,
+        "area_syl": 288,
+        "body_syl": 301,
+        "area_f": 42.604,
+        "body_f": 35.644
+      },
+      {
+        "url": "http://127.0.0.1:8903/dir/nofollow.html",
+        "reference": 35.169,
+        "w": 163,
+        "s": 17,
+        "area_syl": 312,
+        "body_syl": 325,
+        "area_f": 35.169,
+        "body_f": 28.422
+      },
+      {
+        "url": "http://127.0.0.1:8903/dir/refresh-header.html",
+        "reference": 40.463,
+        "w": 158,
+        "s": 16,
+        "area_syl": 292,
+        "body_syl": 305,
+        "area_f": 40.463,
+        "body_f": 33.502
+      },
+      {
+        "url": "http://127.0.0.1:8903/dir/only-via-nofollow.html",
+        "reference": 34.997,
+        "w": 159,
+        "s": 16,
+        "area_syl": 304,
+        "body_syl": 317,
+        "area_f": 34.997,
+        "body_f": 28.081
+      },
+      {
+        "url": "http://127.0.0.1:8903/dir/plain.html",
+        "reference": 38.856,
+        "w": 158,
+        "s": 16,
+        "area_syl": 295,
+        "body_syl": 308,
+        "area_f": 38.856,
+        "body_f": 31.895
+      },
+      {
+        "url": "http://127.0.0.1:8903/dir/refresh-bare.html",
+        "reference": 43.675,
+        "w": 158,
+        "s": 16,
+        "area_syl": 286,
+        "body_syl": 299,
+        "area_f": 43.675,
+        "body_f": 36.714
+      },
+      {
+        "url": "http://127.0.0.1:8903/dir/refresh-target.html",
+        "reference": 39.927,
+        "w": 158,
+        "s": 16,
+        "area_syl": 293,
+        "body_syl": 306,
+        "area_f": 39.927,
+        "body_f": 32.966
+      },
+      {
+        "url": "http://127.0.0.1:8903/dir/conflict.html",
+        "reference": 38.991,
+        "w": 157,
+        "s": 16,
+        "area_syl": 293,
+        "body_syl": 306,
+        "area_f": 38.991,
+        "body_f": 31.986
+      },
+      {
+        "url": "http://127.0.0.1:8903/dir/all.html",
+        "reference": 36.062,
+        "w": 159,
+        "s": 16,
+        "area_syl": 302,
+        "body_syl": 315,
+        "area_f": 36.062,
+        "body_f": 29.145
+      },
+      {
+        "url": "http://127.0.0.1:8903/dir/noindex.html",
+        "reference": 37.25,
+        "w": 158,
+        "s": 16,
+        "area_syl": 298,
+        "body_syl": 311,
+        "area_f": 37.25,
+        "body_f": 30.289
+      },
+      {
+        "url": "http://127.0.0.1:8903/dir/index-follow.html",
+        "reference": 35.108,
+        "w": 158,
+        "s": 16,
+        "area_syl": 302,
+        "body_syl": 315,
+        "area_f": 35.108,
+        "body_f": 28.147
+      },
+      {
+        "url": "http://127.0.0.1:8903/dir/noindex-header.html",
+        "reference": 44.211,
+        "w": 158,
+        "s": 16,
+        "area_syl": 285,
+        "body_syl": 298,
+        "area_f": 44.211,
+        "body_f": 37.25
+      },
+      {
+        "url": "http://127.0.0.1:8903/dir/none.html",
+        "reference": 41.533,
+        "w": 158,
+        "s": 16,
+        "area_syl": 290,
+        "body_syl": 303,
+        "area_f": 41.533,
+        "body_f": 34.573
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c3/p5.html",
+        "reference": 47.292,
+        "w": 132,
+        "s": 14,
+        "area_syl": 234,
+        "body_syl": 247,
+        "area_f": 47.292,
+        "body_f": 38.96
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c3/p1.html",
+        "reference": 46.651,
+        "w": 132,
+        "s": 14,
+        "area_syl": 235,
+        "body_syl": 248,
+        "area_f": 46.651,
+        "body_f": 38.32
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c3/p4.html",
+        "reference": 42.806,
+        "w": 132,
+        "s": 14,
+        "area_syl": 241,
+        "body_syl": 254,
+        "area_f": 42.806,
+        "body_f": 34.474
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c3/p2.html",
+        "reference": 46.651,
+        "w": 132,
+        "s": 14,
+        "area_syl": 235,
+        "body_syl": 248,
+        "area_f": 46.651,
+        "body_f": 38.32
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c3/p3.html",
+        "reference": 40.883,
+        "w": 132,
+        "s": 14,
+        "area_syl": 244,
+        "body_syl": 257,
+        "area_f": 40.883,
+        "body_f": 32.551
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c3/p6.html",
+        "reference": 47.292,
+        "w": 132,
+        "s": 14,
+        "area_syl": 234,
+        "body_syl": 247,
+        "area_f": 47.292,
+        "body_f": 38.96
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c2/p2.html",
+        "reference": 45.37,
+        "w": 132,
+        "s": 14,
+        "area_syl": 237,
+        "body_syl": 250,
+        "area_f": 45.37,
+        "body_f": 37.038
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c2/p6.html",
+        "reference": 49.215,
+        "w": 132,
+        "s": 14,
+        "area_syl": 231,
+        "body_syl": 244,
+        "area_f": 49.215,
+        "body_f": 40.883
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c2/p3.html",
+        "reference": 50.497,
+        "w": 132,
+        "s": 14,
+        "area_syl": 229,
+        "body_syl": 242,
+        "area_f": 50.497,
+        "body_f": 42.165
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c2/p5.html",
+        "reference": 44.729,
+        "w": 132,
+        "s": 14,
+        "area_syl": 238,
+        "body_syl": 251,
+        "area_f": 44.729,
+        "body_f": 36.397
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c2/p4.html",
+        "reference": 47.292,
+        "w": 132,
+        "s": 14,
+        "area_syl": 234,
+        "body_syl": 247,
+        "area_f": 47.292,
+        "body_f": 38.96
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c2/p1.html",
+        "reference": 46.651,
+        "w": 132,
+        "s": 14,
+        "area_syl": 235,
+        "body_syl": 248,
+        "area_f": 46.651,
+        "body_f": 38.32
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c5/p3.html",
+        "reference": 37.038,
+        "w": 132,
+        "s": 14,
+        "area_syl": 250,
+        "body_syl": 263,
+        "area_f": 37.038,
+        "body_f": 28.706
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c5/p1.html",
+        "reference": 46.01,
+        "w": 132,
+        "s": 14,
+        "area_syl": 236,
+        "body_syl": 249,
+        "area_f": 46.01,
+        "body_f": 37.679
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c5/p6.html",
+        "reference": 46.651,
+        "w": 132,
+        "s": 14,
+        "area_syl": 235,
+        "body_syl": 248,
+        "area_f": 46.651,
+        "body_f": 38.32
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c5/p4.html",
+        "reference": 46.01,
+        "w": 132,
+        "s": 14,
+        "area_syl": 236,
+        "body_syl": 249,
+        "area_f": 46.01,
+        "body_f": 37.679
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c5/p5.html",
+        "reference": 49.215,
+        "w": 132,
+        "s": 14,
+        "area_syl": 231,
+        "body_syl": 244,
+        "area_f": 49.215,
+        "body_f": 40.883
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c5/p2.html",
+        "reference": 48.574,
+        "w": 132,
+        "s": 14,
+        "area_syl": 232,
+        "body_syl": 245,
+        "area_f": 48.574,
+        "body_f": 40.242
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c4/p1.html",
+        "reference": 37.038,
+        "w": 132,
+        "s": 14,
+        "area_syl": 250,
+        "body_syl": 263,
+        "area_f": 37.038,
+        "body_f": 28.706
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c4/p4.html",
+        "reference": 49.215,
+        "w": 132,
+        "s": 14,
+        "area_syl": 231,
+        "body_syl": 244,
+        "area_f": 49.215,
+        "body_f": 40.883
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c4/p2.html",
+        "reference": 55.624,
+        "w": 132,
+        "s": 14,
+        "area_syl": 221,
+        "body_syl": 234,
+        "area_f": 55.624,
+        "body_f": 47.292
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c4/p6.html",
+        "reference": 45.37,
+        "w": 132,
+        "s": 14,
+        "area_syl": 237,
+        "body_syl": 250,
+        "area_f": 45.37,
+        "body_f": 37.038
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c4/p5.html",
+        "reference": 49.856,
+        "w": 132,
+        "s": 14,
+        "area_syl": 230,
+        "body_syl": 243,
+        "area_f": 49.856,
+        "body_f": 41.524
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c4/p3.html",
+        "reference": 42.806,
+        "w": 132,
+        "s": 14,
+        "area_syl": 241,
+        "body_syl": 254,
+        "area_f": 42.806,
+        "body_f": 34.474
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c1/p4.html",
+        "reference": 44.729,
+        "w": 132,
+        "s": 14,
+        "area_syl": 238,
+        "body_syl": 251,
+        "area_f": 44.729,
+        "body_f": 36.397
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c1/p3.html",
+        "reference": 44.088,
+        "w": 132,
+        "s": 14,
+        "area_syl": 239,
+        "body_syl": 252,
+        "area_f": 44.088,
+        "body_f": 35.756
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c1/p6.html",
+        "reference": 47.292,
+        "w": 132,
+        "s": 14,
+        "area_syl": 234,
+        "body_syl": 247,
+        "area_f": 47.292,
+        "body_f": 38.96
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c1/p2.html",
+        "reference": 42.165,
+        "w": 132,
+        "s": 14,
+        "area_syl": 242,
+        "body_syl": 255,
+        "area_f": 42.165,
+        "body_f": 33.833
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c1/p5.html",
+        "reference": 48.574,
+        "w": 132,
+        "s": 14,
+        "area_syl": 232,
+        "body_syl": 245,
+        "area_f": 48.574,
+        "body_f": 40.242
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c1/p1.html",
+        "reference": 45.367,
+        "w": 132,
+        "s": 15,
+        "area_syl": 238,
+        "body_syl": 251,
+        "area_f": 45.367,
+        "body_f": 37.035
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c6/p5.html",
+        "reference": 44.088,
+        "w": 132,
+        "s": 14,
+        "area_syl": 239,
+        "body_syl": 252,
+        "area_f": 44.088,
+        "body_f": 35.756
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c6/p1.html",
+        "reference": 49.856,
+        "w": 132,
+        "s": 14,
+        "area_syl": 230,
+        "body_syl": 243,
+        "area_f": 49.856,
+        "body_f": 41.524
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c6/p6.html",
+        "reference": 52.42,
+        "w": 132,
+        "s": 14,
+        "area_syl": 226,
+        "body_syl": 239,
+        "area_f": 52.42,
+        "body_f": 44.088
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c6/p3.html",
+        "reference": 50.497,
+        "w": 132,
+        "s": 14,
+        "area_syl": 229,
+        "body_syl": 242,
+        "area_f": 50.497,
+        "body_f": 42.165
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c6/p4.html",
+        "reference": 49.856,
+        "w": 132,
+        "s": 14,
+        "area_syl": 230,
+        "body_syl": 243,
+        "area_f": 49.856,
+        "body_f": 41.524
+      },
+      {
+        "url": "http://127.0.0.1:8903/tree/c6/p2.html",
+        "reference": 43.447,
+        "w": 132,
+        "s": 14,
+        "area_syl": 240,
+        "body_syl": 253,
+        "area_f": 43.447,
+        "body_f": 35.115
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/l2.html",
+        "reference": 46.045,
+        "w": 113,
+        "s": 12,
+        "area_syl": 202,
+        "body_syl": 215,
+        "area_f": 46.045,
+        "body_f": 36.312
+      },
+      {
+        "url": "http://127.0.0.1:8903/hl/es/",
+        "reference": 41.761,
+        "w": 160,
+        "s": 16,
+        "area_syl": 293,
+        "body_syl": 306,
+        "area_f": 41.761,
+        "body_f": 34.888
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/l3.html",
+        "reference": 46.045,
+        "w": 113,
+        "s": 12,
+        "area_syl": 202,
+        "body_syl": 215,
+        "area_f": 46.045,
+        "body_f": 36.312
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/l4.html",
+        "reference": 44.548,
+        "w": 113,
+        "s": 12,
+        "area_syl": 204,
+        "body_syl": 217,
+        "area_f": 44.548,
+        "body_f": 34.815
+      },
+      {
+        "url": "http://127.0.0.1:8903/links/l5.html",
+        "reference": 44.12,
+        "w": 108,
+        "s": 11,
+        "area_syl": 195,
+        "body_syl": 208,
+        "area_f": 44.12,
+        "body_f": 33.936
+      }
+    ]
+  }
+]

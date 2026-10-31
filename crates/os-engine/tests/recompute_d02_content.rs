@@ -107,3 +107,82 @@ async fn disabled_readability_clears_existing_values_without_creating_null_facts
         .unwrap();
     assert_eq!(value, None);
 }
+
+// spec: ONPAGE-140 [M2]
+// spec: ONPAGE-149
+#[tokio::test]
+async fn recomputed_readability_uses_crawl_word_count_including_list_items() {
+    for enabled in [true, false] {
+        let mut cfg = CrawlConfig::default();
+        cfg.extraction.store_html = true;
+        cfg.extraction.word_count = enabled;
+        let mut fx = os_engine::testing::crawl_fixture("onpage-m2-content", cfg).await;
+        let old = fx.file.config().unwrap();
+        let mut new = old.clone();
+        new.content.area.include_elements = vec!["main".into()];
+        let id: i64 = fx
+            .file
+            .conn()
+            .query_row(
+                "SELECT MIN(id) FROM urls WHERE content_class='HTML' AND status_code=200",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        // A-35b adds two words that are absent from the sentence text.
+        let html = "<body><nav>Outside area</nav><main><ul><li>River</li><li>garden</li></ul></main></body>";
+        fx.file.conn().execute(
+            "INSERT OR REPLACE INTO page_html(url_id,encoding,body,compression) VALUES (?1,'UTF-8',?2,NULL)",
+            (id, html.as_bytes()),
+        ).unwrap();
+        let url = url::Url::parse("https://fixture.test/").unwrap();
+        let expected = os_parse::parse_html(&os_parse::ParseInput {
+            url: &url,
+            body: html.as_bytes(),
+            content_type: Some("text/html"),
+            headers: &[],
+            status: 200,
+            cfg: &os_parse::ParseConfig::from_crawl_config(&new),
+        });
+        assert_eq!(expected.word_count, enabled.then_some(4));
+        let before = fx.site.total_requests();
+        os_engine::recompute::d02::run(&mut fx.file, &old, &new, &CancelToken::new()).unwrap();
+        assert_eq!(fx.site.total_requests(), before);
+        let words: Option<u32> = fx
+            .file
+            .conn()
+            .query_row("SELECT word_count FROM urls WHERE id=?1", [id], |r| {
+                r.get(0)
+            })
+            .unwrap();
+        assert_eq!(words, enabled.then_some(4), "word_count enabled={enabled}");
+        for (key, value) in expected
+            .ext
+            .iter()
+            .filter(|(k, _)| k.as_str().starts_with("readability."))
+        {
+            let actual = fx
+                .file
+                .conn()
+                .query_row(
+                    "SELECT v_int,v_real,v_text FROM url_ext WHERE url_id=?1 AND key=?2",
+                    (id, key.as_str()),
+                    |r| {
+                        Ok(match value {
+                            os_model::Value::Int(_) => os_model::Value::Int(r.get(0)?),
+                            os_model::Value::Float(_) => os_model::Value::Float(r.get(1)?),
+                            os_model::Value::Text(_) => os_model::Value::Text(r.get(2)?),
+                            _ => unreachable!(),
+                        })
+                    },
+                )
+                .unwrap();
+            assert_eq!(
+                &actual,
+                value,
+                "{}; word_count enabled={enabled}",
+                key.as_str()
+            );
+        }
+    }
+}

@@ -1,0 +1,36 @@
+{
+  "export": "hreflang_noncanonical_returns",
+  "site": null,
+  "ref_rows": 1,
+  "os_rows": 1,
+  "matched": 1,
+  "missing_in_os": [],
+  "extra_in_os": [],
+  "cells_compared": 1,
+  "cells_equal": 1,
+  "agreement_pct": 100.0,
+  "columns": [
+    {
+      "ref_column": "Canonical",
+      "os_column": "Canonical Of Hreflang URL",
+      "compared": 1,
+      "errors": 0,
+      "examples": []
+    }
+  ],
+  "applied_deviations": [],
+  "dropped_ref_columns": [],
+  "ignored_columns": [],
+  "unmapped_ref_columns": [],
+  "unmapped_os_columns": [
+    "Hreflang Language"
+  ],
+  "missing_ref_columns": [],
+  "missing_os_columns": [],
+  "ignored_ref_rows": [],
+  "os_only_rows": [],
+  "threshold_pct": 97.0,
+  "url_set_identical": true,
+  "passed": true,
+  "failures": []
+}

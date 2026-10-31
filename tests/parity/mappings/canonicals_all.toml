@@ -22,8 +22,8 @@ drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Refer
 "X-Robots-Tag 3" = { ignore = true, reason = "Spaltenliste des Canonicals-Tabs in der Referenz fuehrt nur X-Robots-Tag 1" }
 "rel=\"next\" 1" = "rel=\"next\" 1"
 "rel=\"prev\" 1" = "rel=\"prev\" 1"
-"HTTP rel=\"next\" 1" = "HTTP rel=\"next\" 1"
-"HTTP rel=\"prev\" 1" = "HTTP rel=\"prev\" 1"
+"HTTP rel=\"next\" 1" = { ignore = true, reason = "SQ-13f / TECH-011: HTTP-rel-Zusatzspalte der Referenz" }
+"HTTP rel=\"prev\" 1" = { ignore = true, reason = "SQ-13f / TECH-011: HTTP-rel-Zusatzspalte der Referenz" }
 
 [normalize]
 base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}

@@ -1,0 +1,21 @@
+# N06: Spaltensatz nach Referenzkopfzeile; Soll und Ignoriergründe aus der Spec.
+key = ["Source", "Destination", "#"]
+drop_ref_columns = ["Description", "How To Fix"]
+
+[columns]
+"Source" = "Address"
+"Destination" = "Hreflang URL"
+"hreflang" = "Hreflang Language"
+"Status Code" = "Status Code"
+"Status" = { ignore = true, reason = "OUT-092: Status-Text der Referenz ist nicht Teil des Unlinked-Hreflang-Reportvertrags; Status Code wird verglichen" }
+"Type" = { ignore = true, reason = "OUT-091/092: Link-Metadaten außerhalb des Hreflang-Reportvertrags" }
+"Path Type" = { ignore = true, reason = "OUT-091/092: Link-Metadaten außerhalb des Hreflang-Reportvertrags" }
+"Unlinked" = { ignore = true, reason = "OUT-091/092: Link-Metadaten außerhalb des Hreflang-Reportvertrags" }
+"Link Origin" = { ignore = true, reason = "OUT-091/092: Link-Metadaten außerhalb des Hreflang-Reportvertrags" }
+
+[normalize]
+bool = "case-insensitive"
+base_url = true
+trim = true
+number_decimals = 3
+empty_equals_null = true

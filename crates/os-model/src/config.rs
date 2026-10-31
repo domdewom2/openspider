@@ -285,6 +285,8 @@ pub struct SpiderConfig {
     pub images: StoreCrawl,
     /// CSS.
     pub css: StoreCrawl,
+    /// Style-Attribute ohne Rendering nach CSS-Verweisen durchsuchen (CRAWL-040).
+    pub css_style_attributes: bool,
     /// JavaScript.
     pub javascript: StoreCrawl,
     /// Medien.
@@ -322,6 +324,7 @@ impl Default for SpiderConfig {
 
             images: StoreCrawl::ON,
             css: StoreCrawl::ON,
+            css_style_attributes: false,
             javascript: StoreCrawl::ON,
             media: StoreCrawl::ON,
             internal: StoreCrawl::ON,
@@ -699,7 +702,12 @@ impl Default for ContentAreaConfig {
             include_elements: Vec::new(),
             include_classes: Vec::new(),
             include_ids: Vec::new(),
-            exclude_elements: vec!["nav".to_string(), "footer".to_string()],
+            exclude_elements: vec![
+                "nav".to_string(),
+                "footer".to_string(),
+                "header".to_string(),
+                "aside".to_string(),
+            ],
             exclude_classes: Vec::new(),
             exclude_ids: Vec::new(),
         }
@@ -806,7 +814,6 @@ impl Default for UrlLimits {
             .map(String::from)
             .to_vec(),
             internal_search_params: [
-                "s",
                 "q",
                 "query",
                 "search",

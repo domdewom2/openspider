@@ -39,11 +39,9 @@ pub fn tab() -> TabDef {
         id: "Pagination",
         hidden_population: Some(":pagination_store = 1 AND u.in_tables = 0 AND u.is_internal = 1 AND \
             EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'respect_hidden' AND f.value = 'pagination') AND \
-            ((u.content_class = 'HTML' AND u.status_code = 200) OR \
-             (u.state = 'done' AND EXISTS (SELECT 1 FROM pagination p WHERE p.target_id = u.id)))"),
+            u.content_class = 'HTML' AND u.status_code BETWEEN 200 AND 299"),
         population: ":pagination_store = 1 AND u.in_tables = 1 AND u.is_internal = 1 AND \
-            ((u.content_class = 'HTML' AND u.status_code = 200) OR \
-             (u.state = 'done' AND EXISTS (SELECT 1 FROM pagination p WHERE p.target_id = u.id)))",
+            u.content_class = 'HTML' AND u.status_code BETWEEN 200 AND 299",
         columns: vec![
             column("Address", "u.address", ColumnKind::Url, true),
             column("Occurrences", "(SELECT COUNT(*) FROM pagination p WHERE p.url_id = u.id)", ColumnKind::Int, true),

@@ -1,0 +1,33 @@
+# Spaltenmapping Referenz -> OpenSpider fuer den Export "Canonicals:All" (Format: docs/plan/M1.md 5.2).
+# Stand M1-P29 (Welle 5): an die echten Kopfzeilen der Referenz (Referenzprodukt (Free-Version), englische Oberflaeche) angepasst.
+# Nur Spaltennamen der Kopfzeile; Beschreibungsspalten werden beim Einlesen verworfen (Clean-Room, A8).
+# Die Referenz schreibt den HTTP-Canonical-Header ohne Nummer (`HTTP Canonical`); OpenSpider nummeriert (`HTTP Canonical 1`).
+key = ["Address"]
+drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
+
+[columns]
+"Address" = "Address"
+"Occurrences" = "Occurrences"
+"Indexability" = "Indexability"
+"Indexability Status" = { os = "Indexability Status", transform = ["ignore_case"] }
+"Canonical Link Element 1" = "Canonical Link Element 1"
+"Canonical Link Element 2" = "Canonical Link Element 2"
+"Canonical Link Element 3" = "Canonical Link Element 3"
+"HTTP Canonical" = { os = "HTTP Canonical 1" }
+"Meta Robots 1" = "Meta Robots 1"
+"X-Robots-Tag 1" = "X-Robots-Tag 1"
+"Meta Robots 2" = { ignore = true, reason = "Spaltenliste des Canonicals-Tabs in der Referenz fuehrt nur Meta Robots 1" }
+"X-Robots-Tag 2" = { ignore = true, reason = "Spaltenliste des Canonicals-Tabs in der Referenz fuehrt nur X-Robots-Tag 1" }
+"Meta Robots 3" = { ignore = true, reason = "Spaltenliste des Canonicals-Tabs in der Referenz fuehrt nur Meta Robots 1" }
+"X-Robots-Tag 3" = { ignore = true, reason = "Spaltenliste des Canonicals-Tabs in der Referenz fuehrt nur X-Robots-Tag 1" }
+"rel=\"next\" 1" = "rel=\"next\" 1"
+"rel=\"prev\" 1" = "rel=\"prev\" 1"
+"HTTP rel=\"next\" 1" = "HTTP rel=\"next\" 1"
+"HTTP rel=\"prev\" 1" = "HTTP rel=\"prev\" 1"
+
+[normalize]
+base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}
+trim = true
+bool = "case-insensitive"
+number_decimals = 3      # Zahlen werden nach Rundung verglichen
+empty_equals_null = true

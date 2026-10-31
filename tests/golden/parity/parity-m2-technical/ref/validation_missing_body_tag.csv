@@ -1,0 +1,2 @@
+﻿"Address","Content Type","Status Code","Status","Indexability","Indexability Status","Size (Bytes)","Transferred (Bytes)","Total Transferred (Bytes)","CO2 (mg)","Carbon Rating"
+"http://127.0.0.1:8907/validation-body-missing.html","text/html; charset=utf-8","200","OK","Indexable","","68","68","68","0.010",""

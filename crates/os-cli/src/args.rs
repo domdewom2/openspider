@@ -205,6 +205,10 @@ pub struct RunArgs {
     #[arg(long, value_name = "REPORT,…", help_heading = "Exporte")]
     pub save_report: Vec<String>,
 
+    /// Herkunftspfad der gewählten URLs als eine Datei in Auswahlreihenfolge exportieren.
+    #[arg(long, value_name = "URL[,URL…]", help_heading = "Exporte")]
+    pub export_crawl_path: Vec<String>,
+
     /// Format der Exporte: csv (Standard), xls, xlsx oder gsheet (verbundenes Google-Konto).
     #[arg(long, value_name = "FORMAT", help_heading = "Exporte")]
     pub export_format: Option<String>,

@@ -1,0 +1,28 @@
+[[route]]
+path = "/gone.html"
+status = 404
+
+[[route]]
+path = "/redirect"
+status = 302
+location = "/"
+
+[[route]]
+path = "/asset.css"
+content_type = "text/css"
+body = "body { color: blue }"
+[route.headers]
+X-Robots-Tag = "noarchive"
+
+[[route]]
+path = "/header.html"
+[route.headers]
+Refresh = "0; url=/header.html"
+Link = '<http://site.test/ignored.html>; rel="canonical"; type="text/html"'
+
+[[route]]
+path = "/header-bare.html"
+content_type = "text/html"
+body = "<html><head><title>Bare header refresh</title></head><body></body></html>"
+[route.headers]
+Refresh = "30"

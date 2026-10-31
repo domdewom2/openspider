@@ -27,16 +27,16 @@ fn syllables_sentences_and_scores_are_deterministic() {
 // spec: ONPAGE-150
 #[test]
 fn difficult_band_includes_both_boundaries() {
-    assert_eq!(label(30.0), "Difficult");
-    assert_eq!(label(49.9), "Difficult");
-    assert_ne!(label(50.0), "Difficult");
+    assert_eq!(label(30.0), "Hard");
+    assert_eq!(label(49.9), "Hard");
+    assert_ne!(label(50.0), "Hard");
 }
 // spec: ONPAGE-151
 #[test]
 fn very_difficult_band_stops_at_thirty() {
-    assert_eq!(label(0.0), "Very Difficult");
-    assert_eq!(label(29.9), "Very Difficult");
-    assert_ne!(label(30.0), "Very Difficult");
+    assert_eq!(label(0.0), "Very Hard");
+    assert_eq!(label(29.9), "Very Hard");
+    assert_ne!(label(30.0), "Very Hard");
 }
 // spec: ONPAGE-149
 #[test]

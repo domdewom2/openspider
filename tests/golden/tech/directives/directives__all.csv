@@ -6,7 +6,6 @@ Address,Occurrences,Indexability Status
 /conflict-meta.html,2,noindex
 /conflict-mixed.html,2,noindex
 /follow-nofollow.html,1,
-/gone.html,1,Client Error
 /index-follow.html,1,
 /max.html,1,
 /mixed-case.html,1,noindex
@@ -27,7 +26,7 @@ Address,Occurrences,Indexability Status
 /refresh-self-0.html,0,
 /refresh-self-300.html,0,
 /refresh-self-fragment.html,0,
-/refresh-self-header.html,0,
+/refresh-self-header.html,0,Redirected
 /unavailable-past.html,1,
 /xrobots-agent.html,2,noindex
 /xrobots-two.html,2,noindex

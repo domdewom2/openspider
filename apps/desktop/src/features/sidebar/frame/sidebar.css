@@ -14,7 +14,7 @@
 .os-sidebar-badge { display:inline-flex; gap:var(--os-size-4); align-items:center; font-size:var(--os-font-small); }
 .os-sidebar-table th .os-sidebar-badge, .os-sidebar-state { display:flex; }
 .os-sidebar-priority-high { color:var(--os-issue-type-issue); }
-.os-sidebar-priority-medium { color:var(--os-status-3xx); }
+.os-sidebar-priority-medium { color:var(--os-text); }
 .os-sidebar-priority-low { color:var(--os-text-muted); }
 .os-sidebar-stale { color:var(--os-text-muted); }
 .os-sidebar-filters, .os-sidebar-actions { display:flex; flex-wrap:wrap; gap:var(--os-size-8); padding:var(--os-size-8); }

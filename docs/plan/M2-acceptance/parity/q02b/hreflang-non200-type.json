@@ -1,0 +1,78 @@
+{
+  "export": "all_inlinks",
+  "site": null,
+  "ref_rows": 2,
+  "os_rows": 0,
+  "matched": 0,
+  "missing_in_os": [
+    "Hyperlink | {BASE}/ | {BASE}/pagination-404-target.html | #1",
+    "Hreflang | {BASE}/lang-to-404.html | {BASE}/pagination-404-target.html | #1"
+  ],
+  "extra_in_os": [],
+  "cells_compared": 0,
+  "cells_equal": 0,
+  "agreement_pct": 0.0,
+  "columns": [
+    {
+      "ref_column": "Status Code",
+      "os_column": "Status Code",
+      "compared": 0,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status",
+      "os_column": "Status",
+      "compared": 0,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Path Type",
+      "os_column": "Path Type",
+      "compared": 0,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Link Origin",
+      "os_column": "Link Origin",
+      "compared": 0,
+      "errors": 0,
+      "examples": []
+    }
+  ],
+  "applied_deviations": [],
+  "dropped_ref_columns": [],
+  "ignored_columns": [],
+  "unmapped_ref_columns": [
+    "hreflang",
+    "Unlinked"
+  ],
+  "unmapped_os_columns": [],
+  "missing_ref_columns": [
+    "Alt Text",
+    "Anchor",
+    "Follow",
+    "Link Path",
+    "Link Position",
+    "Rel",
+    "Size (Bytes)",
+    "Target"
+  ],
+  "missing_os_columns": [
+    "Status Code",
+    "Status",
+    "Path Type",
+    "Link Origin"
+  ],
+  "ignored_ref_rows": [],
+  "os_only_rows": [],
+  "threshold_pct": 97.0,
+  "url_set_identical": false,
+  "passed": false,
+  "failures": [
+    "Zellübereinstimmung 0.000 % liegt unter 97.000 %",
+    "URL-Menge nicht identisch: 2 fehlen in OpenSpider, 0 zusätzlich"
+  ]
+}

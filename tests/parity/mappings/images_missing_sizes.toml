@@ -1,24 +1,25 @@
-# M2-P01: Spec-abgeleitete Spalten; keine Referenzwerte oder Beschreibungstexte.
-key = ["From", "To", "#"]
+# Q02b: Spaltensatz nach Referenzkopfzeile; Soll und Ignoriergründe aus der Spec.
+# XPath wie all_inlinks: ONPAGE-172 verlangt absolute Pfade mit Positionsindizes; Elementfolge bleibt verglichen.
+key = ["Source", "Destination", "#"]
 drop_ref_columns = ["Description", "How To Fix"]
 
 [columns]
-"From" = "From"
-"To" = "To"
+"Type" = { ignore = true, reason = "ONPAGE-179 / OUT-031: spezialisierter Bildgrößenreport liefert in OS keinen Linktyp" }
+"Source" = "From"
+"Destination" = "To"
 "Alt Text" = "Alt Text"
-"Size" = "Size"
-"Real Dimensions (WxH)" = "Real Dimensions (WxH)"
-"Dimensions in Attributes (WxH)" = "Dimensions in Attributes (WxH)"
-"Display Dimensions (WxH)" = "Display Dimensions (WxH)"
-"Potential Savings" = "Potential Savings"
+"Length" = { ignore = true, reason = "ONPAGE-172/181, OUT-053: Referenz-Length ist die Alt-Text-Laenge (7/15/9), nicht die Bildgroesse. Der spezifizierte Instanzexport enthaelt Size in Bytes (hier 74), keine Alt-Text-Laenge; Alt Text bleibt voll verglichen." }
 "Path Type" = "Path Type"
-"Link Path" = "Link Path"
+"Link Path" = { os = "Link Path", transform = ["xpath_tags"] }
 "Link Position" = "Link Position"
 "Link Origin" = "Link Origin"
+"Real Dimensions" = "Real Dimensions (WxH)"
+"Dimensions in Attributes" = "Dimensions in Attributes (WxH)"
+"Display Dimensions" = "Display Dimensions (WxH)"
 
 [normalize]
+bool = "case-insensitive"
 base_url = true
 trim = true
-bool = "case-insensitive"
 number_decimals = 3
 empty_equals_null = true

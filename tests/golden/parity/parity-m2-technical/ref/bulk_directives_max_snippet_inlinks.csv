@@ -1,0 +1,3 @@
+﻿"Type","Source","Destination","Size (Bytes)","Alt Text","Anchor","Status Code","Status","Crawlability","Follow","Target","Rel","Path Type","Link Path","Link Position","Link Origin"
+"Hyperlink","http://127.0.0.1:8907/","http://127.0.0.1:8907/xrobots-all.html","148","","/xrobots-all.html","200","OK","Crawlable","true","","","Root-Relative","//body/main/ul/li[32]/a","Content","HTML"
+"Hyperlink","http://127.0.0.1:8907/","http://127.0.0.1:8907/directive-2.html","193","","/directive-2.html","200","OK","Crawlable","true","","","Root-Relative","//body/main/ul/li[23]/a","Content","HTML"

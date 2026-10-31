@@ -109,9 +109,9 @@
       "filter": {
         "analysisStep": null,
         "count": 0,
-        "id": "Flash",
+        "id": "Plugins",
         "issue": null,
-        "labelTemplate": "Flash",
+        "labelTemplate": "Plugins",
         "params": {},
         "pct": 0.0,
         "state": {
@@ -127,6 +127,51 @@
         "id": "Other",
         "issue": null,
         "labelTemplate": "Other",
+        "params": {},
+        "pct": 0.0,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      "tab": "Internal"
+    },
+    {
+      "filter": {
+        "analysisStep": null,
+        "count": 0,
+        "id": "Media",
+        "issue": null,
+        "labelTemplate": "Media",
+        "params": {},
+        "pct": 0.0,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      "tab": "Internal"
+    },
+    {
+      "filter": {
+        "analysisStep": null,
+        "count": 0,
+        "id": "Fonts",
+        "issue": null,
+        "labelTemplate": "Fonts",
+        "params": {},
+        "pct": 0.0,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      "tab": "Internal"
+    },
+    {
+      "filter": {
+        "analysisStep": null,
+        "count": 0,
+        "id": "XML",
+        "issue": null,
+        "labelTemplate": "XML",
         "params": {},
         "pct": 0.0,
         "state": {

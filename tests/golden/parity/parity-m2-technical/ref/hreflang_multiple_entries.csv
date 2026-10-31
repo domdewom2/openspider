@@ -1,0 +1,3 @@
+﻿"Address","Title 1","Occurrences","HTML hreflang 1","HTML hreflang 1 URL","HTTP hreflang 1","HTTP hreflang 1 URL","Sitemap hreflang 1","Sitemap hreflang 1 URL","Indexability","Indexability Status","HTML hreflang 2","HTML hreflang 2 URL"
+"http://127.0.0.1:8907/lang-inconsistent-return.html","Fixture /lang-inconsistent-return.html","2","fr","http://127.0.0.1:8907/lang-inconsistent-return.html","","","","","Indexable","","fr","http://127.0.0.1:8907/lang-inconsistent.html"
+"http://127.0.0.1:8907/lang-multiple.html","Fixture /lang-multiple.html","2","en","http://127.0.0.1:8907/lang-valid.html","","","","","Indexable","","en","http://127.0.0.1:8907/lang-inconsistent.html"

@@ -27,6 +27,9 @@ pub(super) const DESCRIPTION_PX: f64 = 14.0;
 pub(super) const TITLE_20: &[(char, u8)] = &[
     (' ', 5),
     ('-', 6),
+    // K2-96: separate equations from Fixture /, /Case.html and graph/10…99.
+    ('.', 5),
+    ('/', 8),
     ('0', 11),
     ('1', 11),
     ('2', 11),
@@ -81,6 +84,10 @@ pub(super) const TITLE_20: &[(char, u8)] = &[
     ('x', 10),
     ('y', 9),
     ('z', 10),
+    // G21: separate measured glyphs in the 20 px title profile; other profiles keep font metrics.
+    ('Σ', 11),
+    ('ς', 11),
+    ('σ', 11),
     ('–', 13),
 ];
 

@@ -70,14 +70,27 @@ pub fn extract(doc: &Document, base: &url::Url) -> Vec<CanonicalRef> {
 
 /// Persistierbare Annotationseigenschaften; Quellwerte und Zielvergleich bleiben unverändert.
 pub fn annotation_facts(canonicals: &[CanonicalRef]) -> Vec<(os_model::ExtKey, os_model::Value)> {
-    if canonicals.iter().any(|c| c.invalid_attribute) {
-        vec![(
-            os_model::ExtKey::from_static("canonical.invalid_attribute"),
-            os_model::Value::Bool(true),
-        )]
-    } else {
-        Vec::new()
+    let mut facts = Vec::new();
+    for (key, present) in [
+        (
+            "canonical.invalid_attribute",
+            canonicals.iter().any(|c| c.invalid_attribute),
+        ),
+        (
+            "canonical.outside_head",
+            canonicals
+                .iter()
+                .any(|c| c.source == HintSource::Html && !c.in_head),
+        ),
+    ] {
+        if present {
+            facts.push((
+                os_model::ExtKey::from_static(key),
+                os_model::Value::Bool(true),
+            ));
+        }
     }
+    facts
 }
 
 /// Coverage für den Canonical-Dokumentbaum (TECH-008/023). Nicht-HTML benötigt keine Head-Prüfung.

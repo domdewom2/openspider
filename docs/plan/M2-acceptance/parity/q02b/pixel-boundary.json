@@ -1,0 +1,1292 @@
+{
+  "ref_count": 23,
+  "os_count": 113,
+  "crossings": [
+    {
+      "key": "{BASE}/graph/10.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/11.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/12.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/13.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/14.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/15.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/16.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/17.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/18.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/19.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/20.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/21.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/22.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/23.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/24.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/25.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/26.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/27.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/28.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/29.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/30.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/31.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/32.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/33.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/34.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/35.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/36.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/37.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/38.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/39.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/40.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/41.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/42.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/43.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/44.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/45.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/46.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/47.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/48.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/49.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/50.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/51.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/52.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/53.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/54.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/55.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/56.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/57.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/58.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/59.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/60.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/61.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/62.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/63.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/64.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/65.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/66.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/67.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/68.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/69.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/70.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/71.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/72.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/73.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/74.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/75.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/76.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/77.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/78.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/79.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/80.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/81.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/82.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/83.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/84.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/85.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/86.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/87.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/88.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/89.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/90.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/91.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/92.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/93.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/94.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/95.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/96.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/97.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/98.html",
+      "ref": 202.0,
+      "os": 199.0
+    },
+    {
+      "key": "{BASE}/graph/99.html",
+      "ref": 202.0,
+      "os": 199.0
+    }
+  ],
+  "native_probe": {
+    "export": "pixel_boundary",
+    "site": null,
+    "ref_rows": 142,
+    "os_rows": 142,
+    "matched": 142,
+    "missing_in_os": [],
+    "extra_in_os": [],
+    "cells_compared": 568,
+    "cells_equal": 426,
+    "agreement_pct": 75.0,
+    "columns": [
+      {
+        "ref_column": "Content Type",
+        "os_column": "Content",
+        "compared": 142,
+        "errors": 0,
+        "examples": []
+      },
+      {
+        "ref_column": "Status Code",
+        "os_column": "Status Code",
+        "compared": 142,
+        "errors": 0,
+        "examples": []
+      },
+      {
+        "ref_column": "Indexability",
+        "os_column": "Indexability",
+        "compared": 142,
+        "errors": 0,
+        "examples": []
+      },
+      {
+        "ref_column": "Title 1 Pixel Width",
+        "os_column": "Probe Width",
+        "compared": 142,
+        "errors": 142,
+        "examples": [
+          {
+            "key": "{BASE}/",
+            "ref": "75",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/4.html",
+            "ref": "191",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/10.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/32.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/7.html",
+            "ref": "191",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/48.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/51.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/29.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/54.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/uncrawlable.html",
+            "ref": "229",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/26.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/23.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/92.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/76.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/103.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/57.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/70.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/45.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/109.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/98.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/35.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/19.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/internal-999.html",
+            "ref": "228",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/118.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/67.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/22.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/1.html",
+            "ref": "191",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/61.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/112.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/13.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/58.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/83.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/89.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/44.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/60.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/55.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/36.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/39.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/74.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/0.html",
+            "ref": "191",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/25.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/noindex-source.html",
+            "ref": "257",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/113.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/71.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/116.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/88.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/102.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/85.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/100.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/99.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/90.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/12.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/8.html",
+            "ref": "191",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/114.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/68.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/nofollow-source.html",
+            "ref": "263",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/87.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/73.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/38.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/56.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/42.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/anchors.html",
+            "ref": "192",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/72.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/69.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/11.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/24.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/115.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/9.html",
+            "ref": "191",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/41.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/101.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/86.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/external-99.html",
+            "ref": "222",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/97.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/94.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/21.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/59.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/43.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/40.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/62.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/37.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/mixed-source.html",
+            "ref": "242",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/65.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/84.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/18.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/117.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/31.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/49.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/53.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/deep/1.html",
+            "ref": "184",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/27.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/75.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/91.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/6.html",
+            "ref": "191",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/104.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/30.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/63.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/28.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/positions.html",
+            "ref": "123",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/52.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/108.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/external-101.html",
+            "ref": "233",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/66.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/17.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/14.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/119.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/77.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/internal-1001.html",
+            "ref": "239",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/96.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/target.html",
+            "ref": "175",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/93.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/105.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/79.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/111.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/20.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/5.html",
+            "ref": "191",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/82.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/106.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/15.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/2.html",
+            "ref": "191",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/34.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/50.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/46.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/81.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/95.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/110.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/80.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/64.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/16.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/3.html",
+            "ref": "191",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/78.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/33.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/107.html",
+            "ref": "213",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/graph/47.html",
+            "ref": "202",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/deep/2.html",
+            "ref": "184",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/mixed.html",
+            "ref": "176",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/noindex-inlinks-only.html",
+            "ref": "296",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/deep/3.html",
+            "ref": "184",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/deep/4.html",
+            "ref": "184",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/deep/5.html",
+            "ref": "184",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/deep/6.html",
+            "ref": "184",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/deep/7.html",
+            "ref": "184",
+            "os": ""
+          },
+          {
+            "key": "{BASE}/deep/8.html",
+            "ref": "184",
+            "os": ""
+          }
+        ]
+      }
+    ],
+    "applied_deviations": [],
+    "dropped_ref_columns": [],
+    "ignored_columns": [],
+    "unmapped_ref_columns": [
+      "Status",
+      "Indexability Status",
+      "Title 1",
+      "Title 1 Length",
+      "Meta Description 1",
+      "Meta Description 1 Length",
+      "Meta Description 1 Pixel Width",
+      "Meta Keywords 1",
+      "Meta Keywords 1 Length",
+      "H1-1",
+      "H1-1 Length",
+      "H2-1",
+      "H2-1 Length",
+      "Meta Robots 1",
+      "X-Robots-Tag 1",
+      "Meta Refresh 1",
+      "Canonical Link Element 1",
+      "rel=\"next\" 1",
+      "rel=\"prev\" 1",
+      "HTTP rel=\"next\" 1",
+      "HTTP rel=\"prev\" 1",
+      "amphtml Link Element",
+      "Size (Bytes)",
+      "Transferred (Bytes)",
+      "Total Transferred (Bytes)",
+      "CO2 (mg)",
+      "Carbon Rating",
+      "Word Count",
+      "Sentence Count",
+      "Average Words Per Sentence",
+      "Flesch Reading Ease Score",
+      "Readability",
+      "Text Ratio",
+      "Crawl Depth",
+      "Folder Depth",
+      "Link Score",
+      "Inlinks",
+      "Unique Inlinks",
+      "Unique JS Inlinks",
+      "% of Total",
+      "Outlinks",
+      "Unique Outlinks",
+      "Unique JS Outlinks",
+      "External Outlinks",
+      "Unique External Outlinks",
+      "Unique External JS Outlinks",
+      "Closest Near Duplicate Match",
+      "No. Near Duplicates",
+      "Spelling Errors",
+      "Grammar Errors",
+      "Hash",
+      "Response Time",
+      "Last Modified",
+      "Redirect URL",
+      "Redirect Type",
+      "Cookies",
+      "Language",
+      "HTTP Version",
+      "Mobile Alternate Link",
+      "Closest Semantically Similar Address",
+      "Semantic Similarity Score",
+      "No. Semantically Similar",
+      "Semantic Relevance Score",
+      "URL Encoded Address",
+      "Crawl Timestamp"
+    ],
+    "unmapped_os_columns": [],
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "ignored_ref_rows": [],
+    "os_only_rows": [],
+    "threshold_pct": 97.0,
+    "url_set_identical": true,
+    "passed": false,
+    "failures": [
+      "Zellübereinstimmung 75.000 % liegt unter 97.000 %"
+    ]
+  },
+  "diagnostic_only": true,
+  "method": "Native os-parity-Probe mit absichtlich leerer OS-Spalte Probe Width extrahiert Referenzbreiten in Fehlerbeispiele; 142 erwartete Probefehler sind keine Produktbefunde. Populationseigenschaften stimmen nativ exakt. Ref-/OS-Schwellwertkreuzungen dann nur diagnostisch aus diesen Zahlen und den echten OS-Rohwerten abgeleitet."
+}

@@ -23,8 +23,6 @@ Address
 {BASE}/lm
 {BASE}/no-ct
 {BASE}/no-lm
-{BASE}/p0
-{BASE}/p2
 {BASE}/r
 {BASE}/rel-redirect
 {BASE}/size-10k-gz

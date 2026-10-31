@@ -1,0 +1,319 @@
+[
+ {
+  "id": "M2-N06",
+  "kind": "package",
+  "model": "codex",
+  "title": "Paritätsmessung nach Q02: dynamische Folgespalten, Spaltensätze der neuen Referenzversion, Exportaufruf/Dateinamen, verified-Auswertung in os-parity, Ausnahmen-Geltungsbereich (Q02-P01…P06, Q02-E01-Runnerteil)",
+  "wave": "4q",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "ONPAGE-008",
+   "ONPAGE-011",
+   "ONPAGE-013",
+   "ONPAGE-020",
+   "ONPAGE-024",
+   "OUT-015",
+   "OUT-080",
+   "OUT-081",
+   "OUT-083",
+   "OUT-084",
+   "OUT-085",
+   "OUT-086",
+   "TECH-141",
+   "TECH-211",
+   "TECH-145"
+  ],
+  "groups": [
+   "G01",
+   "G02",
+   "G03 (Runner/Dateinamen)",
+   "G04",
+   "G05",
+   "G06 (nur Toleranz bis SQ-08)",
+   "G23 (nur R-Anteile: Chain Type, Schleife, Zwischenglied als DEV)"
+  ],
+  "owns": [
+   "crates/os-parity/**",
+   "tests/parity/**",
+   "tests/golden/parity/*/manifest.toml (nie */ref/*)",
+   "docs/plan/M2-acceptance/parity/**",
+   "docs/plan/M2-reports/n06.md"
+  ],
+  "depends_on": [
+   "M2-Q02"
+  ],
+  "runner": "server",
+  "size": "L",
+  "acceptance": "os-parity run --all auf Linux: (1) keine Exportfehler außer dokumentierten unavailable/skip mit Grund; m2-links crawl_overview.csv wird verglichen; (2) missing_ref_columns/missing_os_columns/unmapped_ref_columns in allen Berichten leer oder als ignore mit Begründung; (3) verified wird von os-parity coverage (nicht per Skript) berechnet, Nenner ohne Change Detection (bzw. nach SQ-01), und die Tabs Meta Description, H1, H2, Meta Keywords, External sind verified (≥ 24 IDs); (4) Security ist nur noch durch security_bad_content_type.csv (/submit) blockiert, Page Titles nur durch Title 1 Pixel Width (unicode-4/5/6); (5) 38 M1-Vergleiche weiter grün (B3a); (6) cargo fmt/clippy/test -p os-parity grün inkl. real_repo_files.rs.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Clean-Room: nur docs/spec/* beschreibt das Soll; Referenz-Exportdateien unter tests/golden/parity/*/ref/ sind Messdaten (lesen erlaubt, nie ändern); das Referenzprodukt nie nennen (nur „Referenz“), scripts/check-neutral.sh bleibt grün. Arbeitsliste: Triage docs/plan/M2-acceptance/parity/triage.md (vom Orchestrator eingecheckt; Gruppen G01–G25) und die Q02-Belege befunde.csv/roh/lauf.json. Server-Ausführung: schwere Befehle mit `timeout 3600s nice -n 10`, Cargo `-j 8 --locked`. BASIS: Branch build/m2-q02 (origin/m2/q02) – dessen diff.rs/run.rs-Änderungen (Original-Url-Schlüssel OUT-015/085, eindeutiger Bindestrich-Alias OUT-008) übernehmen, nicht neu erfinden. AUFTRAG je Gruppe (Triage Abschnitt 4): G01 – nummerierte Referenzspalte fehlt → Erwartung „leer oder 0“ (neue Normalisierung, z. B. `absent_numbered = \"empty_or_zero\"`), fehlt auf beiden Seiten → keine Spaltenlücke; fehlt nur in OS bei vorhandenen Referenzwerten → bleibt Fehler; Test `// spec: ONPAGE-008` mit page_titles_all (m2-onpage, 7 Spalten) und internal_all (Canonical Link Element 2/3). G02 – Mappings an die Kopfzeilen der neuen Referenzversion: security_all (`Content Type`, `HTTP Version`), validation_all (Size/Transferred/CO2/Carbon Rating ignore mit Grund TECH-281), pagination_all (kein Occurrences; HTTP rel next/prev, HTTP Canonical), canonicals_all (HTTP rel next/prev: ignore mit Grund bis SQ-13f), external_all (Redirect URL/Type in alten Referenzen nicht vorhanden → drop/optional), Filterexporte mit eigenem Spaltensatz (Content Lorem/Readability/Soft 404), SERP Summary (Schlüssel URL, doppelte Spaltennamen positionsgenau), Images-Missing-Size-Bulk (Source/Destination), Security-Bulk ohne Type, Hreflang-Reports ohne Address, Non-Indexable Canonicals, Kettenreports (Alias Number of Redirects/Canonicals; zusätzlicher Sprungblock n+1 der Referenz = Endziel → gegen Final Status Code/Final Status prüfen oder ignorieren) – beide Referenzgenerationen (alt Free mit Dezimalkomma, neu lizenziert) müssen tragen; keine Referenzdatei ändern. G03 – run.rs: Reports und Bulk-Exporte so aufrufen, dass ein unbekannter Name nur den eigenen Export rot macht (einzeln oder Gruppen mit Fallback); Dateinamenauflösung für `Links:<Name> (Bulk)` und Hreflang-Reports (`file_stem`) über Manifestfeld (z. B. `os_file`) oder dokumentierte Regel; Crawl Path Report: bis SQ-14 entschieden `skip` mit Grund. G04 – coverage/evidence.rs übernimmt die strengen Regeln aus belege.py (URL-Menge, null Zellfehler, Spaltenvollständigkeit, kein REF-FREE, DEV erlaubt), Selektor Site/Datei je Beleg, Granularität nach Orchestrator-Entscheid SQ-01 (Vorschlag: je Filter-ID = Tab-All grün auf allen Sites + eigener Filterexport grün), Nenner ohne nicht referenzfähige Gruppen (Change Detection TECH-301…305); Q02-P01 (crawl_overview `filters = [docs/plan/M2-filters.toml]`, links_all Link Score/Inlinks vergleichen – Link Score bis SQ-10 als DEV „TECH-145 OS-Festlegung“), Q02-P03 (real_repo_files.rs:248 Erwartung Present, K2-63-Begründung), Q02-P04 (OUT-084-skip in parity-response entfernen), Q02-P06 (DEV-016/022 Geltungsbereich). G05 – deviations.toml: DEV-003/004 auf internal_m2/list_internal und neue Sites, DEV-014 auf neue Sites, OUT-080 leere Zähler (needs_config/needs_rendering), TECH-141 (row-scope extra/missing für links_outlinks_to_localhost + Overview), OUT-015 ungültige Listenzeilen, TECH-211 Sitemaps-All-Zähler, TECH-130/K-07; neuer Eintrag für den widersprüchlichen Overview-Zähler der Referenz (m2-security CSP 17 vs Filterdatei 13) als Referenzartefakt, nicht REF-FREE; für jede vom Orchestrator mit „Spec bleibt“ entschiedene Spec-Frage (SQ-02…SQ-13) den DEV-Eintrag mit Spec-ID anlegen; keine Schwellen lockern. G06 – bis SQ-08 entschieden: Toleranz für 1 vs 3 Nachkommastellen nur, wenn die Spec 1 Stelle behält; sonst nichts. G23-R – DEV für Chain Type „Redirect & Canonical“ (OUT-083), Schleifenzeile (OUT-081/DEV-030), Zwischenglied ohne eigene Zeile. NICHT in diesem Paket: Produktcode außerhalb os-parity. ABSCHLUSS: zwei volle Läufe (vor/nach), Ergebnisdateien unter docs/plan/M2-acceptance/parity/ (bericht-n06.md, exporte.csv, befunde.csv, verified.json neu), Bericht docs/plan/M2-reports/n06.md mit Liste der noch offenen Produktgruppen je Paket N07–N11. Tests mit `// spec: <ID>` gegen Fixture-CSV unter crates/os-parity/tests/fixtures/."
+ },
+ {
+  "id": "M2-N07",
+  "kind": "package",
+  "model": "codex",
+  "title": "Onpage-Parität: Inline-CSS-Entdeckung, Missing Size Attributes, Internal-Inhaltstyp-Filter, Pixelbreite Sigma, URL-Heuristik Internal Search",
+  "wave": "4r",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "CRAWL-039",
+   "CRAWL-040",
+   "ONPAGE-178",
+   "ONPAGE-179",
+   "ONPAGE-020",
+   "ONPAGE-023",
+   "ONPAGE-024",
+   "ONPAGE-011",
+   "ONPAGE-090",
+   "ONPAGE-077",
+   "INTEG-081",
+   "OUT-031"
+  ],
+  "groups": [
+   "G09",
+   "G12",
+   "G13",
+   "G21",
+   "G19 (ONPAGE-077)",
+   "G24"
+  ],
+  "owns": [
+   "crates/os-parse/src/lib.rs (nur Aufruf css::extract_inline, G13)",
+   "crates/os-parse/src/css.rs",
+   "crates/os-parse/src/pixel/**",
+   "crates/os-analyze/src/tabs/{images,internal,url}.rs",
+   "crates/os-analyze/src/tabs/mod.rs (nur parity_filters-Block)",
+   "crates/os-analyze/src/analysis/steps/images.rs",
+   "crates/os-model/src/config/** (nur neue Option für style-Attribute nach SQ-02 und Linkpositions-Standardregel aside nach SQ-13d)",
+   "crates/os-parse/src/link_position.rs",
+   "docs/spec/schemas/osconfig.schema.json (nur Neuerzeugung)",
+   "crates/os-parse/tests/n07_*.rs",
+   "crates/os-analyze/tests/n07_*.rs",
+   "tests/fixtures/n07-*/**",
+   "docs/plan/M2-reports/n07.md"
+  ],
+  "depends_on": [
+   "M2-N06"
+  ],
+  "runner": "server",
+  "size": "M",
+  "acceptance": "Nach N06 im Paritätslauf grün (URL-Menge identisch, 0 Zellfehler): parity-m2-onpage internal_all (URL-Menge 59), response_codes_all, url_all, url_internal_search, images_all, images_missing_size_attributes, internal_other, internal_flash, page_titles_all und alle page_titles_*-Filter; Overview-Zeilen Internal (HTML/Images/Media/Fonts/XML/Plugins/Other), Images: Missing Size Attributes und URL: Internal Search auf allen 10 Sites identisch oder per DEV begründet; Tabs Page Titles, Images, URL verified. Fixture-Tests je Spec-ID.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Clean-Room: nur docs/spec/* beschreibt das Soll; Referenz-Exportdateien unter tests/golden/parity/*/ref/ sind Messdaten (lesen erlaubt, nie ändern); das Referenzprodukt nie nennen (nur „Referenz“), scripts/check-neutral.sh bleibt grün. Arbeitsliste: Triage docs/plan/M2-acceptance/parity/triage.md (vom Orchestrator eingecheckt; Gruppen G01–G25) und die Q02-Belege befunde.csv/roh/lauf.json. Server-Ausführung: schwere Befehle mit `timeout 3600s nice -n 10`, Cargo `-j 8 --locked`. Startbedingung: M2-N06 gemergt; Orchestrator-Entscheide SQ-02 (style-Attribute), SQ-07 (A-49, Media/Fonts/XML/Plugins), SQ-13b (Parameter `s`) liegen vor und sind in docs/spec eingearbeitet – sonst nur die unstrittigen Teile (G09, G21) umsetzen und den Rest melden. G09: tabs/images.rs:137 – Filter „Missing Size Attributes“ ohne Requirement (ONPAGE-179: keine Konfiguration); prüfen, ob analysis/steps/images.rs:14 den Teilschritt ebenso überspringt; Overview-Zähler muss Zahl statt leer liefern. G13: nach SQ-02 style-Attribute ohne Rendering nicht mehr als Bild-Link entdecken (neue Option, Default aus; `<style>`-Blöcke nach Entscheid), images.parse_inline_css_backgrounds bleibt unabhängig. G12: Paritätsmodus führt Media/Fonts/XML/Plugins als eigene Filter (internal.rs:354, mod.rs:1165), Other ohne diese Klassen, Filtername gemäß Spec nach SQ-07. G21: Pixelbreiten Σ/σ/ς (Fixtures parity-m2-onpage unicode-4/5/6: Referenz 11 px) – Breitentabelle prüfen, keine Pauschalkorrektur. G19/ONPAGE-077: Heuristik nach SQ-13b. G24: Standardregel `aside` → Position „Aside“ nach SQ-13d (Beleg bulk_links_all_anchor_text positions.html #4). Paritätsnachweis: nach Merge von M2-N06 `cargo build --locked -p os-cli -p os-parity` und `OPENSPIDER_SECRET_STORE=memory target/debug/os-parity run --all --openspider target/debug/openspider --out target/parity` (Linux, Ports 8900–8910 frei); im Bericht je Abnahme-Export Vorher/Nachher (Zeilen, Zellfehler, URL-Menge). Tests `// spec: <ID>` gegen eigene Fixtures (keine Referenzdateien in Unit-Tests)."
+ },
+ {
+  "id": "M2-N08",
+  "kind": "package",
+  "model": "codex",
+  "title": "Inhaltsanalyse-Parität: Content-Export mit Lesbarkeitsspalten, Flesch-Kalibrierung und Labels, Wortzählung an Elementgrenzen, Nachkommastellen, Soft-404-Filterexport",
+  "wave": "4r",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "ONPAGE-013",
+   "ONPAGE-140",
+   "ONPAGE-141",
+   "ONPAGE-142",
+   "ONPAGE-147",
+   "ONPAGE-149",
+   "ONPAGE-150",
+   "ONPAGE-151"
+  ],
+  "groups": [
+   "G06",
+   "G07",
+   "G08",
+   "G20",
+   "G19 (ONPAGE-147)"
+  ],
+  "owns": [
+   "crates/os-parse/src/{readability,text,content}.rs",
+   "crates/os-analyze/src/tabs/content.rs",
+   "crates/os-export/src/pipeline.rs (nur falls die Export-Spaltenwahl die Ursache von G07 ist; vorher melden)",
+   "crates/os-parse/tests/n08_*.rs",
+   "crates/os-analyze/tests/n08_*.rs",
+   "tests/fixtures/n08-*/**",
+   "docs/plan/M2-reports/n08.md"
+  ],
+  "depends_on": [
+   "M2-N06"
+  ],
+  "runner": "server",
+  "size": "M",
+  "acceptance": "Im Paritätslauf grün: parity-m2-onpage content_all (inkl. Sentence Count, Average Words Per Sentence, Flesch Reading Ease Score, Readability), content_readability_difficult, content_readability_very_difficult, content_soft_404_pages, content_lorem_ipsum_placeholder; Word Count in internal_all auf parity-m2-links/onpage/security 0 Zellfehler (oder per DEV nach SQ-09); Overview Readability Difficult/Very Difficult auf allen 10 Sites identisch; M1-Belege für Word Count (K-68, 211 Seiten) bleiben grün; Tab Content verified.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Clean-Room: nur docs/spec/* beschreibt das Soll; Referenz-Exportdateien unter tests/golden/parity/*/ref/ sind Messdaten (lesen erlaubt, nie ändern); das Referenzprodukt nie nennen (nur „Referenz“), scripts/check-neutral.sh bleibt grün. Arbeitsliste: Triage docs/plan/M2-acceptance/parity/triage.md (vom Orchestrator eingecheckt; Gruppen G01–G25) und die Q02-Belege befunde.csv/roh/lauf.json. Server-Ausführung: schwere Befehle mit `timeout 3600s nice -n 10`, Cargo `-j 8 --locked`. Startbedingung: M2-N06 gemergt; Entscheide SQ-08 (Labels, Nachkommastellen, A-41) und SQ-09 (Wortgrenzen, header/aside) in docs/spec eingearbeitet. G07 zuerst: Ursache klären, warum p1_column-Spalten mit needs=extraction.readability im Tab-Export fehlen (tabs/content.rs:145-200 bzw. Export-Spaltenwahl); Soft-404-Filter `default_columns: [\"Matched Phrase\"]` verliert Address – Spaltensatz nach ONPAGE-147 (Address + Erweiterungsspalte). G08: mit den nun exportierten Werten W/S/Silben je Seite gegen die Referenzwerte (z. B. m2-onpage `/`: W=110, S=111, AWPS 0.991, Flesch 36.629) und die alten Sites (technical, synthetic) kalibrieren; Ursache (Satz- oder Silbenregel) im Bericht mit Zahlen belegen; Labels nach SQ-08 als Daten. G20: Wortgrenze an Inline-Elementgrenzen und Inhaltsbereich nach SQ-09 (Belege anchors.html 6, external-99.html 99, positions.html 1, uncrawlable.html 4); M1-Regel A-35b (+1 je <li>) muss weiter auf allen alten Sites stimmen. G06: Nachkommastellen nach SQ-08 (Text Ratio, Flesch, AWPS). ONPAGE-147: Abweichung 2→3 auf m2-onpage analysieren (Phrase/Prüfort), Fix oder DEV-Vorschlag. Paritätsnachweis: nach Merge von M2-N06 `cargo build --locked -p os-cli -p os-parity` und `OPENSPIDER_SECRET_STORE=memory target/debug/os-parity run --all --openspider target/debug/openspider --out target/parity` (Linux, Ports 8900–8910 frei); im Bericht je Abnahme-Export Vorher/Nachher (Zeilen, Zellfehler, URL-Menge). "
+ },
+ {
+  "id": "M2-N09",
+  "kind": "package",
+  "model": "codex",
+  "title": "Technik-Tab-Parität: Grundmengen Directives/Pagination/Hreflang/Validation, Annotationen außerhalb <head>, Indexierbarkeit (unavailable_after, HTTP-Refresh), Canonical-/Hreflang-/Pagination-/Validation-Filterlogik",
+  "wave": "4r",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "TECH-001",
+   "TECH-011",
+   "TECH-018",
+   "TECH-019",
+   "TECH-020",
+   "TECH-021",
+   "TECH-023",
+   "TECH-031",
+   "TECH-041",
+   "TECH-051",
+   "TECH-063",
+   "TECH-071",
+   "TECH-075",
+   "TECH-076",
+   "TECH-077",
+   "TECH-078",
+   "TECH-079",
+   "TECH-082",
+   "TECH-084",
+   "TECH-086",
+   "TECH-281",
+   "TECH-283",
+   "ONPAGE-059",
+   "ONPAGE-094"
+  ],
+  "groups": [
+   "G14 (ohne Security)",
+   "G15",
+   "G16",
+   "G17",
+   "G19 (ONPAGE-094)"
+  ],
+  "owns": [
+   "crates/os-analyze/src/tabs/{directives,pagination,hreflang,canonicals,validation,response_codes}.rs",
+   "crates/os-analyze/src/analysis/steps/{canonicals,hreflang,pagination}.rs",
+   "crates/os-parse/src/{canonical,hreflang,validation,refresh}.rs",
+   "crates/os-model/src/indexability.rs",
+   "crates/os-engine/src/recompute/** (nur Indexierbarkeit)",
+   "crates/os-export/src/catalog/bulk_canonicals.rs",
+   "crates/os-analyze/tests/n09_*.rs",
+   "crates/os-parse/tests/n09_*.rs",
+   "tests/fixtures/n09-*/**",
+   "docs/plan/M2-reports/n09.md"
+  ],
+  "depends_on": [
+   "M2-N06"
+  ],
+  "runner": "server",
+  "size": "L",
+  "acceptance": "Im Paritätslauf grün auf parity-m2-technical und parity-technical: directives_all + alle directives_*-Filter, validation_all + alle validation_*-Filter, response_codes_all + response_codes_internal_redirection_http_refresh, canonicals_all + canonicals_*-Filter, pagination_all + pagination_*-Filter, hreflang_all + hreflang_*-Filter; Indexability/Indexability Status 0 Zellfehler in allen Technik-Exporten und internal_all; Overview-Zähler Canonicals/Pagination/Hreflang/Directives/Validation identisch (oder DEV). Gate-Minimum (falls Teilabgabe): Directives, Validation, Response Codes verified; Ziel: zusätzlich Canonicals, Pagination, Hreflang.",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Clean-Room: nur docs/spec/* beschreibt das Soll; Referenz-Exportdateien unter tests/golden/parity/*/ref/ sind Messdaten (lesen erlaubt, nie ändern); das Referenzprodukt nie nennen (nur „Referenz“), scripts/check-neutral.sh bleibt grün. Arbeitsliste: Triage docs/plan/M2-acceptance/parity/triage.md (vom Orchestrator eingecheckt; Gruppen G01–G25) und die Q02-Belege befunde.csv/roh/lauf.json. Server-Ausführung: schwere Befehle mit `timeout 3600s nice -n 10`, Cargo `-j 8 --locked`. Startbedingung: M2-N06 gemergt; Entscheide SQ-03 (Grundmengen), SQ-04 (außerhalb <head>/ungültiges Attribut), SQ-05 (unavailable_after, HTTP-Refresh-Selbstverweis), SQ-06 (Unlinked: Ziel) in docs/spec eingearbeitet; was mit „Spec bleibt“ entschieden ist, wird nicht umgebaut (DEV macht Q02b/N06). Reihenfolge nach Gate-Wert: (1) G14 Populationen Directives/Validation, (2) G16 Indexierbarkeit, (3) G15 Annotationen außerhalb <head> und Canonical mit hreflang/lang/media/type-Attribut (zählen nur für den eigenen Problemfilter), (4) G14 Pagination/Hreflang-Population, (5) G17: Unlinked Canonical listet Ziel, Canonical-Anzeige ohne Fragment (Filter TECH-018 bleibt), Hreflang-Rücklinkfilter (inconsistent/non-canonical/noindex/unlinked – Fixture-Fälle lang-* einzeln nachrechnen und Ursache je Fall im Bericht), Pagination Sequence Error mit 404-Ziel (pagination-404.html), „<head> not first“ bei fehlendem <head> (validation-head-missing.html), Titel/Text Ratio auf Validierungsseiten mit kaputtem Markup (ONPAGE-094 30→32, Text Ratio 27,397 vs 26,0) prüfen. Bulk-Canonical-/Directive-Inlinks sind Folgefehler – nach den Fixes erneut messen, Typnamen (Referenz „HTML Rel Next“) nur über Mapping (N06) oder Spec-Frage melden. Konflikt: tabs/mod.rs gehört nicht zu diesem Paket. Paritätsnachweis: nach Merge von M2-N06 `cargo build --locked -p os-cli -p os-parity` und `OPENSPIDER_SECRET_STORE=memory target/debug/os-parity run --all --openspider target/debug/openspider --out target/parity` (Linux, Ports 8900–8910 frei); im Bericht je Abnahme-Export Vorher/Nachher (Zeilen, Zellfehler, URL-Menge). "
+ },
+ {
+  "id": "M2-N10",
+  "kind": "package",
+  "model": "codex",
+  "title": "Security- und Links-Parität: Bad Content Type, Grundmenge der Header-Filter, nicht gecrawlte Linkziele (nofollow, Paginierung) und Crawl-Tiefe, Links-Schwellen",
+  "wave": "4r",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "ONPAGE-038",
+   "ONPAGE-039",
+   "ONPAGE-040",
+   "ONPAGE-041",
+   "ONPAGE-042",
+   "ONPAGE-043",
+   "CRAWL-038",
+   "CRAWL-047",
+   "CRAWL-056",
+   "TECH-132",
+   "TECH-133",
+   "TECH-137"
+  ],
+  "groups": [
+   "G10",
+   "G14 (Security-Headerfilter)",
+   "G11",
+   "G19 (TECH-132/133/137)"
+  ],
+  "owns": [
+   "crates/os-parse/src/security.rs",
+   "crates/os-analyze/src/tabs/{security,links}.rs",
+   "crates/os-engine/src/{frontier,decide}.rs",
+   "crates/os-engine/tests/n10_*.rs",
+   "crates/os-analyze/tests/n10_*.rs",
+   "crates/os-parse/tests/n10_*.rs",
+   "tests/fixtures/n10-*/**",
+   "docs/plan/M2-reports/n10.md"
+  ],
+  "depends_on": [
+   "M2-N06"
+  ],
+  "runner": "server",
+  "size": "M",
+  "acceptance": "Im Paritätslauf grün: alle security_*-Exporte von parity-m2-security (insb. security_bad_content_type ohne /submit), parity-m2-links internal_all URL-Menge 142 (ohne nofollow-only.html), bulk_links_all_anchor_text URL-Menge, links_pages_with_high_external_outlinks, Crawl Depth page-3/page-4 in parity-m2-technical internal_all; Overview Security (Headerfilter, Bad Content Type) und Links (High Crawl Depth, Without Internal Outlinks, High External Outlinks) auf allen 10 Sites identisch oder per DEV; Tab Security verified. Kein Rückschritt in den Engine-Tests (Frontier, Resume).",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Clean-Room: nur docs/spec/* beschreibt das Soll; Referenz-Exportdateien unter tests/golden/parity/*/ref/ sind Messdaten (lesen erlaubt, nie ändern); das Referenzprodukt nie nennen (nur „Referenz“), scripts/check-neutral.sh bleibt grün. Arbeitsliste: Triage docs/plan/M2-acceptance/parity/triage.md (vom Orchestrator eingecheckt; Gruppen G01–G25) und die Q02-Belege befunde.csv/roh/lauf.json. Server-Ausführung: schwere Befehle mit `timeout 3600s nice -n 10`, Cargo `-j 8 --locked`. Startbedingung: M2-N06 gemergt; Entscheide SQ-03 (Header-Filter nur 2xx), SQ-12 (gespeicherte, nicht gecrawlte Paginierungsziele nicht in Tabellen), SQ-13a/c eingearbeitet. Vor Start prüfen, dass keine aktive Branch (Q03, E07, N04) crates/os-engine/src/{frontier,decide}.rs ändert; sonst melden. G10: security.rs:211 – fehlender Content-Type ist kein Treffer (ONPAGE-043 Regel 1 = syntaktisch ungültig), Sniffing/Obsolet-Liste nach SQ-13c; Belege out-basic /old-page, parity-response (22), m2-security /submit. G14-Security: Header-Filter ONPAGE-039…042 Grundmenge nach SQ-03 (Referenz: interne URLs mit 2xx jedes Inhaltstyps; out-basic 16 statt 18, response 15 statt 44). G11: Ziele, die nur über nicht gefolgte Links (nofollow nach CRAWL-056; Paginierung nach SQ-12) bekannt sind, nicht in die Tabellen (frontier.rs:532/566 `in_tables: c.store`); Crawl-Tiefe nur über gecrawlte Kanten (rel=next/prev zählt nicht, CRAWL-047; page-3 = 3). Resume/Checkpoint-Verhalten (CRAWL-126) mit Test absichern. G19: TECH-137-Schwelle nach SQ-13a, TECH-133 m2-technical 56 vs 41 Ursache klären (Fall für Fall im Bericht), TECH-132 nach G11 neu messen. Paritätsnachweis: nach Merge von M2-N06 `cargo build --locked -p os-cli -p os-parity` und `OPENSPIDER_SECRET_STORE=memory target/debug/os-parity run --all --openspider target/debug/openspider --out target/parity` (Linux, Ports 8900–8910 frei); im Bericht je Abnahme-Export Vorher/Nachher (Zeilen, Zellfehler, URL-Menge). "
+ },
+ {
+  "id": "M2-N11",
+  "kind": "package",
+  "model": "codex",
+  "title": "Export-Parität: Ketten-Reports im Listenmodus, Sitemap-Generator lastmod/changefreq, Overview-Zeile JS-Weiterleitung, Crawl-Path-Export per CLI",
+  "wave": "4r",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "OUT-023",
+   "OUT-081",
+   "OUT-083",
+   "OUT-085",
+   "OUT-086",
+   "OUT-123",
+   "OUT-125",
+   "OUT-080",
+   "ONPAGE-057"
+  ],
+  "groups": [
+   "G22",
+   "G23 (I: Listenmodus)",
+   "G25",
+   "G03 (CLI-Teil Crawl Path)"
+  ],
+  "owns": [
+   "crates/os-export/src/reports/{redirects,redirect_canonical_chains,canonical_chains,overview,crawl_path}.rs",
+   "crates/os-export/src/sitemap_gen/**",
+   "crates/os-cli/src/{args,exec}.rs (nur Crawl-Path-Export, nach SQ-14)",
+   "crates/os-export/tests/n11_*.rs",
+   "crates/os-cli/tests/n11_*.rs",
+   "tests/fixtures/n11-*/**",
+   "docs/plan/M2-reports/n11.md"
+  ],
+  "depends_on": [
+   "M2-N06"
+  ],
+  "runner": "server",
+  "size": "M",
+  "acceptance": "Im Paritätslauf: parity-m2-list redirects_redirect_chains und redirects_redirect_canonical_chains mit 46 Zeilen in Upload-Reihenfolge und ≥ 97 %; parity-m2-onpage sitemap_default/options/images.xml ≥ 97 % (Crawl-Datum normalisiert); Overview-Zeile „External Redirection (JavaScript)“ auf allen 9 Sites vorhanden; crawl_path_deep8.csv verglichen (oder per SQ-14 begründet ausgenommen).",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Clean-Room: nur docs/spec/* beschreibt das Soll; Referenz-Exportdateien unter tests/golden/parity/*/ref/ sind Messdaten (lesen erlaubt, nie ändern); das Referenzprodukt nie nennen (nur „Referenz“), scripts/check-neutral.sh bleibt grün. Arbeitsliste: Triage docs/plan/M2-acceptance/parity/triage.md (vom Orchestrator eingecheckt; Gruppen G01–G25) und die Q02-Belege befunde.csv/roh/lauf.json. Server-Ausführung: schwere Befehle mit `timeout 3600s nice -n 10`, Cargo `-j 8 --locked`. Startbedingung: M2-N06 gemergt; SQ-11 (Sitemap-Datum) und SQ-14 (Crawl Path per CLI) entschieden. G23: OUT-085 – im Listenmodus ist jede Listen-URL Startpunkt einer Zeile, auch ohne Weiterleitung (Number of Redirects 0), Reihenfolge = Upload; Chain Type/Schleife/Zwischenglieder bleiben nach OUT-081/083 (DEV in N06), außer der Orchestrator entscheidet SQ-13e anders. G22: lastmod/changefreq nach SQ-11 (Referenz: Datum ohne Uhrzeit; ohne Last-Modified Crawl-Datum und daily); Zeitabhängigkeit in Tests über feste Uhr. G25: Ursache, warum die Overview-Zeile fehlt (Abschnittszuordnung/needs_rendering), Zeile mit leerem Zähler nach OUT-080. G03-CLI: nach SQ-14 `--export-crawl-path <URL>` (oder gleichwertig) mit Ausgabe nach OUT-023; Name im os-parity-Manifest stimmt N06 ab. Paritätsnachweis: nach Merge von M2-N06 `cargo build --locked -p os-cli -p os-parity` und `OPENSPIDER_SECRET_STORE=memory target/debug/os-parity run --all --openspider target/debug/openspider --out target/parity` (Linux, Ports 8900–8910 frei); im Bericht je Abnahme-Export Vorher/Nachher (Zeilen, Zellfehler, URL-Menge). "
+ },
+ {
+  "id": "M2-Q02b",
+  "kind": "package",
+  "model": "codex",
+  "title": "Paritätslauf 2 nach den Nachbesserungen N06–N11: vollständige Messung, Restklassifizierung, DEV-Einträge für entschiedene Spec-Fragen, verified-Beleg B3",
+  "wave": "4s",
+  "spec_ids": [],
+  "extra_spec_ids": [],
+  "groups": [
+   "Abnahme aller Gruppen; Rest-DEV G05/G18/G23-R"
+  ],
+  "owns": [
+   "tests/parity/deviations.toml",
+   "tests/parity/evidence.toml",
+   "docs/plan/M2-acceptance/parity/**",
+   "docs/plan/M2-reports/q02b.md"
+  ],
+  "depends_on": [
+   "M2-N06",
+   "M2-N07",
+   "M2-N08",
+   "M2-N09",
+   "M2-N10",
+   "M2-N11"
+  ],
+  "runner": "server",
+  "size": "M",
+  "acceptance": "B3a–g einzeln belegt: 38 M1-Vergleiche grün; alle neuen Exporte ≥ Schwelle, Internal:All-URL-Menge je Site identisch; Overview-Zähler aller M1+M2-Filter identisch außer begründeten DEV/REF-FREE; ≥ 4/5 neue Sites present; jede Abweichung mit Spec-ID; verified ≥ 60 % nach der in SQ-01 entschiedenen Definition, berechnet durch os-parity coverage; Bericht mit Restliste für M2-backlog (u. a. Link Score).",
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Clean-Room: nur docs/spec/* beschreibt das Soll; Referenz-Exportdateien unter tests/golden/parity/*/ref/ sind Messdaten (lesen erlaubt, nie ändern); das Referenzprodukt nie nennen (nur „Referenz“), scripts/check-neutral.sh bleibt grün. Arbeitsliste: Triage docs/plan/M2-acceptance/parity/triage.md (vom Orchestrator eingecheckt; Gruppen G01–G25) und die Q02-Belege befunde.csv/roh/lauf.json. Server-Ausführung: schwere Befehle mit `timeout 3600s nice -n 10`, Cargo `-j 8 --locked`. Nur messen und klassifizieren, keine Produktänderung; os-parity-Code nur bei nachgewiesenem Messfehler (melden, dann Freigabe). Vor dem Lauf main bzw. Integrationsstand mit N06–N11. Jede verbleibende Abweichung: Fix-Auftrag (Gruppe, Datei, Beispiel) oder DEV mit Spec-ID; keine Schwellenlockerung. Q04 hängt danach an Q02b."
+ }
+]

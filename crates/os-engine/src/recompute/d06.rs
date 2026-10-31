@@ -38,7 +38,7 @@ pub fn run(
     let mut rows_stmt = sql(tx.prepare(
         "SELECT id, url, COALESCE(status_code, 0), robots_blocked, no_response_reason,
                 effective_index, canonical_url, indexability, indexability_status, in_tables,
-                EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = urls.id AND f.flag = 'respect_hidden')
+                EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = urls.id AND f.flag = 'respect_hidden'), crawl_timestamp
          FROM urls WHERE state = 'done' ORDER BY id",
     ))?;
     let mut rows = sql(rows_stmt.query([]))?;
@@ -46,12 +46,17 @@ pub fn run(
         "SELECT source, raw, delay, target_raw, target_url, in_head, position
          FROM refresh WHERE url_id = ?1 ORDER BY CASE source WHEN 'header' THEN 0 ELSE 1 END, position",
     ))?;
+    let mut directive_stmt =
+        sql(tx.prepare("SELECT raw FROM directives WHERE url_id = ?1 AND applies = 1"))?;
     while let Some(row) = sql(rows.next())? {
         cancel.checkpoint().map_err(|_| EngineError::Cancelled)?;
         let id: i64 = sql(row.get(0))?;
         let page_url: String = sql(row.get(1))?;
         let fetch = FetchFacts {
             status_code: sql(row.get(2))?,
+            crawl_timestamp: sql(row.get::<_, Option<String>>(11))?
+                .and_then(|s| os_model::Timestamp::from_db(&s).ok())
+                .unwrap_or_default(),
             robots_blocked: sql(row.get(3))?,
             no_response_reason: sql(row.get::<_, Option<String>>(4))?.and_then(|s| s.parse().ok()),
             ..Default::default()
@@ -97,14 +102,23 @@ pub fn run(
             })
         }))?;
         let refresh: Vec<RefreshRef> = sql(refresh.collect())?;
-        let (indexability, status) = os_model::evaluate(&IndexabilityInput {
-            fetch: &fetch,
-            page: Some(&page),
-            page_url: &page_url,
-            refresh: &refresh,
-            cfg: new,
-            same_url: os_url::eq_for_compare,
-        });
+        let raw = sql(directive_stmt.query_map([id], |r| r.get::<_, String>(0)))?;
+        let raw: Vec<String> = sql(raw.collect())?;
+        let unavailable_after = raw
+            .iter()
+            .filter_map(|r| os_parse::directives::unavailable_after(r))
+            .min();
+        let (indexability, status) = os_model::indexability::evaluate_with_expiration(
+            &IndexabilityInput {
+                fetch: &fetch,
+                page: Some(&page),
+                page_url: &page_url,
+                refresh: &refresh,
+                cfg: new,
+                same_url: os_url::eq_for_compare,
+            },
+            unavailable_after,
+        );
         let was_visible: bool = sql(row.get(9))?;
         let was_hidden: bool = sql(row.get(10))?;
         // Nur Respect-eigene Ausblendungen restaurieren; Speicher-/Scope-Schalter bleiben erhalten.
@@ -138,6 +152,7 @@ pub fn run(
     drop(rows);
     drop(rows_stmt);
     drop(refresh_stmt);
+    drop(directive_stmt);
     if !changed.is_empty() {
         // Abhängige Canonical-/Pagination-/hreflang-Ansichten müssen denselben Feed sehen.
         let mut dependants = std::collections::BTreeSet::new();

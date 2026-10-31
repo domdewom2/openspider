@@ -2,8 +2,6 @@
 
 Typ: Issue (T-I2) · Priorität: Low (P-L1)
 
-Befüllt erst nach der Crawl-Analyse.
-
 ## Deutsch
 
 **Was bedeutet das?** Bei mindestens einer Bildeinbindung fehlt eine Breiten- oder Höhenangabe im HTML.

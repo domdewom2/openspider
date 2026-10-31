@@ -83,3 +83,6 @@ INSERT INTO url_ext(url_id,key,v_int) VALUES (12,'canonical.invalid_attribute',1
 INSERT INTO url_ext(url_id,key,v_int) SELECT id,'canonical.checked',1 FROM urls;
 INSERT INTO url_flags(url_id,flag,value) VALUES (30,'respect_hidden','canonical');
 UPDATE url_counters SET inlinks = (SELECT COUNT(*) FROM links l JOIN urls s ON s.id=l.source_id WHERE l.target_id=url_counters.url_id AND l.link_type='Hyperlink' AND s.is_internal=1);
+
+-- SQ-04: Outside-head problem evidence is independent of effective annotation rows.
+INSERT INTO url_ext(url_id,key,v_int) VALUES (12,'canonical.outside_head',1);

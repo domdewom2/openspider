@@ -97,16 +97,24 @@ fn http_defaults_follow_the_spec() {
 
 // spec: INTEG-081
 #[test]
-fn link_position_defaults_are_the_five_standard_rules_in_order() {
+fn link_position_defaults_are_the_six_standard_rules_in_order() {
     let rules = LinkPositionsConfig::default().rules;
     let names: Vec<_> = rules.iter().map(|r| r.position.as_str()).collect();
     assert_eq!(
         names,
-        ["Navigation", "Header", "Sidebar", "Footer", "Content"]
+        [
+            "Navigation",
+            "Header",
+            "Aside",
+            "Sidebar",
+            "Footer",
+            "Content"
+        ]
     );
     assert_eq!(rules[0].contains, ["nav", "menu"]);
-    assert_eq!(rules[2].contains, ["aside", "sidebar"]);
-    assert!(rules[4].contains.is_empty(), "Content ist die Auffangregel");
+    assert_eq!(rules[2].contains, ["aside"]);
+    assert_eq!(rules[3].contains, ["sidebar"]);
+    assert!(rules[5].contains.is_empty(), "Content ist die Auffangregel");
 }
 
 // spec: OUT-121, OUT-123, OUT-124, OUT-125, OUT-126, OUT-128
@@ -609,6 +617,7 @@ fn v1_files_load_unchanged_with_defaults_for_the_new_sections() {
     let mut expected = CrawlConfig::default();
     expected.scope.crawl_outside_start_folder = false;
     expected.extraction.http_headers = true;
+    expected.content.area.exclude_elements = vec!["nav".into(), "footer".into()];
     assert_eq!(l.config, expected);
     assert_eq!(
         fs::read_to_string(fixture("config/v1/default.osconfig")).unwrap(),
@@ -716,12 +725,13 @@ fn newer_files_are_never_touched_by_migration() {
 
 // spec: OUT-226
 #[test]
-fn migrated_v1_fixture_equals_the_v2_default_file() {
+fn migrated_v1_fixture_preserves_legacy_settings_against_v2_defaults() {
     let (text, _) =
         migrate_toml(&fs::read_to_string(fixture("config/v1/default.osconfig")).unwrap()).unwrap();
     let mut expected = CrawlConfig::default();
     expected.scope.crawl_outside_start_folder = false;
     expected.extraction.http_headers = true;
+    expected.content.area.exclude_elements = vec!["nav".into(), "footer".into()];
     assert_eq!(text, expected.to_osconfig_string().unwrap());
 }
 

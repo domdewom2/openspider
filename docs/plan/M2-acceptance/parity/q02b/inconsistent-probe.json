@@ -1,0 +1,70 @@
+{
+  "export": "hreflang_inconsistent_returns",
+  "site": null,
+  "ref_rows": 2,
+  "os_rows": 2,
+  "matched": 2,
+  "missing_in_os": [],
+  "extra_in_os": [],
+  "cells_compared": 4,
+  "cells_equal": 0,
+  "agreement_pct": 0.0,
+  "columns": [
+    {
+      "ref_column": "Expected Language",
+      "os_column": "Expected Language",
+      "compared": 2,
+      "errors": 2,
+      "examples": [
+        {
+          "key": "{BASE}/lang-inconsistent-return.html | {BASE}/lang-inconsistent.html | #1",
+          "ref": "en",
+          "os": "fr"
+        },
+        {
+          "key": "{BASE}/lang-inconsistent.html | {BASE}/lang-inconsistent-return.html | #1",
+          "ref": "fr",
+          "os": "en"
+        }
+      ]
+    },
+    {
+      "ref_column": "Actual Language",
+      "os_column": "Actual Language",
+      "compared": 2,
+      "errors": 2,
+      "examples": [
+        {
+          "key": "{BASE}/lang-inconsistent-return.html | {BASE}/lang-inconsistent.html | #1",
+          "ref": "fr",
+          "os": "de"
+        },
+        {
+          "key": "{BASE}/lang-inconsistent.html | {BASE}/lang-inconsistent-return.html | #1",
+          "ref": "de",
+          "os": "fr"
+        }
+      ]
+    }
+  ],
+  "applied_deviations": [],
+  "dropped_ref_columns": [],
+  "ignored_columns": [
+    {
+      "column": "URL with Inconsistent Language Return Link",
+      "reason": "Probe: Selbstannotation neben URL Target"
+    }
+  ],
+  "unmapped_ref_columns": [],
+  "unmapped_os_columns": [],
+  "missing_ref_columns": [],
+  "missing_os_columns": [],
+  "ignored_ref_rows": [],
+  "os_only_rows": [],
+  "threshold_pct": 97.0,
+  "url_set_identical": true,
+  "passed": false,
+  "failures": [
+    "Zellübereinstimmung 0.000 % liegt unter 97.000 %"
+  ]
+}

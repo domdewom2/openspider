@@ -1,0 +1,5370 @@
+{
+  "passed": 3978,
+  "failed": 0,
+  "ignored": 43,
+  "targets": 536,
+  "reported_target_seconds": 1292.09,
+  "wall_seconds": 1375.35,
+  "results": [
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_analyze-4c15bff3be792c21)",
+      "result": "ok",
+      "passed": 13,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.26
+    },
+    {
+      "target": "Running tests/aggregates_benchmark.rs (target/debug/deps/aggregates_benchmark-997359b0e32506a8)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/aggregates_fixture.rs (target/debug/deps/aggregates_fixture-b2ef62a0de6d7735)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/aggregates_live.rs (target/debug/deps/aggregates_live-0c12976b8e166711)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.59
+    },
+    {
+      "target": "Running tests/aggregates_status.rs (target/debug/deps/aggregates_status-053fc1979b27cacd)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.31
+    },
+    {
+      "target": "Running tests/analysis_trigger_hook.rs (target/debug/deps/analysis_trigger_hook-33a3aca9ff6c8381)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.44
+    },
+    {
+      "target": "Running tests/analysis_trigger_stale.rs (target/debug/deps/analysis_trigger_stale-7fc68db02bc93a54)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.63
+    },
+    {
+      "target": "Running tests/bench_duplicates.rs (target/debug/deps/bench_duplicates-f1cdb22fe5627bbd)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/catalog_split.rs (target/debug/deps/catalog_split-32868b50e005de59)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.04
+    },
+    {
+      "target": "Running tests/change_detection.rs (target/debug/deps/change_detection-7fe22925d6834f6d)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.8
+    },
+    {
+      "target": "Running tests/change_detection_auto.rs (target/debug/deps/change_detection_auto-6f4a0a45ed7d1253)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 6.62
+    },
+    {
+      "target": "Running tests/change_detection_fixture.rs (target/debug/deps/change_detection_fixture-042832fd94d4f78f)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/change_detection_notifications.rs (target/debug/deps/change_detection_notifications-b76bbde0528b6e92)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 8.39
+    },
+    {
+      "target": "Running tests/compare_classify.rs (target/debug/deps/compare_classify-6055645a722bfc70)",
+      "result": "ok",
+      "passed": 15,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 11.0
+    },
+    {
+      "target": "Running tests/compare_common.rs (target/debug/deps/compare_common-7c0282e252787496)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/compare_links.rs (target/debug/deps/compare_links-812edae7a1bf288e)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.59
+    },
+    {
+      "target": "Running tests/compare_mapping.rs (target/debug/deps/compare_mapping-62bb11404cf944d0)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.5
+    },
+    {
+      "target": "Running tests/filters_registry.rs (target/debug/deps/filters_registry-d115aee92c19241b)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.22
+    },
+    {
+      "target": "Running tests/framework_common.rs (target/debug/deps/framework_common-d79d8552394c2dab)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/framework_names.rs (target/debug/deps/framework_names-eca887ba976543a5)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.12
+    },
+    {
+      "target": "Running tests/framework_registry.rs (target/debug/deps/framework_registry-ab44b4ce35c0a4fd)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.19
+    },
+    {
+      "target": "Running tests/framework_state.rs (target/debug/deps/framework_state-8379f430992dcb86)",
+      "result": "ok",
+      "passed": 13,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.74
+    },
+    {
+      "target": "Running tests/framework_views.rs (target/debug/deps/framework_views-964577ec8a26de2b)",
+      "result": "ok",
+      "passed": 26,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.12
+    },
+    {
+      "target": "Running tests/framework_w1.rs (target/debug/deps/framework_w1-63b3ba1d3f149513)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.19
+    },
+    {
+      "target": "Running tests/graph_data.rs (target/debug/deps/graph_data-7384e064e024c7cf)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.62
+    },
+    {
+      "target": "Running tests/graph_fixture.rs (target/debug/deps/graph_fixture-7b8c22ff4de3b54b)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/graph_limits.rs (target/debug/deps/graph_limits-efb259ea718d7ca6)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 4.33
+    },
+    {
+      "target": "Running tests/internal_crawl_m2.rs (target/debug/deps/internal_crawl_m2-742724db07202203)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.16
+    },
+    {
+      "target": "Running tests/issue_catalog_accessibility.rs (target/debug/deps/issue_catalog_accessibility-c1a7c26fb85d0a01)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.08
+    },
+    {
+      "target": "Running tests/issue_catalog_analytics.rs (target/debug/deps/issue_catalog_analytics-d32f7558d59e1378)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.05
+    },
+    {
+      "target": "Running tests/issue_catalog_mobile.rs (target/debug/deps/issue_catalog_mobile-f6869429a3e19e17)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.04
+    },
+    {
+      "target": "Running tests/issue_catalog_pagespeed.rs (target/debug/deps/issue_catalog_pagespeed-a02b01a653d7dd05)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.05
+    },
+    {
+      "target": "Running tests/issue_catalog_search_console.rs (target/debug/deps/issue_catalog_search_console-e145f83339d3718b)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.07
+    },
+    {
+      "target": "Running tests/issue_catalog_sitemaps.rs (target/debug/deps/issue_catalog_sitemaps-f7d0bf85851c5083)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.07
+    },
+    {
+      "target": "Running tests/issue_catalog_structured_data.rs (target/debug/deps/issue_catalog_structured_data-c70a0fa3da40edda)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.06
+    },
+    {
+      "target": "Running tests/issue_catalog_validation.rs (target/debug/deps/issue_catalog_validation-8037f4ecb837c256)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.08
+    },
+    {
+      "target": "Running tests/issues_catalog.rs (target/debug/deps/issues_catalog-b7db76e680a61a39)",
+      "result": "ok",
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.52
+    },
+    {
+      "target": "Running tests/issues_texts.rs (target/debug/deps/issues_texts-73aee263963713c6)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.1
+    },
+    {
+      "target": "Running tests/k83_duplicate_plans.rs (target/debug/deps/k83_duplicate_plans-090430e1602f3efe)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.52
+    },
+    {
+      "target": "Running tests/link_score_benchmarks.rs (target/debug/deps/link_score_benchmarks-9435b538a642e522)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 2,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/link_score_m2.rs (target/debug/deps/link_score_m2-50c8e3430fcf4147)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.77
+    },
+    {
+      "target": "Running tests/n07_onpage.rs (target/debug/deps/n07_onpage-eada478596658372)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.59
+    },
+    {
+      "target": "Running tests/n08_content.rs (target/debug/deps/n08_content-9ec31cd4a9f599d8)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.2
+    },
+    {
+      "target": "Running tests/n09_technical.rs (target/debug/deps/n09_technical-8a7dd9c3ad0ac89f)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.32
+    },
+    {
+      "target": "Running tests/n10_links.rs (target/debug/deps/n10_links-fdad43f779a043dc)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.47
+    },
+    {
+      "target": "Running tests/n10_security.rs (target/debug/deps/n10_security-362c2f1afc686d8e)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.63
+    },
+    {
+      "target": "Running tests/near_dup_d02.rs (target/debug/deps/near_dup_d02-7ebc8b13fab05157)",
+      "result": "ok",
+      "passed": 15,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.18
+    },
+    {
+      "target": "Running tests/near_dup_scale.rs (target/debug/deps/near_dup_scale-06656e2ba6ae3833)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 2,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/pending_w1_d04.rs (target/debug/deps/pending_w1_d04-86af1a5cacb7b430)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.4
+    },
+    {
+      "target": "Running tests/pending_w1_d06.rs (target/debug/deps/pending_w1_d06-61765246a7f92a30)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.52
+    },
+    {
+      "target": "Running tests/pending_w1_d07.rs (target/debug/deps/pending_w1_d07-9ec170ec424dd94c)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.44
+    },
+    {
+      "target": "Running tests/pending_w1_d08.rs (target/debug/deps/pending_w1_d08-30a4678ed0773bd2)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.42
+    },
+    {
+      "target": "Running tests/pending_w1_d11.rs (target/debug/deps/pending_w1_d11-62d8ddef965c839e)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.51
+    },
+    {
+      "target": "Running tests/pending_w1_d12.rs (target/debug/deps/pending_w1_d12-096ef2abae8b675c)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.58
+    },
+    {
+      "target": "Running tests/pending_w1_e04.rs (target/debug/deps/pending_w1_e04-8888ddad3f91a8ef)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.42
+    },
+    {
+      "target": "Running tests/pending_w1_k16.rs (target/debug/deps/pending_w1_k16-ae1f25f65b700272)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.12
+    },
+    {
+      "target": "Running tests/search_rules.rs (target/debug/deps/search_rules-3b657d96f66f602a)",
+      "result": "ok",
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.17
+    },
+    {
+      "target": "Running tests/segments_rules.rs (target/debug/deps/segments_rules-4a1509dab27d3a0e)",
+      "result": "ok",
+      "passed": 14,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.34
+    },
+    {
+      "target": "Running tests/serp_edits.rs (target/debug/deps/serp_edits-a4a5938a345e4988)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.17
+    },
+    {
+      "target": "Running tests/tab_accessibility.rs (target/debug/deps/tab_accessibility-59ab3810c1fc6cff)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 11.97
+    },
+    {
+      "target": "Running tests/tab_analytics.rs (target/debug/deps/tab_analytics-d5c8d780f2e28006)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.46
+    },
+    {
+      "target": "Running tests/tab_canonicals.rs (target/debug/deps/tab_canonicals-a00ed7a67741cbaf)",
+      "result": "ok",
+      "passed": 22,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 4.27
+    },
+    {
+      "target": "Running tests/tab_canonicals_m2.rs (target/debug/deps/tab_canonicals_m2-c8d26da5637f5519)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.22
+    },
+    {
+      "target": "Running tests/tab_change_detection.rs (target/debug/deps/tab_change_detection-9022e62397a64930)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.35
+    },
+    {
+      "target": "Running tests/tab_content.rs (target/debug/deps/tab_content-78bee9d199f4178f)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.59
+    },
+    {
+      "target": "Running tests/tab_content_d02.rs (target/debug/deps/tab_content_d02-4f8af2fba0b97c72)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.38
+    },
+    {
+      "target": "Running tests/tab_content_spelling.rs (target/debug/deps/tab_content_spelling-4d590cf45865988b)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.12
+    },
+    {
+      "target": "Running tests/tab_content_spelling_dictionary.rs (target/debug/deps/tab_content_spelling_dictionary-3cad750587fce22d)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.3
+    },
+    {
+      "target": "Running tests/tab_custom_extraction.rs (target/debug/deps/tab_custom_extraction-32e864dec61ad627)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.52
+    },
+    {
+      "target": "Running tests/tab_custom_js.rs (target/debug/deps/tab_custom_js-e183566e761c6158)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 4.52
+    },
+    {
+      "target": "Running tests/tab_custom_search.rs (target/debug/deps/tab_custom_search-733dbe794f3b4e77)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.85
+    },
+    {
+      "target": "Running tests/tab_directives.rs (target/debug/deps/tab_directives-a6d05f614e0fb9d8)",
+      "result": "ok",
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.77
+    },
+    {
+      "target": "Running tests/tab_directives_m2.rs (target/debug/deps/tab_directives_m2-b048937f4d3c3320)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.78
+    },
+    {
+      "target": "Running tests/tab_duplicates.rs (target/debug/deps/tab_duplicates-e7a130fb1fe6fa2c)",
+      "result": "ok",
+      "passed": 15,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.72
+    },
+    {
+      "target": "Running tests/tab_external.rs (target/debug/deps/tab_external-dc836389686bc8a7)",
+      "result": "ok",
+      "passed": 15,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 11.5
+    },
+    {
+      "target": "Running tests/tab_h1.rs (target/debug/deps/tab_h1-bc1d5b9c915d6a51)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.81
+    },
+    {
+      "target": "Running tests/tab_h2.rs (target/debug/deps/tab_h2-678446ffe4f517df)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.68
+    },
+    {
+      "target": "Running tests/tab_hreflang.rs (target/debug/deps/tab_hreflang-293dfaa7ea972e04)",
+      "result": "ok",
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.96
+    },
+    {
+      "target": "Running tests/tab_hreflang_m2.rs (target/debug/deps/tab_hreflang_m2-95f7427802905034)",
+      "result": "ok",
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.24
+    },
+    {
+      "target": "Running tests/tab_images.rs (target/debug/deps/tab_images-6968fdf9e4699e51)",
+      "result": "ok",
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 25.51
+    },
+    {
+      "target": "Running tests/tab_images_m2.rs (target/debug/deps/tab_images_m2-3d36033dba9533a4)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.43
+    },
+    {
+      "target": "Running tests/tab_indexability.rs (target/debug/deps/tab_indexability-da9ccdb60b496cbc)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 19.48
+    },
+    {
+      "target": "Running tests/tab_internal.rs (target/debug/deps/tab_internal-6db8041332fcabf4)",
+      "result": "ok",
+      "passed": 42,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 5.23
+    },
+    {
+      "target": "Running tests/tab_internal_api.rs (target/debug/deps/tab_internal_api-076a646c4b67f300)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.92
+    },
+    {
+      "target": "Running tests/tab_internal_d02.rs (target/debug/deps/tab_internal_d02-7dc5e42c0ad7c602)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.28
+    },
+    {
+      "target": "Running tests/tab_javascript.rs (target/debug/deps/tab_javascript-07571ba90a045488)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 25.41
+    },
+    {
+      "target": "Running tests/tab_javascript_support.rs (target/debug/deps/tab_javascript_support-94d5eb4506d99ecc)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/tab_link_metrics.rs (target/debug/deps/tab_link_metrics-c354d2703519cb9b)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.18
+    },
+    {
+      "target": "Running tests/tab_links.rs (target/debug/deps/tab_links-94c909d782bd29c0)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.28
+    },
+    {
+      "target": "Running tests/tab_links_m2.rs (target/debug/deps/tab_links_m2-69123c8ffc37d9e8)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.83
+    },
+    {
+      "target": "Running tests/tab_links_support.rs (target/debug/deps/tab_links_support-dff849991d095946)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/tab_meta.rs (target/debug/deps/tab_meta-e843d185b5a1bbf6)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.61
+    },
+    {
+      "target": "Running tests/tab_meta_m2.rs (target/debug/deps/tab_meta_m2-3e9752a58a0ba923)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.17
+    },
+    {
+      "target": "Running tests/tab_mobile.rs (target/debug/deps/tab_mobile-e5f1dcf8d5a31c71)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.9
+    },
+    {
+      "target": "Running tests/tab_pagespeed.rs (target/debug/deps/tab_pagespeed-098ba24ba2ed663c)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.73
+    },
+    {
+      "target": "Running tests/tab_pagination_m2.rs (target/debug/deps/tab_pagination_m2-0f124e5a59c824fe)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.61
+    },
+    {
+      "target": "Running tests/tab_response_codes.rs (target/debug/deps/tab_response_codes-a5dd07eed76e274d)",
+      "result": "ok",
+      "passed": 31,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 23.29
+    },
+    {
+      "target": "Running tests/tab_response_codes_m2.rs (target/debug/deps/tab_response_codes_m2-6bf3aaab9027f8bb)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 22.78
+    },
+    {
+      "target": "Running tests/tab_search_console.rs (target/debug/deps/tab_search_console-12b4c25c824dec7e)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.86
+    },
+    {
+      "target": "Running tests/tab_security.rs (target/debug/deps/tab_security-e68f56eb7a347b49)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.87
+    },
+    {
+      "target": "Running tests/tab_security_m2.rs (target/debug/deps/tab_security_m2-603ac9c9f46c48b2)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.88
+    },
+    {
+      "target": "Running tests/tab_sitemaps.rs (target/debug/deps/tab_sitemaps-7358a32b434fe160)",
+      "result": "ok",
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.46
+    },
+    {
+      "target": "Running tests/tab_sitemaps_m2.rs (target/debug/deps/tab_sitemaps_m2-368d37abc6425217)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.85
+    },
+    {
+      "target": "Running tests/tab_structured_data.rs (target/debug/deps/tab_structured_data-5dbeae79c996f59d)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.58
+    },
+    {
+      "target": "Running tests/tab_structured_data_validation.rs (target/debug/deps/tab_structured_data_validation-e8955f0e24d38b66)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.85
+    },
+    {
+      "target": "Running tests/tab_titles.rs (target/debug/deps/tab_titles-37148bed0e5b6458)",
+      "result": "ok",
+      "passed": 16,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 27.5
+    },
+    {
+      "target": "Running tests/tab_url.rs (target/debug/deps/tab_url-ecce889398956e2d)",
+      "result": "ok",
+      "passed": 21,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.14
+    },
+    {
+      "target": "Running tests/tab_url_m2.rs (target/debug/deps/tab_url_m2-602b2a3ff33d2d7c)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.99
+    },
+    {
+      "target": "Running tests/tab_validation.rs (target/debug/deps/tab_validation-c979b94d7d81e63d)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 4.22
+    },
+    {
+      "target": "Running tests/tab_validation_benchmark.rs (target/debug/deps/tab_validation_benchmark-72a418e7540b0782)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/view_session_budget.rs (target/debug/deps/view_session_budget-2ac563cc4730532e)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.34
+    },
+    {
+      "target": "Running tests/view_session_columns.rs (target/debug/deps/view_session_columns-1098472fa8862932)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.27
+    },
+    {
+      "target": "Running tests/view_session_core.rs (target/debug/deps/view_session_core-aa402e7ccb384238)",
+      "result": "ok",
+      "passed": 17,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.58
+    },
+    {
+      "target": "Running tests/view_session_fixture.rs (target/debug/deps/view_session_fixture-e37dd3bc424bc5c5)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/view_session_large.rs (target/debug/deps/view_session_large-bca58fa21704cc83)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 3,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 9.24
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_app-814483354681b3fd)",
+      "result": "ok",
+      "passed": 34,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 4.46
+    },
+    {
+      "target": "Running unittests src/bin/os-app-manifest.rs (target/debug/deps/os_app_manifest-2356ce672cae0dfa)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/beta_delay.rs (target/debug/deps/beta_delay-b4e66bfb27acd617)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.85
+    },
+    {
+      "target": "Running tests/beta_detail.rs (target/debug/deps/beta_detail-4b72edc465fb7737)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.88
+    },
+    {
+      "target": "Running tests/beta_n04.rs (target/debug/deps/beta_n04-6c2899bcf10e76ad)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 53.46
+    },
+    {
+      "target": "Running tests/beta_resume.rs (target/debug/deps/beta_resume-6a59945bec61e78f)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.44
+    },
+    {
+      "target": "Running tests/beta_services.rs (target/debug/deps/beta_services-d960326a829c0157)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.74
+    },
+    {
+      "target": "Running tests/beta_stop.rs (target/debug/deps/beta_stop-0a2b95318a4d0c2b)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.4
+    },
+    {
+      "target": "Running tests/bridge_session.rs (target/debug/deps/bridge_session-b7304cc2c2a5c69e)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.09
+    },
+    {
+      "target": "Running tests/bridge_ws.rs (target/debug/deps/bridge_ws-134e43082b39aaa6)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/cmd_api_framework.rs (target/debug/deps/cmd_api_framework-4e565dcd1abad6c8)",
+      "result": "ok",
+      "passed": 21,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.01
+    },
+    {
+      "target": "Running tests/cmd_api_linkmetrics.rs (target/debug/deps/cmd_api_linkmetrics-cdd63a3e5956e44d)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.3
+    },
+    {
+      "target": "Running tests/cmd_api_support.rs (target/debug/deps/cmd_api_support-b550d3f33cb93a84)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/cmd_auth_login_flow.rs (target/debug/deps/cmd_auth_login_flow-a2a3899c234d80f6)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 19.02
+    },
+    {
+      "target": "Running tests/cmd_auth_profiles_operations.rs (target/debug/deps/cmd_auth_profiles_operations-cc18f7212330ec6e)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.88
+    },
+    {
+      "target": "Running tests/cmd_catalog_basic.rs (target/debug/deps/cmd_catalog_basic-b7af47ed863f0a60)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.86
+    },
+    {
+      "target": "Running tests/cmd_catalog_fixture.rs (target/debug/deps/cmd_catalog_fixture-68de51ad1a286f5a)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/cmd_compare_basic.rs (target/debug/deps/cmd_compare_basic-8f5ec6bdfea8cf7d)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.14
+    },
+    {
+      "target": "Running tests/cmd_compare_guard.rs (target/debug/deps/cmd_compare_guard-9cef16242b4cafdb)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.51
+    },
+    {
+      "target": "Running tests/cmd_config_runtime.rs (target/debug/deps/cmd_config_runtime-9ca39c9b219301e6)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.49
+    },
+    {
+      "target": "Running tests/cmd_copy_basic.rs (target/debug/deps/cmd_copy_basic-684a0f69c469c032)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.13
+    },
+    {
+      "target": "Running tests/cmd_copy_page_fixture.rs (target/debug/deps/cmd_copy_page_fixture-1884ed2da29bcf38)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/cmd_crawl_add_m2.rs (target/debug/deps/cmd_crawl_add_m2-d6cef56c0cc8a5d9)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.53
+    },
+    {
+      "target": "Running tests/cmd_crawls_management.rs (target/debug/deps/cmd_crawls_management-42a999d53020fc87)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.05
+    },
+    {
+      "target": "Running tests/cmd_detail_basic.rs (target/debug/deps/cmd_detail_basic-64d2899ac9abdcd3)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.35
+    },
+    {
+      "target": "Running tests/cmd_detail_ext_service.rs (target/debug/deps/cmd_detail_ext_service-e49777e5ff42ff51)",
+      "result": "ok",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.71
+    },
+    {
+      "target": "Running tests/cmd_export_basic.rs (target/debug/deps/cmd_export_basic-852ac23f65aef164)",
+      "result": "ok",
+      "passed": 15,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.79
+    },
+    {
+      "target": "Running tests/cmd_mail_delivery.rs (target/debug/deps/cmd_mail_delivery-c8729e1742991a45)",
+      "result": "ok",
+      "passed": 13,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.56
+    },
+    {
+      "target": "Running tests/cmd_mail_lifecycle.rs (target/debug/deps/cmd_mail_lifecycle-e161a4be2ec626d0)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 15.49
+    },
+    {
+      "target": "Running tests/cmd_mcp_service.rs (target/debug/deps/cmd_mcp_service-81ed16c42000883f)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.27
+    },
+    {
+      "target": "Running tests/cmd_profile_runtime.rs (target/debug/deps/cmd_profile_runtime-0dccf7d76974d485)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.18
+    },
+    {
+      "target": "Running tests/cmd_search_rules.rs (target/debug/deps/cmd_search_rules-5e6bd2267a7313c3)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/cmd_segment_commands.rs (target/debug/deps/cmd_segment_commands-0b7273501c5bcd97)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.81
+    },
+    {
+      "target": "Running tests/cmd_sidebar_basic.rs (target/debug/deps/cmd_sidebar_basic-5d4eb26f7ff87426)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.05
+    },
+    {
+      "target": "Running tests/cmd_sidebarext_queries.rs (target/debug/deps/cmd_sidebarext_queries-e37f94e99af666b6)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.54
+    },
+    {
+      "target": "Running tests/cmd_tasks_commands.rs (target/debug/deps/cmd_tasks_commands-3317a498979e7d04)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.39
+    },
+    {
+      "target": "Running tests/cmd_tasks_history.rs (target/debug/deps/cmd_tasks_history-080634eaf8dd059c)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.52
+    },
+    {
+      "target": "Running tests/cmd_view_basic.rs (target/debug/deps/cmd_view_basic-c74dd1038a594c7b)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.85
+    },
+    {
+      "target": "Running tests/cmd_view_session.rs (target/debug/deps/cmd_view_session-ae4c985152e4c14a)",
+      "result": "ok",
+      "passed": 13,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.26
+    },
+    {
+      "target": "Running tests/cmd_viz_snapshots.rs (target/debug/deps/cmd_viz_snapshots-22dd8a03f69e6849)",
+      "result": "ok",
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.22
+    },
+    {
+      "target": "Running tests/coalescer_cadence.rs (target/debug/deps/coalescer_cadence-3b5c16a77895cbd1)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.28
+    },
+    {
+      "target": "Running tests/crawl_cmd_analysis.rs (target/debug/deps/crawl_cmd_analysis-ad714540d68070f4)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.43
+    },
+    {
+      "target": "Running tests/crawl_cmd_lifecycle.rs (target/debug/deps/crawl_cmd_lifecycle-b29d43cbe4fd699e)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.12
+    },
+    {
+      "target": "Running tests/crawl_cmd_open.rs (target/debug/deps/crawl_cmd_open-e7331bdff375b263)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.58
+    },
+    {
+      "target": "Running tests/diag_bundle.rs (target/debug/deps/diag_bundle-4e99c1b01ffdd6c9)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.91
+    },
+    {
+      "target": "Running tests/dto_exports.rs (target/debug/deps/dto_exports-ae648e4f0268bde3)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.2
+    },
+    {
+      "target": "Running tests/dto_fixtures.rs (target/debug/deps/dto_fixtures-d5919810152b5c50)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/f05_runtime.rs (target/debug/deps/f05_runtime-bd2a14b16476ed71)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.39
+    },
+    {
+      "target": "Running tests/logging_rotation.rs (target/debug/deps/logging_rotation-b9cb0805384c3950)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.07
+    },
+    {
+      "target": "Running tests/manifest_contract.rs (target/debug/deps/manifest_contract-5ee9505a235a6c0a)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.38
+    },
+    {
+      "target": "Running tests/multi_export_commands.rs (target/debug/deps/multi_export_commands-5416aa2c5fa51e3e)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.65
+    },
+    {
+      "target": "Running tests/n01b_alpha.rs (target/debug/deps/n01b_alpha-58621ca3a90ca0fc)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.69
+    },
+    {
+      "target": "Running tests/n01b_fix.rs (target/debug/deps/n01b_fix-4b149c147aa56fe1)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.91
+    },
+    {
+      "target": "Running tests/n01b_segments.rs (target/debug/deps/n01b_segments-24033e081d342e2c)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.71
+    },
+    {
+      "target": "Running tests/network_cmd_m2.rs (target/debug/deps/network_cmd_m2-b9e283ebaa7de3f1)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.14
+    },
+    {
+      "target": "Running tests/ops_cancel.rs (target/debug/deps/ops_cancel-4d3302918d06324b)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.85
+    },
+    {
+      "target": "Running tests/pending_w1_e03.rs (target/debug/deps/pending_w1_e03-bcd9f14a6f14b173)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.2
+    },
+    {
+      "target": "Running tests/pending_w1_i01.rs (target/debug/deps/pending_w1_i01-8068ded49c9e0f88)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.23
+    },
+    {
+      "target": "Running tests/pending_w1_k02.rs (target/debug/deps/pending_w1_k02-6d221402e64718c5)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.16
+    },
+    {
+      "target": "Running tests/pending_w1_k03.rs (target/debug/deps/pending_w1_k03-8f64e4a1a77ee461)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.34
+    },
+    {
+      "target": "Running tests/pending_w1_k04.rs (target/debug/deps/pending_w1_k04-4149430b6e9feb29)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.92
+    },
+    {
+      "target": "Running tests/pending_w1_k06.rs (target/debug/deps/pending_w1_k06-224f12b5ec2a10db)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.64
+    },
+    {
+      "target": "Running tests/pending_w1_k07.rs (target/debug/deps/pending_w1_k07-0d261b840dad3763)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.88
+    },
+    {
+      "target": "Running tests/pending_w1_k16.rs (target/debug/deps/pending_w1_k16-12ad7f041a7ac964)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.34
+    },
+    {
+      "target": "Running tests/pending_w1_o02.rs (target/debug/deps/pending_w1_o02-77b8bef1e74300c8)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.39
+    },
+    {
+      "target": "Running tests/pool_read.rs (target/debug/deps/pool_read-4b7ae7beb30f664a)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.38
+    },
+    {
+      "target": "Running tests/quit_cmd_lifecycle.rs (target/debug/deps/quit_cmd_lifecycle-0192c49291d3c8c8)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.46
+    },
+    {
+      "target": "Running tests/robots_cmd_m2.rs (target/debug/deps/robots_cmd_m2-66143df0ed37e9dd)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.03
+    },
+    {
+      "target": "Running tests/runtime_common.rs (target/debug/deps/runtime_common-4759efa50026552a)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/runtime_dispatch.rs (target/debug/deps/runtime_dispatch-3383d76170f51bc1)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.2
+    },
+    {
+      "target": "Running tests/runtime_events.rs (target/debug/deps/runtime_events-90ec371a8c8e8638)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/runtime_lint.rs (target/debug/deps/runtime_lint-bce405a4f4249bc2)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 15.94
+    },
+    {
+      "target": "Running tests/session_common.rs (target/debug/deps/session_common-b777df7e96daa98b)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/session_feed.rs (target/debug/deps/session_feed-f79b45ccdd3e5f10)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.44
+    },
+    {
+      "target": "Running tests/settings_store.rs (target/debug/deps/settings_store-b593ecde4a17053f)",
+      "result": "ok",
+      "passed": 15,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.02
+    },
+    {
+      "target": "Running tests/settings_uistate.rs (target/debug/deps/settings_uistate-29ba05a5e78ffcf8)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.27
+    },
+    {
+      "target": "Running tests/stub_views.rs (target/debug/deps/stub_views-c678cb5d1808cb8d)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/summary_export_commands.rs (target/debug/deps/summary_export_commands-1eae949e27bac4d3)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.13
+    },
+    {
+      "target": "Running tests/u23_comparison.rs (target/debug/deps/u23_comparison-7d270492b99a6d75)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 4.78
+    },
+    {
+      "target": "Running tests/write_queue_serial.rs (target/debug/deps/write_queue_serial-3bc8f3ceaf60601c)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.98
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_cli-8d759f79f623fc4c)",
+      "result": "ok",
+      "passed": 43,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 14.69
+    },
+    {
+      "target": "Running unittests src/main.rs (target/debug/deps/openspider-da137b589db0dd48)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/auth_profiles.rs (target/debug/deps/auth_profiles-83721d00d9613e89)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.37
+    },
+    {
+      "target": "Running tests/browser_install.rs (target/debug/deps/browser_install-8d6e30b13a224820)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.02
+    },
+    {
+      "target": "Running tests/cli_basics.rs (target/debug/deps/cli_basics-885063fc6c139775)",
+      "result": "ok",
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 11.05
+    },
+    {
+      "target": "Running tests/cli_config.rs (target/debug/deps/cli_config-0d91bd5bcfd6525a)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.28
+    },
+    {
+      "target": "Running tests/cli_crawl.rs (target/debug/deps/cli_crawl-0a0591837a05e1b6)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.76
+    },
+    {
+      "target": "Running tests/cli_list.rs (target/debug/deps/cli_list-35ef470a0273c1e7)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.12
+    },
+    {
+      "target": "Running tests/cli_load.rs (target/debug/deps/cli_load-20a610e09ed67a34)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 9.1
+    },
+    {
+      "target": "Running tests/diagnostics_cli.rs (target/debug/deps/diagnostics_cli-41b19077af802167)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.61
+    },
+    {
+      "target": "Running tests/linux_server.rs (target/debug/deps/linux_server-9b86bdf3bb7ddeec)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.64
+    },
+    {
+      "target": "Running tests/listing_management.rs (target/debug/deps/listing_management-6a817a8d5676b135)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 10.95
+    },
+    {
+      "target": "Running tests/logging_cli.rs (target/debug/deps/logging_cli-361acb5e307cc0d9)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.92
+    },
+    {
+      "target": "Running tests/m2_l01.rs (target/debug/deps/m2_l01-2359f690b9b83940)",
+      "result": "ok",
+      "passed": 13,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 7.22
+    },
+    {
+      "target": "Running tests/m2_l02_api.rs (target/debug/deps/m2_l02_api-502f10d3424f668e)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 21.06
+    },
+    {
+      "target": "Running tests/m2_l02_compare.rs (target/debug/deps/m2_l02_compare-b8445cf9ec7f3788)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 13.61
+    },
+    {
+      "target": "Running tests/m2_l02_drive.rs (target/debug/deps/m2_l02_drive-18310d0812c056a6)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.18
+    },
+    {
+      "target": "Running tests/n11_crawl_path.rs (target/debug/deps/n11_crawl_path-24498173d578558f)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 10.66
+    },
+    {
+      "target": "Running tests/read_api_export.rs (target/debug/deps/read_api_export-6ab42b8edbca4f90)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 4.39
+    },
+    {
+      "target": "Running tests/run_task_cli.rs (target/debug/deps/run_task_cli-b39c03d21054897f)",
+      "result": "ok",
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.39
+    },
+    {
+      "target": "Running tests/run_task_inproc.rs (target/debug/deps/run_task_inproc-a186af4b2bb9bf01)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 5.3
+    },
+    {
+      "target": "Running tests/segment_load.rs (target/debug/deps/segment_load-ce6fd50635a4b481)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.47
+    },
+    {
+      "target": "Running tests/xls_target.rs (target/debug/deps/xls_target-82a7adde5efbc6eb)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.69
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_engine-318393f6817677fc)",
+      "result": "ok",
+      "passed": 123,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.8
+    },
+    {
+      "target": "Running tests/add_urls_m2.rs (target/debug/deps/add_urls_m2-dc53cf9e2883289a)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.61
+    },
+    {
+      "target": "Running tests/core_canonical_targets.rs (target/debug/deps/core_canonical_targets-31675f5a1dfae531)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.99
+    },
+    {
+      "target": "Running tests/core_depth.rs (target/debug/deps/core_depth-6539a0367ad7e6b4)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.99
+    },
+    {
+      "target": "Running tests/core_limits.rs (target/debug/deps/core_limits-24ef817983fba6f4)",
+      "result": "ok",
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 7.33
+    },
+    {
+      "target": "Running tests/core_m2_limits.rs (target/debug/deps/core_m2_limits-aca30de4744b5684)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.85
+    },
+    {
+      "target": "Running tests/core_m2_switches.rs (target/debug/deps/core_m2_switches-78bfe6c880f57b7d)",
+      "result": "ok",
+      "passed": 16,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.65
+    },
+    {
+      "target": "Running tests/core_m2_transport.rs (target/debug/deps/core_m2_transport-1c113b26261ee550)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.64
+    },
+    {
+      "target": "Running tests/core_redirects.rs (target/debug/deps/core_redirects-03041893cf44679a)",
+      "result": "ok",
+      "passed": 20,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.41
+    },
+    {
+      "target": "Running tests/core_robots.rs (target/debug/deps/core_robots-159bb16ae7c4283a)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.57
+    },
+    {
+      "target": "Running tests/core_scope.rs (target/debug/deps/core_scope-acd7e23e7bfd67a6)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.63
+    },
+    {
+      "target": "Running tests/core_sim.rs (target/debug/deps/core_sim-70e048c95a94dd87)",
+      "result": "ok",
+      "passed": 16,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.99
+    },
+    {
+      "target": "Running tests/core_sitemap.rs (target/debug/deps/core_sitemap-f106e2222643c0e9)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.45
+    },
+    {
+      "target": "Running tests/core_stop.rs (target/debug/deps/core_stop-301b47d8d4809c0b)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.16
+    },
+    {
+      "target": "Running tests/core_support.rs (target/debug/deps/core_support-ef9284167ecc3f07)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/core_writer.rs (target/debug/deps/core_writer-3bb6e0bd409607b3)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 5.6
+    },
+    {
+      "target": "Running tests/decide_crawl.rs (target/debug/deps/decide_crawl-776dfb7aec21c207)",
+      "result": "ok",
+      "passed": 30,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 9.8
+    },
+    {
+      "target": "Running tests/decide_fixtures.rs (target/debug/deps/decide_fixtures-96c15575bf6a4936)",
+      "result": "ok",
+      "passed": 17,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.17
+    },
+    {
+      "target": "Running tests/host_pace_m2.rs (target/debug/deps/host_pace_m2-cbe3eea17cafe910)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/hreflang_crawl_m2.rs (target/debug/deps/hreflang_crawl_m2-29eaf91ef6b5f4d1)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.56
+    },
+    {
+      "target": "Running tests/lifecycle_crash.rs (target/debug/deps/lifecycle_crash-b01b83dc1eebf695)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 97.59
+    },
+    {
+      "target": "Running tests/lifecycle_determinism.rs (target/debug/deps/lifecycle_determinism-b9af8f3ec55cad31)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.52
+    },
+    {
+      "target": "Running tests/lifecycle_disk.rs (target/debug/deps/lifecycle_disk-6cfbed8586579002)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.87
+    },
+    {
+      "target": "Running tests/lifecycle_hook.rs (target/debug/deps/lifecycle_hook-d4de7e8d63777bc4)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.81
+    },
+    {
+      "target": "Running tests/lifecycle_list.rs (target/debug/deps/lifecycle_list-ff6347bcebcbcf59)",
+      "result": "ok",
+      "passed": 13,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.27
+    },
+    {
+      "target": "Running tests/lifecycle_pause.rs (target/debug/deps/lifecycle_pause-452f94136b6685fe)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.3
+    },
+    {
+      "target": "Running tests/lifecycle_rescan.rs (target/debug/deps/lifecycle_rescan-3b715bc16198bdfc)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.11
+    },
+    {
+      "target": "Running tests/lifecycle_sitemaps.rs (target/debug/deps/lifecycle_sitemaps-8eca802934fa65c2)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.57
+    },
+    {
+      "target": "Running tests/lifecycle_support.rs (target/debug/deps/lifecycle_support-6485047252ddd87a)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/list_m2.rs (target/debug/deps/list_m2-afdd0b9f94638d30)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.66
+    },
+    {
+      "target": "Running tests/memory_m2.rs (target/debug/deps/memory_m2-abdbd2482b335c8e)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.28
+    },
+    {
+      "target": "Running tests/memory_process.rs (target/debug/deps/memory_process-44eff5788ba58bf7)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.69
+    },
+    {
+      "target": "Running tests/n10_frontier.rs (target/debug/deps/n10_frontier-51203f7dcfb6592f)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.61
+    },
+    {
+      "target": "Running tests/pending_w1_d02.rs (target/debug/deps/pending_w1_d02-10d0178ed32d23af)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.38
+    },
+    {
+      "target": "Running tests/pending_w1_e01.rs (target/debug/deps/pending_w1_e01-20039cb76f1a94ac)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.44
+    },
+    {
+      "target": "Running tests/perf_backpressure.rs (target/debug/deps/perf_backpressure-7259257f903758c9)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 5.94
+    },
+    {
+      "target": "Running tests/perf_memory.rs (target/debug/deps/perf_memory-34042736f2b68104)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.25
+    },
+    {
+      "target": "Running tests/perf_queue_window.rs (target/debug/deps/perf_queue_window-18d92d864e6026d5)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 8.03
+    },
+    {
+      "target": "Running tests/perf_seen_collision.rs (target/debug/deps/perf_seen_collision-55393042e9d191c2)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.0
+    },
+    {
+      "target": "Running tests/perf_store.rs (target/debug/deps/perf_store-341bafca09debb3c)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 2,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/recompute_d02_content.rs (target/debug/deps/recompute_d02_content-e01dae5e6b646eae)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.83
+    },
+    {
+      "target": "Running tests/recompute_d06_directives.rs (target/debug/deps/recompute_d06_directives-c2f36166dde1a9c7)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.35
+    },
+    {
+      "target": "Running tests/recompute_d16_positions.rs (target/debug/deps/recompute_d16_positions-ff3aefd3e8c64ab1)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.42
+    },
+    {
+      "target": "Running tests/recompute_e01_hash.rs (target/debug/deps/recompute_e01_hash-2db81e839b6d9629)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.6
+    },
+    {
+      "target": "Running tests/recompute_w1.rs (target/debug/deps/recompute_w1-a57c47496846f432)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.18
+    },
+    {
+      "target": "Running tests/render_chromium.rs (target/debug/deps/render_chromium-0e19a274d07b66d4)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 46.5
+    },
+    {
+      "target": "Running tests/render_integration.rs (target/debug/deps/render_integration-c807016954348bab)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.75
+    },
+    {
+      "target": "Running tests/render_links.rs (target/debug/deps/render_links-0a5b30b49382c110)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.77
+    },
+    {
+      "target": "Running tests/retry_m2.rs (target/debug/deps/retry_m2-5179846fb1cedadc)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.32
+    },
+    {
+      "target": "Running tests/robots_step_m2.rs (target/debug/deps/robots_step_m2-16c411b514021ae7)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.24
+    },
+    {
+      "target": "Running tests/robots_step_visibility.rs (target/debug/deps/robots_step_visibility-976957f726e42815)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.02
+    },
+    {
+      "target": "Running tests/serp_m2.rs (target/debug/deps/serp_m2-7eda6ba9210431c4)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.36
+    },
+    {
+      "target": "Running tests/serp_seed_overview.rs (target/debug/deps/serp_seed_overview-41f9b1b924d5aa1c)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.29
+    },
+    {
+      "target": "Running tests/sitemap_ingest_m2.rs (target/debug/deps/sitemap_ingest_m2-2ec1970b93918262)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.6
+    },
+    {
+      "target": "Running tests/w1_review.rs (target/debug/deps/w1_review-68eb47ae5766696b)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.33
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_export-d34db6db33788d96)",
+      "result": "ok",
+      "passed": 83,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 7.32
+    },
+    {
+      "target": "Running tests/bulk_links_m2.rs (target/debug/deps/bulk_links_m2-f2bbc458fb1c3218)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.6
+    },
+    {
+      "target": "Running tests/bulk_links_m2_support.rs (target/debug/deps/bulk_links_m2_support-96d0340534c8e45d)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/bulk_web_m2.rs (target/debug/deps/bulk_web_m2-54ba5fbe06170d9a)",
+      "result": "ok",
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.56
+    },
+    {
+      "target": "Running tests/bulk_web_support.rs (target/debug/deps/bulk_web_support-1788a497d5df3d43)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/catalog_stubs.rs (target/debug/deps/catalog_stubs-b9d8900924832c03)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.4
+    },
+    {
+      "target": "Running tests/catalog_wiring.rs (target/debug/deps/catalog_wiring-40d21acdbad9fe2a)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.65
+    },
+    {
+      "target": "Running tests/compare_exports.rs (target/debug/deps/compare_exports-c502a841dec09c1a)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 6.37
+    },
+    {
+      "target": "Running tests/crawl_path_reports.rs (target/debug/deps/crawl_path_reports-7c09f752d2af36ba)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.25
+    },
+    {
+      "target": "Running tests/csv_format.rs (target/debug/deps/csv_format-0a89e07a445c08d4)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.03
+    },
+    {
+      "target": "Running tests/detail_m2.rs (target/debug/deps/detail_m2-bbecf1f116afc2e0)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.23
+    },
+    {
+      "target": "Running tests/links_bench.rs (target/debug/deps/links_bench-2710672b958f7728)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/links_detail.rs (target/debug/deps/links_detail-75af44a7e3dce870)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 21.9
+    },
+    {
+      "target": "Running tests/links_format.rs (target/debug/deps/links_format-05601b61299f259a)",
+      "result": "ok",
+      "passed": 19,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.15
+    },
+    {
+      "target": "Running tests/links_response_codes.rs (target/debug/deps/links_response_codes-9191a2a29424a38b)",
+      "result": "ok",
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.34
+    },
+    {
+      "target": "Running tests/links_support.rs (target/debug/deps/links_support-c07c61544a97a5c0)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/list_m2_e06.rs (target/debug/deps/list_m2_e06-e06cdb34ded19de8)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.88
+    },
+    {
+      "target": "Running tests/n10_anchor_text.rs (target/debug/deps/n10_anchor_text-e678ee8956b5d6ee)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.41
+    },
+    {
+      "target": "Running tests/n11_exports.rs (target/debug/deps/n11_exports-6c2e304caaf2904e)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.44
+    },
+    {
+      "target": "Running tests/naming_rules.rs (target/debug/deps/naming_rules-7f878694d7526201)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.02
+    },
+    {
+      "target": "Running tests/output_modes.rs (target/debug/deps/output_modes-70c7a5b412455e72)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/page_content_ndjson.rs (target/debug/deps/page_content_ndjson-c751be310a14c8bd)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 10.61
+    },
+    {
+      "target": "Running tests/paths_fs.rs (target/debug/deps/paths_fs-cf87e319431675f5)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.06
+    },
+    {
+      "target": "Running tests/pending_w1_d12.rs (target/debug/deps/pending_w1_d12-0cc96efac3edd864)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.34
+    },
+    {
+      "target": "Running tests/pending_w1_x01.rs (target/debug/deps/pending_w1_x01-bdb2e6eb48306f90)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.18
+    },
+    {
+      "target": "Running tests/pipeline_bench.rs (target/debug/deps/pipeline_bench-9340ea02168d64a9)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/pipeline_core.rs (target/debug/deps/pipeline_core-b3e01eb0161e4ae7)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.37
+    },
+    {
+      "target": "Running tests/pipeline_m2.rs (target/debug/deps/pipeline_m2-bbbebcc082f7f467)",
+      "result": "ok",
+      "passed": 15,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.47
+    },
+    {
+      "target": "Running tests/pipeline_perf.rs (target/debug/deps/pipeline_perf-ab5eb7c596e7dee2)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 2,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/queued_reports.rs (target/debug/deps/queued_reports-11d32daa6dfc236d)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.29
+    },
+    {
+      "target": "Running tests/report_cookies_m2.rs (target/debug/deps/report_cookies_m2-2c1d3288fe253652)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.79
+    },
+    {
+      "target": "Running tests/report_headers_m2.rs (target/debug/deps/report_headers_m2-8a394d63607fa8da)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.19
+    },
+    {
+      "target": "Running tests/reports_common.rs (target/debug/deps/reports_common-14a8ad5785f03fa8)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/reports_issues.rs (target/debug/deps/reports_issues-78b06466c4c9dc42)",
+      "result": "ok",
+      "passed": 15,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.43
+    },
+    {
+      "target": "Running tests/reports_overview.rs (target/debug/deps/reports_overview-41b20f97d916fe1c)",
+      "result": "ok",
+      "passed": 20,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.18
+    },
+    {
+      "target": "Running tests/reports_prereq.rs (target/debug/deps/reports_prereq-e8efeb1c386e6b3f)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.55
+    },
+    {
+      "target": "Running tests/reports_redirects.rs (target/debug/deps/reports_redirects-51dfcb6b60d226ad)",
+      "result": "ok",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 23.57
+    },
+    {
+      "target": "Running tests/segment_exports.rs (target/debug/deps/segment_exports-928cbab6f6304985)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.68
+    },
+    {
+      "target": "Running tests/sidebar_reports.rs (target/debug/deps/sidebar_reports-9634d4fdab551c31)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.65
+    },
+    {
+      "target": "Running tests/sidebar_support.rs (target/debug/deps/sidebar_support-8217e70432c62932)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/sitemap_gen.rs (target/debug/deps/sitemap_gen-f5120e3cd89aa67d)",
+      "result": "ok",
+      "passed": 18,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.55
+    },
+    {
+      "target": "Running tests/sitemap_gen_m2.rs (target/debug/deps/sitemap_gen_m2-400510d1e8adb9a2)",
+      "result": "ok",
+      "passed": 21,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.59
+    },
+    {
+      "target": "Running tests/sitemap_xsd.rs (target/debug/deps/sitemap_xsd-f51454767dd46b85)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/tab_export_view.rs (target/debug/deps/tab_export_view-e1b19f120fb27ae3)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.68
+    },
+    {
+      "target": "Running tests/target_gsheet_export.rs (target/debug/deps/target_gsheet_export-c98bd2bf3c21ddd4)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.23
+    },
+    {
+      "target": "Running tests/timeseries_reports.rs (target/debug/deps/timeseries_reports-c4c4fd2024b7116a)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.91
+    },
+    {
+      "target": "Running tests/xlsx_cells.rs (target/debug/deps/xlsx_cells-fab3078b6938ae34)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.06
+    },
+    {
+      "target": "Running tests/xlsx_m2.rs (target/debug/deps/xlsx_m2-0858c758667e6c96)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.03
+    },
+    {
+      "target": "Running tests/xlsx_structure.rs (target/debug/deps/xlsx_structure-4dd9af1577225d0f)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.03
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_fetch-7afb35a8fff985fa)",
+      "result": "ok",
+      "passed": 114,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.34
+    },
+    {
+      "target": "Running tests/http_fetch.rs (target/debug/deps/http_fetch-ea2077f3835b1c35)",
+      "result": "ok",
+      "passed": 31,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.65
+    },
+    {
+      "target": "Running tests/http_m2.rs (target/debug/deps/http_m2-4e67d90fdd5a95b1)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.4
+    },
+    {
+      "target": "Running tests/http_m2_proxy.rs (target/debug/deps/http_m2_proxy-694d6964433be47c)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.13
+    },
+    {
+      "target": "Running tests/http_m2_system.rs (target/debug/deps/http_m2_system-1b6788ae98c97802)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 1,
+      "seconds": 0.06
+    },
+    {
+      "target": "Running tests/http_m2_system.rs (target/debug/deps/http_m2_system-1b6788ae98c97802)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.07
+    },
+    {
+      "target": "Running tests/http_p09.rs (target/debug/deps/http_p09-4f79178b0f2d161f)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.12
+    },
+    {
+      "target": "Running tests/http_reason.rs (target/debug/deps/http_reason-649529d361508ab7)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.06
+    },
+    {
+      "target": "Running tests/http_session.rs (target/debug/deps/http_session-d9ff92f46db022de)",
+      "result": "ok",
+      "passed": 13,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.09
+    },
+    {
+      "target": "Running tests/http_status.rs (target/debug/deps/http_status-22cb79b94bea3b8e)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 2,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.05
+    },
+    {
+      "target": "Running tests/http_support.rs (target/debug/deps/http_support-7ac9af22e8fcdaf3)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/http_wire.rs (target/debug/deps/http_wire-5ad2d1fd77f70762)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.12
+    },
+    {
+      "target": "Running tests/robots_gate.rs (target/debug/deps/robots_gate-d7276d4fa5916811)",
+      "result": "ok",
+      "passed": 17,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 5.39
+    },
+    {
+      "target": "Running tests/robots_parser.rs (target/debug/deps/robots_parser-4e98dc5febbd8fd2)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.1
+    },
+    {
+      "target": "Running tests/secrets_store_mut.rs (target/debug/deps/secrets_store_mut-3934d2055dc107c2)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_integrations-8a61740bdd42328b)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.08
+    },
+    {
+      "target": "Running tests/api_framework.rs (target/debug/deps/api_framework-2c595dc7c820592f)",
+      "result": "ok",
+      "passed": 24,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 5.21
+    },
+    {
+      "target": "Running tests/crawl_glue_lifecycle.rs (target/debug/deps/crawl_glue_lifecycle-c34159a8dc681ba4)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.35
+    },
+    {
+      "target": "Running tests/drive_support.rs (target/debug/deps/drive_support-ee372bc2c39dcde1)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/drive_transport.rs (target/debug/deps/drive_transport-2e7ae8e8500f8fe7)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.17
+    },
+    {
+      "target": "Running tests/ga4_api.rs (target/debug/deps/ga4_api-75152932fc97d683)",
+      "result": "ok",
+      "passed": 25,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.11
+    },
+    {
+      "target": "Running tests/gsc_inspection.rs (target/debug/deps/gsc_inspection-90b7ee1c6f6f1e61)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.28
+    },
+    {
+      "target": "Running tests/gsc_search_analytics.rs (target/debug/deps/gsc_search_analytics-40c14a4848c8bd80)",
+      "result": "ok",
+      "passed": 16,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.51
+    },
+    {
+      "target": "Running tests/linkmetrics_providers.rs (target/debug/deps/linkmetrics_providers-652873757b647b10)",
+      "result": "ok",
+      "passed": 16,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.22
+    },
+    {
+      "target": "Running tests/psi_local.rs (target/debug/deps/psi_local-0ca1cc47a431efaf)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.44
+    },
+    {
+      "target": "Running tests/psi_parse.rs (target/debug/deps/psi_parse-8aba05070beb083d)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.02
+    },
+    {
+      "target": "Running tests/psi_remote.rs (target/debug/deps/psi_remote-33745d17466d4c69)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.09
+    },
+    {
+      "target": "Running tests/psi_settings.rs (target/debug/deps/psi_settings-2dc13b6de3844c79)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_loadtest-ad45895ff720f4d6)",
+      "result": "ok",
+      "passed": 32,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 6.91
+    },
+    {
+      "target": "Running unittests src/bin/gen-ui-large.rs (target/debug/deps/gen_ui_large-257584cb65584a98)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running unittests src/main.rs (target/debug/deps/os_loadtest-76a17ece0d659476)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/engine_adapter.rs (target/debug/deps/engine_adapter-e073dfe7e827b4e9)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 14.25
+    },
+    {
+      "target": "Running tests/gen_ui_large_fixture.rs (target/debug/deps/gen_ui_large_fixture-29e1700a71b9bc62)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 35.9
+    },
+    {
+      "target": "Running tests/run.rs (target/debug/deps/run-8d7000cf7a5e4c21)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.61
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_mcp-bbeb54a0bf580286)",
+      "result": "ok",
+      "passed": 66,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.14
+    },
+    {
+      "target": "Running unittests src/main.rs (target/debug/deps/openspider_mcp-75caae07f9b5a64d)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/audit_parameters.rs (target/debug/deps/audit_parameters-7e1176fa25548012)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/k17_details.rs (target/debug/deps/k17_details-8e682c7243b781f2)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.68
+    },
+    {
+      "target": "Running tests/k17_tools.rs (target/debug/deps/k17_tools-99cea9956ddbc18c)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 11.89
+    },
+    {
+      "target": "Running tests/m2_http.rs (target/debug/deps/m2_http-1d9b53a161186471)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.16
+    },
+    {
+      "target": "Running tests/m2_metadata.rs (target/debug/deps/m2_metadata-c029d4ac9d3de045)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.07
+    },
+    {
+      "target": "Running tests/m2_process.rs (target/debug/deps/m2_process-8326889fb3af5899)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 21.89
+    },
+    {
+      "target": "Running tests/server_print_config.rs (target/debug/deps/server_print_config-c9b989ac2229745c)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/server_process.rs (target/debug/deps/server_process-ff149f766bacf255)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.09
+    },
+    {
+      "target": "Running tests/server_protocol.rs (target/debug/deps/server_protocol-f154394e8b4bdb40)",
+      "result": "ok",
+      "passed": 20,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.15
+    },
+    {
+      "target": "Running tests/tools_columns.rs (target/debug/deps/tools_columns-6d4ab71e4af6f15e)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 10.66
+    },
+    {
+      "target": "Running tests/tools_injection.rs (target/debug/deps/tools_injection-4f564225a7ae2be0)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.57
+    },
+    {
+      "target": "Running tests/tools_m03.rs (target/debug/deps/tools_m03-f652e3c03b70e4c3)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 33.97
+    },
+    {
+      "target": "Running tests/tools_process.rs (target/debug/deps/tools_process-9f23e92675327262)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 11.12
+    },
+    {
+      "target": "Running tests/tools_read.rs (target/debug/deps/tools_read-13972c5f4391ff7b)",
+      "result": "ok",
+      "passed": 34,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 10.48
+    },
+    {
+      "target": "Running tests/tools_support.rs (target/debug/deps/tools_support-de078383fc21f851)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_model-d737be106c114188)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/config_io.rs (target/debug/deps/config_io-68976a608357df80)",
+      "result": "ok",
+      "passed": 15,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.61
+    },
+    {
+      "target": "Running tests/config_schema.rs (target/debug/deps/config_schema-a29c54bfe4a1103f)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.1
+    },
+    {
+      "target": "Running tests/config_set.rs (target/debug/deps/config_set-f6930f9115fcd661)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.31
+    },
+    {
+      "target": "Running tests/config_v2.rs (target/debug/deps/config_v2-e27900447bb417fd)",
+      "result": "ok",
+      "passed": 26,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.04
+    },
+    {
+      "target": "Running tests/config_validate.rs (target/debug/deps/config_validate-cba180265c9a5d1a)",
+      "result": "ok",
+      "passed": 13,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.08
+    },
+    {
+      "target": "Running tests/ext_namespaces.rs (target/debug/deps/ext_namespaces-ad06de28a94528f7)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/indexability_order.rs (target/debug/deps/indexability_order-599d0282d264a3ad)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/model_config.rs (target/debug/deps/model_config-29c85b1e34a4a400)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.57
+    },
+    {
+      "target": "Running tests/model_enums.rs (target/debug/deps/model_enums-9a6183f2d2f6e032)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/model_indexability.rs (target/debug/deps/model_indexability-a6814984e45f1421)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/model_time.rs (target/debug/deps/model_time-c5c05e06776e85d6)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/model_write_m2.rs (target/debug/deps/model_write_m2-2ed20ea91df10b3b)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/progress_roundtrip.rs (target/debug/deps/progress_roundtrip-795f11f44886847b)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/settings_split.rs (target/debug/deps/settings_split-96140e4f148a6dd2)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/w1_contracts.rs (target/debug/deps/w1_contracts-48a3741024be87a9)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.09
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_parity-5c61b4137ab1ea60)",
+      "result": "ok",
+      "passed": 69,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.02
+    },
+    {
+      "target": "Running unittests src/main.rs (target/debug/deps/os_parity-834fcc6c35f20a1a)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/coverage_bench.rs (target/debug/deps/coverage_bench-d3d4c815d2c8ace5)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.02
+    },
+    {
+      "target": "Running tests/coverage_m2.rs (target/debug/deps/coverage_m2-dc69a8df268caea9)",
+      "result": "ok",
+      "passed": 27,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.12
+    },
+    {
+      "target": "Running tests/coverage_status.rs (target/debug/deps/coverage_status-b5ad915937cfe983)",
+      "result": "ok",
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.03
+    },
+    {
+      "target": "Running tests/diff_cli.rs (target/debug/deps/diff_cli-194da2ef5553d5b2)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.02
+    },
+    {
+      "target": "Running tests/diff_engine.rs (target/debug/deps/diff_engine-8010bae43d784edd)",
+      "result": "ok",
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/real_repo_files.rs (target/debug/deps/real_repo_files-be6b19ec3a6478de)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.26
+    },
+    {
+      "target": "Running tests/reference_format.rs (target/debug/deps/reference_format-91be92f2189f666c)",
+      "result": "ok",
+      "passed": 17,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/run_site.rs (target/debug/deps/run_site-32abc4e9344b6a37)",
+      "result": "ok",
+      "passed": 24,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.05
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_parse-5bf42c15464328b2)",
+      "result": "ok",
+      "passed": 85,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.02
+    },
+    {
+      "target": "Running tests/alternates_m2.rs (target/debug/deps/alternates_m2-6821e1239b0d5963)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/bookmarks_m2.rs (target/debug/deps/bookmarks_m2-5963c5ac58efcc24)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.03
+    },
+    {
+      "target": "Running tests/canonical_extract.rs (target/debug/deps/canonical_extract-023ca8b8f3600c48)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.03
+    },
+    {
+      "target": "Running tests/canonical_m2.rs (target/debug/deps/canonical_m2-e5479cb61f393011)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.03
+    },
+    {
+      "target": "Running tests/canonical_pagination.rs (target/debug/deps/canonical_pagination-7898716a0bd38d4b)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/charset_decode.rs (target/debug/deps/charset_decode-83f8f51a1aab44c7)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.05
+    },
+    {
+      "target": "Running tests/content_area.rs (target/debug/deps/content_area-83ca6df0ff678019)",
+      "result": "ok",
+      "passed": 22,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.55
+    },
+    {
+      "target": "Running tests/content_d02.rs (target/debug/deps/content_d02-a53b05dc0a55a907)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.05
+    },
+    {
+      "target": "Running tests/crawlability_m2.rs (target/debug/deps/crawlability_m2-f65a134613022fd1)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.04
+    },
+    {
+      "target": "Running tests/css_extract.rs (target/debug/deps/css_extract-a5c0e7c7e44ab115)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/custom_extract_parse.rs (target/debug/deps/custom_extract_parse-580f1c4f2fe9640b)",
+      "result": "ok",
+      "passed": 13,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.44
+    },
+    {
+      "target": "Running tests/custom_search_regions.rs (target/debug/deps/custom_search_regions-be53803779f838e2)",
+      "result": "ok",
+      "passed": 17,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.25
+    },
+    {
+      "target": "Running tests/directives_effective.rs (target/debug/deps/directives_effective-6ba2baef23143e1c)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.03
+    },
+    {
+      "target": "Running tests/directives_m2.rs (target/debug/deps/directives_m2-18827da270958456)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/directives_meta.rs (target/debug/deps/directives_meta-b07689c14fcb4aae)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.03
+    },
+    {
+      "target": "Running tests/directives_xrobots.rs (target/debug/deps/directives_xrobots-dde196ec4ae0c63b)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/dom_head.rs (target/debug/deps/dom_head-9b990ae965b7152e)",
+      "result": "ok",
+      "passed": 15,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/elements_extract.rs (target/debug/deps/elements_extract-0a2a7951cdbd109a)",
+      "result": "ok",
+      "passed": 24,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.46
+    },
+    {
+      "target": "Running tests/elements_m2.rs (target/debug/deps/elements_m2-16b1544ffb5cb5e7)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.04
+    },
+    {
+      "target": "Running tests/elements_parse_html.rs (target/debug/deps/elements_parse_html-0a6a780e930d25c3)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.04
+    },
+    {
+      "target": "Running tests/head_paths.rs (target/debug/deps/head_paths-a03b4512cd4a1cf9)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.04
+    },
+    {
+      "target": "Running tests/hreflang_codes.rs (target/debug/deps/hreflang_codes-d36ba9fff4cfad6d)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/hreflang_extract.rs (target/debug/deps/hreflang_extract-e763b54a0bf79098)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.08
+    },
+    {
+      "target": "Running tests/hreflang_m2.rs (target/debug/deps/hreflang_m2-3bbb5dce92169e87)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/images_instances.rs (target/debug/deps/images_instances-dfd479f37f968440)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/images_m2.rs (target/debug/deps/images_m2-bc92db40df078fe4)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.03
+    },
+    {
+      "target": "Running tests/link_position_rules.rs (target/debug/deps/link_position_rules-8cba2f5560710642)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/links_attrs.rs (target/debug/deps/links_attrs-cfa4fc5982b8efc0)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/links_resources.rs (target/debug/deps/links_resources-024c77eaf6a48e32)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/links_sources.rs (target/debug/deps/links_sources-8431b3ff201de3c8)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/links_url_resolve.rs (target/debug/deps/links_url_resolve-29f65ad0503ee373)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.03
+    },
+    {
+      "target": "Running tests/n07_onpage.rs (target/debug/deps/n07_onpage-4daa408353d11d87)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.08
+    },
+    {
+      "target": "Running tests/n08_content.rs (target/debug/deps/n08_content-0907bf6c87626760)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.06
+    },
+    {
+      "target": "Running tests/n09_annotations.rs (target/debug/deps/n09_annotations-4d98dfa51dbf5f6e)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/n10_security.rs (target/debug/deps/n10_security-e04fba51fac6fda7)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/pagination_m2.rs (target/debug/deps/pagination_m2-ceb59602e11800c8)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.05
+    },
+    {
+      "target": "Running tests/pdf_d02.rs (target/debug/deps/pdf_d02-8cee1e6bb732648d)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.03
+    },
+    {
+      "target": "Running tests/pdf_meta.rs (target/debug/deps/pdf_meta-41413e45c36aea2f)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/pending_w1_d01.rs (target/debug/deps/pending_w1_d01-befc5a7c603c39fc)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.05
+    },
+    {
+      "target": "Running tests/pixel_font_tables.rs (target/debug/deps/pixel_font_tables-b686027a76bb67fe)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.06
+    },
+    {
+      "target": "Running tests/pixel_license.rs (target/debug/deps/pixel_license-d25e7be6936d735e)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/pixel_serp.rs (target/debug/deps/pixel_serp-9fde9c1ff5d38e6b)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/pixel_width.rs (target/debug/deps/pixel_width-d2c6c3209bbc7761)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/readability_d02.rs (target/debug/deps/readability_d02-db8eba493b128b59)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/refresh_variants.rs (target/debug/deps/refresh_variants-1ae3cd7022024f92)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.02
+    },
+    {
+      "target": "Running tests/sd_extraction.rs (target/debug/deps/sd_extraction-b307a04d6a8bd735)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.06
+    },
+    {
+      "target": "Running tests/security_facts.rs (target/debug/deps/security_facts-a73a54f9fc996a2d)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.05
+    },
+    {
+      "target": "Running tests/sitemap_gzip.rs (target/debug/deps/sitemap_gzip-9f41dd05a23f84de)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.07
+    },
+    {
+      "target": "Running tests/sitemap_hreflang.rs (target/debug/deps/sitemap_hreflang-77be152b011089f9)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.03
+    },
+    {
+      "target": "Running tests/sitemap_m2.rs (target/debug/deps/sitemap_m2-06e21604c94aed02)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 10.69
+    },
+    {
+      "target": "Running tests/sitemap_urlset.rs (target/debug/deps/sitemap_urlset-a53183d27ebdcbe9)",
+      "result": "ok",
+      "passed": 13,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.48
+    },
+    {
+      "target": "Running tests/switches_m2.rs (target/debug/deps/switches_m2-ba674c8b5e2c95c0)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.05
+    },
+    {
+      "target": "Running tests/text_normalize.rs (target/debug/deps/text_normalize-d7df94894280d56e)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/validation_tokens.rs (target/debug/deps/validation_tokens-850610d05f7dcf26)",
+      "result": "ok",
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.05
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_render-dcfde18694a21a02)",
+      "result": "ok",
+      "passed": 21,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 22.12
+    },
+    {
+      "target": "Running tests/login_capture.rs (target/debug/deps/login_capture-9dfebad8f4d8ac41)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.52
+    },
+    {
+      "target": "Running tests/render_chromium.rs (target/debug/deps/render_chromium-099eb31b9af1896f)",
+      "result": "ok",
+      "passed": 16,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 39.83
+    },
+    {
+      "target": "Running tests/render_proxy.rs (target/debug/deps/render_proxy-e97934a8bb026557)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 3.01
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_sched-25a02dd22d0e5730)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/history_runs.rs (target/debug/deps/history_runs-d3f33a014bb8aa04)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/planner_golden.rs (target/debug/deps/planner_golden-dfd3acf63b5f7ab1)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/schedule_next_run.rs (target/debug/deps/schedule_next_run-4dee6fad06adebf9)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/task_store.rs (target/debug/deps/task_store-c41a9442e79f164b)",
+      "result": "ok",
+      "passed": 13,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_store-1abddc0dd55c6efc)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.02
+    },
+    {
+      "target": "Running tests/auth_profiles_crypto.rs (target/debug/deps/auth_profiles_crypto-551b2612611afa07)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.52
+    },
+    {
+      "target": "Running tests/bench_links_build.rs (target/debug/deps/bench_links_build-6575ff5c2a98cd41)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 2,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/bench_writer.rs (target/debug/deps/bench_writer-495d24e34f57d99b)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 6,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/bg_checkpoint.rs (target/debug/deps/bg_checkpoint-c9421a196ddb8c7f)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 5.02
+    },
+    {
+      "target": "Running tests/collation_os_text.rs (target/debug/deps/collation_os_text-1dcd13c956d84385)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.19
+    },
+    {
+      "target": "Running tests/crawl_files.rs (target/debug/deps/crawl_files-7209e9651dbd299d)",
+      "result": "ok",
+      "passed": 15,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.97
+    },
+    {
+      "target": "Running tests/diag_series.rs (target/debug/deps/diag_series-44309abd54d75e2e)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.16
+    },
+    {
+      "target": "Running tests/link_index.rs (target/debug/deps/link_index-a8f72231d1a02373)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.71
+    },
+    {
+      "target": "Running tests/paths_registry.rs (target/debug/deps/paths_registry-55527a8034881930)",
+      "result": "ok",
+      "passed": 10,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.36
+    },
+    {
+      "target": "Running tests/profile_config.rs (target/debug/deps/profile_config-ded9a6a5009a8193)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.11
+    },
+    {
+      "target": "Running tests/profiles.rs (target/debug/deps/profiles-0ebebc06823dac59)",
+      "result": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.61
+    },
+    {
+      "target": "Running tests/queries_links.rs (target/debug/deps/queries_links-d836cb8e044e77bd)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.98
+    },
+    {
+      "target": "Running tests/read_api_manifest.rs (target/debug/deps/read_api_manifest-257e8bbd2b14a41f)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.54
+    },
+    {
+      "target": "Running tests/read_api_views.rs (target/debug/deps/read_api_views-fbb731f0891f52ff)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.62
+    },
+    {
+      "target": "Running tests/readonly_sql_schema.rs (target/debug/deps/readonly_sql_schema-cb729e75f029e2a4)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/registry_management.rs (target/debug/deps/registry_management-81d916959a60820f)",
+      "result": "ok",
+      "passed": 13,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 2.32
+    },
+    {
+      "target": "Running tests/registry_performance.rs (target/debug/deps/registry_performance-437e48f1dd48ce2b)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 2,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.46
+    },
+    {
+      "target": "Running tests/scale_ext_migration.rs (target/debug/deps/scale_ext_migration-8c73c2a0f4f226af)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.23
+    },
+    {
+      "target": "Running tests/scale_indexes.rs (target/debug/deps/scale_indexes-86f6ddc2375d1173)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.13
+    },
+    {
+      "target": "Running tests/scale_storage.rs (target/debug/deps/scale_storage-a40f78e2227aa2ee)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 41.71
+    },
+    {
+      "target": "Running tests/scale_wal.rs (target/debug/deps/scale_wal-7895cdb2e9fbb73f)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.51
+    },
+    {
+      "target": "Running tests/schema_create.rs (target/debug/deps/schema_create-bfcac53a2e9a27d5)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.96
+    },
+    {
+      "target": "Running tests/schema_migrate.rs (target/debug/deps/schema_migrate-6abc9760c9b9a653)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.18
+    },
+    {
+      "target": "Running tests/schema_open.rs (target/debug/deps/schema_open-df9853acae1c324a)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.39
+    },
+    {
+      "target": "Running tests/schema_sink.rs (target/debug/deps/schema_sink-0e0e4be65504fce8)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/schema_v3_migrate.rs (target/debug/deps/schema_v3_migrate-09ec2795db7731ec)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.46
+    },
+    {
+      "target": "Running tests/schema_v3_tables.rs (target/debug/deps/schema_v3_tables-dda2b2487b1efb1a)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.4
+    },
+    {
+      "target": "Running tests/url_index.rs (target/debug/deps/url_index-eaa8d149f67f88ea)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.34
+    },
+    {
+      "target": "Running tests/view_cache_roundtrip.rs (target/debug/deps/view_cache_roundtrip-fada085a711cf570)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.22
+    },
+    {
+      "target": "Running tests/writer_batches.rs (target/debug/deps/writer_batches-631f38acfbaeabec)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.06
+    },
+    {
+      "target": "Running tests/writer_changefeed.rs (target/debug/deps/writer_changefeed-5f2c03275a8c3a34)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.2
+    },
+    {
+      "target": "Running tests/writer_counters.rs (target/debug/deps/writer_counters-7ed9a77a431aaa12)",
+      "result": "ok",
+      "passed": 12,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 1.11
+    },
+    {
+      "target": "Running tests/writer_flags.rs (target/debug/deps/writer_flags-493bfabf7d8668e7)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.37
+    },
+    {
+      "target": "Running tests/writer_m2_roundtrip.rs (target/debug/deps/writer_m2_roundtrip-7169ecdfa832bdc7)",
+      "result": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.91
+    },
+    {
+      "target": "Running tests/writer_w1.rs (target/debug/deps/writer_w1-8416429a61a9eae7)",
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.26
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_testsite-95b46d6015bc91f1)",
+      "result": "ok",
+      "passed": 36,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.37
+    },
+    {
+      "target": "Running unittests src/main.rs (target/debug/deps/os_testsite-21b06a8a9cb8d4d0)",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/golden.rs (target/debug/deps/golden-a4ee6f7a89cb623a)",
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.02
+    },
+    {
+      "target": "Running tests/hosts.rs (target/debug/deps/hosts-bab383881e4b05c4)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.04
+    },
+    {
+      "target": "Running tests/informational.rs (target/debug/deps/informational-94ce01482dc8107e)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.09
+    },
+    {
+      "target": "Running ../../tests/parity/fixtures_check.rs (target/debug/deps/parity_fixtures-a57365bc737ee9c0)",
+      "result": "ok",
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.91
+    },
+    {
+      "target": "Running tests/request_log.rs (target/debug/deps/request_log-08cc8acc22f6264d)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.94
+    },
+    {
+      "target": "Running tests/routes.rs (target/debug/deps/routes-94f1d05c26f09dd8)",
+      "result": "ok",
+      "passed": 17,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.97
+    },
+    {
+      "target": "Running tests/serve.rs (target/debug/deps/serve-300a9b9e93386dbc)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.03
+    },
+    {
+      "target": "Running tests/synthetic.rs (target/debug/deps/synthetic-0968bb1850fbcbce)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 1,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.18
+    },
+    {
+      "target": "Running tests/tls.rs (target/debug/deps/tls-55b31840c6995e82)",
+      "result": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.08
+    },
+    {
+      "target": "Running tests/tls_m2.rs (target/debug/deps/tls_m2-632ee6836de35001)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.1
+    },
+    {
+      "target": "Running tests/wire_log.rs (target/debug/deps/wire_log-5515648676260366)",
+      "result": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.08
+    },
+    {
+      "target": "Running unittests src/lib.rs (target/debug/deps/os_url-50d64757bf5a0647)",
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Running tests/url_compare.rs (target/debug/deps/url_compare-fdbb63d782072cea)",
+      "result": "ok",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/url_metrics.rs (target/debug/deps/url_metrics-78abff9455946e33)",
+      "result": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/url_normalize.rs (target/debug/deps/url_normalize-6d1bea15b7d8321c)",
+      "result": "ok",
+      "passed": 18,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Running tests/url_rewrite_m2.rs (target/debug/deps/url_rewrite_m2-e77e573ef0e40c5e)",
+      "result": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.18
+    },
+    {
+      "target": "Running tests/url_rules.rs (target/debug/deps/url_rules-3c5ff3142e4d8e62)",
+      "result": "ok",
+      "passed": 15,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.44
+    },
+    {
+      "target": "Running tests/url_scope.rs (target/debug/deps/url_scope-73fc686c3b89ecdd)",
+      "result": "ok",
+      "passed": 15,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.01
+    },
+    {
+      "target": "Doc-tests os_analyze",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_app",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_cli",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_engine",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_export",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_fetch",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_integrations",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_loadtest",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_mcp",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_model",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_parity",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_parse",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_render",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_sched",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_store",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_testsite",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    },
+    {
+      "target": "Doc-tests os_url",
+      "result": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered": 0,
+      "seconds": 0.0
+    }
+  ]
+}

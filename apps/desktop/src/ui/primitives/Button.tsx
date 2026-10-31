@@ -1,3 +1,4 @@
+import "./contrast.css";
 import type { ReactNode } from "react";
 import { Button as RacButton, type ButtonProps as RacButtonProps } from "react-aria-components";
 import { cx } from "./cx";

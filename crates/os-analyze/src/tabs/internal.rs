@@ -116,7 +116,7 @@ pub(crate) const X_ROBOTS_LIST: &str = "SELECT raw FROM directives WHERE url_id 
      source = 'x_robots_tag' AND applies = 1 ORDER BY position";
 
 /// Alle `<link rel=\"canonical\">` im HTML (absolut aufgelöst), in Quelltextreihenfolge.
-pub(crate) const CANONICAL_LIST: &str = "SELECT COALESCE(resolved, raw) FROM canonicals WHERE \
+pub(crate) const CANONICAL_LIST: &str = "SELECT CASE WHEN instr(COALESCE(resolved, raw), '#') > 0 THEN substr(COALESCE(resolved, raw), 1, instr(COALESCE(resolved, raw), '#') - 1) ELSE COALESCE(resolved, raw) END FROM canonicals WHERE \
      url_id = ?1 AND source = 'html' ORDER BY position";
 
 /// Die Basisspalten `Address … Indexability Status` (ONPAGE-010), gemeinsam für Internal und Security.
@@ -258,7 +258,7 @@ pub fn tab() -> TabDef {
         col(
             "Text Ratio",
             html_2xx!("u.text_ratio"),
-            ColumnKind::Float { decimals: 1 },
+            ColumnKind::Float { decimals: 3 },
             true,
         ),
         // ONPAGE-014
@@ -336,7 +336,7 @@ pub fn tab() -> TabDef {
         col("Meta Keywords 2", html_or_pdf_2xx!("u.meta_kw_2"), ColumnKind::Text, true),
         col(
             "Meta Keywords 2 Length",
-            html_or_pdf_2xx!("u.meta_kw_2_len"),
+            html_or_pdf_2xx!("COALESCE(u.meta_kw_2_len, 0)"),
             ColumnKind::Int,
             true,
         ),
@@ -350,8 +350,8 @@ pub fn tab() -> TabDef {
     filters.extend(class_filters());
     filters.push(unknown_filter());
     filters.extend([
-        class_filter("Flash", "u.content_class = 'Plugins'"),
-        class_filter("Other", "u.content_class = 'Other' OR (:parity_filters=1 AND u.content_class IN ('Media','Fonts','XML'))"),
+        class_filter("Plugins", "u.content_class = 'Plugins'"),
+        class_filter("Other", "u.content_class = 'Other'"),
         class_filter("Media", "u.content_class = 'Media'"),
         class_filter("Fonts", "u.content_class = 'Fonts'"),
         class_filter("XML", "u.content_class = 'XML'"),
@@ -364,14 +364,7 @@ pub fn tab() -> TabDef {
         columns,
         filters,
         default_sort: Vec::new(),
-        params: |cfg| {
-            let mut params = super::content::analysis_params(cfg);
-            params.push((
-                "parity_filters",
-                os_model::Value::Bool(cfg.ui.parity_filters),
-            ));
-            params
-        },
+        params: super::content::analysis_params,
         hidden_population: None,
     }
 }

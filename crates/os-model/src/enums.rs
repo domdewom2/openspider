@@ -339,6 +339,7 @@ string_enum! {
         ServerError => "Server Error",
         SelfReferencingMetaRefresh => "Self Referencing Meta Refresh",
         Noindex => "noindex",
+        UnavailableAfter => "Unavailable After",
         Canonicalised => "Canonicalised",
     }
 }

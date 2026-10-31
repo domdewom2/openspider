@@ -162,6 +162,7 @@ pub(super) fn build<'t>(
         } else {
             &q.columns
         },
+        cfg,
     )?;
     let sort = sort_terms(tab, filter, &q.sort)?;
     let order_by = order_by(&sort);
@@ -331,7 +332,9 @@ pub(super) fn series_parts(def: &ColumnDef) -> Option<(&'static str, Vec<PairedP
 fn select_columns<'t>(
     tab: &'t TabDef,
     selection: &ColumnSelection,
+    cfg: &CrawlConfig,
 ) -> Result<Vec<SelectedColumn<'t>>, ViewError> {
+    let cfg_json = serde_json::to_value(cfg).expect("serializable crawl configuration");
     let whole = |def: &'t ColumnDef| SelectedColumn {
         def,
         pick: Pick::Whole,
@@ -340,7 +343,18 @@ fn select_columns<'t>(
         ColumnSelection::Default => Ok(tab
             .columns
             .iter()
-            .filter(|c| c.default_visible)
+            .filter(|c| {
+                c.default_visible
+                    && match c.needs {
+                        Some(crate::defs::Needs::Config(key)) => {
+                            crate::state::config_key_enabled(&cfg_json, key)
+                        }
+                        Some(crate::defs::Needs::AnyConfig(keys)) => keys
+                            .iter()
+                            .any(|key| crate::state::config_key_enabled(&cfg_json, key)),
+                        _ => true,
+                    }
+            })
             .map(whole)
             .collect()),
         ColumnSelection::All => {
@@ -536,5 +550,38 @@ mod tests {
         assert_eq!(parse_numbered("Base 3", "Base", "URL"), None);
         assert_eq!(parse_numbered("Base 0", "Base", ""), None);
         assert_eq!(parse_numbered("Baseline 1", "Base", ""), None);
+    }
+}
+
+#[cfg(test)]
+mod n08_tests {
+    use super::*;
+
+    // spec: ONPAGE-142 [P1]
+    #[test]
+    fn default_column_requirements_are_independent_of_tab_and_column_names() {
+        let mut tab = crate::tabs::content::tab();
+        tab.id = "Requirements fixture";
+        tab.columns.retain(|c| c.key == "Sentence Count");
+        tab.columns[0].key = "Renamed metric";
+        tab.columns[0].needs = Some(crate::defs::Needs::Config("extraction.word_count"));
+        let mut cfg = CrawlConfig::default();
+        assert_eq!(
+            select_columns(&tab, &ColumnSelection::Default, &cfg)
+                .unwrap()
+                .len(),
+            1
+        );
+        cfg.extraction.word_count = false;
+        assert!(select_columns(&tab, &ColumnSelection::Default, &cfg)
+            .unwrap()
+            .is_empty());
+        // Explicit selection keeps disabled columns available for inspection.
+        assert_eq!(
+            select_columns(&tab, &ColumnSelection::All, &cfg)
+                .unwrap()
+                .len(),
+            1
+        );
     }
 }

@@ -436,18 +436,21 @@ async fn class_filters_assign_external_urls_by_content_type() {
     assert_eq!(external_addresses(&fx, "JavaScript"), ["/ext.js"]);
     assert_eq!(external_addresses(&fx, "CSS"), ["/ext.css"]);
     assert_eq!(external_addresses(&fx, "PDF"), ["/ext.pdf"]);
-    assert_eq!(external_addresses(&fx, "Flash"), ["/ext.swf"]);
-    // Parität (A-49): Medien, Schriften und XML stehen unter Other
+    assert_eq!(external_addresses(&fx, "Plugins"), ["/ext.swf"]);
+    // SQ-07: Media, Fonts und XML stehen in eigenen Filtern.
     let mut other = external_addresses(&fx, "Other");
     other.sort();
-    assert_eq!(other, ["/ext.json", "/ext.mp4", "/ext.xml"]);
+    assert_eq!(other, ["/ext.json"]);
+    assert_eq!(external_addresses(&fx, "Media"), ["/ext.mp4"]);
+    assert_eq!(external_addresses(&fx, "XML"), ["/ext.xml"]);
+    assert!(external_addresses(&fx, "Fonts").is_empty());
     for (filter, file) in [
         ("HTML", "external__html.csv"),
         ("JavaScript", "external__javascript.csv"),
         ("CSS", "external__css.csv"),
         ("Images", "external__images.csv"),
         ("PDF", "external__pdf.csv"),
-        ("Flash", "external__flash.csv"),
+        ("Plugins", "external__plugins.csv"),
         ("Other", "external__other.csv"),
         ("Unknown", "external__unknown.csv"),
     ] {
@@ -520,7 +523,10 @@ async fn the_class_filters_partition_external_all() {
         "CSS",
         "Images",
         "PDF",
-        "Flash",
+        "Plugins",
+        "Media",
+        "Fonts",
+        "XML",
         "Other",
         "Unknown",
     ] {

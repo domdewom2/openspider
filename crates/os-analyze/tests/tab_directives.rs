@@ -129,7 +129,6 @@ const ALL: &[&str] = &[
     "/conflict-meta.html",
     "/conflict-mixed.html",
     "/follow-nofollow.html",
-    "/gone.html",
     "/index-follow.html",
     "/max.html",
     "/mixed-case.html",
@@ -167,7 +166,6 @@ const NOINDEX: &[&str] = &[
     "/canonical-and-robots.html",
     "/conflict-meta.html",
     "/conflict-mixed.html",
-    "/gone.html",
     "/mixed-case.html",
     "/noindex-googlebot.html",
     "/noindex-header.html",
@@ -193,13 +191,11 @@ const REFRESH: &[&str] = &[
     "/refresh-0.html",
     "/refresh-5-self.html",
     "/refresh-bare.html",
-    "/refresh-header.html",
     "/refresh-query.html",
     "/refresh-query.html?x=1",
     "/refresh-self-0.html",
     "/refresh-self-300.html",
     "/refresh-self-fragment.html",
-    "/refresh-self-header.html",
 ];
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -207,13 +203,13 @@ const REFRESH: &[&str] = &[
 
 // spec: TECH-051
 #[tokio::test]
-async fn population_is_every_internal_url_with_a_response() {
+async fn population_is_every_internal_url_with_a_2xx_response() {
     let c = crawl(CrawlConfig::default()).await;
     let all = c.set("All");
     assert_eq!(all, set(ALL));
-    // X-Robots-Tag hängt auch an Nicht-HTML und Nicht-200-Antworten.
+    // SQ-03: X-Robots-Tag zählt für jeden Inhaltstyp, aber nur bei 2xx.
     assert!(all.contains("/noindex.pdf"));
-    assert!(all.contains("/gone.html"));
+    assert!(!all.contains("/gone.html"));
     // Nicht gecrawlte Ziele (hier: nur über die Nofollow-Seite erreichbar) haben keine Antwort.
     assert!(!all.contains("/only-via-nofollow-page.html"));
     // Jeder Filter ist eine Teilmenge von All.
@@ -338,7 +334,6 @@ async fn noindex_filter_checks_the_token_in_meta_and_header_for_the_crawler() {
         "/noindex-meta.html",
         "/noindex-header.html",
         "/noindex.pdf",
-        "/gone.html",
         "/noindex-googlebot.html",
     ] {
         assert!(c.set("Noindex").contains(a), "{a}");
@@ -358,7 +353,7 @@ async fn noindex_filter_checks_the_token_in_meta_and_header_for_the_crawler() {
     assert!(!c.set("Nofollow").contains("/xrobots-agent.html"));
     // Status noindex für die Seiten, die auch sonst nicht indexierbar sind (404 → Client Error geht vor)
     assert_eq!(c.status("/noindex-meta.html"), "noindex");
-    assert_eq!(c.status("/gone.html"), "Client Error");
+    assert!(!c.set("All").contains("/gone.html"));
     assert_eq!(c.status("/noindex.pdf"), "noindex");
 }
 
@@ -498,11 +493,11 @@ async fn refresh_filter_and_the_indexability_it_causes() {
         "/refresh-self-0.html",
         "/refresh-self-300.html",
         "/refresh-self-fragment.html",
-        "/refresh-self-header.html",
         "/refresh-query.html?x=1",
     ] {
         assert_eq!(c.status(a), "Self Referencing Meta Refresh", "{a}");
     }
+    assert_eq!(c.status("/refresh-self-header.html"), "Redirected");
     // Rohwert in der Spalte Meta Refresh
     assert_eq!(
         c.text_cell("Refresh", "/refresh-0.html", "Meta Refresh 1"),
@@ -529,7 +524,6 @@ async fn self_referencing_refresh_stays_in_the_filter_without_the_option() {
         "/refresh-self-0.html",
         "/refresh-self-300.html",
         "/refresh-self-fragment.html",
-        "/refresh-self-header.html",
     ] {
         assert_eq!(
             c.text_cell("Refresh", a, "Indexability"),
@@ -539,6 +533,7 @@ async fn self_referencing_refresh_stays_in_the_filter_without_the_option() {
         assert_eq!(c.status(a), "", "{a}");
     }
     assert_eq!(c.status("/refresh-0.html"), "Redirected");
+    assert_eq!(c.status("/refresh-self-header.html"), "Redirected");
 }
 
 // M2-Ergänzungen: tab_directives_m2.rs; schichtübergreifend: pending_w1_d06.rs.

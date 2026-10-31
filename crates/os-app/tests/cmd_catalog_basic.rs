@@ -56,7 +56,7 @@ async fn configured_columns_include_extraction_gates_and_parity_filters() {
         .iter()
         .find(|t| t["id"] == "Internal")
         .unwrap();
-    assert!(!internal["filters"]
+    assert!(internal["filters"]
         .as_array()
         .unwrap()
         .iter()
@@ -131,4 +131,34 @@ async fn no_crawl_catalogs_and_unknown_names_are_typed() {
         .await
         .unwrap_err();
     assert_eq!(e.code, os_app::dto::ErrorCode::InvalidInput);
+}
+
+// spec: ONPAGE-142
+// spec: ONPAGE-149
+// spec: ONPAGE-153
+// spec: OUT-001 [M2]
+#[tokio::test]
+async fn catalog_default_columns_match_the_core_view_for_configuration_gates() {
+    for enabled in [false, true] {
+        let mut cfg = os_model::CrawlConfig::default();
+        cfg.extraction.readability = enabled;
+        cfg.spelling.enabled = enabled;
+        let fx = Fx::config(cfg);
+        let columns = fx.call("catalog.columns", json!({"tab":"Internal"})).await;
+        let handle = fx.open(tab(), json!([])).await;
+        let defaults: Vec<_> = columns
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|column| column["defaultVisible"] == true)
+            .map(|column| column["key"].clone())
+            .collect();
+        let view: Vec<_> = handle["columns"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|column| column["key"].clone())
+            .collect();
+        assert_eq!(defaults, view, "configuration gates enabled={enabled}");
+    }
 }

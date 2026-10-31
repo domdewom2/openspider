@@ -1,0 +1,319 @@
+{
+  "images_missing_size_attributes.csv": [
+    {
+      "Address": "http://127.0.0.1:8902/img/alt-100.png",
+      "Content": "image/png",
+      "Size": "74",
+      "IMG Inlinks": "1",
+      "Indexability": "Indexable",
+      "Indexability Status": ""
+    },
+    {
+      "Address": "http://127.0.0.1:8902/img/alt-101.png",
+      "Content": "image/png",
+      "Size": "74",
+      "IMG Inlinks": "1",
+      "Indexability": "Indexable",
+      "Indexability Status": ""
+    },
+    {
+      "Address": "http://127.0.0.1:8902/img/empty-alt.png",
+      "Content": "image/png",
+      "Size": "74",
+      "IMG Inlinks": "1",
+      "Indexability": "Indexable",
+      "Indexability Status": ""
+    },
+    {
+      "Address": "http://127.0.0.1:8902/img/good-alt.png",
+      "Content": "image/png",
+      "Size": "74",
+      "IMG Inlinks": "1",
+      "Indexability": "Indexable",
+      "Indexability Status": ""
+    },
+    {
+      "Address": "http://127.0.0.1:8902/img/missing.png",
+      "Content": "text/plain; charset=utf-8",
+      "Size": "0",
+      "IMG Inlinks": "1",
+      "Indexability": "Non-Indexable",
+      "Indexability Status": "Client Error"
+    },
+    {
+      "Address": "http://127.0.0.1:8902/img/no-alt.png",
+      "Content": "image/png",
+      "Size": "74",
+      "IMG Inlinks": "1",
+      "Indexability": "Indexable",
+      "Indexability Status": ""
+    },
+    {
+      "Address": "http://127.0.0.1:8902/img/size-102400.png",
+      "Content": "image/png",
+      "Size": "102400",
+      "IMG Inlinks": "1",
+      "Indexability": "Indexable",
+      "Indexability Status": ""
+    },
+    {
+      "Address": "http://127.0.0.1:8902/img/size-102401.png",
+      "Content": "image/png",
+      "Size": "102401",
+      "IMG Inlinks": "1",
+      "Indexability": "Indexable",
+      "Indexability Status": ""
+    },
+    {
+      "Address": "http://127.0.0.1:8902/img/small.png",
+      "Content": "image/png",
+      "Size": "74",
+      "IMG Inlinks": "1",
+      "Indexability": "Indexable",
+      "Indexability Status": ""
+    },
+    {
+      "Address": "http://localhost:8902/img/size-102401.png",
+      "Content": "image/png",
+      "Size": "102401",
+      "IMG Inlinks": "1",
+      "Indexability": "Indexable",
+      "Indexability Status": ""
+    }
+  ],
+  "images_images_missing_size_attributes_inlinks.csv": [
+    {
+      "From": "http://127.0.0.1:8902/images/alt.html",
+      "To": "http://127.0.0.1:8902/img/alt-100.png",
+      "Alt Text": "Alt text with one hundred characters signal market storm wasteland orbit pebble woodland brook netwo",
+      "Size": "74",
+      "Real Dimensions (WxH)": "",
+      "Dimensions in Attributes (WxH)": "",
+      "Display Dimensions (WxH)": "",
+      "Potential Savings": "",
+      "Path Type": "Root-Relative",
+      "Link Path": "/html[1]/body[1]/main[1]/img[4]",
+      "Link Position": "Content",
+      "Link Origin": "HTML"
+    },
+    {
+      "From": "http://127.0.0.1:8902/images/alt.html",
+      "To": "http://127.0.0.1:8902/img/alt-101.png",
+      "Alt Text": "Alt text with one hundred and one characters linen gamma delta woodland sun garden frost cove thunder",
+      "Size": "74",
+      "Real Dimensions (WxH)": "",
+      "Dimensions in Attributes (WxH)": "",
+      "Display Dimensions (WxH)": "",
+      "Potential Savings": "",
+      "Path Type": "Root-Relative",
+      "Link Path": "/html[1]/body[1]/main[1]/img[5]",
+      "Link Position": "Content",
+      "Link Origin": "HTML"
+    },
+    {
+      "From": "http://127.0.0.1:8902/images/alt.html",
+      "To": "http://127.0.0.1:8902/img/empty-alt.png",
+      "Alt Text": "",
+      "Size": "74",
+      "Real Dimensions (WxH)": "",
+      "Dimensions in Attributes (WxH)": "",
+      "Display Dimensions (WxH)": "",
+      "Potential Savings": "",
+      "Path Type": "Root-Relative",
+      "Link Path": "/html[1]/body[1]/main[1]/img[2]",
+      "Link Position": "Content",
+      "Link Origin": "HTML"
+    },
+    {
+      "From": "http://127.0.0.1:8902/images/alt.html",
+      "To": "http://127.0.0.1:8902/img/good-alt.png",
+      "Alt Text": "A good alternative text",
+      "Size": "74",
+      "Real Dimensions (WxH)": "",
+      "Dimensions in Attributes (WxH)": "",
+      "Display Dimensions (WxH)": "",
+      "Potential Savings": "",
+      "Path Type": "Root-Relative",
+      "Link Path": "/html[1]/body[1]/main[1]/img[1]",
+      "Link Position": "Content",
+      "Link Origin": "HTML"
+    },
+    {
+      "From": "http://127.0.0.1:8902/images/alt.html",
+      "To": "http://127.0.0.1:8902/img/no-alt.png",
+      "Alt Text": "",
+      "Size": "74",
+      "Real Dimensions (WxH)": "",
+      "Dimensions in Attributes (WxH)": "",
+      "Display Dimensions (WxH)": "",
+      "Potential Savings": "",
+      "Path Type": "Root-Relative",
+      "Link Path": "/html[1]/body[1]/main[1]/img[3]",
+      "Link Position": "Content",
+      "Link Origin": "HTML"
+    },
+    {
+      "From": "http://127.0.0.1:8902/images/gallery.html",
+      "To": "http://127.0.0.1:8902/img/missing.png",
+      "Alt Text": "Image that does not exist",
+      "Size": "",
+      "Real Dimensions (WxH)": "",
+      "Dimensions in Attributes (WxH)": "",
+      "Display Dimensions (WxH)": "",
+      "Potential Savings": "",
+      "Path Type": "Root-Relative",
+      "Link Path": "/html[1]/body[1]/main[1]/img[5]",
+      "Link Position": "Content",
+      "Link Origin": "HTML"
+    },
+    {
+      "From": "http://127.0.0.1:8902/images/gallery.html",
+      "To": "http://127.0.0.1:8902/img/size-102400.png",
+      "Alt Text": "Exactly 102400 bytes",
+      "Size": "102400",
+      "Real Dimensions (WxH)": "",
+      "Dimensions in Attributes (WxH)": "",
+      "Display Dimensions (WxH)": "",
+      "Potential Savings": "",
+      "Path Type": "Root-Relative",
+      "Link Path": "/html[1]/body[1]/main[1]/img[2]",
+      "Link Position": "Content",
+      "Link Origin": "HTML"
+    },
+    {
+      "From": "http://127.0.0.1:8902/images/gallery.html",
+      "To": "http://127.0.0.1:8902/img/size-102401.png",
+      "Alt Text": "One byte more than 102400",
+      "Size": "102401",
+      "Real Dimensions (WxH)": "",
+      "Dimensions in Attributes (WxH)": "",
+      "Display Dimensions (WxH)": "",
+      "Potential Savings": "",
+      "Path Type": "Root-Relative",
+      "Link Path": "/html[1]/body[1]/main[1]/img[3]",
+      "Link Position": "Content",
+      "Link Origin": "HTML"
+    },
+    {
+      "From": "http://127.0.0.1:8902/images/gallery.html",
+      "To": "http://127.0.0.1:8902/img/small.png",
+      "Alt Text": "Small image",
+      "Size": "74",
+      "Real Dimensions (WxH)": "",
+      "Dimensions in Attributes (WxH)": "",
+      "Display Dimensions (WxH)": "",
+      "Potential Savings": "",
+      "Path Type": "Root-Relative",
+      "Link Path": "/html[1]/body[1]/main[1]/img[1]",
+      "Link Position": "Content",
+      "Link Origin": "HTML"
+    },
+    {
+      "From": "http://127.0.0.1:8902/images/gallery.html",
+      "To": "http://localhost:8902/img/size-102401.png",
+      "Alt Text": "Same big image on the external host",
+      "Size": "102401",
+      "Real Dimensions (WxH)": "",
+      "Dimensions in Attributes (WxH)": "",
+      "Display Dimensions (WxH)": "",
+      "Potential Savings": "",
+      "Path Type": "Absolute",
+      "Link Path": "/html[1]/body[1]/main[1]/img[4]",
+      "Link Position": "Content",
+      "Link Origin": "HTML"
+    }
+  ],
+  "native_images_all": {
+    "export": "images_all",
+    "site": "parity-onpage",
+    "ref_rows": 12,
+    "os_rows": 13,
+    "matched": 12,
+    "missing_in_os": [],
+    "extra_in_os": [],
+    "cells_compared": 57,
+    "cells_equal": 57,
+    "agreement_pct": 100.0,
+    "columns": [
+      {
+        "ref_column": "Content Type",
+        "os_column": "Content",
+        "compared": 12,
+        "errors": 0,
+        "examples": []
+      },
+      {
+        "ref_column": "Size (Bytes)",
+        "os_column": "Size",
+        "compared": 12,
+        "errors": 0,
+        "examples": []
+      },
+      {
+        "ref_column": "IMG Inlinks",
+        "os_column": "IMG Inlinks",
+        "compared": 9,
+        "errors": 0,
+        "examples": []
+      },
+      {
+        "ref_column": "Indexability",
+        "os_column": "Indexability",
+        "compared": 12,
+        "errors": 0,
+        "examples": []
+      },
+      {
+        "ref_column": "Indexability Status",
+        "os_column": "Indexability Status",
+        "compared": 12,
+        "errors": 0,
+        "examples": []
+      }
+    ],
+    "applied_deviations": [
+      {
+        "id": "DEV-018",
+        "spec": "ONPAGE-171",
+        "kind": "OS-Festlegung",
+        "note": "IMG Inlinks (OpenSpider-Erweiterung) zaehlt auch Hyperlinks auf Bilder (ONPAGE-170 Nr. 2); die Referenz zaehlt nur eingebettete Bilder.",
+        "scope": "cell",
+        "count": 3,
+        "keys": [
+          "{BASE}/ctype/t-png.png",
+          "{BASE}/ctype/t-svg.svg",
+          "{EXT}/ctype/t-png.png"
+        ]
+      },
+      {
+        "id": "DEV-028",
+        "spec": "ONPAGE-170",
+        "kind": "OS-Festlegung",
+        "note": "Grundmenge des Images-Tabs: auch per Bild-Referenz entdeckte Bild-URLs mit Fehlerantwort (Images-Intro, ONPAGE-170); die Referenz fuehrt das nicht abrufbare Bild (404) nicht.",
+        "scope": "extra_in_os",
+        "count": 1,
+        "keys": [
+          "{BASE}/img/missing.png"
+        ]
+      }
+    ],
+    "dropped_ref_columns": [],
+    "ignored_columns": [
+      {
+        "column": "Dimensions",
+        "reason": "Real Dimensions nur mit Rendering (ONPAGE-172, M2)"
+      }
+    ],
+    "unmapped_ref_columns": [],
+    "unmapped_os_columns": [],
+    "missing_ref_columns": [],
+    "missing_os_columns": [],
+    "ignored_ref_rows": [],
+    "os_only_rows": [],
+    "threshold_pct": 97.0,
+    "url_set_identical": true,
+    "passed": true,
+    "failures": []
+  },
+  "conclusion": "Der einzige durch DEV-028 belegte Populationsunterschied ist img/missing.png (404). Eigener Missing-Size-Filter hat 10 URLs und 10 img-Instanzen ohne Abmessungen, einschliesslich genau dieses Bildes. Die drei weiteren All-URLs sind reine Bild-Hyperlinks ohne img-Instanz. Ohne die bereits begruendete 404-URL bleiben neun Treffer; externe URL ist keine neue Ausnahme."
+}

@@ -405,7 +405,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
   - [ ] `Meta Robots 1` enthält den `content` des ersten `<meta name="robots">` (Name case-insensitiv), z. B. `noindex, follow`.
   - [ ] `X-Robots-Tag 1` enthält den Wert des ersten `X-Robots-Tag`-Headers.
   - [ ] `Meta Refresh 1` enthält den `content` des ersten `<meta http-equiv="refresh">`, z. B. `5; url=/ziel`.
-  - [ ] `Canonical Link Element 1` enthält die absolut aufgelöste URL aus `<link rel="canonical">`.
+  - [ ] `Canonical Link Element 1` enthält die absolut aufgelöste URL aus `<link rel="canonical">`, in der Anzeige ohne Fragment wie im Canonicals-Tab (K2-96); die gespeicherte Originalannotation bleibt als TECH-022-Beleg erhalten.
   - [ ] `HTTP rel="next" 1` stammt aus einem `Link`-Header mit `rel="next"`.
 - **Testfixture:** `onpage-internal/elements.html` mit allen Elementen; Route `/elements-header` mit `X-Robots-Tag: noindex` und `Link: <{{BASE_URL}}/p2>; rel="next"`.
 
@@ -424,7 +424,8 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
 
 ### ONPAGE-013 Internal: Word Count, Text Ratio
 - **Priorität:** P0
-- **Beschreibung:** `Word Count` gemäß ONPAGE-141 (nur Inhaltsbereich). `Text Ratio` = (Anzahl Zeichen des sichtbaren Textes im `<body>` ohne Markup, ohne `script`/`style`/`noscript`/`template`) ÷ (Anzahl Zeichen des gesamten HTML-Quelltextes) × 100, eine Nachkommastelle (**Annahme A-7**: Text Ratio nutzt den gesamten Body, nicht nur den Inhaltsbereich).
+- **Präzisierung (K2-96):** In den Body reparierte `title`-Elemente bilden für die Text Ratio eine Textgrenze. Normale Inline-Elemente bleiben zusammenhängend; die Wortzählungsregeln bleiben ONPAGE-141.
+- **Beschreibung:** `Word Count` gemäß ONPAGE-141 (nur Inhaltsbereich). `Text Ratio` = (Anzahl Zeichen des sichtbaren Textes im `<body>` ohne Markup, ohne `script`/`style`/`noscript`/`template`) ÷ (Anzahl Zeichen des gesamten HTML-Quelltextes) × 100, drei Nachkommastellen (K2-87, SQ-08; vorher eine) (**Annahme A-7**: Text Ratio nutzt den gesamten Body, nicht nur den Inhaltsbereich).
 - **Eingaben/Konfiguration:** Inhaltsbereich (ONPAGE-140).
 - **Ausgabe:** Spalten `Word Count`, `Text Ratio`.
 - **Akzeptanzkriterien:**
@@ -574,16 +575,14 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
 
 ### ONPAGE-023 Internal-Filter Flash, Other (+ Erweiterung Media, Fonts, XML)
 - **Priorität:** P1
-- **Beschreibung:** Paritätsfilter: `Flash` (interne Klasse `Plugins`, d. h. `.swf`-Inhalte gemäß ONPAGE-020) und `Other`. Die öffentliche Tab-Doku der Referenz nennt für Internal nur die Filter HTML, JavaScript, CSS, Images, PDF, Flash, Other und Unknown. Die Filter `Media`, `Fonts` und `XML` sind daher eine **OpenSpider-Erweiterung** (V-1; **Annahme A-49**: die Referenz führt solche URLs unter Other): Im Paritätsmodus (`ui.parity_filters = true`, Default) werden Media-, Font- und XML-URLs im Filter `Other` geführt und die drei Zusatzfilter ausgeblendet; im erweiterten Modus erscheinen sie als eigene Filter und fehlen dann in `Other`. Die Klassenzuordnung in ONPAGE-020 (Speicherwert) bleibt in beiden Modi gleich.
-- **Eingaben/Konfiguration:** `ui.parity_filters`; Medien-Links (`<video>`, `<audio>`, `<source>`) werden nur entdeckt, wenn die entsprechende Crawl-Option aktiv ist.
-- **Ausgabe:** Filter `Flash`, `Other`; optional `Media`, `Fonts`, `XML`.
+- **Beschreibung:** Filter `Plugins` (interne Klasse `Plugins`, d. h. `.swf`-Inhalte gemäß ONPAGE-020; bis K2-87 „Flash“), `Media`, `Fonts`, `XML` und `Other`. Die Referenz führt diese Klassen als eigene Filter (Overview `parity-m2-onpage`: Media, Fonts, XML, Plugins, Other je 1); **Annahme A-49 ist widerlegt** (K2-87, SQ-07). `Other` enthält nur URLs ohne eine der übrigen Klassen (z. B. `application/octet-stream`, `application/json`, `text/plain`). Die Filter sind unabhängig von `ui.parity_filters` sichtbar; die Klassenzuordnung in ONPAGE-020 (Speicherwert) bleibt gleich.
+- **Eingaben/Konfiguration:** Medien-Links (`<video>`, `<audio>`, `<source>`) werden nur entdeckt, wenn die entsprechende Crawl-Option aktiv ist. `ui.parity_filters` wirkt nicht mehr auf diese Filter (K2-87).
+- **Ausgabe:** Filter `Plugins`, `Media`, `Fonts`, `XML`, `Other`.
 - **Akzeptanzkriterien:**
-  - [ ] Der Filter heißt in UI und Export „Flash“ (nicht „Plugins“) und enthält `/t-swf`.
-  - [ ] Paritätsmodus: `Other` enthält `/t-json`, `/t-mp4`, `/t-woff2`, `/t-xml` und `/sitemap.xml`; die Filter Media/Fonts/XML sind nicht sichtbar.
-  - [ ] Erweiterter Modus: Media enthält `/t-mp4`; Fonts `/t-woff2`; XML `/t-xml` und `/sitemap.xml`; Other enthält nur noch `/t-json` und `text/plain`-Dokumente.
-  - [ ] Ein `text/plain`-Dokument erscheint in beiden Modi in Other.
-  - [ ] In beiden Modi gilt: Summe aller sichtbaren Inhaltstyp-Filter = All.
-- **Testfixture:** `onpage-ctype/` (beide Modi).
+  - [ ] Der Filter heißt in UI und Export „Plugins“ (vorher „Flash“) und enthält `/t-swf`; die Filter-Kennung in `M1-filters.toml`/`M2-filters.toml` stellt M2-N07 um.
+  - [ ] Media enthält `/t-mp4`; Fonts `/t-woff2`; XML `/t-xml` und `/sitemap.xml`; Other enthält nur `/t-json` und `text/plain`-Dokumente – bei `ui.parity_filters` an und aus gleich.
+  - [ ] Summe aller Inhaltstyp-Filter = All.
+- **Testfixture:** `onpage-ctype/` (Läufe mit `ui.parity_filters` an und aus, Ergebnis gleich).
 
 ### ONPAGE-024 Internal-Filter Unknown
 - **Priorität:** P0
@@ -618,7 +617,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
 
 ### ONPAGE-026 External: Inhaltstyp-Filter
 - **Priorität:** P0
-- **Beschreibung:** Gleiche Klassenfilter wie Internal (HTML, JavaScript, CSS, Images, PDF, Flash, Other, Unknown; im erweiterten Modus zusätzlich Media, Fonts, XML – ONPAGE-023) über externe URLs, Logik ONPAGE-020.
+- **Beschreibung:** Gleiche Klassenfilter wie Internal (HTML, JavaScript, CSS, Images, PDF, Plugins, Media, Fonts, XML, Other, Unknown – ONPAGE-023, K2-87) über externe URLs, Logik ONPAGE-020.
 - **Eingaben/Konfiguration:** keine.
 - **Ausgabe:** Filter je Klasse.
 - **Akzeptanzkriterien:**
@@ -632,7 +631,7 @@ Grundmenge („All“): alle internen URLs, die gecrawlt oder entdeckt wurden �
 
 ## 4 Security
 
-Grundmenge („All“): alle internen URLs (alle Inhaltstypen). Die seitenbasierten Filter (Mixed Content, Form …, Unsafe Cross-Origin, Protocol-Relative) betreffen nur interne HTML-Seiten mit Status 2xx; die Header-Filter (ONPAGE-038 … 042) alle internen URLs mit HTTP-Antwort, unabhängig vom Inhaltstyp (**Annahme A-12**).
+Grundmenge („All“): alle internen URLs (alle Inhaltstypen). Die seitenbasierten Filter (Mixed Content, Form …, Unsafe Cross-Origin, Protocol-Relative) betreffen nur interne HTML-Seiten mit Status 2xx; die Header-Filter ONPAGE-039 … 042 alle internen URLs mit 2xx-Antwort, unabhängig vom Inhaltstyp (K2-85, SQ-03; **Annahme A-12** in der Fassung „jede HTTP-Antwort“ ist widerlegt: die Referenz zählt 3xx/4xx nicht, Nicht-HTML mit 2xx schon); ONPAGE-038 prüft alle internen HTTPS-Antworten (A-14, kein Gegenbeleg).
 
 ### ONPAGE-030 Security: Spalten
 - **Priorität:** P1
@@ -746,6 +745,7 @@ Grundmenge („All“): alle internen URLs (alle Inhaltstypen). Die seitenbasier
   - [ ] Header fehlt → im Filter; Header mit beliebigem Wert → nicht.
   - [ ] Nur Report-Only-Header → im Filter.
   - [ ] Nur Meta-CSP → im Filter.
+  - [ ] Grundmenge (gilt ebenso für ONPAGE-040 … 042): 404- oder 301-Antwort ohne Header → nicht im Filter; Bild mit 200 ohne Header → im Filter (K2-85, SQ-03).
 - **Testfixture:** `onpage-security-http/` Routen `/csp-yes`, `/csp-no`, `/csp-ro`, `csp-meta.html`.
 
 ### ONPAGE-040 Security-Filter Missing X-Content-Type-Options Header
@@ -781,10 +781,9 @@ Grundmenge („All“): alle internen URLs (alle Inhaltstypen). Die seitenbasier
 
 ### ONPAGE-043 Security-Filter Bad Content Type
 - **Priorität:** P1
-- **Beschreibung:** Interne URLs, deren deklarierter Content-Type nicht zum tatsächlichen Inhalt passt oder ungültig/veraltet ist. Regeln:
-  1. MIME-Typ syntaktisch ungültig (kein `type/subtype`) → Treffer.
+- **Beschreibung:** Interne URLs mit 2xx-Antwort, deren deklarierter Content-Type nicht zum tatsächlichen Inhalt passt oder veraltet ist. Ein fehlender oder explizit leerer `Content-Type`-Header ist kein Treffer; die MIME-Syntax allein wird nicht geprüft. Die bisherigen Regeln 2–4 gelten ausschließlich für 2xx-Antworten (K2-94). Regeln:
   2. Die URL hat eine **bekannte** Dateiendung (`.html/.htm`, `.css`, `.js/.mjs`, `.png`, `.jpg/.jpeg`, `.gif`, `.webp`, `.avif`, `.svg`, `.ico`, `.pdf`, `.xml`, `.json`, `.woff/.woff2/.ttf/.otf`, `.mp4/.webm/.mp3`) und der deklarierte Typ gehört nicht zur erwarteten Klasse (ONPAGE-020) → Treffer. URLs ohne oder mit unbekannter Endung werden nach Regel 2 nicht geprüft.
-  3. Inhalts-Sniffing: Magic Bytes widersprechen dem deklarierten Typ (z. B. PNG-Signatur bei `text/html`, HTML-Markup bei `image/jpeg`) → Treffer.
+  3. Inhalts-Sniffing: Magic Bytes widersprechen dem deklarierten Typ (z. B. PNG-Signatur bei `text/html`, HTML-Markup bei `image/jpeg`) → Treffer. Beim generischen Typ `application/octet-stream` findet kein Sniffing statt (K2-87, SQ-13c; Beleg Referenz `parity-m2-security` `/submit`).
   4. Veraltete Typen aus einer konfigurierbaren Liste → Treffer. Default-Liste für Parität: `text/javascript`, `application/x-javascript` (Referenz empfiehlt `application/javascript`). Hinweis: RFC 9239 hat `text/javascript` wieder zum Standard erklärt; die Liste ist daher abschaltbar.
 - **Eingaben/Konfiguration:** `security.obsolete_mime_types` (Liste).
 - **Ausgabe:** Filter `Bad Content Type`; zusätzliche Spalte im Filter `Expected Content Type` (Erweiterung OpenSpider).
@@ -794,7 +793,8 @@ Grundmenge („All“): alle internen URLs (alle Inhaltstypen). Die seitenbasier
   - [ ] `/script.js` mit `application/javascript` → kein Treffer.
   - [ ] `/page` (ohne Endung) mit `text/plain` und Text-Body → kein Treffer.
   - [ ] `/logo` (ohne Endung) mit `text/html`, Body beginnt mit PNG-Signatur → Treffer (Regel 3).
-  - [ ] Content-Type `html` → Treffer (Regel 1).
+  - [ ] Content-Type `html` ohne Endungs- oder Inhaltswiderspruch → kein Treffer; explizit leerer Header → kein Treffer; 404 mit PNG-Endung und `text/plain` → kein Treffer (K2-94).
+  - [ ] `/submit` (ohne Endung) mit `application/octet-stream` und HTML-Body → kein Treffer; 301 ohne `Content-Type` → kein Treffer (K2-87).
 - **Testfixture:** `onpage-security-http/` Routen `/image.jpg` (JS-Typ), `/script.js` (zwei Varianten), `/page`, `/logo` (PNG-Bytes, html-Typ), `/bad-syntax`.
 
 ---
@@ -908,12 +908,13 @@ Grundmenge („All“): alle internen und externen URLs mit Antwort- oder Blocki
 
 ### ONPAGE-059 Filter Redirection (HTTP Refresh)
 - **Priorität:** P1
-- **Beschreibung:** URLs, deren Antwort einen `Refresh`-HTTP-Header mit Ziel-URL enthält (Syntax wie Meta Refresh), Ziel ≠ eigene URL. Redirect Type „HTTP Refresh Redirect“.
+- **Beschreibung:** URLs, deren Antwort einen `Refresh`-HTTP-Header mit Ziel-URL enthält (Syntax wie Meta Refresh), auch mit der eigenen URL als Ziel (K2-86, SQ-05; vorher „Ziel ≠ eigene URL“; Beleg Referenz `refresh-self.html`). Redirect Type „HTTP Refresh Redirect“.
 - **Eingaben/Konfiguration:** keine.
 - **Ausgabe:** Filter `Redirection (HTTP Refresh)`.
 - **Akzeptanzkriterien:**
   - [ ] Route `/http-refresh` (200, Header `Refresh: 0; url=/ok`) → im Filter, Ziel wird gecrawlt.
   - [ ] Header `Refresh: 10` ohne URL → nicht im Filter.
+  - [ ] Header `Refresh: 0; url=<eigene URL>` → im Filter, Indexability `Redirected` (TECH-001).
 - **Testfixture:** `onpage-rc/` Routen `/http-refresh`, `/http-refresh-nourl`.
 
 ### ONPAGE-060 Filter Redirect Chain
@@ -1090,12 +1091,12 @@ Grundmenge („All“): alle internen URLs. Prüfungen arbeiten auf der Anzeigef
 - **Priorität:** P1
 - **Beschreibung:** Interne URLs, die heuristisch zur seiteninternen Suche gehören. Treffer, wenn mindestens eine Bedingung gilt (case-insensitiv) (**Annahme A-26**, Heuristik ist OpenSpider-eigen):
   1. Ein Pfadsegment ist exakt einer der Werte `search`, `suche`, `recherche`, `buscar`, `busca`, `cerca`, `zoeken`, `szukaj`, `sok`, `haku`, `catalogsearch`.
-  2. Ein Query-Parameter-Name ist einer von `s`, `q`, `query`, `search`, `search_query`, `searchterm`, `keyword`, `keywords`, `k`, `term` – und der Wert ist nicht leer.
+  2. Ein Query-Parameter-Name ist einer von `q`, `query`, `search`, `search_query`, `searchterm`, `keyword`, `keywords`, `k`, `term` – und der Wert ist nicht leer.
   3. Die Seite enthält strukturierte Daten `SearchAction` mit einem `urlTemplate`, dessen Muster auf die URL passt (Erweiterung).
 - **Eingaben/Konfiguration:** `url.internal_search_segments`, `url.internal_search_params` (Listen, Defaults wie oben).
 - **Ausgabe:** Filter `Internal Search`.
 - **Akzeptanzkriterien:**
-  - [ ] `/search?q=schuhe` → im Filter; `/suche/schuhe` → im Filter; `/?s=test` → im Filter.
+  - [ ] `/search?q=schuhe` → im Filter; `/suche/schuhe` → im Filter; `/?s=test` → nicht im Filter (Parameter `s` gestrichen, Beleg Referenz `parity-m2-onpage` `/?s=stone`; K2-87, SQ-13b).
   - [ ] `/research/` → nicht (Segment-Gleichheit, nicht Teilstring).
   - [ ] `/?q=` (leer) → nicht.
   - [ ] Nach Entfernen von `q` aus der Liste → `/search?q=…` bleibt wegen Segment `search` im Filter.
@@ -1558,15 +1559,15 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
 
 ### ONPAGE-140 Inhaltsbereich (Content Area)
 - **Priorität:** P0
-- **Beschreibung:** Legt fest, welcher Text einer Seite in Wortzählung, Near-Duplicates, Lesbarkeit, Rechtschreibung/Grammatik (Body-Teil), Low Content, Soft 404, Lorem Ipsum und Embeddings eingeht. Basis ist der Textinhalt des `<body>`. Standardmäßig ausgeschlossen: Elemente `nav` und `footer` samt Nachfahren. Immer ausgeschlossen: `script`, `style`, `noscript`, `template`, `svg`, Kommentare. Konfigurierbar sind Listen „Include“ und „Exclude“ für Elementnamen, Klassen und IDs.
+- **Beschreibung:** Legt fest, welcher Text einer Seite in Wortzählung, Near-Duplicates, Lesbarkeit, Rechtschreibung/Grammatik (Body-Teil), Low Content, Soft 404, Lorem Ipsum und Embeddings eingeht. Basis ist der Textinhalt des `<body>`. Standardmäßig ausgeschlossen: Elemente `nav`, `footer`, `header` und `aside` samt Nachfahren (K2-87/SQ-09, bestätigt durch N08 und K2-95: M1 38/38, Word Count ohne Zellfehler). Immer ausgeschlossen: `script`, `style`, `noscript`, `template`, `svg`, Kommentare. Konfigurierbar sind Listen „Include“ und „Exclude“ für Elementnamen, Klassen und IDs.
   - Ist mindestens eine Include-Regel gesetzt, wird nur Text innerhalb passender Elemente verwendet; Exclude-Regeln wirken danach (Exclude gewinnt bei Verschachtelung).
   - Block-Grenzen (`p`, `div`, `li`, `td`, `th`, `h1`–`h6`, `br`, `section`, `article` …) erzeugen einen Leerraum, damit `<p>a</p><p>b</p>` zu „a b“ wird, nicht „ab“.
   - Versteckter Text (CSS `display:none`, `hidden`-Attribut) wird **nicht** ausgeschlossen.
   - Im Rendering-Modus wird das gerenderte DOM verwendet.
-- **Eingaben/Konfiguration:** `content.area.include_elements|classes|ids`, `content.area.exclude_elements|classes|ids` (Default exclude_elements = [`nav`, `footer`]).
+- **Eingaben/Konfiguration:** `content.area.include_elements|classes|ids`, `content.area.exclude_elements|classes|ids` (Default exclude_elements = [`nav`, `footer`, `header`, `aside`], K2-95).
 - **Ausgabe:** gespeicherter Seitentext je URL (komprimiert in `os-store`, Voraussetzung für Neuanalyse ohne Recrawl).
 - **Akzeptanzkriterien:**
-  - [ ] Default: Text in `<nav>` und `<footer>` fehlt; Text in `<header>`, `<aside>`, `<main>` ist enthalten.
+  - [ ] Default: Text in `<nav>` und `<footer>` fehlt; Text in `<main>` ist enthalten; Text in `<header>` und `<aside>` fehlt (SQ-09/K2-95) (Beleg Referenz `parity-m2-links` `positions.html`: Word Count 1).
   - [ ] Exclude-Klasse `mobile-menu` entfernt `<div class="menu mobile-menu">…</div>` (Klassenvergleich tokenweise).
   - [ ] Exclude-ID `comments` entfernt `<section id="comments">`.
   - [ ] Include-Element `main` → nur Text aus `<main>`.
@@ -1577,7 +1578,7 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
 
 ### ONPAGE-141 Wortzählung
 - **Priorität:** P0
-- **Beschreibung:** `Word Count` = Anzahl Token des Inhaltsbereich-Textes, getrennt an Unicode-Leerraum. Jedes nicht-leere Token zählt, auch reine Satzzeichen-Token wie „–“ (**Annahme A-35**). **Dazu kommt je Listenelement `<li>` im Inhaltsbereich ein Token** (**Annahme A-35b**, Paritätsbefund M1 vom 14.10.2026, Befund N-03, K-59, präzisiert durch K-68 vom 15.10.2026). M1-P31 hat die Regel zellgenau geprüft: Token + Anzahl `<li>` im Inhaltsbereich trifft `Word Count` auf allen 211 HTML-Seiten der Paritäts-Sites (0 Abweichungen). Die vorherige Fassung „+ 1 je `<a href>`“ ist widerlegt: Links in `<p>` zählen in der Referenz nicht (`out-basic-site`, `parity-technical` `/links/*`). `<li>` in ausgeschlossenen Bereichen (`nav`, `footer`, Exclude-Regeln) zählen nicht, Include-Regeln gelten. Auf allen Fixture-Seiten enthält jedes `<li>` genau einen Link; ein `<li>` ohne Link ist gegen die Referenz nicht belegt und zählt nach der Regel ebenfalls (Annahme, M2-S06). Keine Sprachsegmentierung (CJK-Text ohne Leerzeichen zählt als ein Wort pro Block – bekannte Einschränkung, dokumentieren).
+- **Beschreibung:** `Word Count` = Anzahl Token des Inhaltsbereich-Textes, getrennt an Unicode-Leerraum. Jedes nicht-leere Token zählt, auch reine Satzzeichen-Token wie „–“ (**Annahme A-35**). **Dazu kommt je Listenelement `<li>` im Inhaltsbereich ein Token** (**Annahme A-35b**, Paritätsbefund M1 vom 14.10.2026, Befund N-03, K-59, präzisiert durch K-68 vom 15.10.2026). M1-P31 hat die Regel zellgenau geprüft: Token + Anzahl `<li>` im Inhaltsbereich trifft `Word Count` auf allen 211 HTML-Seiten der Paritäts-Sites (0 Abweichungen). Die vorherige Fassung „+ 1 je `<a href>`“ ist widerlegt: Links in `<p>` zählen in der Referenz nicht (`out-basic-site`, `parity-technical` `/links/*`). `<li>` in ausgeschlossenen Bereichen (`nav`, `footer`, Exclude-Regeln) zählen nicht, Include-Regeln gelten. Auf allen Fixture-Seiten enthält jedes `<li>` genau einen Link; ein `<li>` ohne Link ist gegen die Referenz nicht belegt und zählt nach der Regel ebenfalls (Annahme, M2-S06). **K2-87/SQ-09, bestätigt durch N08 (K2-95):** Jede Grenze eines `<a>`-Elements trennt wie Leerraum, aneinandergrenzende Anker werden nicht verkettet (Beleg Referenz `parity-m2-links` `anchors.html`, K-68 grün). Keine Sprachsegmentierung (CJK-Text ohne Leerzeichen zählt als ein Wort pro Block – bekannte Einschränkung, dokumentieren).
 - **Eingaben/Konfiguration:** Inhaltsbereich.
 - **Ausgabe:** Spalte `Word Count` (Internal, Content).
 - **Akzeptanzkriterien:**
@@ -1586,7 +1587,8 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
   - [ ] „E-Mail-Adresse“ → 1.
   - [ ] `a&nbsp;b` → 2 (NBSP trennt).
   - [ ] Leerer Body → 0.
-  - [ ] `area.html` aus ONPAGE-140 → 5 + 100 + 15 + 30 + 10 + 3 = 163 (nur nav/footer ausgeschlossen; die Fixture enthält im Inhaltsbereich keine Listenelemente `<li>`).
+  - [ ] `area.html` aus ONPAGE-140 → 100 + 15 + 30 + 3 = 148 (`nav`, `footer`, `header` und `aside` ausgeschlossen; keine Listenelemente `<li>` im Inhaltsbereich).
+  - [ ] [vorbehaltlich N08, SQ-09] `<main><p><a href="/a">click here</a><a href="/b">read more</a><a href="/c"></a><a href="/d">River guide</a></p></main>` → 6.
   - [ ] `<main><p>eins zwei</p><ul><li><a href="/a">Seite 1</a></li><li><a href="/b">Seite 2</a></li></ul></main><nav><a href="/c">Menü</a></nav>` → 2 + 4 + 2 = 8 (A-35b: zwei `<li>`; `nav` ist ausgeschlossen).
   - [ ] `<main><p>Mehr <a href="/x">hier lesen</a></p></main>` → 3 (ein Link im Absatz zählt nicht zusätzlich; K-68).
   - [ ] `<main><ul><li>eins</li><li>zwei</li></ul></main>` → 4 (`<li>` ohne Link zählt ebenfalls; Annahme A-35b, unbelegt).
@@ -1704,30 +1706,32 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
 ### ONPAGE-149 Lesbarkeit: Flesch-Berechnung und Spalten
 - **Priorität:** P1
 - **Beschreibung:** Berechnet für jede Seite der Grundmenge mit ≥ 1 Wort den Flesch Reading Ease Score (englische Formel) über den Inhaltsbereich-Text:
-  - **Wörter W:** Token aus ONPAGE-141, die mindestens einen Buchstaben enthalten.
-  - **Sätze S:** Satzende an `.`, `!`, `?`, `…` gefolgt von Leerraum oder Textende; zusätzlich endet jeder Block (Absatz, Listeneintrag, Tabellenzelle, Überschrift) einen Satz, sofern er Wörter enthält (**Annahme A-41**). `3.5` oder `z.B.` ohne folgendes Leerzeichen trennt nicht.
-  - **Silben Syl** (englische Heuristik): Wort kleinschreiben, Nicht-Buchstaben entfernen; Anzahl Gruppen aufeinanderfolgender Vokale `[aeiouy]` (inkl. äöü als Vokal); endet das Wort auf `e` (aber nicht auf Konsonant + `le`) und Anzahl > 1, minus 1; Minimum 1.
-  - **Score** = 206,835 − 1,015 × (W/S) − 84,6 × (Syl/W), auf [0, 100] begrenzt, eine Nachkommastelle.
-  - **Readability**-Label: Aus der Referenz-Doku **belegt** sind nur zwei Bänder: 30–49 „Difficult“ und 0–29 „Very Difficult“ (beide mit eigenem Filter). Die übrigen Labels verweist die Referenz auf die übliche Flesch-Einteilung, ohne die Bezeichnungen im Text zu nennen. OpenSpider verwendet vorläufig (**Annahme A-54**, Paritätstest V-5): ≥ 90 „Very Easy“; 80–89,9 „Easy“; 70–79,9 „Fairly Easy“; 60–69,9 „Normal“; 50–59,9 „Fairly Difficult“. Die Bezeichnung für 60–69,9 ist besonders unsicher (in Flesch-Tabellen kursieren u. a. „Standard“ und „Plain English“); die Labels liegen daher als Daten (`readability_bands.toml`) vor und werden nach V-5 angepasst.
-  - `Sentence Count` = S (Spalte laut Referenz-Tutorial, siehe ONPAGE-142 Fußnote ¹); `Average Words Per Sentence` = W/S (eine Nachkommastelle).
+  - **Kalibrierung K2-87/SQ-08, K2-95:**
+    1. W aus der Wortzahl des Inhaltsbereichs einschließlich Zahlentoken und A-35b. Auf der Startseite ergeben 55 Linktexte plus 55 Listeneinträge W=110. Der Satztext enthält keine künstlichen Listenpunktzeichen.
+    2. Erst nichtleere Satzfragmente an `. ! ? … :` sowie Blockgrenzen bilden; Dezimalpunkte zwischen ASCII-Ziffern und Initialismen wie `z.B.` bleiben erhalten. Auch Punkte/Fragezeichen innerhalb von URL-Texten trennen. Anschließend jedes Fragment an Wortgrenzen umbrechen, bevor die Zeile 80 Unicode-Zeichen erreicht (höchstens 79). Lange einzelne Token werden nicht zerschnitten. Satzzeichen belegen keine Umbruchbreite. Ankergrenzen allein sind keine Satzgrenzen. Gegenprobe: auf allen 379 synthetischen HTML-Seiten stimmt S; Breite 80 Zeichen ergibt 28 Abweichungen, 80 Bytes 20, 79 Zeichen vor Abtrennung des Endpunkts noch 3. Die Trennung vor dem Umbruch beseitigt auch diese drei.
+    3. Kleinschreibung; Trennzeichen innerhalb und am Ende eines Tokens bleiben erhalten, damit Vokalgruppen nicht über Bindestriche oder `&` zusammenfallen und `notice.` anders als `notice` gezählt wird. Stummes `ed`/`es` am Tokenende entfernen; `es` nach c/g/s/x/z bzw. ch/sh bleibt. ASCII-Vokalgruppen aeiouy zählen. `ia`/`io` zählen eine zusätzliche Gruppe, außer nach c/s/t. Für abschließendes e eine Gruppe abziehen, außer bei ee oder Konsonant+le. Die Formel verwendet den rohen Gruppenzähler einschließlich **0 für „the“**; die öffentliche Einzelwort-Hilfe `syllables` behält ihr spezifiziertes Minimum 1. Damit ergeben sich beim Absatz mit vier „the“ Syl=28, bei `kategorie` und `variante` jeweils 3, bei `tree` 1 und `images` 3. Die Mitnahme von äöü erklärt zusätzliche Silben und zu niedrige Scores auf der alten synthetischen Site.
+    4. Score nach der unveränderten Flesch-Formel, Begrenzung 0…100, Rundung erst am Ende auf drei Nachkommastellen. Labels nach der Banddatei.
+  - **Score** = 206,835 − 1,015 × (W/S) − 84,6 × (Syl/W), auf [0, 100] begrenzt, drei Nachkommastellen (K2-87, SQ-08; vorher eine).
+  - **Readability**-Label nach der Werteliste der Referenz (V-5 durch Q02 belegt, K2-87, SQ-08; ersetzt A-54): ≥ 90 „Very Easy“; 80 bis < 90 „Easy“; 70 bis < 80 „Fairly Easy“; 60 bis < 70 „Normal“; 50 bis < 60 „Fairly Hard“; 30 bis < 50 „Hard“; < 30 „Very Hard“. Die Filter ONPAGE-150/151 behalten ihre Namen „Readability Difficult“/„Readability Very Difficult“ und entsprechen den Labels „Hard“/„Very Hard“. Die Labels liegen als Daten vor (`readability_bands.toml`).
+  - `Sentence Count` = S (Spalte laut Referenz-Tutorial, siehe ONPAGE-142 Fußnote ¹); `Average Words Per Sentence` = W/S (drei Nachkommastellen, K2-87, SQ-08).
   - Die Formel ist für Englisch ausgelegt; sie wird (wie in der Referenz) auf alle Seiten angewandt. UI-Hinweis bei Seiten mit `lang` ≠ `en*`.
 - **Eingaben/Konfiguration:** Speicher-Schalter „Readability“ (Default an).
 - **Ausgabe:** Spalten `Sentence Count`, `Average Words Per Sentence`, `Flesch Reading Ease Score`, `Readability`.
 - **Akzeptanzkriterien:**
   - [ ] Silben: `the`→1, `cake`→1, `table`→2, `beautiful`→3, `readability`→5, `rhythm`→1 (y als Vokal), `a`→1.
-  - [ ] „The cat sat on the mat.“ → W=6, S=1, Syl=6, Rohscore 116,1 → 100,0, „Very Easy“.
-  - [ ] „Internationalization considerations necessitate comprehensive organizational restructuring.“ → Score 0,0, „Very Difficult“.
+  - [ ] „The cat sat on the mat.“ → W=6, S=1, Syl=4 (kalibrierter Rohzähler), Rohscore 144,345 → 100,000, „Very Easy“.
+  - [ ] „Internationalization considerations necessitate comprehensive organizational restructuring.“ → Score 0,000, „Very Hard“.
   - [ ] `<p>Ohne Punkt</p><p>Noch ein Satz</p>` → S = 2.
   - [ ] „Es kostet 3.5 Euro.“ → S = 1.
   - [ ] Seite ohne Wörter → alle vier Spalten leer.
   - [ ] Schalter aus → Spalten und Filter ONPAGE-150/151 ausgeblendet.
-  - [ ] Label-Zuordnung an den belegten Grenzen: 49,9 → „Difficult“, 30,0 → „Difficult“, 29,9 → „Very Difficult“, 0,0 → „Very Difficult“; die übrigen Grenzen (50, 60, 70, 80, 90) werden gegen `readability_bands.toml` getestet, nicht gegen fest codierte Texte.
+  - [ ] Label-Zuordnung an den Filtergrenzen: 49,999 → „Hard“, 30,000 → „Hard“, 29,999 → „Very Hard“, 0,000 → „Very Hard“, 50,000 → „Fairly Hard“; die übrigen Grenzen (60, 70, 80, 90) werden gegen `readability_bands.toml` getestet, nicht gegen fest codierte Texte.
   - [ ] Interne PDF mit `pdf.store = true` erhält einen Score aus dem extrahierten Dokumenttext (ONPAGE-166); Satzgrenzen zusätzlich an Absatzwechseln des PDF-Textlayers.
 - **Testfixture:** `onpage-content/flesch-*.html` mit den obigen Texten; Unit-Tests für Silbenzählung; zusätzlich `flesch-difficult.html` mit einem Text, dessen Score im Unit-Test auf 30–49,9 vorberechnet ist.
 
 ### ONPAGE-150 Content-Filter Readability Difficult
 - **Priorität:** P1
-- **Beschreibung:** Seiten mit 30 ≤ Flesch Score < 50 (Label „Difficult“: anspruchsvoller Text mit langen Sätzen und vielen mehrsilbigen Wörtern).
+- **Beschreibung:** Seiten mit 30 ≤ Flesch Score < 50 (Label „Hard“, K2-87: anspruchsvoller Text mit langen Sätzen und vielen mehrsilbigen Wörtern).
 - **Eingaben/Konfiguration:** keine (Bänder fest).
 - **Ausgabe:** Filter `Readability Difficult`.
 - **Akzeptanzkriterien:**
@@ -1737,7 +1741,7 @@ Grundmenge: ONPAGE-009 (interne HTML-Seiten mit Status 2xx; zusätzlich interne 
 
 ### ONPAGE-151 Content-Filter Readability Very Difficult
 - **Priorität:** P1
-- **Beschreibung:** Seiten mit Flesch Score < 30 (Label „Very Difficult“: sehr schwer zugänglicher Text, typischerweise Fach- oder Wissenschaftssprache).
+- **Beschreibung:** Seiten mit Flesch Score < 30 (Label „Very Hard“, K2-87: sehr schwer zugänglicher Text, typischerweise Fach- oder Wissenschaftssprache).
 - **Eingaben/Konfiguration:** keine.
 - **Ausgabe:** Filter `Readability Very Difficult`.
 - **Akzeptanzkriterien:**
@@ -2155,7 +2159,7 @@ Jede Annahme wird mit einer Paritätsfixture gegen die Referenz (Free-Version, �
 | A-9 | Selbstlinks zählen als In-/Outlink | 015 | Seite mit Link auf sich selbst |
 | A-10 | Eigener Redirect Type für HTTP Refresh | 018, 059 | Refresh-Header-Route |
 | A-11 | Externe URLs bei „Check external“ aus | 025 | Option aus, External-Tab prüfen |
-| A-12 | Security-Header-Filter für alle internen URLs mit Antwort (alle Inhaltstypen) | 038–042 | Bild ohne Security-Header in Filtern? |
+| A-12 | Widerlegt (Q02, K2-85, SQ-03): Header-Filter 039–042 nur für interne URLs mit 2xx (jeder Inhaltstyp); vorher „alle internen URLs mit Antwort“ | 038–042 | erledigt |
 | A-13 | Protocol-relative nur für Ressourcen, nicht `<a>` | 037 | `<a href="//…">` |
 | A-14 | HSTS-Filter nur für HTTPS-Antworten | 038 | HTTP-Crawl, Filter leer? |
 | A-15 | CSP Report-Only/Meta zählt nicht | 039 | Routen `/csp-ro`, `csp-meta.html` |
@@ -2186,7 +2190,7 @@ Jede Annahme wird mit einer Paritätsfixture gegen die Referenz (Free-Version, �
 | A-38 | Low Content unabhängig von Indexierbarkeit (solange `issues.ignore_non_indexable` aus) | 146 | `noindex`-Seite mit 50 Wörtern, Option an/aus |
 | A-39 | Soft 404 prüft Titel, H1, Inhaltsbereich; eigene Default-Phrasen | 147 | Phrase nur im Titel / nur im Footer |
 | A-40 | Lorem Ipsum über gesamten Body + Titel + Meta-Description | 148 | Lorem nur im Footer |
-| A-41 | Satzenden auch an Blockgrenzen | 149 | Liste ohne Punkte, Score vergleichen |
+| A-41 | Satzenden auch an Blockgrenzen (vorläufig) | 149 | Kalibrierung an den Q02-Referenzwerten in M2-N08 (K2-87, SQ-08) |
 | A-42 | srcset-Extraktion standardmäßig aus (Lower-Tab zeigt srcset-Instanzen trotzdem) | 170 | Default-Konfiguration der Referenz; Image Details einer srcset-Seite |
 | A-43 | `data:`-Bilder werden nicht gelistet | 170 | Inline-Base64-Bild |
 | A-44 | SVG ohne Real Dimensions | 172 | SVG mit viewBox |
@@ -2194,12 +2198,12 @@ Jede Annahme wird mit einer Paritätsfixture gegen die Referenz (Free-Version, �
 | A-46 | `role="presentation"` befreit nicht von Alt-Filtern | 175 | Bild mit role |
 | A-47 | Missing Size Attributes: ein fehlendes Attribut genügt | 179 | nur `width` |
 | A-48 | Savings-Formel flächenproportional | 180 | 3 Sizing-Fixtures, Potential-Savings-Spalte vergleichen |
-| A-49 | Referenz hat keine eigenen Filter Media/Fonts/XML; solche URLs stehen unter Other | 023, 026 | `onpage-ctype/` crawlen, Filterliste und Other-Inhalt vergleichen (V-1) |
+| A-49 | Widerlegt (Q02, K2-87, SQ-07): die Referenz führt Media/Fonts/XML/Plugins als eigene Filter, Other ohne diese Klassen | 023, 026 | erledigt |
 | A-50 | „Ignore Paginated URLs for Duplicate Filters“ standardmäßig an | 005 | Default-Konfiguration der Referenz; `pagination/`-Fixture ohne Konfigurationsänderung |
 | A-51 | Keine Annahme mehr: „Ignore Non-Indexable URLs for Issues“ standardmäßig **an**, festgelegt in CRAWL-089 (führend) | 009, 146 | Nur noch Paritätsbeobachtung: Default-Konfiguration der Referenz; `noindex.html` ohne Titel in Missing? (Abweichung ändert den OS-Standard nicht) |
 | A-52 | „Limit Page Content“ (Embeddings) standardmäßig aus | 159 → INTEG-180 (führend; dort weiterzuführen) | Default der erweiterten KI-Anbieter-Einstellungen |
 | A-53 | PDFs im Content-Tab nur mit Wortzahl, Lesbarkeit, Sprache, Rechtschreibung/Grammatik; keine Duplikat-/Embedding-/Low-Content-/Soft-404-/Lorem-Auswertung | 142, 146, 166 | zwei identische PDFs, PDF mit 50 Wörtern |
-| A-54 | Readability-Labels außerhalb der belegten Bänder (≥ 50) | 149 | Seiten mit Scores 55/65/75/85/95, Readability-Spalte vergleichen (V-5) |
+| A-54 | Erledigt (V-5 durch Q02, K2-87, SQ-08): Labels der Referenz Very Easy … Very Hard | 149 | – |
 | A-55 | Referenz schränkt Embedding-Analysen nicht auf indexierbare Seiten ein | 164 → INTEG-180 (führend; dort weiterzuführen) | `noindex`-Seite mit Embedding: erscheint sie in Semantically Similar? |
 | A-56 | SERP-Snippet-Grenzen Mobile/Tablet (vorläufig Titel 561 px, Beschreibung 680 px) | 194 | Preferences/Snippet der Referenz für Mobile und Tablet ablesen (V-7) |
 
@@ -2209,11 +2213,11 @@ Bündeln mehrere Annahmen bzw. unbelegte Werte zu einem Prüflauf gegen die Refe
 
 | Nr. | Gegenstand | Betrifft | Vorgehen |
 |---|---|---|---|
-| V-1 | Filterliste Internal/External (Flash vs. Plugins; Media/Fonts/XML) | 023, 026, A-49 | `onpage-ctype/` crawlen, Filterbaum der Referenz und Filterzugehörigkeit jeder Route exportieren |
+| V-1 | Filterliste Internal/External (Flash vs. Plugins; Media/Fonts/XML) | 023, 026, A-49 | Erledigt durch Q02 (K2-87, SQ-07) |
 | V-2 | PDF-Behandlung in Element-Tabs und Content-Tab | 009, 166, A-5b, A-53 | `onpage-pdf/` mit „Store PDF“ an/aus crawlen; Page Titles, Meta Keywords, Content exportieren |
 | V-3 | Pixel-Defaults (561/200/985/400) und Pixel-Metrik (Schrift, Größe) | 0.3, UI-038, 095, 096, 105, 106, A-3 | Filternamen nach Neuinstallation ablesen; 20 Golden-Titel und 20 Golden-Beschreibungen exportieren, Pixel-Spalten vergleichen (≤ 3 % je Wert) |
 | V-4 | Issue-Typ und -Priorität je Filter | UI-063 (führend), Erwartungswerte unten | Issues-Export der Referenz über alle Fixtures, Abgleich mit den Erwartungswerten unten und mit dem Ergebnis der UI-063-Logik; Abweichungen in `PARITY.md` protokollieren (kein Zwang zur Angleichung) |
-| V-5 | Readability-Labels und Spalte Sentence Count | 142, 149, A-54 | Content-Export für Seiten mit gestuften Scores |
+| V-5 | Readability-Labels und Spalte Sentence Count | 142, 149, A-54 | Labels erledigt durch Q02 (K2-87, SQ-08); Spalte Sentence Count prüft M2-N08 |
 | V-6 | Sprachliste der Rechtschreibprüfung | 153 | Sprachauswahlfeld der Referenz abschreiben (nur Namen/Codes), mit Zielmenge abgleichen |
 | V-7 | SERP-Snippet je Gerät | 194, A-56 | Snippet-Vorschau einer Seite mit langem Titel/Beschreibung auf Desktop/Mobile/Tablet, Abschneidepunkte notieren |
 

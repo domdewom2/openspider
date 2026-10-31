@@ -5,7 +5,7 @@ import { definePage, f } from "../../frame/definePage";
 import { FieldFrame } from "../../frame/fields";
 import { Action, Input, RowActions, RowIssues, coreGuard, moveRow } from "../custom-search/shared";
 export interface PositionRule { position: string; contains: string[] }
-export const DEFAULT_RULES: PositionRule[] = [{ position: "Navigation", contains: ["nav", "menu"] }, { position: "Header", contains: ["header"] }, { position: "Sidebar", contains: ["aside", "sidebar"] }, { position: "Footer", contains: ["footer"] }, { position: "Content", contains: [] }];
+export const DEFAULT_RULES: PositionRule[] = [{ position: "Navigation", contains: ["nav", "menu"] }, { position: "Header", contains: ["header"] }, { position: "Aside", contains: ["aside"] }, { position: "Sidebar", contains: ["sidebar"] }, { position: "Footer", contains: ["footer"] }, { position: "Content", contains: [] }];
 function Positions() {
   const t = useT(); const { value = [], set, lock } = useConfigValue<PositionRule[]>("link_positions.rules"); const disabled = !!lock;
   const update = (i: number, p: Partial<PositionRule>) => set(value.map((r, n) => n === i ? { ...r, ...p } : r));

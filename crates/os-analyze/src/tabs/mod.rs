@@ -214,7 +214,7 @@ pub type M2FilterRow = (
 /// `(Tab, Filterkennung, Nachlaufschritt, Konfigurationsschlüssel die `true` sein müssen, braucht JavaScript-Rendering)`.
 /// Reihenfolge der Datei. Der Test `filters_registry.rs` hält die Tabelle gleich der Datei.
 pub const M2_FILTERS: &[M2FilterRow] = &[
-    ("Internal", "Flash", None, &[], false),
+    ("Internal", "Plugins", None, &[], false),
     ("Internal", "Other", None, &[], false),
     ("Internal", "Media", None, &[], false),
     ("Internal", "Fonts", None, &[], false),
@@ -417,13 +417,7 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         &["images.parse_inline_css_backgrounds"],
         false,
     ),
-    (
-        "Images",
-        "Missing Size Attributes",
-        Some(AnalysisStep::Images),
-        &["images.parse_inline_css_backgrounds"],
-        false,
-    ),
+    ("Images", "Missing Size Attributes", None, &[], false),
     (
         "Images",
         "Incorrectly Sized Images",
@@ -1161,14 +1155,6 @@ fn configure_sources(
     for tab in &mut tabs {
         tab.columns.extend(crate::segments::columns(cfg));
         apply_meta_defaults(&mut tab.columns);
-    }
-    if cfg.ui.parity_filters {
-        for tab in &mut tabs {
-            if tab.id == "Internal" {
-                tab.filters
-                    .retain(|f| !matches!(f.id, "Media" | "Fonts" | "XML"));
-            }
-        }
     }
     tabs
 }

@@ -267,7 +267,7 @@ async fn total_language_errors_sums_the_active_checks_and_switched_off_columns_s
         "Language",
     ] {
         let def = tab.columns.iter().find(|c| c.key == column).unwrap();
-        assert!(!def.default_visible, "{column}");
+        assert!(def.default_visible, "{column}");
     }
 }
 

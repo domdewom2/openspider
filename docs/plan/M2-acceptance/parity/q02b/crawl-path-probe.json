@@ -1,0 +1,99 @@
+{
+  "export": "all_inlinks",
+  "site": null,
+  "ref_rows": 17,
+  "os_rows": 0,
+  "matched": 0,
+  "missing_in_os": [
+    "Hyperlink | {BASE}/deep/7.html | {BASE}/deep/8.html | #1",
+    " |  |  | #1",
+    "Hyperlink | {BASE}/deep/6.html | {BASE}/deep/7.html | #1",
+    " |  |  | #2",
+    "Hyperlink | {BASE}/deep/5.html | {BASE}/deep/6.html | #1",
+    " |  |  | #3",
+    "Hyperlink | {BASE}/deep/4.html | {BASE}/deep/5.html | #1",
+    " |  |  | #4",
+    "Hyperlink | {BASE}/deep/3.html | {BASE}/deep/4.html | #1",
+    " |  |  | #5",
+    "Hyperlink | {BASE}/deep/2.html | {BASE}/deep/3.html | #1",
+    " |  |  | #6",
+    "Hyperlink | {BASE}/deep/1.html | {BASE}/deep/2.html | #1",
+    " |  |  | #7",
+    "Hyperlink | {BASE}/ | {BASE}/deep/1.html | #1",
+    " |  |  | #8",
+    " |  |  | #9"
+  ],
+  "extra_in_os": [],
+  "cells_compared": 0,
+  "cells_equal": 0,
+  "agreement_pct": 0.0,
+  "columns": [
+    {
+      "ref_column": "Alt Text",
+      "os_column": "Alt Text",
+      "compared": 0,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Anchor",
+      "os_column": "Anchor",
+      "compared": 0,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status Code",
+      "os_column": "Status Code",
+      "compared": 0,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Status",
+      "os_column": "Status",
+      "compared": 0,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Follow",
+      "os_column": "Follow",
+      "compared": 0,
+      "errors": 0,
+      "examples": []
+    }
+  ],
+  "applied_deviations": [],
+  "dropped_ref_columns": [],
+  "ignored_columns": [],
+  "unmapped_ref_columns": [
+    "Crawl Depth"
+  ],
+  "unmapped_os_columns": [],
+  "missing_ref_columns": [
+    "Link Origin",
+    "Link Path",
+    "Link Position",
+    "Path Type",
+    "Rel",
+    "Size (Bytes)",
+    "Target"
+  ],
+  "missing_os_columns": [
+    "Alt Text",
+    "Anchor",
+    "Status Code",
+    "Status",
+    "Follow"
+  ],
+  "ignored_ref_rows": [],
+  "os_only_rows": [],
+  "threshold_pct": 97.0,
+  "url_set_identical": false,
+  "passed": false,
+  "failures": [
+    "Zellübereinstimmung 0.000 % liegt unter 97.000 %",
+    "URL-Menge nicht identisch: 17 fehlen in OpenSpider, 0 zusätzlich"
+  ]
+}

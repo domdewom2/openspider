@@ -23,6 +23,7 @@ use std::process::Command;
 
 use serde::Serialize;
 
+use crate::crawl_date::CrawlWindow;
 use crate::csvio::{read_output, read_reference, Table};
 use crate::deviations::Deviations;
 use crate::diff::{compare, evaluate, CompareInput};
@@ -79,6 +80,8 @@ pub struct ExportRequest {
     pub bulk: Vec<String>,
     /// Werte für `--save-report`.
     pub reports: Vec<String>,
+    /// Einzelne Ziel-URL für den Auswahl-Export OUT-023.
+    pub crawl_path: Option<String>,
 }
 
 /// Erzeugt die OpenSpider-Exporte einer Site.
@@ -158,6 +161,9 @@ impl CommandExporter {
                 a.push(flag.into());
                 a.push(values.join(","));
             }
+        }
+        if let Some(target) = &req.crawl_path {
+            a.extend(["--export-crawl-path".into(), target.clone()]);
         }
         a
     }
@@ -348,6 +354,27 @@ fn find_file(dir: &Path, name: &str, depth: u32) -> Option<PathBuf> {
     if direct.is_file() {
         return Some(direct);
     }
+    // OUT-008: historical mappings flatten hyphens to underscores, while the
+    // exporter preserves them. Accept this additive spelling variant only when
+    // the current directory has exactly one matching file; never guess on a
+    // collision or search a different configuration variant.
+    let normalized = name.replace('-', "_");
+    let mut aliases = std::fs::read_dir(dir)
+        .ok()?
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .filter(|path| {
+            path.is_file()
+                && path
+                    .file_name()
+                    .is_some_and(|file| file.to_string_lossy().replace('-', "_") == normalized)
+        });
+    if let Some(alias) = aliases.next() {
+        if aliases.next().is_none() {
+            return Some(alias);
+        }
+        return None;
+    }
     if depth == 0 {
         return None;
     }
@@ -489,7 +516,7 @@ fn run_site(
             results.push(result_of(
                 e,
                 Outcome::Skipped {
-                    reason: format!("außerhalb des M1-Umfangs: {why}"),
+                    reason: why.clone(),
                 },
             ));
             continue;
@@ -534,7 +561,9 @@ fn run_site(
             ExportStatus::Unavailable => results.push(result_of(
                 e,
                 Outcome::Skipped {
-                    reason: "in der Referenz nicht exportierbar (unavailable)".into(),
+                    reason: e.skip.clone().unwrap_or_else(|| {
+                        "in der Referenz nicht exportierbar (unavailable)".into()
+                    }),
                 },
             )),
         }
@@ -605,6 +634,11 @@ fn run_site(
     let mut requests: Vec<ExportRequest> = Vec::new();
     let mut destinations = Vec::new();
     for p in &prepared {
+        let crawl_path = if matches!(&p.os, OsExport::Report(name) if name == "Crawl Path Report") {
+            Some(crawl_path_target(&p.entry, &os_base)?)
+        } else {
+            None
+        };
         let sitemap = match &p.os {
             OsExport::Sitemap(kind) => Some(kind.clone()),
             _ => None,
@@ -612,12 +646,13 @@ fn run_site(
         let index = requests
             .iter()
             .position(|r| {
-                r.config == p.entry.config
+                r.crawl_path == crawl_path
+                    && r.config == p.entry.config
                     && r.sitemap == sitemap
                     && match &p.os {
                         OsExport::Tab { .. } => !r.tabs.is_empty(),
                         OsExport::Bulk(_) => !r.bulk.is_empty(),
-                        OsExport::Report(_) => !r.reports.is_empty(),
+                        OsExport::Report(_) => r.crawl_path.is_some() || !r.reports.is_empty(),
                         OsExport::Sitemap(_) => r.sitemap.is_some(),
                     }
             })
@@ -638,6 +673,7 @@ fn run_site(
                     tabs: Vec::new(),
                     bulk: Vec::new(),
                     reports: Vec::new(),
+                    crawl_path: crawl_path.clone(),
                 });
                 index
             });
@@ -646,6 +682,7 @@ fn run_site(
         let list = match &p.os {
             OsExport::Tab { .. } => Some(&mut req.tabs),
             OsExport::Bulk(_) => Some(&mut req.bulk),
+            OsExport::Report(_) if req.crawl_path.is_some() => None,
             OsExport::Report(_) => Some(&mut req.reports),
             OsExport::Sitemap(_) => None,
         };
@@ -656,10 +693,39 @@ fn run_site(
             }
         }
     }
-    let errors: Vec<_> = requests
+    let (mut errors, mut crawl_windows): (Vec<_>, Vec<_>) = requests
         .iter()
-        .map(|req| exporter.export(req).err())
-        .collect();
+        .map(|req| {
+            let started = os_model::Timestamp::now_utc();
+            let error = exporter.export(req).err();
+            let window = CrawlWindow::new(started, os_model::Timestamp::now_utc());
+            (error, window)
+        })
+        .unzip();
+    // Nur fehlgeschlagene Namensgruppen einzeln wiederholen. Erfolgreiche Gruppen
+    // brauchen keinen weiteren Crawl; jeder Fehler bleibt seinem Export zugeordnet.
+    for (item, (p, destination)) in prepared.iter().zip(&mut destinations).enumerate() {
+        let req = &requests[*destination];
+        if errors[*destination].is_none() || req.bulk.len() + req.reports.len() <= 1 {
+            continue;
+        }
+        let mut retry = req.clone();
+        match &p.os {
+            OsExport::Bulk(_) => retry.bulk = vec![p.os.cli_value()],
+            OsExport::Report(_) => retry.reports = vec![p.os.cli_value()],
+            _ => continue,
+        }
+        retry.out_dir = req.out_dir.join(format!("fallback-{item}"));
+        *destination = requests.len();
+        let started = os_model::Timestamp::now_utc();
+        errors.push(exporter.export(&retry).err());
+        crawl_windows.push(CrawlWindow::new(started, os_model::Timestamp::now_utc()));
+        requests.push(retry);
+    }
+    let site_failure = destinations
+        .iter()
+        .find_map(|i| errors[*i].as_ref())
+        .map(|e| format!("OpenSpider-Export fehlgeschlagen: {e}"));
     drop(test_site);
 
     let ref_bases = BaseUrls::from_base(&ref_base);
@@ -675,6 +741,8 @@ fn run_site(
                 site,
                 p,
                 &requests[index].out_dir,
+                manifest.exported_at.as_deref(),
+                &crawl_windows[index],
                 &ref_bases,
                 &os_bases,
                 thresholds,
@@ -701,11 +769,7 @@ fn run_site(
     Ok(SiteResult {
         site: site.to_string(),
         present,
-        error: errors
-            .iter()
-            .flatten()
-            .next()
-            .map(|e| format!("OpenSpider-Export fehlgeschlagen: {e}")),
+        error: site_failure,
         exports: in_manifest_order(results, &manifest),
     })
 }
@@ -716,6 +780,8 @@ fn compare_one(
     site: &str,
     p: &Prepared,
     os_dir: &Path,
+    exported_at: Option<&str>,
+    crawl_window: &CrawlWindow,
     ref_bases: &BaseUrls,
     os_bases: &BaseUrls,
     thresholds: &Thresholds,
@@ -733,22 +799,48 @@ fn compare_one(
             ))
         })?;
     let ref_path = opts.golden_dir(site).join("ref").join(&p.entry.ref_file);
-    let reference = select_rows(
-        read_reference(&ref_path, &p.mapping)?,
-        &p.entry.select,
-        ref_bases,
-    )?;
+    let mut reference_table = read_reference(&ref_path, &p.mapping)?;
+    if p.mapping.format == crate::mapping::RefFormat::CrawlPath {
+        let target = p
+            .entry
+            .select
+            .get("Target Address")
+            .ok_or_else(|| ParityError::Invalid("Crawl Path: Zielauswahl fehlt".into()))?;
+        crate::csvio::label_crawl_path(&mut reference_table, target)?;
+    }
+    let mut reference = select_rows(reference_table, &p.entry.select, ref_bases)?;
     if !p.entry.select.is_empty() && reference.rows.is_empty() {
         return Err(ParityError::Invalid(
             "Zielauswahl der Referenz hat keine Zeilen".into(),
         ));
     }
-    let os = select_rows(
-        read_output(&os_path, &p.mapping)?,
-        &p.entry.select,
-        os_bases,
-    )?;
-    let devs = deviations.for_export(Some(site), &p.entry.mapping);
+    let output_table = read_output(&os_path, &p.mapping)?;
+    if p.mapping.format == crate::mapping::RefFormat::CrawlPath {
+        let index = output_table
+            .index_of("Target Address")
+            .ok_or_else(|| ParityError::Invalid("Crawl Path: Ziel fehlt".into()))?;
+        let selected = &p.entry.select["Target Address"];
+        if output_table
+            .rows
+            .iter()
+            .any(|row| !row[index].ends_with(selected))
+        {
+            return Err(ParityError::Invalid(
+                "Crawl Path: unerwarteter Zielblock".into(),
+            ));
+        }
+    }
+    let mut os = select_rows(output_table, &p.entry.select, os_bases)?;
+    // OUT-123: Nur die Server-Quelle hat den Ersatzwert Crawl-Datum.
+    if matches!(p.os, OsExport::Sitemap(_))
+        && p.entry
+            .config
+            .get("sitemap_gen.lastmod.source")
+            .is_none_or(|source| source == "server")
+    {
+        crate::crawl_date::normalize(&mut reference, &mut os, exported_at, crawl_window)?;
+    }
+    let devs = deviations.for_file(Some(site), &p.entry.mapping, Some(&p.entry.ref_file));
     let mut report = compare(&CompareInput {
         export: &p.entry.mapping,
         site: Some(site),
@@ -759,8 +851,63 @@ fn compare_one(
         os_bases,
         deviations: &devs,
     })?;
+    // OUT-015/085: upload order is normative for list exports. Reference
+    // reports can be emitted in completion order, unlike their tab exports.
+    if p.entry.os.starts_with("report:")
+        && p.mapping.ordered
+        && p.mapping.key.iter().any(|k| k == "Address")
+        && p.mapping.key.iter().all(|k| k == "Address" || k == "#")
+    {
+        let manifest = Manifest::load(&opts.golden_dir(site).join("manifest.toml"))?;
+        if let Some(source) = manifest.list_source {
+            report.row_order_identical = Some(upload_order_matches(
+                &opts.fixture_dir(site).join(source),
+                &reference,
+                &os,
+                ref_bases,
+                os_bases,
+            )?);
+        }
+    }
     evaluate(&mut report, thresholds);
     Ok(report)
+}
+
+/// Compare complete, unique upload order, independently of reference row order.
+/// Every reference address must occur in the input; missing, extra or duplicate
+/// output rows still fail. Unsupported list encodings fail closed.
+fn upload_order_matches(
+    source: &Path,
+    reference: &Table,
+    os: &Table,
+    ref_bases: &BaseUrls,
+    os_bases: &BaseUrls,
+) -> Result<bool, ParityError> {
+    let ref_column = reference
+        .index_of("Address")
+        .ok_or_else(|| ParityError::Invalid("Address fehlt in der Listenreferenz".into()))?;
+    let os_column = os
+        .index_of("Address")
+        .ok_or_else(|| ParityError::Invalid("Address fehlt im Listenexport".into()))?;
+    let addresses: std::collections::BTreeSet<_> = reference
+        .rows
+        .iter()
+        .map(|r| ref_bases.normalize(r[ref_column].trim()))
+        .collect();
+    let text = std::fs::read_to_string(source)?;
+    let mut seen = std::collections::BTreeSet::new();
+    let expected: Vec<_> = text
+        .trim_start_matches('\u{feff}')
+        .lines()
+        .map(|line| ref_bases.normalize(line.trim()))
+        .filter(|address| addresses.contains(address) && seen.insert(address.clone()))
+        .collect();
+    let actual: Vec<_> = os
+        .rows
+        .iter()
+        .map(|r| os_bases.normalize(r[os_column].trim()))
+        .collect();
+    Ok(expected.len() == addresses.len() && expected == actual)
 }
 
 fn write_summary(out: &Path, s: &RunSummary) -> Result<(), ParityError> {
@@ -975,4 +1122,113 @@ fn select_rows(
             .retain(|r| rules.prepare(&r[index], bases) == expected);
     }
     Ok(table)
+}
+
+#[cfg(test)]
+mod filename_format_tests {
+    use super::*;
+
+    // spec: OUT-008
+    #[test]
+    fn hyphen_alias_is_unique_and_stays_in_its_configuration_variant() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("security_unsafe_cross-origin_links.csv");
+        std::fs::write(&file, "Address\n").unwrap();
+        assert_eq!(
+            find_file(dir.path(), "security_unsafe_cross_origin_links.csv", 3),
+            Some(file)
+        );
+        let variant = dir.path().join("variant-1");
+        std::fs::create_dir(&variant).unwrap();
+        std::fs::write(variant.join("only_here.csv"), "Address\n").unwrap();
+        assert_eq!(find_file(dir.path(), "only_here.csv", 3), None);
+        std::fs::write(
+            dir.path().join("security-unsafe_cross_origin_links.csv"),
+            "Address\n",
+        )
+        .unwrap();
+        assert_eq!(
+            find_file(dir.path(), "security_unsafe_cross_origin_links.csv", 3),
+            None
+        );
+    }
+}
+
+#[cfg(test)]
+mod n11_list_order_tests {
+    use super::*;
+
+    // spec: OUT-085 [M2]
+    // spec: OUT-015 [P1]
+    #[test]
+    fn upload_order_is_checked_even_when_reference_report_is_shuffled() {
+        let dir = tempfile::tempdir().unwrap();
+        let input = dir.path().join("list.txt");
+        std::fs::write(
+            &input,
+            "https://site.test/b\nhttps://site.test/a\nhttps://site.test/b\ninvalid\n",
+        )
+        .unwrap();
+        let table = |urls: &[&str]| Table {
+            columns: vec!["Address".into()],
+            rows: urls
+                .iter()
+                .map(|u| vec![format!("https://site.test/{u}")])
+                .collect(),
+            dropped: vec![],
+        };
+        let reference = table(&["a", "b"]);
+        let bases = BaseUrls::default();
+        let matches = |output: Table| {
+            upload_order_matches(&input, &reference, &output, &bases, &bases).unwrap()
+        };
+        assert!(matches(table(&["b", "a"])));
+        assert!(!matches(table(&["a", "b"])));
+        assert!(!matches(table(&["b"])));
+        assert!(!matches(table(&["b", "a", "b"])));
+        assert!(!matches(table(&["b", "a", "extra"])));
+        std::fs::write(&input, "https://site.test/b\n").unwrap();
+        assert!(!matches(table(&["b", "a"])));
+    }
+}
+
+/// OUT-023 accepts exactly one path selection, bound only after the fixture server starts.
+fn crawl_path_target(entry: &ExportEntry, base: &str) -> Result<String, ParityError> {
+    match entry.select.get("Target Address") {
+        Some(path)
+            if entry.select.len() == 1
+                && path.starts_with('/')
+                && !path.starts_with("//")
+                && !path.contains(['?', '#']) =>
+        {
+            Ok(format!("{}{path}", base.trim_end_matches('/')))
+        }
+        _ => Err(ParityError::Invalid(
+            "Crawl Path benötigt genau eine eindeutige Target Address als absoluten URL-Pfad"
+                .into(),
+        )),
+    }
+}
+
+#[cfg(test)]
+mod crawl_path_selection_tests {
+    use super::*;
+    // spec: OUT-023
+    #[test]
+    fn target_selection_is_unique_and_bound_to_runtime_origin() {
+        let manifest = Manifest::parse("site = 'fixture'\nport = 0\n[[export]]\nref_file = 'crawl.csv'\nos = 'report:Crawl Path Report'\nmapping = 'crawl_path'\n[export.select]\n'Target Address' = '/deep/8.html'\n").unwrap();
+        let mut entry = manifest.export[0].clone();
+        assert_eq!(
+            crawl_path_target(&entry, "http://127.0.0.1:1234/").unwrap(),
+            "http://127.0.0.1:1234/deep/8.html"
+        );
+        entry.select.insert("Step".into(), "0".into());
+        assert!(crawl_path_target(&entry, "http://a").is_err());
+        entry.select.clear();
+        assert!(crawl_path_target(&entry, "http://a").is_err());
+        entry
+            .select
+            .insert("Target Address".into(), "//other/end".into());
+        assert!(crawl_path_target(&entry, "http://a").is_err());
+    }
 }

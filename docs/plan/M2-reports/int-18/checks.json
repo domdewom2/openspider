@@ -1,0 +1,81 @@
+{
+  "status": "PAKET OFFEN",
+  "rust": {
+    "targets": 537,
+    "passed": 3989,
+    "failed": 0,
+    "ignored": 44,
+    "test_target_seconds": 1509.84,
+    "exit_code": 0,
+    "desktop_excluded": true,
+    "flake_repeats": [],
+    "started_at": "2026-10-31T01:01:15+00:00",
+    "completed_at": "2026-10-31T01:30:41.077921+00:00",
+    "wall_seconds": 1766.08
+  },
+  "fmt_exit": 0,
+  "clippy_exit": 0,
+  "desktop": {
+    "typecheck_exit": 0,
+    "test_files": 90,
+    "tests_passed": 858,
+    "static_tests_passed": 29,
+    "css_exit": 0,
+    "license_packages": 474,
+    "lint_script": "nicht vorhanden; check:static und CSS-Prüfung ausgeführt"
+  },
+  "playwright": {
+    "main": {
+      "startTime": "2026-10-31T00:48:05.809Z",
+      "duration": 2248997.406,
+      "expected": 976,
+      "skipped": 3,
+      "unexpected": 1,
+      "flaky": 0
+    },
+    "single_repeat": {
+      "startTime": "2026-10-31T01:27:28.061Z",
+      "duration": 5359.427000000001,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "a11y_per_engine": 20,
+    "n12_per_engine": 8,
+    "polish": {
+      "chromium_passed": 29,
+      "webkit_passed": 26,
+      "webkit_skipped": 3
+    },
+    "visual": {
+      "layout_passed": 120,
+      "other_passed": 48,
+      "other_skipped": 5
+    }
+  },
+  "parity": {
+    "unfixed_passed": 215,
+    "compared": 218,
+    "fixed_clock_passed": 218,
+    "skipped": 3,
+    "sites": 10,
+    "links_passed": 23,
+    "verified_before": 129,
+    "verified_after": 129,
+    "denominator": 155,
+    "m1_before": 38,
+    "m1_after": 38,
+    "m1_total": 38
+  },
+  "plan_exit": 0,
+  "neutral_exit": 0,
+  "deny_exit": 0,
+  "ci_run_id": null,
+  "pushed": false,
+  "open": [
+    "WebKit-Hauptsuite: 315 ms statt höchstens 200 ms; Einzelwiederholung grün, voller Lauf rot",
+    "Paritäts-CI braucht feste Vergleichsuhr; parity.yml außerhalb Owns",
+    "Native macOS-/Windows-Matrix samt Lauf-ID durch Orchestrator"
+  ]
+}

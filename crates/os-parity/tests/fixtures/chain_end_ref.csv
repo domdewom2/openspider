@@ -1,0 +1,2 @@
+Address,Number of Redirects/Canonicals,Final Status Code,Final Status,Status Code 1,Status 1,Status Code 2,Status 2
+http://127.0.0.1:8902/a,1,200,OK,301,Moved Permanently,200,OK

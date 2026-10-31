@@ -1,0 +1,672 @@
+{
+  "stats": {
+    "startTime": "2026-10-30T20:22:29.435Z",
+    "duration": 400141.702,
+    "expected": 40,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "tests": [
+    {
+      "project": "chromium",
+      "file": "a11y/contrast.spec.ts",
+      "title": "forced-colors, light: controls, focus and selected tabs remain distinguishable",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 46962,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/contrast.spec.ts",
+      "title": "forced-colors, dark: controls, focus and selected tabs remain distinguishable",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 48942,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/contrast.spec.ts",
+      "title": "more, light: controls, focus and selected tabs remain distinguishable",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 48991,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/contrast.spec.ts",
+      "title": "more, dark: controls, focus and selected tabs remain distinguishable",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 48960,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/contrast.spec.ts",
+      "title": "forced-colors, light: primitive checkbox, switch, radio and colour selection have visible state cues",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3412,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/contrast.spec.ts",
+      "title": "forced-colors, dark: primitive checkbox, switch, radio and colour selection have visible state cues",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3998,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/contrast.spec.ts",
+      "title": "more, light: primitive checkbox, switch, radio and colour selection have visible state cues",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3752,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/contrast.spec.ts",
+      "title": "more, dark: primitive checkbox, switch, radio and colour selection have visible state cues",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4053,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/contrast.spec.ts",
+      "title": "forced-colors, light: controls, focus and selected tabs remain distinguishable",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 53205,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/contrast.spec.ts",
+      "title": "forced-colors, dark: controls, focus and selected tabs remain distinguishable",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 59040,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/contrast.spec.ts",
+      "title": "more, light: controls, focus and selected tabs remain distinguishable",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 64623,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/contrast.spec.ts",
+      "title": "more, dark: controls, focus and selected tabs remain distinguishable",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 64539,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/contrast.spec.ts",
+      "title": "forced-colors, light: primitive checkbox, switch, radio and colour selection have visible state cues",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5082,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/contrast.spec.ts",
+      "title": "forced-colors, dark: primitive checkbox, switch, radio and colour selection have visible state cues",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4588,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/contrast.spec.ts",
+      "title": "more, light: primitive checkbox, switch, radio and colour selection have visible state cues",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5373,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/contrast.spec.ts",
+      "title": "more, dark: primitive checkbox, switch, radio and colour selection have visible state cues",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4794,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/grid.spec.ts",
+      "title": "virtual grid announces the complete total and absolute row indices, with a single Tab stop",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U30-F01: additional Chromium grid tab stop; known red until N12",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/a11y/grid.spec.ts",
+            "line": 25,
+            "column": 10
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 10714,
+          "errors": [
+            "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeFocused\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator:  getByRole('button', { name: 'After grid' })\nExpected: focused\nReceived: inactive\nTimeout:  10000ms\n\nCall log:\n\u001b[2m  - Expect \"soft toBeFocused\" getByRole('button', { name: 'After grid' }) with timeout 10000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('button', { name: 'After grid' })\u001b[22m\n\u001b[2m    24 × locator resolved to <button>After grid</button>\u001b[22m\n\u001b[2m       - unexpected value \"inactive\"\u001b[22m\n\n\n  17 |   await page.keyboard.press(\"Tab\");\n  18 |   await test.info().attach(\"focus-after-grid-tab\", { body: await page.evaluate(() => document.activeElement?.outerHTML ?? \"\"), contentType: \"text/html\" });\n> 19 |   await expect.soft(page.getByRole(\"button\", { name: \"After grid\" })).toBeFocused();\n     |                                                                       ^\n  20 |   await page.keyboard.press(\"Shift+Tab\");\n  21 |   await expect(grid).toBeFocused();\n  22 |   // U30-F01 remains a failing assertion until N12; any other failure stays unexpected.\n    at {REPO}/apps/desktop/e2e/a11y/grid.spec.ts:19:71"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/grid.spec.ts",
+      "title": "virtual grid announces the complete total and absolute row indices, with a single Tab stop",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1799,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/keyboard.spec.ts",
+      "title": "three tablists: roving focus, every tab, overflow actions and return (light)",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 36681,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/keyboard.spec.ts",
+      "title": "three tablists: roving focus, every tab, overflow actions and return (dark)",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 38397,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/keyboard.spec.ts",
+      "title": "grid total/index, keyboard selection, sorting, context action and filter search",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 13321,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/keyboard.spec.ts",
+      "title": "configuration and export trap modal focus, Escape restores the trigger",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 27046,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/keyboard.spec.ts",
+      "title": "complete main-window Tab inventory includes detail, sidebar and every overview action",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 68003,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/keyboard.spec.ts",
+      "title": "all settings sections expose their enabled controls in the sequential keyboard order",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 9497,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/keyboard.spec.ts",
+      "title": "three tablists: roving focus, every tab, overflow actions and return (light)",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 52453,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/keyboard.spec.ts",
+      "title": "three tablists: roving focus, every tab, overflow actions and return (dark)",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 53195,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/keyboard.spec.ts",
+      "title": "grid total/index, keyboard selection, sorting, context action and filter search",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 19803,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/keyboard.spec.ts",
+      "title": "configuration and export trap modal focus, Escape restores the trigger",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 33529,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/keyboard.spec.ts",
+      "title": "complete main-window Tab inventory includes detail, sidebar and every overview action",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 77450,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/keyboard.spec.ts",
+      "title": "all settings sections expose their enabled controls in the sequential keyboard order",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 16418,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/views.spec.ts",
+      "title": "axe main, populated grid, filter, detail, sidebar and three overflow menus (light)",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U30-F03: known contrast failure until N12",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/a11y/views.spec.ts",
+            "line": 41,
+            "column": 12
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 82403,
+          "errors": [
+            "Error: Crawl summary-issues-light\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   Object {\u001b[39m\n\u001b[31m+     \"impact\": \"serious\",\u001b[39m\n\u001b[31m+     \"nodes\": Array [\u001b[39m\n\u001b[31m+       Object {\u001b[39m\n\u001b[31m+         \"summary\": \"Fix any of the following:\u001b[39m\n\u001b[31m+   Element has insufficient color contrast of 4.44 (foreground color: #a86a00, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1\",\u001b[39m\n\u001b[31m+         \"target\": Array [\u001b[39m\n\u001b[31m+           \"tr:nth-child(5) > td:nth-child(2) > .os-sidebar-priority-medium.os-sidebar-badge > span\",\u001b[39m\n\u001b[31m+         ],\u001b[39m\n\u001b[31m+       },\u001b[39m\n\u001b[31m+       Object {\u001b[39m\n\u001b[31m+         \"summary\": \"Fix any of the following:\u001b[39m\n\u001b[31m+   Element has insufficient color contrast of 4.44 (foreground color: #a86a00, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1\",\u001b[39m\n\u001b[31m+         \"target\": Array [\u001b[39m\n\u001b[31m+           \"tr:nth-child(5) > .os-sidebar-priority-medium\",\u001b[39m\n\u001b[31m+         ],\u001b[39m\n\u001b[31m+       },\u001b[39m\n\u001b[31m+     ],\u001b[39m\n\u001b[31m+     \"rule\": \"color-contrast\",\u001b[39m\n\u001b[31m+   },\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n   at a11y/fixture.ts:63\n\n  61 |     ]);\n  62 |   }\n> 63 |   expect.soft(findings.map(v => ({ rule: v.id, impact: v.impact, nodes: v.nodes.map(n => ({ target: n.target, summary: n.failureSummary })) })), name).toEqual([]);\n     |                                                                                                                                                        ^\n  64 | }\n  65 |\n  66 | /** Reach the actual control by Tab; focus() is deliberately not used for reachability. */\n    at scan ({REPO}/apps/desktop/e2e/a11y/fixture.ts:63:152)\n    at {REPO}/apps/desktop/e2e/a11y/views.spec.ts:21:9"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/views.spec.ts",
+      "title": "axe configuration, export and settings sections (light)",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 24422,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/views.spec.ts",
+      "title": "axe main, populated grid, filter, detail, sidebar and three overflow menus (dark)",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U30-F04: known contrast failure until N12",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/a11y/views.spec.ts",
+            "line": 41,
+            "column": 12
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 81399,
+          "errors": [
+            "Error: Crawl summary-segments-dark\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   Object {\u001b[39m\n\u001b[31m+     \"impact\": \"serious\",\u001b[39m\n\u001b[31m+     \"nodes\": Array [\u001b[39m\n\u001b[31m+       Object {\u001b[39m\n\u001b[31m+         \"summary\": \"Fix any of the following:\u001b[39m\n\u001b[31m+   Element has insufficient color contrast of 4.38 (foreground color: #e7e9ec, background color: #6b6b6b, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1\",\u001b[39m\n\u001b[31m+         \"target\": Array [\u001b[39m\n\u001b[31m+           \".os-sidebar-actions > button[type=\\\"button\\\"]\",\u001b[39m\n\u001b[31m+         ],\u001b[39m\n\u001b[31m+       },\u001b[39m\n\u001b[31m+       Object {\u001b[39m\n\u001b[31m+         \"summary\": \"Fix any of the following:\u001b[39m\n\u001b[31m+   Element has insufficient color contrast of 4.38 (foreground color: #e7e9ec, background color: #6b6b6b, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1\",\u001b[39m\n\u001b[31m+         \"target\": Array [\u001b[39m\n\u001b[31m+           \".os-sidebar-empty > button[type=\\\"button\\\"]\",\u001b[39m\n\u001b[31m+         ],\u001b[39m\n\u001b[31m+       },\u001b[39m\n\u001b[31m+     ],\u001b[39m\n\u001b[31m+     \"rule\": \"color-contrast\",\u001b[39m\n\u001b[31m+   },\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n   at a11y/fixture.ts:63\n\n  61 |     ]);\n  62 |   }\n> 63 |   expect.soft(findings.map(v => ({ rule: v.id, impact: v.impact, nodes: v.nodes.map(n => ({ target: n.target, summary: n.failureSummary })) })), name).toEqual([]);\n     |                                                                                                                                                        ^\n  64 | }\n  65 |\n  66 | /** Reach the actual control by Tab; focus() is deliberately not used for reachability. */\n    at scan ({REPO}/apps/desktop/e2e/a11y/fixture.ts:63:152)\n    at {REPO}/apps/desktop/e2e/a11y/views.spec.ts:21:9"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/views.spec.ts",
+      "title": "axe configuration, export and settings sections (dark)",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 22486,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "a11y/views.spec.ts",
+      "title": "axe populated comparison, setup dialog and comparison detail",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 21795,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/views.spec.ts",
+      "title": "axe main, populated grid, filter, detail, sidebar and three overflow menus (light)",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U30-F03: known contrast failure until N12",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/a11y/views.spec.ts",
+            "line": 41,
+            "column": 12
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 116939,
+          "errors": [
+            "Error: Crawl summary-issues-light\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   Object {\u001b[39m\n\u001b[31m+     \"impact\": \"serious\",\u001b[39m\n\u001b[31m+     \"nodes\": Array [\u001b[39m\n\u001b[31m+       Object {\u001b[39m\n\u001b[31m+         \"summary\": \"Fix any of the following:\u001b[39m\n\u001b[31m+   Element has insufficient color contrast of 4.44 (foreground color: #a86a00, background color: #ffffff, font size: 8.3pt (11px), font weight: normal). Expected contrast ratio of 4.5:1\",\u001b[39m\n\u001b[31m+         \"target\": Array [\u001b[39m\n\u001b[31m+           \"tr:nth-child(5) > td:nth-child(2) > .os-sidebar-priority-medium.os-sidebar-badge > span\",\u001b[39m\n\u001b[31m+         ],\u001b[39m\n\u001b[31m+       },\u001b[39m\n\u001b[31m+       Object {\u001b[39m\n\u001b[31m+         \"summary\": \"Fix any of the following:\u001b[39m\n\u001b[31m+   Element has insufficient color contrast of 4.44 (foreground color: #a86a00, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1\",\u001b[39m\n\u001b[31m+         \"target\": Array [\u001b[39m\n\u001b[31m+           \"tr:nth-child(5) > .os-sidebar-priority-medium\",\u001b[39m\n\u001b[31m+         ],\u001b[39m\n\u001b[31m+       },\u001b[39m\n\u001b[31m+     ],\u001b[39m\n\u001b[31m+     \"rule\": \"color-contrast\",\u001b[39m\n\u001b[31m+   },\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n   at a11y/fixture.ts:63\n\n  61 |     ]);\n  62 |   }\n> 63 |   expect.soft(findings.map(v => ({ rule: v.id, impact: v.impact, nodes: v.nodes.map(n => ({ target: n.target, summary: n.failureSummary })) })), name).toEqual([]);\n     |                                                                                                                                                        ^\n  64 | }\n  65 |\n  66 | /** Reach the actual control by Tab; focus() is deliberately not used for reachability. */\n    at scan ({REPO}/apps/desktop/e2e/a11y/fixture.ts:63:152)\n    at {REPO}/apps/desktop/e2e/a11y/views.spec.ts:21:9"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/views.spec.ts",
+      "title": "axe configuration, export and settings sections (light)",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 38440,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/views.spec.ts",
+      "title": "axe main, populated grid, filter, detail, sidebar and three overflow menus (dark)",
+      "status": "expected",
+      "expectedStatus": "failed",
+      "annotations": [
+        {
+          "type": "fail",
+          "description": "U30-F04: known contrast failure until N12",
+          "location": {
+            "file": "{REPO}/apps/desktop/e2e/a11y/views.spec.ts",
+            "line": 41,
+            "column": 12
+          }
+        }
+      ],
+      "results": [
+        {
+          "status": "failed",
+          "duration": 114334,
+          "errors": [
+            "Error: Crawl summary-segments-dark\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  -  1\u001b[39m\n\u001b[31m+ Received  + 22\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   Object {\u001b[39m\n\u001b[31m+     \"impact\": \"serious\",\u001b[39m\n\u001b[31m+     \"nodes\": Array [\u001b[39m\n\u001b[31m+       Object {\u001b[39m\n\u001b[31m+         \"summary\": \"Fix any of the following:\u001b[39m\n\u001b[31m+   Element has insufficient color contrast of 1.49 (foreground color: #e7e9ec, background color: #c0c0c0, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1\",\u001b[39m\n\u001b[31m+         \"target\": Array [\u001b[39m\n\u001b[31m+           \".os-sidebar-actions > button[type=\\\"button\\\"]\",\u001b[39m\n\u001b[31m+         ],\u001b[39m\n\u001b[31m+       },\u001b[39m\n\u001b[31m+       Object {\u001b[39m\n\u001b[31m+         \"summary\": \"Fix any of the following:\u001b[39m\n\u001b[31m+   Element has insufficient color contrast of 1.49 (foreground color: #e7e9ec, background color: #c0c0c0, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1\",\u001b[39m\n\u001b[31m+         \"target\": Array [\u001b[39m\n\u001b[31m+           \".os-sidebar-empty > button[type=\\\"button\\\"]\",\u001b[39m\n\u001b[31m+         ],\u001b[39m\n\u001b[31m+       },\u001b[39m\n\u001b[31m+     ],\u001b[39m\n\u001b[31m+     \"rule\": \"color-contrast\",\u001b[39m\n\u001b[31m+   },\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n   at a11y/fixture.ts:63\n\n  61 |     ]);\n  62 |   }\n> 63 |   expect.soft(findings.map(v => ({ rule: v.id, impact: v.impact, nodes: v.nodes.map(n => ({ target: n.target, summary: n.failureSummary })) })), name).toEqual([]);\n     |                                                                                                                                                        ^\n  64 | }\n  65 |\n  66 | /** Reach the actual control by Tab; focus() is deliberately not used for reachability. */\n    at scan ({REPO}/apps/desktop/e2e/a11y/fixture.ts:63:152)\n    at {REPO}/apps/desktop/e2e/a11y/views.spec.ts:21:9"
+          ]
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/views.spec.ts",
+      "title": "axe configuration, export and settings sections (dark)",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 34665,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "a11y/views.spec.ts",
+      "title": "axe populated comparison, setup dialog and comparison detail",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 27319,
+          "errors": []
+        }
+      ]
+    }
+  ]
+}

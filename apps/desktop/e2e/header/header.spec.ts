@@ -25,7 +25,11 @@ test("starts, pauses, resumes and clears a saved crawl through the bridge contra
   // Measured on macOS arm64 (debug bridge): 0.12 s without load, 0.9-2.3 s while the UI polls; the CI runners are slower, so the
   // phase expectations after pause/resume get 20 s instead of the default 5 s. The assertions are unchanged.
   test.setTimeout(90_000);
-  const slow = { timeout: 20_000 };
+  const waitForPhase = (expected: string, timeout = 5_000) => page.waitForFunction(
+    expected => document.querySelector('[data-testid="crawl-phase"]')?.textContent === expected,
+    expected,
+    { polling: "raf", timeout },
+  );
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.writeHead(200, { "Content-Type": "text/html" });
@@ -37,6 +41,9 @@ test("starts, pauses, resumes and clears a saved crawl through the bridge contra
   if (!address || typeof address === "string") throw new Error("Fixture address missing");
   try {
     await app.open(page, "main");
+    await expect(page.locator("[data-shell-ready]")).toHaveAttribute("data-shell-ready", "true");
+    // Restrict control queries to the header: the live Overview has thousands of buttons.
+    const header = page.getByTestId("crawl-header");
     if (app.mode === "mock") await page.evaluate((base) => {
       const core = window.__osMock!;
       let seq = 1;
@@ -51,16 +58,17 @@ test("starts, pauses, resumes and clears a saved crawl through the bridge contra
     }, tick);
     await page.getByLabel("Start URL").fill(`http://127.0.0.1:${address.port}/`);
     await page.getByLabel("Start URL").press("Enter");
-    await expect(page.getByTestId("crawl-phase")).toHaveText("Running");
+    await waitForPhase("Running");
     // K2-63/K2-77: primary control is Pause for a running crawl.
-    await expect(page.getByRole("button", { name: "Start", exact: true })).toHaveCount(0);
-    await page.getByRole("button", { name: "Pause", exact: true }).click();
-    await expect(page.getByTestId("crawl-phase")).toHaveText("Paused", slow);
-    await page.getByRole("button", { name: "Resume", exact: true }).click();
-    await expect(page.getByTestId("crawl-phase")).toHaveText("Running", slow);
-    await page.getByRole("button", { name: "Pause", exact: true }).click();
-    await page.getByRole("button", { name: "Clear", exact: true }).click();
-    await expect(page.getByTestId("crawl-phase")).toHaveText("Ready", slow);
+    await expect(header.getByRole("button", { name: "Start", exact: true })).toHaveCount(0);
+    await header.getByRole("button", { name: "Pause", exact: true }).click();
+    await waitForPhase("Paused", 20_000);
+    await header.getByRole("button", { name: "Resume", exact: true }).click();
+    await waitForPhase("Running", 20_000);
+    await header.getByRole("button", { name: "Pause", exact: true }).click();
+    await waitForPhase("Paused", 20_000);
+    await header.getByRole("button", { name: "Clear", exact: true }).click();
+    await waitForPhase("Ready", 20_000);
     await expect(page.getByRole("dialog")).toHaveCount(0);
   } finally { await new Promise<void>((resolve, reject) => server.close((e) => e ? reject(e) : resolve())); }
 });

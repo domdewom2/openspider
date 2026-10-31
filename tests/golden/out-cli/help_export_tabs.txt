@@ -157,13 +157,16 @@ Directives:Refresh
 Directives:Unavailable_After
 External:All
 External:CSS
-External:Flash
+External:Fonts
 External:HTML
 External:Images
 External:JavaScript
+External:Media
 External:Other
 External:PDF
+External:Plugins
 External:Unknown
+External:XML
 H1:All
 H1:Alt Text in h1
 H1:Duplicate
@@ -202,13 +205,16 @@ Images:Missing Size Attributes
 Images:Over X KB
 Internal:All
 Internal:CSS
-Internal:Flash
+Internal:Fonts
 Internal:HTML
 Internal:Images
 Internal:JavaScript
+Internal:Media
 Internal:Other
 Internal:PDF
+Internal:Plugins
 Internal:Unknown
+Internal:XML
 JavaScript:All
 JavaScript:Canonical Mismatch
 JavaScript:Canonical Only In Rendered HTML

@@ -1,0 +1,3 @@
+﻿"Type","Source","Destination","Indexability","Indexability Status","Size (Bytes)","Alt Text","Anchor","Status Code","Status","Follow","Target","Rel","Path Type","Unlinked","Link Path","Link Position","Link Origin"
+"HTML Canonical","http://127.0.0.1:8907/canonical-chain-a.html","http://127.0.0.1:8907/canonical-chain-b.html","Non-Indexable","Canonicalised","206","","","200","OK","true","","","Root-Relative","true","//head/link","Head","HTML"
+"HTML Canonical","http://127.0.0.1:8907/canonical-to-noindex.html","http://127.0.0.1:8907/canonical-noindex.html","Non-Indexable","noindex","192","","","200","OK","true","","","Root-Relative","false","//head/link","Head","HTML"

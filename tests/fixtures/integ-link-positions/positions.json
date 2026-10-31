@@ -4,7 +4,7 @@
   ["/header-nav", "Navigation"],
   ["/nav", "Navigation"],
   ["/menu", "Navigation"],
-  ["/aside", "Sidebar"],
+  ["/aside", "Aside"],
   ["/sidebar-id", "Sidebar"],
   ["/sidebar-class", "Sidebar"],
   ["/case", "Content"],

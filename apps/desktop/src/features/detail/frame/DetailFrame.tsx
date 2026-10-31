@@ -11,7 +11,7 @@ import type { ExportFormatDto } from "../../../ipc/gen/ExportFormatDto";
 import { useSession } from "../../../state/session";
 import { useT } from "../../../i18n";
 import { Button } from "../../../ui/primitives/Button";
-import { TabBar } from "../../../ui/primitives/TabBar";
+import { TabBar, tabId } from "../../../ui/primitives/TabBar";
 import { TabContextMenuHost, TabsConfigDialog, tabContextEntries } from "../../table-advanced/TabControls";
 import { Dialog } from "../../../ui/primitives/Dialog";
 import { TextField, Select } from "../../../ui/primitives/fields";
@@ -126,7 +126,7 @@ function RegularDetailFrame(props: DetailFrameProps) {
     <TabContextMenuHost className="os-detail-tabs" label={t("detail-configure-tabs")} entriesFor={id => tabContextEntries(t, id, layout, {
       hide: ids => { if (loaded) savePreferences({ ...preferences, hidden: [...new Set([...preferences.hidden, ...ids as DetailTabId[]])] }); },
       configure: () => setConfigure(true), reset })}>
-      <TabBar tabs={tabs} selected={tab} onSelect={id => setActive(id as DetailTabId)} label={t("detail-tabs")} overflowLabel={t("detail-more-tabs")}
+      <TabBar panelId="detail-panel" tabs={tabs} selected={tab} onSelect={id => setActive(id as DetailTabId)} label={t("detail-tabs")} overflowLabel={t("detail-more-tabs")}
         onReorder={ids => { if (loaded) savePreferences({ ...preferences, order: [...ids, ...preferences.hidden] as DetailTabId[] }); }}
         config={{ all: preferences.order.map(id => ({ id, label: t(`detail-tab-${id}`) })), hidden: preferences.hidden, mandatory: "urlDetails",
           mandatoryReason: t("u20-tab-mandatory"), isDisabled: !loaded, configureLabel: t("u20-tabs-configure"), resetLabel: t("u20-tabs-reset"),
@@ -137,7 +137,7 @@ function RegularDetailFrame(props: DetailFrameProps) {
       onApply={(order, hidden) => { if (loaded) savePreferences({ order: order as DetailTabId[], hidden: hidden as DetailTabId[] }); }} />
     {error ? <DetailError error={error} /> : null}
     {op && <Banner kind={op.error ? "error" : "info"}>{op.error ? t(`err-code-${op.error.code.toLowerCase()}`) : t("detail-export-status", { status: op.state })}</Banner>}
-    <div className="os-detail-body" role="tabpanel" aria-label={t(`detail-tab-${tab}`)}>
+    <div className="os-detail-body" role="tabpanel" id="detail-panel" aria-labelledby={tabId("detail-panel", tab)}>
       {!selected ? <DetailEmpty state={{ code: "NO_SELECTION" }} /> : showCrawlPath ? null : <>
         {multiFocus && <Banner>{t("detail-focus", { id: selection.focus ?? selection.urlIds[0] })}</Banner>}
         {shown.map(id => {

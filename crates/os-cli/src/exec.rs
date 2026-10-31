@@ -815,6 +815,22 @@ async fn export_phase(
         }
     }
 
+    if !plan.crawl_path_urls.is_empty() {
+        let result = os_export::csv::with_header_labels(&plan.header_labels, || {
+            export_crawl_paths(&file, &cfg, plan, out, rep)
+        });
+        match result {
+            Ok(info) => {
+                report_file(rep, &info);
+                files += 1;
+            }
+            Err(message) => {
+                failures += 1;
+                rep.error(format!("Crawl Path Report: {message}"));
+            }
+        }
+    }
+
     if let Some(staging) = &staging {
         let staged: Vec<_> = rep
             .exported_files()
@@ -951,6 +967,55 @@ async fn export_phase(
         }
     }
     ExportEnd::Done { failures, files }
+}
+
+fn export_crawl_paths(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    plan: &Plan,
+    out: &Path,
+    rep: &Reporter,
+) -> Result<ExportFileInfo, String> {
+    let mut ids = Vec::new();
+    let mut stmt = file
+        .conn()
+        .prepare("SELECT id FROM urls WHERE url = ?1")
+        .map_err(|e| e.to_string())?;
+    for url in &plan.crawl_path_urls {
+        let mut rows = stmt.query([url]).map_err(|e| e.to_string())?;
+        if let Some(row) = rows.next().map_err(|e| e.to_string())? {
+            ids.push(os_model::UrlId(row.get(0).map_err(|e| e.to_string())?));
+        } else {
+            rep.warn(format!("Crawl Path: URL nicht im Crawl: {url}"));
+        }
+    }
+    let params = serde_json::json!({});
+    let req = os_analyze::details::DetailReq {
+        url_ids: &ids,
+        params: &params,
+        sort: &[],
+        offset: 0,
+        limit: u64::MAX,
+    };
+    let job = os_export::catalog::TableJob {
+        entry_name: "Crawl Path Report",
+        tabs: &[],
+        file,
+        cfg,
+    };
+    let extension = if plan.format == Format::Xlsx {
+        "xlsx"
+    } else {
+        "csv"
+    };
+    os_export::detail_export::export_detail(
+        os_analyze::details::DetailKind::CrawlPath,
+        &job,
+        &req,
+        &out.join(format!("crawl_path_report.{extension}")),
+        plan.format,
+    )
+    .map_err(|e| e.to_string())
 }
 
 fn run_export(

@@ -71,7 +71,7 @@ Structured Data / All | 9 | 10 | +1 | 11.11%
 Structured Data Unique Types | 0 | 1 | +1 |
 URL / All | 10 | 11 | +1 | 10.00%
 Unique External Outlinks | 0 | 1 | +1 |
-Validation / All | 9 | 10 | +1 | 11.11%
+Validation / All | 11 | 12 | +1 | 9.09%
 Word Count | 0 | 1 | +1 |
 Canonicals / Canonical Is Relative | 0 | 0 | +0 |
 Canonicals / Canonicalised | 0 | 0 | +0 |
@@ -104,13 +104,16 @@ Directives / Refresh | 0 | 0 | +0 |
 Directives / Unavailable_After | 0 | 0 | +0 |
 External / All | 1 | 1 | +0 | 0.00%
 External / CSS | 0 | 0 | +0 |
-External / Flash | 0 | 0 | +0 |
+External / Fonts | 0 | 0 | +0 |
 External / HTML | 1 | 1 | +0 | 0.00%
 External / Images | 0 | 0 | +0 |
 External / JavaScript | 0 | 0 | +0 |
+External / Media | 0 | 0 | +0 |
 External / Other | 0 | 0 | +0 |
 External / PDF | 0 | 0 | +0 |
+External / Plugins | 0 | 0 | +0 |
 External / Unknown | 0 | 0 | +0 |
+External / XML | 0 | 0 | +0 |
 H1 / Alt Text in h1 | 0 | 0 | +0 |
 H1 / Duplicate | 7 | 7 | +0 | 0.00%
 H1 / Missing | 0 | 0 | +0 |
@@ -137,14 +140,18 @@ Images / All | 0 | 0 | +0 |
 Images / Alt Text Over 100 Characters | 0 | 0 | +0 |
 Images / Missing Alt Attribute | 0 | 0 | +0 |
 Images / Missing Alt Text | 0 | 0 | +0 |
+Images / Missing Size Attributes | 0 | 0 | +0 |
 Images / Over 100 KB | 0 | 0 | +0 |
 Internal / CSS | 0 | 0 | +0 |
-Internal / Flash | 0 | 0 | +0 |
+Internal / Fonts | 0 | 0 | +0 |
 Internal / Images | 0 | 0 | +0 |
 Internal / JavaScript | 0 | 0 | +0 |
+Internal / Media | 0 | 0 | +0 |
 Internal / Other | 0 | 0 | +0 |
 Internal / PDF | 0 | 0 | +0 |
+Internal / Plugins | 0 | 0 | +0 |
 Internal / Unknown | 0 | 0 | +0 |
+Internal / XML | 0 | 0 | +0 |
 Links / Internal Nofollow Outlinks | 0 | 0 | +0 |
 Links / Internal Outlinks With No Anchor Text | 0 | 0 | +0 |
 Links / Non-Descriptive Anchor Text In Internal Outlinks | 0 | 0 | +0 |

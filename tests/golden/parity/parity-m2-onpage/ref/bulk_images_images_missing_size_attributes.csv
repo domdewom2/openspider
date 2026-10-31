@@ -1,0 +1,4 @@
+﻿"Type","Source","Destination","Alt Text","Length","Path Type","Link Path","Link Position","Link Origin","Real Dimensions","Dimensions in Attributes","Display Dimensions"
+"Image","http://127.0.0.1:8906/images.html","http://127.0.0.1:8906/picture.png","no size","7","Root-Relative","//body/main/img[1]","Content","HTML","","",""
+"Image","http://127.0.0.1:8906/alt-h1.html","http://127.0.0.1:8906/picture.png","River landscape","15","Root-Relative","//body/main/h1/img","Content","HTML","","",""
+"Image","http://127.0.0.1:8906/images.html","http://127.0.0.1:8906/wide.png","no height","9","Root-Relative","//body/main/img[2]","Content","HTML","","",""

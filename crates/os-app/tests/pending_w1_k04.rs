@@ -59,8 +59,21 @@ async fn all_of_a_versioned_view_except_one_can_be_removed() {
     insert(&f, 1, 1);
     insert(&f, 2, 2);
     open(&app, f.path()).await;
-    let view:os_app::dto::ViewHandle=serde_json::from_value(call(&app,"view.open",json!({"spec":{"kind":"tab","tab":"Internal","filter":"All","search":null,"sort":[],"segment":null,"compare":null},"columns":["Address"]})).await).unwrap();
+    // Force the asynchronous view.open path: slow runners can exceed its
+    // 300-ms synchronous build budget even for this small fixture.
+    let readers = app.read_pool().exclusive(&key(&app)).await;
+    let mut view:os_app::dto::ViewHandle=serde_json::from_value(call(&app,"view.open",json!({"spec":{"kind":"tab","tab":"Internal","filter":"All","search":null,"sort":[],"segment":null,"compare":null},"columns":["Address"]})).await).unwrap();
+    assert_eq!(view.state, os_app::dto::ViewState::Building);
+    drop(readers);
+    let build = app
+        .ops()
+        .wait(&view.op.take().expect("asynchronous view build").op_id)
+        .await
+        .unwrap();
+    assert_eq!(build.state, os_app::dto::OpState::Done, "{build:?}");
+    view = serde_json::from_value(build.result.unwrap()).unwrap();
+    assert_eq!(view.state, os_app::dto::ViewState::Ready);
     let result=operation(&app,"crawl.remove",json!({"selection":{"kind":"all","viewId":view.view_id,"version":view.version,"except":[1]}})).await;
-    assert_eq!(result.state, os_app::dto::OpState::Done);
+    assert_eq!(result.state, os_app::dto::OpState::Done, "{result:?}");
     assert_eq!(result.result.unwrap()["count"], 1);
 }

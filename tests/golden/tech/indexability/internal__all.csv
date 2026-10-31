@@ -18,5 +18,5 @@ Address,Indexability,Indexability Status
 {BASE}/refresh-query.html,Non-Indexable,Redirected
 {BASE}/refresh-query.html?x=1,Non-Indexable,Self Referencing Meta Refresh
 {BASE}/refresh-self-abs.html,Non-Indexable,Self Referencing Meta Refresh
-{BASE}/refresh-self-header.html,Non-Indexable,Self Referencing Meta Refresh
+{BASE}/refresh-self-header.html,Non-Indexable,Redirected
 {BASE}/refresh-self.html,Non-Indexable,Self Referencing Meta Refresh

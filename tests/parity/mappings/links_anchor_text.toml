@@ -3,6 +3,14 @@ key = ["Source", "Destination", "#"]
 drop_ref_columns = ["Description", "How To Fix"]
 
 [columns]
+"Link Origin" = { ignore = true, reason = "OUT-031: All Anchor Text enthält in OS nur Quelle, Ziel, Anker, Alt, Position, Follow und Status Code" }
+"Link Path" = { ignore = true, reason = "OUT-031: All Anchor Text enthält in OS nur Quelle, Ziel, Anker, Alt, Position, Follow und Status Code" }
+"Path Type" = { ignore = true, reason = "OUT-031: All Anchor Text enthält in OS nur Quelle, Ziel, Anker, Alt, Position, Follow und Status Code" }
+"Rel" = { ignore = true, reason = "OUT-031: All Anchor Text enthält in OS nur Quelle, Ziel, Anker, Alt, Position, Follow und Status Code" }
+"Target" = { ignore = true, reason = "OUT-031: All Anchor Text enthält in OS nur Quelle, Ziel, Anker, Alt, Position, Follow und Status Code" }
+"Status" = { ignore = true, reason = "OUT-031: All Anchor Text enthält in OS nur Quelle, Ziel, Anker, Alt, Position, Follow und Status Code" }
+"Size (Bytes)" = { ignore = true, reason = "OUT-031: All Anchor Text enthält in OS nur Quelle, Ziel, Anker, Alt, Position, Follow und Status Code" }
+"Type" = { ignore = true, reason = "OUT-031: All Anchor Text enthält in OS nur Quelle, Ziel, Anker, Alt, Position, Follow und Status Code" }
 "Source" = "Source"
 "Destination" = "Destination"
 "Anchor" = "Anchor"

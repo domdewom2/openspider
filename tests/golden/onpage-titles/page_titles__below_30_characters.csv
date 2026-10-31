@@ -1,6 +1,6 @@
 ﻿Address,Occurrences,Title 1,Title 1 Length,Title 1 Pixel Width,Title 2,Title 2 Length,Title 2 Pixel Width,H1-1,Indexability,Indexability Status
 {BASE}/basic.html,1,Start,5,44,,0,0,,Indexable,
-{BASE}/rcdata.html,1,A <b>B</b>,10,106,,0,0,,Indexable,
+{BASE}/rcdata.html,1,A <b>B</b>,10,108,,0,0,,Indexable,
 {BASE}/entities.html,1,Shop & Mehr,11,114,,0,0,,Indexable,
 {BASE}/multi-short-long.html,2,kurz aaaa bbbb ccccz,20,191,lang aaaa bbbb cccc dddd eeee ffff gggg hhhh iiii jjjj kkkk llll mmmm nnnn ooooz,80,715,,Indexable,
 {BASE}/len-29.html,1,len29 aaaa bbbb cccc dddd eee,29,279,,0,0,,Indexable,

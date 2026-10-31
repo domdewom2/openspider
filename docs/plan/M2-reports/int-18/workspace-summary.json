@@ -1,0 +1,13 @@
+{
+  "targets": 537,
+  "passed": 3989,
+  "failed": 0,
+  "ignored": 44,
+  "test_target_seconds": 1509.84,
+  "exit_code": 0,
+  "desktop_excluded": true,
+  "flake_repeats": [],
+  "started_at": "2026-10-31T01:01:15+00:00",
+  "completed_at": "2026-10-31T01:30:41.077921+00:00",
+  "wall_seconds": 1766.08
+}

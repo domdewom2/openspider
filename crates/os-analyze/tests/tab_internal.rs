@@ -712,12 +712,12 @@ async fn word_count_counts_only_the_content_area() {
 
 // spec: ONPAGE-013
 #[tokio::test]
-async fn text_ratio_is_visible_text_over_source_in_percent_with_one_decimal() {
+async fn text_ratio_is_visible_text_over_source_in_percent_with_three_decimals() {
     let fx = internal_site().await;
     let t = all_columns(&fx, "All");
-    // „sichtbar“ = 8 Zeichen, Quelltext 271 Zeichen: 8 / 271 × 100 = 2,95 → 3,0
+    // K2-63 / SQ-08, ONPAGE-013: 8 / 271 × 100 = 2,952 (drei Nachkommastellen in der Ansicht).
     assert_eq!(t.int("/content/script-style.html", "Size (bytes)"), 271);
-    assert!((t.float("/content/script-style.html", "Text Ratio") - 3.0).abs() < 1e-9);
+    assert!((t.float("/content/script-style.html", "Text Ratio") - 2.952).abs() < 1e-9);
     // Seite ohne Body-Text → 0
     assert!((t.float("/content/no-text.html", "Text Ratio")).abs() < 1e-9);
     assert_eq!(t.int("/content/no-text.html", "Word Count"), 0);
@@ -817,8 +817,18 @@ async fn self_links_and_nofollow_links_are_counted() {
     // B: Z, B selbst und ein nofollow-Link auf N → 3 Outlinks, 3 verschiedene Ziele
     assert_eq!(t.int("/links/b.html", "Outlinks"), 3);
     assert_eq!(t.int("/links/b.html", "Unique Outlinks"), 3);
-    // rel="nofollow" beeinflusst nur das Folgen, nicht die Zählung
-    assert_eq!(t.int("/links/n.html", "Inlinks"), 1);
+    // CRAWL-056: N bleibt als Beziehung/Zähler gespeichert, hat aber keine Tabellenzeile.
+    assert!(!t.contains("/links/n.html"));
+    let inlinks: i64 = fx
+        .file
+        .conn()
+        .query_row(
+            "SELECT c.inlinks FROM url_counters c JOIN urls u ON u.id=c.url_id WHERE u.url=?1",
+            [format!("{}/links/n.html", fx.site.base_url())],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(inlinks, 1);
 }
 
 // spec: ONPAGE-015
@@ -1325,17 +1335,17 @@ async fn every_column_of_the_three_tabs_can_be_selected_sorted_and_counted() {
         .iter()
         .find(|c| c.tab == "Internal" && c.filter == "HTML")
         .expect("Internal:HTML");
-    assert_eq!(internal_all.count, Some(38));
+    assert_eq!(internal_all.count, Some(36));
     assert_eq!(html.count, Some(30));
-    // Anteil an „All“ in Prozent mit einer Nachkommastelle: 30 von 38 = 78,94… → 78,9 (ohne robots.txt, K-54)
-    assert_eq!(html.pct.map(|p| (p * 10.0).round() / 10.0), Some(78.9));
+    // SQ-12: p0/p2 sind nur per Paginierung bekannt; 30 von 36 = 83,33… → 83,3.
+    assert_eq!(html.pct.map(|p| (p * 10.0).round() / 10.0), Some(83.3));
     let security_http = counts
         .iter()
         .find(|c| c.tab == "Security" && c.filter == "HTTP URLs")
         .expect("Security:HTTP URLs");
     assert_eq!(
         security_http.count,
-        Some(38),
+        Some(36),
         "alle Internal-URLs sind http"
     );
 }

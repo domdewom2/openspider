@@ -79,7 +79,10 @@ External,JavaScript,0,0.00
 External,CSS,0,0.00
 External,Images,0,0.00
 External,PDF,0,0.00
-External,Flash,0,0.00
+External,Plugins,0,0.00
+External,Media,0,0.00
+External,Fonts,0,0.00
+External,XML,0,0.00
 External,Other,0,0.00
 External,Unknown,0,0.00
 Security,All,11,100.00
@@ -164,7 +167,7 @@ Canonicals,Missing,7,100.00
 Canonicals,Multiple,0,0.00
 Canonicals,Multiple Conflicting,0,0.00
 Canonicals,Non-Indexable Canonical,,
-Directives,All,10,100.00
+Directives,All,7,100.00
 Directives,Index,0,0.00
 Directives,Noindex,0,0.00
 Directives,Follow,0,0.00

@@ -7,13 +7,14 @@
 //! 1. `Blocked by Robots.txt` – die URL ist von der robots.txt gesperrt (`robots_blocked`) oder wurde wegen
 //!    einer nicht erreichbaren robots.txt gar nicht abgerufen,
 //! 2. `No Response` – Statuscode 0 (Timeout, DNS-, TLS-, Verbindungsfehler),
-//! 3. `Redirected` – 3xx, oder Refresh (Header bzw. Meta-Element) mit Ziel ≠ eigene URL,
+//! 3. `Redirected` – 3xx, gültiger Header-Refresh (auch selbst), oder Meta-Refresh auf eine andere URL,
 //! 4. `Client Error` (4xx), 5. `Server Error` (5xx),
 //! 6. `Self Referencing Meta Refresh` – Refresh ohne Ziel oder auf die eigene URL, nur mit
 //!    `advanced.respect_self_ref_meta_refresh` (TECH-068),
 //! 7. `noindex` – wirksames `noindex` aus Meta Robots, agent-spezifischem Meta-Tag oder `X-Robots-Tag`
 //!    einschließlich `none` (`PageFacts.effective_index`, TECH-066),
-//! 8. `Canonicalised` – maßgebliche Canonical-URL (TECH-017, `PageFacts.canonical_url`) ≠ eigene URL.
+//! 8. `Unavailable After` – wirksames Ablaufdatum vor dem Abrufzeitpunkt,
+//! 9. `Canonicalised` – maßgebliche Canonical-URL (TECH-017, `PageFacts.canonical_url`) ≠ eigene URL.
 //!
 //! Alle URL-Vergleiche laufen über `IndexabilityInput::same_url` (TECH-002). Eine ungültige URL ist nie
 //! gleich einer anderen, auch nicht sich selbst; daran erkennt [`valid_url`] ungültige Canonical- und
@@ -75,6 +76,17 @@ fn refresh_effect(input: &IndexabilityInput) -> RefreshEffect {
     let Some(refresh) = chosen else {
         return RefreshEffect::None;
     };
+    if refresh.source == RefreshSource::Header {
+        return if refresh
+            .target
+            .as_deref()
+            .is_some_and(|t| valid_url(input.same_url, t))
+        {
+            RefreshEffect::Redirect
+        } else {
+            RefreshEffect::None
+        };
+    }
     match refresh.target.as_deref() {
         // Kein Ziel angegeben (`content="30"`): Selbst-Refresh.
         None if refresh.target_raw.is_none() => RefreshEffect::SelfReference,
@@ -88,13 +100,24 @@ fn refresh_effect(input: &IndexabilityInput) -> RefreshEffect {
 
 /// Bewertet die Indexierbarkeit einer URL.
 pub fn evaluate(input: &IndexabilityInput) -> (Indexability, Option<IndexabilityStatus>) {
-    match status_of(input) {
+    evaluate_with_expiration(input, None)
+}
+
+/// Bewertet TECH-063 gegen den Abrufzeitpunkt; das früheste wirksame Datum liefert der Parser.
+pub fn evaluate_with_expiration(
+    input: &IndexabilityInput,
+    unavailable_after: Option<crate::Timestamp>,
+) -> (Indexability, Option<IndexabilityStatus>) {
+    match status_of(input, unavailable_after) {
         Some(s) => (Indexability::NonIndexable, Some(s)),
         None => (Indexability::Indexable, None),
     }
 }
 
-fn status_of(input: &IndexabilityInput) -> Option<IndexabilityStatus> {
+fn status_of(
+    input: &IndexabilityInput,
+    unavailable_after: Option<crate::Timestamp>,
+) -> Option<IndexabilityStatus> {
     let f = input.fetch;
 
     // 1. robots.txt
@@ -130,14 +153,19 @@ fn status_of(input: &IndexabilityInput) -> Option<IndexabilityStatus> {
         return Some(IndexabilityStatus::SelfReferencingMetaRefresh);
     }
 
-    let page = input.page?;
+    let page = input.page;
 
     // 7. noindex (Meta, agent-spezifisches Meta, X-Robots-Tag; `none` inklusive)
-    if !page.effective_index {
+    if page.is_some_and(|p| !p.effective_index) {
         return Some(IndexabilityStatus::Noindex);
     }
 
-    // 8. Canonical auf eine andere URL (nur mit gespeicherten Canonicals, CRAWL-046; ungültige ignoriert)
+    if unavailable_after.is_some_and(|date| date < f.crawl_timestamp) {
+        return Some(IndexabilityStatus::UnavailableAfter);
+    }
+    let page = page?;
+
+    // 9. Canonical auf eine andere URL (nur mit gespeicherten Canonicals, CRAWL-046; ungültige ignoriert)
     if input.cfg.spider.canonicals.store {
         if let Some(canonical) = page.canonical_url.as_deref() {
             if valid_url(input.same_url, canonical) && !(input.same_url)(input.page_url, canonical)

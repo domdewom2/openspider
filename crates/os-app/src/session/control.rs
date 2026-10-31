@@ -444,18 +444,24 @@ pub async fn pause_or_stop(app: &App, ctx: CallCtx, stop: bool) -> Result<(), Cm
             .unwrap_or_else(|p| p.into_inner())
             .is_none()
     });
-    let acknowledged = signalled
-        && joined
+    let acknowledged = joined
         && match s.state {
             CrawlState::Running => false,
-            CrawlState::Paused | CrawlState::Incomplete => !stop,
+            CrawlState::Paused | CrawlState::Incomplete => {
+                !stop && (signalled || requested.state == CrawlState::Running)
+            }
+            // The engine can finish naturally before a click on a stale Running
+            // tick reaches us. There is nothing left to pause or stop in that case.
             CrawlState::Completed | CrawlState::Failed => true,
         };
     if !acknowledged {
         settle(app, &s, Some(stop)).await?;
     }
     feed::invalidate(app, &s.key);
-    feed::refresh(app, &s).await
+    // The durable result was published by settle/stop_checkpoint. Aggregates
+    // and row notifications belong to the next background poll, not the ack.
+    app.flush_tick();
+    Ok(())
 }
 
 pub async fn settle(app: &App, s: &SessionInfo, action: Option<bool>) -> Result<(), CmdError> {
@@ -500,15 +506,18 @@ pub async fn settle(app: &App, s: &SessionInfo, action: Option<bool>) -> Result<
     // progress only after wait() has acknowledged the durable checkpoint.
     let text = serde_json::to_string(&p).map_err(|e| internal("progress", e.to_string()))?;
     app.write_queue()
-        .submit_file(&s.key, move |f| {
-            f.set_meta("progress_snapshot", &text)
-                .map_err(|e| crate::runtime::error::store_error(&e))
+        .submit(s.key.clone(), move |conn| {
+            // The engine already checkpointed the crawl. A single metadata write
+            // does not need a second CrawlFile open, profile setup and writer stamp.
+            os_store::meta::set_meta(conn, "progress_snapshot", &text)
         })
         .await?;
     if result.is_err() {
         crate::commands::mail::on_failed(app, &s.key);
     }
     let summary = result?;
+    feed::settled(app, s, &p);
+    app.flush_tick();
     let event = match summary.state {
         CrawlState::Paused => CrawlEvent::Paused(s.key.clone()),
         _ if action == Some(true) => CrawlEvent::Stopped(s.key.clone()),
@@ -673,6 +682,11 @@ async fn stop_checkpoint(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
     let now = app.config().clock.now().to_db();
     app.write_queue()
         .submit_file(&s.key, move |f| {
+            // One atomic commit instead of five Windows disk synchronizations.
+            let tx = f
+                .conn()
+                .unchecked_transaction()
+                .map_err(|e| crate::runtime::error::store_error(&e.into()))?;
             let state = f
                 .meta()
                 .map_err(|e| crate::runtime::error::store_error(&e))?
@@ -693,10 +707,17 @@ async fn stop_checkpoint(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
                 f.set_meta(key, value)
                     .map_err(|e| crate::runtime::error::store_error(&e))?;
             }
+            tx.commit()
+                .map_err(|e| crate::runtime::error::store_error(&e.into()))?;
             Ok(())
         })
         .await?;
     super::state(app, &s.key, CrawlState::Completed);
+    if !feed::stopped(app, s) {
+        feed::invalidate(app, &s.key);
+        feed::refresh(app, s).await?;
+    }
+    app.flush_tick();
     app.crawl_events()
         .emit(app, CrawlEvent::Stopped(s.key.clone()));
     if s.config.analysis.auto_at_end {
@@ -762,6 +783,32 @@ mod control_priority_tests {
     // spec: UI-003
     // spec: CRAWL-126 [M2]
     #[tokio::test]
+    async fn a_control_click_after_natural_completion_does_not_open_an_error_dialog() {
+        let home = tempfile::tempdir().unwrap();
+        let app = App::new(crate::AppConfig::new(home.path())).unwrap();
+        let ctx = CallCtx::for_window("main");
+        app.sessions().set_current(
+            ctx.window.clone(),
+            SessionInfo {
+                key: CrawlKey("completed".into()),
+                path: home.path().join("completed.ospider"),
+                config: Arc::new(CrawlConfig::default()),
+                state: CrawlState::Completed,
+                writable: true,
+                engine: None,
+            },
+        );
+        pause_or_stop(&app, ctx.clone(), false).await.unwrap();
+        pause_or_stop(&app, ctx.clone(), true).await.unwrap();
+        assert_eq!(
+            super::super::current(&app, &ctx.window).unwrap().state,
+            CrawlState::Completed
+        );
+    }
+
+    // spec: UI-003
+    // spec: CRAWL-126 [M2]
+    #[tokio::test]
     async fn pause_signals_the_engine_while_a_background_snapshot_holds_the_session_lock() {
         let home = tempfile::tempdir().unwrap();
         let app = App::new(crate::AppConfig::new(home.path())).unwrap();
@@ -818,8 +865,38 @@ mod control_priority_tests {
         // Emulate the poller joining the signalled handle before the command
         // acquires the lock. The acknowledgement must remain successful.
         settle(&app, &session, None).await.unwrap();
+        // Occupy the aggregate/feed lane after the durable checkpoint. A control
+        // acknowledgement must not wait for that lane to become available.
+        let (entered_tx, entered_rx) = tokio::sync::oneshot::channel();
+        let (release_tx, release_rx) = std::sync::mpsc::channel();
+        let reader = app.clone();
+        let key = session.key.clone();
+        let blocked = tokio::spawn(async move {
+            reader
+                .read_pool()
+                .run_cached(
+                    key,
+                    "session-feed",
+                    os_model::CancelToken::new(),
+                    move |_, _| {
+                        let _ = entered_tx.send(());
+                        let _ = release_rx.recv_timeout(Duration::from_secs(5));
+                        Ok(())
+                    },
+                )
+                .await
+        });
+        entered_rx.await.unwrap();
         drop(guard);
-        pause.await.unwrap().unwrap();
+        let ack = tokio::time::timeout(Duration::from_secs(2), pause).await;
+        release_tx.send(()).unwrap();
+        blocked.await.unwrap().unwrap();
+        ack.expect("pause ack waited for aggregate reader")
+            .unwrap()
+            .unwrap();
         assert_eq!(stopped.unwrap(), CrawlState::Paused);
+        // A joined checkpoint is available to the UI without another feed read.
+        let tick = app.assemble_tick().unwrap();
+        assert_eq!(tick.crawl.unwrap().phase, CrawlPhase::Paused);
     }
 }

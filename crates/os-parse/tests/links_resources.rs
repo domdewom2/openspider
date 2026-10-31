@@ -86,7 +86,7 @@ fn page_resources_in_document_order() {
 #[test]
 fn css_in_style_blocks_and_attributes_comes_from_extract_inline() {
     let (doc, base_url) = page();
-    let inline = css::extract_inline(&doc, &base_url);
+    let inline = css::extract_inline(&doc, &base_url, true);
     let actual: Vec<(LinkType, &str, Option<&str>)> = inline
         .iter()
         .map(|l| (l.link_type, l.href_raw.as_str(), l.resolved.as_deref()))

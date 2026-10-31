@@ -350,3 +350,90 @@ fn table_default_format_is_unchanged() {
     let t: Table = parse_csv(b"A\n1\n", &[]).unwrap();
     assert_eq!(t.rows.len(), 1);
 }
+
+// spec: ONPAGE-008
+#[test]
+fn absent_numbered_columns_accept_only_empty_or_zero() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let mapping =
+        std::fs::read_to_string(root.join("tests/parity/mappings/page_titles_all.toml")).unwrap();
+    let reference = include_str!("fixtures/page_titles_dynamic_ref.csv");
+    let os = include_str!("fixtures/page_titles_dynamic_os.csv");
+    let r = compare_with(&mapping, reference, os, &[]);
+    assert!(r.missing_ref_columns.is_empty());
+    assert!(r.missing_os_columns.is_empty());
+    assert!(r.columns.iter().all(|c| c.errors == 0));
+    let bad = os.replace(",,0,0,Indexable", ",unexpected,1,0,Indexable");
+    assert!(compare_with(&mapping, reference, &bad, &[])
+        .columns
+        .iter()
+        .any(|c| c.errors > 0));
+    let r = compare_with(&mapping, os, reference, &[]);
+    assert!(
+        !r.missing_os_columns.is_empty(),
+        "vorhandene Referenzspalten bleiben Pflicht"
+    );
+}
+
+// spec: ONPAGE-008
+#[test]
+fn numbered_columns_absent_on_both_sides_are_complete() {
+    let mapping = "key = [\"Address\"]\n[columns]\n\"Address\" = \"Address\"\n\"Canonical Link Element 1\" = \"Canonical Link Element 1\"\n\"Canonical Link Element 2\" = \"Canonical Link Element 2\"\n\"Canonical Link Element 3\" = \"Canonical Link Element 3\"\n";
+    let r = compare_with(
+        mapping,
+        include_str!("fixtures/canonical_dynamic_ref.csv"),
+        include_str!("fixtures/canonical_dynamic_os.csv"),
+        &[],
+    );
+    assert!(r.missing_ref_columns.is_empty() && r.missing_os_columns.is_empty());
+    assert!(r.columns.iter().all(|c| c.errors == 0));
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let internal =
+        std::fs::read_to_string(root.join("tests/parity/mappings/internal_all.toml")).unwrap();
+    let r = compare_with(
+        &internal,
+        include_str!("fixtures/canonical_dynamic_ref.csv"),
+        include_str!("fixtures/canonical_dynamic_os.csv"),
+        &[],
+    );
+    for name in ["Canonical Link Element 2", "Canonical Link Element 3"] {
+        assert!(!r.missing_ref_columns.iter().any(|c| c == name));
+        assert!(!r.missing_os_columns.iter().any(|c| c == name));
+    }
+}
+
+// spec: TECH-141
+#[test]
+fn file_scoped_rows_do_not_excuse_links_all() {
+    let d = Deviations::parse("[[deviation]]\nid = \"DEV-fixture\"\nspec = \"TECH-141\"\nkind = \"OS-Festlegung\"\nexport = \"links_all\"\nfile = \"links_outlinks_to_localhost.csv\"\nscope = \"missing_in_os\"\n").unwrap();
+    assert!(d.for_export(Some("s"), "links_all").is_empty());
+    assert!(d
+        .for_file(Some("s"), "links_all", Some("links_all.csv"))
+        .is_empty());
+    assert_eq!(
+        d.for_file(
+            Some("s"),
+            "links_all",
+            Some("links_outlinks_to_localhost.csv")
+        )
+        .len(),
+        1
+    );
+}
+
+// spec: OUT-081
+#[test]
+fn terminal_hop_is_compared_with_final_status() {
+    let mapping = "chain_end_target = true\nkey = [\"Address\"]\n[columns]\n\"Number of Redirects/Canonicals\" = \"Number of Redirects\"\n\"Final Status Code\" = \"Final Status Code\"\n\"Final Status\" = \"Final Status\"\n\"Status Code 1\" = \"Status Code 1\"\n\"Status 1\" = \"Status 1\"\n\"Status Code 2\" = \"Status Code 2\"\n\"Status 2\" = \"Status 2\"\n";
+    let reference = include_str!("fixtures/chain_end_ref.csv");
+    let os = include_str!("fixtures/chain_end_os.csv");
+    let r = compare_with(mapping, reference, os, &[]);
+    assert!(r.missing_os_columns.is_empty());
+    assert!(r.columns.iter().all(|c| c.errors == 0));
+    let bad = reference.replace(",200,OK\n", ",500,Error\n");
+    let r = compare_with(mapping, &bad, os, &[]);
+    assert!(r
+        .columns
+        .iter()
+        .any(|c| c.ref_column == "Status Code 2" && c.errors == 1));
+}

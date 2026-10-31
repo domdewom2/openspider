@@ -110,7 +110,7 @@ const STATUS_CODE_SQL: &str =
 
 fn select_sql(where_sql: &str, order: LinkOrder) -> String {
     format!(
-        "SELECT l.link_type, s.address, COALESCE(t.address, l.target_raw), t.size_bytes, l.alt_text, \
+        "SELECT l.link_type, s.address, COALESCE(t.address, l.target_raw), CASE WHEN t.is_internal = 1 AND t.state <> 'done' THEN COALESCE(t.size_bytes, 0) ELSE t.size_bytes END, l.alt_text, \
                 l.anchor, {STATUS_CODE_SQL}, {STATUS_SQL}, \
                 CASE WHEN l.follow <> 0 THEN 'True' ELSE 'False' END, \
                 l.target_attr, l.rel, l.path_type, l.link_path, l.link_position, l.link_origin, l.uncrawlable_reason \
@@ -419,7 +419,9 @@ fn link_spec_condition(
     use os_analyze::tabs::links::{LOCALHOST_LINK, NON_DESCRIPTIVE_LINK};
     let mut params = Vec::new();
     let predicate = match spec {
-        "All Anchor Text" => "l.link_type = 'Hyperlink'".to_owned(),
+        // CRAWL-056: nofollow-only destinations have no exported table row.
+        // Keep their stored relation available in the source's link details.
+        "All Anchor Text" => "l.link_type = 'Hyperlink' AND (t.in_tables = 1 OR COALESCE(t.not_crawled_reason, '') <> 'nofollow')".to_owned(),
         "External Links" => "s.is_internal = 1 AND t.is_internal = 0".to_owned(),
         "Internal Nofollow Outlinks" => "s.is_internal = 1 AND t.is_internal = 1 AND l.link_type = 'Hyperlink' AND l.crawlable = 1 AND l.follow = 0".to_owned(),
         "Internal Outlinks With No Anchor Text" => "s.is_internal = 1 AND t.is_internal = 1 AND l.link_type = 'Hyperlink' AND l.crawlable = 1 AND COALESCE(l.anchor, '') COLLATE OS_ANCHOR = '' AND COALESCE(l.alt_text, '') COLLATE OS_ANCHOR = ''".to_owned(),

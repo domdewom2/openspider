@@ -169,6 +169,7 @@ async fn target_without_fetch_is_not_crawled_and_has_no_status_code() {
             .unwrap_or_else(|| panic!("{ty} {dest}"));
         assert_eq!(r[6], "", "Status Code von {dest}");
         assert_eq!(r[7], "Not Crawled", "Status von {dest}");
+        assert_eq!(r[3], "0", "Ungecrawltes internes Ziel: Größe von {dest}");
     }
     // Fehlerziele behalten ihren Code und Text
     let r = find(&all, HOME, &u("/missing.html"), "Hyperlink");
@@ -255,7 +256,7 @@ async fn link_position_follows_the_enclosing_element() {
     let pos = |dest: &str| find(&all, HOME, &u(dest), "Hyperlink")[13].clone();
     assert_eq!(pos("/nav.html"), "Navigation");
     assert_eq!(pos("/header.html"), "Header");
-    assert_eq!(pos("/aside.html"), "Sidebar");
+    assert_eq!(pos("/aside.html"), "Aside");
     assert_eq!(pos("/footer.html"), "Footer");
     assert_eq!(pos("/dup.html"), "Content");
     // Link Path: absoluter XPath mit Positionsindizes in jedem Schritt

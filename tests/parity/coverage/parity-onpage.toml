@@ -315,7 +315,7 @@ miss = ["ext:/ctype/t-png.png"]
 
 [[case]]
 tab = "External"
-filter = "Flash"
+filter = "Plugins"
 hit = ["ext:/ctype/t-swf"]
 miss = ["ext:/ctype/t-json.json"]
 
@@ -330,4 +330,19 @@ tab = "External"
 filter = "Unknown"
 hit = ["dead:http://localhost:1/"]
 miss = ["ext:/ctype/t-html.html"]
+
+[[exempt]]
+tab = "External"
+filter = "Media"
+reason = "SQ-07: die bestehende Fixture parity-onpage hat keine externen Treffer dieser Klasse; Produktpartition in crates/os-analyze/tests/n07_onpage.rs belegt. Keine neuen Crawl-URLs fuer alte Referenzexporte erzeugen."
+
+[[exempt]]
+tab = "External"
+filter = "Fonts"
+reason = "SQ-07: die bestehende Fixture parity-onpage hat keine externen Treffer dieser Klasse; Produktpartition in crates/os-analyze/tests/n07_onpage.rs belegt. Keine neuen Crawl-URLs fuer alte Referenzexporte erzeugen."
+
+[[exempt]]
+tab = "External"
+filter = "XML"
+reason = "SQ-07: die bestehende Fixture parity-onpage hat keine externen Treffer dieser Klasse; Produktpartition in crates/os-analyze/tests/n07_onpage.rs belegt. Keine neuen Crawl-URLs fuer alte Referenzexporte erzeugen."
 

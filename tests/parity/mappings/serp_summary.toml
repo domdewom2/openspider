@@ -1,19 +1,19 @@
-# M2-P01: Spec-abgeleitete Spalten; keine Referenzwerte oder Beschreibungstexte.
-key = ["Address"]
-drop_ref_columns = ["Description", "How To Fix"]
+# Q02b / UI-038, K-64: dieselbe festgelegte Pixelmetrik wie Internal/Page Titles; Export-Schwellen unveraendert.
+# N06: Spaltensatz nach Referenzkopfzeile; Soll und Ignoriergründe aus der Spec.
+key = ["URL"]
 
 [columns]
-"Address" = "Address"
-"Title 1" = "Title 1"
-"Title 1 Length" = "Title 1 Length"
-"Title 1 Pixel Width" = "Title 1 Pixel Width"
-"Meta Description 1" = "Meta Description 1"
-"Meta Description 1 Length" = "Meta Description 1 Length"
-"Meta Description 1 Pixel Width" = "Meta Description 1 Pixel Width"
+"URL" = "Address"
+"Title" = "Title 1"
+"Character Length" = "Title 1 Length"
+"Pixel Length" = { os = "Title 1 Pixel Width", tolerance_pct = 3.0 }
+"Description" = "Meta Description 1"
+"Character Length (2)" = "Meta Description 1 Length"
+"Pixel Length (2)" = { os = "Meta Description 1 Pixel Width", tolerance_pct = 3.0 }
 
 [normalize]
+bool = "case-insensitive"
 base_url = true
 trim = true
-bool = "case-insensitive"
 number_decimals = 3
 empty_equals_null = true

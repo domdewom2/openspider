@@ -1,0 +1,2682 @@
+{
+  "stats": {
+    "startTime": "2026-10-30T20:29:20.362Z",
+    "duration": 131504.495,
+    "expected": 178,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "tests": [
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "Keine Kollision mit Systemkürzeln oder anderen Aktionen",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "mac: Hilfedialog und vollständiges Register stimmen überein",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2896,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "win: Hilfedialog und vollständiges Register stimmen überein",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2899,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "Keine Kollision mit Systemkürzeln oder anderen Aktionen",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 8,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "mac: Hilfedialog und vollständiges Register stimmen überein",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3213,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "win: Hilfedialog und vollständiges Register stimmen überein",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3243,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.start: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3415,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.pause: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3354,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.new: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3548,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.open: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3624,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.saveAs: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3381,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "app.settings: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3307,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "config.spider: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3522,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "config.diff: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3519,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "search.focus: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3158,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "search.clear: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3204,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "table.copy: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3045,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "table.selectAll: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3162,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "export.view: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2724,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.next: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2914,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.prev: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3192,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.1: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3226,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.2: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2975,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.3: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2888,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.4: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3012,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.5: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3498,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.6: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3753,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.7: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3958,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.8: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3510,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.9: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3635,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "filter.open: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3196,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "focus.next: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3158,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "focus.prev: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3200,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "view.toggleDetail: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2995,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "view.toggleSidebar: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2876,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "nav.back: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2896,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "nav.forward: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3080,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "browser.open: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3095,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.recrawl: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2796,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "table.remove: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3020,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "analysis.start: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3051,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "source.nextDiff: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3177,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "source.prevDiff: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3128,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "zoom.in: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3251,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "zoom.out: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3241,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "zoom.reset: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3154,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "context.menu: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2921,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "Textfeld behält Kopieren, Markieren, Löschen und Navigation; Dialog sperrt globale Kürzel",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3219,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "Aliase Backspace und Kontextmenütaste senden dieselbe Aktion",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3050,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.start: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3075,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.pause: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3220,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.new: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3404,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.open: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3114,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.saveAs: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2906,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "app.settings: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2658,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "config.spider: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2215,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "config.diff: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2188,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "search.focus: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1972,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "search.clear: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2034,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "table.copy: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2189,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "table.selectAll: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2830,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "export.view: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2655,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.next: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2878,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.prev: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2949,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.1: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2654,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.2: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2932,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.3: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3039,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.4: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2729,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.5: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2761,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.6: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2875,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.7: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2606,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.8: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2766,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.9: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2566,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "filter.open: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2391,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "focus.next: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2348,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "focus.prev: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2097,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "view.toggleDetail: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1934,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "view.toggleSidebar: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1914,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "nav.back: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1945,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "nav.forward: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1969,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "browser.open: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1851,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.recrawl: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1886,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "table.remove: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1874,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "analysis.start: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1852,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "source.nextDiff: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1912,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "source.prevDiff: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1881,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "zoom.in: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1988,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "zoom.out: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1773,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "zoom.reset: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1856,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "context.menu: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2062,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "Textfeld behält Kopieren, Markieren, Löschen und Navigation; Dialog sperrt globale Kürzel",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2114,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "Aliase Backspace und Kontextmenütaste senden dieselbe Aktion",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2051,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.start: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3001,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.pause: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2878,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.new: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2926,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.open: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3246,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.saveAs: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3005,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "app.settings: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2955,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "config.spider: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2990,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "config.diff: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3054,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "search.focus: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3097,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "search.clear: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3207,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "table.copy: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3430,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "table.selectAll: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3759,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "export.view: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3825,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.next: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3491,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.prev: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3370,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.1: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3460,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.2: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3226,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.3: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3382,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.4: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3133,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.5: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3174,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.6: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3357,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.7: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3373,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.8: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3097,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.9: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3158,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "filter.open: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3344,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "focus.next: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3030,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "focus.prev: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3008,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "view.toggleDetail: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3037,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "view.toggleSidebar: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3048,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "nav.back: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2947,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "nav.forward: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2931,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "browser.open: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2974,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.recrawl: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3056,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "table.remove: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2920,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "analysis.start: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3106,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "source.nextDiff: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3056,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "source.prevDiff: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3094,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "zoom.in: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3245,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "zoom.out: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2959,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "zoom.reset: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3180,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "context.menu: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3208,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "Textfeld behält Kopieren, Markieren, Löschen und Navigation; Dialog sperrt globale Kürzel",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3377,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "shortcuts.spec.ts",
+      "title": "Aliase Backspace und Kontextmenütaste senden dieselbe Aktion",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3248,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.start: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2100,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.pause: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1886,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.new: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1855,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.open: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1932,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.saveAs: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1847,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "app.settings: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 1966,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "config.spider: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2104,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "config.diff: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2190,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "search.focus: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2460,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "search.clear: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2469,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "table.copy: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2617,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "table.selectAll: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2734,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "export.view: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3134,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.next: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3208,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.prev: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3058,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.1: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3192,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.2: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2771,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.3: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2806,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.4: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2728,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.5: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2620,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.6: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2615,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.7: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2617,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.8: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2632,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "toptab.goto.9: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2769,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "filter.open: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2847,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "focus.next: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3048,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "focus.prev: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3402,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "view.toggleDetail: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3303,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "view.toggleSidebar: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3000,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "nav.back: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2910,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "nav.forward: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2567,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "browser.open: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2458,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "crawl.recrawl: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2647,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "table.remove: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2650,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "analysis.start: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2490,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "source.nextDiff: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2704,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "source.prevDiff: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2759,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "zoom.in: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2997,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "zoom.out: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3171,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "zoom.reset: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2888,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "context.menu: Registerbelegung sendet das Aktionsereignis",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3208,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "Textfeld behält Kopieren, Markieren, Löschen und Navigation; Dialog sperrt globale Kürzel",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3293,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "shortcuts.spec.ts",
+      "title": "Aliase Backspace und Kontextmenütaste senden dieselbe Aktion",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3389,
+          "errors": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2127 @@
+{
+  "export": "content_m2",
+  "site": null,
+  "ref_rows": 50,
+  "os_rows": 50,
+  "matched": 50,
+  "missing_in_os": [],
+  "extra_in_os": [],
+  "cells_compared": 500,
+  "cells_equal": 104,
+  "agreement_pct": 20.8,
+  "columns": [
+    {
+      "ref_column": "Word Count",
+      "os_column": "Word Count",
+      "compared": 50,
+      "errors": 50,
+      "examples": [
+        {
+          "key": "{BASE}/",
+          "ref": "110",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/lorem.html",
+          "ref": "6",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/soft404-2.html",
+          "ref": "3",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-0.html",
+          "ref": "3",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/alt-h1.html",
+          "ref": "0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-986.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/tracking.html?utm_source=fixture&utm_medium=local&utm_campaign=m2",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/near-85.html",
+          "ref": "257",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-199.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-400.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-b.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/readability-difficult.html",
+          "ref": "20",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-561.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-200.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/soft404-0.html",
+          "ref": "3",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-6.html",
+          "ref": "3",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/unique.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-560.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/near-base.html",
+          "ref": "302",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/headings-h2.html",
+          "ref": "7",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-5.html",
+          "ref": "3",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/empty.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/headings-h1.html",
+          "ref": "6",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-4.html",
+          "ref": "3",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-201.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/near-95.html",
+          "ref": "287",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/multiple.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/same-h1.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/soft404-1.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-399.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-562.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-1.html",
+          "ref": "3",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/readability-easy.html",
+          "ref": "17",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/catalog/catalog/catalog.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/missing.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/images.html",
+          "ref": "3",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-984.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-2.html",
+          "ref": "3",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/bookmark-target.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/bookmarks.html",
+          "ref": "4",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-401.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/list-item-text.html",
+          "ref": "10",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-3.html",
+          "ref": "3",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/search?q=river",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/long.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-a.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/readability-very-difficult.html",
+          "ref": "14",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-985.html",
+          "ref": "2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/?s=stone",
+          "ref": "110",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/outside-head.html",
+          "ref": "7",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Sentence Count",
+      "os_column": "Sentence Count",
+      "compared": 50,
+      "errors": 49,
+      "examples": [
+        {
+          "key": "{BASE}/",
+          "ref": "111",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/lorem.html",
+          "ref": "2",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/soft404-2.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-0.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-986.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/tracking.html?utm_source=fixture&utm_medium=local&utm_campaign=m2",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/near-85.html",
+          "ref": "24",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-199.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-400.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-b.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/readability-difficult.html",
+          "ref": "2",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-561.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-200.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/soft404-0.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-6.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/unique.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-560.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/near-base.html",
+          "ref": "28",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/headings-h2.html",
+          "ref": "3",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-5.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/empty.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/headings-h1.html",
+          "ref": "2",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-4.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-201.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/near-95.html",
+          "ref": "27",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/multiple.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/same-h1.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/soft404-1.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-399.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-562.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-1.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/readability-easy.html",
+          "ref": "3",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/catalog/catalog/catalog.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/missing.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/images.html",
+          "ref": "2",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-984.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-2.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/bookmark-target.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/bookmarks.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-401.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/list-item-text.html",
+          "ref": "3",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-3.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/search?q=river",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/long.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-a.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/readability-very-difficult.html",
+          "ref": "4",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-985.html",
+          "ref": "1",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/?s=stone",
+          "ref": "111",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/outside-head.html",
+          "ref": "3",
+          "os": ""
+        }
+      ]
+    },
+    {
+      "ref_column": "Average Words Per Sentence",
+      "os_column": "Average Words Per Sentence",
+      "compared": 50,
+      "errors": 49,
+      "examples": [
+        {
+          "key": "{BASE}/",
+          "ref": "0.991",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/lorem.html",
+          "ref": "3.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/soft404-2.html",
+          "ref": "3.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-0.html",
+          "ref": "3.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-986.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/tracking.html?utm_source=fixture&utm_medium=local&utm_campaign=m2",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/near-85.html",
+          "ref": "10.708",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-199.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-400.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-b.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/readability-difficult.html",
+          "ref": "10.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-561.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-200.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/soft404-0.html",
+          "ref": "3.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-6.html",
+          "ref": "3.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/unique.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-560.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/near-base.html",
+          "ref": "10.786",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/headings-h2.html",
+          "ref": "2.333",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-5.html",
+          "ref": "3.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/empty.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/headings-h1.html",
+          "ref": "3.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-4.html",
+          "ref": "3.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-201.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/near-95.html",
+          "ref": "10.630",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/multiple.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/same-h1.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/soft404-1.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-399.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-562.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-1.html",
+          "ref": "3.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/readability-easy.html",
+          "ref": "5.667",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/catalog/catalog/catalog.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/missing.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/images.html",
+          "ref": "1.500",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-984.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-2.html",
+          "ref": "3.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/bookmark-target.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/bookmarks.html",
+          "ref": "4.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-401.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/list-item-text.html",
+          "ref": "3.333",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-3.html",
+          "ref": "3.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/search?q=river",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/long.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-a.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/readability-very-difficult.html",
+          "ref": "3.500",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-985.html",
+          "ref": "2.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/?s=stone",
+          "ref": "0.991",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/outside-head.html",
+          "ref": "2.333",
+          "os": ""
+        }
+      ]
+    },
+    {
+      "ref_column": "Flesch Reading Ease Score",
+      "os_column": "Flesch Reading Ease Score",
+      "compared": 50,
+      "errors": 49,
+      "examples": [
+        {
+          "key": "{BASE}/",
+          "ref": "36.629",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/lorem.html",
+          "ref": "20.490",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/soft404-2.html",
+          "ref": "62.790",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-0.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-986.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/tracking.html?utm_source=fixture&utm_medium=local&utm_campaign=m2",
+          "ref": "100.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/near-85.html",
+          "ref": "75.156",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-199.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-400.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-b.html",
+          "ref": "77.905",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/readability-difficult.html",
+          "ref": "78.245",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-561.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-200.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/soft404-0.html",
+          "ref": "100.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-6.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/unique.html",
+          "ref": "77.905",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-560.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/near-base.html",
+          "ref": "77.672",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/headings-h2.html",
+          "ref": "71.524",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-5.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/empty.html",
+          "ref": "77.905",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/headings-h1.html",
+          "ref": "62.790",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-4.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-201.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/near-95.html",
+          "ref": "76.957",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/multiple.html",
+          "ref": "77.905",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/same-h1.html",
+          "ref": "35.605",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/soft404-1.html",
+          "ref": "100.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-399.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-562.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-1.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/readability-easy.html",
+          "ref": "100.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/catalog/catalog/catalog.html",
+          "ref": "100.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/missing.html",
+          "ref": "77.905",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/images.html",
+          "ref": "36.113",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-984.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-2.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/bookmark-target.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/bookmarks.html",
+          "ref": "33.575",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-401.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/list-item-text.html",
+          "ref": "68.092",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-3.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/search?q=river",
+          "ref": "100.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/long.html",
+          "ref": "77.905",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-a.html",
+          "ref": "77.905",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/readability-very-difficult.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-985.html",
+          "ref": "0.000",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/?s=stone",
+          "ref": "36.629",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/outside-head.html",
+          "ref": "0.000",
+          "os": ""
+        }
+      ]
+    },
+    {
+      "ref_column": "Readability",
+      "os_column": "Readability",
+      "compared": 50,
+      "errors": 49,
+      "examples": [
+        {
+          "key": "{BASE}/",
+          "ref": "Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/lorem.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/soft404-2.html",
+          "ref": "Normal",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-0.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-986.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/tracking.html?utm_source=fixture&utm_medium=local&utm_campaign=m2",
+          "ref": "Very Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/near-85.html",
+          "ref": "Fairly Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-199.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-400.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-b.html",
+          "ref": "Fairly Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/readability-difficult.html",
+          "ref": "Fairly Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-561.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-200.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/soft404-0.html",
+          "ref": "Very Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-6.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/unique.html",
+          "ref": "Fairly Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-560.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/near-base.html",
+          "ref": "Fairly Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/headings-h2.html",
+          "ref": "Fairly Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-5.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/empty.html",
+          "ref": "Fairly Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/headings-h1.html",
+          "ref": "Normal",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-4.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-201.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/near-95.html",
+          "ref": "Fairly Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/multiple.html",
+          "ref": "Fairly Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/same-h1.html",
+          "ref": "Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/soft404-1.html",
+          "ref": "Very Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-399.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/title-562.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-1.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/readability-easy.html",
+          "ref": "Very Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/catalog/catalog/catalog.html",
+          "ref": "Very Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/missing.html",
+          "ref": "Fairly Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/images.html",
+          "ref": "Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-984.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-2.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/bookmark-target.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/bookmarks.html",
+          "ref": "Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-401.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/list-item-text.html",
+          "ref": "Normal",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/unicode-3.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/search?q=river",
+          "ref": "Very Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/long.html",
+          "ref": "Fairly Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-a.html",
+          "ref": "Fairly Easy",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/readability-very-difficult.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/pixels/description-985.html",
+          "ref": "Very Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/?s=stone",
+          "ref": "Hard",
+          "os": ""
+        },
+        {
+          "key": "{BASE}/outside-head.html",
+          "ref": "Very Hard",
+          "os": ""
+        }
+      ]
+    },
+    {
+      "ref_column": "Closest Near Duplicate Match",
+      "os_column": "Closest Similarity Match",
+      "compared": 50,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "No. Near Duplicates",
+      "os_column": "No. Near Duplicates",
+      "compared": 50,
+      "errors": 0,
+      "examples": []
+    },
+    {
+      "ref_column": "Hash",
+      "os_column": "Hash",
+      "compared": 50,
+      "errors": 50,
+      "examples": [
+        {
+          "key": "{BASE}/",
+          "ref": "3ef3911064e9f1d5f6f9715243fb0416",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/lorem.html",
+          "ref": "502b5bc5260c7a437b5a3f91cf2ca313",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/soft404-2.html",
+          "ref": "fb44fc2ef93e8e6e97da99bc60fd14b5",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-0.html",
+          "ref": "5f3cb6aae8cc13973f523c43e6c8090f",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/alt-h1.html",
+          "ref": "547270ad78101f798ac09601fd6260a7",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-986.html",
+          "ref": "6d2f1e4370385e5172e8daa7941462b5",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/tracking.html?utm_source=fixture&utm_medium=local&utm_campaign=m2",
+          "ref": "7cfba4127c2f0128e460c8242dcd8302",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/near-85.html",
+          "ref": "b2960e2a3d65fabbe6bc797a7314d7fa",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-199.html",
+          "ref": "1cb8edeb8b5f812c34bbb491908f56ac",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-400.html",
+          "ref": "c0ccdf1e7ca4f1df8b3f057bafcfb2e",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-b.html",
+          "ref": "10c4fc69ddb308a33f21b078eb8f3d80",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/readability-difficult.html",
+          "ref": "615ee6e6c6a6d28a5b8591f923f58b8e",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-561.html",
+          "ref": "5e738a3304d4fed26a7cdb35215819ac",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-200.html",
+          "ref": "a5053d87663a11247079f74759ab3d17",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/soft404-0.html",
+          "ref": "b6ad9a8fdfbe6221ed721119cc3d83b2",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-6.html",
+          "ref": "cc883eb36e69a1d298e3a96359a30303",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/unique.html",
+          "ref": "412a61b02b828595a00cdfe3e1cad617",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-560.html",
+          "ref": "dede5de9820b2a795c5e31004dd88aa1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/near-base.html",
+          "ref": "4e60f0664a423a48225b4646aab7db12",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/headings-h2.html",
+          "ref": "40d3f5b76f9ea6406d39705902e10c80",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-5.html",
+          "ref": "405516a0cd2f58f8c800ec12db48815e",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/empty.html",
+          "ref": "3ea9c853bd86358565746ce7e8eb4068",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/headings-h1.html",
+          "ref": "f6770ba3445dd5d96f6d1d868c3840c5",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-4.html",
+          "ref": "682a8580cddb2fd43255e23e19907848",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-201.html",
+          "ref": "2227a2a145fc0594f5cdd9bc9dc5f05b",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/near-95.html",
+          "ref": "50868f778d62fb2882e1e84ac85080a1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/multiple.html",
+          "ref": "d928f766f3be0d20c5fcda1544bb1c07",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/same-h1.html",
+          "ref": "afcbb5897c115d731259a6ff0e7bf84b",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/soft404-1.html",
+          "ref": "ed2cf93e68605d8d942a728a65622753",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-399.html",
+          "ref": "c5a64ea701c9311df7306854e421ad0c",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-562.html",
+          "ref": "61844317e188de37f9e40c5e76006f24",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-1.html",
+          "ref": "f5053e84c5016fc98e1da149110ba191",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/readability-easy.html",
+          "ref": "cd0ebed2ac48cd6bbf94e68bba9d3d28",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/catalog/catalog/catalog.html",
+          "ref": "e75b20980f31b1f02162af6963562255",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/missing.html",
+          "ref": "9fe8cefe1e5e62df171bfe5e41c7cb7d",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/images.html",
+          "ref": "24d9c429139109c544009f52c7b24918",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-984.html",
+          "ref": "497a6787a0cbcaab314d312ea58f1d49",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-2.html",
+          "ref": "1facc9cd46d99f1586cc6aebf709775d",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/bookmark-target.html",
+          "ref": "cfeb4825857f3ba41038d43075826b01",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/bookmarks.html",
+          "ref": "78c89a27977995ce9602507d642150db",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-401.html",
+          "ref": "2520af5d9b646b740b07fafe6a433c1e",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/list-item-text.html",
+          "ref": "2949dd83076835a1b48af522d5b2860a",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-3.html",
+          "ref": "362f9c080b88613d2c93758aa4c2aa51",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/search?q=river",
+          "ref": "a7aa79567dcfcb7dd38a824d3a03b0c1",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/long.html",
+          "ref": "54273655e7c1a87c41bebd0ae39ac319",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-a.html",
+          "ref": "16b0d850008756784f00c6da5247a937",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/readability-very-difficult.html",
+          "ref": "a53b2065304c7f1ec7a8b1698158a8e0",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-985.html",
+          "ref": "5af7b0c2b422a6395200151657294833",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/?s=stone",
+          "ref": "3ef3911064e9f1d5f6f9715243fb0416",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/outside-head.html",
+          "ref": "8aadd54c25d050a57be11d59e99ebe24",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Indexability",
+      "os_column": "Indexability",
+      "compared": 50,
+      "errors": 50,
+      "examples": [
+        {
+          "key": "{BASE}/",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/lorem.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/soft404-2.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-0.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/alt-h1.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-986.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/tracking.html?utm_source=fixture&utm_medium=local&utm_campaign=m2",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/near-85.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-199.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-400.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-b.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/readability-difficult.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-561.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-200.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/soft404-0.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-6.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/unique.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-560.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/near-base.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/headings-h2.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-5.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/empty.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/headings-h1.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-4.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-201.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/near-95.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/multiple.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/same-h1.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/soft404-1.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-399.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-562.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-1.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/readability-easy.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/catalog/catalog/catalog.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/missing.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/images.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-984.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-2.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/bookmark-target.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/bookmarks.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-401.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/list-item-text.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-3.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/search?q=river",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/long.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-a.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/readability-very-difficult.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-985.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/?s=stone",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/outside-head.html",
+          "ref": "Indexable",
+          "os": "Q02_PROBE"
+        }
+      ]
+    },
+    {
+      "ref_column": "Indexability Status",
+      "os_column": "Indexability Status",
+      "compared": 50,
+      "errors": 50,
+      "examples": [
+        {
+          "key": "{BASE}/",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/lorem.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/soft404-2.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-0.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/alt-h1.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-986.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/tracking.html?utm_source=fixture&utm_medium=local&utm_campaign=m2",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/near-85.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-199.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-400.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-b.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/readability-difficult.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-561.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-200.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/soft404-0.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-6.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/unique.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-560.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/near-base.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/headings-h2.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-5.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/empty.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/headings-h1.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-4.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-201.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/near-95.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/multiple.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/same-h1.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/soft404-1.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-399.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/title-562.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-1.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/readability-easy.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/catalog/catalog/catalog.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/missing.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/images.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-984.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-2.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/bookmark-target.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/bookmarks.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-401.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/list-item-text.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/unicode-3.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/search?q=river",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/long.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/keywords/duplicate-a.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/readability-very-difficult.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/pixels/description-985.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/?s=stone",
+          "ref": "",
+          "os": "Q02_PROBE"
+        },
+        {
+          "key": "{BASE}/outside-head.html",
+          "ref": "",
+          "os": "Q02_PROBE"
+        }
+      ]
+    }
+  ],
+  "applied_deviations": [],
+  "dropped_ref_columns": [],
+  "ignored_columns": [
+    {
+      "column": "Closest Semantically Similar Address",
+      "reason": "KI-Funktion, M4"
+    },
+    {
+      "column": "Semantic Similarity Score",
+      "reason": "KI-Funktion, M4"
+    },
+    {
+      "column": "No. Semantically Similar",
+      "reason": "KI-Funktion, M4"
+    },
+    {
+      "column": "Semantic Relevance Score",
+      "reason": "KI-Funktion, M4"
+    },
+    {
+      "column": "Total Language Errors",
+      "reason": "nicht in M1 (P1/P2, M1.md 7.2): Rechtschreibung/Grammatik"
+    },
+    {
+      "column": "Spelling Errors",
+      "reason": "nicht in M1 (P1/P2, M1.md 7.2): Rechtschreibung/Grammatik"
+    },
+    {
+      "column": "Grammar Errors",
+      "reason": "nicht in M1 (P1/P2, M1.md 7.2): Rechtschreibung/Grammatik"
+    },
+    {
+      "column": "Language",
+      "reason": "nicht in M1 (P1/P2, M1.md 7.2): Sprache (ONPAGE-153)"
+    }
+  ],
+  "unmapped_ref_columns": [],
+  "unmapped_os_columns": [],
+  "missing_ref_columns": [],
+  "missing_os_columns": [
+    "Sentence Count",
+    "Average Words Per Sentence",
+    "Flesch Reading Ease Score",
+    "Readability",
+    "Closest Similarity Match",
+    "No. Near Duplicates"
+  ],
+  "ignored_ref_rows": [],
+  "os_only_rows": [],
+  "threshold_pct": 97.0,
+  "url_set_identical": true,
+  "passed": false,
+  "failures": [
+    "Zellübereinstimmung 20.800 % liegt unter 97.000 %"
+  ]
+}

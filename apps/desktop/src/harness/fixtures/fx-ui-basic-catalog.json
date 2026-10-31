@@ -1,0 +1,6004 @@
+[
+  {
+    "defaultOrder": 0,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "HTML",
+        "issue": null,
+        "labelTemplate": "HTML",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "JavaScript",
+        "issue": null,
+        "labelTemplate": "JavaScript",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "CSS",
+        "issue": null,
+        "labelTemplate": "CSS",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Images",
+        "issue": null,
+        "labelTemplate": "Images",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "PDF",
+        "issue": null,
+        "labelTemplate": "PDF",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Unknown",
+        "issue": null,
+        "labelTemplate": "Unknown",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Flash",
+        "issue": null,
+        "labelTemplate": "Flash",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Other",
+        "issue": null,
+        "labelTemplate": "Other",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Internal"
+  },
+  {
+    "defaultOrder": 1,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "HTML",
+        "issue": null,
+        "labelTemplate": "HTML",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "JavaScript",
+        "issue": null,
+        "labelTemplate": "JavaScript",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "CSS",
+        "issue": null,
+        "labelTemplate": "CSS",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Images",
+        "issue": null,
+        "labelTemplate": "Images",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "PDF",
+        "issue": null,
+        "labelTemplate": "PDF",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Flash",
+        "issue": null,
+        "labelTemplate": "Flash",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Other",
+        "issue": null,
+        "labelTemplate": "Other",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Unknown",
+        "issue": null,
+        "labelTemplate": "Unknown",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "External"
+  },
+  {
+    "defaultOrder": 2,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "HTTP URLs",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "HTTP URLs",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "HTTPS URLs",
+        "issue": null,
+        "labelTemplate": "HTTPS URLs",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Mixed Content",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Mixed Content",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Form URL Insecure",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Form URL Insecure",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Form on HTTP URL",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Form on HTTP URL",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Unsafe Cross-Origin Links",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Unsafe Cross-Origin Links",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Protocol-Relative Resource Links",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Protocol-Relative Resource Links",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing HSTS Header",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Missing HSTS Header",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing Content-Security-Policy Header",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Missing Content-Security-Policy Header",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing X-Content-Type-Options Header",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Missing X-Content-Type-Options Header",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing X-Frame-Options Header",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Missing X-Frame-Options Header",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing Secure Referrer-Policy Header",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Missing Secure Referrer-Policy Header",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Bad Content Type",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Bad Content Type",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Security"
+  },
+  {
+    "defaultOrder": 3,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Blocked by Robots.txt",
+        "issue": null,
+        "labelTemplate": "Blocked by Robots.txt",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "No Response",
+        "issue": null,
+        "labelTemplate": "No Response",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Success (2XX)",
+        "issue": null,
+        "labelTemplate": "Success (2XX)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Redirection (3XX)",
+        "issue": null,
+        "labelTemplate": "Redirection (3XX)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Redirection (Meta Refresh)",
+        "issue": null,
+        "labelTemplate": "Redirection (Meta Refresh)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Redirect Chain",
+        "issue": null,
+        "labelTemplate": "Redirect Chain",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Redirect Loop",
+        "issue": null,
+        "labelTemplate": "Redirect Loop",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Client Error (4XX)",
+        "issue": null,
+        "labelTemplate": "Client Error (4XX)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Server Error (5XX)",
+        "issue": null,
+        "labelTemplate": "Server Error (5XX)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Other",
+        "issue": null,
+        "labelTemplate": "Other",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal All",
+        "issue": null,
+        "labelTemplate": "Internal All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal Blocked by Robots.txt",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "Internal Blocked by Robots.txt",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal No Response",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Internal No Response",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal Success (2XX)",
+        "issue": null,
+        "labelTemplate": "Internal Success (2XX)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal Redirection (3XX)",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Internal Redirection (3XX)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal Redirection (Meta Refresh)",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Internal Redirection (Meta Refresh)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal Redirect Chain",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "Internal Redirect Chain",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal Redirect Loop",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Internal Redirect Loop",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal Client Error (4XX)",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Internal Client Error (4XX)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal Server Error (5XX)",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Internal Server Error (5XX)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal Other",
+        "issue": null,
+        "labelTemplate": "Internal Other",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "External All",
+        "issue": null,
+        "labelTemplate": "External All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "External Blocked by Robots.txt",
+        "issue": null,
+        "labelTemplate": "External Blocked by Robots.txt",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "External No Response",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "External No Response",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "External Success (2XX)",
+        "issue": null,
+        "labelTemplate": "External Success (2XX)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "External Redirection (3XX)",
+        "issue": null,
+        "labelTemplate": "External Redirection (3XX)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "External Redirection (Meta Refresh)",
+        "issue": null,
+        "labelTemplate": "External Redirection (Meta Refresh)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "External Redirect Chain",
+        "issue": null,
+        "labelTemplate": "External Redirect Chain",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "External Redirect Loop",
+        "issue": null,
+        "labelTemplate": "External Redirect Loop",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "External Client Error (4XX)",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "External Client Error (4XX)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "External Server Error (5XX)",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "External Server Error (5XX)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "External Other",
+        "issue": null,
+        "labelTemplate": "External Other",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Blocked Resource",
+        "issue": null,
+        "labelTemplate": "Blocked Resource",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal Blocked Resource",
+        "issue": null,
+        "labelTemplate": "Internal Blocked Resource",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "External Blocked Resource",
+        "issue": null,
+        "labelTemplate": "External Blocked Resource",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Redirection (JavaScript)",
+        "issue": null,
+        "labelTemplate": "Redirection (JavaScript)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal Redirection (JavaScript)",
+        "issue": null,
+        "labelTemplate": "Internal Redirection (JavaScript)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "External Redirection (JavaScript)",
+        "issue": null,
+        "labelTemplate": "External Redirection (JavaScript)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Redirection (HTTP Refresh)",
+        "issue": null,
+        "labelTemplate": "Redirection (HTTP Refresh)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal Redirection (HTTP Refresh)",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Internal Redirection (HTTP Refresh)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "External Redirection (HTTP Refresh)",
+        "issue": null,
+        "labelTemplate": "External Redirection (HTTP Refresh)",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Response Codes"
+  },
+  {
+    "defaultOrder": 4,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Non ASCII Characters",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Non ASCII Characters",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Underscores",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Underscores",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Uppercase",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Uppercase",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Multiple Slashes",
+        "issue": {
+          "issueType": "issue",
+          "priority": "low"
+        },
+        "labelTemplate": "Multiple Slashes",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Contains A Space",
+        "issue": {
+          "issueType": "issue",
+          "priority": "low"
+        },
+        "labelTemplate": "Contains A Space",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Parameters",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Parameters",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Over 115 Characters",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Over {url.max_chars} Characters",
+        "params": {
+          "url.max_chars": 115
+        },
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Repetitive Path",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Repetitive Path",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal Search",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Internal Search",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Broken Bookmark",
+        "issue": {
+          "issueType": "issue",
+          "priority": "low"
+        },
+        "labelTemplate": "Broken Bookmark",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "advanced.crawl_fragments",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "GA Tracking Parameters",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "GA Tracking Parameters",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "URL"
+  },
+  {
+    "defaultOrder": 5,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Missing",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Duplicate",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Duplicate",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Over 60 Characters",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Over {title.max_chars} Characters",
+        "params": {
+          "title.max_chars": 60
+        },
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Below 30 Characters",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Below {title.min_chars} Characters",
+        "params": {
+          "title.min_chars": 30
+        },
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Multiple",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Multiple",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Over 561 Pixels",
+        "issue": null,
+        "labelTemplate": "Over {title.max_px} Pixels",
+        "params": {
+          "title.max_px": 561
+        },
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Below 200 Pixels",
+        "issue": null,
+        "labelTemplate": "Below {title.min_px} Pixels",
+        "params": {
+          "title.min_px": 200
+        },
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Same as H1",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Same as H1",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Outside <head>",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Outside <head>",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Page Titles"
+  },
+  {
+    "defaultOrder": 6,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Missing",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Duplicate",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Duplicate",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Over 155 Characters",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Over {meta_description.max_chars} Characters",
+        "params": {
+          "meta_description.max_chars": 155
+        },
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Below 70 Characters",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Below {meta_description.min_chars} Characters",
+        "params": {
+          "meta_description.min_chars": 70
+        },
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Multiple",
+        "issue": {
+          "issueType": "issue",
+          "priority": "medium"
+        },
+        "labelTemplate": "Multiple",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Over 985 Pixels",
+        "issue": null,
+        "labelTemplate": "Over {meta_description.max_px} Pixels",
+        "params": {
+          "meta_description.max_px": 985
+        },
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Below 400 Pixels",
+        "issue": null,
+        "labelTemplate": "Below {meta_description.min_px} Pixels",
+        "params": {
+          "meta_description.min_px": 400
+        },
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Outside <head>",
+        "issue": {
+          "issueType": "issue",
+          "priority": "medium"
+        },
+        "labelTemplate": "Outside <head>",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Meta Description"
+  },
+  {
+    "defaultOrder": 7,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Missing",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Duplicate",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Duplicate",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Multiple",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Multiple",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Meta Keywords"
+  },
+  {
+    "defaultOrder": 8,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing",
+        "issue": {
+          "issueType": "issue",
+          "priority": "medium"
+        },
+        "labelTemplate": "Missing",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Duplicate",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Duplicate",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Over 70 Characters",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Over {h1.max_chars} Characters",
+        "params": {
+          "h1.max_chars": 70
+        },
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Multiple",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "Multiple",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Alt Text in h1",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Alt Text in h1",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Non-sequential",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Non-sequential",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "H1"
+  },
+  {
+    "defaultOrder": 9,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Missing",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Duplicate",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Duplicate",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Over 70 Characters",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Over {h2.max_chars} Characters",
+        "params": {
+          "h2.max_chars": 70
+        },
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Multiple",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Multiple",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Non-sequential",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Non-sequential",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "H2"
+  },
+  {
+    "defaultOrder": 10,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Exact Duplicates",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Exact Duplicates",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Low Content Pages",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Low Content Pages",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": "near_duplicates",
+        "count": null,
+        "id": "Near Duplicates",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "Near Duplicates",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "duplicates.near_enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Soft 404 Pages",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "Soft 404 Pages",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Lorem Ipsum Placeholder",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "Lorem Ipsum Placeholder",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Readability Difficult",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Readability Difficult",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Readability Very Difficult",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Readability Very Difficult",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Spelling Errors",
+        "issue": null,
+        "labelTemplate": "Spelling Errors",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "spelling.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Grammar Errors",
+        "issue": null,
+        "labelTemplate": "Grammar Errors",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "grammar.enabled",
+          "kind": "needsConfig"
+        }
+      }
+    ],
+    "id": "Content"
+  },
+  {
+    "defaultOrder": 11,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Over 100 KB",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Over {image.max_kb} KB",
+        "params": {
+          "image.max_kb": 100
+        },
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing Alt Text",
+        "issue": {
+          "issueType": "issue",
+          "priority": "low"
+        },
+        "labelTemplate": "Missing Alt Text",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing Alt Attribute",
+        "issue": {
+          "issueType": "issue",
+          "priority": "low"
+        },
+        "labelTemplate": "Missing Alt Attribute",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Alt Text Over 100 Characters",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Alt Text Over {image.alt_max_chars} Characters",
+        "params": {
+          "image.alt_max_chars": 100
+        },
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": "images",
+        "count": null,
+        "id": "Background Images",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Background Images",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": "images",
+        "count": null,
+        "id": "Missing Size Attributes",
+        "issue": {
+          "issueType": "issue",
+          "priority": "low"
+        },
+        "labelTemplate": "Missing Size Attributes",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": "images",
+        "count": null,
+        "id": "Incorrectly Sized Images",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Incorrectly Sized Images",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      }
+    ],
+    "id": "Images"
+  },
+  {
+    "defaultOrder": 12,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Contains Canonical",
+        "issue": null,
+        "labelTemplate": "Contains Canonical",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Self Referencing",
+        "issue": null,
+        "labelTemplate": "Self Referencing",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Canonicalised",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "Canonicalised",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "Missing",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Multiple",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Multiple",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Multiple Conflicting",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Multiple Conflicting",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": "canonicals",
+        "count": null,
+        "id": "Non-Indexable Canonical",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Non-Indexable Canonical",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsCrawlAnalysis"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Canonical Is Relative",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Canonical Is Relative",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": "canonicals",
+        "count": null,
+        "id": "Unlinked",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "Unlinked",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsCrawlAnalysis"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Invalid Attribute In Annotation",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Invalid Attribute In Annotation",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Contains Fragment URL",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Contains Fragment URL",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Outside <head>",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Outside <head>",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Canonicals"
+  },
+  {
+    "defaultOrder": 13,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Contains Pagination",
+        "issue": null,
+        "labelTemplate": "Contains Pagination",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "First Page",
+        "issue": null,
+        "labelTemplate": "First Page",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Paginated 2+ Pages",
+        "issue": null,
+        "labelTemplate": "Paginated 2+ Pages",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Pagination URL Not In Anchor Tag",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Pagination URL Not In Anchor Tag",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Non-200 Pagination URLs",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Non-200 Pagination URLs",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": "pagination",
+        "count": null,
+        "id": "Unlinked Pagination URLs",
+        "issue": {
+          "issueType": "issue",
+          "priority": "medium"
+        },
+        "labelTemplate": "Unlinked Pagination URLs",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsCrawlAnalysis"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Non-Indexable",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "Non-Indexable",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Multiple Pagination URLs",
+        "issue": {
+          "issueType": "issue",
+          "priority": "low"
+        },
+        "labelTemplate": "Multiple Pagination URLs",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": "pagination",
+        "count": null,
+        "id": "Pagination Loop",
+        "issue": {
+          "issueType": "issue",
+          "priority": "low"
+        },
+        "labelTemplate": "Pagination Loop",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsCrawlAnalysis"
+        }
+      },
+      {
+        "analysisStep": "pagination",
+        "count": null,
+        "id": "Sequence Error",
+        "issue": {
+          "issueType": "issue",
+          "priority": "low"
+        },
+        "labelTemplate": "Sequence Error",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsCrawlAnalysis"
+        }
+      }
+    ],
+    "id": "Pagination"
+  },
+  {
+    "defaultOrder": 14,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Index",
+        "issue": null,
+        "labelTemplate": "Index",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Noindex",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "Noindex",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Follow",
+        "issue": null,
+        "labelTemplate": "Follow",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Nofollow",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "Nofollow",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "None",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "None",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Refresh",
+        "issue": null,
+        "labelTemplate": "Refresh",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "NoArchive",
+        "issue": null,
+        "labelTemplate": "NoArchive",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "NoSnippet",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "NoSnippet",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Max-Snippet",
+        "issue": null,
+        "labelTemplate": "Max-Snippet",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Max-Image-Preview",
+        "issue": null,
+        "labelTemplate": "Max-Image-Preview",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Max-Video-Preview",
+        "issue": null,
+        "labelTemplate": "Max-Video-Preview",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "NoImageIndex",
+        "issue": {
+          "issueType": "issue",
+          "priority": "low"
+        },
+        "labelTemplate": "NoImageIndex",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "NoTranslate",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "NoTranslate",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Unavailable_After",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "Unavailable_After",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Outside <head>",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Outside <head>",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Directives"
+  },
+  {
+    "defaultOrder": 15,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Contains Hreflang",
+        "issue": null,
+        "labelTemplate": "Contains Hreflang",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Non-200 Hreflang URLs",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Non-200 Hreflang URLs",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing Return Links",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Missing Return Links",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Incorrect Language & Region Codes",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Incorrect Language & Region Codes",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing",
+        "issue": null,
+        "labelTemplate": "Missing",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": "hreflang",
+        "count": null,
+        "id": "Unlinked Hreflang URLs",
+        "issue": {
+          "issueType": "issue",
+          "priority": "medium"
+        },
+        "labelTemplate": "Unlinked Hreflang URLs",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsCrawlAnalysis"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Inconsistent Language & Region Return Links",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Inconsistent Language & Region Return Links",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Non-Canonical Return Links",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Non-Canonical Return Links",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Noindex Return Links",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Noindex Return Links",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Multiple Entries",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Multiple Entries",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing Self Reference",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Missing Self Reference",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Not Using Canonical",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Not Using Canonical",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing X-Default",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Missing X-Default",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Outside <head>",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Outside <head>",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Hreflang"
+  },
+  {
+    "defaultOrder": 16,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Pages With Blocked Resources",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "Pages With Blocked Resources",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Contains JavaScript Links",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "Contains JavaScript Links",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Contains JavaScript Content",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "Contains JavaScript Content",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Noindex Only In Original HTML",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Noindex Only In Original HTML",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Nofollow Only In Original HTML",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Nofollow Only In Original HTML",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Canonical Only In Rendered HTML",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Canonical Only In Rendered HTML",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Canonical Mismatch",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Canonical Mismatch",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Page Title Only In Rendered HTML",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "Page Title Only In Rendered HTML",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Page Title Updated By JavaScript",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "Page Title Updated By JavaScript",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Meta Description Only In Rendered HTML",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "Meta Description Only In Rendered HTML",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Meta Description Updated By JavaScript",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "Meta Description Updated By JavaScript",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "H1 Only In Rendered HTML",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "H1 Only In Rendered HTML",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "H1 Updated By JavaScript",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "H1 Updated By JavaScript",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Pages With JavaScript Errors",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Pages With JavaScript Errors",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      }
+    ],
+    "id": "JavaScript"
+  },
+  {
+    "defaultOrder": 17,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Pages With High Crawl Depth",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Pages With High Crawl Depth",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Pages Without Internal Outlinks",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "Pages Without Internal Outlinks",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal Nofollow Outlinks",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Internal Nofollow Outlinks",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Internal Outlinks With No Anchor Text",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Internal Outlinks With No Anchor Text",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Non-Descriptive Anchor Text In Internal Outlinks",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Non-Descriptive Anchor Text In Internal Outlinks",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Pages With High External Outlinks",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Pages With High External Outlinks",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Pages With High Internal Outlinks",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Pages With High Internal Outlinks",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": "links",
+        "count": null,
+        "id": "Follow & Nofollow Internal Inlinks To Page",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Follow & Nofollow Internal Inlinks To Page",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsCrawlAnalysis"
+        }
+      },
+      {
+        "analysisStep": "links",
+        "count": null,
+        "id": "Internal Nofollow Inlinks Only",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Internal Nofollow Inlinks Only",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsCrawlAnalysis"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Outlinks To Localhost",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Outlinks To Localhost",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": "links",
+        "count": null,
+        "id": "Non-Indexable Page Inlinks Only",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "Non-Indexable Page Inlinks Only",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsCrawlAnalysis"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Pages With Uncrawlable Internal Outlinks",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "Pages With Uncrawlable Internal Outlinks",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Links"
+  },
+  {
+    "defaultOrder": 18,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.structured_data.json_ld | extraction.structured_data.microdata | extraction.structured_data.rdfa",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Contains Structured Data",
+        "issue": null,
+        "labelTemplate": "Contains Structured Data",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.structured_data.json_ld | extraction.structured_data.microdata | extraction.structured_data.rdfa",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing Structured Data",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Missing Structured Data",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.structured_data.json_ld | extraction.structured_data.microdata | extraction.structured_data.rdfa",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "JSON-LD URLs",
+        "issue": null,
+        "labelTemplate": "JSON-LD URLs",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.structured_data.json_ld | extraction.structured_data.microdata | extraction.structured_data.rdfa",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Microdata URLs",
+        "issue": null,
+        "labelTemplate": "Microdata URLs",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.structured_data.json_ld | extraction.structured_data.microdata | extraction.structured_data.rdfa",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "RDFa URLs",
+        "issue": null,
+        "labelTemplate": "RDFa URLs",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.structured_data.json_ld | extraction.structured_data.microdata | extraction.structured_data.rdfa",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Parse Errors",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Parse Errors",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.structured_data.json_ld | extraction.structured_data.microdata | extraction.structured_data.rdfa",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Validation Errors",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Validation Errors",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.structured_data.json_ld | extraction.structured_data.microdata | extraction.structured_data.rdfa",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Validation Warnings",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Validation Warnings",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.structured_data.json_ld | extraction.structured_data.microdata | extraction.structured_data.rdfa",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Rich Result Validation Errors",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Rich Result Validation Errors",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.structured_data.json_ld | extraction.structured_data.microdata | extraction.structured_data.rdfa",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Rich Result Validation Warnings",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Rich Result Validation Warnings",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.structured_data.json_ld | extraction.structured_data.microdata | extraction.structured_data.rdfa",
+          "kind": "needsConfig"
+        }
+      }
+    ],
+    "id": "Structured Data"
+  },
+  {
+    "defaultOrder": 19,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": "sitemaps",
+        "count": null,
+        "id": "URLs In Sitemap",
+        "issue": null,
+        "labelTemplate": "URLs In Sitemap",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsCrawlAnalysis"
+        }
+      },
+      {
+        "analysisStep": "sitemaps",
+        "count": null,
+        "id": "URLs Not In Sitemap",
+        "issue": {
+          "issueType": "issue",
+          "priority": "medium"
+        },
+        "labelTemplate": "URLs Not In Sitemap",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsCrawlAnalysis"
+        }
+      },
+      {
+        "analysisStep": "sitemaps",
+        "count": null,
+        "id": "Orphan URLs",
+        "issue": {
+          "issueType": "issue",
+          "priority": "medium"
+        },
+        "labelTemplate": "Orphan URLs",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsCrawlAnalysis"
+        }
+      },
+      {
+        "analysisStep": "sitemaps",
+        "count": null,
+        "id": "Non-Indexable URLs In Sitemap",
+        "issue": {
+          "issueType": "issue",
+          "priority": "medium"
+        },
+        "labelTemplate": "Non-Indexable URLs In Sitemap",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsCrawlAnalysis"
+        }
+      },
+      {
+        "analysisStep": "sitemaps",
+        "count": null,
+        "id": "URLs In Multiple Sitemaps",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "URLs In Multiple Sitemaps",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsCrawlAnalysis"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "XML Sitemap With Over 50k URLs",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "XML Sitemap With Over 50k URLs",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "XML Sitemap With Over 50MB",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "XML Sitemap With Over 50MB",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Sitemaps"
+  },
+  {
+    "defaultOrder": 20,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Avoid Enormous Network Payloads",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Avoid Enormous Network Payloads",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Document Request Latency",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Document Request Latency",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Duplicated JavaScript",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Duplicated JavaScript",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Font Display",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Font Display",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Forced Reflow",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Forced Reflow",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Improve Image Delivery",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Improve Image Delivery",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "LCP Request Discovery",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "LCP Request Discovery",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Layout Shift Culprits",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Layout Shift Culprits",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Legacy JavaScript",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Legacy JavaScript",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Minify CSS",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Minify CSS",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Minify JavaScript",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Minify JavaScript",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Minimize Main-Thread Work",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Minimize Main-Thread Work",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Network Dependency Tree",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Network Dependency Tree",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Optimize DOM Size",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "low"
+        },
+        "labelTemplate": "Optimize DOM Size",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Reduce JavaScript Execution Time",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Reduce JavaScript Execution Time",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Reduce Unused CSS",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Reduce Unused CSS",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Reduce Unused JavaScript",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Reduce Unused JavaScript",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Render Blocking Requests",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Render Blocking Requests",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Use Efficient Cache Lifetimes",
+        "issue": {
+          "issueType": "opportunity",
+          "priority": "medium"
+        },
+        "labelTemplate": "Use Efficient Cache Lifetimes",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.psi.enabled",
+          "kind": "needsConfig"
+        }
+      }
+    ],
+    "id": "PageSpeed"
+  },
+  {
+    "defaultOrder": 21,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Viewport Not Set",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Viewport Not Set",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "Mobile-Prüfung nicht konfiguriert",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Target Size",
+        "issue": {
+          "issueType": "issue",
+          "priority": "medium"
+        },
+        "labelTemplate": "Target Size",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "Mobile-Prüfung nicht konfiguriert",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Content Not Sized Correctly",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Content Not Sized Correctly",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "Mobile-Prüfung nicht konfiguriert",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Illegible Font Size",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Illegible Font Size",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "Mobile-Prüfung nicht konfiguriert",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Unsupported Plugins",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Unsupported Plugins",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "Mobile-Prüfung nicht konfiguriert",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Mobile Alternate Link",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "Mobile Alternate Link",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Mobile"
+  },
+  {
+    "defaultOrder": 22,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "accesskeys",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "accesskeys",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "presentation-role-conflict",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "presentation-role-conflict",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "tabindex",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "tabindex",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "skip-link",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "skip-link",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-text",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-text",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-dialog-name",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-dialog-name",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-allowed-role",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "aria-allowed-role",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-treeitem-name",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-treeitem-name",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "region",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "region",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "landmark-one-main",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "landmark-one-main",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "landmark-no-duplicate-banner",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "landmark-no-duplicate-banner",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "landmark-banner-is-top-level",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "landmark-banner-is-top-level",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "landmark-no-duplicate-contentinfo",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "landmark-no-duplicate-contentinfo",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "landmark-no-duplicate-main",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "landmark-no-duplicate-main",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "landmark-complementary-is-top-level",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "landmark-complementary-is-top-level",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "landmark-contentinfo-is-top-level",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "landmark-contentinfo-is-top-level",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "landmark-main-is-top-level",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "landmark-main-is-top-level",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "landmark-unique",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "landmark-unique",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "label-title-only",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "label-title-only",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "frame-tested",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "frame-tested",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "page-has-heading-one",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "page-has-heading-one",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "heading-order",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "heading-order",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "empty-heading",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "empty-heading",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "meta-viewport-large",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "meta-viewport-large",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "image-redundant-alt",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "image-redundant-alt",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "empty-table-header",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "empty-table-header",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "table-duplicate-name",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "table-duplicate-name",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "scope-attr-valid",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "scope-attr-valid",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "scrollable-region-focusable",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "scrollable-region-focusable",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-required-attr",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-required-attr",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-conditional-attr",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-conditional-attr",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-valid-attr-value",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-valid-attr-value",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-valid-attr",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-valid-attr",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-command-name",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-command-name",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-input-field-name",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-input-field-name",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-meter-name",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-meter-name",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-progressbar-name",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-progressbar-name",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-required-parent",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-required-parent",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-roles",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-roles",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-toggle-field-name",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-toggle-field-name",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-tooltip-name",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-tooltip-name",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-required-children",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-required-children",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-deprecated-role",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "aria-deprecated-role",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-braille-equivalent",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-braille-equivalent",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-hidden-focus",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-hidden-focus",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-hidden-body",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-hidden-body",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-prohibited-attr",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-prohibited-attr",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "aria-allowed-attr",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "aria-allowed-attr",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "duplicate-id-aria",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "duplicate-id-aria",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "bypass",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "bypass",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "label",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "label",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "form-field-multiple-labels",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "form-field-multiple-labels",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "frame-title",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "frame-title",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "frame-title-unique",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "frame-title-unique",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "frame-focusable-content",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "frame-focusable-content",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "document-title",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "document-title",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "html-lang-valid",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "html-lang-valid",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "html-has-lang",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "html-has-lang",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "html-xml-lang-mismatch",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "html-xml-lang-mismatch",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "meta-refresh",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "meta-refresh",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "input-image-alt",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "input-image-alt",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "image-alt",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "image-alt",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "object-alt",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "object-alt",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "area-alt",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "area-alt",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "role-img-alt",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "role-img-alt",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "svg-img-alt",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "svg-img-alt",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "server-side-image-map",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "server-side-image-map",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "video-caption",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "video-caption",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "no-autoplay-audio",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "no-autoplay-audio",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "button-name",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "button-name",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "input-button-name",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "input-button-name",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "link-in-text-block",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "link-in-text-block",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "link-name",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "link-name",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "select-name",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "select-name",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "summary-name",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "summary-name",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "marquee",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "marquee",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "blink",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "blink",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "nested-interactive",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "nested-interactive",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "listitem",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "listitem",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "list",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "list",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "definition-list",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "definition-list",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "dlitem",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "dlitem",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "th-has-data-cells",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "th-has-data-cells",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "td-headers-attr",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "td-headers-attr",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "meta-viewport",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "meta-viewport",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "valid-lang",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "valid-lang",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "color-contrast",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "color-contrast",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "meta-refresh-no-exceptions",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "meta-refresh-no-exceptions",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "identical-links-same-purpose",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "identical-links-same-purpose",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "color-contrast-enhanced",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "color-contrast-enhanced",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "autocomplete-valid",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "autocomplete-valid",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "avoid-inline-spacing",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "avoid-inline-spacing",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "target-size",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "target-size",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "extraction.accessibility",
+          "kind": "needsConfig"
+        }
+      }
+    ],
+    "id": "Accessibility"
+  },
+  {
+    "defaultOrder": 23,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Custom Search"
+  },
+  {
+    "defaultOrder": 24,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Custom Extraction"
+  },
+  {
+    "defaultOrder": 25,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "needsRendering"
+        }
+      }
+    ],
+    "id": "Custom JavaScript"
+  },
+  {
+    "defaultOrder": 26,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Sessions Above 0",
+        "issue": null,
+        "labelTemplate": "Sessions Above 0",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.ga4.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Bounce Rate Above 70%",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Bounce Rate Above 70%",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.ga4.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "No GA Data",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "No GA Data",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.ga4.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Non-Indexable with GA Data",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Non-Indexable with GA Data",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.ga4.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Orphan URLs",
+        "issue": {
+          "issueType": "issue",
+          "priority": "medium"
+        },
+        "labelTemplate": "Orphan URLs",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.ga4.enabled",
+          "kind": "needsConfig"
+        }
+      }
+    ],
+    "id": "Analytics"
+  },
+  {
+    "defaultOrder": 27,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Clicks Above 0",
+        "issue": null,
+        "labelTemplate": "Clicks Above 0",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.gsc.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "No Search Analytics Data",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "No Search Analytics Data",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.gsc.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Non-Indexable with Search Analytics Data",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "Non-Indexable with Search Analytics Data",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.gsc.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Orphan URLs",
+        "issue": {
+          "issueType": "issue",
+          "priority": "medium"
+        },
+        "labelTemplate": "Orphan URLs",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.gsc.enabled",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "URL Is Not on Google",
+        "issue": {
+          "issueType": "warning",
+          "priority": "low"
+        },
+        "labelTemplate": "URL Is Not on Google",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.gsc.url_inspection",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Indexable URL Not Indexed",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "Indexable URL Not Indexed",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.gsc.url_inspection",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "URL is on Google, But Has Issues",
+        "issue": {
+          "issueType": "issue",
+          "priority": "medium"
+        },
+        "labelTemplate": "URL is on Google, But Has Issues",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.gsc.url_inspection",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "User-Declared Canonical Not Selected",
+        "issue": {
+          "issueType": "warning",
+          "priority": "medium"
+        },
+        "labelTemplate": "User-Declared Canonical Not Selected",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.gsc.url_inspection",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Page Is Not Mobile Friendly",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Page Is Not Mobile Friendly",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.gsc.url_inspection",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "AMP URL Is Invalid",
+        "issue": {
+          "issueType": "issue",
+          "priority": "medium"
+        },
+        "labelTemplate": "AMP URL Is Invalid",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.gsc.url_inspection",
+          "kind": "needsConfig"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Rich Result Invalid",
+        "issue": null,
+        "labelTemplate": "Rich Result Invalid",
+        "params": {},
+        "pct": null,
+        "state": {
+          "key": "api.gsc.url_inspection",
+          "kind": "needsConfig"
+        }
+      }
+    ],
+    "id": "Search Console"
+  },
+  {
+    "defaultOrder": 28,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Invalid HTML Elements In <head>",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "Invalid HTML Elements In <head>",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "<head> Not First In <html> Element",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "<head> Not First In <html> Element",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing <head> Tag",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Missing <head> Tag",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Multiple <head> Tags",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Multiple <head> Tags",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Missing <body> Tag",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Missing <body> Tag",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Multiple <body> Tags",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Multiple <body> Tags",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "<body> Element Preceding <html>",
+        "issue": {
+          "issueType": "warning",
+          "priority": "high"
+        },
+        "labelTemplate": "<body> Element Preceding <html>",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "HTML Document Over 2MB",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "HTML Document Over {validation.html_doc_max_bytes}MB",
+        "params": {
+          "validation.html_doc_max_bytes": 2097152
+        },
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      },
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "Resource Over 2MB",
+        "issue": {
+          "issueType": "issue",
+          "priority": "high"
+        },
+        "labelTemplate": "Resource Over {validation.resource_max_bytes}MB",
+        "params": {
+          "validation.resource_max_bytes": 2097152
+        },
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Validation"
+  },
+  {
+    "defaultOrder": 29,
+    "detailCapable": true,
+    "filters": [
+      {
+        "analysisStep": null,
+        "count": null,
+        "id": "All",
+        "issue": null,
+        "labelTemplate": "All",
+        "params": {},
+        "pct": null,
+        "state": {
+          "kind": "ready"
+        }
+      }
+    ],
+    "id": "Link Metrics"
+  }
+]

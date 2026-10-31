@@ -1,0 +1,22 @@
+# Spaltenmapping Referenz -> OpenSpider fuer den Export "H2:All" (Format: docs/plan/M1.md 5.2).
+# Stand M1-P29 (Welle 5): an die echten Kopfzeilen der Referenz (Referenzprodukt (Free-Version), englische Oberflaeche) angepasst.
+# Nur Spaltennamen der Kopfzeile; Beschreibungsspalten werden beim Einlesen verworfen (Clean-Room, A8).
+key = ["Address"]
+drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
+
+[columns]
+"Address" = "Address"
+"Occurrences" = "Occurrences"
+"H2-1" = "H2-1"
+"H2-1 Length" = "H2-1 Length"
+"H2-2" = "H2-2"
+"H2-2 Length" = "H2-2 Length"
+"Indexability" = "Indexability"
+"Indexability Status" = { os = "Indexability Status", transform = ["ignore_case"] }
+
+[normalize]
+base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}
+trim = true
+bool = "case-insensitive"
+number_decimals = 3      # Zahlen werden nach Rundung verglichen
+empty_equals_null = true

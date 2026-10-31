@@ -1,0 +1,3 @@
+﻿"URL with Inconsistent Language Return Link","URL Target","URL Returning with Inconsistent Language","Expected Language","Actual Language"
+"http://127.0.0.1:8907/lang-inconsistent.html","http://127.0.0.1:8907/lang-inconsistent.html","http://127.0.0.1:8907/lang-inconsistent-return.html","en","fr"
+"http://127.0.0.1:8907/lang-inconsistent-return.html","http://127.0.0.1:8907/lang-inconsistent-return.html","http://127.0.0.1:8907/lang-inconsistent.html","fr","de"

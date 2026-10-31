@@ -27,4 +27,5 @@ pub mod thresholds;
 
 pub use error::ParityError;
 
+mod crawl_date;
 mod xml;

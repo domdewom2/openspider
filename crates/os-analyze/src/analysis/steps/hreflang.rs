@@ -15,8 +15,9 @@ use crate::tabs::hreflang::FLAG_UNLINKED;
 /// External alternates always count as unlinked (TECH-075). One scan, independent of links_target.
 const SELECT_FLAGGED: &str =
     "SELECT DISTINCT q.id FROM hreflang h JOIN urls q ON q.id = h.target_id \
-    LEFT JOIN url_counters c ON c.url_id = q.id \
-    WHERE h.url_id <> q.id AND (q.is_internal = 0 OR COALESCE(c.inlinks, 0) = 0) ORDER BY q.id";
+    WHERE h.url_id <> q.id AND (q.is_internal = 0 OR (q.state = 'done' AND NOT EXISTS \
+    (SELECT 1 FROM links l JOIN urls s ON s.id = l.source_id \
+     WHERE l.target_id = q.id AND s.is_internal = 1 AND l.link_type = 'Hyperlink'))) ORDER BY q.id";
 
 /// Führt den Schritt aus.
 pub fn run(

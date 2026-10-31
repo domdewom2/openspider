@@ -1,0 +1,30 @@
+# Spaltenmapping Referenz -> OpenSpider fuer den Export "Directives:All" (Format: docs/plan/M1.md 5.2).
+# Stand M1-P29 (Welle 5): an die echten Kopfzeilen der Referenz (Referenzprodukt (Free-Version), englische Oberflaeche) angepasst.
+# Nur Spaltennamen der Kopfzeile; Beschreibungsspalten werden beim Einlesen verworfen (Clean-Room, A8).
+key = ["Address"]
+drop_ref_columns = ["Description", "How To Fix"]   # Clean-Room: Texte der Referenz nie einlesen
+
+[columns]
+"Address" = "Address"
+"Occurrences" = "Occurrences"
+"Meta Robots 1" = "Meta Robots 1"
+"Meta Robots 2" = "Meta Robots 2"
+"Meta Robots 3" = "Meta Robots 3"
+"X-Robots-Tag 1" = "X-Robots-Tag 1"
+"X-Robots-Tag 2" = "X-Robots-Tag 2"
+"X-Robots-Tag 3" = "X-Robots-Tag 3"
+"Meta Refresh 1" = "Meta Refresh 1"
+"Meta Refresh 2" = "Meta Refresh 2"
+"Canonical Link Element 1" = "Canonical Link Element 1"
+"Canonical Link Element 2" = "Canonical Link Element 2"
+"Canonical Link Element 3" = "Canonical Link Element 3"
+"HTTP Canonical" = { os = "HTTP Canonical 1" }
+"Indexability" = "Indexability"
+"Indexability Status" = "Indexability Status"
+
+[normalize]
+base_url = true          # http://127.0.0.1:<port> -> {BASE}, http://localhost:<port> -> {EXT}
+trim = true
+bool = "case-insensitive"
+number_decimals = 3      # Zahlen werden nach Rundung verglichen
+empty_equals_null = true

@@ -55,7 +55,7 @@ macro_rules! meta_refresh {
 }
 macro_rules! http_refresh {
     () => {
-        "EXISTS (SELECT 1 FROM refresh r WHERE r.url_id = u.id AND r.source = 'header' AND r.target_url IS NOT NULL AND r.target_url <> u.url)"
+        "EXISTS (SELECT 1 FROM refresh r WHERE r.url_id = u.id AND r.source = 'header' AND r.target_url IS NOT NULL)"
     };
 }
 macro_rules! client_error {
@@ -256,6 +256,7 @@ pub fn tab() -> TabDef {
             filter("External Redirection (3XX)", redirection.2),
             filter("External Redirection (Meta Refresh)", meta_refresh.2),
             filter("External Redirection (HTTP Refresh)", http_refresh.2),
+            filter("External Redirection (JavaScript)", "0 = 1"),
             filter("External Redirect Chain", chain.2),
             filter("External Redirect Loop", looped.2),
             filter("External Client Error (4XX)", client_error.2),
@@ -327,13 +328,12 @@ pub fn http_refresh_filter() -> &'static str {
 pub fn configure_filters(tab: &mut TabDef) {
     // M1-Filter zuerst, dann die M2-Ergänzungen in Registry-Reihenfolge. Die zentrale
     // Registrierung ergänzt dazwischen noch die Rendering-Filter von M2-R02.
-    tab.filters.sort_by_key(|filter| {
-        matches!(
-            filter.id,
-            "Redirection (HTTP Refresh)"
-                | "Internal Redirection (HTTP Refresh)"
-                | "External Redirection (HTTP Refresh)"
-        )
+    tab.filters.sort_by_key(|filter| match filter.id {
+        "External Redirection (JavaScript)" => 1,
+        "Redirection (HTTP Refresh)"
+        | "Internal Redirection (HTTP Refresh)"
+        | "External Redirection (HTTP Refresh)" => 2,
+        _ => 0,
     });
     let predicates = views!(http_refresh!());
     for filter in &mut tab.filters {
@@ -354,7 +354,8 @@ pub fn configure_filters(tab: &mut TabDef) {
             | "External Redirection (JavaScript)" => {
                 filter.requires = vec![crate::defs::Requirement::Rendering];
                 if filter.id.starts_with("External") {
-                    "0"
+                    // External pages are never rendered; keep a real zero-count filter.
+                    "0 = 1"
                 } else {
                     "u.is_internal=1 AND u.content_class='HTML' AND u.status_code BETWEEN 200 AND 299 AND u.redirect_type='javascript'"
                 }

@@ -274,7 +274,7 @@ pub fn extract_with(
         }
     }
     if cfg.crawl.images.parse_inline_css_backgrounds {
-        for link in crate::css::extract_inline(doc, base) {
+        for link in crate::css::extract_inline(doc, base, true) {
             if link.link_type != os_model::LinkType::Image || link.resolved.is_none() {
                 continue;
             }

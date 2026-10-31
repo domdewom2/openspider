@@ -688,7 +688,7 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - **Eingaben/Konfiguration:** Konfiguration › Spider › Crawl, Abschnitte „Ressourcenlinks“ und „Seitenlinks“.
 - **Ausgabe:** abhängig vom Linktyp.
 - **Akzeptanzkriterien:**
-  - [ ] Speichern an, Crawlen aus: URL erscheint in den Tabellen ohne Statuscode (leer), wird nicht angefragt.
+  - [ ] Speichern an, Crawlen aus: URL erscheint in den Tabellen ohne Statuscode (leer), wird nicht angefragt. Ausnahme (K2-85, SQ-12): Ziele, die nur über rel next/prev (CRAWL-047) oder hreflang (TECH-071, K-62) bekannt sind, erscheinen wie nofollow-Ziele (CRAWL-056) nicht als URL-Zeile in den Tabellen und zählen nicht im Crawl Overview; die Beziehung bleibt in den Spalten und Detailzeilen der Quellseite (Beleg Referenz `parity-m2-technical` `pagination-unlinked.html`).
   - [ ] Speichern aus, Crawlen an: URL wird angefragt, erscheint nicht in Tabellen; über sie gefundene Seiten erscheinen normal.
   - [ ] Beide aus: URL wird weder angefragt noch angezeigt; der Link ist in den Outlinks der Quellseite nicht vorhanden.
   - [ ] Änderungen während eines pausierten Crawls wirken auf alle noch nicht abgerufenen URLs.
@@ -702,20 +702,20 @@ Jede Funktion unten nennt den Fixture-Namen und die Routen, die das Verhalten pr
 - **Ausgabe:** Tab „Intern/Extern › Bilder“; Bilddaten im Bereich „Bilder“.
 - **Akzeptanzkriterien:**
   - [ ] Ein per `<a href>` verlinktes Bild wird als Hyperlink gezählt, nicht als eingebettetes Bild (Spalte `Linktyp` in Inlinks: „Hyperlink“ vs. „Bild“).
-  - [ ] CSS-Hintergrundbilder werden nur entdeckt, wenn CSS gecrawlt wird (CRAWL-040) oder JS-Rendering aktiv ist.
+  - [ ] CSS-Hintergrundbilder werden nur entdeckt, wenn CSS gecrawlt wird (CRAWL-040) oder JS-Rendering aktiv ist; aus `style`-Attributen ohne Rendering nur mit `spider.css_style_attributes` (Standard aus, K2-85, SQ-02).
   - [ ] Lazy-Load-Attribute (`data-src`) werden im Textmodus nicht als Bild erkannt (OS-Festlegung, siehe Q).
   - [ ] Bilder von externen Hosts werden nur geprüft, wenn „Externe Links › Crawlen“ an ist (CRAWL-045).
-- **Testfixture:** `crawl-resources`: `/` mit `<img src>`, `<a href="foto.jpg">`, `<input type=image>`, `<img data-src>`, `style="background:url(bg.png)"`, externes Bild `cdn.other.test/x.png`.
+- **Testfixture:** `crawl-resources`: `/` mit `<img src>`, `<a href="foto.jpg">`, `<input type=image>`, `<img data-src>`, `style="background:url(bg.png)"` (Standard: `bg.png` wird nicht entdeckt, K2-85), externes Bild `cdn.other.test/x.png`.
 
 ### CRAWL-040 CSS
 - **Priorität:** P0
 - **Beschreibung:** Stylesheets aus `<link rel="stylesheet">`. Gecrawlte CSS-Dateien werden nach `url(…)` und `@import` durchsucht, die als Links (Bilder, Schriften, weitere CSS) behandelt werden.
-- **Eingaben/Konfiguration:** Ressourcenlinks › CSS: Speichern/Crawlen (Standard: an/an).
+- **Eingaben/Konfiguration:** Ressourcenlinks › CSS: Speichern/Crawlen (Standard: an/an); „`style`-Attribute nach `url()` durchsuchen“ `spider.css_style_attributes` (bool, Standard aus; K2-85, SQ-02).
 - **Ausgabe:** Filter „CSS“.
 - **Akzeptanzkriterien:**
   - [ ] `@import url("b.css")` und `@import "c.css"` werden gefunden und relativ zur CSS-Datei aufgelöst.
   - [ ] `url(bild.png)`, `url('bild.png')`, `url("bild.png")` werden gefunden; `url(data:…)` nicht.
-  - [ ] `<style>`-Blöcke und `style`-Attribute im HTML werden ebenfalls nach `url()` durchsucht.
+  - [ ] `<style>`-Blöcke im HTML werden ebenfalls nach `url()` durchsucht. `style`-Attribute werden ohne Rendering nur bei `spider.css_style_attributes = true` durchsucht (Standard aus wie die Referenz, Beleg `parity-m2-onpage` `images.html`: `background.png` fehlt in allen Referenzexporten; K2-85, SQ-02; vorher immer). Im Rendering-Modus gilt ONPAGE-178; `images.parse_inline_css_backgrounds` bleibt davon unabhängig.
   - [ ] Schriftarten aus `@font-face` landen unter Kategorie „Schriftarten“.
 - **Testfixture:** `crawl-resources/style.css` mit `@import`, Hintergrundbild, `@font-face`, Data-URI.
 
@@ -1217,12 +1217,12 @@ Gemeinsame Regeln: Ein Limit von 0 oder leer bedeutet „unbegrenzt“, sofern n
 - **Akzeptanzkriterien:**
   - [ ] Einstellung 1024 × 768 ohne „An Inhalt anpassen“: Bilddatei ist exakt 1024 × 768 px (× Skalierungsfaktor des Viewports, falls ≠ 1).
   - [ ] „An Inhalt anpassen“ bei einer 3 000 px hohen Seite: Bildhöhe 3 000 px (± 1 px); bei einer 20 000 px hohen Seite: 8 192 px.
-  - [ ] Inhalt, der 200 ms nach der Größenänderung nachgeladen wird, ist bei Wartezeit 300 ms im Bild sichtbar, bei 0 ms nicht (Pixelprüfung einer farbigen Fläche).
+  - [ ] Inhalt, der 1 000 ms nach der Größenänderung nachgeladen wird, ist bei Wartezeit 1 500 ms im Bild sichtbar, bei 0 ms nicht (Pixelprüfung einer farbigen Fläche; K2-82: Abstand groß genug für GPU-lose Runner).
   - [ ] Screenshots werden in der Crawl-Datei gespeichert (komprimiert) und sind nach Schließen und erneutem Öffnen verfügbar (Byte-Vergleich).
   - [ ] Option aus: es wird kein Screenshot erzeugt (Anzahl gespeicherter Bilder = 0), die Detailansicht zeigt „Screenshots deaktiviert“; die mittlere Renderzeit je Seite sinkt messbar (Benchmark: ≥ 10 % schneller bei 100 Seiten).
   - [ ] Sammelexport von 100 Seiten erzeugt 100 Dateien; URLs mit Query-String erzeugen keine Kollision.
   - [ ] Im Textmodus ist die Option ausgegraut und der Detailbereich zeigt „Nur im JavaScript-Rendering-Modus verfügbar“.
-- **Testfixture:** `crawl-js/ssr.html`, `/tall-3000.html`, `/tall-20000.html`, `/late-paint.html` (färbt 200 ms nach `resize` eine Fläche rot), `/q.html?a=1` und `/q.html?a=2`.
+- **Testfixture:** `crawl-js/ssr.html`, `/tall-3000.html`, `/tall-20000.html`, `/late-paint.html` (färbt 1 000 ms nach `resize` eine Fläche rot), `/q.html?a=1` und `/q.html?a=2`.
 
 ### CRAWL-083 Blockierte Ressourcen beim Rendern
 - **Priorität:** P1

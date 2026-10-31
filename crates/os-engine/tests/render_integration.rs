@@ -469,9 +469,9 @@ async fn comparison_normalizes_text_and_counts_the_configured_content_area() {
         .unwrap();
     assert_eq!(title, "Raw & Title");
     for (key, count) in [
-        // Adjacent inline anchors have no whitespace separator in these fixtures.
-        ("render.raw_word_count", 6),
-        ("render.rendered_word_count", 7),
+        // SQ-09: adjacent anchors each delimit words, also in render comparisons.
+        ("render.raw_word_count", 7),
+        ("render.rendered_word_count", 10),
     ] {
         let actual: i64 = file
             .conn()

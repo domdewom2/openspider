@@ -50,3 +50,15 @@ hreflang_noncanonical_returns = 97.0
 hreflang_noindex_returns = 97.0
 links_anchor_text = 97.0
 list_chains = 97.0
+
+# N06: eigene Filterspaltensätze erben unveränderte Tab-/Bulk-Schwellen.
+content_lorem = 99.0
+content_readability = 99.0
+content_soft404 = 99.0
+security_form_inlinks = 97.0
+security_mixed_inlinks = 97.0
+security_unsafe_inlinks = 97.0
+security_relative_inlinks = 97.0
+links_uncrawlable = 97.0
+hreflang_targets = 97.0
+hreflang_unlinked = 97.0

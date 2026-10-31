@@ -1,0 +1,3 @@
+﻿"Address","Title 1","Occurrences","HTML hreflang 1","HTML hreflang 1 URL","HTTP hreflang 1","HTTP hreflang 1 URL","Sitemap hreflang 1","Sitemap hreflang 1 URL","Indexability","Indexability Status","HTML hreflang 2","HTML hreflang 2 URL"
+"http://127.0.0.1:8907/lang-noncanonical-return.html","Fixture /lang-noncanonical-return.html","2","de","http://127.0.0.1:8907/lang-noncanonical-return.html","","","","","Non-Indexable","Canonicalised","en","http://127.0.0.1:8907/lang-noncanonical.html"
+"http://127.0.0.1:8907/lang-not-canonical.html","Fixture /lang-not-canonical.html","1","en","http://127.0.0.1:8907/lang-not-canonical.html","","","","","Non-Indexable","Canonicalised","",""

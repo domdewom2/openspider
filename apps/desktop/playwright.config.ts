@@ -8,12 +8,14 @@ const wanted = (process.env.OS_E2E_PROJECTS ?? "chromium,webkit").split(",").map
 // Laufzeitbudgets (UI-146) werden erst nach allen übrigen Tests und ohne parallele Last gemessen: je Engine ein eigenes
 // Projekt `<engine>-perf`, das vom Hauptprojekt abhängt. `OS_E2E_PROJECTS` nennt weiterhin nur die Engines.
 const PERF = /viz[\\/]perf\.spec\.ts$/;
+// Visual snapshots require the dedicated platform/scale configuration.
+const MAIN_IGNORE = [PERF, /visual[\\/]/];
 const engines = [
   { name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } } },
   { name: "webkit", use: { ...devices["Desktop Safari"], viewport: { width: 1280, height: 800 } } },
 ];
 const all = engines.flatMap((engine) => [
-  { ...engine, testIgnore: PERF },
+  { ...engine, testIgnore: MAIN_IGNORE },
   { name: `${engine.name}-perf`, use: engine.use, testMatch: PERF, dependencies: [engine.name] },
 ]);
 

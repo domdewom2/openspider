@@ -63,6 +63,9 @@ pub struct Deviation {
     /// Einschränkung auf einen Export (Mapping-Name).
     #[serde(default)]
     pub export: Option<String>,
+    /// Optionaler Referenzdateiname; wird vom Runner vor dem Vergleich gefiltert.
+    #[serde(default)]
+    pub file: Option<String>,
     /// Einschränkung auf eine Referenzspalte.
     #[serde(default)]
     pub column: Option<String>,
@@ -211,9 +214,19 @@ impl Deviations {
 
     /// Einträge, die für Site und Export gelten.
     pub fn for_export(&self, site: Option<&str>, export: &str) -> Vec<Deviation> {
+        self.for_file(site, export, None)
+    }
+
+    /// Einträge für eine konkrete Referenzdatei. Ohne Datei gelten nur dateiunabhängige Ausnahmen.
+    pub fn for_file(&self, site: Option<&str>, export: &str, file: Option<&str>) -> Vec<Deviation> {
         self.items
             .iter()
-            .filter(|d| d.applies_to(site, export))
+            .filter(|d| {
+                d.applies_to(site, export)
+                    && d.file.as_ref().is_none_or(|f| {
+                        file.is_some_and(|file| f.split('|').any(|name| name == file))
+                    })
+            })
             .cloned()
             .collect()
     }

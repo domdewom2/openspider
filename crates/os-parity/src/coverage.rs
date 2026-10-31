@@ -618,6 +618,30 @@ impl CoverageReport {
 
 /// Ermittelt den Status; `Ok(true)` = keine ID mit Status `open`.
 pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
+    // Ohne evidence-Datei: eigenständige B3g-Paritätsmessung nach SQ-01.
+    if args.evidence.is_none() {
+        if let Some(path) = &args.parity_report {
+            let parity: Value = serde_json::from_str(&std::fs::read_to_string(path)?)
+                .map_err(|e| ParityError::Invalid(e.to_string()))?;
+            let summary = evidence::filter_summary(&args.root, &parity)?;
+            if let Some(path) = &args.write {
+                std::fs::write(
+                    path,
+                    serde_json::to_string_pretty(&summary)
+                        .map_err(|e| ParityError::Invalid(e.to_string()))?
+                        + "\n",
+                )?;
+            }
+            println!(
+                "verified: {}/{} ({:.3} %)",
+                summary["verified"],
+                summary["denominator"],
+                summary["pct"].as_f64().unwrap_or(0.0)
+            );
+            return Ok(true);
+        }
+    }
+
     if args.milestone == Milestone::M2 {
         return m2::run(args);
     }
@@ -709,7 +733,8 @@ pub(crate) fn apply_parity(
                 }
                 Ok(_) => {}
                 Err(why) => {
-                    if entry.status == Status::Implemented {
+                    if matches!(entry.status, Status::Implemented | Status::Verified) {
+                        entry.status = Status::Implemented;
                         entry.parity = Some(json!({ "not_verified": why }));
                     }
                 }

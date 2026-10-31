@@ -1,0 +1,237 @@
+{
+  "stats": {
+    "startTime": "2026-10-30T20:18:42.415Z",
+    "duration": 96159.507,
+    "expected": 15,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "tests": [
+    {
+      "project": "chromium",
+      "file": "alpha/export.spec.ts",
+      "title": "the Internal:All view exported with the core command export.view equals openspider --export-tabs, CSV and XLSX",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5595,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "alpha/export.spec.ts",
+      "title": "the Internal:All view exported with the core command export.view equals openspider --export-tabs, CSV and XLSX",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5746,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "auth/bridge.spec.ts",
+      "title": "real bridge: capture, cancel configuration, reopen and activate only with OK",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5742,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "webkit",
+      "file": "auth/bridge.spec.ts",
+      "title": "real bridge: capture, cancel configuration, reopen and activate only with OK",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 5286,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "beta/control.spec.ts",
+      "title": "pause and stop lock immediately and a stopped paused crawl cannot resume",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 8086,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "beta/delay.spec.ts",
+      "title": "Crawl-delay status explains the active option (applied=false)",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4135,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "beta/delay.spec.ts",
+      "title": "Crawl-delay status explains the active option (applied=true)",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 3817,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "beta/detail-during-crawl.spec.ts",
+      "title": "detail pages survive writes between opening and reading; External stays responsive",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 9553,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "beta/n04-live.spec.ts",
+      "title": "5000 fixture URLs: live HTML, retained details, pause/resume, completed file through Recent after restart",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 88313,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "beta/overview.spec.ts",
+      "title": "overview retains its last response during crawl updates and after resume",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 8868,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "beta/preferences.spec.ts",
+      "title": "a delayed settings read cannot undo a live theme and language change",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 2659,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "beta/preferences.spec.ts",
+      "title": "theme and language reach both open windows within 200 ms",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4701,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "beta/quit.spec.ts",
+      "title": "quit confirmation can cancel or pause active work before exit",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4855,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "beta/resume.spec.ts",
+      "title": "a paused crawl survives a real process restart, appears in Recent and resumes without duplicate URLs",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 20120,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "project": "chromium",
+      "file": "beta/services.spec.ts",
+      "title": "starting analysis from the menu shows running and a persistent completion",
+      "status": "expected",
+      "expectedStatus": "passed",
+      "annotations": [],
+      "results": [
+        {
+          "status": "passed",
+          "duration": 4401,
+          "errors": []
+        }
+      ]
+    }
+  ]
+}

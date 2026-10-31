@@ -99,6 +99,35 @@ pub fn is_numbered_column(name: &str) -> bool {
         .any(|w| !w.is_empty() && w.chars().all(|c| c.is_ascii_digit()))
 }
 
+// Nur der zusätzliche Endzielblock darf auf die Final-Spalten zeigen.
+fn terminal_column<'a>(
+    mapping: &Mapping,
+    table: &Table,
+    row: &[String],
+    name: &'a str,
+) -> Option<&'a str> {
+    if !mapping.chain_end_target {
+        return None;
+    }
+    let (kind, n) = name.rsplit_once(' ')?;
+    let n: usize = n.parse().ok()?;
+    let count = [
+        "Number of Redirects",
+        "Number of Redirects/Canonicals",
+        "Number of Canonicals",
+    ]
+    .iter()
+    .find_map(|c| table.index_of(c).and_then(|i| row[i].parse::<usize>().ok()))?;
+    if n != count + 1 {
+        return None;
+    }
+    match kind {
+        "Status Code" => Some("Final Status Code"),
+        "Status" => Some("Final Status"),
+        _ => None,
+    }
+}
+
 fn key_rows(
     table: &Table,
     key_cols: &[(usize, CellRules)],
@@ -174,6 +203,25 @@ fn clip(s: &str) -> String {
 
 /// Führt den Vergleich aus. Schwellen werden mit [`evaluate`] angewandt.
 pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
+    // OUT-015 / OUT-085: upload-order exports retain the original input, including
+    // duplicates and invalid URLs. Address can be empty or normalized and is not
+    // the identity of an uploaded row. Keep older ordered formats compatible.
+    if input.mapping.ordered
+        && input
+            .mapping
+            .key
+            .first()
+            .is_some_and(|key| key == "Address")
+        && input.reference.index_of("Original Url").is_some()
+        && input.os.index_of("Original Url").is_some()
+    {
+        let mut mapping = input.mapping.clone();
+        mapping.key[0] = "Original Url".into();
+        return compare(&CompareInput {
+            mapping: &mapping,
+            ..*input
+        });
+    }
     let CompareInput {
         export,
         site,
@@ -248,7 +296,16 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
             }),
             Some(cm) => {
                 let os_idx = os.index_of(&cm.os);
-                if os_idx.is_none() {
+                if os_idx.is_none()
+                    && !(mapping.chain_end_target
+                        && is_numbered_column(name)
+                        && reference.rows.iter().all(|row| {
+                            let value = row[ref_idx].trim();
+                            value.is_empty()
+                                || value.parse::<f64>() == Ok(0.0)
+                                || terminal_column(mapping, reference, row, name).is_some()
+                        }))
+                {
                     missing_os_columns.push(cm.os.clone());
                 }
                 plans.push(ColumnPlan {
@@ -294,6 +351,8 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
             !c.ignore
                 && !key_ref_names.contains(&c.reference.as_str())
                 && reference.index_of(&c.reference).is_none()
+                && !is_numbered_column(&c.reference)
+                && !c.optional_ref
                 && !plans.iter().any(|p| p.map.reference == c.reference)
                 && !mapping
                     .drop_ref_columns
@@ -359,11 +418,19 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
             let rules = &plan.map.rules;
             let ref_raw = plan.ref_idx.map_or("", |i| ref_cells[i].as_str());
             let ref_value = rules.map_reference(&rules.prepare(ref_raw, ref_bases));
-            let os_value = match plan.os_idx {
+            let terminal = terminal_column(mapping, reference, ref_cells, &plan.map.reference);
+            let os_idx = terminal.and_then(|name| os.index_of(name)).or(plan.os_idx);
+            let os_value = match os_idx {
                 Some(i) => rules.prepare(&os_cells[i], os_bases),
                 None => String::new(),
             };
-            if rules.equal(&ref_value, &os_value) {
+            if rules.equal(&ref_value, &os_value)
+                || (plan.os_idx.is_none()
+                    && terminal.is_none()
+                    && ref_value.parse::<f64>() == Ok(0.0))
+                || (plan.ref_idx.is_none()
+                    && (os_value.is_empty() || os_value.parse::<f64>() == Ok(0.0)))
+            {
                 plan.report.compared += 1;
                 cells_compared += 1;
                 cells_equal += 1;
@@ -437,8 +504,20 @@ pub fn compare(input: &CompareInput) -> Result<Report, ParityError> {
         row_order_identical: mapping.ordered.then(|| {
             ref_rows
                 .iter()
+                .filter(|r| {
+                    !deviations
+                        .iter()
+                        .any(|d| d.excuses_row(Scope::MissingInOs, &r.tuple))
+                })
                 .map(|r| &r.id)
-                .eq(os_rows.iter().map(|r| &r.id))
+                .eq(os_rows
+                    .iter()
+                    .filter(|r| {
+                        !deviations
+                            .iter()
+                            .any(|d| d.excuses_row(Scope::ExtraInOs, &r.tuple))
+                    })
+                    .map(|r| &r.id))
         }),
         export: (*export).to_string(),
         site: site.map(str::to_string),
@@ -522,7 +601,11 @@ pub fn run(args: &DiffArgs) -> Result<bool, ParityError> {
         None => Thresholds::builtin(),
     };
     let export = export_name_of(&args.mapping);
-    let devs = deviations.for_export(args.site.as_deref(), &export);
+    let devs = deviations.for_file(
+        args.site.as_deref(),
+        &export,
+        args.reference.file_name().and_then(|f| f.to_str()),
+    );
     let mut report = compare(&CompareInput {
         export: &export,
         site: args.site.as_deref(),
@@ -539,4 +622,55 @@ pub fn run(args: &DiffArgs) -> Result<bool, ParityError> {
     }
     print!("{}", crate::report::render_markdown(&report));
     Ok(report.passed)
+}
+
+#[cfg(test)]
+mod upload_format_tests {
+    use super::*;
+
+    // spec: OUT-015, OUT-085
+    #[test]
+    fn original_input_keys_preserve_duplicates_and_expose_changed_addresses() {
+        let mapping = Mapping::parse(
+            "ordered = true\nkey = ['Address', '#']\n[columns]\nAddress = 'Address'\n",
+        )
+        .unwrap();
+        let reference = crate::csvio::parse_csv(
+            b"Original Url,Address\nHTTP://example/a,http://example/a\nHTTP://example/a,http://example/a\nbad,\n",
+            &[],
+        )
+        .unwrap();
+        let mut os = reference.clone();
+        os.rows[0][1] = "http://example/other".into();
+        let bases = BaseUrls::from_base("http://example");
+        let report = compare(&CompareInput {
+            export: "list_internal",
+            site: None,
+            reference: &reference,
+            os: &os,
+            mapping: &mapping,
+            ref_bases: &bases,
+            os_bases: &bases,
+            deviations: &[],
+        })
+        .unwrap();
+        assert_eq!(report.matched, 3);
+        assert!(report.url_set_identical);
+        assert_eq!(report.row_order_identical, Some(true));
+        assert_eq!(report.columns[0].ref_column, "Address");
+        assert_eq!(report.columns[0].errors, 1);
+        os.rows.swap(1, 2);
+        let report = compare(&CompareInput {
+            export: "list_internal",
+            site: None,
+            reference: &reference,
+            os: &os,
+            mapping: &mapping,
+            ref_bases: &bases,
+            os_bases: &bases,
+            deviations: &[],
+        })
+        .unwrap();
+        assert_eq!(report.row_order_identical, Some(false));
+    }
 }

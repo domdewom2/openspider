@@ -69,10 +69,10 @@ fn parse_html_without_pixel_flag_leaves_px_empty() {
 fn parse_html_text_ratio_uses_source_length_in_chars() {
     // Sichtbarer Body-Text „Grüße aus Köln“ = 14 Zeichen (Script ausgenommen). Der Quelltext hat 120 Zeichen
     // (bei 124 Bytes) und das unquotierte Attribut `class=intro`, das der Baum anders (mit Anführungszeichen)
-    // serialisiert: nur die echte Quelltextlänge ergibt 14 / 120 × 100 = 11,7 % (die Baum-Serialisierung mit 122 Zeichen ergäbe 11,5 %).
+    // serialisiert: nur die echte Quelltextlänge ergibt 14 / 120 × 100 = 11,667 % (die Baum-Serialisierung mit 122 Zeichen ergäbe 11,475 %).
     let html = "<html><head><title>Müller</title></head><body><p class=intro>Grüße aus Köln</p>\
                 <script>var a = 1;</script></body></html>";
     assert_eq!(html.chars().count(), 120);
     let page = parse(html, false);
-    assert_eq!(page.text_ratio, Some(11.7));
+    assert_eq!(page.text_ratio, Some(11.667));
 }

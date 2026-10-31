@@ -41,6 +41,8 @@ impl RawBool {
 struct RawColumnOpts {
     os: Option<String>,
     #[serde(default)]
+    optional_ref: bool,
+    #[serde(default)]
     ignore: bool,
     #[serde(default)]
     reason: Option<String>,
@@ -119,6 +121,8 @@ fn yes() -> bool {
 
 #[derive(Debug, Clone, Deserialize)]
 struct RawMapping {
+    #[serde(default)]
+    chain_end_target: bool,
     /// Reihenfolge der normalisierten Schlüssel muss übereinstimmen (Listenmodus).
     #[serde(default)]
     ordered: bool,
@@ -151,6 +155,8 @@ pub enum RefFormat {
     Blocks,
     /// XML- oder Bilder-Sitemap.
     Xml,
+    /// Referenz-Verbindungen und OpenSpider-Knoten (OUT-023).
+    CrawlPath,
 }
 
 /// Einstellungen für [`RefFormat::Blocks`].
@@ -169,6 +175,8 @@ pub struct BlocksOpts {
 pub struct ColumnMap {
     /// Spaltenname in der Referenz.
     pub reference: String,
+    /// Die Spalte fehlt in manchen Referenzgenerationen; vorhandene Werte bleiben Pflicht.
+    pub optional_ref: bool,
     /// Spaltenname in OpenSpider (bei `ignore` ohne Bedeutung).
     pub os: String,
     /// Spalte wird nicht verglichen.
@@ -182,6 +190,8 @@ pub struct ColumnMap {
 /// Geladenes Mapping.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Mapping {
+    /// OUT-081: Referenz hängt das Endziel als Sprung n+1 an.
+    pub chain_end_target: bool,
     /// Reihenfolge zusätzlich zum Zellvergleich prüfen.
     pub ordered: bool,
     /// Schlüsselspalten (Referenznamen); `"#"` = laufende Nummer.
@@ -354,6 +364,7 @@ impl Mapping {
         for (reference, col) in raw.columns {
             let cm = match col {
                 RawColumn::Name(os) => ColumnMap {
+                    optional_ref: false,
                     reference,
                     os,
                     ignore: false,
@@ -378,6 +389,7 @@ impl Mapping {
                     rules.map = o.map;
                     apply_transforms(&mut rules, &o.transform)?;
                     ColumnMap {
+                        optional_ref: o.optional_ref,
                         os: o.os.unwrap_or_else(|| reference.clone()),
                         reference,
                         ignore: o.ignore,
@@ -392,9 +404,10 @@ impl Mapping {
             None | Some("") | Some("table") => RefFormat::Table,
             Some("blocks") => RefFormat::Blocks,
             Some("xml") => RefFormat::Xml,
+            Some("crawl_path") => RefFormat::CrawlPath,
             Some(other) => {
                 return Err(ParityError::Invalid(format!(
-                    "unbekanntes format {other:?} (erlaubt: table, blocks, xml)"
+                    "unbekanntes format {other:?} (erlaubt: table, blocks, xml, crawl_path)"
                 )))
             }
         };
@@ -411,6 +424,7 @@ impl Mapping {
             None => (BlocksOpts::default(), None, Vec::new()),
         };
         Ok(Self {
+            chain_end_target: raw.chain_end_target,
             ordered: raw.ordered,
             filters_paths,
             key: raw.key,

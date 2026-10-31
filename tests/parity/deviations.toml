@@ -30,9 +30,9 @@
 id = "DEV-003"
 spec = "ONPAGE-011"
 kind = "OS-Festlegung"
-export = "internal_all"
+export = "internal_all|internal_m2|list_internal"
 site = "*"
-column = "Title 1 Length|Title 1 Pixel Width|Title 2 Length|Title 2 Pixel Width|Meta Description 1 Length|Meta Description 1 Pixel Width|Meta Description 2 Length|Meta Description 2 Pixel Width|Meta Keywords 1 Length|H1-1 Length|H1-2 Length|H2-1 Length|H2-2 Length|Word Count"
+column = "Title 1 Length|Title 1 Pixel Width|Title 2 Length|Title 2 Pixel Width|Meta Description 1 Length|Meta Description 1 Pixel Width|Meta Description 2 Length|Meta Description 2 Pixel Width|Meta Keywords 1 Length|Meta Keywords 2 Length|H1-1 Length|H1-2 Length|H2-1 Length|H2-2 Length|Word Count"
 ref = "0"
 os = ""
 reason = "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs ohne Antwort haben leere Element-, Laengen- und Pixelspalten, auch wenn ihr Koerper <title>/<h1> enthaelt (ONPAGE-011, A-5, K-60, Befund N-01), und eine Seite ohne Element leere Wertspalten (ONPAGE-008); die Referenz schreibt 0."
@@ -41,7 +41,7 @@ reason = "Nicht-HTML-URLs sowie Weiterleitungen, Fehlerseiten (4xx/5xx) und URLs
 id = "DEV-004"
 spec = "ONPAGE-013"
 kind = "OS-Festlegung"
-export = "internal_all"
+export = "internal_all|internal_m2|list_internal"
 site = "*"
 column = "Text Ratio"
 ref = "0.000"
@@ -54,7 +54,7 @@ spec = "ONPAGE-065"
 kind = "OS-Festlegung"
 export = "*"
 site = "*"
-column = "Status"
+column = "Status|Final Status|Status 2|Status 3"
 ref = "Connection Timeout"
 os = "Connection Refused"
 reason = "ONPAGE-065 (K-67): OpenSpider meldet die tatsaechliche Ursache, Connection Refused bei abgelehntem Verbindungsaufbau und Connection Timeout bei ausbleibender Antwort; die Referenz meldet fuer den geschlossenen Port localhost:1 Connection Timeout."
@@ -135,26 +135,6 @@ key_prefixes = ["{BASE}/contact.html", "{BASE}/products.html", "{BASE}/"]
 reason = "K-07 (wie DEV-010), Seiten mit Selbstlink in out-basic-site."
 
 [[deviation]]
-id = "DEV-012"
-spec = "TECH-051"
-kind = "OS-Festlegung"
-export = "directives_all"
-site = "*"
-key_prefixes = ["{BASE}/hl/es-old/", "{BASE}/canon/gone-404.html", "{BASE}/canon/moved-301"]
-scope = "extra_in_os"
-reason = "Population des Directives-Tabs: alle internen URLs mit HTTP-Antwort, jeder Status (TECH-051); die Referenz fuehrt Weiterleitungen und Fehlerseiten nicht."
-
-[[deviation]]
-id = "DEV-013"
-spec = "TECH-051"
-kind = "OS-Festlegung"
-export = "crawl_overview"
-site = "*"
-column = "URLs"
-key_prefixes = ["directives | all"]
-reason = "wie DEV-012: Zaehler des Abschnitts Directives (Population aller internen URLs mit Antwort)."
-
-[[deviation]]
 id = "DEV-014"
 spec = "ONPAGE-024"
 kind = "OS-Festlegung"
@@ -169,11 +149,13 @@ id = "DEV-016"
 spec = "ONPAGE-166"
 kind = "OS-Festlegung"
 export = "content_all"
-site = "*"
+site = "out-basic-site|parity-onpage|parity-technical|parity-response|parity-synthetic"
 key_prefix = "{BASE}/ctype/t-pdf.pdf"
 scope = "missing_in_os"
 reason = "PDF-Inhalte (Word Count, Content-Tab-Zeile) sind P1 (ONPAGE-166, M1.md 7.2); in M1 nur Titel und Keywords aus den PDF-Eigenschaften."
 
+
+# Q02-P06: historischer M1-Beleg, keine M2-Gutschrift; DEV-022 existiert nicht mehr.
 [[deviation]]
 id = "DEV-017"
 spec = "OUT-081"
@@ -196,26 +178,18 @@ os = "1"
 reason = "IMG Inlinks (OpenSpider-Erweiterung) zaehlt auch Hyperlinks auf Bilder (ONPAGE-170 Nr. 2); die Referenz zaehlt nur eingebettete Bilder."
 
 [[deviation]]
-id = "DEV-023"
-spec = "TECH-064"
-kind = "OS-Festlegung"
-export = "crawl_overview"
-site = "*"
-column = "URLs"
-key_prefixes = ["directives | refresh"]
-reason = "Der Filter Refresh umfasst Meta Refresh und den Refresh-Header (TECH-064); die Referenz zaehlt den Refresh-Header im Response-Codes-Filter Redirection (HTTP Refresh)."
-
-[[deviation]]
 id = "DEV-024"
 spec = "ONPAGE-166"
 kind = "OS-Festlegung"
 export = "crawl_overview"
-site = "*"
+site = "out-basic-site|parity-onpage|parity-technical|parity-response|parity-synthetic"
 column = "URLs"
 key_prefixes = ["content | all"]
 delta = -1
 reason = "PDF-Inhalte (Content-Tab-Zeile) sind P1 (ONPAGE-166, M1.md 7.2), siehe DEV-016."
 
+
+# Q02-P06: historischer M1-Beleg, keine M2-Gutschrift; DEV-022 existiert nicht mehr.
 [[deviation]]
 id = "DEV-025"
 spec = "TECH-001"
@@ -226,26 +200,6 @@ column = "Indexability Status"
 ref = "Canonicalised,noindex"
 os = "noindex"
 reason = "Indexability Status nennt genau den ersten zutreffenden Grund in der Pruefreihenfolge (TECH-001); die Referenz nennt bei noindex und fremdem Canonical beide, kommagetrennt."
-
-[[deviation]]
-id = "DEV-026"
-spec = "TECH-064"
-kind = "OS-Festlegung"
-export = "directives_all"
-site = "*"
-column = "Meta Refresh 1"
-ref = ""
-reason = "Die Spalte Meta Refresh im Directives-Tab zeigt auch den Wert des Refresh-Headers (TECH-064: Refresh umfasst Meta und Header); die Referenz laesst sie bei reinem Header-Refresh leer."
-
-[[deviation]]
-id = "DEV-027"
-spec = "TECH-071"
-kind = "OS-Festlegung"
-export = "hreflang_all"
-site = "*"
-key_prefix = "{BASE}/hl/es-old/"
-scope = "extra_in_os"
-reason = "Population des Hreflang-Tabs: auch gecrawlte hreflang-Ziele (TECH-071); die Referenz fuehrt das umgeleitete Ziel (301) nicht."
 
 [[deviation]]
 id = "DEV-028"
@@ -291,17 +245,6 @@ os = "False"
 reason = "Meta Refresh und Refresh-Header gelten nur mit Verzoegerung > 0 als temporaer (OUT-081); die Referenz wertet den Meta Refresh ohne Verzoegerung als temporaer."
 
 [[deviation]]
-id = "DEV-034"
-spec = "TECH-071"
-kind = "OS-Festlegung"
-export = "crawl_overview"
-site = "parity-technical"
-column = "URLs"
-key_prefixes = ["hreflang | all"]
-delta = 1
-reason = "wie DEV-027: Die Population des Hreflang-Tabs enthaelt auch gecrawlte hreflang-Ziele (TECH-071), hier das umgeleitete Ziel /hl/es-old/ (301); die Referenz zaehlt nur interne Seiten mit 2xx."
-
-[[deviation]]
 id = "DEV-036"
 spec = "TECH-133"
 kind = "OS-Festlegung"
@@ -317,7 +260,7 @@ id = "REF-FREE-01"
 spec = "TECH-210"
 kind = "Annahme"
 export = "sitemaps_all"
-site = "*"
+site = "out-basic-site|parity-onpage|parity-technical|parity-response|parity-synthetic"
 key_prefix = "{BASE}/"
 scope = "missing_in_os"
 reason = "Referenz-Free-Einschraenkung (Spider-Konfiguration gesperrt): verlinkte XML-Sitemaps und robots.txt-Sitemaps werden nicht abgerufen; die Referenz listet im Tab Sitemaps dennoch alle internen URLs, OpenSpider ohne verarbeitete Sitemap keine (TECH-211: Tab leer)."
@@ -327,7 +270,600 @@ id = "REF-FREE-02"
 spec = "TECH-210"
 kind = "Annahme"
 export = "crawl_overview"
-site = "*"
+site = "out-basic-site|parity-onpage|parity-technical|parity-response|parity-synthetic"
 column = "URLs"
 key_prefixes = ["sitemaps | "]
 reason = "Referenz-Free-Einschraenkung (Spider-Konfiguration gesperrt): ohne Sitemap-Crawl zaehlt die Referenz alle URLs im Abschnitt Sitemaps, OpenSpider 0 (TECH-211)."
+
+# Q02: REF-FREE-01/02 gelten nur fuer die alten Free-Exporte. Die fuenf neuen
+# Manifeste dokumentieren eine lizenzierte Referenz; deren Befunde werden nicht
+# durch diese Einschraenkungen entschuldigt (M2-B02, K2-14).
+
+# Q02 / M2.md 6.1, K2-14: keine Referenz fuer gesperrte bzw. im
+# Referenzprofil nicht aktivierte Funktionsgruppen. Nur Overview-Zellen;
+# Produktfehler und referenzfaehige Filter bleiben im Bericht sichtbar.
+
+[[deviation]]
+id = "REF-FREE-03"
+spec = "TECH-101"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "javascript | "
+reason = "M2.md 6.1 / K2-14: JavaScript hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: TECH-101, TECH-102, TECH-103, TECH-104, TECH-105, TECH-106, TECH-107, TECH-108, TECH-109, TECH-110, TECH-111, TECH-114."
+
+[[deviation]]
+id = "REF-FREE-04"
+spec = "TECH-183"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "structured data | "
+reason = "M2.md 6.1 / K2-14: Structured Data hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: TECH-183, TECH-184, TECH-185, TECH-186, TECH-187, TECH-188."
+
+[[deviation]]
+id = "REF-FREE-05"
+spec = "INTEG-134"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "pagespeed | "
+reason = "M2.md 6.1 / K2-14: PageSpeed hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-134, INTEG-139."
+
+[[deviation]]
+id = "REF-FREE-06"
+spec = "TECH-231"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "mobile | "
+reason = "M2.md 6.1 / K2-14: Mobile hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: TECH-231, TECH-232, TECH-233, TECH-234, TECH-235, TECH-236, TECH-237."
+
+[[deviation]]
+id = "REF-FREE-07"
+spec = "TECH-251"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "accessibility | "
+reason = "M2.md 6.1 / K2-14: Accessibility hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: TECH-251, TECH-252."
+
+[[deviation]]
+id = "REF-FREE-08"
+spec = "INTEG-031"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "custom search | "
+reason = "M2.md 6.1 / K2-14: Custom Search hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-031."
+
+[[deviation]]
+id = "REF-FREE-09"
+spec = "INTEG-053"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "custom extraction | "
+reason = "M2.md 6.1 / K2-14: Custom Extraction hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-053."
+
+[[deviation]]
+id = "REF-FREE-10"
+spec = "INTEG-071"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "custom javascript | "
+reason = "M2.md 6.1 / K2-14: Custom JavaScript hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-071."
+
+[[deviation]]
+id = "REF-FREE-11"
+spec = "INTEG-097"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "analytics | "
+reason = "M2.md 6.1 / K2-14: Analytics hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-097, INTEG-098."
+
+[[deviation]]
+id = "REF-FREE-12"
+spec = "INTEG-115"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "search console | "
+reason = "M2.md 6.1 / K2-14: Search Console hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-115, INTEG-116, INTEG-125."
+
+[[deviation]]
+id = "REF-FREE-13"
+spec = "INTEG-151"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefix = "link metrics | "
+reason = "M2.md 6.1 / K2-14: Link Metrics hat im vereinbarten Referenzprofil keinen aktivierten Referenzbeleg (Rendering/Konfiguration/Integration). Auch die lizenzierte Erzeugung der neuen Exporte hat diese Profilbedingungen nicht geaendert. Overview-Populationen sind kein Funktionsbeleg; kein verified. Betroffene IDs: INTEG-151."
+
+[[deviation]]
+id = "REF-FREE-14"
+spec = "ONPAGE-155"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+address = "content | spelling errors"
+reason = "M2.md 6.1 / K2-14: Rechtschreibung/Grammatik hat keinen aktivierten Referenzbeleg; ein Nullzaehler bei deaktivierter Analyse belegt die Funktion nicht. Kein verified; Beleg ueber spec-abgeleitete Fixtures in B2."
+
+[[deviation]]
+id = "REF-FREE-15"
+spec = "ONPAGE-156"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+address = "content | grammar errors"
+reason = "M2.md 6.1 / K2-14: Rechtschreibung/Grammatik hat keinen aktivierten Referenzbeleg; ein Nullzaehler bei deaktivierter Analyse belegt die Funktion nicht. Kein verified; Beleg ueber spec-abgeleitete Fixtures in B2."
+
+[[deviation]]
+id = "REF-FREE-16"
+spec = "ONPAGE-053"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["response codes | blocked resource", "response codes | internal blocked resource", "response codes | external blocked resource"]
+reason = "M2.md 6.1 / K2-14: rendering.mode=javascript ist im Referenzprofil nicht aktiv; die Rendering-Zaehler haben keinen Referenzbeleg. Nur vorhandene Overview-Zellen ausgenommen; fehlende bzw. falsch benannte Zeilen bleiben Mapping-Befund. Kein verified."
+
+[[deviation]]
+id = "REF-FREE-17"
+spec = "ONPAGE-057"
+kind = "Annahme"
+export = "crawl_overview"
+site = "*"
+column = "URLs"
+key_prefixes = ["response codes | redirection (javascript)", "response codes | internal redirection (javascript)", "response codes | external redirection (javascript)"]
+reason = "M2.md 6.1 / K2-14: rendering.mode=javascript ist im Referenzprofil nicht aktiv; die Rendering-Zaehler haben keinen Referenzbeleg. Nur vorhandene Overview-Zellen ausgenommen; fehlende bzw. falsch benannte Zeilen bleiben Mapping-Befund. Kein verified."
+
+[[deviation]]
+id = "DEV-037"
+spec = "TECH-145"
+kind = "OS-Festlegung"
+export = "links_all|internal_all|internal_m2|list_internal"
+reason = "SQ-10: TECH-145 OS-Festlegung, Kalibrierung M3; Link Score bleibt über Mapping mit Grund ausgenommen; Links/Internal erhalten keine verified-Gutschrift."
+column = "Link Score"
+
+[[deviation]]
+id = "DEV-038"
+spec = "OUT-080"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+reason = "OUT-080: needs_config/needs_rendering liefert einen leeren Zähler, keine aktivierte Analyse. Nur Nullwerte der Referenz werden entschuldigt."
+column = "URLs"
+key_prefixes = ["content | near duplicates", "images | background images", "images | incorrectly sized images", "url | broken bookmark"]
+ref = "0"
+os = ""
+
+[[deviation]]
+id = "DEV-039-missing_in_os"
+spec = "TECH-141"
+kind = "OS-Festlegung"
+export = "links_all"
+reason = "TECH-141: Eigener Start-Host und Port sind ausgenommen; Ausnahme ausschließlich für den eigenen Localhost-Filterexport, nie Links:All."
+file = "links_outlinks_to_localhost.csv"
+scope = "missing_in_os"
+
+[[deviation]]
+id = "DEV-039-extra_in_os"
+spec = "TECH-141"
+kind = "OS-Festlegung"
+export = "links_all"
+reason = "TECH-141: Eigener Start-Host und Port sind ausgenommen; Ausnahme ausschließlich für den eigenen Localhost-Filterexport, nie Links:All."
+file = "links_outlinks_to_localhost.csv"
+scope = "extra_in_os"
+
+[[deviation]]
+id = "DEV-039-overview"
+spec = "TECH-141"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+reason = "TECH-141: Der eigene Start-Host und Port ist ausgenommen."
+column = "URLs"
+address = "links | outlinks to localhost"
+
+[[deviation]]
+id = "DEV-040"
+spec = "OUT-015"
+kind = "OS-Festlegung"
+export = "list_internal"
+reason = "OUT-015: ungültige Uploadzeilen bleiben als eigene Zeilen erhalten; Referenz verwirft sie."
+site = "parity-m2-list"
+scope = "extra_in_os"
+key_prefixes = ["://invalid"]
+
+[[deviation]]
+id = "DEV-041"
+spec = "TECH-211"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+reason = "TECH-211: Ohne verarbeitete Sitemap bleibt der Tab leer. Referenz zählt hier interne HTML-/XML-URLs ohne Sitemap."
+column = "URLs"
+address = "sitemaps | all"
+os = "0"
+site = "parity-m2-onpage|parity-m2-links|parity-m2-security|parity-m2-list|parity-m2-technical"
+
+[[deviation]]
+id = "REF-ART-01"
+spec = "OUT-080"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+reason = "SQ-15: Referenzartefakt m2-security: Overview CSP 17 widerspricht der eigenen Filterdatei mit 13 Zeilen; OS folgt Filterdatei. Kein REF-FREE."
+site = "parity-m2-security"
+column = "URLs"
+address = "security | missing content-security-policy header"
+ref = "17"
+os = "13"
+
+[[deviation]]
+id = "DEV-042"
+spec = "OUT-083"
+kind = "OS-Festlegung"
+export = "m2_redirects_redirect_canonical_chains|list_chains"
+reason = "SQ-13e: Chain Type Redirect & Canonical ist nach OUT-083 eine bewusste OS-Festlegung."
+column = "Chain Type"
+ref = "Mixed"
+os = "Redirect & Canonical"
+
+[[deviation]]
+id = "DEV-043"
+spec = "OUT-081"
+kind = "OS-Festlegung"
+export = "m2_redirects_redirect_canonical_chains|redirect_chains"
+reason = "OUT-081: Zwischenglied erhält keine eigene Startzeile."
+site = "parity-m2-technical"
+scope = "missing_in_os"
+address = "{BASE}/loop-a"
+
+[[deviation]]
+id = "DEV-044"
+spec = "OUT-081"
+kind = "OS-Festlegung"
+export = "m2_redirects_redirect_canonical_chains|redirect_chains"
+reason = "OUT-081 / DEV-030: Schleifen haben keine Final Address und Final Status Redirect Loop; Referenz zeigt letzte Station."
+site = "parity-m2-technical"
+column = "Final Address|Final Status Code|Final Status|Final Indexability|Final Indexability Status|Final Content"
+address = "{BASE}/tail"
+
+[[deviation]]
+id = "DEV-014b"
+spec = "ONPAGE-024"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "out-basic-site|parity-onpage|parity-response|parity-technical|parity-synthetic"
+column = "URLs"
+address = "internal | other"
+ref = "1"
+os = "0"
+reason = "ONPAGE-024 / DEV-014: Antwort ohne Content-Type ist Unknown statt Other; exakt der einzelne historische Zähler, keine Entschuldigung der Media-/Fonts-/XML-Population (G12)."
+
+[[deviation]]
+id = "DEV-044-hop"
+spec = "OUT-081"
+kind = "OS-Festlegung"
+export = "m2_redirects_redirect_canonical_chains"
+site = "parity-m2-technical"
+column = "Status 4"
+address = "{BASE}/tail"
+ref = ""
+os = "Redirect Loop"
+reason = "OUT-081 / DEV-030: zusätzliche Endzielstation der Referenz bei einer Schleife; OS meldet Redirect Loop als Final Status."
+
+[[deviation]]
+id = "DEV-045"
+spec = "TECH-130"
+kind = "OS-Festlegung"
+export = "links_all"
+site = "out-basic-site"
+column = "Inlinks"
+key_prefixes = ["{BASE}/contact.html", "{BASE}/products.html"]
+ref = "14"
+os = "13"
+reason = "TECH-130 / K-07: Selbstlinks werden nicht als Inlinks gezählt; adressgenaue Ergänzung zu DEV-011 für die nun aktiv verglichene Spalte."
+
+[[deviation]]
+id = "DEV-046a"
+spec = "TECH-133"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-m2-technical"
+column = "URLs"
+address = "links | pages without internal outlinks"
+ref = "56"
+os = "41"
+reason = "N10/N09, TECH-133 und CRAWL-089: 15 nicht indexierbare Sackgassen ausgeschlossen, darunter zwei durch N09 korrigierte Indexierbarkeitsfaelle. Inkonsistente Referenz; kein allgemeiner Wechsel der Spec. Einzelbelege n10.md, G19."
+
+[[deviation]]
+id = "DEV-046b"
+spec = "TECH-133"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-m2-list"
+column = "URLs"
+address = "links | pages without internal outlinks"
+ref = "44"
+os = "43"
+reason = "N10, TECH-133/CRAWL-089: kanonisierte Sackgasse canonical-source.html ist nicht indexierbar und wird korrekt ausgeschlossen; Referenz nimmt sie auf (n10.md, G19)."
+
+[[deviation]]
+id = "DEV-047a"
+spec = "TECH-137"
+kind = "OS-Festlegung"
+export = "links_all"
+site = "parity-m2-links"
+file = "links_pages_with_high_external_outlinks.csv"
+scope = "missing_in_os"
+address = "{BASE}/external-99.html"
+reason = "SQ-13a: Schwelle bleibt 100. external-99.html hat genau 99 externe Follow-Linkinstanzen; Referenz listet sie dennoch. N10 belegt den Fall, kein Schwellwertwechsel."
+
+[[deviation]]
+id = "DEV-047b"
+spec = "TECH-137"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-m2-links"
+column = "URLs"
+address = "links | pages with high external outlinks"
+ref = "2"
+os = "1"
+reason = "SQ-13a / DEV-047a: external-99.html erklaert genau die Differenz 2 zu 1; Schwelle 100 bleibt."
+
+[[deviation]]
+id = "DEV-048a"
+spec = "ONPAGE-147"
+kind = "OS-Festlegung"
+export = "content_soft404"
+site = "parity-m2-onpage"
+scope = "extra_in_os"
+address = "{BASE}/soft404-2.html"
+reason = "K2-95 / A-39: mehrsprachige OpenSpider-eigene Phrasenliste verlangt Seite nicht gefunden als Soft-404. Deutscher Treffer ist eine bewusste OS-Festlegung (N08), kein Referenzfehler."
+
+[[deviation]]
+id = "DEV-048b"
+spec = "ONPAGE-147"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-m2-onpage"
+column = "URLs"
+address = "content | soft 404 pages"
+ref = "2"
+os = "3"
+reason = "K2-95 / DEV-048a: die zusaetzliche deutsche Soft-404-Phrase erklaert exakt den Zaehler 2 zu 3."
+
+[[deviation]]
+id = "DEV-049"
+spec = "ONPAGE-149"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-m2-links"
+column = "URLs"
+address = "content | readability very difficult"
+ref = "7"
+os = "6"
+reason = "K2-95 / N08: positions.html mit Inhaltsbereich main hat W=1 S=1 Syl=1, Flesch begrenzt 100 / Very Easy statt Referenz 0 / Very Hard. Wortzahl referenzgleich, kein URL-Sonderfall und keine fachlich unbegruendete Body-Ausnahme."
+
+[[deviation]]
+id = "DEV-040b"
+spec = "OUT-015"
+kind = "OS-Festlegung"
+export = "list_internal"
+site = "parity-m2-list"
+scope = "extra_in_os"
+address = "http://"
+reason = "OUT-015 / DEV-040: ungueltige Uploadzeile http:// bleibt erhalten. Der Runner prueft die Ausnahme am Tupel ohne angehaengtes Anzeige-Ordinal; das alte Praefix http:// | konnte deshalb nicht greifen. Reihenfolge wird weiterhin unabhaengig geprueft."
+
+[[deviation]]
+id = "DEV-039-bulk"
+spec = "TECH-141"
+kind = "OS-Festlegung"
+export = "all_inlinks"
+site = "parity-m2-links"
+file = "bulk_links_outlinks_to_localhost.csv"
+scope = "missing_in_os"
+key_prefixes = ["Hyperlink | {BASE}/ | {BASE}/", "Hyperlink | {BASE}/anchors.html | {BASE}/", "Hyperlink | {BASE}/deep/1.html | {BASE}/", "Hyperlink | {BASE}/deep/2.html | {BASE}/", "Hyperlink | {BASE}/deep/3.html | {BASE}/", "Hyperlink | {BASE}/deep/4.html | {BASE}/", "Hyperlink | {BASE}/deep/5.html | {BASE}/", "Hyperlink | {BASE}/deep/6.html | {BASE}/", "Hyperlink | {BASE}/deep/7.html | {BASE}/", "Hyperlink | {BASE}/graph/0.html | {BASE}/", "Hyperlink | {BASE}/graph/1.html | {BASE}/", "Hyperlink | {BASE}/graph/10.html | {BASE}/", "Hyperlink | {BASE}/graph/100.html | {BASE}/", "Hyperlink | {BASE}/graph/101.html | {BASE}/", "Hyperlink | {BASE}/graph/102.html | {BASE}/", "Hyperlink | {BASE}/graph/103.html | {BASE}/", "Hyperlink | {BASE}/graph/104.html | {BASE}/", "Hyperlink | {BASE}/graph/105.html | {BASE}/", "Hyperlink | {BASE}/graph/106.html | {BASE}/", "Hyperlink | {BASE}/graph/107.html | {BASE}/", "Hyperlink | {BASE}/graph/108.html | {BASE}/", "Hyperlink | {BASE}/graph/109.html | {BASE}/", "Hyperlink | {BASE}/graph/11.html | {BASE}/", "Hyperlink | {BASE}/graph/110.html | {BASE}/", "Hyperlink | {BASE}/graph/111.html | {BASE}/", "Hyperlink | {BASE}/graph/112.html | {BASE}/", "Hyperlink | {BASE}/graph/113.html | {BASE}/", "Hyperlink | {BASE}/graph/114.html | {BASE}/", "Hyperlink | {BASE}/graph/115.html | {BASE}/", "Hyperlink | {BASE}/graph/116.html | {BASE}/", "Hyperlink | {BASE}/graph/117.html | {BASE}/", "Hyperlink | {BASE}/graph/118.html | {BASE}/", "Hyperlink | {BASE}/graph/119.html | {BASE}/", "Hyperlink | {BASE}/graph/12.html | {BASE}/", "Hyperlink | {BASE}/graph/13.html | {BASE}/", "Hyperlink | {BASE}/graph/14.html | {BASE}/", "Hyperlink | {BASE}/graph/15.html | {BASE}/", "Hyperlink | {BASE}/graph/16.html | {BASE}/", "Hyperlink | {BASE}/graph/17.html | {BASE}/", "Hyperlink | {BASE}/graph/18.html | {BASE}/", "Hyperlink | {BASE}/graph/19.html | {BASE}/", "Hyperlink | {BASE}/graph/2.html | {BASE}/", "Hyperlink | {BASE}/graph/20.html | {BASE}/", "Hyperlink | {BASE}/graph/21.html | {BASE}/", "Hyperlink | {BASE}/graph/22.html | {BASE}/", "Hyperlink | {BASE}/graph/23.html | {BASE}/", "Hyperlink | {BASE}/graph/24.html | {BASE}/", "Hyperlink | {BASE}/graph/25.html | {BASE}/", "Hyperlink | {BASE}/graph/26.html | {BASE}/", "Hyperlink | {BASE}/graph/27.html | {BASE}/", "Hyperlink | {BASE}/graph/28.html | {BASE}/", "Hyperlink | {BASE}/graph/29.html | {BASE}/", "Hyperlink | {BASE}/graph/3.html | {BASE}/", "Hyperlink | {BASE}/graph/30.html | {BASE}/", "Hyperlink | {BASE}/graph/31.html | {BASE}/", "Hyperlink | {BASE}/graph/32.html | {BASE}/", "Hyperlink | {BASE}/graph/33.html | {BASE}/", "Hyperlink | {BASE}/graph/34.html | {BASE}/", "Hyperlink | {BASE}/graph/35.html | {BASE}/", "Hyperlink | {BASE}/graph/36.html | {BASE}/", "Hyperlink | {BASE}/graph/37.html | {BASE}/", "Hyperlink | {BASE}/graph/38.html | {BASE}/", "Hyperlink | {BASE}/graph/39.html | {BASE}/", "Hyperlink | {BASE}/graph/4.html | {BASE}/", "Hyperlink | {BASE}/graph/40.html | {BASE}/", "Hyperlink | {BASE}/graph/41.html | {BASE}/", "Hyperlink | {BASE}/graph/42.html | {BASE}/", "Hyperlink | {BASE}/graph/43.html | {BASE}/", "Hyperlink | {BASE}/graph/44.html | {BASE}/", "Hyperlink | {BASE}/graph/45.html | {BASE}/", "Hyperlink | {BASE}/graph/46.html | {BASE}/", "Hyperlink | {BASE}/graph/47.html | {BASE}/", "Hyperlink | {BASE}/graph/48.html | {BASE}/", "Hyperlink | {BASE}/graph/49.html | {BASE}/", "Hyperlink | {BASE}/graph/5.html | {BASE}/", "Hyperlink | {BASE}/graph/50.html | {BASE}/", "Hyperlink | {BASE}/graph/51.html | {BASE}/", "Hyperlink | {BASE}/graph/52.html | {BASE}/", "Hyperlink | {BASE}/graph/53.html | {BASE}/", "Hyperlink | {BASE}/graph/54.html | {BASE}/", "Hyperlink | {BASE}/graph/55.html | {BASE}/", "Hyperlink | {BASE}/graph/56.html | {BASE}/", "Hyperlink | {BASE}/graph/57.html | {BASE}/", "Hyperlink | {BASE}/graph/58.html | {BASE}/", "Hyperlink | {BASE}/graph/59.html | {BASE}/", "Hyperlink | {BASE}/graph/6.html | {BASE}/", "Hyperlink | {BASE}/graph/60.html | {BASE}/", "Hyperlink | {BASE}/graph/61.html | {BASE}/", "Hyperlink | {BASE}/graph/62.html | {BASE}/", "Hyperlink | {BASE}/graph/63.html | {BASE}/", "Hyperlink | {BASE}/graph/64.html | {BASE}/", "Hyperlink | {BASE}/graph/65.html | {BASE}/", "Hyperlink | {BASE}/graph/66.html | {BASE}/", "Hyperlink | {BASE}/graph/67.html | {BASE}/", "Hyperlink | {BASE}/graph/68.html | {BASE}/", "Hyperlink | {BASE}/graph/69.html | {BASE}/", "Hyperlink | {BASE}/graph/7.html | {BASE}/", "Hyperlink | {BASE}/graph/70.html | {BASE}/", "Hyperlink | {BASE}/graph/71.html | {BASE}/", "Hyperlink | {BASE}/graph/72.html | {BASE}/", "Hyperlink | {BASE}/graph/73.html | {BASE}/", "Hyperlink | {BASE}/graph/74.html | {BASE}/", "Hyperlink | {BASE}/graph/75.html | {BASE}/", "Hyperlink | {BASE}/graph/76.html | {BASE}/", "Hyperlink | {BASE}/graph/77.html | {BASE}/", "Hyperlink | {BASE}/graph/78.html | {BASE}/", "Hyperlink | {BASE}/graph/79.html | {BASE}/", "Hyperlink | {BASE}/graph/8.html | {BASE}/", "Hyperlink | {BASE}/graph/80.html | {BASE}/", "Hyperlink | {BASE}/graph/81.html | {BASE}/", "Hyperlink | {BASE}/graph/82.html | {BASE}/", "Hyperlink | {BASE}/graph/83.html | {BASE}/", "Hyperlink | {BASE}/graph/84.html | {BASE}/", "Hyperlink | {BASE}/graph/85.html | {BASE}/", "Hyperlink | {BASE}/graph/86.html | {BASE}/", "Hyperlink | {BASE}/graph/87.html | {BASE}/", "Hyperlink | {BASE}/graph/88.html | {BASE}/", "Hyperlink | {BASE}/graph/89.html | {BASE}/", "Hyperlink | {BASE}/graph/9.html | {BASE}/", "Hyperlink | {BASE}/graph/90.html | {BASE}/", "Hyperlink | {BASE}/graph/91.html | {BASE}/", "Hyperlink | {BASE}/graph/92.html | {BASE}/", "Hyperlink | {BASE}/graph/93.html | {BASE}/", "Hyperlink | {BASE}/graph/94.html | {BASE}/", "Hyperlink | {BASE}/graph/95.html | {BASE}/", "Hyperlink | {BASE}/graph/96.html | {BASE}/", "Hyperlink | {BASE}/graph/97.html | {BASE}/", "Hyperlink | {BASE}/graph/98.html | {BASE}/", "Hyperlink | {BASE}/graph/99.html | {BASE}/", "Hyperlink | {BASE}/internal-1001.html | {BASE}/", "Hyperlink | {BASE}/internal-999.html | {BASE}/", "Hyperlink | {BASE}/mixed-source.html | {BASE}/", "Hyperlink | {BASE}/nofollow-source.html | {BASE}/", "Hyperlink | {BASE}/noindex-source.html | {BASE}/", "Hyperlink | {BASE}/positions.html | {BASE}/"]
+reason = "TECH-141 / DEV-039: eigener Start-Host samt Port ist ausgenommen. Die belegten fehlenden Verbindungen gehen von den expliziten Quellen ausschliesslich an {BASE}/, nie an fremde localhost-Ziele. 2392 Verbindungen der Referenz fallen darunter; die 200 fremden localhost-Verbindungen bleiben voll verglichen. G19/SQ-13, keine Ausnahme fuer Links:All. Bewusster Umfang der Praefixregel: Nach jeder explizit aufgelisteten Quelle umfasst {BASE}/ jedes interne Ziel dieses Hosts, nicht nur die Wurzel. Das entspricht TECH-141: der eigene Start-Host samt Port ist generell ausgenommen. Fremde localhost-Ziele und Links:All bleiben ungefiltert."
+
+[[deviation]]
+id = "DEV-044-hop-m1a"
+spec = "OUT-081"
+kind = "OS-Festlegung"
+export = "redirect_chains"
+site = "parity-response"
+column = "Status 2"
+address = "{BASE}/meta-refresh-self.html"
+ref = ""
+os = "Redirect Loop"
+reason = "OUT-081 / DEV-030: Schleifenstatus statt zusaetzlicher leerer Endzielstation der Referenz; exakt ein belegter Hop, keine generelle Ausnahme fuer Hop-Spalten."
+
+[[deviation]]
+id = "DEV-044-hop-m1b"
+spec = "OUT-081"
+kind = "OS-Festlegung"
+export = "redirect_chains"
+site = "parity-response"
+column = "Status 3"
+address = "{BASE}/loop1"
+ref = ""
+os = "Redirect Loop"
+reason = "OUT-081 / DEV-030: Schleifenstatus statt zusaetzlicher leerer Endzielstation der Referenz; exakt ein belegter Hop, keine generelle Ausnahme fuer Hop-Spalten."
+
+[[deviation]]
+id = "DEV-050a"
+spec = "OUT-084"
+kind = "OS-Festlegung"
+export = "redirects_to_errors"
+site = "parity-response"
+scope = "extra_in_os"
+address = "{BASE}/r-to-blocked"
+reason = "OUT-084 verlangt ausdruecklich Weiterleitungen auf robots-gesperrte Ziele; der Referenzexport laesst diesen dokumentierten Akzeptanzfall aus. OS liefert Blocked by Robots.txt."
+
+[[deviation]]
+id = "DEV-050b"
+spec = "OUT-081"
+kind = "OS-Festlegung"
+export = "redirects_to_errors"
+site = "parity-response"
+column = "Temp Redirect in Chain"
+address = "{BASE}/r-meta-to-404.html"
+ref = "true"
+os = "False"
+reason = "OUT-081: Meta/HTTP Refresh zaehlt nur mit Verzoegerung >0 als temporaer. Fixture hat content=0; url=/e404; Referenz markiert ihn trotzdem temporaer."
+
+[[deviation]]
+id = "DEV-051"
+spec = "OUT-031"
+kind = "OS-Festlegung"
+export = "all_inlinks"
+site = "parity-m2-links"
+file = "bulk_links_internal_nofollow_outlinks.csv"
+column = "Status"
+address = "Hyperlink | {BASE}/nofollow-source.html | {BASE}/nofollow-only.html"
+ref = ""
+os = "Not Crawled"
+reason = "OUT-031 legt fuer nicht gecrawlte Ziele ausdruecklich Status Not Crawled fest. Die Referenz laesst ihn leer. Nur der belegte nofollow-Verweis, kein Status-Code-/Groessen-Blanket."
+
+[[deviation]]
+id = "DEV-014-q02b-1"
+spec = "ONPAGE-024"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-m2-list"
+column = "URLs"
+address = "internal | other"
+ref = "2"
+os = "0"
+reason = "DEV-014 praezisiert: Zwei headerlose 301-Antworten redirect/chain; ungueltige Uploadzeilen sind keine Other-Antworten. Content-Type-Spalte des Internal-All-Vergleichs ohne Fehler; keine Ausnahme fuer Media/Fonts/XML/Plugins. OS-Population in q02b/other-populations.json belegt."
+
+[[deviation]]
+id = "DEV-014-q02b-2"
+spec = "ONPAGE-024"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-m2-technical"
+column = "URLs"
+address = "internal | other"
+ref = "4"
+os = "0"
+reason = "DEV-014 praezisiert: Vier headerlose Weiterleitungen redirect-canonical, tail, loop-a, loop-b. Content-Type-Spalte des Internal-All-Vergleichs ohne Fehler; keine Ausnahme fuer Media/Fonts/XML/Plugins. OS-Population in q02b/other-populations.json belegt."
+
+[[deviation]]
+id = "DEV-014-q02b-3"
+spec = "ONPAGE-024"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-response"
+column = "URLs"
+address = "internal | other"
+ref = "22"
+os = "0"
+reason = "DEV-014 praezisiert: 22 Antwort-URLs ohne Content-Type; die zwei zusaetzlichen robots-gesperrten URLs werden von der Referenz nicht in Other gezaehlt. Content-Type-Spalte des Internal-All-Vergleichs ohne Fehler; keine Ausnahme fuer Media/Fonts/XML/Plugins. OS-Population in q02b/other-populations.json belegt."
+
+[[deviation]]
+id = "DEV-014-q02b-4"
+spec = "ONPAGE-024"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-onpage"
+column = "URLs"
+address = "internal | other"
+ref = "4"
+os = "3"
+reason = "DEV-014 praezisiert: ctype/t-invalid liefert ungueltigen Content-Type foo: Unknown nach ONPAGE-024; die drei gueltigen Other-URLs bleiben gezaehlt. Content-Type-Spalte des Internal-All-Vergleichs ohne Fehler; keine Ausnahme fuer Media/Fonts/XML/Plugins. OS-Population in q02b/other-populations.json belegt."
+
+[[deviation]]
+id = "DEV-014-q02b-5"
+spec = "ONPAGE-024"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-technical"
+column = "URLs"
+address = "internal | other"
+ref = "2"
+os = "0"
+reason = "DEV-014 praezisiert: hl/es-old/ und canon/moved-301 sind die zwei headerlosen 301-Antworten; blocked/page.html ist zusaetzlich Unknown, aber kein Other-Treffer der Referenz. OS-Population in q02b/other-populations.json; keine Ausnahme fuer Media/Fonts/XML/Plugins."
+
+[[deviation]]
+id = "REF-ART-02"
+spec = "OUT-091"
+kind = "OS-Festlegung"
+export = "hreflang_targets"
+site = "parity-m2-technical"
+file = "report_hreflang_non_200_hreflang_urls.csv"
+scope = "missing_in_os"
+address = "{BASE}/ | {BASE}/pagination-404-target.html"
+reason = "Nachgewiesener Referenz-Beifang: der native os-parity-Diff mit all_inlinks weist fuer genau diese Beziehung Type=Hyperlink aus; nur lang-to-404.html hat Type=Hreflang. OUT-091 enthaelt ausschliesslich Hreflang-Beziehungen. Fixture index.html bestaetigt den gewoehnlichen a-Link. Beleg q02b/hreflang-non200-type.json; kein REF-FREE und keine Ausnahme fuer echte Hreflang-Ziele."
+
+[[deviation]]
+id = "DEV-052"
+spec = "TECH-283"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-m2-security"
+column = "URLs"
+address = "validation | <head> not first in <html> element"
+ref = "0"
+os = "1"
+reason = "K2-93 / TECH-283: bei fehlendem head zusaetzlich Head Not First. wrong.css wird absichtlich mit text/html ausgeliefert und enthaelt nur /* fixture */, also keinen head. Missing Head wird in beiden Overview-Exporten bereits mit 1 gezaehlt, nur Head Not First weicht ab; m2-technical/validation-head-missing wird dagegen von beiden gezaehlt. Inkonsistente Referenz, keine einheitlich widerlegte Spec-Regel. Nur dieser belegte Zaehler, keine Ausnahme fuer den Validation-Tab."
+
+[[deviation]]
+id = "DEV-053"
+spec = "OUT-083"
+kind = "OS-Festlegung"
+export = "m2_redirects_redirect_canonical_chains"
+site = "parity-m2-technical"
+scope = "extra_in_os"
+address = "{BASE}/refresh-self.html"
+reason = "OUT-083 erweitert OUT-081; OUT-081/K-57/K-69 verlangt ausdruecklich auch fuer Refresh-Header auf die eigene URL eine Schleifenzeile. N09/TECH-001 klassifiziert die Seite folgerichtig Redirected. Die Referenz laesst genau diesen HTTP-Selbst-Refresh im kombinierten Report aus; der historische Meta-Selbst-Refresh ist dagegen in Redirect Chains vorhanden. Keine Ausnahme fuer andere Startzeilen oder Werte."
+
+[[deviation]]
+id = "DEV-054"
+spec = "TECH-139"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-technical"
+column = "URLs"
+address = "links | follow & nofollow internal inlinks to page"
+ref = "3"
+os = "6"
+reason = "TECH-139 / OUT-031 / bestehender DEV-008: Follow=False beruecksichtigt Meta/X-Robots nofollow der Quelle. Nativ belegte fuenf DEV-008-Verbindungen von dir/nofollow.html und dir/none.html fuehren zu genau drei zusaetzlich gemischten Zielen: /, /dir/, /dir/only-via-nofollow.html. Ohne diese Seiten-Direktiven bleiben genau die drei rel-basierten Ziele target-a/b/c. Beleg q02b/links-detail.json; keine neue Follow-Semantik und kein Alt-Referenz-Blanket."
+
+[[deviation]]
+id = "DEV-055"
+spec = "ONPAGE-179"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-onpage"
+column = "URLs"
+address = "images | missing size attributes"
+ref = "9"
+os = "10"
+reason = "ONPAGE-179 uebernimmt die Bild-Grundmenge aus ONPAGE-170: bereits DEV-028 belegt img/missing.png (404) als einzige zusaetzliche Bild-URL. Auch dieses img hat keine width/height-Attribute; die Attributpruefung haengt nicht vom Abrufstatus ab. Eigener Filter-/Instanzexport isoliert zehn Treffer, ohne genau die DEV-028-URL neun. Beleg q02b/images-detail.json; kein allgemeiner Status- oder Groessenfilter-DEV."
+
+[[deviation]]
+id = "DEV-056"
+spec = "TECH-136"
+kind = "OS-Festlegung"
+export = "crawl_overview"
+site = "parity-technical"
+column = "URLs"
+address = "links | non-descriptive anchor text in internal outlinks"
+ref = "0"
+os = "1"
+reason = "TECH-136/TECH-144: der eigene Filterexport isoliert genau links/self-only.html mit Anchor This page. Die ausdruecklich festgelegte OS-Defaultliste enthaelt this page; TECH-136 verlangt den exakten normalisierten Treffer und nimmt Selbst-Hyperlinks nicht aus (K-07 betrifft die Linkzaehler). Damit ist der OS-Treffer spec-abgeleitet. Ob die alte Referenz die Phrase oder den Selbstlink ausnimmt, ist nicht belegt; kein Referenzartefakt behauptet und keine globale Listen-/Filterausnahme. Beleg q02b/links-detail.json."

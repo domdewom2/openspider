@@ -1,0 +1,2 @@
+Address,Number of Redirects,Final Status Code,Final Status,Status Code 1,Status 1
+http://127.0.0.1:41000/a,1,200,OK,301,Moved Permanently
