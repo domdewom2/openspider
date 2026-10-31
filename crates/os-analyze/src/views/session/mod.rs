@@ -866,9 +866,6 @@ fn materialize(
         .serialize_into(&mut data)
         .map_err(|_| invalid("Bitmap-Serialisierung fehlgeschlagen"))?;
     // Cache is optional: lock contention or disk exhaustion must not prevent reading a crawl.
-    if let Some(common) = &common {
-        let _ = super::membership::save(file, common);
-    }
     let _ = view_cache::save(
         file,
         &disk_key,

@@ -216,8 +216,9 @@ fn response_codes_and_parallel_passes_match_the_sql_population() {
         .unwrap();
     for parallel in [false, true] {
         crate::views::FORCE_PARALLEL.with(|f| f.set(parallel));
-        // Each round scans once; later views of the round decode the stored pass.
+        // Each round scans once and stores the pass; later views of the round decode it.
         os_store::view_cache::clear(&file).unwrap();
+        let mut stored = false;
         for (tab, filter) in [
             ("Response Codes", "All"),
             ("Internal", "All"),
@@ -236,6 +237,9 @@ fn response_codes_and_parallel_passes_match_the_sql_population() {
                 .unwrap()
                 .row_keys;
             assert_eq!(all_rows(&view, &file), expected, "{tab}/{filter}");
+            if !stored {
+                stored = persist_shared(&file).unwrap();
+            }
             view.cache.lock().unwrap().release();
         }
     }
@@ -253,7 +257,9 @@ fn persisted_memberships_replace_the_scan_of_a_reopened_saved_crawl() {
     let expected = {
         let view = ViewSession::open(&file, &cfg, spec("All"), Budget::default()).unwrap();
         view.prepare(&file, &BuildControl::default()).unwrap();
-        // The writable test connection stores the pass right after the build.
+        // Only an explicit writer call stores the pass (the app's write queue).
+        assert!(view.shared_pending());
+        assert!(persist_shared(&file).unwrap());
         assert!(!view.shared_pending());
         let rows = all_rows(&view, &file);
         view.cache.lock().unwrap().release();

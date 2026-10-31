@@ -388,7 +388,7 @@ pub(super) fn persist(file: &CrawlFile) -> Result<bool, ViewError> {
     }
 }
 
-pub(super) fn save(file: &CrawlFile, facts: &Membership) -> Result<bool, ViewError> {
+fn save(file: &CrawlFile, facts: &Membership) -> Result<bool, ViewError> {
     if facts.persisted.load(Ordering::Relaxed) || file.conn().is_readonly("main")? {
         return Ok(false);
     }
