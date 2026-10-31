@@ -1,3 +1,4 @@
+import { loadRecent, updateRecent } from "../help/recent";
 import { openComparison, useComparison } from "../compare/model";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useT, i18n, currentLanguage } from "../../i18n";
@@ -49,6 +50,12 @@ export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDe
   const [active, setActive] = useState<{ handle: OpHandle; repair: boolean } | null>(null);
   const status = useSession(s => active ? s.ops[active.handle.opId] : undefined);
   const phase = useSession(s => s.crawl?.phase);
+  const currentCrawl = useSession(s => s.crawl?.crawlId);
+  useEffect(() => {
+    let live = true;
+    void loadRecent().then(entries => { if (live) setRecent(writeRecent([...entries.map(e => e.path), ...readRecent()])); }).catch(() => undefined);
+    return () => { live = false; };
+  }, [currentCrawl, phase]);
   const [cancelling, setCancelling] = useState(false);
   const requestVersion = useRef(0);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -142,7 +149,11 @@ export function CrawlsHost({ desktop = nativeCrawlDesktop }: { desktop?: CrawlDe
       if (err.code === "Io" && path) {
         try { await desktop.check(path); } catch (checkError) { missing = toCmdError(checkError).code === "NotFound"; }
       }
-      if (missing && path) setRecent(writeRecent(readRecent().filter(p => p !== path)));
+      if (missing && path) {
+        const remaining = writeRecent(readRecent().filter(p => p !== path));
+        setRecent(remaining);
+        await updateRecent(entries => entries.filter(entry => entry.path !== path));
+      }
       setError({ text: `${path ?? ""}: ${missing ? t("crawls-error-missing") : textError(e)}`, path: err.messageKey === "err-crawl-corrupt" ? path : undefined });
     }
   };

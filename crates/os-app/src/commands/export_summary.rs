@@ -123,6 +123,7 @@ async fn run_summary(
         secrets: super::api::export_credentials(app),
         network: app.settings_snapshot().network,
         allow_api_override: false,
+        quota_ledger: Some(app.config().paths.settings.join("api-quotas.json")),
     };
     let client =
         DriveClient::new(&context, &args.account, app.config().clock.now()).map_err(failure)?;
@@ -223,6 +224,7 @@ fn sheets<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResul
                         secrets: super::api::export_credentials(&app),
                         network: app.settings_snapshot().network,
                         allow_api_override: false,
+                        quota_ledger: Some(app.config().paths.settings.join("api-quotas.json")),
                     };
                     let client =
                         DriveClient::new(&context, &args.account, app.config().clock.now())

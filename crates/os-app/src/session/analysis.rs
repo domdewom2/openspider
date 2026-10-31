@@ -40,11 +40,12 @@ pub async fn status(app: &App, s: &SessionInfo) -> Result<AnalysisStatus, CmdErr
             // UI-082/ONPAGE-140: stale and needsRecrawl come from the K03 status, not from the freshness alone.
             let steps = crate::commands::sidebar_ext::step_statuses(&data)
                 .map_err(|e| os_store::StoreError::InvalidInput(e.message_key.to_string()))?;
+            let state = f.get_meta("analysis_state")?;
             Ok(AnalysisStatus {
                 steps,
-                running: f.get_meta("analysis_state")?.as_deref() == Some("running"),
+                running: state.as_deref() == Some("running"),
                 current: None,
-                percent: None,
+                percent: (state.as_deref() == Some("completed")).then_some(100),
             })
         })
         .await
@@ -131,6 +132,27 @@ async fn finish_operation(
         },
     };
     publish(&app, &s.key, final_status.clone());
+    let cancelled = cancel.is_cancelled();
+    app.push_notice(Notice {
+        level: if result.is_err() && !cancelled {
+            NoticeLevel::Error
+        } else {
+            NoticeLevel::Info
+        },
+        code: if cancelled {
+            "analysis-cancelled"
+        } else if result.is_err() {
+            "analysis-failed"
+        } else {
+            "analysis-completed"
+        }
+        .into(),
+        args: result
+            .as_ref()
+            .err()
+            .map(|error| [("detail".into(), serde_json::json!(error.message_key))].into())
+            .unwrap_or_default(),
+    });
     if automatic {
         crate::commands::mail::after_analysis(&app, &s.key);
     }

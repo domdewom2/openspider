@@ -53,15 +53,6 @@ pub(crate) fn parts_empty(batch: &WriteBatch) -> bool {
 
 /// Löscht die seitenbezogenen M2-Zeilen einer URL (`PageWrite.replace`).
 pub(crate) fn clear_page_children(tx: &Connection, id: i64) -> Result<(), StoreError> {
-    let namespaces = os_model::ext::NAMESPACES
-        .iter()
-        .filter(|(ns, _)| os_model::ext::is_fetch_scoped(ns))
-        .map(|(ns, _)| format!("'{ns}'"))
-        .collect::<Vec<_>>()
-        .join(", ");
-    tx.prepare_cached(&format!(
-        "DELETE FROM url_ext WHERE url_id = ?1 AND substr(key, 1, instr(key, '.') - 1) IN ({namespaces})"
-    ))?.execute([id])?;
     for sql in [
         "DELETE FROM cookies WHERE url_id = ?1",
         "DELETE FROM sd_items WHERE url_id = ?1",
@@ -137,15 +128,41 @@ pub(crate) fn write(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(),
 }
 
 fn write_ext(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreError> {
-    if batch.ext.is_empty() {
-        return Ok(());
+    // Die vom neuen Abruf nicht mehr gelieferten Schlüssel entfernen; vorhandene bleiben für den Upsert erhalten.
+    let mut incoming: std::collections::HashMap<i64, std::collections::HashSet<&str>> =
+        std::collections::HashMap::new();
+    for e in &batch.ext {
+        incoming.entry(e.url.0).or_default().insert(e.key.as_str());
+    }
+    let mut existing = tx.prepare_cached("SELECT d.key_id, k.key FROM url_ext_data d JOIN ext_keys k ON k.id=d.key_id WHERE d.url_id=?1")?;
+    let mut delete = tx.prepare_cached("DELETE FROM url_ext_data WHERE url_id=?1 AND key_id=?2")?;
+    for page in batch.pages.iter().filter(|p| p.replace) {
+        let id = page.url_id.0;
+        let rows =
+            existing.query_map([id], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?)))?;
+        for row in rows {
+            let (key_id, key) = row?;
+            let namespace = key.split('.').next().unwrap_or("");
+            if os_model::ext::is_fetch_scoped(namespace)
+                && !incoming
+                    .get(&id)
+                    .is_some_and(|keys| keys.contains(key.as_str()))
+            {
+                delete.execute(params![id, key_id])?;
+            }
+        }
     }
     let mut exists = tx.prepare_cached("SELECT 1 FROM urls WHERE id = ?1")?;
+    let mut insert_key = tx.prepare_cached("INSERT OR IGNORE INTO ext_keys(key) VALUES (?1)")?;
     let mut upsert = tx.prepare_cached(
-        "INSERT INTO url_ext (url_id, key, v_int, v_real, v_text, change_seq) \
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6) \
-         ON CONFLICT(url_id, key) DO UPDATE SET v_int = excluded.v_int, v_real = excluded.v_real, \
+        "INSERT INTO url_ext_data (url_id, key_id, v_int, v_real, v_text, change_seq) \
+         VALUES (?1, (SELECT id FROM ext_keys WHERE key=?2), ?3, ?4, ?5, ?6) \
+         ON CONFLICT(url_id, key_id) DO UPDATE SET v_int = excluded.v_int, v_real = excluded.v_real, \
            v_text = excluded.v_text, change_seq = excluded.change_seq",
+    )?;
+    let mut text = tx.prepare_cached("INSERT INTO ext_texts(url_id,key_id,value) VALUES (?1,(SELECT id FROM ext_keys WHERE key=?2),?3) ON CONFLICT(url_id,key_id) DO UPDATE SET value=excluded.value")?;
+    let mut clear_text = tx.prepare_cached(
+        "DELETE FROM ext_texts WHERE url_id=?1 AND key_id=(SELECT id FROM ext_keys WHERE key=?2)",
     )?;
     let mut known: std::collections::HashSet<i64> = std::collections::HashSet::new();
     for e in &batch.ext {
@@ -165,7 +182,21 @@ fn write_ext(tx: &Connection, batch: &WriteBatch, seq: i64) -> Result<(), StoreE
             ModelValue::Float(f) => (None, Some(*f), None),
             ModelValue::Text(t) => (None, None, Some(t.as_str())),
         };
-        upsert.execute(params![id, e.key.as_str(), v_int, v_real, v_text, seq])?;
+        insert_key.execute([e.key.as_str()])?;
+        let long_text = v_text.filter(|value| value.len() > 768);
+        upsert.execute(params![
+            id,
+            e.key.as_str(),
+            v_int,
+            v_real,
+            if long_text.is_some() { None } else { v_text },
+            seq
+        ])?;
+        if let Some(value) = long_text {
+            text.execute(params![id, e.key.as_str(), value])?;
+        } else {
+            clear_text.execute(params![id, e.key.as_str()])?;
+        }
     }
     Ok(())
 }

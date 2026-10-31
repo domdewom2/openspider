@@ -38,14 +38,17 @@ test("a tour through the main window produces no console errors and axe finds no
   for (const tab of ["External", "Page Titles", "Images"]) await alpha.selectTab(tab);
 
   // Seitenleiste und Detailfenster: jeder Reiter einmal
+  // M2-U34 (K2-72): Reiter, die nicht in die Breite passen, stehen im Überlaufmenü der Leiste (UI-004, UI-030, UI-060).
   for (const name of ["Issues", "Site Structure", "Segments", "Response Times", "API", "Spelling & Grammar", "Overview"]) {
     const tab = page.getByRole("tablist", { name: "Crawl summary" }).getByRole("tab", { name, exact: true });
-    await tab.focus();
-    await tab.press("Enter");
+    if (await tab.count()) { await tab.focus(); await tab.press("Enter"); }
+    else { await page.getByRole("button", { name: "More sidebar tabs" }).press("Enter"); await page.getByRole("menuitem", { name, exact: true }).press("Enter"); }
     await expect(tab).toHaveAttribute("aria-selected", "true");
   }
   for (const name of ["Inlinks", "Outlinks", "Image Details", "Resources", "SERP Snippet", "HTTP Headers", "Cookies", "URL Details"]) {
-    await page.getByRole("region", { name: "Details" }).getByRole("tab", { name, exact: true }).click();
+    const tab = page.getByRole("region", { name: "Details" }).getByRole("tab", { name, exact: true });
+    if (await tab.count()) await tab.click();
+    else { await page.getByRole("button", { name: "More detail tabs" }).click(); await page.getByRole("menuitem", { name, exact: true }).click(); }
   }
 
   // Dialoge: Spalten, Crawl-Verwaltung, Tastaturkürzel, Export (abgebrochen)

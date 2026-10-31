@@ -31,8 +31,16 @@ async function status(page: Page, value: string) {
   // One-second bound is measured at every real HTTP transition, without injecting UI ticks.
   await expect(page.getByRole("button", { name: value, exact: true, includeHidden: true })).toBeAttached({ timeout: 1_000 });
 }
+// React Aria's decorative box covers the native input; exercise its keyboard contract.
+async function setCheckbox(page: Page, name: string | RegExp, checked: boolean) {
+  const input = page.getByRole("checkbox", { name, exact: typeof name === "string" });
+  await input.focus();
+  if (await input.isChecked() !== checked) await input.press("Space");
+  await expect(input).toBeChecked({ checked });
+}
 async function sandboxFile(path: string, home: string) {
-  const rel = relative(await realpath(home), path);
+  // Keep lexical containment separate from canonical containment: macOS /var aliases /private/var.
+  const rel = relative(home, path);
   expect(rel && !rel.startsWith("..") && !isAbsolute(rel), "K17 must route client config paths into the bridge's temporary AppConfig home").toBeTruthy();
   await mkdir(dirname(path), { recursive: true });
   // Check symlinks too before any test writer touches an existing config.
@@ -72,7 +80,6 @@ test("real bridge reports service availability without a mock fallback", async (
 
 // spec: AGENT-043
 test("real writer backs up all client configs after reviewed diffs and preserves foreign entries", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-K17: echte Client-Pfade, Vorschau und atomarer Schreiber; Auflösung M2-N02 nach C9");
   const bridge = await startRealBridge();
   try {
     await connect(page, bridge);
@@ -90,7 +97,7 @@ test("real writer backs up all client configs after reviewed diffs and preserves
       await expect(write).toBeDisabled();
       expect(await readFile(initial.path, "utf8")).toBe(original);
       const preview = await page.evaluate(kind => window.mcpBridge.invoke<McpClientPreview>("mcp.clientConfigPreview", { client: kind }), kind);
-      await page.getByRole("checkbox", { name: /I have reviewed/ }).check();
+      await setCheckbox(page, /I have reviewed/, true);
       await write.click();
       await expect(page.getByText("Client configuration saved.", { exact: true })).toBeVisible();
       expect(await readFile(initial.path, "utf8")).toBe(preview.after);
@@ -106,7 +113,6 @@ test("real writer backs up all client configs after reviewed diffs and preserves
 
 // spec: AGENT-043
 test("three genuine HTTP calls against an out-basic-site crawl appear in the UI log", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-K17/M2-K04: MCP-Service, Aufrufprotokoll und Crawl-Commands; Auflösung M2-N02 nach C9");
   test.setTimeout(120_000);
   const bridge = await startRealBridge();
   let site: Awaited<ReturnType<typeof outBasicSite>> | undefined;
@@ -141,14 +147,13 @@ test("three genuine HTTP calls against an out-basic-site crawl appear in the UI 
 // spec: OUT-285 [P1]
 // spec: AGENT-003 [M2]
 test("HTTP tools/list, UI schemas and saved Markdown agree before and after disabling a tool", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-K17: Freigaben, tools/list und Markdown über den echten Service; Auflösung M2-N02 nach C9");
   const bridge = await startRealBridge();
   let http: HttpMcpClient | undefined;
   try {
     await connect(page, bridge); http = await server(page); await http.initialize();
     await page.getByRole("tab", { name: "Tools", exact: true }).click();
     for (const disabled of [false, true]) {
-      if (disabled) await page.getByRole("checkbox", { name: "query_urls", exact: true }).uncheck();
+      if (disabled) await setCheckbox(page, "query_urls", false);
       const listed = (await http.rpc("tools/list"))?.tools; expect(listed).toBeTruthy();
       const ui = await page.evaluate(() => window.mcpBridge.invoke<ToolInfo[]>("mcp.tools"));
       expect(ui.filter(tool => tool.enabled).map(tool => ({ name: tool.name, schema: tool.schema })).sort((a, b) => a.name.localeCompare(b.name)))
@@ -179,7 +184,6 @@ test("HTTP tools/list, UI schemas and saved Markdown agree before and after disa
 // spec: OUT-285 [P1]
 // spec: AGENT-002
 test("real HTTP sessions update status within a second, reject unauthorized requests and expire after ten minutes", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-K17: HTTP-Sitzungszähler und Ablauf an echte Statusereignisse anbinden; Auflösung M2-N02 nach C9");
   test.setTimeout(660_000);
   const bridge = await startRealBridge();
   let first: HttpMcpClient | undefined; let second: HttpMcpClient | undefined;
@@ -214,14 +218,13 @@ test("real HTTP sessions update status within a second, reject unauthorized requ
 
 // spec: OUT-285 [P1]
 test("autostart survives a real app restart and a busy port produces a visible failure", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-K17: persistierter Auto-Start und Startfehler-Notice; Auflösung M2-N02 nach C9");
   const home = await mkdtemp(join(tmpdir(), "u25-restart-"));
   let bridge: Awaited<ReturnType<typeof startRealBridge>> | undefined;
   const blocker = createServer();
   try {
     bridge = await startRealBridge({ home }); await connect(page, bridge);
     const http = await server(page);
-    await page.getByRole("checkbox", { name: "Start automatically when the app opens", exact: true }).check();
+    await setCheckbox(page, "Start automatically when the app opens", true);
     await expect.poll(() => page.evaluate(() => window.mcpBridge.invoke<{ mcp: { autostart: boolean } }>("settings.get").then(settings => settings.mcp.autostart))).toBe(true);
     await bridge.stop(); bridge = await startRealBridge({ home });
     await connect(page, bridge);

@@ -5064,6 +5064,7 @@ dependencies = [
  "os-testsite",
  "os-url",
  "serde_json",
+ "sys-locale",
  "sysinfo",
  "tempfile",
  "thiserror 2.0.21",

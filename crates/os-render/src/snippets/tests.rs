@@ -22,6 +22,19 @@ fn options(cfg: &CrawlConfig) -> RenderOpts {
     }
 }
 
+// spec: INTEG-072
+#[test]
+fn output_directory_is_optional_and_propagated_to_render_options() {
+    let mut cfg = config();
+    assert!(options(&cfg).snippets.output_dir.is_none());
+    let directory = tempfile::tempdir().unwrap();
+    cfg.custom_js.output_dir = Some(directory.path().to_path_buf());
+    assert_eq!(
+        options(&cfg).snippets.output_dir.as_deref(),
+        Some(directory.path())
+    );
+}
+
 // spec: INTEG-060
 // spec: INTEG-061
 // spec: INTEG-062
@@ -100,6 +113,7 @@ fn management_is_transactional_and_imports_require_preview_and_confirmation() {
                 ..Default::default()
             },
         ],
+        ..Default::default()
     });
     assert!(manager.is_err());
     assert_eq!(network_warning(&cfg).len(), 1);
@@ -107,7 +121,8 @@ fn management_is_transactional_and_imports_require_preview_and_confirmation() {
     let missing_action: JsSnippet =
         serde_json::from_str(r#"{"kind":"action","code":"window.scrollTo(0,100)"}"#).unwrap();
     assert!(SnippetManager::new(CustomJsConfig {
-        snippets: vec![missing_action]
+        snippets: vec![missing_action],
+        ..Default::default()
     })
     .is_err());
 }
@@ -509,4 +524,101 @@ async fn injected_clock_drives_shared_budget_timeouts_and_persisted_trace() {
     );
     assert_eq!(*page.stopped.lock().unwrap(), [Duration::from_secs(8)]);
     assert_eq!(results[3].values, [Some("after".into())]);
+}
+
+// spec: INTEG-072
+#[test]
+fn file_operations_normalize_paths_append_and_reject_unsafe_destinations() {
+    let directory = tempfile::tempdir().unwrap();
+    let files = serde_json::from_str(include_str!(
+        "../../../../tests/fixtures/integ-custom-js/output.json"
+    ))
+    .unwrap();
+    let new_output = directory.path().join("new-output");
+    runtime::save_files(Some(&new_output), &files).unwrap();
+    assert_eq!(
+        std::fs::read(new_output.join("nested").join("text.txt")).unwrap(),
+        b"A\nB\n"
+    );
+    runtime::save_files(Some(directory.path()), &files).unwrap();
+    assert_eq!(
+        std::fs::read(directory.path().join("nested").join("text.txt")).unwrap(),
+        b"A\nB\n"
+    );
+    assert_eq!(
+        runtime::save_files(None, &files).unwrap_err(),
+        "File access is not enabled"
+    );
+    for path in [
+        "../../x",
+        "/absolute",
+        "C:\\escape",
+        "\\\\host\\share",
+        "a\\..\\x",
+        "a/../x",
+        "a/.. /escape",
+        "a/.../escape",
+        "a/trailing./escape",
+        "a/trailing /escape",
+        "",
+        ".",
+    ] {
+        let files = serde_json::json!([{"path":path,"bytes":[88]}]);
+        assert!(
+            runtime::save_files(Some(directory.path()), &files).is_err(),
+            "{path}"
+        );
+    }
+    #[cfg(unix)]
+    {
+        let outside = tempfile::tempdir().unwrap();
+        std::os::unix::fs::symlink(outside.path(), directory.path().join("link")).unwrap();
+        let files = serde_json::json!([{"path":"link/escape","bytes":[88]}]);
+        assert!(runtime::save_files(Some(directory.path()), &files).is_err());
+        assert!(!outside.path().join("escape").exists());
+    }
+}
+
+// spec: INTEG-072
+#[tokio::test]
+async fn requires_chromium_files_stay_in_the_approved_crawl_output_directory() {
+    let site = TestSite::start("integ-custom-js").await.unwrap();
+    let renderer = Renderer::launch(LaunchOpts::default()).await.unwrap();
+    let output = tempfile::tempdir().unwrap();
+    let mut cfg = config();
+    cfg.custom_js.output_dir = Some(output.path().to_path_buf());
+    cfg.custom_js.snippets = vec![
+        JsSnippet {
+            code: include_str!("../../../../tests/fixtures/integ-custom-js/savetext.js").into(),
+            ..Default::default()
+        },
+        JsSnippet {
+            code: include_str!("../../../../tests/fixtures/integ-custom-js/traversal.js").into(),
+            ..Default::default()
+        },
+        JsSnippet {
+            code: include_str!("../../../../tests/fixtures/integ-custom-js/tauri-probe.js").into(),
+            ..Default::default()
+        },
+    ];
+    let page = renderer
+        .render(&site.url("/page.html"), &options(&cfg))
+        .await
+        .unwrap();
+    assert_eq!(page.snippets[0].error, None);
+    assert_eq!(page.snippets[0].values, [Some("undefined".into())]);
+    assert_eq!(
+        std::fs::read_to_string(output.path().join("nested").join("text.txt")).unwrap(),
+        "first\nsecond\n"
+    );
+    assert!(!std::fs::read_dir(output.path().join("downloads"))
+        .unwrap()
+        .collect::<Vec<_>>()
+        .is_empty());
+    assert_eq!(
+        page.snippets[1].error.as_deref(),
+        Some("Invalid output path")
+    );
+    assert_eq!(page.snippets[2].values, [Some("undefined".into())]);
+    renderer.close().await;
 }

@@ -103,12 +103,12 @@ async fn client_config_requires_preview_preserves_other_servers_and_backs_up() {
     for (client, path, before) in [
         (
             "claudeDesktop",
-            "Claude/claude_desktop_config.json",
+            std::path::PathBuf::from("Claude").join("claude_desktop_config.json"),
             "{\"mcpServers\":{\"foreign\":{\"command\":\"keep\"}}}",
         ),
         (
             "codex",
-            ".codex/config.toml",
+            std::path::PathBuf::from(".codex").join("config.toml"),
             "[mcp_servers.foreign]\ncommand = 'keep'\n",
         ),
     ] {

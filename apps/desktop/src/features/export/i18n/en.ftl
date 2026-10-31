@@ -68,3 +68,53 @@ export-frequency-weekly = Weekly
 export-frequency-monthly = Monthly
 export-frequency-yearly = Yearly
 export-frequency-never = Never
+
+## Multi export after OUT-075 (M2-U34, A02-17)
+export-run = Export…
+export-available = Available exports
+export-loading = Loading exports…
+export-tabs-failed = Could not load the tabs.
+export-catalog-failed = Could not load bulk exports and reports.
+export-group-count = { $count } of { $total }
+export-group-all = Select all in { $group }
+export-group-all-short = Select all
+export-no-match = No export matches the search.
+export-selected = Selected ({ $count })
+export-remove-all = Remove all
+export-remove = Remove { $name }
+export-move-up = Move { $name } up
+export-selected-empty = Tick tabs with filters, bulk exports or reports on the left; they appear here in export order.
+export-missing = { $count ->
+    [one] 1 required entry missing
+   *[other] { $count } required entries missing
+}
+export-required-selection = Select at least one export, a local file or the Looker Studio time series.
+export-required-account = Select a Google Drive account.
+export-required-sheet = Enter a name for the Google Sheet.
+export-required-target = Enter a name for the time series sheet.
+export-required-metrics = Select at least one metric.
+export-section-output = Output
+export-section-selection = Selection
+export-section-files = Local files
+export-section-looker = Looker Studio
+export-section-presets = Presets
+export-folder = Destination folder
+export-folder-ask = Empty: the folder is asked for when exporting.
+export-folder-choose = Choose folder…
+export-timestamp = Write into a subfolder named after date and time
+export-drive = Also as Google Sheets in Google Drive
+export-drive-unavailable = No Google Drive account connected; Drive and Looker Studio become available after connecting one under "API access".
+export-drive-account = Google Drive account
+export-sheet-name = Google Sheet name
+export-file-crawl = Copy the crawl file (.ospider) into the folder
+export-file-sitemap = XML sitemap
+export-file-image-sitemap = Image sitemap
+export-looker = Append this crawl's metrics as a row to the Looker Studio time series
+export-looker-unavailable = Needs a connected Google Drive account.
+export-looker-target = Time series sheet name
+export-metrics-available = Available metrics
+export-metrics-selected = Selected metrics (column order)
+export-files-written = { $count ->
+    [one] 1 file written:
+   *[other] { $count } files written:
+}

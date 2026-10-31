@@ -41,6 +41,8 @@ pub(crate) struct OpenView {
     pub tab: Option<Arc<TabView>>,
     /// Materialized link IDs of an inlinks/outlinks/resources view (K-1g).
     pub links: Option<Arc<LinkView>>,
+    /// First rows snapshot of an offset-based detail generation.
+    pub detail_seq: Arc<Mutex<Option<u64>>>,
 }
 /// Link tables with a materialized ID list; the anchor aggregation stays a detail source.
 fn link_list(app: &App, s: &SessionInfo, spec: &ViewSpec) -> Option<Arc<LinkView>> {
@@ -537,6 +539,7 @@ pub(crate) async fn page(
             expected,
             ids: None,
             ordered: false,
+            detail_seq: None,
         },
     )
     .await
@@ -561,6 +564,7 @@ pub(crate) async fn selected_page(
             expected: Some(v.version),
             ids: Some(ids),
             ordered: false,
+            detail_seq: None,
         },
     )
     .await
@@ -570,6 +574,7 @@ struct PageSelection {
     ids: Option<Vec<i64>>,
     /// `ids` are already a window of a materialized link list in view order (read by primary key).
     ordered: bool,
+    detail_seq: Option<Arc<Mutex<Option<u64>>>>,
 }
 /// Window of a materialized link list (K-1g): rows by primary key in list order.
 async fn ordered_link_page(
@@ -590,6 +595,7 @@ async fn ordered_link_page(
             expected: Some(v.version),
             ids: Some(ids),
             ordered: true,
+            detail_seq: None,
         },
     )
     .await
@@ -607,6 +613,7 @@ async fn page_query(
         expected,
         ids: selected_ids,
         ordered,
+        detail_seq,
     } = selection;
     #[cfg(test)]
     app.ext::<PageReads>().0.fetch_add(1, Ordering::Relaxed);
@@ -618,9 +625,25 @@ async fn page_query(
         .run_snapshot(s.key.clone(), move |file, _| {
             let version = os_store::queries::change_seq(file.conn())?;
             Ok((|| {
-                if expected.is_some_and(|v| v != version) {
+                // Offset-based detail pages must use the same database generation.
+                // Pin on the first row read (not open), so an active crawl cannot
+                // starve the first page. A changed snapshot requires view.update
+                // and a full reload; never combine offsets from different orders.
+                if let Some(seq) = &detail_seq {
+                    let mut pinned = seq.lock().unwrap_or_else(|p| p.into_inner());
+                    if pinned.is_some_and(|v| v != version) {
+                        return Err(stale());
+                    }
+                    *pinned = Some(version);
+                }
+                // Tab projections pin database versions. Detail handles instead identify
+                // a selection/query generation: unrelated crawl writes must not make
+                // their first row request permanently stale. Every page still uses a
+                // single read snapshot; explicit outdated handles are rejected by rows().
+                if matches!(spec, ViewSpec::Tab { .. }) && expected.is_some_and(|v| v != version) {
                     return Err(stale());
                 }
+                let version = expected.unwrap_or(version);
                 if let ViewSpec::Tab {
                     tab,
                     filter,
@@ -907,6 +930,7 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
                     version: h.version,
                     tab: Some(tab),
                     links: None,
+                    detail_seq: Arc::default(),
                 },
             );
             return to_json(&h);
@@ -925,6 +949,7 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
                 version: h.version,
                 tab: None,
                 links,
+                detail_seq: Arc::default(),
             },
         );
         to_json(&h)
@@ -932,7 +957,7 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
 }
 async fn link_ids(app: &App, v: &OpenView, links: &LinkView) -> Result<Arc<Vec<i64>>, CmdError> {
     let (selection, page) = link_selection(&v.spec, &v.session.config, 0, 1)?;
-    links.ids(app, v.version, selection, page).await
+    links.ids(app, selection, page).await
 }
 fn insert(app: &App, id: String, view: OpenView) {
     registry(app)
@@ -1071,6 +1096,7 @@ fn update<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
             return Err(CmdError::new(ErrorCode::NotFound, "err-view-not-found"));
         }
         v.links = link_list(app, &v.session, &args.spec);
+        v.detail_seq = Arc::default();
         v.spec = args.spec;
         v.version = h.version;
         v.tab = tab;
@@ -1140,14 +1166,19 @@ fn rows<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
             let end = start.saturating_add(args.limit as usize).min(ids.len());
             ordered_link_page(app, &v, columns, ids[start..end].to_vec(), args.limit).await?
         } else {
-            page(
+            page_query(
                 app,
                 &v.session,
                 v.spec,
                 columns,
                 args.offset,
                 args.limit,
-                Some(args.version),
+                PageSelection {
+                    expected: Some(args.version),
+                    ids: None,
+                    ordered: false,
+                    detail_seq: Some(v.detail_seq),
+                },
             )
             .await?
         };

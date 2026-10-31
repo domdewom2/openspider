@@ -85,7 +85,9 @@ pub(crate) fn info(tab: &str, filter: &defs::FilterDef, cfg: &CrawlConfig) -> Fi
         comparison: None,
         id: names::label(filter.id, cfg),
         label_template: filter.id.into(),
-        params: {
+        params: if !filter.id.contains('{') {
+            Default::default()
+        } else {
             let json = serde_json::to_value(cfg).unwrap_or_default();
             filter
                 .id

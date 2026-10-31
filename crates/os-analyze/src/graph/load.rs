@@ -332,7 +332,7 @@ fn check_capture_limits(file: &CrawlFile) -> Result<(), StoreError> {
         ("discovery_edges", 250_000),
     ] {
         let exists: bool = file.conn().query_row(
-            "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?1)",
+            "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name = ?1)",
             [table],
             |r| r.get(0),
         )?;

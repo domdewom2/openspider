@@ -184,7 +184,12 @@ impl SqliteSink {
                     |r| r.get::<_, i64>(0),
                 )?,
             };
-        let max = batch.new_urls.iter().map(|u| u.id.0).fold(known, i64::max);
+        let max = batch
+            .new_urls
+            .iter()
+            .map(|u| u.id.0)
+            .chain(batch.serp_seeds.iter().map(|u| u.id.0))
+            .fold(known, i64::max);
         self.max_url_id = Some(max);
         if max >= self.url_index_drop_at {
             crate::url_index::drop_indexes(self.file.conn())?;
@@ -446,6 +451,7 @@ impl Drop for SqliteSink {
 }
 
 fn wal_checkpoint(conn: &Connection) -> Result<(), StoreError> {
+    let phase = scale_phase_start(conn);
     let t = std::time::Instant::now();
     // Antwort: (busy, Frames im WAL, davon zurückgeführt)
     let result = conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| {
@@ -453,7 +459,29 @@ fn wal_checkpoint(conn: &Connection) -> Result<(), StoreError> {
     });
     crate::sink::diag::record_checkpoint(t, result.as_ref().map_or(0, |n| (*n).max(0) as u64));
     result?;
+    scale_phase_end(conn, "checkpoint", phase);
     Ok(())
+}
+
+fn scale_phase_start(conn: &Connection) -> Option<(std::time::Instant, u64)> {
+    std::env::var_os("OS_SCALE_DIAG").map(|_| (std::time::Instant::now(), scale_wal_bytes(conn)))
+}
+
+fn scale_wal_bytes(conn: &Connection) -> u64 {
+    conn.path()
+        .and_then(|p| std::fs::metadata(format!("{p}-wal")).ok())
+        .map_or(0, |m| m.len())
+}
+
+fn scale_phase_end(conn: &Connection, name: &str, start: Option<(std::time::Instant, u64)>) {
+    if let Some((start, before)) = start {
+        eprintln!(
+            "OS_SCALE_DIAG {name} duration_ms={} wal_before={} wal_after={}",
+            start.elapsed().as_millis(),
+            before,
+            scale_wal_bytes(conn)
+        );
+    }
 }
 
 impl CrawlSink for SqliteSink {
@@ -480,6 +508,13 @@ impl CrawlSink for SqliteSink {
         let prefetch = (build_url_indexes && !crate::url_index::present(self.file.conn())?)
             .then(|| crate::url_index::Prefetch::start(self.file.path()))
             .flatten();
+        let end_diag = completes_crawl(&batch) && std::env::var_os("OS_SCALE_DIAG").is_some();
+        let diag = end_diag.then(|| {
+            let mut wal_path = self.file.path().as_os_str().to_os_string();
+            wal_path.push("-wal");
+            let before = std::fs::metadata(&wal_path).map_or(0, |m| m.len());
+            (std::time::Instant::now(), wal_path, before)
+        });
         let written = write_batch(
             self.file.conn(),
             &batch,
@@ -488,6 +523,15 @@ impl CrawlSink for SqliteSink {
             build_url_indexes,
         );
         drop(prefetch);
+        if let Some((diag_start, wal_path, wal_before)) = diag {
+            let wal_after = std::fs::metadata(&wal_path).map_or(0, |m| m.len());
+            eprintln!(
+                "OS_SCALE_DIAG end_batch duration_ms={} wal_before={} wal_after={}",
+                diag_start.elapsed().as_millis(),
+                wal_before,
+                wal_after
+            );
+        }
         let written = written?;
         if let Some(written) = written {
             self.after_commit(&written);
@@ -523,6 +567,7 @@ fn batch_error(message: String) -> StoreError {
 
 fn is_empty(batch: &WriteBatch) -> bool {
     batch.new_urls.is_empty()
+        && batch.serp_seeds.is_empty()
         && batch.url_updates.is_empty()
         && batch.pages.is_empty()
         && batch.queue.is_empty()
@@ -567,6 +612,7 @@ fn write_batch(
         |g| &mut g.urls_ins,
         || insert_new_urls(&tx, &batch.new_urls, seq, internal),
     )?;
+    insert_serp_seeds(&tx, &batch.serp_seeds, seq, internal)?;
     g.time(
         |g| &mut g.urls_upd,
         || apply_url_updates(&tx, &batch.url_updates, seq),
@@ -593,10 +639,16 @@ fn write_batch(
     let data = built.elapsed();
     // K-74: Der Index entsteht mit dem regulären Ende, im letzten Batch und derselben Transaktion – ein
     // Fehlschlag lässt den Crawl dann nicht als beendet erscheinen.
+    let index_phase = completes_crawl(batch)
+        .then(|| scale_phase_start(conn))
+        .flatten();
     if build_url_indexes {
         // Sekundärindizes über `urls` (N22): nur eine Datei, die sie behalten hat, prüft sie (K-83: der Writer
         // baut entfernte Indizes nicht mehr auf, `url_index::ensure` bleibt für Leser, die sie brauchen).
         crate::url_index::ensure(&tx)?;
+    }
+    if completes_crawl(batch) {
+        crate::url_index::ensure_deferred(&tx)?;
     }
     if completes_crawl(batch) && link_index::ensure(&tx)? {
         // Das Ereignis (ohne Dauer, deterministisch) macht den Aufbau in der Ereignisliste sichtbar; die Dauer steht in
@@ -610,6 +662,7 @@ fn write_batch(
         ])?;
     }
 
+    scale_phase_end(conn, "indexes", index_phase);
     let committing = std::time::Instant::now();
     tx.commit()?;
     diag::record_commit(committing, bucket);
@@ -1447,7 +1500,13 @@ fn write_meta(tx: &rusqlite::Connection, batch: &WriteBatch, seq: i64) -> Result
             stmt.execute([key, value])?;
         }
     }
-    if let Some(max_id) = batch.new_urls.iter().map(|u| u.id.0).max() {
+    if let Some(max_id) = batch
+        .new_urls
+        .iter()
+        .map(|u| u.id.0)
+        .chain(batch.serp_seeds.iter().map(|u| u.id.0))
+        .max()
+    {
         raise_meta_counter(tx, "next_url_id", max_id.saturating_add(1))?;
     }
     // Der Änderungsfeed gehört dem Writer – zuletzt, damit `meta` ihn nicht überschreiben kann.
@@ -1552,4 +1611,41 @@ pub fn apply_fact_updates(
     }
     tx.commit()?;
     Ok(changed.into_iter().collect())
+}
+
+/// Dedicated additive path: no PageWrite and no invented response measurements.
+fn insert_serp_seeds(
+    tx: &Transaction<'_>,
+    seeds: &[os_model::SerpSeed],
+    seq: i64,
+    internal: &mut InternalFlags,
+) -> Result<(), StoreError> {
+    if seeds.is_empty() {
+        return Ok(());
+    }
+    let mut insert = tx.prepare_cached(
+        "INSERT INTO urls (id,url,address,origin,is_internal,in_tables,state,discovered_via,folder_depth,url_length,content_class,
+         title_count,title_1,title_1_len,title_1_px,meta_desc_count,meta_desc_1,meta_desc_1_len,meta_desc_1_px,
+         effective_index,effective_follow,indexability,change_seq,status_code)
+         VALUES (?1,?2,?3,'',1,1,'done','list_input',0,?4,'HTML',1,?5,?6,?7,1,?8,?9,?10,1,1,'Indexable',?11,200)"
+    )?;
+    let mut counters = tx.prepare_cached("INSERT INTO url_counters (url_id,change_seq) VALUES (?1,?2) ON CONFLICT(url_id) DO UPDATE SET change_seq=excluded.change_seq")?;
+    for row in seeds {
+        insert.execute(params![
+            row.id.0,
+            format!("urn:openspider:serp:{}", row.id.0),
+            row.address,
+            row.url_length,
+            row.title,
+            row.title_length,
+            row.title_px,
+            row.description,
+            row.description_length,
+            row.description_px,
+            seq
+        ])?;
+        counters.execute(params![row.id.0, seq])?;
+        internal.set(row.id.0, true);
+    }
+    Ok(())
 }

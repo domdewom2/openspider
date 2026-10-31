@@ -68,3 +68,53 @@ export-frequency-weekly = Wöchentlich
 export-frequency-monthly = Monatlich
 export-frequency-yearly = Jährlich
 export-frequency-never = Nie
+
+## Multi export after OUT-075 (M2-U34, A02-17)
+export-run = Exportieren…
+export-available = Verfügbare Exporte
+export-loading = Exporte werden geladen…
+export-tabs-failed = Die Tabs konnten nicht geladen werden.
+export-catalog-failed = Bulk-Exporte und Berichte konnten nicht geladen werden.
+export-group-count = { $count } von { $total }
+export-group-all = Alle in { $group } auswählen
+export-group-all-short = Alle wählen
+export-no-match = Kein Export passt zur Suche.
+export-selected = Ausgewählt ({ $count })
+export-remove-all = Alle entfernen
+export-remove = { $name } entfernen
+export-move-up = { $name } nach oben
+export-selected-empty = Links Tabs mit Filtern, Bulk-Exporte oder Berichte anhaken; sie erscheinen hier in der Reihenfolge des Exports.
+export-missing = { $count ->
+    [one] 1 Pflichtangabe fehlt
+   *[other] { $count } Pflichtangaben fehlen
+}
+export-required-selection = Mindestens einen Export, eine lokale Datei oder die Looker-Studio-Zeitreihe auswählen.
+export-required-account = Ein Google-Drive-Konto auswählen.
+export-required-sheet = Einen Namen für die Google-Tabelle eingeben.
+export-required-target = Einen Namen für die Zeitreihen-Tabelle eingeben.
+export-required-metrics = Mindestens eine Kennzahl auswählen.
+export-section-output = Ausgabe
+export-section-selection = Auswahl
+export-section-files = Lokale Dateien
+export-section-looker = Looker Studio
+export-section-presets = Vorlagen
+export-folder = Zielordner
+export-folder-ask = Leer: der Ordner wird beim Exportieren abgefragt.
+export-folder-choose = Ordner wählen…
+export-timestamp = In einen Unterordner mit Datum und Uhrzeit schreiben
+export-drive = Zusätzlich als Google-Tabellen in Google Drive
+export-drive-unavailable = Kein Google-Drive-Konto verbunden; Drive und Looker Studio sind erst nach dem Verbinden unter „API-Zugriff“ verfügbar.
+export-drive-account = Google-Drive-Konto
+export-sheet-name = Name der Google-Tabelle
+export-file-crawl = Crawl-Datei (.ospider) in den Zielordner kopieren
+export-file-sitemap = XML-Sitemap
+export-file-image-sitemap = Bild-Sitemap
+export-looker = Kennzahlen dieses Crawls als Zeile an die Zeitreihe für Looker Studio anhängen
+export-looker-unavailable = Braucht ein verbundenes Google-Drive-Konto.
+export-looker-target = Name der Zeitreihen-Tabelle
+export-metrics-available = Verfügbare Kennzahlen
+export-metrics-selected = Ausgewählte Kennzahlen (Spaltenreihenfolge)
+export-files-written = { $count ->
+    [one] 1 Datei erzeugt:
+   *[other] { $count } Dateien erzeugt:
+}

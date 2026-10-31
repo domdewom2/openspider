@@ -1,0 +1,55 @@
+{
+  "fmt": {
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--check"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 2.7240744589999997
+  },
+  "clippy": {
+    "command": [
+      "cargo",
+      "clippy",
+      "--workspace",
+      "--exclude",
+      "openspider-desktop",
+      "--all-targets",
+      "--locked",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 21.650784666
+  },
+  "tests": {
+    "command": [
+      "cargo",
+      "test",
+      "--workspace",
+      "--exclude",
+      "openspider-desktop",
+      "--locked"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 2011.197630542,
+    "resource_note": "Completed test executables stripped after link by a local wrapper, except logging_cli/logging_rotation which retain symbols for backtrace tests. No source or assertion changes.",
+    "passed": 3866,
+    "ignored": 43,
+    "test_binaries_and_doctests": 512,
+    "wrapper": "docs/plan/M2-acceptance/scale/rustc-test-wrapper.py",
+    "wrapper_sha256": "1bca855caa5a822320df2ab1af3b9fcaf7279d15c5b20a682a19872b444fabb1"
+  },
+  "plan": {
+    "command": [
+      "python3",
+      "-I",
+      "docs/plan/M2-check.py"
+    ],
+    "exit_code": 0,
+    "elapsed_s": 4.891440166000166
+  }
+}

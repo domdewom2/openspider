@@ -731,6 +731,14 @@
     "CustomJsConfig": {
       "description": "Custom JavaScript: bis zu 100 Snippets (INTEG-060).",
       "properties": {
+        "output_dir": {
+          "default": null,
+          "description": "Freigegebenes Ausgabeverzeichnis für Dateizugriffe der Snippets.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "snippets": {
           "default": [],
           "description": "Snippets in Ausführungs- und Spaltenreihenfolge.",
@@ -2203,7 +2211,7 @@
           "description": "Umgang mit robots.txt (Listenmodus: die Engine wendet `ignore` an)."
         },
         "respect_crawl_delay": {
-          "default": true,
+          "default": false,
           "description": "Crawl-delay aus robots.txt beachten (CRAWL-145).",
           "type": "boolean"
         },
@@ -3654,6 +3662,7 @@
     "custom_js": {
       "$ref": "#/$defs/CustomJsConfig",
       "default": {
+        "output_dir": null,
         "snippets": []
       },
       "description": "Custom JavaScript (ab v2)."
@@ -3962,7 +3971,7 @@
       "default": {
         "custom_files": {},
         "mode": "respect",
-        "respect_crawl_delay": true,
+        "respect_crawl_delay": false,
         "retries": 2,
         "retry_delay_s": 5,
         "show_blocked_external": false,

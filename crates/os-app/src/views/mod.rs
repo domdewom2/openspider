@@ -694,11 +694,10 @@ impl LinkView {
         lock(&shared.links).push(Arc::downgrade(&view));
         view
     }
-    /// Link-IDs des Datenstands `version` (`change_seq`); ein anderer Stand ist `Stale`.
+    /// Link IDs of this selection generation, independently of unrelated writer commits.
     pub async fn ids(
         &self,
         app: &App,
-        version: u64,
         selection: os_store::queries::app_support::LinkSelection,
         page: os_store::queries::PageReq,
     ) -> Result<Arc<Vec<i64>>, CmdError> {
@@ -710,15 +709,9 @@ impl LinkView {
         let ids = app
             .read_pool()
             .run(self.key.clone(), move |file, _| {
-                let seq = os_store::queries::change_seq(file.conn())?;
-                if seq != version {
-                    return Ok(None);
-                }
                 os_store::queries::app_support::selected_link_ids(file.conn(), &selection, &page)
-                    .map(Some)
             })
-            .await?
-            .ok_or_else(crate::commands::view::stale)?;
+            .await?;
         let ids = Arc::new(ids);
         *lock(&self.ids) = Some((ids.clone(), now));
         Ok(ids)

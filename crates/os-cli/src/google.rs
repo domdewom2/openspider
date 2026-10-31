@@ -20,6 +20,7 @@ impl GoogleTarget {
             secrets: os_fetch::secret_store_from_env(),
             network,
             allow_api_override: self.allow_override,
+            quota_ledger: None,
         };
         DriveClient::new(&ctx, &self.account, SystemClock.now()).map_err(|_| CliError::usage(format!(
             "Google-Konto '{}' nicht verbunden – das Konto in der App verbinden (--google-drive-account)", self.account)))

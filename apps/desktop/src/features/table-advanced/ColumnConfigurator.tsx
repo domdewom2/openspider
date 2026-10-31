@@ -1,5 +1,6 @@
 import { useEffect, useState, type MouseEvent } from "react";
 import { useT } from "../../i18n";
+import { columnLabel } from "../../i18n/canon";
 import type { ColumnState } from "../../grid/DataGrid";
 import type { ColumnMeta } from "../../ipc/gen/ColumnMeta";
 import { applyTemplateColumns, exportColumns, normalizeColumns, useColumns } from "../../state/columns";
@@ -43,13 +44,14 @@ function ColumnList({ label, keys, selected, onSelect, hint }: {
   label: string; keys: string[]; selected: ReadonlySet<string>; onSelect: (key: string, event: MouseEvent | { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }) => void;
   hint: (key: string) => string | undefined;
 }) {
+  const t = useT();
   return <div className="u20-list-box">
     <span className="u20-list-label">{label}</span>
     <div role="listbox" aria-label={label} aria-multiselectable className="u20-list">
       {keys.map(key => <div key={key} role="option" tabIndex={0} aria-selected={selected.has(key)} data-selected={selected.has(key) || undefined}
         className="u20-option" onClick={event => onSelect(key, event)}
         onKeyDown={event => { if (event.key === " " || event.key === "Enter") { event.preventDefault(); onSelect(key, { shiftKey: event.shiftKey, ctrlKey: true, metaKey: false }); } }}>
-        {key}{hint(key) && <span className="u20-hint"> – {hint(key)}</span>}
+        {columnLabel(t, key)}{hint(key) && <span className="u20-hint"> – {hint(key)}</span>}
       </div>)}
     </div>
   </div>;
@@ -72,7 +74,7 @@ export function ColumnConfigurator({ tab, tabs, isOpen, onOpenChange, label }: {
     setDraft(useColumns.getState().byTab[tab] ?? []); setSearch(""); setLeft(new Set()); setRight(new Set()); setMessage(undefined);
     void useColumns.getState().loadTemplates().catch(() => undefined);
   }, [isOpen, tab]);
-  const matches = (key: string) => key.toLowerCase().includes(search.toLowerCase());
+  const matches = (key: string) => `${key} ${columnLabel(t, key)}`.toLowerCase().includes(search.toLowerCase());
   const available = draft.filter(c => !c.visible && c.key !== "Row" && matches(c.key)).map(c => c.key);
   const displayed = draft.filter(c => c.visible && c.key !== "Row" && matches(c.key)).map(c => c.key);
   const hint = (key: string) => {

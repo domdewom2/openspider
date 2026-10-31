@@ -69,6 +69,7 @@ fn context(
         secrets: credentials,
         network: Default::default(),
         allow_api_override: true,
+        quota_ledger: None,
     }
 }
 // spec: INTEG-150

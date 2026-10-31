@@ -11,9 +11,8 @@ import type { ExportFormatDto } from "../../../ipc/gen/ExportFormatDto";
 import { useSession } from "../../../state/session";
 import { useT } from "../../../i18n";
 import { Button } from "../../../ui/primitives/Button";
-import { Menu } from "../../../ui/primitives/Menu";
-import { ContextMenu } from "../../../ui/primitives/ContextMenu";
 import { TabBar } from "../../../ui/primitives/TabBar";
+import { TabContextMenuHost, TabsConfigDialog, tabContextEntries } from "../../table-advanced/TabControls";
 import { Dialog } from "../../../ui/primitives/Dialog";
 import { TextField, Select } from "../../../ui/primitives/fields";
 import { Banner } from "../../../ui/primitives/Feedback";
@@ -31,6 +30,7 @@ import { useDetailPreferences } from "./preferences";
 import { DETAIL_BACK_EVENT, DETAIL_SHOW_TAB_EVENT, requestNavigation, useDetailSelection } from "./selection";
 import { requestBrowser } from "./browser";
 import { DETAIL_TABS, type DetailActions, type DetailPanelProps, type DetailPlugin, type DetailSelection, type DetailTabId } from "./types";
+import "../../shell/tabbar.css";
 import "./detail.css";
 
 const extensionModules = import.meta.glob<{ detailTab?: DetailPlugin }>("../*/index.tsx", { eager: true });
@@ -101,6 +101,9 @@ function RegularDetailFrame(props: DetailFrameProps) {
   const effectiveSelection = { ...selection, crawlId: selection.crawlId ?? crawl?.crawlId };
   const panelProps: DetailPanelProps = { selection: effectiveSelection, actions, rendering: props.rendering ?? features.rendering,
     htmlStored: props.htmlStored ?? features.htmlStored, storeUncrawlable: props.storeUncrawlable ?? features.storeUncrawlable, positions: props.positions ?? features.positions, listMode: props.listMode ?? crawl?.mode === "list" };
+  const [configure, setConfigure] = useState(false);
+  const layout = { order: preferences.order, hidden: preferences.hidden, mandatory: "urlDetails" };
+  const reset = () => { if (!loaded) return; savePreferences({ order: [], hidden: [] }); setActive("urlDetails"); };
   const tabs = preferences.order.filter(id => !preferences.hidden.includes(id)).map(id => ({ id, label: t(`detail-tab-${id}`) }));
   const selected = selection.urlIds.length > 0 && selection.related !== false;
   const multiFocus = selection.urlIds.length > 1 && !UNION_TABS.has(tab) && !(tab === "urlDetails" && selection.topTab === "Hreflang");
@@ -108,20 +111,21 @@ function RegularDetailFrame(props: DetailFrameProps) {
     if (event.altKey && event.key === "ArrowLeft") { event.preventDefault(); actions.back(); }
   }}>
     <div className="os-detail-heading"><h2>{t("detail-region")}</h2>
-      <Menu label={t("detail-configure-tabs")} trigger={<Button>{t("detail-configure-tabs")}</Button>} entries={preferences.order.map(id => ({ id, label: `${preferences.hidden.includes(id) ? "" : "✓ "}${t(`detail-tab-${id}`)}`,
-        isDisabled: id === "urlDetails" || !loaded, onAction: () => savePreferences({ ...preferences, hidden: preferences.hidden.includes(id) ? preferences.hidden.filter(t => t !== id) : [...preferences.hidden, id] }),
-      }))} />
-      <Button isDisabled={!loaded} onPress={() => { savePreferences({ order: [], hidden: [] }); setActive("urlDetails"); }}>{t("detail-reset-tabs")}</Button>
       <Button isDisabled={!selected || !loaded} onPress={() => setShowCrawlPath(true)}>{t("detail-tab-crawlPath")}</Button>
     </div>
-    <ContextMenu label={t("detail-configure-tabs")} entries={[
-      { id: "close", label: t("detail-close"), isDisabled: tab === "urlDetails" || !loaded, onAction: () => savePreferences({ ...preferences, hidden: [...preferences.hidden, tab] }) },
-      { id: "others", label: t("detail-close-others"), isDisabled: !loaded, onAction: () => savePreferences({ ...preferences, hidden: preferences.order.filter(id => id !== tab && id !== "urlDetails") }) },
-      { id: "reset", label: t("detail-reset-tabs"), isDisabled: !loaded, onAction: () => savePreferences({ order: [], hidden: [] }) },
-    ]}>
+    {/* UI-030/UI-112, A02-06: tab configuration through the overflow menu and the tab context menu, as on the other two bars. */}
+    <TabContextMenuHost className="os-detail-tabs" label={t("detail-configure-tabs")} entriesFor={id => tabContextEntries(t, id, layout, {
+      hide: ids => { if (loaded) savePreferences({ ...preferences, hidden: [...new Set([...preferences.hidden, ...ids as DetailTabId[]])] }); },
+      configure: () => setConfigure(true), reset })}>
       <TabBar tabs={tabs} selected={tab} onSelect={id => setActive(id as DetailTabId)} label={t("detail-tabs")} overflowLabel={t("detail-more-tabs")}
-        onReorder={ids => { if (loaded) savePreferences({ ...preferences, order: [...ids, ...preferences.hidden] as DetailTabId[] }); }} />
-    </ContextMenu>
+        onReorder={ids => { if (loaded) savePreferences({ ...preferences, order: [...ids, ...preferences.hidden] as DetailTabId[] }); }}
+        config={{ all: preferences.order.map(id => ({ id, label: t(`detail-tab-${id}`) })), hidden: preferences.hidden, mandatory: "urlDetails",
+          mandatoryReason: t("u20-tab-mandatory"), isDisabled: !loaded, configureLabel: t("u20-tabs-configure"), resetLabel: t("u20-tabs-reset"),
+          onToggle: (id, visible) => savePreferences({ ...preferences, hidden: visible ? preferences.hidden.filter(h => h !== id) : [...preferences.hidden, id as DetailTabId] }),
+          onConfigure: () => setConfigure(true), onReset: reset }} />
+    </TabContextMenuHost>
+    <TabsConfigDialog isOpen={configure} onOpenChange={setConfigure} layout={layout} label={id => t(`detail-tab-${id}`)}
+      onApply={(order, hidden) => { if (loaded) savePreferences({ order: order as DetailTabId[], hidden: hidden as DetailTabId[] }); }} />
     {error ? <DetailError error={error} /> : null}
     {op && <Banner kind={op.error ? "error" : "info"}>{op.error ? t(`err-code-${op.error.code.toLowerCase()}`) : t("detail-export-status", { status: op.state })}</Banner>}
     <div className="os-detail-body" role="tabpanel" aria-label={t(`detail-tab-${tab}`)}>

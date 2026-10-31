@@ -168,6 +168,8 @@ pub async fn start_with_fetcher<F: os_fetch::Fetch>(
         os_engine::CrawlSource::List { label, .. } => label.clone(),
         os_engine::CrawlSource::Serp { label, .. } => label.clone(),
     };
+    let mut cfg = cfg;
+    cfg.custom_js.output_dir = Some(dir);
     let request = os_engine::CrawlRequest {
         config: cfg,
         source,
@@ -197,6 +199,7 @@ pub async fn start_with_fetcher<F: os_fetch::Fetch>(
         h,
         CrawlEvent::Started(key.clone()),
     );
+    remember_crawl(app, file.to_string_lossy().into_owned()).await;
     Ok(CrawlRef {
         crawl_id: key.0,
         file: file.to_string_lossy().into_owned(),
@@ -283,6 +286,7 @@ pub async fn open(
             }
             app.sessions().set_current(ctx.window, updated);
         }
+        remember_crawl(app, summary.file.clone()).await;
         return Ok(summary);
     }
     replace_allowed(app, &ctx).await?;
@@ -317,6 +321,7 @@ pub async fn open(
         );
     }
     super::activate(app);
+    remember_crawl(app, summary.file.clone()).await;
     app.crawl_events().emit(app, CrawlEvent::Opened(key));
     Ok(summary)
 }
@@ -336,7 +341,14 @@ pub async fn resume(app: &App, ctx: CallCtx) -> Result<(), CmdError> {
     }
     let cfg = app
         .read_pool()
-        .run(s.key.clone(), |f, _| f.config())
+        .run(s.key.clone(), |f, _| {
+            if f.meta()?.end_reason == Some(os_model::EndReason::Stopped) {
+                return Err(os_store::StoreError::InvalidInput(
+                    "stopped crawl cannot resume".into(),
+                ));
+            }
+            f.config()
+        })
         .await?;
     let runtime = app.handle();
     let saved = app
@@ -395,11 +407,48 @@ pub async fn resume(app: &App, ctx: CallCtx) -> Result<(), CmdError> {
 }
 
 pub async fn pause_or_stop(app: &App, ctx: CallCtx, stop: bool) -> Result<(), CmdError> {
+    let requested = super::current(app, &ctx.window)?;
+    super::writable(&requested)?;
+    // Signal the engine before waiting for a background snapshot to release the
+    // session lock; otherwise it keeps fetching throughout that wait.
+    let signalled = requested.engine.as_ref().is_some_and(|engine| {
+        let handle = engine.handle.lock().unwrap_or_else(|p| p.into_inner());
+        if let Some(handle) = handle.as_ref() {
+            if stop {
+                handle.stop();
+            } else {
+                handle.pause();
+            }
+            true
+        } else {
+            false
+        }
+    });
+    super::interrupt_poll(app);
     let service = app.ext::<SessionService>();
     let _guard = service.mutation.lock().await;
     let s = super::current(app, &ctx.window)?;
-    super::writable(&s)?;
-    settle(app, &s, Some(stop)).await?;
+    if s.key != requested.key {
+        return Err(super::busy());
+    }
+    // The poller may have joined the signalled engine before we got the lock.
+    let joined = s.engine.as_ref().is_none_or(|engine| {
+        engine
+            .handle
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .is_none()
+    });
+    let acknowledged = signalled
+        && joined
+        && match s.state {
+            CrawlState::Running => false,
+            CrawlState::Paused | CrawlState::Incomplete => !stop,
+            CrawlState::Completed | CrawlState::Failed => true,
+        };
+    if !acknowledged {
+        settle(app, &s, Some(stop)).await?;
+    }
     feed::invalidate(app, &s.key);
     feed::refresh(app, &s).await
 }
@@ -410,6 +459,9 @@ pub async fn settle(app: &App, s: &SessionInfo, action: Option<bool>) -> Result<
         .as_ref()
         .and_then(|e| e.handle.lock().unwrap_or_else(|p| p.into_inner()).take());
     let Some(h) = h else {
+        if action == Some(true) {
+            return stop_checkpoint(app, s).await;
+        }
         return if action.is_some() {
             Err(CmdError::new(
                 ErrorCode::InvalidInput,
@@ -478,7 +530,8 @@ async fn start_apis(
     id: os_model::CrawlId,
     items: Vec<String>,
 ) -> Result<CrawlRef, CmdError> {
-    let api_ctx = crate::commands::api::crawl_context(app, cfg.clone());
+    let mut api_ctx = crate::commands::api::crawl_context(app, cfg.clone());
+    api_ctx.quota_ledger = Some(app.config().paths.settings.join("api-quotas.json"));
     os_integrations::crawl_glue::validate_apis(&api_ctx).map_err(|e| {
         CmdError::invalid_input("err-api-disconnected", "source").with_detail(e.to_string())
     })?;
@@ -603,8 +656,160 @@ async fn start_apis(
         .emit(app, CrawlEvent::Started(key.clone()));
     app.crawl_events()
         .emit(app, CrawlEvent::Completed(key.clone()));
+    remember_crawl(app, path.to_string_lossy().into_owned()).await;
     Ok(CrawlRef {
         crawl_id: key.0,
         file: path.to_string_lossy().into_owned(),
     })
+}
+
+/// A restored pause has no engine handle. Finalize its durable checkpoint directly.
+async fn stop_checkpoint(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
+    let now = app.config().clock.now().to_db();
+    app.write_queue()
+        .submit_file(&s.key, move |f| {
+            let state = f
+                .meta()
+                .map_err(|e| crate::runtime::error::store_error(&e))?
+                .state;
+            if !matches!(state, CrawlState::Paused | CrawlState::Incomplete) {
+                return Err(CmdError::new(
+                    ErrorCode::InvalidInput,
+                    "err-crawl-not-running",
+                ));
+            }
+            for (key, value) in [
+                ("state", "Completed"),
+                ("end_reason", "stopped"),
+                ("ended_at", &now),
+                ("heartbeat_at", &now),
+                ("owner_pid", ""),
+            ] {
+                f.set_meta(key, value)
+                    .map_err(|e| crate::runtime::error::store_error(&e))?;
+            }
+            Ok(())
+        })
+        .await?;
+    super::state(app, &s.key, CrawlState::Completed);
+    app.crawl_events()
+        .emit(app, CrawlEvent::Stopped(s.key.clone()));
+    if s.config.analysis.auto_at_end {
+        super::analysis::start_operation(app, s.clone(), None, true)?;
+    }
+    Ok(())
+}
+
+/// Persist every newly created/opened crawl, including starts outside the header.
+async fn remember_crawl(app: &App, path: String) {
+    let saved = app.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        saved.uistate().update(|ui| {
+            let Some(state) = ui.state.as_object_mut() else {
+                return;
+            };
+            let old = state
+                .get("recentCrawls")
+                .and_then(|v| v.as_array())
+                .cloned()
+                .unwrap_or_default();
+            let mut paths = vec![path];
+            for entry in old {
+                if let Some(path) = entry.get("path").and_then(|v| v.as_str()) {
+                    if !path.is_empty() && !paths.iter().any(|p| p == path) {
+                        paths.push(path.to_owned());
+                    }
+                }
+            }
+            state.insert(
+                "recentCrawls".into(),
+                serde_json::json!(paths
+                    .into_iter()
+                    .take(10)
+                    .map(|path| serde_json::json!({"path":path}))
+                    .collect::<Vec<_>>()),
+            );
+        })
+    })
+    .await;
+    let error = match result {
+        Ok(Ok(_)) => return,
+        Ok(Err(error)) => error,
+        Err(error) => internal("recent crawls", error.to_string()),
+    };
+    app.push_notice(Notice {
+        level: NoticeLevel::Warning,
+        code: error.message_key.to_string(),
+        args: error.args,
+    });
+}
+
+#[cfg(test)]
+mod control_priority_tests {
+    use super::*;
+    use std::time::Duration;
+
+    // spec: UI-003
+    // spec: CRAWL-126 [M2]
+    #[tokio::test]
+    async fn pause_signals_the_engine_while_a_background_snapshot_holds_the_session_lock() {
+        let home = tempfile::tempdir().unwrap();
+        let app = App::new(crate::AppConfig::new(home.path())).unwrap();
+        let mut cfg = CrawlConfig::default();
+        cfg.analysis.auto_at_end = false;
+        cfg.speed.threads = 1;
+        let links = (0..20)
+            .map(|i| format!("<a href='/p/{i}'>Next</a>"))
+            .collect::<String>();
+        let mut site = os_engine::testing::SimSite::new()
+            .delay(Duration::from_millis(100))
+            .page("https://fixture.test/", &links);
+        for i in 0..20 {
+            site = site.page(&format!("https://fixture.test/p/{i}"), "Done");
+        }
+        let ctx = CallCtx::for_window("main");
+        let req = serde_json::from_value(serde_json::json!({
+            "source": {"kind":"spider", "url":"https://fixture.test/"}, "scope":"domain"
+        }))
+        .unwrap();
+        start_with_fetcher(
+            &app,
+            ctx.clone(),
+            req,
+            cfg,
+            os_engine::testing::SimFetcher::new(site),
+        )
+        .await
+        .unwrap();
+        let service = app.ext::<SessionService>();
+        let guard = service.mutation.lock().await;
+        let session = super::super::current(&app, &ctx.window).unwrap();
+        let engine = session.engine.clone().unwrap();
+        let mut progress = engine.handle.lock().unwrap().as_ref().unwrap().watch();
+        let worker = app.clone();
+        let pause = tokio::spawn(async move { pause_or_stop(&worker, ctx, false).await });
+        let stopped = tokio::time::timeout(Duration::from_secs(2), async {
+            while progress.borrow_and_update().state == CrawlState::Running {
+                progress.changed().await.unwrap();
+            }
+            progress.borrow().state
+        })
+        .await;
+        // A terminal engine watch is not yet a durable acknowledgement.
+        feed::invalidate(&app, &session.key);
+        feed::refresh(&app, &session).await.unwrap();
+        assert_eq!(
+            app.sessions()
+                .current(&crate::WindowId("main".into()))
+                .unwrap()
+                .state,
+            CrawlState::Running
+        );
+        // Emulate the poller joining the signalled handle before the command
+        // acquires the lock. The acknowledgement must remain successful.
+        settle(&app, &session, None).await.unwrap();
+        drop(guard);
+        pause.await.unwrap().unwrap();
+        assert_eq!(stopped.unwrap(), CrawlState::Paused);
+    }
 }

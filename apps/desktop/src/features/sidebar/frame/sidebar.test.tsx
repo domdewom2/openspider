@@ -10,7 +10,7 @@ import type { OverviewDto } from "../../../ipc/gen/OverviewDto";
 import type { AnalysisStatus } from "../../../ipc/gen/AnalysisStatus";
 import tick from "../../../ipc/__fixtures__/Tick.json";
 import fixture from "../../../../e2e/sidebar/sidebar-dto.json";
-import { registerAction } from "../../../ui/actions";
+import { useExportDialog } from "../../export/model";
 import { SidebarMount } from "./SidebarMount";
 import { SidebarFrame } from "./SidebarFrame";
 import { useSidebarNavigation } from "./state";
@@ -116,7 +116,8 @@ it("keeps old values grey, shows stale steps from the core and starts only a use
   expect(await screen.findByText("Analysis outdated – analyze again")).toBeVisible();
   expect(core.calls.some(c => c.cmd === "analysis.start")).toBe(false);
   expect(screen.queryByRole("tab", { name: "Analysis" })).not.toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Low Content Pages" }).closest("tr")).toHaveTextContent("1");
+  // K2-63: overview rows are deferred behind urgent controls; await the same fixture value.
+  expect((await screen.findByRole("button", { name: "Low Content Pages" })).closest("tr")).toHaveTextContent("1");
   fireEvent.click(screen.getByRole("button", { name: "Analyze again" }));
   await waitFor(() => expect(core.calls.filter(c => c.cmd === "analysis.start").at(-1)?.args).toEqual({ steps: null }));
   const before = core.calls.filter(c => c.cmd === "analysis.start").length;
@@ -164,24 +165,18 @@ it("mounts only the specified sidebar tabs and leaves statusbar composition to U
 });
 
 // spec: UI-060
-it("copies displayed rows and dispatches export to the shared UI action", async () => {
+it("copies displayed rows and opens the shared export dialog for the panel (A02-05)", async () => {
   const writeText = vi.fn().mockResolvedValue(undefined);
   Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
   mount(); await tab("Issues");
   fireEvent.click(await screen.findByRole("button", { name: "Copy" }));
   await waitFor(() => expect(writeText).toHaveBeenCalledWith(expect.stringContaining("Issue Name\tIssue Type\tIssue Priority\tURLs\t% of Total")));
   expect(tsv([["A\nB", "C\tD"]])).toBe("A B\tC D");
-  fireEvent.click(screen.getByRole("button", { name: "Export" }));
-  expect(await screen.findByText("Export is not available in this build yet.")).toBeVisible();
-  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  expect(core.calls.some(c => c.cmd.startsWith("export."))).toBe(false);
-  const handler = vi.fn();
-  const unregister = registerAction("export.sidebar", handler);
-  try {
-    fireEvent.click(screen.getByRole("button", { name: "Export" }));
-    expect(handler).toHaveBeenCalledWith({ source: "ui" });
-    expect(screen.queryByText("Export is not available in this build yet.")).not.toBeInTheDocument();
-  } finally { unregister(); }
+  // The panel export has its own name: the only plain "Export" of the main window sits above the upper table (UI-015).
+  expect(screen.queryByRole("button", { name: "Export" })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Export table" }));
+  expect(useExportDialog.getState().request).toEqual({ kind: "issues", which: "issues" });
+  act(() => useExportDialog.setState({ request: null }));
 });
 
 // spec: UI-061
@@ -219,14 +214,23 @@ it("supports hiding, restoring and keyboard reordering tabs, and gates the seman
   render(<Providers><SidebarFrame panels={[{ id: "semanticSearch", titleKey: "sidebar-tab-semanticSearch", Component: () => <p>Semantic panel</p>, embeddingsOnly: true }]} /></Providers>);
   await waitFor(() => expect(document.querySelector('[data-sidebar-ready="true"]')).toBeInTheDocument());
   expect(screen.queryByRole("tab", { name: "Semantic Search" })).not.toBeInTheDocument();
-  fireEvent.contextMenu(screen.getByRole("tab", { name: "Overview" }).querySelector("span")!);
-  fireEvent.click(screen.getByRole("button", { name: "Hide Overview" }));
-  expect(screen.queryByRole("tab", { name: "Overview" })).not.toBeInTheDocument();
-  fireEvent.click(screen.getByText("Customize tabs"));
-  fireEvent.click(screen.getByRole("checkbox", { name: /Overview/ }));
-  expect(screen.getByRole("tab", { name: "Overview" })).toBeVisible();
-  fireEvent.click(screen.getByRole("button", { name: "Move to first position: Issues" }));
-  expect(screen.getAllByRole("tab")[0]).toHaveTextContent("Issues");
+  // UI-112: Overview is the mandatory tab of the sidebar; other tabs close through the tab context menu.
+  fireEvent.contextMenu(screen.getByRole("tab", { name: "Overview" }));
+  expect(await screen.findByRole("menuitem", { name: "Close tab" })).toHaveAttribute("aria-disabled", "true");
+  fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+  fireEvent.contextMenu(screen.getByRole("tab", { name: "Issues" }));
+  fireEvent.click(await screen.findByRole("menuitem", { name: "Close tab" }));
+  await waitFor(() => expect(screen.queryByRole("tab", { name: "Issues" })).not.toBeInTheDocument());
+  expect(screen.queryByText("Customize tabs")).not.toBeInTheDocument();
+  // UI-004/A02-03: the overflow menu lists every tab and shows a closed one again.
+  fireEvent.click(screen.getByRole("button", { name: "More sidebar tabs" }));
+  fireEvent.click(await screen.findByRole("menuitemcheckbox", { name: "Issues" }));
+  expect(screen.getByRole("menuitemcheckbox", { name: "Issues" })).toHaveAttribute("aria-checked", "true");
+  fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+  await waitFor(() => expect(screen.getByRole("tab", { name: "Issues" })).toBeVisible());
+  fireEvent.click(screen.getByRole("tab", { name: "Issues" }));
+  fireEvent.keyDown(screen.getByRole("tab", { name: "Issues" }), { key: "ArrowLeft", altKey: true, shiftKey: true });
+  await waitFor(() => expect(screen.getAllByRole("tab")[0]).toHaveTextContent("Issues"));
 });
 
 // spec: UI-060
@@ -248,7 +252,8 @@ it("keeps an accepted analysis start disabled until the core finishes the operat
   await waitFor(() => expect(core.calls.some(c => c.cmd === "analysis.start")).toBe(true));
   expect(start).toBeDisabled();
   act(() => useSession.setState({ ops: { "analyze-1": { opId: "analyze-1", labelKey: "analysis", done: 1, state: "done" } } }));
-  expect(start).toBeEnabled();
+  // K2-63: the operation tick and accepted start may settle in separate React commits.
+  await waitFor(() => expect(start).toBeEnabled());
 });
 
 // spec: UI-082 [M2]

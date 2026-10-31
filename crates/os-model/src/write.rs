@@ -22,6 +22,8 @@ pub struct WriteBatch {
     pub discoveries: Vec<DiscoveryWrite>,
     /// Neu entdeckte URLs.
     pub new_urls: Vec<NewUrl>,
+    /// Offline SERP drafts without fabricated fetch measurements.
+    pub serp_seeds: Vec<SerpSeed>,
     /// Änderungen an vorhandenen URLs.
     pub url_updates: Vec<UrlUpdate>,
     /// Abgerufene Seiten.
@@ -508,4 +510,19 @@ impl Default for LinkRow {
             pdf_page: None,
         }
     }
+}
+
+/// An offline SERP draft, classified as HTML/200 solely for element filters.
+/// Fetch timestamps and transfer sizes are deliberately absent.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SerpSeed {
+    pub id: UrlId,
+    pub address: String,
+    pub url_length: u32,
+    pub title: String,
+    pub title_length: u32,
+    pub title_px: u32,
+    pub description: String,
+    pub description_length: u32,
+    pub description_px: u32,
 }

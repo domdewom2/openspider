@@ -24,7 +24,8 @@ export function useStatusSnapshot(): SessionState {
 export function Statusbar() {
   const t = useT();
   const f = useFormat();
-  const { crawl: c, analysis, mcp, throttled } = useStatusSnapshot();
+  const { crawl: c, mcp, throttled, crawlDelays, analysis: storedAnalysis, analysisStarting, analysisResult } = useStatusSnapshot();
+  const analysis = analysisStarting ? { steps: [], running: true, current: null, percent: 0 } : storedAnalysis;
   const [sessionLost, setSessionLost] = useState(false);
   useEffect(() => {
     let live = true; setSessionLost(false);
@@ -34,7 +35,7 @@ export function Statusbar() {
     return () => { live = false; clearInterval(timer); };
   }, [c?.crawlId]);
   const chosenMode = useHeader((s) => s.mode);
-  const phase = analysis?.running ? t("status-analysis") : t(`status-${c?.phase ?? "idle"}`);
+  const phase = analysis?.running ? t("status-analysis") : c?.endReason === "stopped" ? t("n03-status-stopped") : t(`status-${c?.phase ?? "idle"}`);
   const unknown = "–";
   const current = analysis?.steps.find((s) => s.step === analysis.current);
   const index = current ? analysis!.steps.indexOf(current) + 1 : null;
@@ -44,6 +45,7 @@ export function Statusbar() {
     {sessionLost && <span role="status" className="os-status-warning">{t("form-login-session-lost")}</span>}
     <span data-testid="crawl-phase">{phase}{c?.endReason === "limit_reached" && ` (${t("status-limit")})`}</span>
     {Object.keys(throttled).length > 0 && <span className="os-status-warning">{t("status-throttled")}</span>}
+    {c?.phase === "running" && Object.entries(crawlDelays).map(([origin, delay]) => <span key={origin} title={origin}>{t(delay.applied ? delay.effectiveSeconds < delay.seconds ? "n03-status-delay-capped" : "n03-status-delay-applied" : "n03-status-delay-ignored", { seconds: f.decimal(delay.seconds), effectiveSeconds: f.decimal(delay.effectiveSeconds) })}</span>)}
     <span>{t("status-rate", { value: f.decimal(c?.rate ?? 0) })}</span>
     <span>{t("status-average", { value: f.decimal(c?.avgRate ?? 0) })}</span>
     <span>{t("status-count", { done: f.integer(c?.crawled ?? 0), total: f.integer((c?.crawled ?? 0) + (c?.queued ?? 0)), percent: c?.percent ?? 0 })}</span>
@@ -63,6 +65,7 @@ export function Statusbar() {
       <span>{t("status-response", { value: c?.avgResponseTime == null ? unknown : f.decimal(c.avgResponseTime, 3) })}</span>
       <span>{t("status-end-reason", { value: c?.endReason ?? unknown })}</span>
     </div></details>
+    {(analysis?.running || analysisResult) && <span role="status" data-testid="analysis-feedback">{t(analysis?.running ? "status-analysis" : `n03-analysis-${analysisResult}`)}</span>}
     {analysis?.running && <div className="os-analysis-progress"><span>{t(`status-step-${analysis.current}`, {}, { fallback: analysis.current ?? t("status-analysis") })}{index && ` ${index}/${analysis.steps.length}`} · {analysis.percent ?? unknown} %</span><ProgressBar label={t("status-analysis")} value={analysis.percent} /></div>}
   </div>;
 }

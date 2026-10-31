@@ -87,6 +87,14 @@ function mergeDeep(target: unknown, patch: unknown): unknown {
   return base;
 }
 
+// Reads may overlap a local edit or a settingsChanged event. Only the newest
+// read from the same mutation generation may replace the visible preferences.
+let readGeneration = 0;
+let mutationGeneration = 0;
+const pendingPatches = new Map<number, Patch>();
+let confirmedDto: AppSettingsDto | null = null;
+let patchTail: Promise<unknown> = Promise.resolve();
+
 export const usePrefs = create<PrefsState>((set, get) => ({
   loaded: false,
   error: null,
@@ -99,26 +107,44 @@ export const usePrefs = create<PrefsState>((set, get) => ({
   restartRequired: [],
 
   async load() {
+    const read = ++readGeneration;
+    const mutation = mutationGeneration;
     try {
       const dto = await settingsApi.get();
+      if (read !== readGeneration || mutation !== mutationGeneration || pendingPatches.size > 0) return;
+      confirmedDto = dto;
       set({ loaded: true, error: null, dto, restartRequired: dto.restartRequired ?? [], ...fromNormalized(normalizeSettings(dto)) });
     } catch (e) {
-      set({ error: toCmdError(e) });
+      if (read === readGeneration && mutation === mutationGeneration && pendingPatches.size === 0) set({ error: toCmdError(e) });
     }
   },
 
   async patch(patch) {
-    const before = get().dto;
-    if (before) {
-      // sofort wirken lassen (UI-120: ≤ 200 ms), bei Fehler zurücksetzen
-      const optimistic = mergeDeep(before, patch) as AppSettingsDto;
-      set({ dto: optimistic, ...fromNormalized(normalizeSettings(optimistic)) });
-    }
+    const mutation = ++mutationGeneration;
+    ++readGeneration;
+    // With no writes in flight the visible DTO is the confirmed baseline.
+    if (pendingPatches.size === 0) confirmedDto = get().dto;
+    pendingPatches.set(mutation, patch);
+    const publish = () => {
+      const dto = [...pendingPatches.values()].reduce<AppSettingsDto | null>(
+        (base, pending) => base ? mergeDeep(base, pending) as AppSettingsDto : null,
+        confirmedDto,
+      );
+      if (dto) set({ dto, restartRequired: dto.restartRequired ?? [], ...fromNormalized(normalizeSettings(dto)) });
+    };
+    publish(); // UI-120: immediate, including while earlier writes are pending.
     try {
-      const dto = await settingsApi.set({ patch: patch as never });
-      set({ error: null, dto, restartRequired: dto.restartRequired ?? [], ...fromNormalized(normalizeSettings(dto)) });
+      const saving = patchTail.then(() => settingsApi.set({ patch: patch as never }));
+      patchTail = saving.catch(() => undefined);
+      const dto = await saving;
+      // Even an older successful write advances the baseline for later rollbacks.
+      confirmedDto = dto;
+      if (mutation === mutationGeneration) set({ error: null });
     } catch (e) {
-      set({ error: toCmdError(e), ...(before ? { dto: before, ...fromNormalized(normalizeSettings(before)) } : {}) });
+      if (mutation === mutationGeneration) set({ error: toCmdError(e) });
+    } finally {
+      pendingPatches.delete(mutation);
+      publish();
     }
   },
 

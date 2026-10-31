@@ -4,7 +4,6 @@ import { startBridge } from "../support/bridge";
 
 // spec: UI-037
 test("a real local crawl feeds the SERP snippet and the source tabs through the bridge", async ({ page }) => {
-  test.fixme(true, "wartet auf M2-K09");
   const site = createServer((_, response) => { response.writeHead(200, { "content-type": "text/html" }); response.end("<title>Core fixture</title><meta name=description content=\"Core description\"><h1>Hi</h1>"); });
   await new Promise<void>(resolve => site.listen(0, "127.0.0.1", resolve));
   const address = site.address(); if (!address || typeof address === "string") throw new Error("Expected loopback port");

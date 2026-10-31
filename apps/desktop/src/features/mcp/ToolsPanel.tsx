@@ -15,7 +15,7 @@ export function ToolsPanel({ controller, download }: { controller: McpController
   const classes = [...new Set(["read", ...(prefs?.classes ?? [])])];
   useEffect(() => {
     let live = true;
-    setTools(null); setLoadFailed(false);
+    setLoadFailed(false);
     void mcp.tools().then(value => { if (live) setTools(value); }).catch(e => { if (live) { setLoadFailed(true); report(e); } });
     return () => { live = false; };
   }, [revision, reload, report]);
@@ -30,7 +30,8 @@ export function ToolsPanel({ controller, download }: { controller: McpController
         })}>{t(`mcp-class-${kind}`)}</Checkbox>)}
     </fieldset>
     <p>{t("mcp-classes-help")}</p>
-    {tools === null ? <p role="status">{t(loadFailed ? "mcp-load-failed" : "mcp-loading")}</p> : tools.length === 0 ? <p>{t("mcp-no-tools")}</p> :
+    {loadFailed && tools !== null && <p role="status">{t("mcp-load-failed")}</p>}
+    {tools === null ? <p role="status">{t(loadFailed ? "mcp-load-failed" : "mcp-loading")}</p> : tools.length === 0 ? <p>{t("n03-mcp-no-tools")}</p> :
       <div className="os-mcp-scroll"><table className="os-mcp-table"><caption>{t("mcp-tools")}</caption>
         <thead><tr><th>{t("mcp-enabled")}</th><th>{t("mcp-tool")}</th><th>{t("mcp-class")}</th><th>{t("mcp-description")}</th><th>{t("mcp-schema")}</th></tr></thead>
         <tbody>{tools.map(tool => <tr key={tool.name}>

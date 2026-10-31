@@ -198,6 +198,7 @@ fn api_ctx(app: &App, mut cfg: CrawlConfig) -> ApiCtx {
         secrets: app.ext::<ApiState>().credentials(app).clone(),
         network: app.settings_snapshot().network,
         allow_api_override: false,
+        quota_ledger: Some(app.config().paths.settings.join("api-quotas.json")),
     }
 }
 fn account(kind: ApiKind, c: &Credential) -> ApiAccount {

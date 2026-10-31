@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { uistate } from "../../../ipc/uistate";
-import type { UiStateJson } from "../../../ipc/gen/UiStateJson";
+import { updateUiState } from "../../../state/uistate";
 import { z } from "zod";
 
 const schema = z.object({ selected: z.string().catch("overview"), order: z.array(z.string()).catch([]), hidden: z.array(z.string()).catch([]), collapsed: z.array(z.string()).catch([]) });
@@ -30,11 +30,7 @@ export function useSidebarLayout() {
     if (!loaded || layout === initial.current) return;
     let live = true;
     const timer = setTimeout(() => {
-      void uistate.load().then(dto => {
-        if (!live) return;
-        const next = { ...dto, state: { ...object(dto.state), sidebar: layout } } as UiStateJson;
-        return uistate.save(next);
-      }).catch(e => { if (live) setError(e); });
+      void updateUiState(state => ({ ...state, sidebar: layout })).catch(e => { if (live) setError(e); });
     }, 1000);
     return () => { live = false; clearTimeout(timer); };
   }, [layout, loaded]);

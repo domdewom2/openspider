@@ -160,7 +160,10 @@ it("updates exact paused/resumed totals from ticks and ignores a late counts res
   expect(controller.source!.total).toBe(3); expect(controller.counts.filters[0].filter.count).toBe(3);
   let resolve!: (value: typeof controller.counts) => void;
   vi.spyOn(catalog, "filterCounts").mockImplementationOnce(() => new Promise(r => { resolve = r; }));
-  const old = controller.refreshCounts(); await controller.refreshCounts(); resolve({ version: 0, filters: [] }); await old;
+  const old = controller.refreshCounts();
+  const latest = controller.refreshCounts();
+  // K2-63: overlapping refreshes are now serialized; the late response still cannot regress totals.
+  resolve({ version: 0, filters: [] }); await Promise.all([old, latest]);
   expect(controller.counts.version).toBe(3); controller.dispose();
 });
 
@@ -418,5 +421,22 @@ it("refreshes the filter counts for every new counts version of the tick, indepe
   counts.mockResolvedValue({ version: 500, filters: [] });
   await controller.tick(tick(1)); await controller.tick(tick(2)); await controller.tick(tick(2)); await controller.tick(tick(3));
   expect(counts).toHaveBeenCalledTimes(3);
+  controller.dispose();
+});
+
+// spec: UI-018
+it("coalesces ticks while a filter-count snapshot is still in flight", async () => {
+  const controller = new TableController();
+  let release!: (value: typeof controller.counts) => void;
+  const counts = vi.spyOn(catalog, "filterCounts")
+    .mockImplementationOnce(() => new Promise(resolve => { release = resolve; }))
+    .mockResolvedValue({ version: 2, filters: [] });
+  const first = controller.refreshCounts();
+  const ticks = Array.from({ length: 20 }, (_, i) => controller.tick(tick(i + 1)));
+  expect(counts).toHaveBeenCalledTimes(1);
+  release({ version: 1, filters: [] });
+  await Promise.all([first, ...ticks]);
+  expect(counts).toHaveBeenCalledTimes(2);
+  expect(controller.counts.version).toBe(2);
   controller.dispose();
 });

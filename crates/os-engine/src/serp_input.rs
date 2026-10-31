@@ -105,28 +105,27 @@ fn from_rows(rows: Vec<Vec<String>>) -> Result<Vec<SerpRow>, EngineError> {
 /// The synthetic HTML/200 classification admits drafts to the existing element filters;
 /// no response headers, timestamps or transfer measurements are fabricated.
 pub(crate) fn seed(file: &os_store::CrawlFile, rows: &[SerpRow]) -> Result<(), EngineError> {
-    let conn = file.conn();
-    let db = |e| EngineError::Store(os_store::StoreError::from(e));
-    conn.execute_batch("BEGIN IMMEDIATE").map_err(db)?;
-    let result = (|| {
-        for (i, row) in rows.iter().enumerate() {
-            conn.execute(
-                "INSERT INTO urls (id,url,address,origin,is_internal,in_tables,state,discovered_via,folder_depth,url_length,content_class,
-                 title_count,title_1,title_1_len,title_1_px,meta_desc_count,meta_desc_1,meta_desc_1_len,meta_desc_1_px,
-                 effective_index,effective_follow,indexability,change_seq,status_code)
-                 VALUES (?1,?2,?3,'',1,1,'done','list_input',0,?4,'HTML',1,?5,?6,?7,1,?8,?9,?10,1,1,'Indexable',1,200)",
-                ((i + 1) as i64, format!("urn:openspider:serp:{}", i + 1), &row.url,
-                 os_parse::text::char_len(&row.url), &row.title, os_parse::text::char_len(&row.title),
-                 os_parse::pixel::width_px(&row.title, 20.0, false), &row.description,
-                 os_parse::text::char_len(&row.description), os_parse::pixel::width_px(&row.description, 14.0, false)),
-            ).map_err(db)?;
-        }
-        Ok::<_, EngineError>(())
-    })();
-    if result.is_err() {
-        let _ = conn.execute_batch("ROLLBACK");
-    } else {
-        conn.execute_batch("COMMIT").map_err(db)?;
-    }
-    result
+    use os_model::{SerpSeed, UrlId, WriteBatch};
+    use os_store::{CrawlSink, SqliteSink, StorageProfile};
+    let mut writer = SqliteSink::open(file.path(), StorageProfile::Balanced)?;
+    writer.write(WriteBatch {
+        serp_seeds: rows
+            .iter()
+            .enumerate()
+            .map(|(i, row)| SerpSeed {
+                id: UrlId((i + 1) as i64),
+                address: row.url.clone(),
+                url_length: os_parse::text::char_len(&row.url),
+                title: row.title.clone(),
+                title_length: os_parse::text::char_len(&row.title),
+                title_px: os_parse::pixel::width_px(&row.title, 20.0, false),
+                description: row.description.clone(),
+                description_length: os_parse::text::char_len(&row.description),
+                description_px: os_parse::pixel::width_px(&row.description, 14.0, false),
+            })
+            .collect(),
+        ..Default::default()
+    })?;
+    writer.finish()?;
+    Ok(())
 }

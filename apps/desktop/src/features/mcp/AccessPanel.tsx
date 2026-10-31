@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useT } from "../../i18n";
 import { mcp } from "../../ipc/mcp";
 import { Banner, Button } from "../../ui/primitives";
@@ -15,6 +15,13 @@ export function AccessPanel({ desktop }: { desktop: McpDesktop }) {
   const alive = useRef(true);
   const generation = useRef(0);
   const locked = useRef(false);
+  const host = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    // A disabled native button can move focus to body. Restore it before input,
+    // so Escape still reaches the modal while an asynchronous token action runs.
+    const active = document.activeElement;
+    if (active === document.body || active?.matches(":disabled")) host.current?.closest<HTMLElement>('[role="dialog"]')?.focus();
+  }, [busy]);
   useEffect(() => {
     alive.current = true;
     const hide = () => { generation.current++; setValue(null); };
@@ -37,16 +44,17 @@ export function AccessPanel({ desktop }: { desktop: McpDesktop }) {
     } catch (e) { if (alive.current) setError(errorKey(e)); }
     finally { locked.current = false; if (alive.current) setBusy(false); }
   };
-  return <section className="os-mcp-stack" aria-label={t("mcp-access")}>
+  return <section ref={host} className="os-mcp-stack" aria-label={t("mcp-access")} aria-busy={busy}>
     <p>{t("mcp-token-help")}</p>
     <code className="os-mcp-token" aria-label={t("mcp-token")}>{value ?? "••••••••"}</code>
     <div className="os-mcp-actions">
-      <Button isDisabled={busy} onPress={() => {
+      <Button aria-disabled={busy} onPress={() => {
+        if (locked.current) return;
         if (value !== null) { generation.current++; setValue(null); }
         else void run("show");
       }}>{t(value === null ? "mcp-show-token" : "mcp-hide-token")}</Button>
-      <Button isDisabled={busy} onPress={() => void run("copy")}>{t("mcp-copy-token")}</Button>
-      <Button isDisabled={busy} onPress={() => void run("regenerate")}>{t("mcp-regenerate-token")}</Button>
+      <Button aria-disabled={busy} onPress={() => void run("copy")}>{t("mcp-copy-token")}</Button>
+      <Button aria-disabled={busy} onPress={() => void run("regenerate")}>{t("mcp-regenerate-token")}</Button>
     </div>
     {message && <Banner>{t(message)}</Banner>}
     {error && <Banner kind="error">{t(error)}</Banner>}

@@ -351,18 +351,19 @@ const savedTabs = (alpha: Alpha) => async () => {
 };
 
 // spec: UI-004 [P1]
+// M2-U34 (K2-77): Reihenfolge und Sichtbarkeit gelten je Gruppe; Ziehen und Ausblenden innerhalb der Gruppe URLs.
 test("tabs can be reordered by dragging, the order persists through a restart and Reset tabs restores the default", async ({ alpha }) => {
   test.setTimeout(60_000);
   const { page } = alpha;
   await alpha.open();
   await expect(page.getByRole("tab", { name: "Internal", exact: true })).toBeVisible();
-  await page.getByRole("tab", { name: "Images", exact: true }).dragTo(page.getByRole("tab", { name: "Internal", exact: true }));
-  await expect(dataTabsOf(page).first()).toHaveText("Images");
+  await page.getByRole("tab", { name: "External", exact: true }).dragTo(page.getByRole("tab", { name: "Internal", exact: true }));
+  await expect(dataTabsOf(page).first()).toHaveText("External");
   // gespeichert wird über die Bridge (ui-state.json); erst danach neu laden
-  await expect.poll(savedTabs(alpha)).toEqual({ first: "Images", hidden: [] });
+  await expect.poll(savedTabs(alpha)).toEqual({ first: "External", hidden: [] });
   await page.reload();
   await expect(page.locator("[data-shell-ready]")).toHaveAttribute("data-shell-ready", "true");
-  await expect(dataTabsOf(page).first()).toHaveText("Images");
+  await expect(dataTabsOf(page).first()).toHaveText("External");
   // Zurücksetzen stellt die Standardreihenfolge wieder her und speichert sie
   await openConfigureTabs(page);
   await page.getByRole("menuitem", { name: "Reset tabs", exact: true }).click();
@@ -377,23 +378,23 @@ test("tabs can be hidden, the choice persists through a restart, Reset tabs show
   await alpha.open();
   await openConfigureTabs(page);
   await expect(page.getByRole("menuitemcheckbox", { name: "Internal", exact: true })).toBeDisabled();
-  await page.getByRole("menuitemcheckbox", { name: "Hreflang", exact: true }).click();
-  await expect(page.getByRole("menuitemcheckbox", { name: "Hreflang", exact: true })).toHaveAttribute("aria-checked", "false");
+  await page.getByRole("menuitemcheckbox", { name: "Security", exact: true }).click();
+  await expect(page.getByRole("menuitemcheckbox", { name: "Security", exact: true })).toHaveAttribute("aria-checked", "false");
   await closeConfigureTabs(page);
-  await expect(page.getByRole("tab", { name: "Hreflang", exact: true })).toHaveCount(0);
-  await expect.poll(savedTabs(alpha)).toMatchObject({ hidden: ["Hreflang"] });
+  await expect(page.getByRole("tab", { name: "Security", exact: true })).toHaveCount(0);
+  await expect.poll(savedTabs(alpha)).toMatchObject({ hidden: ["Security"] });
   await page.reload();
   await expect(page.locator("[data-shell-ready]")).toHaveAttribute("data-shell-ready", "true");
-  await expect(page.getByRole("tab", { name: "Hreflang", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("tab", { name: "Security", exact: true })).toHaveCount(0);
   // Der Haken im Menü „Configure tabs“ zeigt die Sichtbarkeit (die Tab-Leiste rendert überzählige Tabs nicht immer im DOM)
   await openConfigureTabs(page);
-  await expect(page.getByRole("menuitemcheckbox", { name: "Hreflang", exact: true })).toHaveAttribute("aria-checked", "false");
+  await expect(page.getByRole("menuitemcheckbox", { name: "Security", exact: true })).toHaveAttribute("aria-checked", "false");
   await closeConfigureTabs(page);
   await openConfigureTabs(page);
   await page.getByRole("menuitem", { name: "Reset tabs", exact: true }).click();
   await expect.poll(savedTabs(alpha)).toMatchObject({ hidden: [] });
   await openConfigureTabs(page);
-  await expect(page.getByRole("menuitemcheckbox", { name: "Hreflang", exact: true })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("menuitemcheckbox", { name: "Security", exact: true })).toHaveAttribute("aria-checked", "true");
   await closeConfigureTabs(page);
 });
 
@@ -402,15 +403,15 @@ test("reordering and then hiding a tab keeps both changes in the saved tab layou
   test.setTimeout(60_000);
   const { page } = alpha;
   await alpha.open();
-  await page.getByRole("tab", { name: "Images", exact: true }).dragTo(page.getByRole("tab", { name: "Internal", exact: true }));
-  await expect(dataTabsOf(page).first()).toHaveText("Images");
+  await page.getByRole("tab", { name: "External", exact: true }).dragTo(page.getByRole("tab", { name: "Internal", exact: true }));
+  await expect(dataTabsOf(page).first()).toHaveText("External");
   await openConfigureTabs(page);
-  await page.getByRole("menuitemcheckbox", { name: "Hreflang", exact: true }).click();
+  await page.getByRole("menuitemcheckbox", { name: "Security", exact: true }).click();
   await page.keyboard.press("Escape");
-  await expect.poll(savedTabs(alpha)).toEqual({ first: "Images", hidden: ["Hreflang"] });
+  await expect.poll(savedTabs(alpha)).toEqual({ first: "External", hidden: ["Security"] });
   await page.reload();
   await expect(page.locator("[data-shell-ready]")).toHaveAttribute("data-shell-ready", "true");
-  await expect(dataTabsOf(page).first()).toHaveText("Images");
+  await expect(dataTabsOf(page).first()).toHaveText("External");
 });
 
 // spec: UI-007

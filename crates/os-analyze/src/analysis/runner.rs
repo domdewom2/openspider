@@ -13,7 +13,7 @@
 //! Ein Schritt meldet `Ok(StepState::Pending)`, wenn er wegen des Abbruchs nicht fertig wurde.
 
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::mpsc;
+use std::sync::{mpsc, Barrier, Mutex};
 
 use os_model::{AnalysisStep, Clock, CrawlConfig, RenderingMode, StepState, SystemClock};
 use os_store::{CrawlFile, OpenMode};
@@ -134,6 +134,7 @@ pub fn run_with(
     progress: &dyn Fn(AnalysisStep, f32),
     opts: &RunOptions<'_>,
 ) -> Result<AnalysisOutcome, AnalyzeError> {
+    let _busy = AnalysisBusy::new(file.conn())?;
     let in_scope: Vec<AnalysisStep> = AnalysisStep::ALL
         .iter()
         .copied()
@@ -177,6 +178,8 @@ pub fn run_with(
             n => n,
         }
         .clamp(1, runnable.len());
+        let open_lock = Mutex::new(());
+        let opened = Barrier::new(workers);
         let next = AtomicUsize::new(0);
         let (tx, rx) = mpsc::channel::<Event>();
         let path = file.path().to_path_buf();
@@ -185,10 +188,20 @@ pub fn run_with(
             for _ in 0..workers {
                 let tx = tx.clone();
                 let (next, runnable, path) = (&next, &runnable, &path);
+                let (open_lock, opened) = (&open_lock, &opened);
                 scope.spawn(move || {
                     // Eigene Verbindung je Arbeiter; scheitert das Öffnen, scheitern seine Schritte.
-                    let conn =
-                        CrawlFile::open(path, OpenMode::ReadWrite).map_err(|e| e.to_string());
+                    let conn = {
+                        let _open = open_lock.lock().unwrap_or_else(|e| e.into_inner());
+                        CrawlFile::open(path, OpenMode::ReadWrite).and_then(|file| {
+                            file.conn().pragma_update(None, "cache_size", -65_536)?;
+                            file.conn().pragma_update(Some("temp"), "cache_size", -32_768)?;
+                            file.conn().busy_timeout(std::time::Duration::from_secs(300))?;
+                            Ok(file)
+                        }).map_err(|e| e.to_string())
+                    };
+                    // PRAGMA journal_mode darf nicht gegen bereits laufende Schreiber antreten.
+                    opened.wait();
                     loop {
                         if cancel.checkpoint().is_err() {
                             break;
@@ -196,9 +209,25 @@ pub fn run_with(
                         let i = next.fetch_add(1, Ordering::SeqCst);
                         let Some(&step) = runnable.get(i) else { break };
                         let _ = tx.send(Event::Started(step));
+                        let diag_start = std::time::Instant::now();
+                        let wal_path = format!("{}-wal", path.display());
+                        let wal_before = std::fs::metadata(&wal_path).map_or(0, |m| m.len());
                         let outcome = match &conn {
                             Ok(f) => (opts.registry)(step)(f, cfg, cancel),
                             Err(msg) => Err(open_error(msg)),
+                        };
+                        if std::env::var_os("OS_SCALE_DIAG").is_some() {
+                            let wal_after = std::fs::metadata(&wal_path).map_or(0, |m| m.len());
+                            eprintln!("OS_SCALE_DIAG analysis_{step:?} duration_ms={} wal_before={} wal_after={} ok={}", diag_start.elapsed().as_millis(), wal_before, wal_after, u8::from(outcome.is_ok()));
+                        }
+                        // Jeder Teilschritt hat seine Statements/Transaktionen freigegeben.
+                        // Große Veröffentlichungen vor dem nächsten Schritt zurückführen.
+                        let outcome = match &conn {
+                            Ok(f) => outcome.and_then(|state| {
+                                checkpoint_phase(f, &format!("analysis_checkpoint_{step:?}"), false)?;
+                                Ok(state)
+                            }),
+                            Err(_) => outcome,
                         };
                         let _ = tx.send(Event::Finished(step, outcome));
                     }
@@ -245,6 +274,8 @@ pub fn run_with(
     let final_state = overall_state(file)?;
     persist::write_run_state(file, final_state, Some(&opts.clock.now()))?;
 
+    checkpoint_phase(file, "analysis_checkpoint_final", true)?;
+
     if let Some(e) = first_error {
         return Err(e);
     }
@@ -252,6 +283,57 @@ pub fn run_with(
         steps: results,
         complete,
     })
+}
+
+// SQLite hat einen Schreiber; parallele Rechenphasen dürfen auf dessen kurze
+// Veröffentlichung länger als das 5-s-Verbindungsdefault warten. Danach wiederherstellen.
+struct AnalysisBusy<'a> {
+    conn: &'a rusqlite::Connection,
+    previous: i64,
+}
+impl<'a> AnalysisBusy<'a> {
+    fn new(conn: &'a rusqlite::Connection) -> Result<Self, rusqlite::Error> {
+        let previous = conn.pragma_query_value(None, "busy_timeout", |r| r.get(0))?;
+        conn.pragma_update(None, "busy_timeout", 300_000)?;
+        Ok(Self { conn, previous })
+    }
+}
+impl Drop for AnalysisBusy<'_> {
+    fn drop(&mut self) {
+        let _ = self.conn.pragma_update(None, "busy_timeout", self.previous);
+    }
+}
+
+// Keine Lesetransaktion über Phasengrenzen: SQLite darf das WAL hier zurücksetzen.
+fn checkpoint_phase(file: &CrawlFile, name: &str, always: bool) -> Result<(), AnalyzeError> {
+    let mut wal = file.path().as_os_str().to_os_string();
+    wal.push("-wal");
+    let before = std::fs::metadata(&wal).map_or(0, |m| m.len());
+    if !always && before < 64 * 1024 * 1024 {
+        return Ok(());
+    }
+    let start = std::time::Instant::now();
+    let timeout: i64 = file
+        .conn()
+        .pragma_query_value(None, "busy_timeout", |r| r.get(0))?;
+    file.conn().pragma_update(None, "busy_timeout", 5_000)?;
+    let result = file
+        .conn()
+        .query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| {
+            r.get::<_, i64>(0)
+        });
+    file.conn().pragma_update(None, "busy_timeout", timeout)?;
+    let busy = result?;
+    if std::env::var_os("OS_SCALE_DIAG").is_some() {
+        let after = std::fs::metadata(&wal).map_or(0, |m| m.len());
+        eprintln!(
+            "OS_SCALE_DIAG {name} duration_ms={} wal_before={} wal_after={} busy={busy}",
+            start.elapsed().as_millis(),
+            before,
+            after
+        );
+    }
+    Ok(())
 }
 
 /// Fehler, wenn ein Arbeiter die Crawl-Datei nicht öffnen konnte.
@@ -309,4 +391,150 @@ fn overall_state(file: &CrawlFile) -> Result<RunState, AnalyzeError> {
     } else {
         RunState::Incomplete
     })
+}
+
+#[cfg(test)]
+mod scale_tests {
+    use super::*;
+    use os_model::time::{IdSource, SeededIds};
+    use os_model::{CrawlMode, Timestamp};
+    use os_store::{CrawlInit, StorageProfile};
+
+    fn publish(
+        file: &CrawlFile,
+        _: &CrawlConfig,
+        _: &CancelToken,
+    ) -> Result<StepState, AnalyzeError> {
+        let cache: i64 = file
+            .conn()
+            .pragma_query_value(None, "cache_size", |r| r.get(0))?;
+        assert_eq!(cache, -65_536);
+        let tx = file.conn().unchecked_transaction()?;
+        for id in 1..=1000 {
+            tx.execute(
+                "INSERT INTO url_ext(url_id,key,v_text) VALUES(?1,'content.text',?2)",
+                rusqlite::params![id, "x".repeat(1100)],
+            )?;
+        }
+        tx.commit()?;
+        Ok(StepState::Done)
+    }
+
+    // spec: PERF-003
+    #[test]
+    fn analysis_completion_truncates_the_wal_with_worker_connections_closed() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("phases.ospider");
+        let cfg = CrawlConfig::default();
+        let file = CrawlFile::create(
+            &path,
+            &CrawlInit {
+                crawl_id: SeededIds::new(7).new_crawl_id(Timestamp::UNIX_EPOCH),
+                mode: CrawlMode::Spider,
+                start_url: None,
+                list_source: None,
+                project: String::new(),
+                name: String::new(),
+                config: cfg.clone(),
+                created_at: Timestamp::UNIX_EPOCH,
+            },
+            StorageProfile::Balanced,
+        )
+        .unwrap();
+        run_with(
+            &file,
+            &cfg,
+            &CancelToken::new(),
+            &|_, _| {},
+            &RunOptions {
+                only: Some(&[AnalysisStep::LinkScore]),
+                registry: |_| publish,
+                max_parallel: 1,
+                ..RunOptions::default()
+            },
+        )
+        .unwrap();
+        let mut wal = path.as_os_str().to_os_string();
+        wal.push("-wal");
+        assert_eq!(std::fs::metadata(wal).map_or(0, |m| m.len()), 0);
+    }
+
+    fn contend(
+        file: &CrawlFile,
+        _: &CrawlConfig,
+        _: &CancelToken,
+    ) -> Result<StepState, AnalyzeError> {
+        let tx = file.conn().unchecked_transaction()?;
+        tx.execute("INSERT INTO crawl_meta(key,value) VALUES('e07_probe','1') ON CONFLICT(key) DO UPDATE SET value=CAST(value AS INTEGER)+1", [])?;
+        std::thread::sleep(std::time::Duration::from_millis(50));
+        tx.commit()?;
+        Ok(StepState::Done)
+    }
+
+    // spec: PERF-003
+    // spec: CRAWL-141
+    #[test]
+    fn parallel_writers_open_before_work_and_persist_every_completed_step() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("parallel.ospider");
+        let cfg = CrawlConfig::default();
+        let file = CrawlFile::create(
+            &path,
+            &CrawlInit {
+                crawl_id: SeededIds::new(8).new_crawl_id(Timestamp::UNIX_EPOCH),
+                mode: CrawlMode::Spider,
+                start_url: None,
+                list_source: None,
+                project: String::new(),
+                name: String::new(),
+                config: cfg.clone(),
+                created_at: Timestamp::UNIX_EPOCH,
+            },
+            StorageProfile::Balanced,
+        )
+        .unwrap();
+        file.conn().pragma_update(None, "busy_timeout", 17).unwrap();
+        let selected = [
+            AnalysisStep::LinkScore,
+            AnalysisStep::Canonicals,
+            AnalysisStep::Pagination,
+            AnalysisStep::Hreflang,
+            AnalysisStep::Links,
+            AnalysisStep::Sitemaps,
+            AnalysisStep::Content,
+            AnalysisStep::Amp,
+        ];
+        let outcome = run_with(
+            &file,
+            &cfg,
+            &CancelToken::new(),
+            &|_, _| {},
+            &RunOptions {
+                only: Some(&selected),
+                registry: |_| contend,
+                max_parallel: 8,
+                ..RunOptions::default()
+            },
+        )
+        .unwrap();
+        assert!(outcome.complete);
+        assert!(outcome
+            .steps
+            .iter()
+            .all(|(_, state)| *state == StepState::Done));
+        let count: i64 = file
+            .conn()
+            .query_row(
+                "SELECT CAST(value AS INTEGER) FROM crawl_meta WHERE key='e07_probe'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(count, selected.len() as i64);
+        let timeout: i64 = file
+            .conn()
+            .pragma_query_value(None, "busy_timeout", |r| r.get(0))
+            .unwrap();
+        assert_eq!(timeout, 17);
+    }
 }

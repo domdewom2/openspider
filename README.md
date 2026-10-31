@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/brand/openspider-logo.png" width="160" alt="OpenSpider logo"></p>
+<p align="center"><img src="assets/brand/openspider-mark.svg" width="160" alt="OpenSpider logo"></p>
 
 <h1 align="center">OpenSpider</h1>
 
@@ -11,7 +11,7 @@ Open-source website crawler and technical SEO auditor – built for AI agents an
   <img src="https://img.shields.io/badge/platforms-macOS%20(Apple%20Silicon%20%26%20Intel)%20%7C%20Windows-lightgrey.svg" alt="Platforms">
   <img src="https://img.shields.io/badge/core-Rust-orange.svg" alt="Rust">
   <img src="https://img.shields.io/badge/MCP-native-8A2BE2.svg" alt="MCP native">
-  <img src="https://img.shields.io/badge/status-pre--alpha-yellow.svg" alt="Status: pre-alpha">
+  <img src="https://img.shields.io/badge/status-alpha-yellow.svg" alt="Status: alpha">
 </p>
 
 <p align="center">

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { analysis } from "../../../ipc/analysis";
+import { useCallback, useState } from "react";
+import { startAnalysis } from "./start";
 import type { OpHandle } from "../../../ipc/gen/OpHandle";
 import type { AnalysisStatus } from "../../../ipc/gen/AnalysisStatus";
 import { useT } from "../../../i18n";
@@ -11,11 +11,11 @@ export function useStartAnalysis() {
   const [handle, setHandle] = useState<OpHandle | null>(null);
   const [starting, setStarting] = useState(false);
   const operation = useSession(s => handle ? s.ops[handle.opId] : undefined);
-  async function start() {
+  const start = useCallback(async () => {
     setStarting(true);
     setError(undefined);
-    try { setHandle(await analysis.start({ steps: null })); } catch (e) { setError(e); } finally { setStarting(false); }
-  }
+    try { setHandle(await startAnalysis({ steps: null })); } catch (e) { setError(e); } finally { setStarting(false); }
+  }, []);
   const busy = starting || !!handle && (!operation || operation.state === "running");
   return { start, error: operation?.error ?? error, starting: busy };
 }

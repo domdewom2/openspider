@@ -18,7 +18,7 @@ export function Divider({ pane, label, collapsed, size, viewport, onCommit, onRe
   const [dragging, setDragging] = useState(false);
   const horizontal = pane === "sidebar";
   const total = horizontal ? viewport.width : viewport.height;
-  const minTable = MIN_TABLE + (horizontal ? 0 : TABLE_TABS);
+  const minTable = MIN_TABLE + (horizontal ? 0 : viewport.tabs ?? TABLE_TABS);
   const min = horizontal ? MIN_SIDEBAR : MIN_DETAIL;
   const coordinate = (e: PointerEvent) => horizontal ? e.clientX : e.clientY;
   const end = (cancel: boolean) => {

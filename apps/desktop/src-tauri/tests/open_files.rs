@@ -170,14 +170,18 @@ async fn a_file_that_starts_the_app_is_not_lost_before_the_window_subscribes() {
         path: PathBuf::from("/daten/start.ospider"),
     }];
     forward(&app, &reqs);
-    // das Fenster abonniert erst später: die Meldung wartet auf den ersten Tick
+    // K2-63: Wartende Startmeldungen werden seit fix-int15 schon beim Abonnieren
+    // als Tick zugestellt. Entscheidend ist die genau einmalige Zustellung ans Fenster.
     let sink = Arc::new(CollectingSink::new());
     app.subscribe(WindowId("main".into()), sink.clone());
-    assert_eq!(app.flush_tick(), 1);
-    let UiEvent::Tick { tick } = sink.take().remove(0) else {
+    let events = sink.take();
+    assert_eq!(events.len(), 1);
+    let UiEvent::Tick { tick } = &events[0] else {
         panic!()
     };
-    assert_eq!(tick.notices[0], notice_for(&reqs[0]));
+    assert_eq!(tick.notices, vec![notice_for(&reqs[0])]);
+    assert_eq!(app.flush_tick(), 0);
+    assert!(sink.is_empty());
     let _ = std::fs::remove_dir_all(dir);
 }
 

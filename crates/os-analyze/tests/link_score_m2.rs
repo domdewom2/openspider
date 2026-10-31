@@ -287,8 +287,8 @@ fn temp_store_is_restored_after_success_and_sql_failure() {
             .query_row("PRAGMA temp_store", [], |r| r.get(0))
             .unwrap();
         assert_eq!(actual, previous);
-        sql(&file, "CREATE TRIGGER fail_score BEFORE INSERT ON url_ext BEGIN SELECT RAISE(ABORT, 'test failure'); END;
-            DELETE FROM url_ext WHERE key LIKE 'linkscore.%'");
+        sql(&file, "CREATE TRIGGER fail_score BEFORE INSERT ON url_ext_data BEGIN SELECT RAISE(ABORT, 'test failure'); END;
+            DELETE FROM url_ext_data WHERE key_id IN (SELECT id FROM ext_keys WHERE key LIKE 'linkscore.%')");
         assert!(link_score::run(&file, &CrawlConfig::default(), &CancelToken::new()).is_err());
         let actual: i64 = file
             .conn()

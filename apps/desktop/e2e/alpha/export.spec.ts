@@ -283,7 +283,7 @@ test("the same fixture crawled through the UI and through openspider --crawl yie
     await dialog.getByRole("textbox", { name: "Search exports" }).fill("Crawl Overview");
     await dialog.getByText("Crawl Overview", { exact: true }).last().click();
     await expect(dialog.getByRole("checkbox", { name: "Crawl Overview", exact: true })).toBeChecked();
-    await dialog.getByRole("button", { name: "Save…" }).click();
+    await dialog.getByRole("button", { name: "Export…" }).click();
     await expect(page.getByRole("region", { name: "Export status" })).toContainText("Export complete.");
     const ui = join(dir, "folder");
     expect(listFiles(ui)).toEqual(expect.arrayContaining(["crawl_overview.csv", "internal_all.csv", "links_all_inlinks.csv", "response_codes_all.csv"]));

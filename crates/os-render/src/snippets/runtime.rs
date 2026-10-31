@@ -131,6 +131,14 @@ pub(super) async fn execute(
                 timeout_ms
             };
             let source = WRAPPER
+                .replace(
+                    "/* FILE_ACCESS */",
+                    if opts.output_dir.is_some() {
+                        "true"
+                    } else {
+                        "false"
+                    },
+                )
                 .replace("/* ACTION */", if action { "true" } else { "false" })
                 .replace("/* USER_CODE */", &snippet.code);
             let evaluated = tokio::select! {
@@ -140,7 +148,10 @@ pub(super) async fn execute(
             };
             let (values, error) = match evaluated {
                 Some(Ok(value)) => {
-                    let error = value["error"].as_str().map(str::to_owned);
+                    let mut error = value["error"].as_str().map(str::to_owned);
+                    if let Err(failure) = save_files(opts.output_dir.as_deref(), &value["files"]) {
+                        error = Some(failure);
+                    }
                     let values = value["values"]
                         .as_array()
                         .into_iter()
@@ -172,4 +183,75 @@ pub(super) async fn execute(
         }
     }
     Ok(results)
+}
+
+/// Treat browser results as untrusted, even after the JavaScript path validation.
+pub(super) fn save_files(root: Option<&std::path::Path>, files: &Value) -> Result<(), String> {
+    use std::{fs, io::Write, path::Component};
+    let Some(files) = files.as_array().filter(|files| !files.is_empty()) else {
+        return Ok(());
+    };
+    let root = root.ok_or("File access is not enabled")?;
+    // A configured CLI output folder may not have been created by an export yet.
+    fs::create_dir_all(root).map_err(|e| e.to_string())?;
+    let root = root.canonicalize().map_err(|e| e.to_string())?;
+    for file in files {
+        let name = file["path"].as_str().ok_or("Invalid output path")?;
+        let name = name.replace('\\', "/");
+        if name.is_empty()
+            || name.starts_with('/')
+            || name.contains(':')
+            || name.contains('\0')
+            || name.split('/').any(|part| {
+                part == ".." || (part != "." && (part.ends_with('.') || part.ends_with(' ')))
+            })
+        {
+            return Err("Invalid output path".into());
+        }
+        let mut destination = root.clone();
+        let components: Vec<_> = std::path::Path::new(&name).components().collect();
+        if components.is_empty() {
+            return Err("Invalid output path".into());
+        }
+        for (i, component) in components.iter().enumerate() {
+            match component {
+                Component::CurDir => continue,
+                Component::Normal(part) => destination.push(part),
+                _ => return Err("Invalid output path".into()),
+            }
+            // Reject symlinks, including dangling links, before creating or opening anything.
+            match fs::symlink_metadata(&destination) {
+                Ok(meta) if meta.file_type().is_symlink() => {
+                    return Err("Invalid output path: symlink".into())
+                }
+                Ok(_) => {
+                    if !destination
+                        .canonicalize()
+                        .map_err(|e| e.to_string())?
+                        .starts_with(&root)
+                    {
+                        return Err("Invalid output path: outside output directory".into());
+                    }
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                    if i + 1 < components.len() {
+                        fs::create_dir(&destination).map_err(|e| e.to_string())?;
+                    }
+                }
+                Err(e) => return Err(e.to_string()),
+            }
+        }
+        let bytes: Vec<u8> =
+            serde_json::from_value(file["bytes"].clone()).map_err(|e| e.to_string())?;
+        let append = file["append"].as_bool().unwrap_or(false);
+        fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .append(append)
+            .truncate(!append)
+            .open(&destination)
+            .and_then(|mut f| f.write_all(&bytes))
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
