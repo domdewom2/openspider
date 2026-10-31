@@ -590,6 +590,35 @@ async fn response_timeout_aborts_after_the_configured_time() {
 }
 
 // spec: CRAWL-095
+// spec: AGENT-020 [M2]
+#[tokio::test]
+async fn timed_out_request_releases_its_connection() {
+    // Der Versand läuft als eigene Task (kleine Worker-Stacks); nach dem Antwort-Timeout darf sie die
+    // Verbindung nicht weiter offen halten.
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let (closed_tx, closed_rx) = tokio::sync::oneshot::channel();
+    tokio::spawn(async move {
+        use tokio::io::AsyncReadExt;
+        let (mut socket, _) = listener.accept().await.unwrap();
+        let mut buf = [0u8; 1024];
+        // Anfrage lesen, nie antworten, bis der Client die Verbindung schließt.
+        while socket.read(&mut buf).await.is_ok_and(|n| n > 0) {}
+        let _ = closed_tx.send(());
+    });
+    let f = fetcher_with(Arc::new(SystemClock), |c| {
+        c.response_timeout = Duration::from_millis(300)
+    });
+    let url = Url::parse(&format!("http://{addr}/hang")).unwrap();
+    let (reason, _, _) = expect_no_response(get(&f, url).await);
+    assert_eq!(reason, NoResponseReason::ResponseTimeout);
+    tokio::time::timeout(Duration::from_secs(5), closed_rx)
+        .await
+        .expect("connection still open after the response timeout")
+        .unwrap();
+}
+
+// spec: CRAWL-095
 #[tokio::test]
 async fn trickling_body_is_cut_off_by_the_total_timeout() {
     let server = MiniServer::start(|_| Reply::Trickle {
