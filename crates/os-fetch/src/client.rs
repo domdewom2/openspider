@@ -94,6 +94,8 @@ pub struct FetchConfig {
     pub resolve: Vec<String>,
     /// Höchstzahl Abrufe pro Sekunde (für alle Abrufe inkl. robots.txt).
     pub max_urls_per_sec: Option<f64>,
+    /// Effektive Parallelität je Host aus Threads und Host-Limit (maximal 200).
+    pub max_parallel_per_host: usize,
     /// Höchste Body-Größe in Bytes.
     pub max_body_bytes: u64,
     /// Zusätzliche Wurzelzertifikate (PEM), nur Tests.
@@ -111,6 +113,7 @@ impl std::fmt::Debug for FetchConfig {
             .field("basic_auth", &self.basic_auth)
             .field("resolve", &self.resolve)
             .field("max_urls_per_sec", &self.max_urls_per_sec)
+            .field("max_parallel_per_host", &self.max_parallel_per_host)
             .field("max_body_bytes", &self.max_body_bytes)
             .field("extra_root_certs", &self.extra_root_certs.len())
             .finish()
@@ -170,6 +173,12 @@ impl FetchConfig {
             basic_auth,
             resolve: cfg.network.resolve.clone(),
             max_urls_per_sec: cfg.speed.max_urls_per_sec,
+            max_parallel_per_host: cfg
+                .speed
+                .max_per_host
+                .unwrap_or(cfg.speed.threads)
+                .min(cfg.speed.threads)
+                .clamp(1, 200) as usize,
             max_body_bytes: cfg.limits.max_page_kb.saturating_mul(1024),
             extra_root_certs: Vec::new(),
             clock,
@@ -187,8 +196,7 @@ pub struct HttpFetcher {
     digest: crate::auth::digest::DigestAuth,
     challenge_digest: AuthMatcher,
     challenge_ntlm: AuthMatcher,
-    ntlm_clients:
-        std::sync::Mutex<std::collections::HashMap<(url::Origin, String), Arc<NtlmClient>>>,
+    ntlm_clients: std::sync::Mutex<std::collections::HashMap<(url::Origin, String), Arc<NtlmPool>>>,
     auth_ids: Arc<dyn os_model::IdSource>,
     limiter: Option<RateLimiter>,
     /// Gemeinsamer Speicher für `CookieMode::Persistent`, wenn die Anfrage keinen mitbringt.
@@ -198,7 +206,29 @@ pub struct HttpFetcher {
 // Deliberately has no Debug implementation: it owns authenticated connections.
 struct NtlmClient {
     client: reqwest::Client,
-    exchange: tokio::sync::Mutex<()>,
+    exchange: Arc<tokio::sync::Mutex<()>>,
+}
+
+struct NtlmPool {
+    clients: Vec<NtlmClient>,
+}
+
+impl NtlmPool {
+    async fn acquire(&self) -> (&reqwest::Client, tokio::sync::OwnedMutexGuard<()>) {
+        for slot in &self.clients {
+            if let Ok(guard) = slot.exchange.clone().try_lock_owned() {
+                return (&slot.client, guard);
+            }
+        }
+        let waiting = self.clients.iter().map(|slot| {
+            Box::pin(async move {
+                let guard = slot.exchange.clone().lock_owned().await;
+                (&slot.client, guard)
+            })
+        });
+        let (acquired, _, _) = futures_util::future::select_all(waiting).await;
+        acquired
+    }
 }
 
 impl std::fmt::Debug for HttpFetcher {
@@ -652,38 +682,55 @@ impl HttpFetcher {
                 );
             }
         }
-        // NTLM is connection-bound. Reuse one HTTP/1 pool per origin and
-        // credential scope; serialize its exchanges through the response body.
+        // Each scope has up to the configured host concurrency in independent
+        // HTTP/1 clients. Each handshake and body stays on its leased client.
         let ntlm = self.challenge_ntlm.rendering_credentials(url);
         let dedicated = if let Some(credentials) = &ntlm {
-            let mut clients = self.ntlm_clients.lock().expect("NTLM cache lock");
             let key = (url.origin(), credentials.prefix.clone());
-            if let Some(client) = clients.get(&key) {
-                Some(client.clone())
+            let cached = self
+                .ntlm_clients
+                .lock()
+                .expect("NTLM cache lock")
+                .get(&key)
+                .cloned();
+            let pool = if let Some(pool) = cached {
+                pool
             } else {
-                let mut cfg = self.cfg.clone();
-                cfg.http.version = os_model::HttpVersion::Http1;
-                let client = Arc::new(NtlmClient {
-                    client: Self::new(cfg)
-                        .map_err(|_| Failure {
-                            proxy_auth_required: false,
-                            reason: NoResponseReason::Malformed,
-                            detail: "NTLM-Client konnte nicht erstellt werden".into(),
-                        })?
-                        .client,
-                    exchange: tokio::sync::Mutex::new(()),
-                });
-                clients.insert(key, client.clone());
-                Some(client)
-            }
+                // Build outside the cache mutex. A concurrent winner is reused;
+                // the losing candidate is dropped without opening connections.
+                let mut slots = Vec::with_capacity(self.cfg.max_parallel_per_host.clamp(1, 200));
+                for _ in 0..self.cfg.max_parallel_per_host.clamp(1, 200) {
+                    let mut cfg = self.cfg.clone();
+                    cfg.http.version = os_model::HttpVersion::Http1;
+                    slots.push(NtlmClient {
+                        client: Self::new(cfg)
+                            .map_err(|_| Failure {
+                                proxy_auth_required: false,
+                                reason: NoResponseReason::Malformed,
+                                detail: "NTLM-Client konnte nicht erstellt werden".into(),
+                            })?
+                            .client,
+                        exchange: Arc::new(tokio::sync::Mutex::new(())),
+                    });
+                }
+                self.ntlm_clients
+                    .lock()
+                    .expect("NTLM cache lock")
+                    .entry(key)
+                    .or_insert_with(|| Arc::new(NtlmPool { clients: slots }))
+                    .clone()
+            };
+            Some(pool)
         } else {
             None
         };
-        let _exchange_guard = match &dedicated {
-            Some(client) => Some(client.exchange.lock().await),
+        let lease = match &dedicated {
+            Some(pool) => Some(pool.acquire().await),
             None => None,
         };
-        let client = dedicated.as_ref().map_or(&self.client, |f| &f.client);
+        let client = lease
+            .as_ref()
+            .map_or(&self.client, |(client, _guard)| *client);
         if ntlm.is_some() {
             headers.remove(header::AUTHORIZATION);
         }

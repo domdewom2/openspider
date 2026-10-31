@@ -3,11 +3,12 @@
 mod support;
 
 use base64::{engine::general_purpose::STANDARD, Engine};
-use os_fetch::{BasicAuthEntry, HttpFetcher};
-use os_model::SystemClock;
+use os_fetch::{BasicAuthEntry, FetchConfig, HttpFetcher, MemorySecretStore};
+use os_model::{CrawlConfig, SystemClock};
 use std::{
     collections::HashMap,
     sync::{Arc, Mutex},
+    time::Duration,
 };
 use support::*;
 
@@ -38,7 +39,7 @@ async fn server() -> MiniServer {
                 auth.is_none(),
                 "reuse must rely on connection authentication"
             );
-            return ok_text(user);
+            return authenticated_reply(req, user);
         }
         let header = if *stage == 0 {
             assert!(
@@ -65,7 +66,7 @@ async fn server() -> MiniServer {
                         .collect();
                     *user = String::from_utf16(&chars).unwrap();
                     *stage = 2;
-                    return ok_text(user);
+                    return authenticated_reply(req, user);
                 }
                 other => panic!("unexpected NTLM message {other}"),
             }
@@ -79,6 +80,26 @@ async fn server() -> MiniServer {
         ))
     })
     .await
+}
+
+fn authenticated_reply(req: &Request, user: &str) -> Reply {
+    if req.path().starts_with("/slow") {
+        Reply::Trickle {
+            head: head_only(200, "OK", &[], user.len()),
+            body: user.as_bytes().to_vec(),
+            interval: Duration::from_secs(3),
+        }
+    } else {
+        ok_text(user)
+    }
+}
+
+fn pool_config(threads: u32, per_host: Option<u32>) -> FetchConfig {
+    let mut crawl = CrawlConfig::default();
+    crawl.speed.threads = threads;
+    crawl.speed.max_per_host = per_host;
+    FetchConfig::from_crawl_config(&crawl, &MemorySecretStore::new(), Arc::new(SystemClock))
+        .unwrap()
 }
 
 fn profile(server: &MiniServer, path: &str, user: &str) -> BasicAuthEntry {
@@ -99,7 +120,7 @@ async fn check(fetcher: &HttpFetcher, server: &MiniServer, path: &str, user: &st
 #[tokio::test]
 async fn repeated_and_parallel_requests_reuse_the_origin_connection() {
     let server = server().await;
-    let fetcher = HttpFetcher::new(config(Arc::new(SystemClock)))
+    let fetcher = HttpFetcher::new(pool_config(5, Some(2)))
         .unwrap()
         .with_challenge_auth(&[], &[profile(&server, "/", "User")])
         .unwrap();
@@ -109,8 +130,44 @@ async fn repeated_and_parallel_requests_reuse_the_origin_connection() {
         check(&fetcher, &server, "/second", "User")
     );
     check(&fetcher, &server, "/fourth", "User").await;
-    assert_eq!(server.connections(), 1);
-    assert_eq!(server.requests().len(), 6); // 3 handshake legs plus 3 authenticated requests.
+    let connections = server.connections();
+    assert!((1..=2).contains(&connections));
+    for _ in 0..4 {
+        check(&fetcher, &server, "/again", "User").await;
+    }
+    assert_eq!(
+        server.connections(),
+        connections,
+        "reuse existing connections"
+    );
+    assert_eq!(server.requests().len(), 8 + 2 * connections);
+}
+
+// spec: CRAWL-121 [M3]
+#[tokio::test]
+async fn configured_parallel_slow_bodies_are_not_serialized() {
+    let server = server().await;
+    // No explicit host limit: the configured thread count is the effective limit.
+    let cfg = pool_config(3, None);
+    assert_eq!(cfg.max_parallel_per_host, 3);
+    let fetcher = HttpFetcher::new(cfg)
+        .unwrap()
+        .with_challenge_auth(&[], &[profile(&server, "/", "User")])
+        .unwrap();
+    // Each body takes 12s to stream. Three serialized bodies take at least 36s;
+    // 25s allows over twice the parallel duration for a busy build server.
+    tokio::time::timeout(Duration::from_secs(25), async {
+        tokio::join!(
+            check(&fetcher, &server, "/slow/one", "User"),
+            check(&fetcher, &server, "/slow/two", "User"),
+            check(&fetcher, &server, "/slow/three", "User")
+        );
+    })
+    .await
+    .expect("configured host concurrency must include body streaming");
+    assert_eq!(server.connections(), 3);
+    assert_eq!(pool_config(2, Some(5)).max_parallel_per_host, 2);
+    assert_eq!(pool_config(500, Some(500)).max_parallel_per_host, 200);
 }
 
 // spec: CRAWL-121 [M3]
