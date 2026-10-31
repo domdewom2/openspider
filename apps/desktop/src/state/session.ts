@@ -57,14 +57,19 @@ export const useSession = create<SessionState>((set, get) => ({
   applyTick(tick) {
     if (tick.seq <= get().seq) return;
     set((s) => {
-      const views = { ...s.views };
-      for (const v of tick.views) views[v.viewId] = v;
-      const ops = { ...s.ops };
+      let views = s.views;
+      for (const v of tick.views) {
+        const old = views[v.viewId];
+        if (old?.version === v.version && old.total === v.total) continue;
+        if (views === s.views) views = { ...views };
+        views[v.viewId] = v;
+      }
+      const ops = tick.ops.length ? { ...s.ops } : s.ops;
       for (const o of tick.ops) ops[o.opId] = o;
       return {
         seq: tick.seq,
         ...reduceOpening(s, tick.notices),
-        throttled: tick.crawl && ["idle", "completed", "failed"].includes(tick.crawl.phase) ? {} : reduceThrottle(tick.crawl && tick.crawl.crawlId !== s.crawl?.crawlId ? {} : s.throttled, tick.notices),
+        throttled: tick.crawl && ["idle", "completed", "failed"].includes(tick.crawl.phase) ? (Object.keys(s.throttled).length ? {} : s.throttled) : reduceThrottle(tick.crawl && tick.crawl.crawlId !== s.crawl?.crawlId ? {} : s.throttled, tick.notices),
         crawlDelays: reduceDelays(tick.crawl && tick.crawl.crawlId !== s.crawl?.crawlId ? {} : s.crawlDelays, tick.notices),
         crawl: tick.crawl ?? s.crawl,
         analysis: tick.analysis ?? (tick.crawl && tick.crawl.crawlId !== s.crawl?.crawlId ? null : s.analysis),
@@ -99,6 +104,7 @@ export function attachSession(bus: EventBus): () => void {
 }
 
 function reduceThrottle(before: Record<string, boolean>, notices: Notice[]): Record<string, boolean> {
+  if (!notices.some(n => ["memory-throttled", "memory-throttle-cleared", "crawl-throttled", "crawl-throttle-cleared"].includes(n.code))) return before;
   const next = { ...before };
   for (const n of notices) {
     const host = String(n.args.host ?? "");
@@ -111,6 +117,7 @@ function reduceThrottle(before: Record<string, boolean>, notices: Notice[]): Rec
 }
 
 function reduceDelays(before: SessionState["crawlDelays"], notices: Notice[]): SessionState["crawlDelays"] {
+  if (!notices.some(n => n.code === "crawl-delay" && typeof n.args.seconds === "number" && Number.isFinite(n.args.seconds))) return before;
   const next = { ...before };
   for (const n of notices) if (n.code === "crawl-delay" && typeof n.args.seconds === "number" && Number.isFinite(n.args.seconds)) {
     const applied = n.args.applied === true;
