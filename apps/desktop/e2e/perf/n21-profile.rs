@@ -36,6 +36,20 @@ fn main() {
         println!("filters={}", facts.counts.len());
         return;
     }
+    if args.get(2).is_some_and(|v| v == "members-tabs") {
+        // Incremental cost: all filters of each tab for N consecutive IDs.
+        let n: i64 = args.get(3).and_then(|v| v.parse().ok()).unwrap_or(10_000);
+        let ids: Vec<i64> = (1_000_000..1_000_000 + n).collect();
+        let tabs = os_analyze::tabs::configured_for_file(&cfg, &file);
+        let at_all = Instant::now();
+        for tab in &tabs {
+            let at = Instant::now();
+            let m = views::filter_members_in(std::slice::from_ref(tab), &file, &cfg, &ids).unwrap();
+            mark(&format!("members.{}[{}]", tab.id, m.len()), at);
+        }
+        mark(&format!("members.all[{n}]"), at_all);
+        return;
+    }
     if args.get(2).is_some_and(|v| v == "counts-tabs") {
         let tabs = os_analyze::tabs::configured_for_file(&cfg, &file);
         // Optional third argument: only this tab.
