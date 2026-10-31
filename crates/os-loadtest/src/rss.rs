@@ -206,6 +206,9 @@ impl PeakMonitor {
         let (stop, rx) = std::sync::mpsc::channel();
         let thread = std::thread::spawn(move || {
             let started = std::time::Instant::now();
+            let started_unix_ms = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map_or(0, |duration| duration.as_millis() as u64);
             let mut peak = 0;
             let mut at = 0;
             let mut stages = Vec::new();
@@ -238,6 +241,11 @@ impl PeakMonitor {
             }
             stages.push(("sampled_peak_rss_bytes", peak));
             stages.push(("sampled_peak_at_ms", at));
+            stages.push(("sample_start_unix_ms", started_unix_ms));
+            stages.push((
+                "sampled_peak_at_unix_ms",
+                started_unix_ms.saturating_add(at),
+            ));
             stages.push(("sample_interval_ms", 25));
             stages
         });
