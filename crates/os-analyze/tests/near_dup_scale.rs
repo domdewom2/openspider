@@ -178,3 +178,11 @@ fn n16_near_fixture_exercises_comparison_and_directed_pair_count() {
     // 400 pages include five groups of four; 60 directed results.
     scale(400, true, std::time::Duration::from_secs(600));
 }
+
+// spec: PERF-007
+#[test]
+#[ignore = "Benchmark: near-duplicate fixture preparation only, no analysis or performance assertion"]
+fn n16_prepare_million_page_near_duplicate_fixture() {
+    let _fixture = prepare(1_000_000, true);
+    eprintln!("n16 near-duplicate fixture prepared; analysis NOT run; no performance result");
+}
