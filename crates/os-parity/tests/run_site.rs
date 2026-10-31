@@ -710,8 +710,8 @@ fn sitemap_crawl_dates_normalize_but_real_lastmod_differences_fail() {
         &repo.root().join("tests/parity/mappings/sitemap_xml.toml"),
         "format = \"xml\"\nkey = [\"Address\"]\n[columns]\n\"Address\" = \"Address\"\n\"Lastmod\" = \"Lastmod\"\n",
     );
-    let xml = |crawl_date: &str, lastmod: &str| {
-        format!("<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'><url><loc>http://127.0.0.1:{}/fallback</loc><lastmod>{crawl_date}</lastmod></url><url><loc>http://127.0.0.1:{}/header</loc><lastmod>{lastmod}</lastmod></url></urlset>", repo.port, repo.port)
+    let xml = |base: &str, crawl_date: &str, lastmod: &str| {
+        format!("<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'><url><loc>{base}/fallback</loc><lastmod>{crawl_date}</lastmod></url><url><loc>{base}/header</loc><lastmod>{lastmod}</lastmod></url></urlset>")
     };
     for (kind, explicit_server) in [("default", false), ("default", true), ("images", false)] {
         write(&manifest, &format!("site = \"site-a\"\nport = {}\nexported_at = \"{reference_date}\"\n[[export]]\nref_file = \"sitemap.xml\"\nos = \"sitemap:{kind}\"\nmapping = \"sitemap_xml\"\nstatus = \"present\"\n", repo.port));
@@ -724,17 +724,17 @@ fn sitemap_crawl_dates_normalize_but_real_lastmod_differences_fail() {
             &repo
                 .root()
                 .join("tests/golden/parity/site-a/ref/sitemap.xml"),
-            &xml(reference_date, "2001-01-01"),
+            &xml("{BASE}", reference_date, "2001-01-01"),
         );
         for lastmod in ["2001-01-01", "2001-01-02", reference_date] {
-            let output = xml(&today, lastmod);
             let exporter = |req: &ExportRequest| {
                 let name = if kind == "images" {
                     "image-sitemap.xml"
                 } else {
                     "sitemap.xml"
                 };
-                write(&req.out_dir.join(name), &output);
+                let base = req.base_url.trim_end_matches('/');
+                write(&req.out_dir.join(name), &xml(base, &today, lastmod));
                 Ok(())
             };
             let result = run_sites(&repo.opts(&["site-a"], false), &exporter).unwrap();
@@ -755,7 +755,7 @@ fn sitemap_crawl_dates_normalize_but_real_lastmod_differences_fail() {
     let exporter = |req: &ExportRequest| {
         write(
             &req.out_dir.join("image-sitemap.xml"),
-            &xml(&today, "2001-01-01"),
+            &xml(req.base_url.trim_end_matches('/'), &today, "2001-01-01"),
         );
         Ok(())
     };
