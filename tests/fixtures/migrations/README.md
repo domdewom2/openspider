@@ -75,3 +75,8 @@ UI-Zustand und Crawl-Verwaltung über zwei App-Starts und pinnt die Bundle-ID.
 LaunchAgent-Präfix bleibt `de.openspider.task.`. OUT-232: der echte
 Dateiweiterleitungsadapter wird mit Archivdateien ohne WebView getestet; Fokus und
 Rückfragedialog des Betriebssystems bleiben der manuellen Prüfung M3-Q03 vorbehalten.
+
+Befund D01-01: Wiederholtes Öffnen derselben Altdatei nach Neustart darf nicht
+an einer vorhandenen Migrationskopie scheitern. Die App wählt inzwischen einen
+freien Namen (`.migrated-2.ospider` usw.); der Regressionstest bewahrt Original,
+bisherige Kopie und zusätzlich belegte Namen bytegleich.
