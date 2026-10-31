@@ -71,9 +71,30 @@ About 10× faster with a third of the memory. A local test site has no network l
 
 Memory for an open view over 5 million rows stays around 60 MB. The table never loads the whole crawl – it streams the visible window from the crawl file.
 
-## Quick start
+## Installation
 
-> OpenSpider is in active development. There are no installers yet – the headless CLI and the MCP server already work when built from source. The desktop app is coming with the alpha.
+Version 1.0 and the public beta are being prepared. The [download page](https://openspider.de/download/)
+contains clearly marked GitHub Releases asset URL templates and SHA256SUMS guidance;
+these templates are not live downloads. Desktop targets: macOS 13+ (Apple Silicon/Intel),
+Windows 10 1809+ / Windows 11 x64, and Windows on ARM via x64 emulation.
+Linux x86_64 with glibc supports the core and CLI only; Linux desktop,
+.deb/.rpm and arm64 releases remain unsupported.
+Homebrew and winget distribution are planned and not available yet.
+
+The [German user guide](website/site/handbuch/index.html) and
+[English user guide](website/site/en/manual/index.html) cover DMG, NSIS and silent MSI
+installation, Gatekeeper/SmartScreen, CLI/MCP, scheduling, updates and uninstalling.
+Automatic update checks send only version, OS and architecture to GitHub Releases
+(which sees the connection IP), without telemetry or crawl data. Disable them in
+Settings → Updates or with `OPENSPIDER_DISABLE_UPDATE_CHECK=1`.
+
+## Documentation
+
+- [Benutzerhandbuch (Deutsch)](website/site/handbuch/index.html)
+- [User guide (English)](website/site/en/manual/index.html)
+- [Agency beta instructions](website/site/en/beta/index.html) — you will receive the feedback channel with your invitation.
+
+### Build the CLI from source
 
 ```bash
 git clone https://github.com/domdewom2/openspider.git

@@ -61,6 +61,17 @@ for(const [file,text] of texts){
     if(ts.filter(t=>t.name==='h1').length!==1)fail(file,'expected exactly one h1');
     const lang=ts.find(t=>t.name==='html')?.a.lang;
     if(!['de','en'].includes(lang))fail(file,'expected de/en lang');
+    const visible=text.replace(/<!--[\s\S]*?-->/g,'');
+    if(/TODO\(|\b(?:OUT-\d+|M3-[A-Z0-9]+|A00)\b|Projektverantwortlich|project owner/i.test(visible))fail(file,'internal placeholder or project identifier on public page');
+    const guide=lang==='en'?'/en/manual/':'/handbuch/';
+    const footer=text.match(/<footer\b[^>]*>([\s\S]*?)<\/footer>/)?.[1]??'';
+    if(!tags(footer).some(t=>t.name==='a'&&t.a.href===guide))fail(file,'footer missing user guide');
+    if(['/download/','/en/download/'].includes(new URL(pageURL(file)).pathname)){
+        const header=text.match(/<header\b[^>]*>([\s\S]*?)<\/header>/)?.[1]??'';
+        const current=new URL(pageURL(file)).pathname;
+        if(!tags(header).some(t=>t.name==='a'&&t.a.href===current&&t.a['aria-current']==='page'))fail(file,'download navigation missing aria-current');
+        if(ts.some(t=>t.name==='a'&&t.a.href?.includes('VERSION')))fail(file,'download URL templates must be plain text');
+    }
     const alternates=ts.filter(t=>t.name==='link'&&t.a.rel==='alternate');
     for(const l of ['de','en'])if(alternates.filter(t=>t.a.hreflang===l).length!==1)fail(file,`expected one hreflang ${l}`);
     if(alternates.find(t=>t.a.hreflang===lang)?.a.href!==pageURL(file))fail(file,'hreflang self-reference missing');

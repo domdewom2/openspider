@@ -12,4 +12,8 @@
 <url><loc>https://openspider.de/en/faq/</loc><xhtml:link rel="alternate" hreflang="de" href="https://openspider.de/faq/"/><xhtml:link rel="alternate" hreflang="en" href="https://openspider.de/en/faq/"/></url>
 <url><loc>https://openspider.de/en/legal/</loc><xhtml:link rel="alternate" hreflang="de" href="https://openspider.de/impressum/"/><xhtml:link rel="alternate" hreflang="en" href="https://openspider.de/en/legal/"/></url>
 <url><loc>https://openspider.de/en/privacy/</loc><xhtml:link rel="alternate" hreflang="de" href="https://openspider.de/datenschutz/"/><xhtml:link rel="alternate" hreflang="en" href="https://openspider.de/en/privacy/"/></url>
+<url><loc>https://openspider.de/handbuch/</loc><xhtml:link rel="alternate" hreflang="de" href="https://openspider.de/handbuch/"/><xhtml:link rel="alternate" hreflang="en" href="https://openspider.de/en/manual/"/></url>
+<url><loc>https://openspider.de/en/manual/</loc><xhtml:link rel="alternate" hreflang="de" href="https://openspider.de/handbuch/"/><xhtml:link rel="alternate" hreflang="en" href="https://openspider.de/en/manual/"/></url>
+<url><loc>https://openspider.de/beta/</loc><xhtml:link rel="alternate" hreflang="de" href="https://openspider.de/beta/"/><xhtml:link rel="alternate" hreflang="en" href="https://openspider.de/en/beta/"/></url>
+<url><loc>https://openspider.de/en/beta/</loc><xhtml:link rel="alternate" hreflang="de" href="https://openspider.de/beta/"/><xhtml:link rel="alternate" hreflang="en" href="https://openspider.de/en/beta/"/></url>
 </urlset>
