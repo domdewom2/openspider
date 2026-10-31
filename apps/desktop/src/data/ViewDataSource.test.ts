@@ -12,6 +12,30 @@ function setup() {
   return { source: new ViewDataSource(fixture as ViewHandle, api), api };
 }
 describe("gen-ui-large", () => {
+  // spec: UI-145
+  // spec: UI-140
+  it("uses the open response's bounded initial window without a second IPC request", async () => {
+    const { api } = setup();
+    const initial: RowWindow = { viewId: fixture.viewId, version: fixture.version, offset: 0,
+      columns: fixture.columns.map(c => c.key),
+      rowKeys: Array.from({ length: 200 }, (_, i) => i + 1),
+      cells: Array.from({ length: 200 }, (_, i) => fixture.columns.map((_, col) => col === 0 ? i + 1 : "ready in open")) };
+    const source = new ViewDataSource({ ...fixture, initialRows: initial } as ViewHandle, api);
+    expect(source.getCell(1, 0)).toBe("ready in open");
+    await source.ensureRange(0, 29);
+    expect(api.rows).not.toHaveBeenCalled();
+    await source.ensureRow(200);
+    expect(api.rows).toHaveBeenCalledTimes(1);
+    await source.onViewChanged(2, fixture.total);
+    expect(source.getCell(1, 0)).not.toBe("ready in open");
+  });
+  // spec: UI-145
+  it("rejects an initial window belonging to a different generation", () => {
+    const { api } = setup();
+    const initial: RowWindow = { viewId: fixture.viewId, version: fixture.version + 1, offset: 0,
+      columns: fixture.columns.map(c => c.key), rowKeys: [1], cells: [fixture.row] };
+    expect(() => new ViewDataSource({ ...fixture, initialRows: initial } as ViewHandle, api)).toThrow("Invalid initial row window");
+  });
   // spec: UI-140
   it("deduplicates aligned 200-row blocks and fetches two screens of buffer", async () => {
     const { source, api } = setup();

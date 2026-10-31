@@ -40,6 +40,15 @@ export class ViewDataSource {
     this.version = handle.version;
     this.total = handle.total ?? 0;
     this.columns = handle.columns;
+    const initial = handle.initialRows;
+    if (initial) {
+      if (initial.viewId !== this.viewId || initial.version !== this.version || initial.offset !== 0
+        || initial.columns.join("\0") !== this.columns.map(c => c.key).join("\0")
+        || initial.rowKeys.length !== initial.cells.length || initial.cells.length > BLOCK_SIZE) {
+        throw new Error("Invalid initial row window");
+      }
+      this.blocks.set(0, { keys: initial.rowKeys, cells: initial.cells });
+    }
   }
   get cachedRows(): number { return [...this.blocks.values()].reduce((n, b) => n + b.keys.length, 0); }
   subscribe = (listener: () => void): (() => void) => {
