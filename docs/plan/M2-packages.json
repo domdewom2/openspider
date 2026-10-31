@@ -4645,7 +4645,12 @@
    "apps/desktop/e2e/n12/**",
    "docs/plan/M2-acceptance/e2e/befunde.md (nur Status U32-002/003)",
    "docs/plan/M2-acceptance/a11y/befunde.md (nur Status U30-F01/F03/F04)",
-   "docs/plan/M2-reports/n12.md"
+   "docs/plan/M2-reports/n12.md",
+   "apps/desktop/src/ui/primitives/ComboBox.tsx",
+   "apps/desktop/src/features/detail/frame/DetailFrame.tsx",
+   "apps/desktop/src/features/toptabs/TopTabs.tsx",
+   "apps/desktop/src/features/table/UpperTable.tsx",
+   "apps/desktop/e2e/** (Owns-Ausweitung für die Integration bestätigt)"
   ],
   "depends_on": [
    "M2-U30",
@@ -4653,7 +4658,7 @@
   ],
   "size": "S",
   "runner": "server+ci",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Clean-Room: nur docs/spec/* beschreibt das Soll; das Referenzprodukt nie nennen (nur „Referenz“), scripts/check-neutral.sh bleibt grün. Server-Ausführung: schwere Befehle mit `timeout 3600s nice -n 10`, Cargo `-j 8 --locked`. ARBEITSLISTE (K2-89/K2-90): (1) U32-002 – `.os-tab-label` aller drei Tab-Leisten: scrollHeight 17 > clientHeight 16 bei allen Faktoren und Größen; die Zeilenbox der Tab-Beschriftung ganzzahlig machen (line-height und Höhe in ganzen px, keine Bruchteil-Padding-Summe), Tab-Höhe nach M2-ui-concept 5 unverändert; U30 hat ganze 20-px-Zeilenboxen in TabBar eingeführt – darauf aufbauen. (2) Kappungsprüfung robust machen (visual/support.ts, polish/support.ts): gekappter Text wird am Textrechteck (Range.getBoundingClientRect der Textknoten) gegen das sichtbare Elementrechteck gemessen, Rundungstoleranz < 1 Gerätepixel; Ellipse mit vollem Tooltip/zugänglichem Namen bleibt erlaubt; die bestehenden Negativfälle (absichtlich gekappter Text, überlappende Controls, Ellipse ohne Namen) bleiben rot. Die erwarteten Fehler (`test.fail`) zu U32-002/003 entfallen danach; U32-003 (native select unter Linux-WebKit, 75×23 > 74×22) fällt unter die Toleranz oder wird mit Messwert gemeldet. (3) U30-F01 – `.os-grid-scroll` aus dem Tab-Zyklus nehmen (`tabIndex={-1}`), Grid bleibt einziger Einstieg; Tab/Shift+Tab in Chromium und WebKit gegenprüfen. (4) U30-F03 – Textfarbe der mittleren Priorität in Issues (hell) ≥ 4,5:1 mit Reserve. (5) U30-F04 – Segment-Buttons (dunkel) auf den gemeinsamen Button oder Theme-Tokens umstellen, Forced Colors prüfen. NACHWEIS: U30-Suite a11y (beide Browser, 0 critical/serious, Tabfolge grün), U32 layout.spec.ts ohne erwartete Fehler bei 1 024 × 640/1 440 × 900/1 920 × 1 080, vier Skalierungen, de/en, hell/dunkel; macOS/Windows über die CI-Matrix (Lauf-ID im Bericht). Baselines nur neu erzeugen, wenn sich die Tab-Darstellung sichtbar ändert, mit Begründung im Commit (Baselines gehören U32; Änderung melden statt selbst committen). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Clean-Room: nur docs/spec/* beschreibt das Soll; das Referenzprodukt nie nennen (nur „Referenz“), scripts/check-neutral.sh bleibt grün. Server-Ausführung: schwere Befehle mit `timeout 3600s nice -n 10`, Cargo `-j 8 --locked`. ARBEITSLISTE (K2-89/K2-90): (1) U32-002 – `.os-tab-label` aller drei Tab-Leisten: scrollHeight 17 > clientHeight 16 bei allen Faktoren und Größen; die Zeilenbox der Tab-Beschriftung ganzzahlig machen (line-height und Höhe in ganzen px, keine Bruchteil-Padding-Summe), Tab-Höhe nach M2-ui-concept 5 unverändert; U30 hat ganze 20-px-Zeilenboxen in TabBar eingeführt – darauf aufbauen. (2) Kappungsprüfung robust machen (visual/support.ts, polish/support.ts): gekappter Text wird am Textrechteck (Range.getBoundingClientRect der Textknoten) gegen das sichtbare Elementrechteck gemessen, Rundungstoleranz < 1 Gerätepixel; Ellipse mit vollem Tooltip/zugänglichem Namen bleibt erlaubt; die bestehenden Negativfälle (absichtlich gekappter Text, überlappende Controls, Ellipse ohne Namen) bleiben rot. Die erwarteten Fehler (`test.fail`) zu U32-002/003 entfallen danach; U32-003 (native select unter Linux-WebKit, 75×23 > 74×22) fällt unter die Toleranz oder wird mit Messwert gemeldet. (3) U30-F01 – `.os-grid-scroll` aus dem Tab-Zyklus nehmen (`tabIndex={-1}`), Grid bleibt einziger Einstieg; Tab/Shift+Tab in Chromium und WebKit gegenprüfen. (4) U30-F03 – Textfarbe der mittleren Priorität in Issues (hell) ≥ 4,5:1 mit Reserve. (5) U30-F04 – Segment-Buttons (dunkel) auf den gemeinsamen Button oder Theme-Tokens umstellen, Forced Colors prüfen. NACHWEIS: U30-Suite a11y (beide Browser, 0 critical/serious, Tabfolge grün), U32 layout.spec.ts ohne erwartete Fehler bei 1 024 × 640/1 440 × 900/1 920 × 1 080, vier Skalierungen, de/en, hell/dunkel; macOS/Windows über die CI-Matrix (Lauf-ID im Bericht). Baselines nur neu erzeugen, wenn sich die Tab-Darstellung sichtbar ändert, mit Begründung im Commit (Baselines gehören U32; Änderung melden statt selbst committen). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. Integrationsrunde 17: Owns-Ausweitung auf ComboBox, DetailFrame, TopTabs, UpperTable und e2e/* bestätigt; Tabellenbenennung ohne Tab-Leiste erhalten und Geometrie atomar in einem evaluate messen."
  },
  {
   "id": "M2-N13",
@@ -4709,7 +4714,8 @@
    "M2-N04",
    "M2-Q02b",
    "M2-N12",
-   "M2-N13"
+   "M2-N13",
+   "M2-N14"
   ],
   "size": "M",
   "runner": "cloud",
