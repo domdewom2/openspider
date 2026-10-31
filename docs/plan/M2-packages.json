@@ -4796,5 +4796,136 @@
   "size": "S",
   "runner": "server+ci",
   "prompt_notes": "Regeln M2.md Abschnitt 2/2a. os-testsite, os-cli und os-parity vor E2E bauen; AppleKeyboardUIMode für Playwright-WebKit auf macOS setzen. Keine Produkt- oder Teständerung. Native CI-Nachweise durch den Orchestrator ergänzen."
+ },
+ {
+  "id": "M2-N15F",
+  "kind": "package",
+  "model": "codex",
+  "title": "Speicherfreigabe ohne mimalloc",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "PERF-001",
+   "PERF-003"
+  ],
+  "owns": [
+   "crates/os-engine/src/writer_thread.rs",
+   "crates/os-store/src/profile.rs",
+   "crates/os-loadtest/**",
+   "docs/plan/M2-reports/n15.md"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "M",
+  "runner": "server+ci",
+  "prompt_notes": "Fable N15F approved; ersetzt den verworfenen mimalloc-Ansatz N15. In N20-final enthalten (b35f00ef). Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-N19",
+  "kind": "package",
+  "model": "codex",
+  "title": "PERF-001-Diagnose und HTML-Bereitschaft im beta_n04-Test",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "PERF-001",
+   "PERF-009"
+  ],
+  "owns": [
+   "crates/os-loadtest/src/engine.rs",
+   "crates/os-app/tests/beta_n04.rs",
+   "docs/plan/M2-reports/n19.md"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "M",
+  "runner": "server+ci",
+  "prompt_notes": "Diagnosefelder additiv zu N15F/N20 erhalten, keine Umbenennung. HTML-Wartebedingung statt vorzeitiger Bereitschaft durch robots.txt; keine Grenzwertänderung. macOS-Ursachenklärung bleibt offen. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-N20",
+  "kind": "package",
+  "model": "codex",
+  "title": "Speicherbudgets für Engine- und Writer-Nutzdaten",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "PERF-003"
+  ],
+  "owns": [
+   "crates/os-engine/src/**",
+   "crates/os-store/src/sink.rs",
+   "crates/os-loadtest/**",
+   "docs/plan/M2-reports/n20.md"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "M",
+  "runner": "server+ci",
+  "prompt_notes": "Fable approved mit Auflagen. Baut auf N15F auf; sequenzielle Integration innerhalb 4n ausdrücklich erlaubt (int-22), kein paralleler Dateibesitz. Steuer-Nachrichten in crawl.rs select! nicht wartend senden: offene Folgeauflage, nicht Teil int-22. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-N21",
+  "kind": "package",
+  "model": "codex",
+  "title": "View-Lebenszyklus, Öffnen, Tabwechsel und Seitenleiste",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-140",
+   "UI-141",
+   "UI-142",
+   "UI-145",
+   "UI-147"
+  ],
+  "owns": [],
+  "depends_on": [
+   "M2-U31"
+  ],
+  "size": "M",
+  "runner": "server+ci",
+  "prompt_notes": "Vormerkung int-22, Umsetzung läuft separat und wird hier nicht integriert. Owns werden mit der konkreten Paketabnahme ergänzt; dieser Eintrag reserviert noch keine Dateien. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-N22",
+  "kind": "package",
+  "model": "codex",
+  "title": "Kern: Sortieren, Filtern und Suchen",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-141"
+  ],
+  "owns": [],
+  "depends_on": [
+   "M2-U31"
+  ],
+  "size": "M",
+  "runner": "server+ci",
+  "prompt_notes": "Vormerkung int-22, Umsetzung läuft separat und wird hier nicht integriert. Owns werden mit der konkreten Paketabnahme ergänzt; dieser Eintrag reserviert noch keine Dateien. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-N23",
+  "kind": "package",
+  "model": "codex",
+  "title": "Renderer-CPU, UI-Speicher und Visualisierungen",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-140",
+   "UI-143",
+   "UI-144",
+   "UI-146"
+  ],
+  "owns": [],
+  "depends_on": [
+   "M2-U31"
+  ],
+  "size": "M",
+  "runner": "server+ci",
+  "prompt_notes": "Vormerkung int-22, Umsetzung läuft separat und wird hier nicht integriert. Owns werden mit der konkreten Paketabnahme ergänzt; dieser Eintrag reserviert noch keine Dateien. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
  }
 ]

@@ -58,6 +58,12 @@ NICHT_M2 = {
 
 # Gewollte Überschneidungen innerhalb einer Welle (Paar → Grund).
 ERLAUBT = {
+    frozenset({"M2-N04", "M2-N19"}): "int-22: N04 bereits integriert; N19 korrigiert nur die HTML-Bereitschaft in beta_n04",
+    frozenset({"M2-N04", "M2-N20"}): "int-22: N04 bereits integriert; N20 ergänzt danach Engine-Speicherbudgets",
+    frozenset({"M2-N13", "M2-N20"}): "int-22: N13 bereits integriert; N20-Engine-Owns umfassen den bestehenden Fixture-Helfer",
+    frozenset({"M2-N15F", "M2-N20"}): "int-22: N20 baut auf integriertem N15F auf; os-engine und os-loadtest bewusst sequenziell",
+    frozenset({"M2-N15F", "M2-N19"}): "int-22: additive os-loadtest-Diagnose, beide Feldmengen erhalten",
+    frozenset({"M2-N19", "M2-N20"}): "int-22: additive os-loadtest-Diagnose, beide Feldmengen erhalten",
     frozenset({"M2-N04", "M2-N12"}): "Integrationsrunde 17: N04 bereits integriert; N12-Owns-Ausweitung auf UpperTable und e2e/* vom Orchestrator ausdrücklich bestätigt",
     frozenset({"M2-U31", "M2-U32"}): "e2e-b/** ohne perf (U32) vs. e2e-b/perf/** (U31)",
     frozenset({"M2-N07", "M2-N08"}): "os-model config.rs nur SpiderConfig (N07) vs. nur ContentAreaConfig (N08); Schema und default.osconfig nur Neuerzeugung (K2-83)",
