@@ -212,36 +212,60 @@ async fn data_settings_ask_keep_reload_and_limits_do_not_invalidate() {
     h.server.stop().await;
 }
 // spec: INTEG-002
-#[tokio::test]
-async fn profile_never_contains_secrets_and_remove_account_clears_secret_store() {
-    let h = Harness::new().await;
-    h.connect().await;
-    let settings = h
-        .call("api.getSettings", json!({"kind":"psi"}))
-        .await
-        .unwrap();
-    assert!(!settings
-        .to_string()
-        .contains(fixture()["secret"].as_str().unwrap()));
-    let mut malicious = settings;
-    malicious["values"]["api_key"] = fixture()["secret"].clone();
-    assert_eq!(
-        h.call(
-            "api.setSettings",
-            json!({"kind":"psi","settings":malicious})
-        )
-        .await
-        .unwrap_err()
-        .code,
-        ErrorCode::InvalidInput
-    );
+#[test]
+fn profile_never_contains_secrets_and_remove_account_clears_secret_store() {
+    // Windows enforces SQLite byte-range locks against raw filesystem reads.
+    // Stop the fixture runtime (including startup jobs) before scanning every
+    // persisted byte. Keep credentials intact until after this offline scan.
+    let (dir, config) = {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        runtime.block_on(async {
+            let h = Harness::new().await;
+            h.connect().await;
+            let settings = h
+                .call("api.getSettings", json!({"kind":"psi"}))
+                .await
+                .unwrap();
+            assert!(!settings
+                .to_string()
+                .contains(fixture()["secret"].as_str().unwrap()));
+            let mut malicious = settings;
+            malicious["values"]["api_key"] = fixture()["secret"].clone();
+            assert_eq!(
+                h.call(
+                    "api.setSettings",
+                    json!({"kind":"psi","settings":malicious})
+                )
+                .await
+                .unwrap_err()
+                .code,
+                ErrorCode::InvalidInput
+            );
+            let conn = h
+                .app
+                .read_pool()
+                .run(h.key.clone(), |file, _| Ok(file.config().unwrap()))
+                .await
+                .unwrap();
+            assert!(!serde_json::to_string(&conn)
+                .unwrap()
+                .contains(fixture()["secret"].as_str().unwrap()));
+            let config = h.app.config().clone();
+            h.server.stop().await;
+            (h._dir, config)
+        })
+    };
     fn scan(path: &std::path::Path, secret: &[u8]) {
         if path.is_dir() {
             for entry in std::fs::read_dir(path).unwrap() {
                 scan(&entry.unwrap().path(), secret);
             }
         } else if path.is_file() {
-            let bytes = std::fs::read(path).unwrap();
+            let bytes =
+                std::fs::read(path).unwrap_or_else(|error| panic!("{}: {error}", path.display()));
             assert!(
                 !bytes.windows(secret.len()).any(|w| w == secret),
                 "Geheimnis in {}",
@@ -249,26 +273,27 @@ async fn profile_never_contains_secrets_and_remove_account_clears_secret_store()
             );
         }
     }
-    for path in h.app.config().paths.all() {
+    assert!(config.secrets.get("api/psi").is_some());
+    for path in config.paths.all() {
         scan(path, fixture()["secret"].as_str().unwrap().as_bytes());
     }
-    let conn = h
-        .app
-        .read_pool()
-        .run(h.key.clone(), |file, _| Ok(file.config().unwrap()))
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    runtime.block_on(async {
+        let app = App::new(config).unwrap();
+        app.dispatch(
+            CallCtx::for_window("main"),
+            "api.removeAccount",
+            json!({"kind":"psi","accountId":"default"}),
+        )
         .await
         .unwrap();
-    assert!(!serde_json::to_string(&conn)
-        .unwrap()
-        .contains(fixture()["secret"].as_str().unwrap()));
-    h.call(
-        "api.removeAccount",
-        json!({"kind":"psi","accountId":"default"}),
-    )
-    .await
-    .unwrap();
-    assert!(h.app.config().secrets.get("api/psi").is_none());
-    h.server.stop().await;
+        assert!(app.config().secrets.get("api/psi").is_none());
+    });
+    drop(runtime);
+    drop(dir);
 }
 // spec: INTEG-019
 #[tokio::test]
