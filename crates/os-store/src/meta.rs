@@ -120,13 +120,18 @@ impl CrawlFile {
 
     /// Setzt einen `crawl_meta`-Schlüssel (Upsert).
     pub fn set_meta(&self, key: &str, value: &str) -> Result<(), StoreError> {
-        self.conn().execute(
-            "INSERT INTO crawl_meta (key, value) VALUES (?1, ?2) \
-             ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-            [key, value],
-        )?;
-        Ok(())
+        set_meta(self.conn(), key, value)
     }
+}
+
+/// Metadata update on an already validated writer connection (no reopen or writer stamp).
+pub fn set_meta(conn: &rusqlite::Connection, key: &str, value: &str) -> Result<(), StoreError> {
+    conn.execute(
+        "INSERT INTO crawl_meta (key, value) VALUES (?1, ?2) \
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        [key, value],
+    )?;
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------------------------------------------

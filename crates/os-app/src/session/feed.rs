@@ -444,6 +444,77 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
     Ok(())
 }
 
+// Control acknowledgements use the joined engine's durable progress. They must
+// not queue behind aggregate rebuilds or a process-wide memory sample (Windows).
+// Keep the feed cursor's sequence untouched so the next poll still refreshes rows.
+pub(super) fn settled(app: &App, s: &SessionInfo, progress: &Progress) {
+    let service = app.ext::<SessionService>();
+    let mut feeds = service.feeds.lock().unwrap_or_else(|p| p.into_inner());
+    let cursor = feeds.entry(s.key.clone()).or_default();
+    let mode = cursor
+        .status
+        .as_ref()
+        .map_or(mode(s.config.mode), |s| s.mode);
+    let mut status = from_progress(
+        s.key.0.clone(),
+        mode,
+        CrawlOwner {
+            kind: OwnerKind::App,
+            pid: None,
+            live: false,
+            controllable: s.writable,
+        },
+        progress,
+    );
+    status.active_threads = 0;
+    status.rate = 0.0;
+    if progress.state == CrawlState::Completed {
+        status.percent = completed_percent(
+            status.percent,
+            progress.end_reason,
+            status.crawled,
+            status.queued,
+        );
+    }
+    cursor.status = Some(status.clone());
+    cursor.last = None;
+    service
+        .parts
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .crawl = Some(status);
+}
+
+pub(super) fn stopped(app: &App, s: &SessionInfo) -> bool {
+    let service = app.ext::<SessionService>();
+    let mut feeds = service.feeds.lock().unwrap_or_else(|p| p.into_inner());
+    let Some(cursor) = feeds.get_mut(&s.key) else {
+        return false;
+    };
+    let Some(status) = cursor.status.as_mut() else {
+        return false;
+    };
+    status.phase = CrawlPhase::Completed;
+    status.end_reason = Some("stopped".into());
+    status.percent = completed_percent(
+        status.percent,
+        Some(os_model::EndReason::Stopped),
+        status.crawled,
+        status.queued,
+    );
+    status.active_threads = 0;
+    status.rate = 0.0;
+    status.owner.live = false;
+    status.owner.pid = None;
+    cursor.last = None;
+    service
+        .parts
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .crawl = Some(status.clone());
+    true
+}
+
 pub fn invalidate(app: &App, key: &CrawlKey) {
     if let Some(cursor) = app
         .ext::<SessionService>()
