@@ -37,6 +37,9 @@ test("starts, pauses, resumes and clears a saved crawl through the bridge contra
   if (!address || typeof address === "string") throw new Error("Fixture address missing");
   try {
     await app.open(page, "main");
+    await expect(page.locator("[data-shell-ready]")).toHaveAttribute("data-shell-ready", "true");
+    // Restrict control queries to the header: the live Overview has thousands of buttons.
+    const header = page.getByTestId("crawl-header");
     if (app.mode === "mock") await page.evaluate((base) => {
       const core = window.__osMock!;
       let seq = 1;
@@ -53,13 +56,14 @@ test("starts, pauses, resumes and clears a saved crawl through the bridge contra
     await page.getByLabel("Start URL").press("Enter");
     await expect(page.getByTestId("crawl-phase")).toHaveText("Running");
     // K2-63/K2-77: primary control is Pause for a running crawl.
-    await expect(page.getByRole("button", { name: "Start", exact: true })).toHaveCount(0);
-    await page.getByRole("button", { name: "Pause", exact: true }).click();
+    await expect(header.getByRole("button", { name: "Start", exact: true })).toHaveCount(0);
+    await header.getByRole("button", { name: "Pause", exact: true }).click();
     await expect(page.getByTestId("crawl-phase")).toHaveText("Paused", slow);
-    await page.getByRole("button", { name: "Resume", exact: true }).click();
+    await header.getByRole("button", { name: "Resume", exact: true }).click();
     await expect(page.getByTestId("crawl-phase")).toHaveText("Running", slow);
-    await page.getByRole("button", { name: "Pause", exact: true }).click();
-    await page.getByRole("button", { name: "Clear", exact: true }).click();
+    await header.getByRole("button", { name: "Pause", exact: true }).click();
+    await expect(page.getByTestId("crawl-phase")).toHaveText("Paused", slow);
+    await header.getByRole("button", { name: "Clear", exact: true }).click();
     await expect(page.getByTestId("crawl-phase")).toHaveText("Ready", slow);
     await expect(page.getByRole("dialog")).toHaveCount(0);
   } finally { await new Promise<void>((resolve, reject) => server.close((e) => e ? reject(e) : resolve())); }
