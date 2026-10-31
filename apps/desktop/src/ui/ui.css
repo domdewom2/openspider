@@ -162,9 +162,10 @@ html[data-accent-warn="on"] .os-btn-primary { outline:var(--os-line) solid var(-
 .os-progress { display:block; width:100%; }
 .os-progress-track { height:var(--os-size-4); background:var(--os-border); border-radius:var(--os-focus-width); overflow:hidden; }
 .os-progress-fill { height:100%; background:var(--os-accent); }
-.os-progress[aria-valuenow] .os-progress-fill { transition:width 0.25s; }
+.os-progress[aria-valuenow] .os-progress-fill { width:100%; transform-origin:left; transition:transform 0.25s; }
 .os-progress:not([aria-valuenow]) .os-progress-fill { width:35%; animation:os-indeterminate 1.2s ease-in-out infinite alternate; }
-@keyframes os-indeterminate { from { margin-left:0; } to { margin-left:65%; } }
+/* Translate relative to the 35% fill: 65 / 35 keeps the original travel distance. */
+@keyframes os-indeterminate { from { transform:translateX(0); } to { transform:translateX(185.7142857142857%); } }
 .os-badge { display:inline-flex; align-items:center; padding:0 var(--os-size-8); height:var(--os-size-16); border-radius:var(--os-size-8); font-size:var(--os-font-small); line-height:1.4; border:var(--os-line) solid var(--os-border-strong); }
 .os-badge-accent { background:var(--os-accent); border-color:var(--os-accent); color:var(--os-text-on-accent); }
 
