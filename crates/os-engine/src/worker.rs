@@ -153,7 +153,7 @@ pub(crate) async fn process<F: Fetch>(sh: Arc<Shared<F>>, item: QueueItem) {
     };
     let started = std::time::Instant::now();
     // Keep the per-URL state machine off the polling thread's small stack.
-    let outcome = Box::pin(run_item(&sh, &item)).await;
+    let outcome = crate::heap(|| run_item(&sh, &item)).await;
     diag::inc(&diag::STATS.items);
     diag::add(&diag::STATS.item_ns, started);
     match outcome {
@@ -190,28 +190,28 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         return Ok(());
     }
     // Optional fetcher policy: preserve an explicit target denial instead of masking it as robots failure.
-    if record_target_denial(sh, item, &url).await? {
+    if crate::heap(|| record_target_denial(sh, item, &url)).await? {
         return Ok(());
     }
     // 1. robots.txt
     let t = std::time::Instant::now();
-    let check = Box::pin(sh.gate.check(&*sh.fetcher, &url)).await;
+    let check = crate::heap(|| sh.gate.check(&*sh.fetcher, &url)).await;
     diag::add(&diag::STATS.robots_ns, t);
     let mut sitemap_seeds = Vec::new();
     if let Some((fetch_result, write)) = check.robots_fetch {
-        sitemap_seeds = record_robots(sh, fetch_result, write).await?;
+        sitemap_seeds = crate::heap(|| record_robots(sh, fetch_result, write)).await?;
     }
     if sh.ctl.stop.load(Ordering::SeqCst) != STOP_NONE {
         sh.lock_core().requeue(item.clone());
         return Ok(());
     }
     // DNS may have changed while robots.txt was fetched; check the policy again before its decision.
-    if record_target_denial(sh, item, &url).await? {
+    if crate::heap(|| record_target_denial(sh, item, &url)).await? {
         return Ok(());
     }
     match &check.decision {
         RobotsDecision::Blocked { .. } => {
-            crate::robots_glue::record_blocked(sh, item, &check.decision).await?;
+            crate::heap(|| crate::robots_glue::record_blocked(sh, item, &check.decision)).await?;
             return Ok(());
         }
         RobotsDecision::Allowed | RobotsDecision::ReportOnly { .. } => {}
@@ -264,7 +264,7 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
     }
     // 3. Auswertung
     let t = std::time::Instant::now();
-    let mut analysis = Box::pin(analyze(sh, item, &url, &result)).await;
+    let mut analysis = crate::heap(|| analyze(sh, item, &url, &result)).await;
     diag::add(&diag::STATS.analyze_ns, t);
     if let RobotsDecision::ReportOnly {
         would_block,
@@ -283,10 +283,10 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         .response_time_ms
         .filter(|_| analysis.facts.status_code != 0);
     let t = std::time::Instant::now();
-    let batch = Box::pin(assemble(sh, item, analysis)).await?;
+    let batch = crate::heap(|| assemble(sh, item, analysis)).await?;
     diag::add(&diag::STATS.assemble_ns, t);
     let t = std::time::Instant::now();
-    sh.writer.send(batch).await?;
+    crate::heap(|| sh.writer.send(batch)).await?;
     diag::add_max(&diag::STATS.send_ns, &diag::STATS.send_max_ns, t);
     sh.progress
         .lock()
@@ -297,7 +297,7 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
     // 6. Sitemaps aus der robots.txt – nicht mehr, wenn schon pausiert oder gestoppt wird: nach der Pause
     // keine neuen Abrufe (CRAWL-126). Beim Fortsetzen leitet das robots-Gate die Adressen erneut ab.
     if !sitemap_seeds.is_empty() && sh.ctl.stop.load(Ordering::SeqCst) == STOP_NONE {
-        ingest_sitemaps(sh, sitemap_seeds).await?;
+        crate::heap(|| ingest_sitemaps(sh, sitemap_seeds)).await?;
     }
     Ok(())
 }
@@ -311,9 +311,9 @@ async fn record_target_denial<F: Fetch>(
     let Some(result) = sh.fetcher.target_denial(url).await else {
         return Ok(false);
     };
-    let analysis = analyze(sh, item, url, &result).await;
-    let batch = assemble(sh, item, analysis).await?;
-    sh.writer.send(batch).await?;
+    let analysis = crate::heap(|| analyze(sh, item, url, &result)).await;
+    let batch = crate::heap(|| assemble(sh, item, analysis)).await?;
+    crate::heap(|| sh.writer.send(batch)).await?;
     sh.progress
         .lock()
         .unwrap_or_else(|p| p.into_inner())
@@ -2699,5 +2699,39 @@ mod tests {
             .queue
             .iter()
             .any(|q| matches!(q, QueueOp::Push { id, .. } if *id == fr.id)));
+    }
+}
+
+#[cfg(test)]
+mod future_size_tests {
+    use super::*;
+    use std::{future::Future, mem::size_of};
+
+    fn future_size<A, F: Future>(_: impl FnOnce(A) -> F) -> usize {
+        size_of::<F>()
+    }
+
+    // spec: AGENT-020 [M2]
+    // spec: CRAWL-001
+    #[test]
+    fn url_worker_futures_have_bounded_size() {
+        let process_bytes = future_size(|(sh, item)| process::<os_fetch::HttpFetcher>(sh, item));
+        let item_bytes = future_size(
+            |(sh, item): (
+                &'static Arc<Shared<os_fetch::HttpFetcher>>,
+                &'static QueueItem,
+            )| run_item(sh, item),
+        );
+        eprintln!("URL process future: {process_bytes} bytes; run_item: {item_bytes} bytes");
+        // `process` is spawned per URL; `run_item` keeps its phases (robots, fetch, analysis,
+        // batch) behind heap pointers instead of inline (13.9 KiB before, x86_64 debug).
+        assert!(
+            process_bytes <= 1024,
+            "URL process future: {process_bytes} bytes exceeds 1 KiB"
+        );
+        assert!(
+            item_bytes <= 8 * 1024,
+            "URL item future: {item_bytes} bytes exceeds 8 KiB"
+        );
     }
 }
