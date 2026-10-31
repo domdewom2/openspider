@@ -1,4 +1,6 @@
 //! NTLMv2 for HTTP, MS-NLMP 2.2.1 and 3.3.2. No NTLMv1 downgrade.
+use hmac::{Hmac, KeyInit, Mac};
+use md4::Md4;
 use md5::{Digest, Md5};
 
 /// Consume a challenge without buffering an untrusted response body.
@@ -37,19 +39,9 @@ fn field(out: &mut Vec<u8>, at: usize, value: &[u8]) -> Option<()> {
     Some(())
 }
 fn hmac(key: &[u8], data: &[u8]) -> [u8; 16] {
-    let mut block = [0u8; 64];
-    if key.len() > 64 {
-        block[..16].copy_from_slice(&Md5::digest(key));
-    } else {
-        block[..key.len()].copy_from_slice(key);
-    }
-    let mut inner = Md5::new();
-    inner.update(block.map(|b| b ^ 0x36));
-    inner.update(data);
-    let mut outer = Md5::new();
-    outer.update(block.map(|b| b ^ 0x5c));
-    outer.update(inner.finalize());
-    outer.finalize().into()
+    let mut mac = Hmac::<Md5>::new_from_slice(key).expect("HMAC accepts keys of any length");
+    mac.update(data);
+    mac.finalize().into_bytes().into()
 }
 /// Inputs for time and nonce are supplied by the caller, so vectors are reproducible.
 pub(crate) fn authenticate(
@@ -140,58 +132,9 @@ pub(crate) fn authenticate(
     Some(out)
 }
 
-// RFC 1320 compression, used only by the NTLM password transform.
+// NTOWFv1 password transform from MS-NLMP 3.3.1, implemented by RustCrypto.
 fn md4(input: &[u8]) -> [u8; 16] {
-    let mut padded = input.to_vec();
-    padded.push(0x80);
-    while padded.len() % 64 != 56 {
-        padded.push(0);
-    }
-    padded.extend_from_slice(&(input.len() as u64 * 8).to_le_bytes());
-    let mut state = [0x67452301u32, 0xefcdab89, 0x98badcfe, 0x10325476];
-    for block in padded.as_chunks::<64>().0 {
-        let words: Vec<u32> = block
-            .as_chunks::<4>()
-            .0
-            .iter()
-            .map(|w| u32::from_le_bytes(*w))
-            .collect();
-        let mut v = state;
-        for round in 0..3 {
-            for step in 0..16 {
-                let a = (16 - step) % 4;
-                let [b, c, d] = [v[(a + 1) % 4], v[(a + 2) % 4], v[(a + 3) % 4]];
-                let (f, k, add, rotation) = match round {
-                    0 => ((b & c) | (!b & d), step, 0, [3, 7, 11, 19][step % 4]),
-                    1 => (
-                        (b & c) | (b & d) | (c & d),
-                        (step % 4) * 4 + step / 4,
-                        0x5a827999,
-                        [3, 5, 9, 13][step % 4],
-                    ),
-                    _ => (
-                        b ^ c ^ d,
-                        [0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15][step],
-                        0x6ed9eba1,
-                        [3, 9, 11, 15][step % 4],
-                    ),
-                };
-                v[a] = v[a]
-                    .wrapping_add(f)
-                    .wrapping_add(words[k])
-                    .wrapping_add(add)
-                    .rotate_left(rotation);
-            }
-        }
-        for i in 0..4 {
-            state[i] = state[i].wrapping_add(v[i]);
-        }
-    }
-    let mut out = [0; 16];
-    for i in 0..4 {
-        out[i * 4..i * 4 + 4].copy_from_slice(&state[i].to_le_bytes());
-    }
-    out
+    Md4::digest(input).into()
 }
 
 pub(crate) fn decode(value: &str) -> Option<Vec<u8>> {
@@ -220,6 +163,9 @@ pub(crate) fn decode(value: &str) -> Option<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    // MS-NLMP 4.2.2.1.2 (NTOWFv1), 4.2.4.1.1 (NTOWFv2), plus RFC 1320/2202.
+    // https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/7795bd0e-fd5e-43ec-bd9c-994704d8ee26
+    // spec: CRAWL-121 [M3]
     // spec: OUT-223
     #[test]
     fn ntlm_password_and_response_key_match_published_vectors() {
@@ -243,5 +189,52 @@ mod tests {
             "9294727a3638bb1c13f48ef8158bfc9d"
         );
         assert!(authenticate(b"invalid", "user", "password", [0; 8], 0).is_none());
+    }
+
+    // MS-NLMP 4.2.4.1.2 and 4.2.4.2.1–2, with the example's fixed time and nonces.
+    // https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-nlmp/54973495-20d2-49e8-9925-c399a403ed4a
+    // spec: CRAWL-121 [M3]
+    #[test]
+    fn ntlm_v2_response_and_session_key_match_specification() {
+        let info =
+            hex::decode("02000c0044006f006d00610069006e0001000c0053006500720076006500720000000000")
+                .unwrap();
+        let mut challenge = vec![0; 48];
+        challenge[..12].copy_from_slice(b"NTLMSSP\0\x02\0\0\0");
+        challenge[20..24].copy_from_slice(&0x0088_0201u32.to_le_bytes());
+        challenge[24..32].copy_from_slice(&hex::decode("0123456789abcdef").unwrap());
+        let len = u16::try_from(info.len()).unwrap().to_le_bytes();
+        challenge[40..42].copy_from_slice(&len);
+        challenge[42..44].copy_from_slice(&len);
+        challenge[44..48].copy_from_slice(&48u32.to_le_bytes());
+        challenge.extend(info);
+        let message = authenticate(&challenge, "Domain\\User", "Password", [0xaa; 8], 0).unwrap();
+        assert_eq!(
+            hex::encode(buffer(&message, 12).unwrap()),
+            "86c35097ac9cec102554764a57cccc19aaaaaaaaaaaaaaaa"
+        );
+        let response = buffer(&message, 20).unwrap();
+        assert_eq!(
+            hex::encode(&response[..16]),
+            "68cd0ab851e51c96aabc927bebef6a1c"
+        );
+        let key = hmac(&md4(&utf16("Password")), &utf16("USERDomain"));
+        assert_eq!(
+            hex::encode(hmac(&key, &response[..16])),
+            "8de40ccadbc14a82f15cb0ad0de95ca3"
+        );
+    }
+
+    // RFC 2202 test case 6 exercises HMAC's long-key hashing path.
+    // spec: CRAWL-121 [M3]
+    #[test]
+    fn hmac_md5_accepts_keys_longer_than_one_block() {
+        assert_eq!(
+            hex::encode(hmac(
+                &[0xaa; 80],
+                b"Test Using Larger Than Block-Size Key - Hash Key First"
+            )),
+            "6b1ab7fe4bd7bf8f0b62e6ce61b9d0cd"
+        );
     }
 }

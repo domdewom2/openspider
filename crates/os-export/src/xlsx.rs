@@ -234,6 +234,7 @@ fn to_cell(kind: ColumnKind, v: &Value) -> Cell {
 
 /// Zeilenweiser XLSX-Schreiber.
 pub struct XlsxWriter {
+    header_labels: std::collections::BTreeMap<String, String>,
     path: PathBuf,
     workbook: Workbook,
     base_name: String,
@@ -262,6 +263,7 @@ impl XlsxWriter {
         }
         let name = sheet_name(sheet);
         let mut w = XlsxWriter {
+            header_labels: opts.header_labels.clone(),
             path: path.to_path_buf(),
             workbook: deterministic_workbook(),
             base_name: name.clone(),
@@ -361,7 +363,7 @@ impl TableWriter for XlsxWriter {
                 columns.len()
             )));
         }
-        self.header = Some(crate::csv::header_labels(columns));
+        self.header = Some(crate::csv::header_labels(columns, &self.header_labels));
         self.write_header_row()
     }
 

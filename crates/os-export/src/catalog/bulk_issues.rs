@@ -126,12 +126,25 @@ pub fn export(
     out_dir: &Path,
     format: Format,
 ) -> Result<Vec<ExportFileInfo>, ExportError> {
-    Ok(export_in(
+    export_with_options(file, cfg, out_dir, format, &writer_options(cfg))
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_with_options(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    out_dir: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<Vec<ExportFileInfo>, ExportError> {
+    Ok(export_in_with_options(
         &tabs::configured_for_file(cfg, file),
         file,
         cfg,
         out_dir,
         format,
+        opts,
     )?
     .files)
 }
@@ -207,12 +220,14 @@ struct Ctx<'a> {
 }
 
 /// Schreibt die Ansicht eines Filters in eine Datei.
-fn write_view(
+#[allow(clippy::too_many_arguments)]
+fn write_view_with_options(
     cx: &Ctx<'_>,
     tab: &TabDef,
     filter: &str,
     path: &Path,
     sheet: &str,
+    opts: &crate::types::WriterOptions,
 ) -> Result<ExportFileInfo, ExportError> {
     let Ctx {
         tabs,
@@ -226,7 +241,7 @@ fn write_view(
     probe.limit = 1;
     let columns = query_view_in(tabs, file, cfg, &probe)?.columns;
     let kinds = kinds_for(tab, &columns);
-    let mut writer = open_writer(path, format, sheet, &writer_options(cfg))?;
+    let mut writer = open_writer(path, format, sheet, opts)?;
     writer.header(&columns)?;
     let mut failure: Option<ExportError> = None;
     let streamed = stream_view_in(tabs, file, cfg, &query, &mut |values| {
@@ -277,6 +292,19 @@ pub fn export_in(
     out_dir: &Path,
     format: Format,
 ) -> Result<IssuesExport, ExportError> {
+    export_in_with_options(tabs, file, cfg, out_dir, format, &writer_options(cfg))
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_in_with_options(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    out_dir: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<IssuesExport, ExportError> {
     let counts = filter_counts_in(tabs, file, cfg)?;
     let rows = issues::issues_from_counts(&counts);
     let dir = out_dir.join(DIR_NAME);
@@ -307,7 +335,7 @@ pub fn export_in(
         // Datei mit den betroffenen URLs.
         let disc = format!("{}:{}", row.tab, row.filter);
         let name = names.claim(&issue_file_name(row, &label, ext), &disc);
-        let info = write_view(&cx, tab, &row.filter, &dir.join(&name), &label)?;
+        let info = write_view_with_options(&cx, tab, &row.filter, &dir.join(&name), &label, opts)?;
         out.files.push(info);
 
         // Inlinks-Variante bei linkbezogenen Issues.
@@ -315,12 +343,13 @@ pub fn export_in(
             let ids = filter_url_ids(tabs, file, cfg, &row.tab, &row.filter)?;
             let in_name = names.claim(&inlinks_file_name(row, &label, ext), &format!("{disc}:in"));
             // `export_detail` nimmt den Pfad der Zieldatei (nicht eines Ordners).
-            let info = crate::detail::export_detail(
+            let info = crate::detail::export_detail_with_options(
                 file,
                 DetailKind::Inlinks,
                 &ids,
                 &dir.join(&in_name),
                 format,
+                opts,
             )?;
             out.files.push(info);
         }
@@ -363,12 +392,7 @@ pub fn export_in(
 
     // Übersicht.
     let overview_name = names.claim(&format!("{OVERVIEW_STEM}.{ext}"), OVERVIEW_STEM);
-    let mut writer = open_writer(
-        &dir.join(&overview_name),
-        format,
-        "Issues Overview",
-        &writer_options(cfg),
-    )?;
+    let mut writer = open_writer(&dir.join(&overview_name), format, "Issues Overview", opts)?;
     let header: Vec<String> = OVERVIEW_HEADER.iter().map(|h| (*h).to_string()).collect();
     writer.header(&header)?;
     let kinds = [

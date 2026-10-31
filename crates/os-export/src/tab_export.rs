@@ -33,14 +33,35 @@ pub fn export_tab(
     out_dir: &Path,
     format: Format,
 ) -> Result<ExportFileInfo, ExportError> {
+    export_tab_with_options(
+        file,
+        cfg,
+        q,
+        out_dir,
+        format,
+        &crate::pipeline::writer_options(cfg),
+    )
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_tab_with_options(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    q: &ViewQuery,
+    out_dir: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<ExportFileInfo, ExportError> {
     crate::pipeline::snapshot(file, || {
-        export_tab_in(
+        export_tab_in_with_options(
             &tabs::configured_for_file(cfg, file),
             file,
             cfg,
             q,
             out_dir,
             format,
+            opts,
         )
     })
 }
@@ -56,11 +77,35 @@ pub fn export_tab_with(
     preserve_upload_order: bool,
     ctx: &mut crate::types::ExportCtx<'_>,
 ) -> Result<Option<ExportFileInfo>, ExportError> {
+    export_tab_with_writer_options(
+        file,
+        cfg,
+        q,
+        out_dir,
+        format,
+        preserve_upload_order,
+        ctx,
+        &crate::pipeline::writer_options(cfg),
+    )
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_tab_with_writer_options(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    q: &ViewQuery,
+    out_dir: &Path,
+    format: Format,
+    preserve_upload_order: bool,
+    ctx: &mut crate::types::ExportCtx<'_>,
+    opts: &crate::types::WriterOptions,
+) -> Result<Option<ExportFileInfo>, ExportError> {
     crate::pipeline::snapshot(file, || {
         let tabs = tabs::configured_for_file(cfg, file);
         let canonical = canonical_name(&tabs, cfg, &q.tab, &q.filter)?;
         let path = out_dir.join(naming::file_name(&canonical, None, format.extension()));
-        crate::pipeline::export_view_with(
+        crate::pipeline::export_view_with_writer_options(
             &tabs,
             file,
             cfg,
@@ -70,6 +115,7 @@ pub fn export_tab_with(
             &canonical.replace(':', " "),
             preserve_upload_order,
             ctx,
+            opts,
         )
     })
 }
@@ -82,6 +128,28 @@ pub fn export_tab_in(
     q: &ViewQuery,
     out_dir: &Path,
     format: Format,
+) -> Result<ExportFileInfo, ExportError> {
+    export_tab_in_with_options(
+        tabs,
+        file,
+        cfg,
+        q,
+        out_dir,
+        format,
+        &crate::pipeline::writer_options(cfg),
+    )
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_tab_in_with_options(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    q: &ViewQuery,
+    out_dir: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
 ) -> Result<ExportFileInfo, ExportError> {
     let canonical = canonical_name(tabs, cfg, &q.tab, &q.filter)?;
     fs_paths::create_dir_all(out_dir).map_err(|source| ExportError::Io {
@@ -100,8 +168,10 @@ pub fn export_tab_in(
         workbook: None,
         skipped: Vec::new(),
     };
-    crate::pipeline::export_view_with(tabs, file, cfg, q, &path, format, &sheet, false, &mut ctx)?
-        .ok_or_else(|| ExportError::Write("Missing tab output".into()))
+    crate::pipeline::export_view_with_writer_options(
+        tabs, file, cfg, q, &path, format, &sheet, false, &mut ctx, opts,
+    )?
+    .ok_or_else(|| ExportError::Write("Missing tab output".into()))
 }
 
 /// Kanonischer Exportname `Tab:Filter` mit aufgelösten Schwellen (`Page Titles:Over 60 Characters`).

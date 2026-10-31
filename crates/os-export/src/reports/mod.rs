@@ -53,13 +53,27 @@ pub fn save_report(
     out_dir: &Path,
     format: Format,
 ) -> Result<ReportResult, ExportError> {
-    save_report_in(
+    save_report_with_options(file, cfg, name, out_dir, format, &writer_options(cfg))
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn save_report_with_options(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    name: &str,
+    out_dir: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<ReportResult, ExportError> {
+    save_report_in_with_options(
         &tabs::configured_for_file(cfg, file),
         file,
         cfg,
         name,
         out_dir,
         format,
+        opts,
     )
 }
 
@@ -72,6 +86,20 @@ pub fn save_report_in(
     out_dir: &Path,
     format: Format,
 ) -> Result<ReportResult, ExportError> {
+    save_report_in_with_options(tabs, file, cfg, name, out_dir, format, &writer_options(cfg))
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn save_report_in_with_options(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    name: &str,
+    out_dir: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<ReportResult, ExportError> {
     // Reports der Fachpakete von M2 (Tabellen-Einträge).
     if reports::resolve(name).is_err() {
         if let Some(entry) = crate::catalog::find_table(&report_tables(), name) {
@@ -82,7 +110,7 @@ pub fn save_report_in(
                 cfg,
                 entry_name: name,
             };
-            let info = crate::catalog::export_table(entry, &job, &path, format)?;
+            let info = crate::catalog::export_table_with_options(entry, &job, &path, format, opts)?;
             let warnings = info.warnings.clone();
             return Ok(ReportResult {
                 files: vec![info],
@@ -98,7 +126,7 @@ pub fn save_report_in(
         ReportKind::CrawlOverview => {
             let ov = overview::build(file, cfg, tabs)?;
             pending = ov.pending_analysis.clone();
-            let mut writer = open_writer(&path, format, def.file_stem, &writer_options(cfg))?;
+            let mut writer = open_writer(&path, format, def.file_stem, opts)?;
             let header: Vec<String> = overview::HEADER.iter().map(|h| (*h).to_string()).collect();
             writer.header(&header)?;
             for row in &ov.rows {
@@ -107,16 +135,23 @@ pub fn save_report_in(
             }
             writer.finish()?
         }
-        ReportKind::AllRedirects => {
-            redirects::write_report(file, cfg, RedirectReport::All, &path, def.file_stem, format)?
-        }
-        ReportKind::RedirectChains => redirects::write_report(
+        ReportKind::AllRedirects => redirects::write_report_with_options(
+            file,
+            cfg,
+            RedirectReport::All,
+            &path,
+            def.file_stem,
+            format,
+            opts,
+        )?,
+        ReportKind::RedirectChains => redirects::write_report_with_options(
             file,
             cfg,
             RedirectReport::Chains,
             &path,
             def.file_stem,
             format,
+            opts,
         )?,
     };
     result.warnings = prereq::requirement_warnings(def.name, def.requires, cfg, &pending);

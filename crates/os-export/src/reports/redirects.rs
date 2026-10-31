@@ -26,7 +26,7 @@ use std::str::FromStr;
 use os_model::{LinkType, RedirectType, UrlId};
 use os_store::{queries, CrawlFile};
 
-use super::common::{db, writer_options};
+use super::common::db;
 use crate::catalog::{TableEntry, TableJob};
 use crate::error::ExportError;
 use crate::types::{ExportFileInfo, Format};
@@ -301,7 +301,10 @@ fn start_ids(file: &CrawlFile) -> Result<Vec<i64>, ExportError> {
         .conn()
         .query_row("SELECT COUNT(*) FROM list_input", [], |r| r.get(0)))?;
     if list_count > 0 {
-        return collect_ids(file, "SELECT u.id FROM list_input l JOIN urls u ON u.id = l.url_id WHERE l.outcome = 'ok' AND (u.redirect_url IS NOT NULL OR u.redirect_target_id IS NOT NULL) ORDER BY l.position");
+        return collect_ids(
+            file,
+            "SELECT u.id FROM list_input l JOIN urls u ON u.id = l.url_id WHERE l.outcome = 'ok' AND (u.redirect_url IS NOT NULL OR u.redirect_target_id IS NOT NULL) ORDER BY l.position",
+        );
     }
     let types = redirect_link_types();
     let linked = if db(os_store::link_index::present(file.conn()))? {
@@ -508,15 +511,17 @@ fn row_values(
 }
 
 /// Schreibt den Report.
-pub(crate) fn write_report(
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn write_report_with_options(
     file: &CrawlFile,
-    cfg: &CrawlConfig,
+    _cfg: &CrawlConfig,
     which: RedirectReport,
     path: &std::path::Path,
     sheet: &str,
     format: Format,
+    opts: &crate::types::WriterOptions,
 ) -> Result<ExportFileInfo, ExportError> {
-    let mut writer = crate::output::open_writer(path, format, sheet, &writer_options(cfg))?;
+    let mut writer = crate::output::open_writer(path, format, sheet, opts)?;
     let cancel = os_model::CancelToken::default();
     let mut ctx = crate::types::ExportCtx {
         cancel: &cancel,

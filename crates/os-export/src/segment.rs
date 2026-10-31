@@ -89,10 +89,34 @@ pub fn export_view(
     directory: &Path,
     format: Format,
 ) -> Result<ExportFileInfo, ExportError> {
+    export_view_with_options(
+        file,
+        cfg,
+        query,
+        scope,
+        directory,
+        format,
+        &crate::pipeline::writer_options(cfg),
+    )
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_view_with_options(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    query: &ViewQuery,
+    scope: Option<&SegmentFilter>,
+    directory: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<ExportFileInfo, ExportError> {
     let registry = tabs(file, cfg, scope);
     let name = crate::tab_export::canonical_name(&registry, cfg, &query.tab, &query.filter)?;
     let path = directory.join(file_name(file, &name, scope, format.extension())?);
-    crate::pipeline::export_view(&registry, file, cfg, query, &path, format, &query.tab)
+    crate::pipeline::export_view_with_options(
+        &registry, file, cfg, query, &path, format, &query.tab, opts,
+    )
 }
 
 /// Inlinks restrict targets. All Outlinks restrict sources; filter-specific inlinks
@@ -105,17 +129,41 @@ pub fn export_bulk(
     directory: &Path,
     format: Format,
 ) -> Result<Vec<ExportFileInfo>, ExportError> {
-    crate::pipeline::snapshot(file, || {
-        export_bulk_snapshot(file, cfg, name, scope, directory, format)
-    })
+    export_bulk_with_options(
+        file,
+        cfg,
+        name,
+        scope,
+        directory,
+        format,
+        &crate::pipeline::writer_options(cfg),
+    )
 }
-fn export_bulk_snapshot(
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_bulk_with_options(
     file: &CrawlFile,
     cfg: &CrawlConfig,
     name: &str,
     scope: Option<&SegmentFilter>,
     directory: &Path,
     format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<Vec<ExportFileInfo>, ExportError> {
+    crate::pipeline::snapshot(file, || {
+        export_bulk_snapshot_with_options(file, cfg, name, scope, directory, format, opts)
+    })
+}
+#[allow(clippy::too_many_arguments)]
+fn export_bulk_snapshot_with_options(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    name: &str,
+    scope: Option<&SegmentFilter>,
+    directory: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
 ) -> Result<Vec<ExportFileInfo>, ExportError> {
     let tabs = tabs(file, cfg, scope);
     let crate::catalog::ExportRef::Bulk(canonical) =
@@ -144,12 +192,7 @@ fn export_bulk_snapshot(
                         Some(scope),
                         format.extension(),
                     )?);
-                    let mut writer = crate::output::open_writer(
-                        &path,
-                        format,
-                        &canonical,
-                        &crate::pipeline::writer_options(cfg),
-                    )?;
+                    let mut writer = crate::output::open_writer(&path, format, &canonical, opts)?;
                     writer.header(&crate::links_export::link_header())?;
                     let predicate = format!(
                         "l.source_id IN (SELECT u.id FROM urls u WHERE {})",
@@ -177,14 +220,16 @@ fn export_bulk_snapshot(
                     Some(scope),
                     format.extension(),
                 )?);
-                return Ok(vec![crate::links_export::export_link_entry(
-                    &tabs, file, cfg, &entry, &path, format, &canonical,
+                return Ok(vec![crate::links_export::export_link_entry_with_options(
+                    &tabs, file, cfg, &entry, &path, format, &canonical, opts,
                 )?]);
             }
         }
     }
     if scope.is_none() {
-        return crate::pipeline::export_bulk_in(&tabs, file, cfg, &canonical, directory, format);
+        return crate::pipeline::export_bulk_in_with_options(
+            &tabs, file, cfg, &canonical, directory, format, opts,
+        );
     }
     if let Some(scope) = scope {
         let job = crate::catalog::TableJob {
@@ -206,7 +251,7 @@ fn export_bulk_snapshot(
                 Some(make) => make(&job)?,
                 None => entry.header.iter().map(|s| s.to_string()).collect(),
             };
-            let mut info = write_scoped_table(
+            let mut info = write_scoped_table_with_options(
                 &job,
                 scope,
                 directory,
@@ -214,6 +259,7 @@ fn export_bulk_snapshot(
                 entry.file_stem,
                 &header,
                 |writer| (entry.run)(&job, writer),
+                opts,
             )?;
             info.warnings
                 .extend(crate::reports::prereq::requirement_warnings(
@@ -228,7 +274,7 @@ fn export_bulk_snapshot(
             .into_iter()
             .find(|e| e.name == canonical)
         {
-            let info = write_scoped_table(
+            let info = write_scoped_table_with_options(
                 &job,
                 scope,
                 directory,
@@ -236,13 +282,15 @@ fn export_bulk_snapshot(
                 &entry.file_stem,
                 &entry.header,
                 |writer| (entry.run)(&job, writer),
+                opts,
             )?;
             return Ok(vec![info]);
         }
     }
     let staging = Staging::new(directory)?;
-    let generated =
-        crate::pipeline::export_bulk_in(&tabs, file, cfg, &canonical, &staging.0, format)?;
+    let generated = crate::pipeline::export_bulk_in_with_options(
+        &tabs, file, cfg, &canonical, &staging.0, format, opts,
+    )?;
     publish(file, generated, scope, directory, &staging.0)
 }
 struct Staging(std::path::PathBuf);
@@ -313,20 +361,46 @@ pub fn export_report(
     directory: &Path,
     format: Format,
 ) -> Result<ReportResult, ExportError> {
-    crate::pipeline::snapshot(file, || {
-        export_report_snapshot(file, cfg, name, scope, directory, format)
-    })
+    export_report_with_options(
+        file,
+        cfg,
+        name,
+        scope,
+        directory,
+        format,
+        &crate::pipeline::writer_options(cfg),
+    )
 }
-fn export_report_snapshot(
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_report_with_options(
     file: &CrawlFile,
     cfg: &CrawlConfig,
     name: &str,
     scope: Option<&SegmentFilter>,
     directory: &Path,
     format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<ReportResult, ExportError> {
+    crate::pipeline::snapshot(file, || {
+        export_report_snapshot_with_options(file, cfg, name, scope, directory, format, opts)
+    })
+}
+#[allow(clippy::too_many_arguments)]
+fn export_report_snapshot_with_options(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    name: &str,
+    scope: Option<&SegmentFilter>,
+    directory: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
 ) -> Result<ReportResult, ExportError> {
     let Some(scope) = scope else {
-        return crate::pipeline::export_report(file, cfg, name, directory, format);
+        return crate::pipeline::export_report_with_options(
+            file, cfg, name, directory, format, opts,
+        );
     };
     let crate::catalog::ExportRef::Report(canonical) =
         crate::catalog::resolve_with(ExportKind::Report, name, cfg)?
@@ -376,13 +450,14 @@ fn export_report_snapshot(
             .map_err(|e| ExportError::Write(e.to_string()))?;
         let _guard = Population(file);
         let staging = Staging::new(directory)?;
-        let mut report = crate::pipeline::export_report_in(
+        let mut report = crate::pipeline::export_report_in_with_options(
             &tabs(file, cfg, Some(scope)),
             file,
             cfg,
             &canonical,
             &staging.0,
             format,
+            opts,
         )?;
         report.files = publish(file, report.files, Some(scope), directory, &staging.0)?;
         return Ok(report);
@@ -410,12 +485,7 @@ fn export_report_snapshot(
         workbook: None,
         skipped: Vec::new(),
     };
-    let writer = crate::output::open_writer(
-        &path,
-        format,
-        &canonical,
-        &crate::pipeline::writer_options(cfg),
-    )?;
+    let writer = crate::output::open_writer(&path, format, &canonical, opts)?;
     let _addresses = AddressScope::new(file, scope)?;
     let mut writer = RowScope {
         writer,
@@ -488,6 +558,28 @@ pub fn export_all(
     directory: &Path,
     format: Format,
 ) -> Result<Vec<ExportFileInfo>, ExportError> {
+    export_all_with_options(
+        file,
+        cfg,
+        selection,
+        segment,
+        directory,
+        format,
+        &crate::pipeline::writer_options(cfg),
+    )
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_all_with_options(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    selection: &crate::types::ExportSelection,
+    segment: Option<&str>,
+    directory: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<Vec<ExportFileInfo>, ExportError> {
     crate::pipeline::snapshot(file, || {
         let mut files = Vec::new();
         for scope in selections(file, segment)? {
@@ -497,31 +589,34 @@ pub fn export_all(
                         &os_analyze::tabs::configured_for_file(cfg, file),
                         &selection.name,
                     )?;
-                    files.push(export_view(
+                    files.push(export_view_with_options(
                         file,
                         cfg,
                         &ViewQuery::new(tab, filter),
                         scope.as_ref(),
                         directory,
                         format,
+                        opts,
                     )?);
                 }
-                "bulk" => files.extend(export_bulk(
+                "bulk" => files.extend(export_bulk_with_options(
                     file,
                     cfg,
                     &selection.name,
                     scope.as_ref(),
                     directory,
                     format,
+                    opts,
                 )?),
                 "report" | "reports" => files.extend(
-                    export_report(
+                    export_report_with_options(
                         file,
                         cfg,
                         &selection.name,
                         scope.as_ref(),
                         directory,
                         format,
+                        opts,
                     )?
                     .files,
                 ),
@@ -549,7 +644,8 @@ impl Drop for AddressScope<'_> {
             .execute_batch("DROP TABLE IF EXISTS temp.os_segment_report_addresses");
     }
 }
-fn write_scoped_table(
+#[allow(clippy::too_many_arguments)]
+fn write_scoped_table_with_options(
     job: &crate::catalog::TableJob<'_>,
     scope: &SegmentFilter,
     directory: &Path,
@@ -557,15 +653,11 @@ fn write_scoped_table(
     stem: &str,
     header: &[String],
     write: impl FnOnce(&mut dyn crate::types::TableWriter) -> Result<u64, ExportError>,
+    opts: &crate::types::WriterOptions,
 ) -> Result<ExportFileInfo, ExportError> {
     let _addresses = AddressScope::new(job.file, scope)?;
     let path = directory.join(file_name(job.file, stem, Some(scope), format.extension())?);
-    let writer = crate::output::open_writer(
-        &path,
-        format,
-        stem,
-        &crate::pipeline::writer_options(job.cfg),
-    )?;
+    let writer = crate::output::open_writer(&path, format, stem, opts)?;
     let mut writer = RowScope {
         writer,
         file: job.file,

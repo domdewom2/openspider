@@ -13,6 +13,11 @@ pub async fn export(
     signals: &Signals,
     rep: &Reporter,
 ) -> Result<usize, String> {
+    let opts = {
+        let mut opts = os_export::pipeline::writer_options(cfg);
+        opts.header_labels = plan.header_labels.clone();
+        opts
+    };
     let token = signals.cancel_token();
     let snapshot = file
         .conn()
@@ -46,16 +51,15 @@ pub async fn export(
                 kind: kind.into(),
                 name,
             };
-            let files = os_export::csv::with_header_labels(&plan.header_labels, || {
-                os_export::segment::export_all(
-                    file,
-                    cfg,
-                    &selection,
-                    segment,
-                    &staging.path,
-                    os_export::Format::Csv,
-                )
-            })
+            let files = os_export::segment::export_all_with_options(
+                file,
+                cfg,
+                &selection,
+                segment,
+                &staging.path,
+                os_export::Format::Csv,
+                &opts,
+            )
             .map_err(|e| e.to_string())?;
             for mut info in files {
                 for warning in &info.warnings {
