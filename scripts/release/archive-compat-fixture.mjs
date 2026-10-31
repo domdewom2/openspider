@@ -10,11 +10,9 @@ const archive = join(root, 'tests/fixtures/migrations');
 
 // spec: OUT-255
 export function archiveFixture({ version, out = join(archive, 'releases'), commit, cli } = {}) {
-  if (!/^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:beta|rc)\.[1-9]\d*)?$/.test(version ?? '')) {
-    throw new Error('Expected a release version (from 1.0.0-beta.1)');
+  if (!/^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-beta\.(?:0|[1-9]\d*)|-rc\.[1-9]\d*)?$/.test(version ?? '')) {
+    throw new Error('Expected a release version (x.y.z, beta.N or rc.N)');
   }
-  const [major] = version.split('.').map(Number);
-  if (major < 1) throw new Error('Archive starts at 1.0.0-beta.1');
   commit ??= execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
   if (!/^[a-f0-9]{40}$/.test(commit)) throw new Error('Expected full source commit');
   const destination = join(resolve(out), version);

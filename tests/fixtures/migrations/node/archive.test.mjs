@@ -22,7 +22,7 @@ test('release archive is complete, versioned, verifiable and immutable', () => {
       assert.equal(db.prepare("SELECT value FROM crawl_meta WHERE key='generator'").get().value, 'openspider 1.0.0-beta.1');
     } finally { db.close(); }
     assert.throws(() => archiveFixture({ version: '1.0.0-beta.1', out }), /already exists/);
-    for (const version of ['../escape', '0.1.0', '1.0.0-beta.0', 'v1.0.0', '1.0', '01.0.0', '1.00.0']) assert.throws(() => archiveFixture({ version, out }));
+    for (const version of ['../escape', '1.0.0-rc.0', 'v1.0.0', '1.0', '01.0.0', '1.00.0']) assert.throws(() => archiveFixture({ version, out }));
     assert.deepEqual(readdirSync(out), ['1.0.0-beta.1']);
     archiveFixture({ version: '1.0.0', out });
   } finally { rmSync(out, { recursive: true, force: true }); }
@@ -34,5 +34,16 @@ test('failed release export removes staging and never leaves a partial archive',
   try {
     assert.throws(() => archiveFixture({ version: '1.0.0-beta.2', out, cli: join(out, 'missing-cli') }));
     assert.deepEqual(readdirSync(out), []);
+  } finally { rmSync(out, { recursive: true, force: true }); }
+});
+
+// spec: OUT-255
+test('R04 dry runs before beta.1 use the same versions as set-version', () => {
+  const out = mkdtempSync(join(tmpdir(), 'compat-dry-run-'));
+  try {
+    for (const version of ['1.0.0-beta.0', '0.1.0']) {
+      const dir = archiveFixture({ version, out });
+      assert.equal(JSON.parse(readFileSync(join(dir, 'manifest.json'))).version, version);
+    }
   } finally { rmSync(out, { recursive: true, force: true }); }
 });

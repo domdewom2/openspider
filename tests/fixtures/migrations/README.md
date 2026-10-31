@@ -61,7 +61,9 @@ unverändert nach `tests/fixtures/migrations/releases/<version>/` übernehmen un
 committen. CLI-Tests entdecken alle Release-Ordner automatisch. Das Skript darf
 auch direkt mit dem Standardziel im Repository verwendet werden; es committet,
 pusht und veröffentlicht nichts. Ein Entwurfsrelease ist noch keine veröffentlichte
-Version. Keine erfundenen beta.1/beta.2-Archive vor der Veröffentlichung.
+Version. Frühere Trockenläufe (z. B. beta.0 aus R04) werden als temporäre
+Artefakte unterstützt; daraus folgt keine Pflicht, sie als veröffentlichten Stand
+ins Repository zu übernehmen. Keine erfundenen beta.1/beta.2-Archive vor der Veröffentlichung.
 
 Node-Vertragstests: `node --test tests/fixtures/migrations/node/archive.test.mjs`.
 
