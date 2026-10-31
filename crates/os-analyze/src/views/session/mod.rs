@@ -96,7 +96,7 @@ pub struct BuildControl {
     pub cancel: CancelToken,
 }
 impl BuildControl {
-    fn check(&self) -> Result<(), ViewError> {
+    pub(super) fn check(&self) -> Result<(), ViewError> {
         self.cancel
             .checkpoint()
             .map_err(|_| SearchError::Cancelled.into())
@@ -106,7 +106,7 @@ impl BuildControl {
 fn invalid(message: &str) -> ViewError {
     StoreError::InvalidInput(message.into()).into()
 }
-fn url_index(id: i64) -> Result<u32, ViewError> {
+pub(super) fn url_index(id: i64) -> Result<u32, ViewError> {
     u32::try_from(id).map_err(|_| invalid("URL-Kennung außerhalb des Bitmap-Bereichs"))
 }
 
@@ -158,6 +158,7 @@ struct Materialized {
     projection: Arc<Projection>,
 }
 struct Cache {
+    membership: Option<Arc<super::membership::Membership>>,
     filters: HashMap<String, FilterBitmap>,
     permutations: HashMap<String, Permutation>,
     projections: HashMap<String, Arc<Projection>>,
@@ -170,6 +171,7 @@ struct Cache {
 impl Default for Cache {
     fn default() -> Self {
         Self {
+            membership: None,
             filters: HashMap::new(),
             permutations: HashMap::new(),
             projections: HashMap::new(),
@@ -188,10 +190,12 @@ impl Cache {
         self.recency = ACCESS.fetch_add(1, Ordering::Relaxed);
     }
     fn bytes(&self) -> u64 {
-        self.filters
-            .values()
-            .map(|f| f.ids.serialized_size() as u64)
-            .sum::<u64>()
+        self.membership.as_ref().map_or(0, |m| m.bytes())
+            + self
+                .filters
+                .values()
+                .map(|f| f.ids.serialized_size() as u64)
+                .sum::<u64>()
             + self
                 .permutations
                 .values()
@@ -203,6 +207,7 @@ impl Cache {
                 .map_or(0, |v| v.ids.capacity() as u64 * 4 + v.inverse.bytes())
     }
     fn release(&mut self) {
+        self.membership = None;
         self.filters.clear();
         self.permutations.clear();
         self.projections.clear();
@@ -328,6 +333,15 @@ impl ViewSession {
     }
     pub fn memory_bytes(&self) -> u64 {
         self.cache.lock().unwrap_or_else(|e| e.into_inner()).bytes()
+    }
+    /// Shared memberships prepared by this session that a writer has not persisted yet (K-1a).
+    pub fn shared_pending(&self) -> bool {
+        self.cache
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .membership
+            .as_ref()
+            .is_some_and(|m| super::membership::pending(m))
     }
     pub fn built_seq(&self) -> Option<u64> {
         self.cache
@@ -460,6 +474,9 @@ impl ViewSession {
             .and_then(|s| s.parse::<u64>().ok())
             .unwrap_or(0);
         let current_stamp = stamp(file)?;
+        if let Some(previous) = &cache.membership {
+            cache.membership = super::membership::repair(file, previous, ids, &current_stamp)?;
+        }
         let mut repaired = HashMap::new();
         for (key, mut permutation) in cache.permutations.drain() {
             let previous_seq = key
@@ -534,6 +551,13 @@ impl ViewSession {
     }
     pub fn close(self) {}
 }
+/// Persists the shared memberships of the file's current data version (K-1a, UI-147) after a
+/// read-only view prepared them. Call with a writable connection outside any read transaction;
+/// read-only and running crawls store nothing. Returns whether a cache entry was written.
+pub fn persist_shared(file: &CrawlFile) -> Result<bool, ViewError> {
+    super::membership::persist(file)
+}
+
 /// Immutable published positions/projection for double-buffered builds.
 #[derive(Clone)]
 pub struct ViewSnapshot {
@@ -591,7 +615,7 @@ fn filter_key(built: &build::Built<'_>, ready: bool) -> String {
     ])
 }
 
-fn stamp(file: &CrawlFile) -> Result<String, ViewError> {
+pub(super) fn stamp(file: &CrawlFile) -> Result<String, ViewError> {
     let mut stmt = file.conn().prepare(
         "SELECT step, state, finished_at, config_hash FROM analysis_steps ORDER BY step",
     )?;
@@ -603,7 +627,11 @@ fn stamp(file: &CrawlFile) -> Result<String, ViewError> {
             r.get::<_, Option<String>>(3)?,
         ))
     })?;
-    Ok(format!("{:?}", rows.collect::<Result<Vec<_>, _>>()?))
+    Ok(format!(
+        "{}:{:?}",
+        file.get_meta("reset_seq")?.unwrap_or_default(),
+        rows.collect::<Result<Vec<_>, _>>()?
+    ))
 }
 fn repair(
     file: &CrawlFile,
@@ -668,6 +696,29 @@ fn materialize(
         .filters
         .retain(|_, f| f.seq == seq && f.seq >= reset && f.stamp == stamp);
     let key = filter_key(&built, ready);
+    // Common Internal/External live facts are shared across sessions. The stamp
+    // covers resets and analysis changes, including resets at the same sequence.
+    let common = if ready && super::membership::applicable(&built) {
+        Some(super::membership::load(file, seq, &stamp, control)?)
+    } else {
+        None
+    };
+    cache.membership = common.clone();
+    if let Some(common) = &common {
+        for filter in &built.tab.filters {
+            let sibling = build::build(&tabs, &ViewQuery::new(built.tab.id, filter.id), cfg)?;
+            if let Some(ids) = common.bitmap(&sibling) {
+                cache.filters.insert(
+                    filter_key(&sibling, true),
+                    FilterBitmap {
+                        ids,
+                        seq,
+                        stamp: stamp.clone(),
+                    },
+                );
+            }
+        }
+    }
     let disk_key = format!("{}:{}", built.tab.id, built.filter.id);
     if !cache
         .filters
@@ -678,7 +729,7 @@ fn materialize(
         let bitmap = entry
             .filter(|e| e.built_seq == seq && e.built_seq >= reset && e.step_stamp == stamp)
             .and_then(|e| RoaringBitmap::deserialize_from(e.data.as_slice()).ok());
-        let ids = if let Some(bitmap) = bitmap {
+        let ids = if let Some(bitmap) = common.as_ref().and_then(|m| m.bitmap(&built)).or(bitmap) {
             bitmap
         } else {
             let mut ids = RoaringBitmap::new();
@@ -796,7 +847,13 @@ fn materialize(
         // A01-01: die Spaltenausdrücke tragen benannte Parameter; Bereitschaft aus dem Dateizustand.
         let mut params = built.plan.params.clone();
         crate::tabs::content::bind_analysis_params(&mut params, file, cfg)?;
-        let projection = Arc::new(Projection::build(file.conn(), &built, params, ready)?);
+        let projection = Arc::new(Projection::build(
+            file.conn(),
+            &built,
+            params,
+            ready,
+            common.as_ref().map(|m| m.html_2xx),
+        )?);
         cache.projections.insert(projection_key, projection.clone());
         projection
     };
@@ -809,6 +866,9 @@ fn materialize(
         .serialize_into(&mut data)
         .map_err(|_| invalid("Bitmap-Serialisierung fehlgeschlagen"))?;
     // Cache is optional: lock contention or disk exhaustion must not prevent reading a crawl.
+    if let Some(common) = &common {
+        let _ = super::membership::save(file, common);
+    }
     let _ = view_cache::save(
         file,
         &disk_key,

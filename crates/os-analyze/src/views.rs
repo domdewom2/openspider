@@ -15,6 +15,8 @@
 mod build;
 mod counts;
 mod exec;
+mod facts;
+mod membership;
 pub mod session;
 
 use os_model::{CrawlConfig, FilterState, UrlId, Value};
@@ -32,6 +34,38 @@ pub use build::column_name_resolves;
 /// `LEFT JOIN` über den Primärschlüssel entfällt, wenn keine Spalte, kein Filter und keine Sortierung `c` nutzt.
 pub const URLS_FROM: &str = "urls u LEFT JOIN url_counters c ON c.url_id = u.id";
 pub use counts::percent;
+pub use facts::{
+    overview_facts, persist as persist_overview_facts, persist_all as persist_facts, OverviewFacts,
+};
+
+#[cfg(test)]
+thread_local! {
+    /// Tests force the ID-range split on small fixtures.
+    pub(crate) static FORCE_PARALLEL: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+    /// Completed split passes on this thread (no silent fallback in tests).
+    pub(crate) static PARALLEL_PASSES: std::cell::Cell<u32> = const { std::cell::Cell::new(0) };
+}
+
+/// Records a completed split pass for tests.
+pub(crate) fn parallel_pass_done() {
+    #[cfg(test)]
+    PARALLEL_PASSES.with(|n| n.set(n.get() + 1));
+}
+
+/// Read connections for a crawl-wide pass split into disjoint ID ranges (UI-141, UI-145, UI-147).
+/// Small crawls stay on the caller's connection; `share` divides the available cores.
+pub(crate) fn parallel_workers(max_id: i64, share: usize) -> usize {
+    #[cfg(test)]
+    if FORCE_PARALLEL.with(|f| f.get()) {
+        return 3;
+    }
+    if max_id < 250_000 {
+        return 1;
+    }
+    std::thread::available_parallelism()
+        .map_or(1, |n| n.get() / share.max(1))
+        .clamp(1, 4)
+}
 
 /// ONPAGE-015 denominator prepared once with a view snapshot (UI-140/UI-142).
 pub(crate) fn internal_html_2xx_count(conn: &rusqlite::Connection) -> Result<i64, ViewError> {
@@ -152,7 +186,7 @@ pub struct ViewPage {
 }
 
 /// Zähler eines Filters.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct FilterCount {
     /// Tab.
     pub tab: String,
@@ -305,15 +339,30 @@ pub fn filter_counts_in(
     file: &CrawlFile,
     cfg: &CrawlConfig,
 ) -> Result<Vec<FilterCount>, ViewError> {
-    let mut counts = counts::counts_in(tabs, file, cfg)?;
-    // Stub-Tabs und Stub-Filter (M2, `TabDef::is_stub`/`FilterDef::is_stub`) liefern keine Zähler, bis ihr Paket sie
-    // umsetzt: Berichte und Übersichten zeigen nur Befüllbares (Crawl Overview bleibt für M1-Crawls unverändert).
+    let counts = counts::counts_in(tabs, file, cfg)?;
+    Ok(countable(tabs, counts))
+}
+
+/// Like [`filter_counts_in`], counting large crawls on several read connections (UI-145).
+pub(crate) fn filter_counts_parallel(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    cancel: &os_model::CancelToken,
+) -> Result<Vec<FilterCount>, ViewError> {
+    let counts = counts::counts_with(tabs, file, cfg, true, cancel)?;
+    Ok(countable(tabs, counts))
+}
+
+// Stub-Tabs und Stub-Filter (M2, `TabDef::is_stub`/`FilterDef::is_stub`) liefern keine Zähler, bis ihr Paket sie
+// umsetzt: Berichte und Übersichten zeigen nur Befüllbares (Crawl Overview bleibt für M1-Crawls unverändert).
+fn countable(tabs: &[TabDef], mut counts: Vec<FilterCount>) -> Vec<FilterCount> {
     counts.retain(|c| {
         tabs.iter().find(|t| t.id == c.tab).is_none_or(|t| {
             !t.is_stub() && !t.filters.iter().any(|f| f.id == c.filter && f.is_stub())
         })
     });
-    Ok(counts)
+    counts
 }
 
 /// Löst `"Tab:Filter"` auf (Vorschläge bei Fehlern).
