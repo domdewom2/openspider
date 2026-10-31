@@ -15,25 +15,24 @@ jobs:
     outputs:
       enabled: ${{ steps.gate.outputs.enabled }}
     steps:
-      - name: M3-REL opt-in and access prerequisites (D14)
+      - name: M3-REL opt-in and stable release prerequisites (D14)
         id: gate
         env:
           ENABLED: ${{ vars.RELEASE_PACKAGES_ENABLED }}
           DRAFT: ${{ github.event.release.draft }}
           PRERELEASE: ${{ github.event.release.prerelease }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
           PACKAGE_ID: ${{ vars.OPENSPIDER_PACKAGE_ID }}
           TAP_REPOSITORY: ${{ vars.HOMEBREW_TAP_REPOSITORY }}
           WINGET_FORK: ${{ vars.WINGET_FORK_REPOSITORY }}
-          TAP_READY: ${{ secrets.HOMEBREW_TAP_TOKEN != '' }}
-          WINGET_READY: ${{ secrets.WINGET_PR_TOKEN != '' }}
         run: |
           set -euo pipefail
-          if [[ "$DRAFT" == true || "$PRERELEASE" == true ]]; then
+          if [[ "$DRAFT" == true || "$PRERELEASE" == true || ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo '::notice::Paketveröffentlichung übersprungen: nur stabile veröffentlichte Releases.'
             exit 0
           fi
-          if [[ "$ENABLED" != true || -z "$PACKAGE_ID" || -z "$TAP_REPOSITORY" || -z "$WINGET_FORK" || "$TAP_READY" != true || "$WINGET_READY" != true ]]; then
-            echo '::notice::Paketveröffentlichung deaktiviert: M3-REL/K3-08 oder Zugänge fehlen. Keine externen Änderungen.'
+          if [[ "$ENABLED" != true || -z "$PACKAGE_ID" || -z "$TAP_REPOSITORY" || -z "$WINGET_FORK" ]]; then
+            echo '::notice::Paketveröffentlichung deaktiviert: M3-REL/K3-08 oder Repository-Angaben fehlen. Keine externen Änderungen.'
             echo 'Paketveröffentlichung übersprungen; Freigabe erst mit M3-REL. Keine Tokenwerte protokolliert.' >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
@@ -46,13 +45,29 @@ jobs:
     timeout-minutes: 60
     environment: release
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Check environment secrets after release approval (D14)
+        id: credentials
+        env:
+          TAP_READY: ${{ secrets.HOMEBREW_TAP_TOKEN != '' }}
+          WINGET_READY: ${{ secrets.WINGET_PR_TOKEN != '' }}
+        run: |
+          set -euo pipefail
+          if [[ "$TAP_READY" != true || "$WINGET_READY" != true ]]; then
+            echo '::notice::Paketveröffentlichung übersprungen: Environment-Secrets in release fehlen. Keine externen Änderungen.'
+            echo 'Paketveröffentlichung übersprungen; Environment-Secrets fehlen. Keine Tokenwerte protokolliert.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
+      - if: steps.credentials.outputs.ready == 'true'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - if: steps.credentials.outputs.ready == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
       - name: Download exact published assets and generate metadata
+        if: steps.credentials.outputs.ready == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -65,6 +80,7 @@ jobs:
           node packaging/homebrew/generate.mjs --directory release-assets --output generated \
             --version "${RELEASE_TAG#v}" --repository "$GH_REPO"
       - name: Commit existing tap and open winget PR in existing fork
+        if: steps.credentials.outputs.ready == 'true'
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
           OPENSPIDER_PACKAGE_ID: ${{ vars.OPENSPIDER_PACKAGE_ID }}

@@ -16,7 +16,8 @@ function setup(t) {
   for (const [name, bytes] of Object.entries(fixture)) writeFileSync(join(directory, name), bytes);
   return { directory, output: join(root, 'out'), version: '1.0.0', repository: 'example/openspider', packageId: 'OpenSpider.CITest' };
 }
-const parse = text => JSON.parse(execFileSync('python3', ['-c', 'import json,sys,yaml;print(json.dumps(yaml.safe_load(sys.stdin)))'], { input: text }));
+const parse = (text, loader = 'SafeLoader') => JSON.parse(execFileSync('python3', ['-c',
+  'import json,sys,yaml;print(json.dumps(yaml.load(sys.stdin, Loader=getattr(yaml, sys.argv[1]))))', loader], { input: text }));
 
 // spec: OUT-166 [M3]
 test('Cask links the CLI at the stable app path and removes registrations without implicit zap', t => {
@@ -95,22 +96,67 @@ test('publication has only release published trigger and defaults to no external
   const publish = spawnSync('bash', ['packaging/winget/publish.sh'], { env: { PATH: process.env.PATH }, encoding: 'utf8' });
   assert.notEqual(publish.status, 0);
   assert.match(publish.stderr, /RELEASE_TAG/);
-  const parsed = parse(workflow);
+  // BaseLoader preserves GitHub Actions' YAML 1.2 key `on` (SafeLoader uses YAML 1.1).
+  const parsed = parse(workflow, 'BaseLoader');
+  assert.deepEqual(Object.keys(parsed.on), ['release']);
+  assert.deepEqual(parsed.on.release.types, ['published']);
   assert.equal(parsed.jobs.gate.environment, undefined);
+  assert.doesNotMatch(JSON.stringify(parsed.jobs.gate), /secrets\.|TAP_READY|WINGET_READY/);
   assert.equal(parsed.jobs.publish.needs, 'gate');
+  assert.equal(parsed.jobs.publish.environment, 'release');
+  for (const step of parsed.jobs.publish.steps.slice(1)) {
+    assert.equal(step.if, "steps.credentials.outputs.ready == 'true'");
+  }
   const gate = parsed.jobs.gate.steps[0].run;
   const root = mkdtempSync(join(tmpdir(), 'p01-gate-'));
   try {
     const summary = join(root, 'summary');
     const output = join(root, 'output');
-    const skipped = spawnSync('bash', ['-c', gate], { encoding: 'utf8', env: {
-      PATH: process.env.PATH, ENABLED: 'true', DRAFT: 'false', PRERELEASE: 'false', PACKAGE_ID: 'OpenSpider.CITest',
-      TAP_REPOSITORY: 'example/homebrew-openspider', WINGET_FORK: 'example/winget-pkgs',
-      TAP_READY: 'false', WINGET_READY: 'false', GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary,
-    } });
-    assert.equal(skipped.status, 0, skipped.stderr);
+    const env = {
+      PATH: process.env.PATH, ENABLED: 'true', DRAFT: 'false', PRERELEASE: 'false', RELEASE_TAG: 'v1.0.0',
+      PACKAGE_ID: 'OpenSpider.CITest', TAP_REPOSITORY: 'example/homebrew-openspider',
+      WINGET_FORK: 'example/winget-pkgs', GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary,
+    };
+    for (const overrides of [
+      { ENABLED: 'false' }, { PACKAGE_ID: '' }, { TAP_REPOSITORY: '' }, { WINGET_FORK: '' },
+      { DRAFT: 'true' }, { PRERELEASE: 'true' },
+      { RELEASE_TAG: 'v1.0.0-beta.1' }, { RELEASE_TAG: 'v1.0.0-rc.1' },
+      { RELEASE_TAG: 'v1.0.0+build.1' }, { RELEASE_TAG: '1.0.0' }, { RELEASE_TAG: 'v1.0' },
+    ]) {
+      const skipped = spawnSync('bash', ['-c', gate], { encoding: 'utf8', env: { ...env, ...overrides } });
+      assert.equal(skipped.status, 0, skipped.stderr);
+      assert.match(skipped.stdout, /::notice::/);
+      assert.equal(existsSync(output), false);
+    }
     assert.match(readFileSync(summary, 'utf8'), /übersprungen/);
-    assert.match(skipped.stdout, /notice/);
-    assert.equal(existsSync(output), false);
+    const enabled = spawnSync('bash', ['-c', gate], { encoding: 'utf8', env });
+    assert.equal(enabled.status, 0, enabled.stderr);
+    assert.equal(readFileSync(output, 'utf8'), 'enabled=true\n');
+    rmSync(output);
+    const credentials = parsed.jobs.publish.steps[0];
+    assert.equal(credentials.id, 'credentials');
+    for (const [tap, winget] of [['false', 'false'], ['true', 'false'], ['false', 'true']]) {
+      const skipped = spawnSync('bash', ['-c', credentials.run], { encoding: 'utf8', env: {
+        ...env, TAP_READY: tap, WINGET_READY: winget,
+      } });
+      assert.equal(skipped.status, 0, skipped.stderr);
+      assert.match(skipped.stdout, /::notice::/);
+      assert.equal(existsSync(output), false);
+    }
+    const ready = spawnSync('bash', ['-c', credentials.run], { encoding: 'utf8', env: {
+      ...env, TAP_READY: 'true', WINGET_READY: 'true',
+    } });
+    assert.equal(ready.status, 0, ready.stderr);
+    assert.equal(readFileSync(output, 'utf8'), 'ready=true\n');
+    // Reach both token guards before any gh/git command, using no actual credentials.
+    for (const overrides of [{}, { HOMEBREW_TAP_TOKEN: 'fixture-unused' }]) {
+      const blocked = spawnSync('bash', ['packaging/winget/publish.sh'], { encoding: 'utf8', env: {
+        ...env, OPENSPIDER_PACKAGE_ID: env.PACKAGE_ID, HOMEBREW_TAP_REPOSITORY: env.TAP_REPOSITORY,
+        WINGET_FORK_REPOSITORY: env.WINGET_FORK, ...overrides,
+      } });
+      assert.notEqual(blocked.status, 0);
+      assert.match(blocked.stderr, overrides.HOMEBREW_TAP_TOKEN ? /WINGET_PR_TOKEN/ : /HOMEBREW_TAP_TOKEN/);
+      assert.doesNotMatch(blocked.stderr, /fixture-unused/);
+    }
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
