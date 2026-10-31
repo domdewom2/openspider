@@ -27,7 +27,7 @@ use os_store::{CrawlFile, StoreError};
 use crate::catalog::bulk_links::{BulkLinkEntry, Selection};
 use crate::error::ExportError;
 use crate::output::open_writer;
-use crate::pipeline::{filter_warning, writer_options};
+use crate::pipeline::filter_warning;
 use crate::types::{ExportFileInfo, Format, TableWriter};
 
 /// Kopfzeile des Standard-Linkformats (OUT-031, Golden-Vergleich).
@@ -92,7 +92,9 @@ impl LinkOrder {
             LinkOrder::Inlinks => {
                 "COALESCE(t.address, l.target_raw) ASC, s.address ASC, l.position ASC, l.id ASC"
             }
-            LinkOrder::ErrorInlinks => "CASE WHEN t.state = 'done' AND t.status_code > 0 THEN t.status_code END ASC, COALESCE(t.address, l.target_raw) ASC, s.address ASC, l.position ASC, l.id ASC",
+            LinkOrder::ErrorInlinks => {
+                "CASE WHEN t.state = 'done' AND t.status_code > 0 THEN t.status_code END ASC, COALESCE(t.address, l.target_raw) ASC, s.address ASC, l.position ASC, l.id ASC"
+            }
             LinkOrder::Outlinks => "s.address ASC, l.position ASC, l.id ASC",
         }
     }
@@ -242,7 +244,7 @@ fn target_condition(
             return Ok(Some(TargetCondition {
                 sql: "1".to_string(),
                 params: Vec::new(),
-            }))
+            }));
         }
         Selection::Empty => return Ok(None),
         Selection::LinkSpec(spec) => return link_spec_condition(tabs, file, cfg, spec, warnings),
@@ -284,7 +286,8 @@ fn target_condition(
 ///
 /// Ohne auswertbare Auswahl (kein M1-Filter, Filter nicht bereit) entsteht eine Datei nur mit Kopfzeile;
 /// Hinweise stehen in [`ExportFileInfo::warnings`].
-pub(crate) fn export_link_entry(
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn export_link_entry_with_options(
     tabs: &[TabDef],
     file: &CrawlFile,
     cfg: &CrawlConfig,
@@ -292,6 +295,7 @@ pub(crate) fn export_link_entry(
     path: &Path,
     format: Format,
     sheet: &str,
+    opts: &crate::types::WriterOptions,
 ) -> Result<ExportFileInfo, ExportError> {
     let layout = Layout::for_entry(entry);
     let kinds = layout.kinds();
@@ -303,7 +307,7 @@ pub(crate) fn export_link_entry(
             entry.name
         ));
     }
-    let mut writer = open_writer(path, format, sheet, &writer_options(cfg))?;
+    let mut writer = open_writer(path, format, sheet, opts)?;
     writer.header(&Layout::for_entry(entry).header())?;
     if let Some(c) = &condition {
         stream_links_with(

@@ -24,7 +24,7 @@ use os_store::{CrawlFile, StoreError};
 use crate::catalog::{self, bulk_issues, bulk_links, ExportKind, ExportRef};
 use crate::error::ExportError;
 use crate::fs_paths;
-use crate::links_export::export_link_entry;
+use crate::links_export::export_link_entry_with_options;
 use crate::naming;
 use crate::types::{ExportFileInfo, Format, ReportResult, TableWriter, WriterOptions};
 
@@ -97,6 +97,30 @@ pub fn export_view(
     format: Format,
     sheet: &str,
 ) -> Result<ExportFileInfo, ExportError> {
+    export_view_with_options(
+        tabs,
+        file,
+        cfg,
+        q,
+        path,
+        format,
+        sheet,
+        &crate::pipeline::writer_options(cfg),
+    )
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_view_with_options(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    q: &ViewQuery,
+    path: &Path,
+    format: Format,
+    sheet: &str,
+    opts: &crate::types::WriterOptions,
+) -> Result<ExportFileInfo, ExportError> {
     let cancel = os_model::CancelToken::new();
     let mut ctx = crate::types::ExportCtx {
         cancel: &cancel,
@@ -105,8 +129,10 @@ pub fn export_view(
         workbook: None,
         skipped: Vec::new(),
     };
-    export_view_with(tabs, file, cfg, q, path, format, sheet, true, &mut ctx)?
-        .ok_or_else(|| ExportError::Write("Missing view output".into()))
+    export_view_with_writer_options(
+        tabs, file, cfg, q, path, format, sheet, true, &mut ctx, opts,
+    )?
+    .ok_or_else(|| ExportError::Write("Missing view output".into()))
 }
 
 /// Controlled single-view export. Returns `None` for an omitted empty table or
@@ -123,9 +149,37 @@ pub fn export_view_with(
     preserve_upload_order: bool,
     ctx: &mut crate::types::ExportCtx<'_>,
 ) -> Result<Option<ExportFileInfo>, ExportError> {
+    export_view_with_writer_options(
+        tabs,
+        file,
+        cfg,
+        q,
+        path,
+        format,
+        sheet,
+        preserve_upload_order,
+        ctx,
+        &crate::pipeline::writer_options(cfg),
+    )
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_view_with_writer_options(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    q: &ViewQuery,
+    path: &Path,
+    format: Format,
+    sheet: &str,
+    preserve_upload_order: bool,
+    ctx: &mut crate::types::ExportCtx<'_>,
+    opts: &crate::types::WriterOptions,
+) -> Result<Option<ExportFileInfo>, ExportError> {
     let mut warnings = Vec::new();
     let info = snapshot(file, || {
-        crate::output::write_table(path, format, sheet, &writer_options(cfg), ctx, |writer| {
+        crate::output::write_table(path, format, sheet, opts, ctx, |writer| {
             warnings = write_view_to(tabs, file, cfg, q, preserve_upload_order, writer)?;
             Ok(())
         })
@@ -380,13 +434,34 @@ pub fn export_bulk(
     out_dir: &Path,
     format: Format,
 ) -> Result<Vec<ExportFileInfo>, ExportError> {
-    export_bulk_in(
+    export_bulk_with_options(
+        file,
+        cfg,
+        name,
+        out_dir,
+        format,
+        &crate::pipeline::writer_options(cfg),
+    )
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_bulk_with_options(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    name: &str,
+    out_dir: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<Vec<ExportFileInfo>, ExportError> {
+    export_bulk_in_with_options(
         &os_analyze::tabs::configured_for_file(cfg, file),
         file,
         cfg,
         name,
         out_dir,
         format,
+        opts,
     )
 }
 
@@ -399,21 +474,45 @@ pub fn export_bulk_in(
     out_dir: &Path,
     format: Format,
 ) -> Result<Vec<ExportFileInfo>, ExportError> {
-    if file.conn().is_autocommit() {
-        os_store::link_index::ensure_if_idle(file)?;
-    }
-    snapshot(file, || {
-        export_bulk_in_snapshot(tabs, file, cfg, name, out_dir, format)
-    })
+    export_bulk_in_with_options(
+        tabs,
+        file,
+        cfg,
+        name,
+        out_dir,
+        format,
+        &crate::pipeline::writer_options(cfg),
+    )
 }
 
-fn export_bulk_in_snapshot(
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_bulk_in_with_options(
     tabs: &[TabDef],
     file: &CrawlFile,
     cfg: &CrawlConfig,
     name: &str,
     out_dir: &Path,
     format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<Vec<ExportFileInfo>, ExportError> {
+    if file.conn().is_autocommit() {
+        os_store::link_index::ensure_if_idle(file)?;
+    }
+    snapshot(file, || {
+        export_bulk_in_snapshot_with_options(tabs, file, cfg, name, out_dir, format, opts)
+    })
+}
+
+#[allow(clippy::too_many_arguments)]
+fn export_bulk_in_snapshot_with_options(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    name: &str,
+    out_dir: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
 ) -> Result<Vec<ExportFileInfo>, ExportError> {
     // Auflösung über den gemeinsamen Katalog: Vorschläge bei Tippfehlern stammen aus allen Bulk-Namen.
     let lookup = catalog::bulk_generic::canonical_name(name, cfg).unwrap_or(name);
@@ -441,7 +540,8 @@ fn export_bulk_in_snapshot(
         )));
     }
     if canonical == bulk_issues::BULK_NAME {
-        let mut result = bulk_issues::export_in(tabs, file, cfg, out_dir, format)?;
+        let mut result =
+            bulk_issues::export_in_with_options(tabs, file, cfg, out_dir, format, opts)?;
         // Hinweise des Gesamtexports (z. B. fehlende Beschreibungstexte) gehen an die letzte Datei, damit
         // der Aufrufer sie über `ExportFileInfo::warnings` findet; Voraussetzungen stehen dort schon.
         if let Some(last) = result.files.last_mut() {
@@ -473,8 +573,7 @@ fn export_bulk_in_snapshot(
             cfg,
             entry_name: &canonical,
         };
-        let mut writer =
-            crate::output::open_writer(&path, format, &entry.name, &writer_options(cfg))?;
+        let mut writer = crate::output::open_writer(&path, format, &entry.name, opts)?;
         writer.header(&entry.header)?;
         (entry.run)(&job, writer.as_mut())?;
         return Ok(vec![writer.finish()?]);
@@ -492,7 +591,9 @@ fn export_bulk_in_snapshot(
             cfg,
             entry_name: &canonical,
         };
-        return Ok(vec![catalog::export_table(entry, &job, &path, format)?]);
+        return Ok(vec![catalog::export_table_with_options(
+            entry, &job, &path, format, opts,
+        )?]);
     }
     let entry = bulk_links::resolve(&canonical)?;
     fs_paths::create_dir_all(out_dir).map_err(|source| ExportError::Io {
@@ -500,7 +601,8 @@ fn export_bulk_in_snapshot(
         source,
     })?;
     let path = out_dir.join(naming::file_name(&entry.name, None, format.extension()));
-    let info = export_link_entry(tabs, file, cfg, entry, &path, format, &entry.name)?;
+    let info =
+        export_link_entry_with_options(tabs, file, cfg, entry, &path, format, &entry.name, opts)?;
     Ok(vec![info])
 }
 
@@ -514,13 +616,34 @@ pub fn export_report(
     out_dir: &Path,
     format: Format,
 ) -> Result<ReportResult, ExportError> {
-    export_report_in(
+    export_report_with_options(
+        file,
+        cfg,
+        name,
+        out_dir,
+        format,
+        &crate::pipeline::writer_options(cfg),
+    )
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_report_with_options(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    name: &str,
+    out_dir: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<ReportResult, ExportError> {
+    export_report_in_with_options(
         &os_analyze::tabs::configured_for_file(cfg, file),
         file,
         cfg,
         name,
         out_dir,
         format,
+        opts,
     )
 }
 
@@ -533,27 +656,51 @@ pub fn export_report_in(
     out_dir: &Path,
     format: Format,
 ) -> Result<ReportResult, ExportError> {
-    if file.conn().is_autocommit() {
-        os_store::link_index::ensure_if_idle(file)?;
-    }
-    snapshot(file, || {
-        export_report_in_snapshot(tabs, file, cfg, name, out_dir, format)
-    })
+    export_report_in_with_options(
+        tabs,
+        file,
+        cfg,
+        name,
+        out_dir,
+        format,
+        &crate::pipeline::writer_options(cfg),
+    )
 }
 
-fn export_report_in_snapshot(
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_report_in_with_options(
     tabs: &[TabDef],
     file: &CrawlFile,
     cfg: &CrawlConfig,
     name: &str,
     out_dir: &Path,
     format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<ReportResult, ExportError> {
+    if file.conn().is_autocommit() {
+        os_store::link_index::ensure_if_idle(file)?;
+    }
+    snapshot(file, || {
+        export_report_in_snapshot_with_options(tabs, file, cfg, name, out_dir, format, opts)
+    })
+}
+
+#[allow(clippy::too_many_arguments)]
+fn export_report_in_snapshot_with_options(
+    tabs: &[TabDef],
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    name: &str,
+    out_dir: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
 ) -> Result<ReportResult, ExportError> {
     fs_paths::create_dir_all(out_dir).map_err(|source| ExportError::Io {
         path: out_dir.to_path_buf(),
         source,
     })?;
-    crate::reports::save_report_in(tabs, file, cfg, name, out_dir, format)
+    crate::reports::save_report_in_with_options(tabs, file, cfg, name, out_dir, format, opts)
 }
 
 /// App export extension preserving uploaded list order without changing the M1 writer API.
@@ -659,19 +806,41 @@ pub fn export_batch(
     options: &BatchOptions<'_>,
     ctx: &mut crate::types::ExportCtx<'_>,
 ) -> Result<crate::types::BatchResult, ExportError> {
+    export_batch_with_options(
+        file,
+        cfg,
+        selections,
+        options,
+        ctx,
+        &crate::pipeline::writer_options(cfg),
+    )
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_batch_with_options(
+    file: &CrawlFile,
+    cfg: &CrawlConfig,
+    selections: &[crate::types::ExportSelection],
+    options: &BatchOptions<'_>,
+    ctx: &mut crate::types::ExportCtx<'_>,
+    opts: &crate::types::WriterOptions,
+) -> Result<crate::types::BatchResult, ExportError> {
     snapshot(file, || {
         let tabs = os_analyze::tabs::configured_for_file(cfg, file);
-        export_batch_in(&tabs, file, cfg, selections, options, ctx)
+        export_batch_in_with_options(&tabs, file, cfg, selections, options, ctx, opts)
     })
 }
 
-fn export_batch_in(
+#[allow(clippy::too_many_arguments)]
+fn export_batch_in_with_options(
     tabs: &[TabDef],
     file: &CrawlFile,
     cfg: &CrawlConfig,
     selections: &[crate::types::ExportSelection],
     options: &BatchOptions<'_>,
     ctx: &mut crate::types::ExportCtx<'_>,
+    opts: &crate::types::WriterOptions,
 ) -> Result<crate::types::BatchResult, ExportError> {
     snapshot(file, || {
         use crate::types::WorkbookTarget;
@@ -694,8 +863,7 @@ fn export_batch_in(
         };
         let mut workbook = if let Some(pending) = &pending {
             Some({
-                let mut writer =
-                    crate::xlsx::XlsxWriter::create(&pending.path, "Export", &writer_options(cfg))?;
+                let mut writer = crate::xlsx::XlsxWriter::create(&pending.path, "Export", opts)?;
                 writer.set_cancel(ctx.cancel.clone());
                 writer
             })
@@ -928,7 +1096,7 @@ fn export_batch_in(
                 &path,
                 options.format,
                 &name.replace(':', " "),
-                &writer_options(cfg),
+                opts,
                 &mut table_ctx,
                 |writer| {
                     match &resolved {
@@ -1031,7 +1199,7 @@ fn list_column_expr(tab: &TabDef, name: &str) -> Result<String, ExportError> {
     for column in &tab.columns {
         match &column.sql {
             ColumnSql::Expr(expr) if column.key.eq_ignore_ascii_case(name) => {
-                return Ok((*expr).into())
+                return Ok((*expr).into());
             }
             ColumnSql::Multi { base, list_sql } | ColumnSql::MultiCrawlWide { base, list_sql } => {
                 if let Some(n) = name
@@ -1177,7 +1345,7 @@ mod query_plan_tests {
             workbook: None,
             skipped: Vec::new(),
         };
-        let result = export_batch_in(
+        let result = export_batch_in_with_options(
             &tabs,
             &file,
             &cfg,
@@ -1189,6 +1357,7 @@ mod query_plan_tests {
                 single_workbook: false,
             },
             &mut ctx,
+            &writer_options(&cfg),
         )
         .unwrap();
         assert_eq!(

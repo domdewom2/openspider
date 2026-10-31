@@ -634,11 +634,30 @@ pub fn save_report(
     format: Format,
     cancel: &CancelToken,
 ) -> Result<ReportResult, ExportError> {
-    let cfg = comparison.current().config.clone();
+    save_report_with_options(
+        comparison,
+        name,
+        out_dir,
+        format,
+        cancel,
+        &crate::pipeline::writer_options(&comparison.current().config),
+    )
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn save_report_with_options(
+    comparison: &mut Comparison,
+    name: &str,
+    out_dir: &Path,
+    format: Format,
+    cancel: &CancelToken,
+    opts: &crate::types::WriterOptions,
+) -> Result<ReportResult, ExportError> {
     if let Ok(def) = report_catalog::resolve(name) {
         if def.kind == ReportKind::CrawlOverview {
             let path = out_dir.join(def.file_name(format.extension()));
-            let mut writer = open_writer(&path, format, def.file_stem, &writer_options(&cfg))?;
+            let mut writer = open_writer(&path, format, def.file_stem, opts)?;
             let mut ctx = plain_ctx(cancel);
             write_crawl_overview(comparison, &[], writer.as_mut(), &mut ctx)?;
             let info = writer.finish()?;
@@ -649,7 +668,14 @@ pub fn save_report(
         }
     }
     let current = comparison.current();
-    crate::reports::save_report(&current.file, &current.config, name, out_dir, format)
+    crate::reports::save_report_with_options(
+        &current.file,
+        &current.config,
+        name,
+        out_dir,
+        format,
+        opts,
+    )
 }
 
 /// Saves a report for one saved segment (OUT-011, OUT-113). Call with a fresh
@@ -662,15 +688,38 @@ pub fn save_report_in_segment(
     format: Format,
     cancel: &CancelToken,
 ) -> Result<ReportResult, ExportError> {
+    save_report_in_segment_with_options(
+        comparison,
+        name,
+        scope,
+        out_dir,
+        format,
+        cancel,
+        &crate::pipeline::writer_options(&comparison.current().config),
+    )
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn save_report_in_segment_with_options(
+    comparison: &mut Comparison,
+    name: &str,
+    scope: &os_analyze::segments::SegmentFilter,
+    out_dir: &Path,
+    format: Format,
+    cancel: &CancelToken,
+    opts: &crate::types::WriterOptions,
+) -> Result<ReportResult, ExportError> {
     let current = comparison.current();
     if !report_catalog::resolve(name).is_ok_and(|d| d.kind == ReportKind::CrawlOverview) {
-        return crate::segment::export_report(
+        return crate::segment::export_report_with_options(
             &current.file,
             &current.config,
             name,
             Some(scope),
             out_dir,
             format,
+            opts,
         );
     }
     // Filter rows and aggregate summary rows must see the same segment on both sides.
@@ -699,12 +748,7 @@ pub fn save_report_in_segment(
         Some(scope),
         format.extension(),
     )?);
-    let mut writer = open_writer(
-        &path,
-        format,
-        def.file_stem,
-        &writer_options(&scoped.0.current().config),
-    )?;
+    let mut writer = open_writer(&path, format, def.file_stem, opts)?;
     let rows = crawl_overview(scoped.0, cancel)?;
     writer.header(&OVERVIEW_HEADER.map(String::from))?;
     for row in rows {

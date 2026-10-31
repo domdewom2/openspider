@@ -14,7 +14,7 @@ use os_analyze::views::ViewQuery;
 use os_engine::types::{CrawlRequest, CrawlSource, CrawlSummary, EngineDeps, FinishedHook};
 use os_engine::{disk_guard, resume_crawl, start_crawl, CrawlHandle, EngineError};
 use os_export::catalog::bulk_issues;
-use os_export::{export_bulk, save_report, ExportFileInfo, Format};
+use os_export::{ExportFileInfo, Format};
 use os_fetch::SecretStore;
 use os_model::{
     Clock, CrawlConfig, CrawlId, CrawlState, IdSource, Progress, RandomIds, SystemClock, Timestamp,
@@ -382,15 +382,17 @@ fn analysis_hook(rep: &Arc<Reporter>, signals: &Signals) -> FinishedHook {
 
 fn engine_error(e: EngineError, resuming: bool) -> CliError {
     match e {
-        EngineError::Invalid(msg) if resuming && msg.contains("läuft noch") => CliError::internal(
-            format!(
+        EngineError::Invalid(msg) if resuming && msg.contains("läuft noch") => {
+            CliError::internal(format!(
                 "{msg}. Ein abgestürzter Crawl lässt sich erst mehr als 10 Sekunden nach dem letzten \
                  Heartbeat fortsetzen."
-            ),
-        ),
+            ))
+        }
         EngineError::Invalid(msg) => CliError::usage(msg),
         EngineError::Join(msg) => CliError::internal(format!("interner Fehler: {msg}")),
-        other => CliError::crawl(format!("Der Crawl konnte nicht durchgeführt werden: {other}")),
+        other => CliError::crawl(format!(
+            "Der Crawl konnte nicht durchgeführt werden: {other}"
+        )),
     }
 }
 
@@ -741,9 +743,7 @@ async fn export_phase(
     }
     if let (Some(batch), None) = (plan.batch, plan.segment.as_deref()) {
         if !plan.exports.is_empty() {
-            match os_export::csv::with_header_labels(&plan.header_labels, || {
-                run_batch(&file, &cfg, plan, batch, out, signals, rep)
-            }) {
+            match run_batch(&file, &cfg, plan, batch, out, signals, rep) {
                 Ok(n) => files += n,
                 Err(BatchEnd::Interrupted) => return ExportEnd::Interrupted,
                 Err(BatchEnd::Failed(message)) => {
@@ -764,9 +764,9 @@ async fn export_phase(
             return ExportEnd::Interrupted;
         }
         if plan.compare_with_previous || plan.explicit_previous.is_some() {
-            if let Some(result) = os_export::csv::with_header_labels(&plan.header_labels, || {
+            if let Some(result) =
                 comparison_export(&file, &cfg, item, out, plan, &signals.cancel_token(), rep)
-            }) {
+            {
                 match result {
                     Ok(infos) => {
                         for info in infos {
@@ -783,9 +783,7 @@ async fn export_phase(
             }
         }
         if plan.segment.is_some() {
-            match os_export::csv::with_header_labels(&plan.header_labels, || {
-                run_segment_export(&file, &cfg, item, out, plan, rep)
-            }) {
+            match run_segment_export(&file, &cfg, item, out, plan, rep) {
                 Ok(n) => files += n,
                 Err(message) => {
                     failures += 1;
@@ -797,9 +795,15 @@ async fn export_phase(
             }
             continue;
         }
-        match os_export::csv::with_header_labels(&plan.header_labels, || {
-            run_export(&file, &cfg, item, out, plan.format, rep)
-        }) {
+        match run_export(
+            &file,
+            &cfg,
+            item,
+            out,
+            plan.format,
+            rep,
+            &plan.header_labels,
+        ) {
             Ok(n) => files += n,
             Err(message) => {
                 failures += 1;
@@ -956,7 +960,9 @@ fn run_export(
     out: &Path,
     format: Format,
     rep: &Reporter,
+    labels: &std::collections::BTreeMap<String, String>,
 ) -> Result<usize, String> {
+    let opts = labeled_writer_options(cfg, labels);
     match item {
         Resolved::Tab { tab, filter } => {
             let query = ViewQuery::new(tab.clone(), filter.clone());
@@ -968,8 +974,8 @@ fn run_export(
                 workbook: None,
                 skipped: Vec::new(),
             };
-            let info = os_export::tab_export::export_tab_with(
-                file, cfg, &query, out, format, true, &mut ctx,
+            let info = os_export::tab_export::export_tab_with_writer_options(
+                file, cfg, &query, out, format, true, &mut ctx, &opts,
             )
             .map_err(|e| e.to_string())?;
             if let Some(info) = info {
@@ -980,17 +986,22 @@ fn run_export(
             }
         }
         Resolved::Bulk(name) => {
-            let infos = export_bulk(file, cfg, name, out, format).map_err(|e| e.to_string())?;
+            let infos =
+                os_export::pipeline::export_bulk_with_options(file, cfg, name, out, format, &opts)
+                    .map_err(|e| e.to_string())?;
             infos.iter().for_each(|i| report_file(rep, i));
             Ok(infos.len())
         }
         Resolved::Issues => {
-            let infos = bulk_issues::export(file, cfg, out, format).map_err(|e| e.to_string())?;
+            let infos = bulk_issues::export_with_options(file, cfg, out, format, &opts)
+                .map_err(|e| e.to_string())?;
             infos.iter().for_each(|i| report_file(rep, i));
             Ok(infos.len())
         }
         Resolved::Report(name) => {
-            let result = save_report(file, cfg, name, out, format).map_err(|e| e.to_string())?;
+            let result =
+                os_export::reports::save_report_with_options(file, cfg, name, out, format, &opts)
+                    .map_err(|e| e.to_string())?;
             result.files.iter().for_each(|i| report_file(rep, i));
             for w in &result.warnings {
                 rep.warn(w);
@@ -1015,6 +1026,7 @@ fn run_batch(
     signals: &Signals,
     rep: &Reporter,
 ) -> Result<usize, BatchEnd> {
+    let opts = labeled_writer_options(cfg, &plan.header_labels);
     if plan.explicit_previous.is_some()
         || (plan.compare_with_previous && file.get_meta("compare.latest").ok().flatten().is_some())
     {
@@ -1056,7 +1068,14 @@ fn run_batch(
         crawl_name: &crawl_name,
         single_workbook: batch.single_workbook && plan.google.is_none(),
     };
-    match os_export::pipeline::export_batch(file, cfg, &selections, &options, &mut ctx) {
+    match os_export::pipeline::export_batch_with_options(
+        file,
+        cfg,
+        &selections,
+        &options,
+        &mut ctx,
+        &opts,
+    ) {
         Ok(result) => {
             for info in &result.files {
                 report_file(rep, info);
@@ -1100,6 +1119,7 @@ fn run_segment_export(
     plan: &Plan,
     rep: &Reporter,
 ) -> Result<usize, String> {
+    let opts = labeled_writer_options(cfg, &plan.header_labels);
     let (kind, name) = match item {
         Resolved::Tab { tab, filter } => ("tab", format!("{tab}:{filter}")),
         Resolved::Bulk(name) => ("bulk", name.clone()),
@@ -1116,13 +1136,14 @@ fn run_segment_export(
         .transpose()
         .map_err(|e| e.to_string())?;
     let target = staging.as_ref().map(|s| s.path.as_path()).unwrap_or(out);
-    let files = os_export::segment::export_all(
+    let files = os_export::segment::export_all_with_options(
         file,
         cfg,
         &selection,
         plan.segment.as_deref(),
         target,
         plan.format,
+        &opts,
     )
     .map_err(|e| e.to_string())?;
     let mut count = 0;
@@ -1162,6 +1183,7 @@ fn comparison_export(
     cancel: &os_model::CancelToken,
     rep: &Reporter,
 ) -> Option<Result<Vec<ExportFileInfo>, String>> {
+    let opts = labeled_writer_options(cfg, &plan.header_labels);
     let format = plan.format;
     let segment = plan.segment.as_deref();
     let explicit_previous = plan.explicit_previous.as_deref();
@@ -1184,11 +1206,13 @@ fn comparison_export(
                     cancel,
                 )?;
                 let report = if let Some(scope) = scope {
-                    os_export::compare::save_report_in_segment(
-                        &mut c, name, &scope, out, format, cancel,
+                    os_export::compare::save_report_in_segment_with_options(
+                        &mut c, name, &scope, out, format, cancel, &opts,
                     )
                 } else {
-                    os_export::compare::save_report(&mut c, name, out, format, cancel)
+                    os_export::compare::save_report_with_options(
+                        &mut c, name, out, format, cancel, &opts,
+                    )
                 }
                 .map_err(|e| e.to_string())?;
                 for warning in report.warnings {
@@ -1223,13 +1247,8 @@ fn comparison_export(
                 scope.as_ref().and_then(|s| s.name.as_deref()),
                 format.extension(),
             ));
-            let mut writer = os_export::open_writer(
-                &target,
-                format,
-                &name,
-                &os_export::pipeline::writer_options(cfg),
-            )
-            .map_err(|e| e.to_string())?;
+            let mut writer =
+                os_export::open_writer(&target, format, &name, &opts).map_err(|e| e.to_string())?;
             let mut ctx = os_export::types::ExportCtx {
                 cancel,
                 progress: &|_| {},
@@ -1319,6 +1338,7 @@ fn comparison_batch(
     signals: &Signals,
     rep: &Reporter,
 ) -> Result<usize, BatchEnd> {
+    let opts = labeled_writer_options(cfg, &plan.header_labels);
     use os_export::types::TableWriter;
     let run = || -> Result<usize, String> {
         let token = signals.cancel_token();
@@ -1335,12 +1355,8 @@ fn comparison_batch(
             "xlsx",
         ));
         let mut workbook = if batch.single_workbook && plan.format == Format::Xlsx {
-            let mut w = os_export::xlsx::XlsxWriter::create(
-                &destination,
-                "Export",
-                &os_export::pipeline::writer_options(cfg),
-            )
-            .map_err(|e| e.to_string())?;
+            let mut w = os_export::xlsx::XlsxWriter::create(&destination, "Export", &opts)
+                .map_err(|e| e.to_string())?;
             w.set_cancel(token.clone());
             Some(w)
         } else {
@@ -1374,7 +1390,7 @@ fn comparison_batch(
                         true,
                         &mut q,
                     );
-                    os_export::pipeline::export_view_with(
+                    os_export::pipeline::export_view_with_writer_options(
                         &[def],
                         &comparison.current().file,
                         cfg,
@@ -1384,13 +1400,14 @@ fn comparison_batch(
                         &label,
                         false,
                         &mut ctx,
+                        &opts,
                     )
                 } else {
                     os_export::output::write_table(
                         &target,
                         plan.format,
                         &label,
-                        &os_export::pipeline::writer_options(cfg),
+                        &opts,
                         &mut ctx,
                         |writer| {
                             let selection = os_export::compare::TabSelection {
@@ -1438,9 +1455,15 @@ fn comparison_batch(
                     crawl_name: &name,
                     single_workbook: false,
                 };
-                let result =
-                    os_export::pipeline::export_batch(file, cfg, &[selection], &options, &mut ctx)
-                        .map_err(|e| e.to_string())?;
+                let result = os_export::pipeline::export_batch_with_options(
+                    file,
+                    cfg,
+                    &[selection],
+                    &options,
+                    &mut ctx,
+                    &opts,
+                )
+                .map_err(|e| e.to_string())?;
                 for info in &result.files {
                     report_file(rep, info);
                 }
@@ -1469,3 +1492,12 @@ fn comparison_batch(
 #[cfg(test)]
 #[path = "../../os-analyze/src/compare/change/cli_tests.rs"]
 mod change_tests;
+
+fn labeled_writer_options(
+    cfg: &CrawlConfig,
+    labels: &std::collections::BTreeMap<String, String>,
+) -> os_export::types::WriterOptions {
+    let mut opts = os_export::pipeline::writer_options(cfg);
+    opts.header_labels = labels.clone();
+    opts
+}

@@ -371,8 +371,25 @@ pub fn export_table(
     path: &Path,
     format: Format,
 ) -> Result<ExportFileInfo, ExportError> {
-    let options = crate::pipeline::writer_options(job.cfg);
-    let mut writer = open_writer(path, format, entry.file_stem, &options)?;
+    export_table_with_options(
+        entry,
+        job,
+        path,
+        format,
+        &crate::pipeline::writer_options(job.cfg),
+    )
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_table_with_options(
+    entry: &TableEntry,
+    job: &TableJob<'_>,
+    path: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<ExportFileInfo, ExportError> {
+    let mut writer = open_writer(path, format, entry.file_stem, opts)?;
     let header = match entry.header_fn {
         Some(make) => make(job)?,
         None => entry.header.iter().map(|h| (*h).to_string()).collect(),

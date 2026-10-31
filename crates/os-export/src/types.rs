@@ -42,6 +42,8 @@ impl FromStr for Format {
 /// Optionen der Tabellenschreiber.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct WriterOptions {
+    /// Presentation labels keyed by canonical column name.
+    pub header_labels: std::collections::BTreeMap<String, String>,
     /// UTF-8-BOM am Dateianfang (CSV).
     pub utf8_bom: bool,
     /// Zeilenende (CSV).
@@ -53,6 +55,7 @@ pub struct WriterOptions {
 impl Default for WriterOptions {
     fn default() -> Self {
         WriterOptions {
+            header_labels: Default::default(),
             utf8_bom: true,
             line_ending: LineEnding::Crlf,
             max_rows_per_sheet: 1_048_575,

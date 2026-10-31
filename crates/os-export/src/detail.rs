@@ -14,7 +14,6 @@ use os_store::CrawlFile;
 
 use crate::error::ExportError;
 use crate::links_export::{link_header, link_kinds, sql, stream_links, LinkOrder};
-use crate::pipeline::writer_options;
 use crate::types::{DetailKind, ExportCtx, ExportFileInfo, Format};
 
 /// Exportiert Inlinks bzw. Outlinks der angegebenen URLs im Standard-Linkformat (ONPAGE-192).
@@ -28,6 +27,26 @@ pub fn export_detail(
     out: &Path,
     format: Format,
 ) -> Result<ExportFileInfo, ExportError> {
+    export_detail_with_options(
+        file,
+        detail,
+        urls,
+        out,
+        format,
+        &crate::pipeline::writer_options(&file.config()?),
+    )
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_detail_with_options(
+    file: &CrawlFile,
+    detail: DetailKind,
+    urls: &[UrlId],
+    out: &Path,
+    format: Format,
+    opts: &crate::types::WriterOptions,
+) -> Result<ExportFileInfo, ExportError> {
     let cancel = os_model::CancelToken::new();
     let mut ctx = ExportCtx {
         cancel: &cancel,
@@ -36,7 +55,7 @@ pub fn export_detail(
         workbook: None,
         skipped: Vec::new(),
     };
-    export_detail_with(file, detail, urls, out, format, &mut ctx)?
+    export_detail_with_writer_options(file, detail, urls, out, format, &mut ctx, opts)?
         .ok_or_else(|| ExportError::Write("Missing detail output".into()))
 }
 
@@ -49,18 +68,39 @@ pub fn export_detail_with(
     format: Format,
     ctx: &mut ExportCtx<'_>,
 ) -> Result<Option<ExportFileInfo>, ExportError> {
+    export_detail_with_writer_options(
+        file,
+        detail,
+        urls,
+        out,
+        format,
+        ctx,
+        &crate::pipeline::writer_options(&file.config()?),
+    )
+}
+
+/// Exports with explicit writer options, including presentation header labels.
+#[allow(clippy::too_many_arguments)]
+pub fn export_detail_with_writer_options(
+    file: &CrawlFile,
+    detail: DetailKind,
+    urls: &[UrlId],
+    out: &Path,
+    format: Format,
+    ctx: &mut ExportCtx<'_>,
+    opts: &crate::types::WriterOptions,
+) -> Result<Option<ExportFileInfo>, ExportError> {
     ctx.checkpoint()?;
     if file.conn().is_autocommit() {
         os_store::link_index::ensure_if_idle(file)?;
     }
     crate::pipeline::snapshot(file, || {
-        let cfg = file.config()?;
         let (sheet, where_sql) = match detail {
             DetailKind::Inlinks => ("Inlinks", "l.target_id = :url_id"),
             DetailKind::Outlinks => ("Outlinks", "l.source_id = :url_id"),
         };
         let cancel = ctx.cancel.clone();
-        crate::output::write_table(out, format, sheet, &writer_options(&cfg), ctx, |writer| {
+        crate::output::write_table(out, format, sheet, opts, ctx, |writer| {
             let kinds = link_kinds();
             writer.header(&link_header())?;
             let mut seen = HashSet::new();
