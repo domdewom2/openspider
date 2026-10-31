@@ -142,6 +142,24 @@ pub fn retained_bytes(app: &App) -> u64 {
         .sum()
 }
 
+/// K-1a, UI-147: derivable view facts prepared on read-only connections (shared memberships,
+/// Overview/Issues counts) are stored by the serialized writer. Reopening the saved crawl then
+/// skips the crawl-wide scans. Running and read-only crawls keep them in memory only.
+pub(crate) fn persist_facts(app: &App, key: &CrawlKey) {
+    let (writer, key) = (app.clone(), key.clone());
+    app.handle().spawn(async move {
+        let result = writer
+            .write_queue()
+            .submit_file(&key, |file| {
+                os_analyze::views::persist_facts(file).map_err(view_error)
+            })
+            .await;
+        if let Err(error) = result {
+            tracing::debug!(?error, "Ansichtsfakten nicht gespeichert");
+        }
+    });
+}
+
 #[derive(Default)]
 struct Shared {
     init: AtomicBool,
@@ -282,7 +300,11 @@ impl TabView {
     /// Reuse a published snapshot only while its file version and idle lease
     /// remain valid. A missed feed notification must never resurrect old rows.
     pub async fn cached(&self, app: &App) -> Result<Option<Built>, CmdError> {
-        let _builder = self.builder.lock().await;
+        // Cache probing must not queue behind live maintenance. A busy session
+        // is a cache miss; the caller starts its normal cancellable operation.
+        let Ok(_builder) = self.builder.try_lock() else {
+            return Ok(None);
+        };
         let (seq, stamp) = app
             .read_pool()
             .run_cached(
@@ -382,13 +404,17 @@ impl TabView {
                         meta,
                         state,
                         os_analyze::views::filter_cache_stamp(file)?,
+                        s.shared_pending(),
                     ))
                 })();
                 Ok(result)
             },
         );
-        let (snapshot, core, version, total, meta, state, cache_stamp) =
+        let (snapshot, core, version, total, meta, state, cache_stamp, pending) =
             until_cancelled(&token, work).await??.map_err(view_error)?;
+        if pending {
+            persist_facts(app, &self.key);
+        }
         let built = Built {
             version,
             total,

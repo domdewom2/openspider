@@ -86,6 +86,26 @@ async fn open_spec(app: &App, spec: Value, columns: Value) -> Value {
     }
 }
 
+// spec: UI-141
+// spec: UI-142
+#[tokio::test]
+async fn cache_probe_does_not_wait_for_live_maintenance() {
+    use futures_util::FutureExt;
+    let (_dir, app, _clock, path) = fixture();
+    open_crawl(&app, &path).await;
+    let handle = open_view(&app).await;
+    let tab = crate::commands::view::get(
+        &app,
+        &CallCtx::for_window("main"),
+        handle["viewId"].as_str().unwrap(),
+    )
+    .unwrap()
+    .tab
+    .unwrap();
+    let _maintenance = tab.builder.lock().await;
+    assert!(matches!(tab.cached(&app).now_or_never(), Some(Ok(None))));
+}
+
 // spec: UI-140
 // spec: UI-142
 // spec: ONPAGE-015
@@ -239,4 +259,55 @@ async fn grouped_catalog_width_keeps_population_and_directive_scope() {
         .collect();
     assert!(keys.contains(&"Meta Robots 2"));
     assert!(!keys.contains(&"Meta Robots 3"));
+}
+
+fn stored_keys(path: &std::path::Path) -> Vec<String> {
+    let file = CrawlFile::open(path, OpenMode::ReadOnly).unwrap();
+    let mut stmt = file
+        .conn()
+        .prepare("SELECT key FROM view_cache WHERE key LIKE 'n21:%' ORDER BY key")
+        .unwrap();
+    stmt.query_map([], |r| r.get(0))
+        .unwrap()
+        .collect::<Result<_, _>>()
+        .unwrap()
+}
+
+// spec: UI-145
+// spec: UI-147
+#[tokio::test]
+async fn opening_a_saved_crawl_stores_derivable_view_facts_for_the_next_open() {
+    let (_dir, app, _clock, path) = fixture();
+    open_crawl(&app, &path).await;
+    open_view(&app).await;
+    let overview = call(&app, "sidebar.overview", json!({})).await;
+    let issues = call(&app, "sidebar.issues", json!({})).await;
+    let structure = call(
+        &app,
+        "sidebar.siteStructure",
+        json!({"view":"responseCodes","offset":0,"limit":200}),
+    )
+    .await;
+    let expected = ["n21:membership", "n21:overview", "n21:sidebar"];
+    let deadline = std::time::Instant::now() + Duration::from_secs(20);
+    while stored_keys(&path) != expected && std::time::Instant::now() < deadline {
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    assert_eq!(stored_keys(&path), expected);
+
+    // A second app serves the same answers for the stored data version.
+    let dir = tempfile::tempdir().unwrap();
+    let second = App::new(AppConfig::new(dir.path())).unwrap();
+    open_crawl(&second, &path).await;
+    assert_eq!(call(&second, "sidebar.overview", json!({})).await, overview);
+    assert_eq!(call(&second, "sidebar.issues", json!({})).await, issues);
+    assert_eq!(
+        call(
+            &second,
+            "sidebar.siteStructure",
+            json!({"view":"responseCodes","offset":0,"limit":200}),
+        )
+        .await,
+        structure
+    );
 }

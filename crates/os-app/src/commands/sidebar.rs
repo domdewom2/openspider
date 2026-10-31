@@ -42,35 +42,29 @@ fn overview<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFutur
         };
         catalog::check_scope(&args.segment, &compare_scope)?;
         let s = session(app, &ctx)?;
+        let facts = overview_facts(app, &s, ctx.cancel.clone()).await?;
         app.read_pool()
             .run_snapshot(s.key, move |file, _| {
-                let summary = os_store::queries::app_support::overview_summary(file.conn())?;
-                let summary = summary_rows(summary);
+                let summary = summary_rows(facts.summary.clone());
                 let registry = os_analyze::tabs::configured_for_file(&s.config, file);
-                Ok(
-                    os_analyze::views::filter_counts_in(&registry, file, &s.config)
-                        .map_err(view_error)
-                        .and_then(|counts| {
-                            let mut rows = catalog::count_rows(&registry, &s.config, &counts);
-                            rows.retain(|r| r.tab != "Change Detection");
-                            rows.extend(change_rows);
-                            let tabs = registry
-                                .iter()
-                                .filter_map(|t| {
-                                    let filters = rows
-                                        .iter()
-                                        .filter(|r| r.tab == t.id)
-                                        .map(|r| r.filter.clone())
-                                        .collect::<Vec<_>>();
-                                    (!filters.is_empty()).then(|| OverviewTab {
-                                        tab: t.id.into(),
-                                        filters,
-                                    })
-                                })
-                                .collect();
-                            to_json(&OverviewDto { summary, tabs })
-                        }),
-                )
+                let mut rows = catalog::count_rows(&registry, &s.config, &facts.counts);
+                rows.retain(|r| r.tab != "Change Detection");
+                rows.extend(change_rows);
+                let tabs = registry
+                    .iter()
+                    .filter_map(|t| {
+                        let filters = rows
+                            .iter()
+                            .filter(|r| r.tab == t.id)
+                            .map(|r| r.filter.clone())
+                            .collect::<Vec<_>>();
+                        (!filters.is_empty()).then(|| OverviewTab {
+                            tab: t.id.into(),
+                            filters,
+                        })
+                    })
+                    .collect();
+                Ok(to_json(&OverviewDto { summary, tabs }))
             })
             .await?
     })
@@ -107,14 +101,31 @@ fn issues<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
         let args: IssuesArgs = parse_args(args)?;
         catalog::check_scope(&args.segment, &args.compare)?;
         let s = session(app, &ctx)?;
-        app.read_pool()
-            .run_snapshot(s.key, move |file, _| {
-                Ok(os_analyze::views::filter_counts(file, &s.config)
-                    .map_err(view_error)
-                    .and_then(|counts| to_json(&issue_rows(&counts, &args))))
-            })
-            .await?
+        let facts = overview_facts(app, &s, ctx.cancel.clone()).await?;
+        to_json(&issue_rows(&facts.counts, &args))
     })
+}
+
+/// UI-145/UI-147: Overview and Issues share one fact set per data version. A dedicated lane
+/// serializes its computation with the precomputation after opening, so a request waits for
+/// the running pass instead of scanning the crawl a second time.
+pub(crate) async fn overview_facts(
+    app: &App,
+    s: &crate::runtime::sessions::SessionInfo,
+    cancel: os_model::CancelToken,
+) -> Result<std::sync::Arc<os_analyze::views::OverviewFacts>, CmdError> {
+    let cfg = s.config.clone();
+    let (facts, pending) = app
+        .read_pool()
+        .run_cached(s.key.clone(), "overview", cancel, move |file, cancel| {
+            Ok(os_analyze::views::overview_facts(file, &cfg, cancel))
+        })
+        .await?
+        .map_err(view_error)?;
+    if pending {
+        crate::views::persist_facts(app, &s.key);
+    }
+    Ok(facts)
 }
 fn explain<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
