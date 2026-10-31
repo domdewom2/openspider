@@ -13,6 +13,10 @@ const fixture = resolve(
 );
 const output = resolve("../../target/loadtest/raw");
 let bridge: Bridge;
+const startedByTest = new Map<string, string>();
+test.beforeEach(({}, info) => {
+  startedByTest.set(info.testId, new Date().toISOString());
+});
 test.beforeAll(async () => {
   const b = await startPerfBridge();
   if (!b) throw new Error("Real bridge required");
@@ -30,7 +34,7 @@ test.afterEach(async ({}, info) => {
         scenario: `test-failure-${info.line}`,
         engine: info.project.name,
         size: rows === 5_000_000 ? "large" : "small",
-        started_at: new Date().toISOString(),
+        started_at: startedByTest.get(info.testId) ?? new Date().toISOString(),
         metrics: {},
         passed: false,
         details: {
@@ -78,7 +82,7 @@ async function evidence(
   const report = {
     scenario,
     size: rows === 5_000_000 ? "large" : "small",
-    started_at: new Date().toISOString(),
+    started_at: startedByTest.get(info.testId) ?? new Date().toISOString(),
     engine: info.project.name,
     metrics,
     details,
@@ -282,6 +286,9 @@ test("seeded random action soak and attributable renderer RSS", async ({
         "random vertical/horizontal scroll/jump and tab changes; cache ≤20000; DOM rows <300",
       fullSoak: seconds >= 1800,
       configuredSeconds: seconds,
+      errorExamples: await page.evaluate(() =>
+        window.uiPerf.errors.slice(0, 100),
+      ),
     },
   );
 });
@@ -383,6 +390,11 @@ test("200 URL/s fixture with 20 crawl threads: click latency and event cap", asy
       "crawl-load",
       {
         clickP95Ms: metric(p95(observed.clicks), 100),
+        validClickSamples: metric(
+          observed.clicks.filter(Number.isFinite).length,
+          30,
+          "min",
+        ),
         crawlFps: metric(loadFrames.fps, 50, "min"),
         eventsPerSecond: metric(observed.ticks.length / seconds, 10),
         fixtureUrlsPerSecond: metric(

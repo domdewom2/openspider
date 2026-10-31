@@ -9,6 +9,7 @@ import {
 } from "../../src/ipc/client";
 import { isTauri } from "../../src/ipc/transport/tauri";
 import { view } from "../../src/ipc/view";
+import { catalog } from "../../src/ipc/catalog";
 import { ViewDataSource, LOADING } from "../../src/data/ViewDataSource";
 import { SelectionModel } from "../../src/state/selection";
 import { resolveTokens } from "../../src/ui/tokens/tokens";
@@ -23,18 +24,20 @@ import { paint, recordFrames } from "../../src/grid/recorder";
 const bridge = new URLSearchParams(location.search).get("bridge");
 if (isTauri()) setClient(createTauriClient());
 else if (bridge) setClient(createBridgeClient(bridge));
-else
-  throw new Error("Grid gate requires a real stub-views bridge or native app");
+else throw new Error("Performance entry requires a real bridge or native app");
 const { crawl } = await import("../../src/ipc/crawl");
 const { client } = await import("../../src/ipc/client");
 const { settled } = await import("./settled");
 const fixture = new URLSearchParams(location.search).get("fixture");
 const openStart = performance.now();
 if (fixture) await crawl.open({ kind: "path", path: fixture });
+const initialColumns = (await catalog.columns({ tab: "Internal" }))
+  .slice(0, 65)
+  .map((c) => c.key);
 let handle = await settled(
   await view.open({
     spec: { kind: "tab", tab: "Internal", filter: "All", sort: [] },
-    columns: [],
+    columns: initialColumns,
   }),
 );
 let source = new ViewDataSource(handle);
@@ -168,10 +171,13 @@ function scrollElement(): HTMLElement {
 const api = {
   current: () => ({ source, handle }),
   switchTab: async (tab: string) => {
+    const columns = (await catalog.columns({ tab }))
+      .slice(0, 65)
+      .map((c) => c.key);
     const next = await settled(
       await view.open({
         spec: { kind: "tab", tab, filter: "All", sort: [] },
-        columns: [],
+        columns,
       }),
     );
     const previous = source;

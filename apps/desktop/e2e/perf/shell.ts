@@ -14,9 +14,16 @@ client.subscribe("main", (event) => {
 });
 document.addEventListener(
   "click",
-  () => {
-    const start = performance.now();
-    requestAnimationFrame(() => clicks.push(performance.now() - start));
+  (event) => {
+    const now = performance.now();
+    const start =
+      event.timeStamp > now + 60000
+        ? event.timeStamp - performance.timeOrigin
+        : event.timeStamp;
+    void paint().then(() => {
+      const latency = performance.now() - start;
+      clicks.push(latency >= 0 ? latency : NaN);
+    });
   },
   true,
 );
