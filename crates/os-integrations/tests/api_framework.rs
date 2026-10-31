@@ -600,22 +600,59 @@ async fn sliding_window_and_retry_limit_are_observed_by_mock() {
         retries: 0,
         ..Default::default()
     };
-    let transport = Transport::new(&Default::default(), limits).unwrap();
-    let calls = (0..5).map(|seed| {
+    let attempts = Arc::new(std::sync::Mutex::new(Vec::new()));
+    let rate_clock = attempts.clone();
+    let transport = Transport::with_rate_clock(&Default::default(), limits, move || {
+        let now = tokio::time::Instant::now();
+        rate_clock.lock().unwrap().push(now);
+        now
+    })
+    .unwrap();
+    // Keep the runtime runnable so loopback I/O cannot auto-advance paused time
+    // to a rate-limit or HTTP timeout. Only this test advances the clock.
+    tokio::time::pause();
+    let keep_time_fixed = tokio::spawn(async {
+        loop {
+            tokio::task::yield_now().await;
+        }
+    });
+    let start = tokio::time::Instant::now();
+    let request = |seed| {
         transport.execute(
             transport.client.get(server.base_url("common")),
             clock().now(),
             seed,
         )
-    });
-    for response in futures_util::future::join_all(calls).await {
-        response.unwrap();
+    };
+    let (first, second) = tokio::join!(request(0), request(1));
+    first.unwrap();
+    second.unwrap();
+    assert_eq!(mock.log.calls().len(), 2);
+    assert_eq!(start.elapsed(), Duration::ZERO);
+    for seed in [2, 4] {
+        let next = request(seed);
+        tokio::pin!(next);
+        assert!(futures_util::poll!(&mut next).is_pending());
+        tokio::time::advance(Duration::from_millis(999)).await;
+        assert!(futures_util::poll!(&mut next).is_pending());
+        assert_eq!(mock.log.calls().len(), seed as usize);
+        // Tokio rounds timer deadlines up to its millisecond tick.
+        tokio::time::advance(Duration::from_millis(2)).await;
+        next.await.unwrap();
+        // A socket-pending future alone is no proof of throttling: the limiter
+        // must actually recheck its clock when this request leaves the window.
+        assert_eq!(
+            attempts.lock().unwrap().last().copied(),
+            Some(tokio::time::Instant::now())
+        );
+        if seed == 2 {
+            request(3).await.unwrap();
+        }
     }
-    let calls = mock.log.calls();
-    assert_eq!(calls.len(), 5);
-    for calls in calls.windows(3) {
-        assert!(calls[2].at.duration_since(calls[0].at) >= Duration::from_millis(990));
-    }
+    assert_eq!(start.elapsed(), Duration::from_millis(2002));
+    assert_eq!(mock.log.calls().len(), 5);
+    keep_time_fixed.abort();
+    tokio::time::resume();
     let transport = Transport::new(
         &Default::default(),
         ApiLimitsConfig {
