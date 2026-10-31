@@ -48,6 +48,10 @@ try {
             New-Item -ItemType Directory -Force (Split-Path $data) | Out-Null
             Set-Content $data 'retain'
             $action = New-ScheduledTaskAction -Execute $cli -Argument '--version'
+            $scheduler = New-Object -ComObject Schedule.Service
+            $scheduler.Connect()
+            try { $null = $scheduler.GetFolder('\OpenSpider') }
+            catch { $null = $scheduler.GetFolder('\').CreateFolder('OpenSpider') }
             Register-ScheduledTask -TaskPath '\OpenSpider\' -TaskName $taskName -Action $action -Force | Out-Null
         } catch {
             $primaryError = $_
