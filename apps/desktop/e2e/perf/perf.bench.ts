@@ -221,6 +221,16 @@ test("seeded random action soak and attributable renderer RSS", async ({
     "Soak runs once per suite; reference selects WebKit",
   );
   test.setTimeout((seconds + 900) * 1000);
+  await mkdir(output, { recursive: true });
+  await writeFile(
+    resolve(output, "../soak-progress.json"),
+    JSON.stringify({
+      phase: "opening",
+      seconds,
+      rows,
+      engine: info.project.name,
+    }),
+  );
   await open(page);
   // Warm cache/render paths before choosing baseline.
   let seed = 19;

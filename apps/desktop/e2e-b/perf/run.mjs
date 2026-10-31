@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { spawn } from "node:child_process";
 import { mkdtemp, rm, mkdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -5,7 +6,10 @@ import { resolve, join } from "node:path";
 import { createServer } from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
 import { rendererRss } from "../../e2e/perf/rss.mjs";
-const binary = resolve(process.argv[2] ?? "target/debug/openspider-desktop");
+const binary = resolve(
+  process.argv[2] ??
+    `target/release/openspider-desktop${process.platform === "win32" ? ".exe" : ""}`,
+);
 const importFixture = resolve(
   process.env.OS_PERF_IMPORT_FIXTURE ?? "target/ui-perf-import.ospider",
 );
@@ -14,6 +18,17 @@ const fixture = resolve(
 );
 if (!["win32", "darwin"].includes(process.platform))
   throw new Error("Native performance run requires macOS/Windows GUI");
+const expectedRows = Number(process.env.OS_PERF_ROWS ?? 100000);
+if (JSON.parse(readFileSync(`${fixture}.json`, "utf8")).rows !== expectedRows)
+  throw new Error("Native fixture row count mismatch");
+if (JSON.parse(readFileSync(`${importFixture}.json`, "utf8")).rows !== 1000000)
+  throw new Error("Native import fixture must contain one million rows");
+if (
+  process.platform === "win32" &&
+  (!Number.isInteger(Number(process.env.OS_PERF_SOAK_SECONDS ?? 1800)) ||
+    Number(process.env.OS_PERF_SOAK_SECONDS ?? 1800) < 1)
+)
+  throw new Error("Native soak duration must be a positive integer");
 const home = await mkdtemp(join(tmpdir(), "os-perf-native-"));
 const port = await new Promise((resolvePort) => {
   const s = createServer();
