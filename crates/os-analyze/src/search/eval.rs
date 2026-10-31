@@ -841,9 +841,33 @@ mod n22_tests {
         ];
         for (i, value) in texts.iter().enumerate() {
             let address = format!("https://n22.test/{i}");
-            file.conn().execute("INSERT INTO urls(id,url,address,origin,is_internal,state,discovered_via,folder_depth,url_length,title_1) VALUES (?1,?2,?2,'https://n22.test',1,'Done','Start',0,length(?2),?3)",
+            file.conn().execute("INSERT INTO urls(id,url,address,origin,is_internal,state,discovered_via,folder_depth,url_length,content_class,status_code,title_1) VALUES (?1,?2,?2,'https://n22.test',1,'Done','Start',0,length(?2),'HTML',200,?3)",
                 rusqlite::params![i as i64 + 1, address, value]).unwrap();
         }
+        // Title 1 has a readiness expression: prove the fixture exposes its actual Unicode cells.
+        let probe = compile(
+            &RuleNode::Rule(Rule {
+                column: "Title 1".into(),
+                op: RuleOp::Contains,
+                value: "ss".into(),
+            }),
+            false,
+        )
+        .unwrap();
+        assert_eq!(
+            probe
+                .scan(
+                    &file,
+                    Instant::now() + Duration::from_secs(10),
+                    &CancelToken::new(),
+                    "1",
+                    &[]
+                )
+                .unwrap()
+                .iter()
+                .collect::<Vec<_>>(),
+            vec![3, 4]
+        );
         for sensitive in [false, true] {
             for op in [
                 RuleOp::Contains,

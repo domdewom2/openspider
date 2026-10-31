@@ -21,6 +21,7 @@ fn extracted_sort_keys_equal_sql_collation_and_tie_order_on_fixture() {
     for i in 1..=33_001 {
         let address = format!("https://n22.test/{:06}", 40_000 - i);
         let mut row = common::row(i, &address)
+            .text("content_class", "HTML")
             .text("title_1", texts[i as usize % texts.len()])
             .int("status_code", 200 + i % 5);
         if i % 23 == 0 {
