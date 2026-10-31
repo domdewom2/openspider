@@ -92,7 +92,8 @@ function mergeDeep(target: unknown, patch: unknown): unknown {
 let readGeneration = 0;
 let mutationGeneration = 0;
 const pendingPatches = new Map<string, Patch>();
-const sender = globalThis.crypto.randomUUID();
+// getRandomValues also works on custom app origins without secure-context UUID APIs.
+const sender = Array.from(globalThis.crypto.getRandomValues(new Uint32Array(4)), value => value.toString(16)).join("-");
 let broadcast: BroadcastChannel | null = null;
 let confirmedDto: AppSettingsDto | null = null;
 let patchTail: Promise<unknown> = Promise.resolve();
