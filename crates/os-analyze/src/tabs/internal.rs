@@ -18,7 +18,8 @@ pub(crate) const POPULATION: &str = "u.is_internal = 1 AND u.in_tables = 1";
 /// Hyperlink auf die URL (Selbstlinks zählen mit, A-9) ÷ Anzahl interner HTML-Seiten mit 2xx × 100. Ohne solche
 /// Seiten leer. Der Zähler der URL steht in `url_counters.html_2xx_sources` (K-74/K-75): live, exakt und ohne den
 /// Index `links_target`; die Gesamtzahl ist eine unkorrelierte Teilabfrage und wird einmal je Abfrage berechnet.
-const PCT_OF_TOTAL: &str = "CASE WHEN (SELECT COUNT(*) FROM urls h WHERE h.is_internal = 1 AND \
+pub(crate) const PCT_OF_TOTAL: &str =
+    "CASE WHEN (SELECT COUNT(*) FROM urls h WHERE h.is_internal = 1 AND \
      h.content_class = 'HTML' AND h.status_code BETWEEN 200 AND 299) = 0 THEN NULL ELSE \
      100.0 * c.html_2xx_sources / \
      (SELECT COUNT(*) FROM urls h WHERE h.is_internal = 1 AND h.content_class = 'HTML' AND \

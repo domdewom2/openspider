@@ -126,7 +126,9 @@ pub async fn snapshot(
                     live,
                     controllable: !live || pid == Some(std::process::id()),
                 };
-                let urls = os_store::queries::session_counts(f.conn())?.discovered;
+                // UI-147: opening needs only the URL total. Do not scan crawled
+                // rows (including their table payload) for counters discarded here.
+                let urls = os_store::counters::discovered(f.conn())?;
                 let file_bytes = std::fs::metadata(f.path())
                     .map_err(|e| os_store::StoreError::Io {
                         path: f.path().to_path_buf(),

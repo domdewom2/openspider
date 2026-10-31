@@ -33,6 +33,20 @@ pub use build::column_name_resolves;
 pub const URLS_FROM: &str = "urls u LEFT JOIN url_counters c ON c.url_id = u.id";
 pub use counts::percent;
 
+/// ONPAGE-015 denominator prepared once with a view snapshot (UI-140/UI-142).
+pub(crate) fn internal_html_2xx_count(conn: &rusqlite::Connection) -> Result<i64, ViewError> {
+    Ok(conn.query_row("SELECT COUNT(*) FROM urls WHERE is_internal=1 AND content_class='HTML' AND status_code BETWEEN 200 AND 299", [], |r| r.get(0))?)
+}
+
+/// Invalidation stamp for reusable filter/view snapshots (UI-142). Changes of
+/// analysis readiness and resets invalidate caches even at the same change_seq.
+pub fn filter_cache_stamp(file: &CrawlFile) -> Result<String, os_store::StoreError> {
+    Ok(file.conn().query_row(
+        "SELECT COALESCE((SELECT value FROM crawl_meta WHERE key='reset_seq'),'0') || ':' || COALESCE(group_concat(step || ':' || state || ':' || COALESCE(finished_at,'') || ':' || COALESCE(config_hash,'')), '') FROM (SELECT * FROM analysis_steps ORDER BY step)",
+        [], |r| r.get(0),
+    )?)
+}
+
 /// Welche Spalten geliefert werden.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum ColumnSelection {
