@@ -182,8 +182,13 @@ impl Permutation {
         let mut stmt = file
             .conn()
             .prepare(&format!("SELECT u.id,{},u.address FROM {from}", term.raw))?;
+        // A narrow covering-index count reserves exactly once, avoiding geometric growth
+        // (5M rows would otherwise retain capacity for 8M temporary sort records).
+        let count = file
+            .conn()
+            .query_row("SELECT COUNT(*) FROM urls", [], |r| r.get::<_, usize>(0))?;
         let mut rows = stmt.query([])?;
-        let mut values = Vec::new();
+        let mut values = Vec::with_capacity(count);
         while let Some(row) = rows.next()? {
             cancel.checkpoint().map_err(|_| SearchError::Cancelled)?;
             values.push(SortValue {
