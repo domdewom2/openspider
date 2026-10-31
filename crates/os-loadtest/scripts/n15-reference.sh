@@ -9,6 +9,7 @@ fi
 if [[ ${N15_CAFFEINATED:-0} != 1 ]]; then
   exec caffeinate -dims env N15_CAFFEINATED=1 bash "$PWD/crates/os-loadtest/scripts/n15-reference.sh"
 fi
+export PATH="$HOME/.cargo/bin:$PATH"
 export CARGO_INCREMENTAL=0
 export OPENSPIDER_SECRET_STORE=memory
 mkdir -p target/n15/reference/tmp
