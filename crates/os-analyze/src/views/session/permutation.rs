@@ -191,12 +191,11 @@ impl Permutation {
         let mut values = Vec::with_capacity(count);
         while let Some(row) = rows.next()? {
             cancel.checkpoint().map_err(|_| SearchError::Cancelled)?;
-            values.push(SortValue {
-                id: super::url_index(row.get(0)?)?,
-                value: row.get(1)?,
-                address: row.get(2)?,
-                key: Vec::new(),
-            });
+            values.push(SortValue::new(
+                super::url_index(row.get(0)?)?,
+                row.get(1)?,
+                row.get(2)?,
+            ));
         }
         drop(rows);
         drop(stmt);
@@ -211,9 +210,7 @@ impl Permutation {
                         scope.spawn(move || {
                             for value in chunk {
                                 cancel.checkpoint().map_err(|_| SearchError::Cancelled)?;
-                                if let Value::Text(text) = &value.value {
-                                    value.key = os_store::collation::sort_key(text);
-                                }
+                                value.prepare_key();
                             }
                             Ok::<_, ViewError>(())
                         })
@@ -226,7 +223,7 @@ impl Permutation {
                 Ok::<_, ViewError>(())
             })?;
         }
-        let order = sort_values(&mut values, cancel, term.collate)?;
+        let order = sort_values(&mut values, cancel)?;
         let mut ids = Vec::with_capacity(values.len());
         let mut ties = Vec::new();
         let mut previous: Option<usize> = None;
@@ -237,12 +234,10 @@ impl Permutation {
                 cancel.checkpoint().map_err(|_| SearchError::Cancelled)?;
             }
             let index = index as usize;
-            if empty(&values[index].value) {
+            if values[index].rank == 4 {
                 non_null = non_null.min(ids.len());
             }
-            if previous
-                .is_some_and(|p| values[p].primary(&values[index], term.collate) != Ordering::Equal)
-            {
+            if previous.is_some_and(|p| values[p].primary(&values[index]) != Ordering::Equal) {
                 if ids.len() - start > 1 && start < non_null {
                     ties.push((start as u32, ids.len() as u32));
                 }
@@ -438,47 +433,60 @@ impl Permutation {
     }
 }
 
-/// Temporary column keys; Address and ID always resolve collation ties bytewise.
+/// Temporary keys. The original text is released once its ICU key has been built.
 struct SortValue {
     id: u32,
+    rank: u8,
     value: Value,
     address: String,
-    key: Vec<u8>,
 }
 impl SortValue {
-    fn primary(&self, other: &Self, collate: bool) -> Ordering {
-        if collate
-            && !empty(&self.value)
-            && !empty(&other.value)
-            && matches!(
-                (&self.value, &other.value),
-                (Value::Text(_), Value::Text(_))
-            )
-        {
-            self.key.cmp(&other.key)
-        } else {
-            compare(&self.value, &other.value, collate)
+    fn new(id: u32, value: Value, address: String) -> Self {
+        let rank = if empty(&value) { 4 } else { rank(&value) };
+        Self {
+            id,
+            rank,
+            value,
+            address,
         }
     }
-    fn compare(&self, other: &Self, collate: bool) -> Ordering {
-        self.primary(other, collate)
+    fn prepare_key(&mut self) {
+        if self.rank != 4 {
+            if let Value::Text(text) = &self.value {
+                // Keep the original SQLite type rank; a text key is still ordered before blobs.
+                self.value = Value::Blob(os_store::collation::sort_key(text));
+            }
+        }
+    }
+    fn primary(&self, other: &Self) -> Ordering {
+        self.rank
+            .cmp(&other.rank)
+            .then_with(|| match (&self.value, &other.value) {
+                (Value::Integer(a), Value::Integer(b)) => a.cmp(b),
+                (Value::Real(a), Value::Real(b)) => a.partial_cmp(b).unwrap_or(Ordering::Equal),
+                (Value::Integer(a), Value::Real(b)) => compare_integer_real(*a, *b),
+                (Value::Real(a), Value::Integer(b)) => compare_integer_real(*b, *a).reverse(),
+                (Value::Text(a), Value::Text(b)) => a.cmp(b),
+                (Value::Blob(a), Value::Blob(b)) => a.cmp(b),
+                // Only NULL and empty text have the same rank but different SQLite types.
+                _ => Ordering::Equal,
+            })
+    }
+    fn compare(&self, other: &Self) -> Ordering {
+        self.primary(other)
             .then_with(|| self.address.cmp(&other.address))
             .then(self.id.cmp(&other.id))
     }
 }
 
 /// Sort bounded blocks, then merge adjacent runs. At most four workers and no retained workers.
-fn sort_values(
-    values: &mut [SortValue],
-    cancel: &CancelToken,
-    collate: bool,
-) -> Result<Vec<u32>, ViewError> {
+fn sort_values(values: &mut [SortValue], cancel: &CancelToken) -> Result<Vec<u32>, ViewError> {
     const CHUNK: usize = 32_768;
     let len = u32::try_from(values.len()).map_err(|_| super::invalid("Zu viele Sortwerte"))?;
     let workers = std::thread::available_parallelism().map_or(1, |n| n.get().min(4));
     if values.len() <= CHUNK {
         cancel.checkpoint().map_err(|_| SearchError::Cancelled)?;
-        values.sort_unstable_by(|a, b| a.compare(b, collate));
+        values.sort_unstable_by(|a, b| a.compare(b));
         return Ok((0..len).collect());
     }
     let batch = CHUNK * values.len().div_ceil(CHUNK).div_ceil(workers);
@@ -489,7 +497,7 @@ fn sort_values(
                 scope.spawn(move || {
                     for chunk in batch.chunks_mut(CHUNK) {
                         cancel.checkpoint().map_err(|_| SearchError::Cancelled)?;
-                        chunk.sort_unstable_by(|a, b| a.compare(b, collate));
+                        chunk.sort_unstable_by(|a, b| a.compare(b));
                     }
                     Ok::<_, ViewError>(())
                 })
@@ -525,7 +533,7 @@ fn sort_values(
                                 if a < left.len()
                                     && (b == right.len()
                                         || values[left[a] as usize]
-                                            .compare(&values[right[b] as usize], collate)
+                                            .compare(&values[right[b] as usize])
                                             != Ordering::Greater)
                                 {
                                     *slot = left[a];
@@ -650,6 +658,52 @@ mod n22_tests {
                     )
                     .unwrap();
                 assert_eq!(compare(a, b, false), expected.cmp(&0), "{a:?} vs {b:?}");
+            }
+        }
+    }
+    // spec: UI-141
+    #[test]
+    fn compact_keys_equal_legacy_comparison_for_all_sqlite_types() {
+        let fixture = vec![
+            Value::Null,
+            Value::Text(String::new()),
+            Value::Text("a".into()),
+            Value::Text("A".into()),
+            Value::Text("ä".into()),
+            Value::Text("a\u{308}".into()),
+            Value::Text("東京".into()),
+            Value::Text("0".repeat(300)),
+            Value::Blob(vec![]),
+            Value::Blob(vec![0, 255]),
+            Value::Integer(i64::MIN),
+            Value::Integer(i64::MAX),
+            Value::Integer(0),
+            Value::Integer(9_007_199_254_740_993),
+            Value::Real(-0.0),
+            Value::Real(0.0),
+            Value::Real(1.5),
+            Value::Real(9_007_199_254_740_992.0),
+            Value::Real(f64::INFINITY),
+        ];
+        for collate in [false, true] {
+            let mut keys: Vec<_> = fixture
+                .iter()
+                .enumerate()
+                .map(|(i, value)| SortValue::new(i as u32, value.clone(), format!("/{i}")))
+                .collect();
+            if collate {
+                for key in &mut keys {
+                    key.prepare_key();
+                }
+            }
+            for (i, a) in fixture.iter().enumerate() {
+                for (j, b) in fixture.iter().enumerate() {
+                    assert_eq!(
+                        keys[i].primary(&keys[j]),
+                        compare(a, b, collate),
+                        "{a:?} vs {b:?} collate={collate}"
+                    );
+                }
             }
         }
     }
