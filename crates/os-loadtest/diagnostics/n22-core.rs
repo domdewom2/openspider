@@ -76,11 +76,13 @@ fn profile(file: &CrawlFile, cfg: &CrawlConfig, extract: bool) {
         return;
     }
     for (label, sql) in [
+        ("legacy numeric key scan", "SELECT id,status_code FROM urls ORDER BY status_code ASC"),
+        ("legacy text key scan", "SELECT id,CASE WHEN content_class IN ('HTML','PDF') AND status_code BETWEEN 200 AND 299 THEN title_1 END FROM urls"),
         (
             "numeric extraction",
             "SELECT id,status_code,address FROM urls",
         ),
-        ("text extraction", "SELECT id,title_1,address FROM urls"),
+        ("text extraction", "SELECT id,CASE WHEN content_class IN ('HTML','PDF') AND status_code BETWEEN 200 AND 299 THEN title_1 END,address FROM urls"),
         ("address extraction", "SELECT id,address FROM urls"),
     ] {
         let at = Instant::now();
