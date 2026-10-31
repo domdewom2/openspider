@@ -78,3 +78,13 @@ mod sitemap_ingest;
 pub mod serp_input;
 /// Form-session protection (CRAWL-120).
 pub mod session_guard;
+
+/// Builds a future in this short-lived frame and moves it to the heap (AGENT-020, CRAWL-001).
+///
+/// In unoptimised builds `Box::pin(f(..)).await` still materialises the whole future as a temporary
+/// of the caller's poll frame, and that frame stays on the thread stack while the nested futures run.
+/// Constructing it here keeps only the pointer in the caller, on every platform and profile.
+#[inline(never)]
+pub(crate) fn heap<F: std::future::Future>(make: impl FnOnce() -> F) -> std::pin::Pin<Box<F>> {
+    Box::pin(make())
+}
