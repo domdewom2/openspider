@@ -1,3 +1,4 @@
+import { Profiler } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { Providers } from "../../../app/Providers";
@@ -335,4 +336,20 @@ it("labels the counting progress in German and English", async () => {
   mount();
   expect(await screen.findByText("Filterzähler werden berechnet: 3 von 31 Tabs")).toBeVisible();
   expect(screen.getByRole("button", { name: "Abbrechen" })).toBeVisible();
+});
+
+// spec: UI-018
+// spec: UI-061
+it("publishes the first overview response without an empty foreground commit", async () => {
+  let finish: (data: OverviewDto) => void = () => undefined;
+  core.handlers.set("sidebar.overview", () => new Promise<OverviewDto>(resolve => { finish = resolve; }));
+  const emptyCommits: number[] = [];
+  render(<Providers><Profiler id="sidebar" onRender={() => {
+    const panel = document.querySelector("#sidebar-panel");
+    if (panel && panel.childElementCount === 0) emptyCommits.push(performance.now());
+  }}><SidebarFrame /></Profiler></Providers>);
+  await screen.findByText("Loading…");
+  await act(async () => { finish(fixture.overview as OverviewDto); });
+  expect(await screen.findByRole("table", { name: "Summary" })).toBeVisible();
+  expect(emptyCommits, "A successful first response must not leave publication to a background render").toEqual([]);
 });
