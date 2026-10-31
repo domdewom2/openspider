@@ -9,7 +9,7 @@ use os_analyze::{
     minhash,
 };
 use os_model::{CrawlConfig, StepState};
-fn scale(size: usize, budget: std::time::Duration) {
+fn prepare(size: usize) -> (tempfile::TempDir, os_store::CrawlFile) {
     // Optional reusable fixture; timing still covers only the analysis, as before.
     let dir = tempfile::tempdir().unwrap();
     let reuse = std::env::var_os("OPENSPIDER_NEAR_DUP_FIXTURE").map(std::path::PathBuf::from);
@@ -59,6 +59,11 @@ fn scale(size: usize, budget: std::time::Duration) {
         count, size as i64,
         "incomplete reusable fixture: remove its directory and rebuild"
     );
+    (dir, file)
+}
+
+fn scale(size: usize, budget: std::time::Duration) {
+    let (_dir, file) = prepare(size);
     let mut cfg = CrawlConfig::default();
     cfg.duplicates.near_enabled = true;
     let start = std::time::Instant::now();
@@ -108,4 +113,12 @@ fn hundred_thousand_pages_under_sixty_seconds() {
 #[ignore = "Benchmark: 1 Mio. Seiten, RSS extern messen (<2 GB), Referenzhardware M2-Q03"]
 fn million_pages_under_ten_minutes() {
     scale(1_000_000, std::time::Duration::from_secs(600));
+}
+
+// spec: PERF-007
+#[test]
+#[ignore = "Benchmark: fixture preparation only, no analysis or performance assertion"]
+fn n16_prepare_million_page_fixture() {
+    let _fixture = prepare(1_000_000);
+    eprintln!("n16 fixture prepared; analysis NOT run; no performance result");
 }
