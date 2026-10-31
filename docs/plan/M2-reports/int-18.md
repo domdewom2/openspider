@@ -64,7 +64,7 @@ Belege: [Prüfzahlen](int-18/checks.json), [Rust-Summe](int-18/workspace-summary
 
 Der Browser-JSON enthält alle Ergebnisse, Fehler, Zeitwerte und Textanhänge. Die 224 eingebetteten PNG-Binärkörper sind zugunsten der Repo-Größenregel durch Namen, Typ, Base64-Länge und Prüfsumme ersetzt; keine Testresultate wurden entfernt.
 
-## Parität vor/nach Integration und feste Uhr nach C8
+## Parität vor/nach Integration und feste Uhr nach M2 Abschnitt 2, Regel 8
 
 | Messung | Ergebnis |
 |---|---|
@@ -78,7 +78,7 @@ Der Browser-JSON enthält alle Ergebnisse, Fehler, Zeitwerte und Textanhänge. D
 
 Ohne feste Uhr weichen ausschließlich Lastmod-Zellen in sitemap_default.xml, sitemap_options.xml und sitemap_images.xml ab: **48/48/2 Zellen**, jeweils 31.10. statt 30.10. Alle übrigen Spalten und URL-Mengen stimmen. OUT-123 verwendet bei fehlendem HTTP-Last-Modified das Crawl-Datum; die Referenz-Fixture wurde am 30.10. exportiert. Der Befund ist im [ungefrorenen Gesamtbericht](int-18/parity-unfixed.json.gz) erhalten.
 
-OUT-123 verlangt Tests mit fester Uhr und die Normalisierung des Crawl-Datums im Paritätsvergleich. Der bestehende CI-Aufruf stellt diese Vergleichsbedingung nicht sicher. C8 verlangt ebenfalls eine feste Prüfuhr. [clock-cli.sh](int-18/clock-cli.sh) setzt ausschließlich die Echtzeituhr der Paritäts-CLI auf 2026-10-30 12:00 UTC mit normal weiterlaufenden Sekunden. Monotone Uhr und Stat-Zeiten bleiben echt. Probe: Echtzeit 12:00:00 → 12:00:01 bei einer Sekunde monotoner Laufzeit. Systemuhr und andere Prozesse bleiben unverändert. libfaketime wurde nur lokal unter target entpackt; keine Systeminstallation oder Produktabhängigkeit.
+OUT-123 verlangt Tests mit fester Uhr und die Normalisierung des Crawl-Datums im Paritätsvergleich. Der bestehende CI-Aufruf stellt diese Vergleichsbedingung nicht sicher. M2 Abschnitt 2, Regel 8 verlangt ebenfalls eine feste Prüfuhr. [clock-cli.sh](int-18/clock-cli.sh) setzt ausschließlich die Echtzeituhr der Paritäts-CLI auf 2026-10-30 12:00 UTC mit normal weiterlaufenden Sekunden. Monotone Uhr und Stat-Zeiten bleiben echt. Probe: Echtzeit 12:00:00 → 12:00:01 bei einer Sekunde monotoner Laufzeit. Systemuhr und andere Prozesse bleiben unverändert. libfaketime wurde nur lokal unter target entpackt; keine Systeminstallation oder Produktabhängigkeit.
 
 Reproduktion nach dem Build der CLI und des Paritätswerkzeugs, aus der Repo-Wurzel:
 
@@ -112,3 +112,7 @@ Nach Sicherung aller Belege wurden **target/**, eigene Testausgaben und der eige
 3. **Native Matrix samt Lauf-ID offen:** Der Orchestrator holt den Branch, pusht und startet macOS/Windows. Hier kein Push, keine erfundene Lauf-ID; VoiceOver/NVDA und native Hardwareabnahmen bleiben dort.
 
 **PAKET OFFEN – nächster Schritt: Orchestrator bewertet den UI-Lastbefund, klärt die CI-Zeitfixierung und führt die native Matrix aus.**
+
+## Wiederaufnahmeprüfung am 31.10.2026
+
+Vorhandene Integration und Belege geprüft; keine erneuten Merges und keine weiteren Paketstände übernommen. Fmt, M2-check (129 Pakete / 590 Spec-IDs) und Neutralitätsprüfung erneut grün. Runner-Kommentare und Regelverweis zur festen Uhr berichtigt. Keine Produkt- oder Teständerung; die oben dokumentierten Gesamtlaufbefunde bleiben offen. target/ bleibt entfernt.
