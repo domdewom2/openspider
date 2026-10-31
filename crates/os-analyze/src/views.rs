@@ -344,14 +344,16 @@ pub fn filter_counts_in(
     Ok(countable(tabs, counts))
 }
 
-/// Like [`filter_counts_in`], counting large crawls on several read connections (UI-145).
+/// Like [`filter_counts_in`] for the tabs at `only`, counting several tabs of a large crawl at
+/// once on additional read connections (UI-145).
 pub(crate) fn filter_counts_parallel(
     tabs: &[TabDef],
+    only: &[usize],
     file: &CrawlFile,
     cfg: &CrawlConfig,
     cancel: &os_model::CancelToken,
 ) -> Result<Vec<FilterCount>, ViewError> {
-    let counts = counts::counts_with(tabs, file, cfg, true, cancel)?;
+    let counts = counts::counts_with(tabs, Some(only), file, cfg, true, cancel)?;
     Ok(countable(tabs, counts))
 }
 

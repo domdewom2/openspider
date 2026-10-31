@@ -188,20 +188,24 @@ pub fn overview_progress(
     }
     let more = todo.len() > max_tabs;
     todo.truncate(max_tabs);
-    for i in todo {
-        // Each tab is counted independently, split over several connections.
-        let value = filter_counts_parallel(std::slice::from_ref(&tabs[i]), file, cfg, cancel)?;
+    if !todo.is_empty() {
+        let counts = filter_counts_parallel(&tabs, &todo, file, cfg, cancel)?;
         with_entry(file, &v, |e| {
-            e.tabs.insert(
-                tabs[i].id.to_owned(),
-                (
-                    signatures[i].clone(),
-                    Piece {
-                        value: Arc::new(value),
-                        persisted: false,
-                    },
-                ),
-            );
+            for i in &todo {
+                let tab = &tabs[*i];
+                let value: Vec<FilterCount> =
+                    counts.iter().filter(|c| c.tab == tab.id).cloned().collect();
+                e.tabs.insert(
+                    tab.id.to_owned(),
+                    (
+                        signatures[*i].clone(),
+                        Piece {
+                            value: Arc::new(value),
+                            persisted: false,
+                        },
+                    ),
+                );
+            }
         });
     }
     Ok(!more)

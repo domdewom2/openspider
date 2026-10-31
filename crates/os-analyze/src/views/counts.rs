@@ -46,10 +46,9 @@ struct TabPlan<'a> {
     query: Option<SumQuery>,
 }
 
-/// SQL of one tab's sums: whole crawl, or one ID range of it.
+/// SQL of one tab's sums over its whole population.
 struct SumQuery {
     sql: String,
-    ranged: String,
     params: Vec<(String, os_model::Value)>,
 }
 
@@ -84,7 +83,6 @@ fn plan_tab<'a>(
             built.plan.filter_sql
         ));
     }
-    // UI-145: the ID range lets disjoint parts of the crawl be counted on several connections.
     let query = population.map(|population| {
         let sums = sums.join(", ");
         // UI-145: the counter join costs a primary-key probe per URL; only tabs whose
@@ -94,10 +92,8 @@ fn plan_tab<'a>(
         } else {
             "urls u"
         };
-        let sql = format!("SELECT {sums} FROM {from} WHERE {population}");
         SumQuery {
-            ranged: format!("{sql} AND u.id > :os_count_after AND u.id <= :os_count_last"),
-            sql,
+            sql: format!("SELECT {sums} FROM {from} WHERE {population}"),
             params,
         }
     });
@@ -109,32 +105,12 @@ fn plan_tab<'a>(
     })
 }
 
-fn run_sums(
-    conn: &rusqlite::Connection,
-    query: Option<&SumQuery>,
-    range: Option<(i64, i64)>,
-) -> Result<Vec<i64>, ViewError> {
+fn run_sums(conn: &rusqlite::Connection, query: Option<&SumQuery>) -> Result<Vec<i64>, ViewError> {
     let Some(query) = query else {
         return Ok(Vec::new());
     };
-    let mut stmt = conn.prepare(if range.is_some() {
-        &query.ranged
-    } else {
-        &query.sql
-    })?;
-    let extra = range.map_or_else(Vec::new, |(after, last)| {
-        vec![
-            (
-                ":os_count_after".into(),
-                rusqlite::types::Value::Integer(after),
-            ),
-            (
-                ":os_count_last".into(),
-                rusqlite::types::Value::Integer(last),
-            ),
-        ]
-    });
-    bind_named(&mut stmt, &query.params, &extra)?;
+    let mut stmt = conn.prepare(&query.sql)?;
+    bind_named(&mut stmt, &query.params, &[])?;
     let columns = stmt.column_count();
     let mut rows = stmt.raw_query();
     let row = rows.next()?.ok_or(rusqlite::Error::QueryReturnedNoRows)?;
@@ -183,14 +159,16 @@ pub(super) fn counts_in(
     file: &CrawlFile,
     cfg: &CrawlConfig,
 ) -> Result<Vec<FilterCount>, ViewError> {
-    counts_with(tabs, file, cfg, false, &os_model::CancelToken::new())
+    counts_with(tabs, None, file, cfg, false, &os_model::CancelToken::new())
 }
 
-/// Like [`counts_in`]; with `parallel` large crawls are counted in disjoint ID ranges on
-/// additional read connections of the same data version (UI-145). Background counting uses
-/// a quarter of the cores. Any version difference falls back to the caller's snapshot.
+/// Like [`counts_in`] for the tabs at `only` (all without). With `parallel`, large crawls count
+/// several tabs at once on additional read connections of the same data version (UI-145), a
+/// quarter of the cores. Each tab keeps exactly its serial SQL and plan. Any version difference
+/// falls back to the caller's snapshot.
 pub(super) fn counts_with(
     tabs: &[TabDef],
+    only: Option<&[usize]>,
     file: &CrawlFile,
     cfg: &CrawlConfig,
     parallel: bool,
@@ -204,19 +182,25 @@ pub(super) fn counts_with(
     let version = queries::change_seq(conn)?;
     let cfg_json = serde_json::to_value(cfg).unwrap_or(serde_json::Value::Null);
     let analysis = analysis_snapshot(file)?;
-    let plans = tabs
+    let selected: Vec<usize> = match only {
+        Some(only) => only.to_vec(),
+        None => (0..tabs.len()).collect(),
+    };
+    let plans = selected
         .iter()
-        .map(|tab| plan_tab(tabs, tab, file, cfg, &cfg_json, &analysis))
+        .map(|i| plan_tab(tabs, &tabs[*i], file, cfg, &cfg_json, &analysis))
         .collect::<Result<Vec<_>, _>>()?;
-    let max_id: i64 = conn.query_row("SELECT COALESCE(MAX(id), 0) FROM urls", [], |r| r.get(0))?;
-    let workers = if parallel {
-        super::parallel_workers(max_id, 4)
+    let busy = plans.iter().filter(|p| p.query.is_some()).count();
+    let workers = if parallel && busy > 1 {
+        let max_id: i64 =
+            conn.query_row("SELECT COALESCE(MAX(id), 0) FROM urls", [], |r| r.get(0))?;
+        super::parallel_workers(max_id, 4).min(busy)
     } else {
         1
     };
     let parallel = if workers > 1 {
         let queries: Vec<_> = plans.iter().map(|p| p.query.as_ref()).collect();
-        parallel_sums(file, &queries, version, max_id, workers, cancel)?
+        parallel_sums(file, &queries, version, workers, cancel)?
     } else {
         None
     };
@@ -231,7 +215,7 @@ pub(super) fn counts_with(
                 if cancel.is_cancelled() {
                     return Err(crate::search::SearchError::Cancelled.into());
                 }
-                run_sums(conn, plan.query.as_ref(), None)
+                run_sums(conn, plan.query.as_ref())
             })
             .collect::<Result<Vec<_>, ViewError>>()?,
     };
@@ -243,43 +227,22 @@ pub(super) fn counts_with(
     Ok(out)
 }
 
-/// Parts per worker: small enough to balance tabs of very different cost.
-const PARTS_PER_WORKER: i64 = 4;
-
 fn parallel_sums(
     file: &CrawlFile,
-    plans: &[Option<&SumQuery>],
+    jobs: &[Option<&SumQuery>],
     version: u64,
-    max_id: i64,
     workers: usize,
     cancel: &os_model::CancelToken,
 ) -> Result<Option<Vec<Vec<i64>>>, ViewError> {
     use std::sync::atomic::{AtomicUsize, Ordering};
     let stamp = super::filter_cache_stamp(file)?;
-    let parts = workers as i64 * PARTS_PER_WORKER;
-    let step = max_id / parts + 1;
-    let ranges: Vec<(i64, i64)> = (0..parts)
-        .map(|i| {
-            let after = if i == 0 { i64::MIN } else { i * step };
-            let last = if i + 1 == parts {
-                i64::MAX
-            } else {
-                (i + 1) * step
-            };
-            (after, last)
-        })
-        .collect();
-    let items: Vec<(usize, (i64, i64))> = (0..plans.len())
-        .filter(|p| plans[*p].is_some())
-        .flat_map(|p| ranges.iter().map(move |r| (p, *r)))
-        .collect();
     let next = AtomicUsize::new(0);
     let path = file.path();
     type Part = Vec<(usize, Vec<i64>)>;
     let results: Vec<Result<Option<Part>, ViewError>> = std::thread::scope(|scope| {
         let handles: Vec<_> = (0..workers)
             .map(|_| {
-                let (items, next, stamp) = (&items, &next, &stamp);
+                let (next, stamp) = (&next, &stamp);
                 scope.spawn(move || -> Result<Option<Part>, ViewError> {
                     let worker = CrawlFile::open(path, os_store::OpenMode::ReadOnly)?;
                     let interrupt = worker.conn().get_interrupt_handle();
@@ -295,15 +258,11 @@ fn parallel_sums(
                         if cancel.is_cancelled() {
                             return Err(crate::search::SearchError::Cancelled.into());
                         }
-                        let Some((plan, (after, last))) =
-                            items.get(next.fetch_add(1, Ordering::Relaxed)).copied()
-                        else {
+                        let item = next.fetch_add(1, Ordering::Relaxed);
+                        let Some(query) = jobs.get(item) else {
                             return Ok(Some(done));
                         };
-                        done.push((
-                            plan,
-                            run_sums(worker.conn(), plans[plan], Some((after, last)))?,
-                        ));
+                        done.push((item, run_sums(worker.conn(), *query)?));
                     }
                 })
             })
@@ -319,17 +278,13 @@ fn parallel_sums(
             })
             .collect()
     });
-    let mut sums: Vec<Vec<i64>> = vec![Vec::new(); plans.len()];
+    let mut sums: Vec<Vec<i64>> = vec![Vec::new(); jobs.len()];
     for result in results {
         let Some(parts) = result? else {
             return Ok(None);
         };
-        for (plan, counts) in parts {
-            let total = &mut sums[plan];
-            total.resize(counts.len(), 0);
-            for (total, n) in total.iter_mut().zip(counts) {
-                *total += n;
-            }
+        for (item, counts) in parts {
+            sums[item] = counts;
         }
     }
     Ok(Some(sums))
