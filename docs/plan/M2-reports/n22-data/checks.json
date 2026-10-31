@@ -61,5 +61,25 @@
   },
   "npm_licenses": {
     "exit_status": 0
+  },
+  "compact_keys_fixtures": {
+    "exit_status": 0,
+    "unit_fixtures_passed": 3,
+    "unit_elapsed_seconds": 0.34,
+    "sql_fixture_passed": 1,
+    "sql_fixture_elapsed_seconds": 9.98
+  },
+  "compact_keys_clippy": {
+    "exit_status": 0,
+    "workspace": true,
+    "all_targets": true,
+    "exclusions": [],
+    "warnings": "deny",
+    "elapsed_seconds": 27.53
+  },
+  "compact_workspace_interrupted": {
+    "completed": false,
+    "log": "workspace-v2.log.gz",
+    "last_test_binary": "pending_w1_e04"
   }
 }
