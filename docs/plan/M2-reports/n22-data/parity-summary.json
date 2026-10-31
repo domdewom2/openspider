@@ -1,0 +1,71 @@
+{
+  "sites_present": 10,
+  "min_sites_present": 4,
+  "passed": true,
+  "failures": [],
+  "warnings": [],
+  "sites": [
+    {
+      "site": "out-basic-site",
+      "present": true,
+      "error": null,
+      "exports": 7
+    },
+    {
+      "site": "parity-m2-links",
+      "present": true,
+      "error": null,
+      "exports": 23
+    },
+    {
+      "site": "parity-m2-list",
+      "present": true,
+      "error": null,
+      "exports": 5
+    },
+    {
+      "site": "parity-m2-onpage",
+      "present": true,
+      "error": null,
+      "exports": 42
+    },
+    {
+      "site": "parity-m2-security",
+      "present": true,
+      "error": null,
+      "exports": 22
+    },
+    {
+      "site": "parity-m2-technical",
+      "present": true,
+      "error": null,
+      "exports": 90
+    },
+    {
+      "site": "parity-onpage",
+      "present": true,
+      "error": null,
+      "exports": 12
+    },
+    {
+      "site": "parity-response",
+      "present": true,
+      "error": null,
+      "exports": 8
+    },
+    {
+      "site": "parity-synthetic",
+      "present": true,
+      "error": null,
+      "exports": 4
+    },
+    {
+      "site": "parity-technical",
+      "present": true,
+      "error": null,
+      "exports": 8
+    }
+  ],
+  "compared_cases": 218,
+  "passed_cases": 218
+}

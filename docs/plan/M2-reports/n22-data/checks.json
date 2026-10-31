@@ -1,0 +1,65 @@
+{
+  "targeted": {
+    "exit_status": 0,
+    "passed": 1035,
+    "failed": 0,
+    "ignored": 31,
+    "test_binary_elapsed_seconds_sum": 516.04
+  },
+  "workspace": {
+    "exit_status": 0,
+    "passed": 4028,
+    "failed": 0,
+    "ignored": 49,
+    "test_binary_elapsed_seconds_sum": 1483.4
+  },
+  "clippy": {
+    "exit_status": 0,
+    "workspace": true,
+    "all_targets": true,
+    "exclusions": [],
+    "warnings": "deny",
+    "elapsed_seconds": 33.67
+  },
+  "desktop": {
+    "exit_status": 0,
+    "typecheck": true,
+    "test_files": 90,
+    "passed": 860,
+    "elapsed_seconds": 220.41
+  },
+  "parity": {
+    "exit_status": 0,
+    "passed": 218,
+    "cases": 218
+  },
+  "fmt": {
+    "exit_status": 0
+  },
+  "deny_licenses": {
+    "exit_status": 0
+  },
+  "neutral": {
+    "exit_status": 0
+  },
+  "final_sort_fixture": {
+    "exit_status": 0,
+    "passed": 1,
+    "elapsed_seconds": 11.39
+  },
+  "final_unicode_numeric_unit_fixtures": {
+    "exit_status": 0,
+    "passed": 2,
+    "elapsed_seconds": 0.52
+  },
+  "deny_licenses_bans_sources": {
+    "exit_status": 0
+  },
+  "desktop_static": {
+    "exit_status": 0,
+    "passed": 29
+  },
+  "npm_licenses": {
+    "exit_status": 0
+  }
+}
