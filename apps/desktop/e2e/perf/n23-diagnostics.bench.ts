@@ -8,6 +8,7 @@ import { openViz, layoutDone } from "../viz/support";
 import { startVizBridge } from "../viz/viz-bridge";
 import { rendererRss } from "./rss.mjs";
 import { startWebKitCapture } from "./n23-webkit";
+import { processProvenance } from "./n23-provenance";
 
 test.skip(!process.env.N23_PHASE, "Benchmark: opt-in renderer diagnostics via N23_PHASE");
 
@@ -58,6 +59,7 @@ test("N23 diagnostic: canvas costs and heap with 10000-node fixture", async ({ p
     await layoutDone(page, 30000);
     expect(await page.evaluate(() => window.__osViz!.nodes)).toBe(10000);
     const opened = rendererRss();
+    const provenance = processProvenance(opened);
     if (session) {
       const chunks: string[] = [];
       session.on("HeapProfiler.addHeapSnapshotChunk", e => chunks.push(e.chunk));
@@ -72,7 +74,7 @@ test("N23 diagnostic: canvas costs and heap with 10000-node fixture", async ({ p
     }
     await stopWebKit?.(true);
     const canvas = await page.evaluate(() => (window as unknown as { n23Canvas: unknown }).n23Canvas);
-    await writeFile(resolve(out, "diagnostic.json"), JSON.stringify({ before, opened, canvas, webkitInspector: session ? "CDP trace + heap" : "WebKit Inspector timeline, script/CPU samples and heap via locked internal adapter", load: (await import("node:os")).loadavg() }, null, 2));
+    await writeFile(resolve(out, "diagnostic.json"), JSON.stringify({ before, opened, provenance, canvas, webkitInspector: session ? "CDP trace + heap" : "WebKit Inspector timeline, script/CPU samples and heap via locked internal adapter", load: (await import("node:os")).loadavg() }, null, 2));
   } finally { await bridge.stop(); }
 });
 
@@ -97,6 +99,7 @@ test("N23 diagnostic: scroll layout costs with real U31 fixture", async ({ page,
     }
     const stopWebKit = info.project.name === "webkit" ? await startWebKitCapture(page, out, "scroll") : null;
     const before = rendererRss();
+    const provenance = processProvenance(before);
     const vertical = await page.evaluate(() => window.uiPerf.record("vertical"));
     const horizontal = await page.evaluate(() => window.uiPerf.record("horizontal"));
     const layout = await page.evaluate(() => (window as unknown as { n23Layout: unknown }).n23Layout);
@@ -111,7 +114,7 @@ test("N23 diagnostic: scroll layout costs with real U31 fixture", async ({ page,
       await writeFile(resolve(out, "grid.heapsnapshot"), chunks.join(""));
     }
     await stopWebKit?.(true);
-    await writeFile(resolve(out, "scroll.json"), JSON.stringify({ vertical, horizontal, layout, before, after: rendererRss(), load: (await import("node:os")).loadavg() }, null, 2));
+    await writeFile(resolve(out, "scroll.json"), JSON.stringify({ vertical, horizontal, layout, provenance, before, after: rendererRss(), load: (await import("node:os")).loadavg() }, null, 2));
   } finally { await bridge.stop(); }
 });
 
@@ -146,6 +149,7 @@ test("N23 diagnostic: renderer trace under crawl load", async ({ page, context }
     }
     const stopWebKit = info.project.name === "webkit" ? await startWebKitCapture(page, out, "crawl") : null;
     const before = rendererRss();
+    const provenance = processProvenance(before);
     await page.waitForTimeout(15000);
     const after = rendererRss();
     if (session) {
@@ -154,7 +158,7 @@ test("N23 diagnostic: renderer trace under crawl load", async ({ page, context }
       await writeFile(resolve(out, "crawl-trace.json"), JSON.stringify({ traceEvents: events }));
     }
     await stopWebKit?.();
-    await writeFile(resolve(out, "crawl.json"), JSON.stringify({ before, after, state: await page.evaluate(() => window.perfShell.state()), layout: await page.evaluate(() => (window as unknown as { n23Layout: unknown }).n23Layout), load: (await import("node:os")).loadavg() }, null, 2));
+    await writeFile(resolve(out, "crawl.json"), JSON.stringify({ before, after, provenance, state: await page.evaluate(() => window.perfShell.state()), layout: await page.evaluate(() => (window as unknown as { n23Layout: unknown }).n23Layout), load: (await import("node:os")).loadavg() }, null, 2));
   } finally {
     await page.evaluate(() => window.perfShell?.stop()).catch(() => {});
     clearInterval(timer); site.closeAllConnections();
