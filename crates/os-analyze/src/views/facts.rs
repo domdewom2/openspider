@@ -283,6 +283,9 @@ pub fn persist(file: &CrawlFile) -> Result<bool, ViewError> {
         }
     }
     let any = !saved.is_empty();
+    if any {
+        super::membership::note_cache_write(file.path());
+    }
     with_entry(file, &v, |e| {
         for key in saved {
             if key == SUMMARY_KEY {

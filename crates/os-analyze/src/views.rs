@@ -47,6 +47,11 @@ thread_local! {
     pub(crate) static PARALLEL_PASSES: std::cell::Cell<u32> = const { std::cell::Cell::new(0) };
 }
 
+/// Our own `view_cache` writes leave shared view facts of the file valid (UI-141, UI-147).
+pub(crate) fn note_cache_write(path: &std::path::Path) {
+    membership::note_cache_write(path);
+}
+
 /// Records a completed split pass for tests.
 pub(crate) fn parallel_pass_done() {
     #[cfg(test)]

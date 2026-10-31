@@ -292,3 +292,30 @@ fn persisted_memberships_replace_the_scan_of_a_reopened_saved_crawl() {
     assert!(!view.shared_pending());
     assert!(!persist_shared(&writer).unwrap());
 }
+
+// spec: UI-142
+// spec: UI-147
+#[test]
+fn a_commit_without_a_new_sequence_is_not_served_from_shared_memberships() {
+    let (_dir, cfg, file) = fixture();
+    let first = ViewSession::open(&file, &cfg, spec("All"), Budget::default()).unwrap();
+    first.prepare(&file, &BuildControl::default()).unwrap();
+    assert!(all_rows(&first, &file).contains(&UrlId(1)));
+    let second = ViewSession::open(&file, &cfg, spec("All"), Budget::default()).unwrap();
+    second.prepare(&file, &BuildControl::default()).unwrap();
+    let shared = |a: &ViewSession, b: &ViewSession| {
+        Arc::ptr_eq(
+            a.cache.lock().unwrap().membership.as_ref().unwrap(),
+            b.cache.lock().unwrap().membership.as_ref().unwrap(),
+        )
+    };
+    assert!(shared(&first, &second), "same data version is shared");
+    // Another connection commits without advancing change_seq.
+    file.conn()
+        .execute_batch("UPDATE urls SET in_tables=0 WHERE id=1")
+        .unwrap();
+    let third = ViewSession::open(&file, &cfg, spec("All"), Budget::default()).unwrap();
+    third.prepare(&file, &BuildControl::default()).unwrap();
+    assert!(!shared(&first, &third));
+    assert!(!all_rows(&third, &file).contains(&UrlId(1)));
+}

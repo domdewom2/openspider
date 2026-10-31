@@ -466,7 +466,7 @@ pub fn take_export(file: &CrawlFile) -> Result<Option<Export>, StoreError> {
 
 /// Stores an [`Export`] with a writable connection; read-only and running crawls store nothing.
 pub fn persist(file: &CrawlFile, export: &Export) -> Result<bool, StoreError> {
-    os_store::view_cache::save(
+    let saved = os_store::view_cache::save(
         file,
         CACHE_KEY,
         &params_hash(),
@@ -475,7 +475,11 @@ pub fn persist(file: &CrawlFile, export: &Export) -> Result<bool, StoreError> {
             built_seq: export.seq,
             data: export.data.clone(),
         },
-    )
+    )?;
+    if saved {
+        crate::views::note_cache_write(file.path());
+    }
+    Ok(saved)
 }
 
 fn check_cancel(cancel: &os_model::CancelToken) -> Result<(), StoreError> {

@@ -14,7 +14,7 @@ use std::{
     collections::HashMap,
     io::{Cursor, Read},
     sync::{
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicBool, AtomicI64, Ordering},
         Arc, Mutex, OnceLock, Weak,
     },
 };
@@ -38,6 +38,8 @@ pub(super) struct Membership {
     classes: [HashMap<String, RoaringBitmap>; 2],
     pub html_2xx: i64,
     persisted: AtomicBool,
+    /// `PRAGMA data_version` of the file's watcher when these facts were read (see [`changed`]).
+    baseline: AtomicI64,
 }
 
 impl Membership {
@@ -50,6 +52,7 @@ impl Membership {
             classes: Default::default(),
             html_2xx: 0,
             persisted: AtomicBool::new(false),
+            baseline: AtomicI64::new(i64::MIN),
         }
     }
 
@@ -63,6 +66,7 @@ impl Membership {
             classes: self.classes.clone(),
             html_2xx: self.html_2xx,
             persisted: AtomicBool::new(false),
+            baseline: AtomicI64::new(i64::MIN),
         }
     }
 
@@ -253,17 +257,30 @@ pub(super) fn load(
     control: &BuildControl,
 ) -> Result<Arc<Membership>, ViewError> {
     let key = cache_key(file, seq, stamp)?;
-    {
+    // Read before the facts: a commit during the pass is detected by the next lookup.
+    let version = data_version(file.path());
+    let shared = {
         let mut entries = registry().lock().unwrap_or_else(|e| e.into_inner());
         entries.retain(|_, v| v.strong_count() > 0);
-        if let Some(facts) = entries.get(&key).and_then(Weak::upgrade) {
+        entries.get(&key).and_then(Weak::upgrade)
+    };
+    // A commit without a new change_seq (another connection writing directly) makes
+    // the shared and the stored pass of this sequence unusable.
+    let mut bypassed = false;
+    if let Some(facts) = shared {
+        if version.is_some_and(|v| facts.baseline.load(Ordering::Relaxed) == v) {
             return Ok(facts);
         }
+        bypassed = true;
     }
     // K-1a: a persisted pass of exactly this data version replaces the scan.
-    let stored = view_cache::load(file, CACHE_KEY, &params_hash())?
-        .filter(|e| e.built_seq == seq && e.step_stamp == stamp)
-        .and_then(|e| Membership::decode(&e.data, seq, stamp));
+    let stored = if bypassed {
+        None
+    } else {
+        view_cache::load(file, CACHE_KEY, &params_hash())?
+            .filter(|e| e.built_seq == seq && e.step_stamp == stamp)
+            .and_then(|e| Membership::decode(&e.data, seq, stamp))
+    };
     let facts = match stored {
         Some(facts) => {
             facts.persisted.store(true, Ordering::Relaxed);
@@ -271,9 +288,54 @@ pub(super) fn load(
         }
         None => scan(file, seq, stamp, control)?,
     };
+    facts
+        .baseline
+        .store(version.unwrap_or(i64::MIN), Ordering::Relaxed);
     let facts = Arc::new(facts);
     remember(key, &facts);
     Ok(facts)
+}
+
+type Watchers = Mutex<HashMap<std::path::PathBuf, rusqlite::Connection>>;
+fn watchers() -> &'static Watchers {
+    static WATCHERS: OnceLock<Watchers> = OnceLock::new();
+    WATCHERS.get_or_init(Default::default)
+}
+
+/// `PRAGMA data_version` of a dedicated read-only connection per file: it changes with every
+/// commit of any other connection. `None` if the file cannot be watched (no sharing then).
+fn data_version(path: &std::path::Path) -> Option<i64> {
+    let mut watchers = watchers().lock().unwrap_or_else(|e| e.into_inner());
+    if !watchers.contains_key(path) {
+        let conn = rusqlite::Connection::open_with_flags(
+            path,
+            rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY | rusqlite::OpenFlags::SQLITE_OPEN_NO_MUTEX,
+        )
+        .ok()?;
+        watchers.insert(path.to_path_buf(), conn);
+    }
+    watchers
+        .get(path)?
+        .query_row("PRAGMA data_version", [], |r| r.get(0))
+        .ok()
+}
+
+/// Our own derivable-cache writes (`view_cache`) do not change the data: shared passes of the
+/// file stay valid. Call right after such a write.
+pub(crate) fn note_cache_write(path: &std::path::Path) {
+    let Some(version) = data_version(path) else {
+        return;
+    };
+    let prefix = format!("{path:?}:");
+    for facts in registry()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .iter()
+        .filter(|(key, _)| key.starts_with(&prefix))
+        .filter_map(|(_, v)| v.upgrade())
+    {
+        facts.baseline.store(version, Ordering::Relaxed);
+    }
 }
 
 fn scan(
@@ -404,6 +466,7 @@ fn save(file: &CrawlFile, facts: &Membership) -> Result<bool, ViewError> {
     )?;
     if saved {
         facts.persisted.store(true, Ordering::Relaxed);
+        note_cache_write(file.path());
     }
     Ok(saved)
 }
@@ -421,6 +484,10 @@ pub(super) fn repair(
         return Ok(None);
     }
     let mut facts = previous.derived(seq);
+    facts.baseline.store(
+        data_version(file.path()).unwrap_or(i64::MIN),
+        Ordering::Relaxed,
+    );
     let mut stmt = file.conn().prepare(&format!("{FACTS} WHERE id=?1"))?;
     for id in ids {
         if facts.html_ids.remove(id.0 as u64) {
