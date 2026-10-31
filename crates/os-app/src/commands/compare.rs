@@ -617,6 +617,7 @@ fn change_handle(
     let page = os_analyze::views::query_view_in(std::slice::from_ref(&tab), file, cfg, &q)
         .map_err(super::catalog::view_error)?;
     Ok(ViewHandle {
+        initial_rows: None,
         view_id: id,
         version: view.version,
         total: Some(page.total),

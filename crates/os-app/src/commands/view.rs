@@ -964,22 +964,22 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
         )
         .await?;
         let initial = Arc::new(Mutex::new(links.as_ref().map(|_| p.clone())));
-        let h = handle(id.clone(), p);
-        insert(
-            app,
-            id,
-            OpenView {
-                owner: ctx.window,
-                session: s,
-                spec: args.spec,
-                columns: args.columns,
-                version: h.version,
-                tab: None,
-                links,
-                detail_seq: Arc::default(),
-                initial,
-            },
-        );
+        let mut h = handle(id.clone(), p);
+        let opened = OpenView {
+            owner: ctx.window,
+            session: s,
+            spec: args.spec,
+            columns: args.columns,
+            version: h.version,
+            tab: None,
+            links,
+            detail_seq: Arc::default(),
+            initial,
+        };
+        if opened.links.is_some() {
+            h.initial_rows = initial_rows(&opened, &id, h.version, 0, INITIAL_LINK_ROWS, &[]);
+        }
+        insert(app, id, opened);
         to_json(&h)
     })
 }
@@ -1077,6 +1077,7 @@ async fn settle(
                 })
             });
             Ok(ViewHandle {
+                initial_rows: None,
                 view_id: id.to_string(),
                 version: 0,
                 total: None,
@@ -1097,6 +1098,7 @@ fn tab_handle(view_id: String, spec: &ViewSpec, built: Built) -> ViewHandle {
         }
     );
     ViewHandle {
+        initial_rows: None,
         view_id,
         version: built.version,
         total: Some(built.total),
@@ -1108,6 +1110,7 @@ fn tab_handle(view_id: String, spec: &ViewSpec, built: Built) -> ViewHandle {
 }
 fn handle(view_id: String, p: DataPage) -> ViewHandle {
     ViewHandle {
+        initial_rows: None,
         view_id,
         version: p.version,
         total: Some(p.total),

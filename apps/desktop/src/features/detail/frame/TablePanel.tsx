@@ -82,7 +82,9 @@ export function TablePanel(props: TablePanelProps) {
       if (!props.fallbackColumns || toCmdError(error).messageKey !== "err-unknown-column") throw error;
       handle = await view.open({ spec, columns: [...props.fallbackColumns] });
     }
-    const source = new DetailDataSource(handle);
+    let source: DetailDataSource;
+    try { source = new DetailDataSource(handle); }
+    catch (error) { await view.close({ viewId: handle.viewId }).catch(actions.reportError); throw error; }
     source.setSorted(spec.sort.length > 0);
     // Fetch the bounded first window before mounting the grid. Otherwise the
     // first rows wait for another React commit/effect during live tick traffic.

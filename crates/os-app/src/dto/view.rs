@@ -471,6 +471,10 @@ pub struct ViewHandle {
     pub op: Option<OpHandle>,
     /// Leerzustand, falls die View strukturell leer ist.
     pub empty_state: Option<EmptyState>,
+    /// Optionales erstes, begrenztes Zeilenfenster ohne zweiten IPC-Umlauf (UI-145).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional = nullable)]
+    pub initial_rows: Option<RowWindow>,
 }
 
 /// Ein Zeilenfenster (`view.rows`).
