@@ -35,13 +35,58 @@ enum Event {
     BandDone(Duration),
 }
 
-struct Scratch<'a>(&'a rusqlite::Connection);
+#[derive(Clone, Copy)]
+enum Transaction {
+    Collect,
+    Publish,
+}
+
+/// TEMP collection may read MAIN, but must release that WAL snapshot before
+/// acquiring the publication write transaction. Other analysis steps publish
+/// concurrently on separate connections; upgrading an old snapshot yields 517.
+struct Scratch<'a> {
+    conn: &'a rusqlite::Connection,
+    transaction: Option<Transaction>,
+}
+impl<'a> Scratch<'a> {
+    fn new(conn: &'a rusqlite::Connection) -> Self {
+        Self {
+            conn,
+            transaction: None,
+        }
+    }
+
+    fn begin(&mut self, transaction: Transaction) -> Result<(), rusqlite::Error> {
+        self.conn.execute_batch(match transaction {
+            Transaction::Collect => "SAVEPOINT d02_work;",
+            Transaction::Publish => "SAVEPOINT d02_publish;",
+        })?;
+        self.transaction = Some(transaction);
+        Ok(())
+    }
+
+    fn release(&mut self) -> Result<(), rusqlite::Error> {
+        if let Some(transaction) = self.transaction {
+            self.conn.execute_batch(match transaction {
+                Transaction::Collect => "RELEASE d02_work;",
+                Transaction::Publish => "RELEASE d02_publish;",
+            })?;
+            self.transaction = None;
+        }
+        Ok(())
+    }
+}
 impl Drop for Scratch<'_> {
     fn drop(&mut self) {
-        let _ = self
-            .0
-            .execute_batch("ROLLBACK TO d02_work; RELEASE d02_work;");
-        let _ = self.0.execute_batch("DROP TABLE IF EXISTS temp.d02_pairs;");
+        if let Some(transaction) = self.transaction {
+            let _ = self.conn.execute_batch(match transaction {
+                Transaction::Collect => "ROLLBACK TO d02_work; RELEASE d02_work;",
+                Transaction::Publish => "ROLLBACK TO d02_publish; RELEASE d02_publish;",
+            });
+        }
+        let _ = self.conn.execute_batch(
+            "DROP TABLE IF EXISTS temp.d02_bands; DROP TABLE IF EXISTS temp.d02_pairs;",
+        );
     }
 }
 
@@ -212,8 +257,8 @@ fn run_with_limits(
     let load_time = started.elapsed();
     cancel.set_progress(0.2);
     conn.execute_batch("DROP TABLE IF EXISTS temp.d02_pairs; CREATE TEMP TABLE d02_pairs(url_id INTEGER,other_id INTEGER,similarity REAL,PRIMARY KEY(url_id,other_id)) WITHOUT ROWID;")?;
-    let _scratch = Scratch(conn);
-    conn.execute_batch("SAVEPOINT d02_work;")?;
+    let mut scratch = Scratch::new(conn);
+    scratch.begin(Transaction::Collect)?;
     let height = minhash::band_rows(cfg.duplicates.near_threshold_pct) * 4;
     let bands = 512 / height;
     let threads = workers().min(bands);
@@ -342,7 +387,15 @@ fn run_with_limits(
         return Ok(StepState::Pending);
     }
     let timer = Instant::now();
-    conn.execute_batch("DELETE FROM near_duplicates; INSERT INTO near_duplicates SELECT * FROM temp.d02_pairs; RELEASE d02_work;")?;
+    scratch.release()?;
+    if cancel.checkpoint().is_err() {
+        return Ok(StepState::Pending);
+    }
+    scratch.begin(Transaction::Publish)?;
+    conn.execute_batch(
+        "DELETE FROM near_duplicates; INSERT INTO near_duplicates SELECT * FROM temp.d02_pairs;",
+    )?;
+    scratch.release()?;
     write_time += timer.elapsed();
     if profile {
         eprintln!("n16 pages={} threads={threads} total={:?} load={load_time:?} lsh_wall={lsh_time:?} band_hash_sort_worker_sum={band_time:?} candidate_read={read_time:?} shingling={shingle_time:?} compare={compare_time:?} write_publish={write_time:?} candidates={candidates}; persisted MinHash/SimHash unchanged", pages.len(), started.elapsed());

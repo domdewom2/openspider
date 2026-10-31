@@ -162,3 +162,94 @@ fn n16_cancellation_with_backpressured_candidates_keeps_published_pairs() {
         .unwrap();
     assert_eq!(scratch, 0);
 }
+
+// spec: ONPAGE-144
+// spec: PERF-007
+#[test]
+fn n16_publication_survives_an_unrelated_wal_writer_during_comparison() {
+    use rusqlite::functions::FunctionFlags;
+    use std::sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc,
+    };
+    use std::time::Duration;
+    let mut outcomes = Vec::new();
+    for original in [true, false] {
+        let dir = tempfile::tempdir().unwrap();
+        let (path, file) = create(dir.path(), "wal-writer.ospider", 0x16);
+        let text = "identical words across these three documents";
+        let sig = os_store::encode_minhash(&minhash::signature(&minhash::shingles(text)));
+        for id in 1..=3 {
+            insert(
+                &file,
+                &[row(id, &format!("{id}.html"))
+                    .text("content_class", "HTML")
+                    .int("status_code", 200)
+                    .text("hash_md5", &format!("hash{id}"))],
+            );
+            file.conn()
+                .execute(
+                    "INSERT INTO url_ext(url_id,key,v_text) VALUES (?1,'content.text',?2)",
+                    (id, text),
+                )
+                .unwrap();
+            file.conn()
+                .execute("INSERT INTO minhash VALUES (?1,?2)", (id, &sig))
+                .unwrap();
+        }
+        file.conn()
+            .execute_batch(
+                "CREATE TABLE n16_marker(value INTEGER); INSERT INTO n16_marker VALUES(0);",
+            )
+            .unwrap();
+        let (read_tx, read_rx) = mpsc::channel();
+        let (written_tx, written_rx) = mpsc::channel();
+        let first = AtomicBool::new(true);
+        file.conn()
+            .create_scalar_function("n16_observe", 1, FunctionFlags::SQLITE_UTF8, move |ctx| {
+                let text: String = ctx.get(0)?;
+                if first.swap(false, Ordering::Relaxed) {
+                    read_tx
+                        .send(())
+                        .map_err(|e| rusqlite::Error::UserFunctionError(Box::new(e)))?;
+                    written_rx
+                        .recv_timeout(Duration::from_secs(10))
+                        .map_err(|e| rusqlite::Error::UserFunctionError(Box::new(e)))?;
+                }
+                Ok(text)
+            })
+            .unwrap();
+        // Observe the first MAIN text read, without changing its contents. A separate
+        // WAL connection then commits unrelated data BEFORE comparison continues.
+        file.conn().execute_batch("CREATE TEMP VIEW url_ext AS SELECT url_id,key,n16_observe(v_text) AS v_text FROM main.url_ext;").unwrap();
+        let writer = std::thread::spawn(move || {
+            let conn = rusqlite::Connection::open(path).unwrap();
+            conn.busy_timeout(Duration::from_secs(10)).unwrap();
+            read_rx.recv_timeout(Duration::from_secs(10)).unwrap();
+            conn.execute("UPDATE n16_marker SET value=1", []).unwrap();
+            written_tx.send(()).unwrap();
+        });
+        let mut cfg = CrawlConfig::default();
+        cfg.duplicates.near_enabled = true;
+        let run = if original {
+            baseline::run
+        } else {
+            near_duplicates::run
+        };
+        let result = run(&file, &cfg, &CancelToken::new());
+        writer.join().unwrap();
+        eprintln!("original={original} result={result:?}");
+        outcomes.push(result.is_ok_and(|s| s == os_model::StepState::Done));
+        if outcomes.last() == Some(&true) {
+            assert_eq!(dump(&file).len(), 6);
+        }
+        assert!(file.conn().is_autocommit());
+        assert_eq!(
+            file.conn()
+                .query_row("SELECT value FROM n16_marker", [], |r| r.get::<_, i64>(0))
+                .unwrap(),
+            1
+        );
+    }
+    assert_eq!(outcomes, [true, true]);
+}
