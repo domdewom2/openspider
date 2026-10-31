@@ -205,6 +205,15 @@ export function DataGrid(props: DataGridProps) {
     ctx.textBaseline = "middle";
     metrics.current ??= new DisplayTextMetrics(measuring.current!);
     const measure = (text: string) => metrics.current!.width(text);
+    ctx.font = `${theme.fontSize}px ${theme.fontFamily}`;
+    metrics.current.setFont(ctx.font);
+    const painted = Array.from({ length: count + 1 }, (_, i) => layout.map(c => i === 0
+      ? { text: props.headerTitle?.(c.key) ?? (props.columnTitles?.[c.key] ?? c.key) + (c.sort ? ` ${c.sort === "asc" ? "↑" : "↓"} ${visible.filter(c => c.sort).findIndex(s => s.key === c.key) + 1}` : ""), color: t.text, align: "left" as const }
+      : cell(c.index, first + i - 1)));
+    metrics.current.prepare(painted.flatMap((row, i) => row.map((value, j) => {
+      const c = layout[j];
+      return { text: value.text, width: c.width - (c.key === "Address" ? (markerColumn === "Address" ? D.addressReserved : D.labelInset + D.addressAction) : i === 0 ? 30 : 16) };
+    })));
     for (let row = first - 1; row < first + count; row++) {
       const header = row === first - 1;
       const y = header ? 0 : headerHeight + (row - first) * rowHeight;
@@ -216,7 +225,7 @@ export function DataGrid(props: DataGridProps) {
       metrics.current.setFont(ctx.font);
       for (const c of layout) {
         ctx.save(); ctx.beginPath(); ctx.rect(c.clipLeft, y, c.clipRight - c.clipLeft, h); ctx.clip();
-        const value = header ? { text: props.headerTitle?.(c.key) ?? (props.columnTitles?.[c.key] ?? c.key) + (c.sort ? ` ${c.sort === "asc" ? "↑" : "↓"} ${visible.filter(c => c.sort).findIndex(s => s.key === c.key) + 1}` : ""), color: t.text, align: "left" as const } : cell(c.index, row);
+        const value = painted[row - first + 1][layout.indexOf(c)];
         const background = (value as { background?: string }).background;
         if (background) { ctx.fillStyle = background; ctx.fillRect(c.x, y, c.width, h); }
         const badge = header || background ? null : cellBadge(c.key, value.text, t);
