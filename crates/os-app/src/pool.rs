@@ -306,7 +306,7 @@ impl ReadPool {
         })
         .await;
         match joined {
-            Ok(r) => r,
+            Ok(r) => r.map(|boxed| *boxed),
             Err(e) => Err(internal("ReadPool::run", e.to_string())),
         }
     }
@@ -326,12 +326,14 @@ fn open_read(path: &Path) -> Result<CrawlFile, StoreError> {
     Ok(file)
 }
 
+/// The result travels boxed through the unwind and blocking-task frames: large read results
+/// (e.g. a crawl configuration) would otherwise be copied into each of those frames (AGENT-020).
 fn run_blocking<T>(
     slot: &Slot,
     hub: &InterruptHub,
     token: &CancelToken,
     f: impl FnOnce(&CrawlFile, &CancelToken) -> Result<T, StoreError>,
-) -> Result<T, CmdError> {
+) -> Result<Box<T>, CmdError> {
     let file = checkout(slot).map_err(|e| store_error(&e))?;
     let outcome = {
         let _registration = hub.register(token, file.conn().get_interrupt_handle());
@@ -339,7 +341,7 @@ fn run_blocking<T>(
             Ok(Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled")))
         } else {
             std::panic::catch_unwind(AssertUnwindSafe(|| {
-                f(&file, token).map_err(|e| store_error(&e))
+                f(&file, token).map(Box::new).map_err(|e| store_error(&e))
             }))
         }
     };
