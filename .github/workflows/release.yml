@@ -189,22 +189,19 @@ jobs:
             echo 'unsigniert: keine vollständigen signierten Updater-Artefakte; keine Update-Manifeste.' >> release-reports/release-notes.md
           fi
           cat release-reports/R03.txt >> release-reports/release-notes.md
-      - name: SHA256SUMS über alle Release-Assets
-        run: node scripts/release/checksums.mjs release-assets
       - name: Archiv-Kompatibilitäts-Fixture (D01)
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
         run: |
           set -euo pipefail
-          if [[ -f scripts/release/archive-compat-fixture.mjs ]]; then
-            # Schnittstelle mit D01 beim Merge abgleichen; Fehler werden nicht verschluckt.
-            node scripts/release/archive-compat-fixture.mjs --version "$VERSION" --out release-reports/compat
-          else
-            echo 'STUB/TODO(D01): archive-compat-fixture.mjs fehlt; keine Archiv-Kompatibilität nachgewiesen.' | tee release-reports/D01.txt
-            cat release-reports/D01.txt >> "$GITHUB_STEP_SUMMARY"
-            cat release-reports/D01.txt >> release-reports/release-notes.md
-          fi
+          node --test tests/fixtures/migrations/node/archive.test.mjs
+          mkdir -p "$RUNNER_TEMP/compat-cli"
+          tar -xzf "release-assets/openspider_${VERSION}_linux-x86_64.tar.gz" -C "$RUNNER_TEMP/compat-cli"
+          node scripts/release/archive-compat-fixture.mjs --version "$VERSION" --out release-reports/compat --cli "$RUNNER_TEMP/compat-cli/openspider"
+          tar -czf "release-assets/compat_${VERSION}.tar.gz" -C release-reports/compat "$VERSION"
           echo 'TODO: Offene M2-Paritätspakete vor einer Freigabe prüfen.' >> release-reports/release-notes.md
+      - name: SHA256SUMS über alle Release-Assets
+        run: node scripts/release/checksums.mjs release-assets
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-assets

@@ -116,27 +116,15 @@ test('Asset-Kollisionen werden abgelehnt statt Signaturen oder Installer zu übe
 });
 
 // spec: OUT-255 [M3]
-test('D01-Hook meldet fehlende Archivierung, führt vorhandenes Skript aus und propagiert Fehler', t => {
-  const options = fixture(t);
+test('D01 archiviert mit dem Release-Binary vor den Prüfsummen und ohne Fallback', () => {
   const workflow = readFileSync(join(root, '.github/workflows/release.yml'), 'utf8');
-  const body = workflow.split('      - name: Archiv-Kompatibilitäts-Fixture (D01)')[1]
-    .split('        run: |\n')[1].split('      - uses:')[0]
-    .split('\n').map(line => line.startsWith('          ') ? line.slice(10) : line).join('\n');
-  mkdirSync(join(options.directory, 'release-reports'));
-  const summary = join(options.directory, 'summary.txt');
-  const run = () => spawnSync('bash', ['-c', body], { cwd: options.directory,
-    env: { ...process.env, VERSION: options.version, GITHUB_STEP_SUMMARY: summary }, encoding: 'utf8' });
-  assert.equal(run().status, 0);
-  assert.match(readFileSync(summary, 'utf8'), /STUB\/TODO\(D01\).*keine Archiv-Kompatibilität nachgewiesen/);
-  assert.match(readFileSync(join(options.directory, 'release-reports/release-notes.md'), 'utf8'), /STUB\/TODO\(D01\)/);
-  mkdirSync(join(options.directory, 'scripts/release'), { recursive: true });
-  const hook = join(options.directory, 'scripts/release/archive-compat-fixture.mjs');
-  writeFileSync(hook, `import {writeFileSync} from 'node:fs'; writeFileSync('hook-args.json', JSON.stringify(process.argv.slice(2)));`);
-  assert.equal(run().status, 0);
-  assert.deepEqual(JSON.parse(readFileSync(join(options.directory, 'hook-args.json'))),
-    ['--version', '1.0.0-beta.0', '--out', 'release-reports/compat']);
-  writeFileSync(hook, 'process.exit(7);');
-  assert.equal(run().status, 7);
+  const hook = workflow.indexOf('      - name: Archiv-Kompatibilitäts-Fixture (D01)');
+  assert.ok(hook > 0);
+  assert.ok(hook < workflow.indexOf('      - name: SHA256SUMS über alle Release-Assets'));
+  const body = workflow.slice(hook, workflow.indexOf('      - name: SHA256SUMS', hook));
+  assert.match(body, /node scripts\/release\/archive-compat-fixture\.mjs --version "\$VERSION" --out release-reports\/compat --cli/);
+  assert.match(body, /release-assets\/compat_\$\{VERSION\}\.tar\.gz/);
+  assert.doesNotMatch(body, /STUB|if \[\[ -f/);
 });
 
 test('Release-Erstellung bleibt Draft, normale Beta, kein Latest und Trockenlauf standardmäßig an', () => {
