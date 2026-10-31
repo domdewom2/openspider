@@ -2,8 +2,10 @@
 
 Stand: 31.10.2026. Branch `m3/fix-e`, Basis `origin/m3/int-e` (`a2b7bd61`).
 Linux-Server; keine Veröffentlichung, kein Push. Native macOS-Bestätigung beim Orchestrator.
-**Status: PAKET OFFEN** wegen verbleibender WebKit-Open-Latenz unter Doppel-Crawl-Last;
-die unten aufgeführten grünen Standardgates ersetzen diesen offenen Befund nicht.
+**Status: PAKET FERTIG (Linux).** Die geforderten Linux-Nachweise sind vollständig;
+zusätzlich besteht der unveränderte N04-Test jetzt auch isoliert mit zwei Workern
+20/20 ohne Retry. Die historische Überschreitung bei gleichzeitigem Workspace-Lauf
+bleibt unten dokumentiert. Native macOS-Bestätigung wie beauftragt beim Orchestrator.
 
 ## Befund 1: MCP-Crawl und kleine Thread-Stacks
 
@@ -294,6 +296,7 @@ Alle Produktcommits tragen den verlangten Co-Author-Trailer.
 | Sechs gezielte Frontendregressionen, 20 Wiederholungen | 20/20 grün; `frontend-regressions20.log` |
 | Beta + A11y WebKit / Chromium, je 2 Worker | Beide je 34/34 grün: WebKit 7,9 min, Chromium 6,3 min; `final-*-beta-a11y.log` |
 | N04 WebKit / Chromium, 20 Wiederholungen | Chromium 20/20 grün (16,5 min, 2 Worker); WebKit 20/20 grün (30,7 min, 1 Worker), beide ohne Retry; `browser-final-pipeline.log`, `final-webkit-serial20.log`, `webkit-serial-orchestration.log` |
+| Zusätzliche isolierte N04-WebKit-Doppel-Crawl-Reihe | **20/20 grün**, 2 Worker, kein Retry, 16,1 min; `resume-clean-webkit20.log`, `.jsonl`, `resume-clean-webkit20-summary.json` |
 
 Die finalen Rust-Wiederholungen setzen Hauptthread-Stacklimit und
 `RUST_MIN_STACK` auf 512 KiB, `--test-threads=1`; der MCP-Crawl setzt intern
@@ -352,19 +355,82 @@ und anschließend das native Gate ausführen. Linux-WebKit ersetzt keine Prüfun
 von WKWebView. Signierung, Installation und Veröffentlichung bleiben außerhalb
 dieses lokalen Pakets.
 
-## Offener Restbefund und nächster Schritt
+## Fortsetzung: Diagnose und isolierter Doppel-Crawl-Nachweis
 
-Die Linux-Stackkorrektur ist mit rotem Vorherlauf und kleinen Runtime-Stacks
-belegt; die native SIGBUS-Zuordnung bleibt durch den Orchestrator zu bestätigen.
-Die Detailkorrekturen beseitigen nachgewiesene Mehrfachscans, inkonsistente
-Auswahlgenerationen und serielle Initial-Ladewege. Der WebKit-Doppel-Crawl-
-Roundtrip von 1.152 ms ist damit jedoch **nicht geschlossen**. Das Paket wird
-nicht allein aufgrund grüner serieller Wiederholungen als vollständig behoben
-abgegeben.
+Der vorangehende Berichtsstand blieb wegen des oben genannten roten Doppel-Crawl-
+Laufs während Workspace-/Frontend-Prüfung offen. Die Fortsetzung untersucht dessen
+vermuteten Pool-/Open-Engpass, ohne Produkt- oder Testbudgets weiter zu ändern.
+Alle sechs MCP-Tests bestanden erneut (`/tmp/m3-fix-e-mcp-baseline.log`).
 
-Nächster technischer Schritt: im langsamen `view.open` getrennt messen:
-Semaphore-/Blocking-Wartezeit der `detail-link-ids`-/`detail-window`-Lanes in
-`ReadPool`, kaltes Öffnen der jeweiligen SQLite-Verbindung, SQL-Laufzeit sowie
-Serialisierung/Antworttransport. Erst danach den verbleibenden Produktengpass
-gezielt korrigieren und dieselbe Doppel-Crawl-Reihe ohne Budgetänderung wiederholen.
-Parallel dazu führt der Orchestrator die oben beschriebene macOS-arm64-Bestätigung aus.
+Temporäre Messungen in `ReadPool` trennten Wartezeit einschließlich Checkout und
+SQL-Laufzeit; eine weitere Messung in der Bridge trennte Task-Wartezeit,
+Command-Verarbeitung und Antwortserialisierung. Messcode wurde anschließend
+**bytegleich entfernt**; `git diff` auf den Produktdateien ist leer. Keine neuen
+Produktänderungen nach `b3b1ecd1`, keine neue dauerhafte Instrumentierung.
+
+Die erste isolierte Viererreihe mit zwei Workern bestand 4/4. Maxima über 234
+Link-ID-Abfragen: 11,9 ms vor SQL und 175,9 ms SQL; über 233 erste Zeilenfenster:
+14,9 ms vor SQL und 15,3 ms SQL. Eine zweite Diagnosereihe bestand ebenfalls
+vier vollständige Tests und wurde dann gezielt für den uninstrumentierten
+Schlusslauf beendet (Exit 130; **kein** 20/20-Nachweis). In ihren 39 Open-Antworten
+lagen die Maxima bei 0,236 ms Task-Wartezeit, 103,6 ms Command-Verarbeitung und
+3,83 ms Serialisierung. Die Detail-Lanes lagen höchstens bei 15,5 ms vor SQL,
+184,3 ms Link-ID-SQL und 20,9 ms Fenster-SQL. Unterbrochene eigene Kindprozesse
+wurden gezielt beendet. Belege: `resume-timing.log`, `resume-pool-timing-summary.json`,
+`resume-bridge-timing-run.log`, `resume-bridge-timing-summary.json`.
+
+Diese Diagnosen reproduzierten keinen langsamen initialen Open-Aufruf. Sie
+belegen daher **keine nachträglich bewiesene Ursache** des historischen
+1.152-ms-Ausreißers. Sie liefern auch keinen Grund, Poolgrößen, SQLite-Open oder
+Thread-Stacks pauschal zu vergrößern. Längere Wartezeiten während der späteren
+Abschlussanalyse sind nicht mit dem initialen Detail-Open gleichzusetzen.
+
+Nach Entfernen des Messcodes und erneutem Bridge-Build wurde der originale
+N04-Test vollständig **20-mal mit zwei WebKit-Workern und ohne Retry** ausgeführt.
+Lauf vom 31.10.2026, 16:12:46 bis 16:28:52 UTC: **20/20 grün**, Exit 0.
+Währenddessen kein Cargo-/Vitest-Lauf in diesem Worktree; die anderen Pakete auf
+dem gemeinsamen Server liefen weiter. Jedes Ergebnis umfasst Live-HTML,
+Inlinks/Outlinks/Retention, Pause/Resume, Analyseabschluss und Recent nach
+Prozessneustart. Externer Reporter und Logs liegen ausschließlich unter `/tmp`.
+
+```sh
+OPENSPIDER_SECRET_STORE=memory U03_E2E_ALL=1 \
+timeout 3600s nice -n 10 npm run -w apps/desktop e2e -- \
+  --config=e2e/header/playwright.config.ts beta/n04-live.spec.ts \
+  --project=webkit --workers=2 --repeat-each=20 --retries=0 --max-failures=1
+```
+
+Der Schlusslauf nutzte zusätzlich einen externen Reporter und ein externes
+Ausgabeverzeichnis. Alle 20 vorhandenen `live-latencies-ms`-Anhänge sind im
+JSONL-Protokoll gespeichert. Maxima: HTML 1.268 ms, erster Inlinks-Wechsel
+1.016 ms, Outlinks 1.097 ms, Rückwechsel Inlinks 790 ms. Diese Werte enthalten
+bereits den Playwright-Klick einschließlich dessen Wartezeiten; die unveränderte
+1000-ms-Assertion beginnt **nach** Abschluss des Klicks und bestand in allen Fällen.
+Das sind verschiedene Messintervalle; die Anhangswerte werden nicht als reine
+1000-ms-Antwortlatenz ausgegeben.
+
+Die vollständigen oben aufgeführten Linux-Gates gelten weiterhin für denselben
+Produktstand; sie wurden in dieser Fortsetzung nicht als neu ausgeführt ausgegeben.
+Zusätzlich wurden zum Abschluss Formatierung und Neutralität erneut geprüft.
+Werkzeuge und Bridge wurden vor den neuen Browserläufen mit `--locked -j 8`
+gebaut. Der Messcode wurde nicht committet. `target/` wurde nach Ende aller
+Prüfungen erneut entfernt; kein Push.
+
+## Abschluss und Grenzen
+
+Der auf Linux nachgewiesene Stacküberlauf und der ursprüngliche Detail-Ladepfad
+sind durch Produktkorrekturen und rote Vorher-/grüne Nachherregressionen abgedeckt.
+Alle geforderten Linux-Prüfungen einschließlich der 20-fachen Befundtests sind grün;
+der zusätzliche isolierte WebKit-Doppel-Crawl-Nachweis ist jetzt ebenfalls grün.
+Damit ist das Linux-Fixpaket abgeschlossen.
+
+Die frühere Überschreitung bei gleichzeitigem Workspace-Lauf bleibt als bekannte
+Zusatzlastgrenze bestehen; der neue Lauf beweist keine obere Antwortzeit unter
+beliebiger zusätzlicher CPU-/I/O-Last. Bei erneutem Auftreten die oben getrennt
+vermessenen Pool-, SQL-, Bridge- und Browserintervalle am konkreten Ausreißer
+sichern. Das ist keine Behauptung, der historische Ausreißer sei durch eine weitere
+Produktänderung verschwunden.
+
+Nächster verbindlicher Schritt: Der Orchestrator führt die oben beschriebene
+macOS-arm64-Bestätigung einschließlich nativer Crashdiagnose bei erneutem SIGBUS
+sowie die Mac-mini-/WKWebView-Prüfung aus. Linux ersetzt diesen nativen Nachweis nicht.
