@@ -434,3 +434,99 @@ Produktänderung verschwunden.
 Nächster verbindlicher Schritt: Der Orchestrator führt die oben beschriebene
 macOS-arm64-Bestätigung einschließlich nativer Crashdiagnose bei erneutem SIGBUS
 sowie die Mac-mini-/WKWebView-Prüfung aus. Linux ersetzt diesen nativen Nachweis nicht.
+
+## Nachbesserung 2 (Claude)
+
+Stand 31.10.2026, Übernahme von Codex (Kontingent erschöpft) auf `b1ed83de` plus
+dessen unkommittierten Zwischenständen. Auslöser: CI `41220198430` (windows-x64,
+`cmd_mcp_service`: `tokio-rt-worker` überläuft, `STATUS_STACK_OVERFLOW`) und
+ui-e2e `41220204813` (linux-webkit, `overview.spec.ts:8` zweimal rot,
+`header.spec.ts:23` flaky). Code lokal im Worktree, Bauen/Prüfen nur auf dem Server.
+
+### Befund 1: Stacküberlauf unter Windows
+
+**Ursache.** `04e552e8` ließ den MCP-Crawltest auf 320-KiB-Worker- und
+Blocking-Stacks laufen (vorher 2 MiB). Die dort gesetzten `Box::pin(f(..)).await`
+verkleinern zwar den Zustand, nicht aber den Pollrahmen: in unoptimierten Builds
+entsteht die Future `f(..)` zuerst als Temporärwert im Rahmen des Aufrufers und
+bleibt dort reserviert, solange die inneren Futures laufen. Gemessen (Linux x86_64,
+Debug, GDB-Rahmenadressen beim Überlauf): `worker::run_item` allein **102.400 Byte**,
+darüber reqwest/hyper rund 100 KB. Linux brauchte mehr als 256 KiB (3/3 Überlauf
+bei 256 KiB, 3/3 grün bei 320 KiB); Windows mit eigener Rahmen- und Guard-Aufteilung
+lag über 320 KiB. Weitere tiefe Ketten: MCP-Werkzeug → Konfiguration → Launch →
+TLS-Wurzeln; Blocking-Task-Ergebnisse mit `CrawlConfig`, die durch jeden
+Tokio-/Unwind-Rahmen kopiert wurden; die TOML-Deserialisierung von `CrawlConfig`
+(Serde-Visitor 52 KB, gesamt rund 106 KB) am Ende dieser Ketten.
+
+**Änderung (plattformneutral, keine Stackvergrößerung, keine neue Abhängigkeit).**
+
+- `os-engine`: Hilfsfunktion `heap(|| f(..))` (nie inline) baut die Future in einem
+  kurzlebigen Rahmen und legt sie auf den Heap; damit bleibt nur der Zeiger im
+  Aufrufer. Angewendet auf die URL-Phasen (`run_item`, Zielprüfung, robots,
+  Analyse, Zusammenbau, Senden, Sitemaps), die drei Startvarianten, die
+  Inline-Awaits des Runners und den gespawnten Runner selbst.
+- `os-fetch`: Der reqwest-Versand läuft als eigene Task (Abbruch beim Verwerfen der
+  Future, also bei Timeout/Pause/Stopp wie bisher; Panics werden weitergereicht).
+  Der tiefe Verbindungsaufbau beginnt damit an der Basis eines Runtime-Threads.
+- `os-mcp`: `start_crawl` und `crawl_status` haben eigene Rahmen statt eines
+  gemeinsamen 42-KB-Rahmens.
+- `os-app`: MCP-Launch geteilt (Fetcher/TLS auf frischem Blocking-Thread, Engine-
+  Start und Registrierung als Heap-Futures); `ReadPool` reicht Ergebnisse geboxt
+  durch Unwind- und Blocking-Task-Rahmen.
+- Codex-Zwischenstände geprüft: Heap-Grenzen für List/Serp übernommen (jetzt über
+  `heap`), `Box::pin` um `block_on` durch den Split ersetzt, die drei
+  Größentests übernommen und für die geänderten Pfade verschärft.
+
+**Regressionstests (alle Plattformen, Debug).** Feste Obergrenzen der
+Future-Größen: `run_item` ≤ 8 KiB (vorher 13.928 B, jetzt 3.856 B), `process`
+≤ 1 KiB (176 B), Runner ≤ 16 KiB (vorher 20.728 B, jetzt 11.736 B), MCP-Launch und
+Engine-Start je ≤ 16 KiB (7.024 B bzw. 7.120 B). Der bestehende 320-KiB-Test bleibt
+unverändert. Neu `timed_out_request_releases_its_connection` (CRAWL-095): nach dem
+Antwort-Timeout schließt die Versand-Task die Verbindung.
+
+**Messung danach** (temporäre, nicht committete Sonde mit gleicher Fixture,
+Stack-Hochwassermarke je Thread bei 1 MiB, fünf Läufe): höchstens **186.563 Byte**
+(Startkette mit TOML-Deserialisierung), übrige Threads 114–177 KB;
+vorher über 256 KiB. Die TOML-Deserialisierung (≈ 106 KB) ist jetzt der
+größte Einzelposten; sie hängt am Modell und wurde nicht umgebaut. Native
+Windows-Werte sind auf Linux nicht messbar; die Bestätigung bleibt beim CI.
+
+### Befund 2: Overview in Linux-WebKit
+
+**Ursache.** Im CI-Fehlerbild (Artefakt der linux-webkit-Jobs) ist der
+Overview-Tabpanel leer, ohne „Loading…“: Die Abfrage hatte Daten, aber
+`useDeferredValue(overview.data)` lieferte noch `undefined`. Unter laufenden
+Fortschrittsticks wird das verzögerte Rendering der großen Übersicht immer wieder
+von dringenden Updates unterbrochen. `b1ed83de` veröffentlicht die erste Antwort
+sofort und verzögert nur spätere Aktualisierungen. Bestätigt unter Last
+(WebKit, 6 Worker, kein Retry): Stand vor `b1ed83de` **11/12** (ein Lauf ohne
+jede Overview-Mutation), mit `b1ed83de` **36/36** (12 + 24). Seriell sind beide
+Stände lokal grün; der CI-Runner ist langsamer.
+
+**Header-Flake (`header.spec.ts:23`).** Laut CI-Snapshot war der Crawl beim
+zweiten Pausieren bereits „Completed“ (101/101 URLs, 0:08): Die Fixture ist auf
+langsamen Runnern vor der zweiten Pause fertig. Das betrifft weder Pause noch
+Fortsetzen aus diesem Paket; Test und Fixture bleiben unverändert (K2-63).
+Lokal 20/20 (beide Header-Tests je 10× seriell, WebKit).
+
+### Prüfung (Server, Stand `6a47d809` + Bericht)
+
+| Prüfung | Ergebnis |
+| --- | --- |
+| `cargo fmt --all --check` | grün |
+| `cargo clippy --workspace --all-targets -j 6 --locked -- -D warnings` | grün |
+| `cargo test -p os-app --test cmd_mcp_service` | 6/6; zusätzlich Binary 10/10 normal und 10/10 mit `RUST_MIN_STACK=1048576` |
+| `cargo test --workspace -j 6 --locked` (nach `ws-slot`) | grün: 4.094 bestanden, 0 Fehler, 49 bestehende Ignores, 566 Ziele |
+| `npm run -w apps/desktop typecheck` / `test` | grün; Vitest 870/870 in 92 Dateien |
+| Bridge-, Testsite-, CLI-, Parity-Builds | grün |
+| `e2e/beta`, Chromium + WebKit, 2 Worker | 28/28 grün (2,9 min) |
+| `overview.spec.ts` 10× seriell WebKit, ohne Retry | 10/10 |
+| `header/header.spec.ts` 10× seriell WebKit, ohne Retry | 20/20 (zwei Tests) |
+| `bash scripts/check-neutral.sh` | grün |
+
+Kein Push, kein `cargo update`, Tokio 1.53.3 und Lockfile unverändert; die
+Messsonde lag nur im Server-Worktree und ist gelöscht. `target/` und
+Playwright-Ausgaben im Server-Worktree danach entfernt.
+
+**Offen:** Windows-x64-Bestätigung von `cmd_mcp_service` und linux-webkit-ui-e2e
+im CI des Orchestrators.
