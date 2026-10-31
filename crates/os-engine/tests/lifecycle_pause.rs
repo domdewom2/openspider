@@ -20,6 +20,78 @@ fn secs(s: f64) -> Duration {
 // ---------------------------------------------------------------------------------------------------
 // Pause in simulierter Zeit (Regel 2.8)
 
+/// Fetcher with a shared start limit like `HttpFetcher` (CRAWL-113): `fetch` waits for the slot
+/// without cancellation, `start_delay` reports the wait beforehand.
+struct StartLimited {
+    inner: Arc<SimFetcher>,
+    limiter: os_fetch::rate::RateLimiter,
+}
+
+impl os_fetch::Fetch for StartLimited {
+    fn start_delay(&self) -> Duration {
+        self.limiter.pending()
+    }
+
+    fn fetch(
+        &self,
+        req: os_fetch::FetchRequest,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = os_fetch::FetchResult> + Send + '_>>
+    {
+        Box::pin(async move {
+            self.limiter.acquire().await;
+            self.inner.fetch(req).await
+        })
+    }
+}
+
+// spec: CRAWL-126
+// spec: CRAWL-113
+#[tokio::test(start_paused = true)]
+async fn pause_cancels_the_wait_for_the_shared_start_slot() {
+    let sink = MemorySink::new();
+    let sim = SimFetcher::new(SimSite::tree("site.test", 50));
+    let fetcher = Arc::new(StartLimited {
+        inner: sim.clone(),
+        // one start every 5 s: robots.txt at 0 s, first page at 5 s, the next waits until 10 s
+        limiter: os_fetch::rate::RateLimiter::new(0.2, os_engine::testing::TokioClock::new())
+            .unwrap(),
+    });
+    let dir = tempfile::tempdir().unwrap();
+    let mut cfg = CrawlConfig::default();
+    cfg.speed.threads = 1;
+    let handle = start_crawl(
+        fetcher,
+        CrawlRequest {
+            config: cfg,
+            source: CrawlSource::Spider {
+                start_url: "https://site.test/".to_string(),
+            },
+            file: dir.path().join("crawl.ospider"),
+            project: "sim".to_string(),
+            name: "sim".to_string(),
+        },
+        sim_deps(&sink),
+    )
+    .await
+    .unwrap();
+    tokio::time::sleep(secs(7.0)).await;
+    handle.pause();
+    let summary = handle.wait().await.unwrap();
+    assert_eq!(summary.state, CrawlState::Paused);
+    // Without the cancellable wait the queued page would sit in the transport limit until 10 s and
+    // then start although the pause had been requested (simulated time also advances while the
+    // writer thread checkpoints, so a duration bound would not be meaningful here).
+    let late: Vec<_> = sim
+        .page_requests()
+        .into_iter()
+        .filter(|r| r.start > secs(7.0))
+        .collect();
+    assert!(
+        late.is_empty(),
+        "no request starts after the pause: {late:?}"
+    );
+}
+
 // spec: CRAWL-126
 #[tokio::test(start_paused = true)]
 async fn after_pause_no_request_starts_and_the_running_ones_are_stored() {

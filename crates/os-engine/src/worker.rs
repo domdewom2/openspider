@@ -230,6 +230,16 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         sh.lock_core().requeue(item.clone());
         return Ok(());
     }
+    // CRAWL-113/126: wait for the transport's global start slot here, where pause and stop still
+    // cancel the wait. Inside `fetch` the request would start after the pause had been requested.
+    let start_delay = sh.fetcher.start_delay();
+    if !start_delay.is_zero() {
+        sh.host_pacer.sleep_unless_cancelled(start_delay).await;
+        if sh.ctl.stop.load(Ordering::SeqCst) != STOP_NONE {
+            sh.lock_core().requeue(item.clone());
+            return Ok(());
+        }
+    }
     let cookies = sh.lock_core().session_jar(item.session);
     let t = std::time::Instant::now();
     let result = sh
