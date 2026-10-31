@@ -201,6 +201,18 @@ genannten Kandidatenpfaden. `target/` wurde nach Abschluss aller Prüfungen entf
 
 ## Abschluss
 
+Bei der erneuten Aufnahme des Auftrags lag dieser Merge samt Header-Korrektur und
+allen oben genannten Laufprotokollen bereits im sauberen Checkout vor. Die
+Merge-Eltern wurden erneut gegen die angegebenen Remote-Referenzen geprüft;
+`git merge --no-ff --no-commit origin/m2/int-21` bestätigte `Already up to date`.
+Die vorhandenen vollständigen Rust-, Clippy-, Playwright- und Einzelwiederholungs-
+Logs wurden mit den Zahlen dieses Berichts abgeglichen. Erneut grün ausgeführt:
+Formatierung, Neutralität, M2-Planprüfer, Websiteprüfung, actionlint 1.7.12 sowie
+`cargo metadata --locked` und `cargo tree --locked -d`. Das Lockfile blieb dabei
+unverändert und `target/` blieb abwesend. Kein weiterer vollständiger Build ohne
+Code- oder Erwartungsänderung. Die ausdrückliche Vorgabe „Goldens unverändert“
+bleibt bis zu einer abweichenden Nutzerentscheidung maßgeblich.
+
 Merge und Header-Integrationskorrektur sind committet, der Arbeitsstand enthält
 keine eigenen Golden-/Baseline-Änderungen. Der vollständige Rust-Lauf wurde trotz
 der Archivfehler bis einschließlich aller übrigen Ziele und Doc-Tests beendet;
