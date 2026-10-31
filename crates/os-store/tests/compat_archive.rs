@@ -1,13 +1,11 @@
-use os_store::{CrawlFile, OpenMode, SCHEMA_VERSION};
+use os_store::{CrawlFile, OpenMode, StoreError, SCHEMA_VERSION};
 use std::{fs, path::PathBuf};
 
 fn archive() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../tests/fixtures/migrations")
 }
 
-// spec: OUT-255
 // spec: OUT-226 [M3]
-// spec: OUT-184
 #[test]
 fn every_schema_opens_and_migrates_with_an_unchanged_backup() {
     assert_eq!(SCHEMA_VERSION, 5, "Add a fixture when changing the schema");
@@ -64,7 +62,17 @@ fn future_schema_is_rejected_without_changing_bytes() {
     drop(conn);
     let bytes = fs::read(&path).unwrap();
     let error = CrawlFile::open(&path, OpenMode::ReadWrite).err().unwrap();
-    assert!(error.to_string().contains("aktualisieren"), "{error}");
+    assert!(
+        matches!(
+            error,
+            StoreError::NewerVersion {
+                found: 999,
+                supported: SCHEMA_VERSION,
+                ..
+            }
+        ),
+        "{error:?}"
+    );
     assert_eq!(fs::read(path).unwrap(), bytes);
 }
 

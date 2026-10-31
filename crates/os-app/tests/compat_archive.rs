@@ -1,7 +1,9 @@
 #![allow(clippy::disallowed_types, clippy::disallowed_methods)]
 #[path = "session_common.rs"]
 mod common;
-// Tauri reexports url::Url. Compile the actual forwarding adapter without GTK/WebView.
+// Intentionally include the real desktop open.rs via #[path] to test the forwarding
+// adapter without GTK/WebView; Tauri reexports url::Url. If open.rs starts using
+// Tauri runtime APIs, move this coverage into a src-tauri unit test.
 extern crate self as tauri;
 pub use reqwest::Url;
 #[path = "../../../apps/desktop/src-tauri/src/open.rs"]

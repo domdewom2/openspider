@@ -7,7 +7,6 @@ fn archive() -> PathBuf {
 }
 
 // spec: OUT-255
-// spec: OUT-184
 #[test]
 fn every_archived_schema_and_release_exports_internal_all() {
     let root = archive();
