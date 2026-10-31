@@ -27,14 +27,16 @@ pub fn export_detail(
     out: &Path,
     format: Format,
 ) -> Result<ExportFileInfo, ExportError> {
-    export_detail_with_options(
-        file,
-        detail,
-        urls,
-        out,
-        format,
-        &crate::pipeline::writer_options(&file.config()?),
-    )
+    let cancel = os_model::CancelToken::new();
+    let mut ctx = ExportCtx {
+        cancel: &cancel,
+        progress: &|_| {},
+        skip_empty: false,
+        workbook: None,
+        skipped: Vec::new(),
+    };
+    export_detail_with(file, detail, urls, out, format, &mut ctx)?
+        .ok_or_else(|| ExportError::Write("Missing detail output".into()))
 }
 
 /// Exports with explicit writer options, including presentation header labels.
@@ -68,15 +70,14 @@ pub fn export_detail_with(
     format: Format,
     ctx: &mut ExportCtx<'_>,
 ) -> Result<Option<ExportFileInfo>, ExportError> {
-    export_detail_with_writer_options(
-        file,
-        detail,
-        urls,
-        out,
-        format,
-        ctx,
-        &crate::pipeline::writer_options(&file.config()?),
-    )
+    ctx.checkpoint()?;
+    if file.conn().is_autocommit() {
+        os_store::link_index::ensure_if_idle(file)?;
+    }
+    crate::pipeline::snapshot(file, || {
+        let opts = crate::pipeline::writer_options(&file.config()?);
+        export_detail_with_writer_options(file, detail, urls, out, format, ctx, &opts)
+    })
 }
 
 /// Exports with explicit writer options, including presentation header labels.
