@@ -38,7 +38,8 @@ fn main() {
     }
     if args.get(2).is_some_and(|v| v == "counts-tabs") {
         let tabs = os_analyze::tabs::configured_for_file(&cfg, &file);
-        for tab in &tabs {
+        // Optional third argument: only this tab.
+        for tab in tabs.iter().filter(|t| args.get(3).is_none_or(|only| only == t.id)) {
             let at = Instant::now();
             let c = views::filter_counts_in(std::slice::from_ref(tab), &file, &cfg).unwrap();
             mark(&format!("counts.{}[{}]", tab.id, c.len()), at);
