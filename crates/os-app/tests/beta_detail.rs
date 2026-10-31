@@ -35,51 +35,53 @@ async fn link_count_and_first_rows_share_the_opened_generation_until_update() {
 // spec: UI-033
 // spec: UI-145
 #[tokio::test]
-async fn opened_and_updated_link_generations_do_not_rescan_ids_before_first_rows() {
-    for incoming in [true, false] {
-        for update in [false, true] {
-            let fx = Fx::new();
-            let spec = links(incoming);
-            let mut h = fx.open(spec.clone(), json!([])).await;
-            if update {
-                h = fx
-                    .call("view.update", json!({"viewId":h["viewId"],"spec":spec}))
-                    .await;
+async fn opened_and_updated_link_generations_serve_first_rows_without_more_reads() {
+    for lane in ["detail-link-ids", "detail-window"] {
+        for incoming in [true, false] {
+            for update in [false, true] {
+                let fx = Fx::new();
+                let spec = links(incoming);
+                let mut h = fx.open(spec.clone(), json!([])).await;
+                if update {
+                    h = fx
+                        .call("view.update", json!({"viewId":h["viewId"],"spec":spec}))
+                        .await;
+                }
+                // Hold either reader after open/update. The initial bounded page
+                // must already be ready, even under reader load.
+                let app = fx.app.clone();
+                let (started, ready) = tokio::sync::oneshot::channel();
+                let (release, held) = std::sync::mpsc::channel();
+                let blocker = tokio::spawn(async move {
+                    app.read_pool()
+                        .run_cached(
+                            os_app::pool::CrawlKey("fx-ui-basic".into()),
+                            lane,
+                            os_model::CancelToken::default(),
+                            move |_, _| {
+                                started.send(()).unwrap();
+                                held.recv().unwrap();
+                                Ok(())
+                            },
+                        )
+                        .await
+                        .unwrap();
+                });
+                ready.await.unwrap();
+                let rows = tokio::time::timeout(
+                    std::time::Duration::from_secs(2),
+                    fx.rows(&h, 0, 20, json!([])),
+                )
+                .await;
+                release.send(()).unwrap();
+                blocker.await.unwrap();
+                let rows = rows.expect("first rows must not queue another database read");
+                assert_eq!(
+                    rows["rowKeys"].as_array().unwrap().len() as u64,
+                    h["total"].as_u64().unwrap()
+                );
+                assert!(!rows["cells"].as_array().unwrap().is_empty());
             }
-            // Hold the materialization reader after open/update. First rows must
-            // use the already materialized generation, even under reader load.
-            let app = fx.app.clone();
-            let (started, ready) = tokio::sync::oneshot::channel();
-            let (release, held) = std::sync::mpsc::channel();
-            let blocker = tokio::spawn(async move {
-                app.read_pool()
-                    .run_cached(
-                        os_app::pool::CrawlKey("fx-ui-basic".into()),
-                        "detail-link-ids",
-                        os_model::CancelToken::default(),
-                        move |_, _| {
-                            started.send(()).unwrap();
-                            held.recv().unwrap();
-                            Ok(())
-                        },
-                    )
-                    .await
-                    .unwrap();
-            });
-            ready.await.unwrap();
-            let rows = tokio::time::timeout(
-                std::time::Duration::from_secs(2),
-                fx.rows(&h, 0, 20, json!([])),
-            )
-            .await;
-            release.send(()).unwrap();
-            blocker.await.unwrap();
-            let rows = rows.expect("first rows must not queue another link-ID scan");
-            assert_eq!(
-                rows["rowKeys"].as_array().unwrap().len() as u64,
-                h["total"].as_u64().unwrap()
-            );
-            assert!(!rows["cells"].as_array().unwrap().is_empty());
         }
     }
 }
