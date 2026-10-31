@@ -12,6 +12,7 @@ import type { Tick } from "../gen/Tick";
 import type { UiEvent } from "../gen/UiEvent";
 import cmdErrorFixture from "../__fixtures__/CmdError.json";
 import tickFixture from "../__fixtures__/UiEvent.tick.json";
+import viewFixture from "../__fixtures__/k06/fx-ui-basic/ViewHandle.json";
 
 afterEach(() => setClient(null));
 
@@ -108,6 +109,18 @@ describe("Client", () => {
     await view.rows({} as never);
     await view.rows({} as never);
     await expect(view.rows({} as never)).rejects.toMatchObject({ code: "Stale" });
+  });
+
+  // spec: UI-142
+  it("keeps the published version across a building control handle", () => {
+    const g = new VersionGuard();
+    const ready = { ...viewFixture, viewId: "n21", version: 3, state: "ready" };
+    expect(g.accept(ready)).toBe(ready);
+    const building = { ...ready, version: 0, state: "building", total: null, columns: [], op: { opId: "n21-build", cancellable: true } };
+    expect(g.accept(building)).toBe(building);
+    expect(() => g.accept({ viewId: ready.viewId, version: 2, cells: [["late"]] })).toThrow(IpcError);
+    expect(g.accept({ ...ready, version: 4 })).toMatchObject({ version: 4 });
+    expect(() => g.accept({ viewId: ready.viewId, version: 3, cells: [["old"]] })).toThrow(IpcError);
   });
 
   it("VersionGuard unterscheidet Ansichten und kann vergessen", () => {
