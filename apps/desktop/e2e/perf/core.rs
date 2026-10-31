@@ -53,15 +53,21 @@ fn main() {
     let total = view.prepare(&file, &Default::default()).unwrap();
     assert_eq!(total, rows);
     let mut samples = vec![];
+    let mut offsets = vec![];
     // spec: UI-142
     for i in 0..55 {
+        let offset = if i == 5 {
+            rows - 200
+        } else {
+            ((i + 19) * 104729 % ((rows - 200) / 200)) * 200
+        };
         let at = Instant::now();
         let result = view
             .rows(
                 &file,
                 RowsReq {
                     version: view.version(),
-                    offset: (i * 200) % (rows - 200),
+                    offset,
                     limit: 200,
                 },
             )
@@ -71,6 +77,7 @@ fn main() {
         assert_eq!(result.rows.len(), 200);
         if i >= 5 {
             samples.push(ms);
+            offsets.push(offset);
         }
     }
     let raw = samples.clone();
@@ -147,6 +154,6 @@ fn main() {
         }
         record(name, at.elapsed().as_secs_f64() * 1000.0, budget, completed);
     }
-    println!("{{\"scenario\":\"core\",\"size\":\"{}\",\"started_at\":\"{}\",\"engine\":\"core\",\"metrics\":{{{}}},\"details\":{{\"rows\":{},\"seed\":19,\"samples\":{:?},\"retained_bytes\":{},\"errors\":{:?}}},\"passed\":{}}}",
-        if rows == 5_000_000 { "large" } else { "small" }, args[3], metrics.join(","), rows, raw, view.memory_bytes(), errors, passed && errors.is_empty());
+    println!("{{\"scenario\":\"core\",\"size\":\"{}\",\"started_at\":\"{}\",\"engine\":\"core\",\"metrics\":{{{}}},\"details\":{{\"rows\":{},\"seed\":19,\"samples\":{:?},\"offsets\":{:?},\"retained_bytes\":{},\"errors\":{:?}}},\"passed\":{}}}",
+        if rows == 5_000_000 { "large" } else { "small" }, args[3], metrics.join(","), rows, raw, offsets, view.memory_bytes(), errors, passed && errors.is_empty());
 }

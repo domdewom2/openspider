@@ -15,7 +15,9 @@ const SLACK = STRICT ? 1 : 2;
 const TEN_K = [1, 40, 2000, 7959];
 
 let bridge: VizBridge;
+let startedAt = new Date().toISOString();
 test.beforeEach(async () => {
+  startedAt = new Date().toISOString();
   bridge = await startVizBridge(new FakeVizCore(() => genUiLarge(TEN_K)));
 });
 test.afterEach(async () => {
@@ -136,7 +138,7 @@ test.describe("UI-146 Budgets", () => {
       JSON.stringify({
         scenario: "viz",
         size: process.env.OS_PERF_ROWS === "5000000" ? "large" : "small",
-        started_at: new Date().toISOString(),
+        started_at: startedAt,
         engine: info.project.name,
         metrics: {
           firstFrameMs: { value: firstFrameMs, budget: 2000 },
@@ -200,7 +202,7 @@ test.describe("UI-146 Budgets", () => {
       JSON.stringify({
         scenario: "viz-tree",
         size: process.env.OS_PERF_ROWS === "5000000" ? "large" : "small",
-        started_at: new Date().toISOString(),
+        started_at: startedAt,
         engine: info.project.name,
         metrics: {
           collapse: { value: collapse, budget: 200 },

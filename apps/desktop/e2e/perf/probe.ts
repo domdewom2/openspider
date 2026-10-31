@@ -73,19 +73,30 @@ export function installPerf({
       );
       try {
         for (let i = 0; i < 55; i++) {
+          const offset =
+            i === 5
+              ? source.total - 200
+              : (((i + 19) * 104729) %
+                  Math.max(1, Math.floor((source.total - 200) / 200))) *
+                200;
           const start = performance.now();
           const result = await view.rows({
             viewId: ipcHandle.viewId,
             version: ipcHandle.version,
-            offset: (i * 200) % Math.max(200, source.total - 200),
+            offset,
             limit: 200,
             columns,
           });
           const ms = performance.now() - start;
-          if (result.cells.length !== 200 || result.columns.length !== 20)
+          if (
+            result.cells.length !== 200 ||
+            result.columns.length !== 20 ||
+            result.offset !== offset
+          )
             throw new Error("Expected 200 × 20 response");
           if (i >= 5)
             samples.push({
+              offset,
               ms,
               bytes: new TextEncoder().encode(JSON.stringify(result))
                 .byteLength,

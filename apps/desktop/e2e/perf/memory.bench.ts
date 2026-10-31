@@ -12,6 +12,7 @@ test("visualization memory: 10000 nodes add at most 300 MiB and closing releases
   page,
   context,
 }, info) => {
+  const startedAt = new Date().toISOString();
   const bridge = await startVizBridge(
     new FakeVizCore(() => genUiLarge([1, 40, 2000, 7959])),
   );
@@ -34,7 +35,7 @@ test("visualization memory: 10000 nodes add at most 300 MiB and closing releases
       scenario: "viz-memory",
       engine: info.project.name,
       size: process.env.OS_PERF_ROWS === "5000000" ? "large" : "small",
-      started_at: new Date().toISOString(),
+      started_at: startedAt,
       metrics: {
         additionalRssBytes: {
           value: additional,
