@@ -1,0 +1,2 @@
+# Canonical archive databases belong in Git, including future release directories.
+!crawl.ospider
