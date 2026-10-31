@@ -4,6 +4,86 @@ use fixture::*;
 use os_app::CallCtx;
 use serde_json::json;
 
+// spec: UI-033
+// spec: UI-018
+#[tokio::test]
+async fn link_count_and_first_rows_share_the_opened_generation_until_update() {
+    let fx = Fx::new();
+    let spec = links(false);
+    let h = fx.open(spec.clone(), json!([])).await;
+    fx.write("INSERT INTO links(source_id,target_id,target_raw,link_type,position,anchor,follow) SELECT source_id,target_id,target_raw,link_type,position,anchor,follow FROM links WHERE id=1; UPDATE crawl_meta SET value=CAST(value AS INTEGER)+1 WHERE key='change_seq'");
+    let rows = fx.rows(&h, 0, 20, json!([])).await;
+    assert_eq!(
+        rows["rowKeys"].as_array().unwrap().len() as u64,
+        h["total"].as_u64().unwrap()
+    );
+    let fresh = fx
+        .call("view.update", json!({"viewId":h["viewId"],"spec":spec}))
+        .await;
+    assert_eq!(
+        fresh["total"].as_u64().unwrap(),
+        h["total"].as_u64().unwrap() + 1
+    );
+    let rows = fx.rows(&fresh, 0, 20, json!([])).await;
+    assert_eq!(
+        rows["rowKeys"].as_array().unwrap().len() as u64,
+        fresh["total"].as_u64().unwrap()
+    );
+}
+
+// spec: UI-032
+// spec: UI-033
+// spec: UI-145
+#[tokio::test]
+async fn opened_and_updated_link_generations_do_not_rescan_ids_before_first_rows() {
+    for incoming in [true, false] {
+        for update in [false, true] {
+            let fx = Fx::new();
+            let spec = links(incoming);
+            let mut h = fx.open(spec.clone(), json!([])).await;
+            if update {
+                h = fx
+                    .call("view.update", json!({"viewId":h["viewId"],"spec":spec}))
+                    .await;
+            }
+            // Hold the materialization reader after open/update. First rows must
+            // use the already materialized generation, even under reader load.
+            let app = fx.app.clone();
+            let (started, ready) = tokio::sync::oneshot::channel();
+            let (release, held) = std::sync::mpsc::channel();
+            let blocker = tokio::spawn(async move {
+                app.read_pool()
+                    .run_cached(
+                        os_app::pool::CrawlKey("fx-ui-basic".into()),
+                        "detail-link-ids",
+                        os_model::CancelToken::default(),
+                        move |_, _| {
+                            started.send(()).unwrap();
+                            held.recv().unwrap();
+                            Ok(())
+                        },
+                    )
+                    .await
+                    .unwrap();
+            });
+            ready.await.unwrap();
+            let rows = tokio::time::timeout(
+                std::time::Duration::from_secs(2),
+                fx.rows(&h, 0, 20, json!([])),
+            )
+            .await;
+            release.send(()).unwrap();
+            blocker.await.unwrap();
+            let rows = rows.expect("first rows must not queue another link-ID scan");
+            assert_eq!(
+                rows["rowKeys"].as_array().unwrap().len() as u64,
+                h["total"].as_u64().unwrap()
+            );
+            assert!(!rows["cells"].as_array().unwrap().is_empty());
+        }
+    }
+}
+
 // spec: UI-030
 // spec: UI-032
 // spec: UI-033

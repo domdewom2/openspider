@@ -949,9 +949,16 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
             );
             return to_json(&h);
         }
-        let p = page(app, &s, args.spec.clone(), args.columns.clone(), 0, 1, None).await?;
-        let h = handle(id.clone(), p);
         let links = link_list(app, &s, &args.spec);
+        let p = detail_page(
+            app,
+            &s,
+            args.spec.clone(),
+            args.columns.clone(),
+            links.as_ref(),
+        )
+        .await?;
+        let h = handle(id.clone(), p);
         insert(
             app,
             id,
@@ -968,6 +975,39 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
         );
         to_json(&h)
     })
+}
+/// Materialize a link generation once, including its count. In a live crawl the
+/// incoming-link index can be deferred: COUNT + OFFSET followed by a lazy ID
+/// build used to scan the growing links table three times before showing rows.
+async fn detail_page(
+    app: &App,
+    s: &SessionInfo,
+    spec: ViewSpec,
+    columns: Vec<String>,
+    links: Option<&Arc<LinkView>>,
+) -> Result<DataPage, CmdError> {
+    let Some(links) = links else {
+        return page(app, s, spec, columns, 0, 1, None).await;
+    };
+    let (selection, req) = link_selection(&spec, &s.config, 0, 1)?;
+    let ids = links.ids(app, selection, req).await?;
+    let mut p = page_query(
+        app,
+        s,
+        spec,
+        columns,
+        0,
+        1,
+        PageSelection {
+            expected: None,
+            ids: Some(ids.iter().take(1).copied().collect()),
+            ordered: true,
+            detail_seq: None,
+        },
+    )
+    .await?;
+    p.total = ids.len() as u64;
+    Ok(p)
 }
 async fn link_ids(app: &App, v: &OpenView, links: &LinkView) -> Result<Arc<Vec<i64>>, CmdError> {
     let (selection, page) = link_selection(&v.spec, &v.session.config, 0, 1)?;
@@ -1082,6 +1122,7 @@ fn update<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
             )),
             _ => None,
         };
+        let links = link_list(app, &v.session, &args.spec);
         let h = if let Some(tab) = &tab {
             let built = start_build(
                 app,
@@ -1092,14 +1133,12 @@ fn update<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
             );
             settle(app, &args.view_id, &args.spec, built).await?
         } else {
-            let p = page(
+            let p = detail_page(
                 app,
                 &v.session,
                 args.spec.clone(),
                 v.columns.clone(),
-                0,
-                1,
-                None,
+                links.as_ref(),
             )
             .await?;
             handle(args.view_id.clone(), p)
@@ -1109,7 +1148,7 @@ fn update<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
         if !entries.contains_key(&args.view_id) {
             return Err(CmdError::new(ErrorCode::NotFound, "err-view-not-found"));
         }
-        v.links = link_list(app, &v.session, &args.spec);
+        v.links = links;
         v.detail_seq = Arc::default();
         v.spec = args.spec;
         v.version = h.version;
