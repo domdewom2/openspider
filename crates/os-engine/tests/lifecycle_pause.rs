@@ -691,3 +691,55 @@ async fn pausing_with_a_million_queue_entries_takes_under_three_seconds() {
         "Pausieren dauerte {pause:?}"
     );
 }
+
+// spec: CRAWL-126
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn an_export_during_the_wal_merge_is_self_contained_and_paused() {
+    let site_dir = slow_site_dir(20);
+    let site = start_site(site_dir.path()).await;
+    let work = tempfile::tempdir().unwrap();
+    // The registry expects the file at its canonical name.
+    let id = os_model::IdSource::new_crawl_id(&os_model::RandomIds, os_model::Timestamp::now_utc());
+    struct Fixed(os_model::CrawlId);
+    impl os_model::IdSource for Fixed {
+        fn new_crawl_id(&self, _: os_model::Timestamp) -> os_model::CrawlId {
+            self.0
+        }
+    }
+    let path = os_store::registry::path_for(work.path(), &id);
+    let mut fixed = deps();
+    fixed.ids = Arc::new(Fixed(id));
+    let handle = start(config_for(&site, 1), &path, fixed).await;
+    until_crawled(&handle, 3).await;
+    // A reader holds a snapshot: the pause is acknowledged, the WAL merge continues in the background.
+    let held = open_ro(&path);
+    held.conn().execute_batch("BEGIN").unwrap();
+    scalar(&held, "SELECT COUNT(*) FROM urls");
+    handle.pause();
+    assert_eq!(run_to_end(handle).await.state, CrawlState::Paused);
+    assert!(os_store::open::wal_bytes(&path) > 0);
+    assert_eq!(open_ro(&path).meta().unwrap().crawl_id, id);
+    let export = work.path().join("export.ospider");
+    let cancel = std::sync::atomic::AtomicBool::new(false);
+    std::thread::scope(|scope| {
+        let merge = scope.spawn(|| os_store::open::merge_wal(&path, &cancel).unwrap());
+        let mut manager = os_store::registry::Manager::open(work.path()).unwrap();
+        manager
+            .export(&id, &export, os_model::Timestamp::now_utc(), &|_, _| true)
+            .unwrap();
+        assert!(!merge.is_finished(), "the merge still waits for the reader");
+        for suffix in ["-wal", "-shm", "-journal"] {
+            let mut name = export.as_os_str().to_owned();
+            name.push(suffix);
+            assert!(
+                !std::path::PathBuf::from(name).exists(),
+                "export without {suffix}"
+            );
+        }
+        let exported = open_ro(&export);
+        assert_eq!(exported.meta().unwrap().state, CrawlState::Paused);
+        drop(held);
+        assert!(merge.join().unwrap());
+    });
+    assert_eq!(os_store::open::wal_bytes(&path), 0);
+}

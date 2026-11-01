@@ -9,6 +9,7 @@
 //!             [--config <datei.osconfig>]       # Basis-Konfiguration (TOML); die Schalter oben überschreiben sie
 //!             [--resume]                        # vorhandene Datei fortsetzen statt neu anlegen
 //!             [--ca-cert <datei.pem>]           # zusätzliche Test-CA für https
+//!             [--pause-after <n>]               # nach n Abrufen pausieren; ein Leser hält dabei einen Stand
 //! ```
 //!
 //! Ausgabe (eine Zeile je Ereignis, sofort geleert):
@@ -16,6 +17,8 @@
 //! * `READY pid=<pid>` – die Crawl-Datei existiert, der Crawl läuft.
 //! * `PROGRESS crawled=<n> queued=<n> discovered=<n>` – bei jeder Änderung von `crawled` (höchstens alle 20 ms).
 //! * `DONE state=<Completed|Paused|…> end_reason=<…|-> crawled=<n>` – regulärer Abschluss oder Pause.
+//! * `HOLDING wal=<bytes>` – nur mit `--pause-after`: die Pause ist quittiert, der Leser hält das WAL fest, der
+//!   Prozess wartet auf den harten Abbruch (CRAWL-126).
 //!
 //! Exit-Code: 0 bei Abschluss oder Pause, 130 nach Strg+C (der Crawl wird zuvor pausiert), 1 bei einem Fehler
 //! (Meldung auf stderr). Ein harter Abbruch hinterlässt eine Datei im Zustand „Unterbrochen“ (Heartbeat).
@@ -42,6 +45,7 @@ struct Args {
     config: Option<PathBuf>,
     ca_cert: Option<PathBuf>,
     resume: bool,
+    pause_after: Option<u64>,
 }
 
 fn parse_args() -> Result<Args, String> {
@@ -55,6 +59,7 @@ fn parse_args() -> Result<Args, String> {
         config: None,
         ca_cert: None,
         resume: false,
+        pause_after: None,
     };
     let mut it = std::env::args().skip(1);
     while let Some(flag) = it.next() {
@@ -90,6 +95,13 @@ fn parse_args() -> Result<Args, String> {
             "--config" => args.config = Some(PathBuf::from(value("--config")?)),
             "--ca-cert" => args.ca_cert = Some(PathBuf::from(value("--ca-cert")?)),
             "--resume" => args.resume = true,
+            "--pause-after" => {
+                args.pause_after = Some(
+                    value("--pause-after")?
+                        .parse()
+                        .map_err(|e| format!("--pause-after: {e}"))?,
+                )
+            }
             other => return Err(format!("unbekannter Schalter {other}")),
         }
     }
@@ -202,6 +214,37 @@ async fn run(args: Args) -> Result<i32, String> {
         }
     };
     tokio::spawn(progress);
+
+    if let Some(n) = args.pause_after {
+        let mut watch = handle.watch();
+        while watch.borrow_and_update().crawled < n {
+            if watch.changed().await.is_err() {
+                break;
+            }
+        }
+        // Ein Leser hält einen älteren Stand: der Abschluss-Checkpoint kann das WAL nicht zurückführen.
+        let reader = os_store::CrawlFile::open(&args.file, os_store::OpenMode::ReadOnly)
+            .map_err(|e| e.to_string())?;
+        reader
+            .conn()
+            .execute_batch("BEGIN")
+            .map_err(|e| e.to_string())?;
+        reader
+            .conn()
+            .query_row("SELECT COUNT(*) FROM urls", [], |r| r.get::<_, i64>(0))
+            .map_err(|e| e.to_string())?;
+        handle.pause();
+        let summary = handle.wait().await.map_err(|e| e.to_string())?;
+        report(&summary);
+        let mut wal = args.file.as_os_str().to_owned();
+        wal.push("-wal");
+        let bytes = std::fs::metadata(PathBuf::from(wal)).map_or(0, |m| m.len());
+        say(&format!("HOLDING wal={bytes}"));
+        loop {
+            tokio::time::sleep(Duration::from_secs(3600)).await;
+            let _ = reader.conn();
+        }
+    }
 
     let interrupted = {
         let ctrl_c = tokio::signal::ctrl_c();
