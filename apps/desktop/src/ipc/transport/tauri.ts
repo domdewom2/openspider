@@ -8,11 +8,15 @@ export function isTauri(win: object = globalThis): boolean {
   return "__TAURI_INTERNALS__" in win;
 }
 
-/** `view.rows` → `plugin:view|rows` (Namen wie in commands.json). */
+// Kern-Plugins von Tauri; gleichnamige Domänen registriert die Hülle mit Präfix `os-` (src-tauri/src/plugin_names.rs).
+export const TAURI_CORE_PLUGINS: ReadonlySet<string> = new Set(["app", "event", "image", "menu", "path", "resources", "tray", "webview", "window"]);
+
+/** `view.rows` → `plugin:view|rows`, `app.info` → `plugin:os-app|info` (Namen wie in commands.json). */
 export function tauriCommandName(cmd: string): string {
   const dot = cmd.indexOf(".");
   if (dot < 0) return cmd;
-  return `plugin:${cmd.slice(0, dot)}|${cmd.slice(dot + 1)}`;
+  const domain = cmd.slice(0, dot);
+  return `plugin:${TAURI_CORE_PLUGINS.has(domain) ? `os-${domain}` : domain}|${cmd.slice(dot + 1)}`;
 }
 
 export function createTauriTransport(): Transport {
