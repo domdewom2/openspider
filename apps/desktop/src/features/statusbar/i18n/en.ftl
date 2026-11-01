@@ -2,6 +2,7 @@ status-mode = Mode: { $mode }
 status-idle = Ready
 status-running = Running
 status-paused = Paused
+status-paused-merging = Paused – merging file
 status-completed = Completed
 status-incomplete = Interrupted
 status-failed = Failed
