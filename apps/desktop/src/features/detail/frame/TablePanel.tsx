@@ -59,6 +59,8 @@ class DetailDataSource extends ViewDataSource {
 export function TablePanel(props: TablePanelProps) {
   const { spec, title, actions, onSort, hiddenColumns = NO_HIDDEN } = props;
   const visible = useContext(DetailVisible);
+  const currentlyVisible = useRef(visible);
+  currentlyVisible.current = visible;
   const t = useT(); const appearance = usePrefs(s => s.appearance); const locale = useLanguageStore(s => s.lang);
   const [selection, setSelection] = useState(SelectionModel.empty);
   const layoutId = spec.kind === "detail" ? spec.detail : spec.kind === "inlinks" || spec.kind === "outlinks" ? `${spec.kind}:${spec.filter.mode ?? "links"}` : spec.kind;
@@ -80,8 +82,15 @@ export function TablePanel(props: TablePanelProps) {
       if (!props.fallbackColumns || toCmdError(error).messageKey !== "err-unknown-column") throw error;
       handle = await view.open({ spec, columns: [...props.fallbackColumns] });
     }
-    const source = new DetailDataSource(handle);
+    let source: DetailDataSource;
+    try { source = new DetailDataSource(handle); }
+    catch (error) { await view.close({ viewId: handle.viewId }).catch(actions.reportError); throw error; }
     source.setSorted(spec.sort.length > 0);
+    // Fetch the bounded first window before mounting the grid. Otherwise the
+    // first rows wait for another React commit/effect during live tick traffic.
+    // A handle that finishes after hiding the tab stays lazy until resume.
+    source.active = currentlyVisible.current && !signal.aborted;
+    await source.ensureRange(0, 29);
     return { handle, source };
   }, value => { void value.source.dispose().catch(actions.reportError); });
   const source = result.value?.source;

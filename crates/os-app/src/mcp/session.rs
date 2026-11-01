@@ -51,27 +51,28 @@ impl Access {
         if service.quitting.load(std::sync::atomic::Ordering::SeqCst) || app.ops().running() > 0 {
             return Err(SessionError::Invalid("App is busy or shutting down".into()));
         }
-        let network = app.settings_snapshot().network;
-        let mut fetch_config = os_fetch::FetchConfig::from_crawl_config(
-            &config,
-            app.config().secrets.as_ref(),
-            app.config().clock.clone(),
-        )
-        .map_err(err)?
-        .with_network(&network);
-        fetch_config.proxy_password = app
-            .config()
-            .secrets
-            .try_get(os_fetch::net::PROXY_PASSWORD)
-            .map_err(err)?;
-        let fetcher = Arc::new(
-            ProtectedFetcher::new(
-                fetch_config,
-                policy.clone(),
-                policy.allows_private_targets(),
-            )
-            .map_err(err)?,
-        );
+        // Client and TLS-root setup is deep synchronous work: run it on a fresh blocking stack
+        // instead of on top of this caller's frames (AGENT-020).
+        let fetcher = {
+            let (app, config, policy) = (app.clone(), config.clone(), policy.clone());
+            tokio::task::spawn_blocking(move || protected_fetcher(&app, &config, &policy))
+                .await
+                .map_err(err)??
+        };
+        let (handle, file) =
+            heap(|| Self::engine(app, source, config, policy, resume, fetcher)).await?;
+        heap(|| Self::register(app, handle, file)).await
+    }
+
+    /// Starts or resumes the engine on its own blocking thread.
+    async fn engine(
+        app: &App,
+        source: Option<SessionSource>,
+        config: CrawlConfig,
+        policy: DomainPolicy,
+        resume: Option<SessionInfo>,
+        fetcher: Arc<ProtectedFetcher>,
+    ) -> Result<(os_engine::CrawlHandle, std::path::PathBuf), SessionError> {
         let mut deps = control::deps(app);
         if config.rendering.mode != os_model::RenderingMode::Text {
             deps.renderer = Some(
@@ -81,58 +82,66 @@ impl Access {
             );
         }
         let runtime = app.handle();
-        let (handle, file) = if let Some(s) = resume {
+        if let Some(s) = resume {
             control::ensure_idle(app, &s).await.map_err(err)?;
+            session::merge::cancel(app, &s.key).await;
             let file = s.path;
             let path = file.clone();
             let h = tokio::task::spawn_blocking(move || {
-                runtime.block_on(os_engine::resume_crawl(fetcher, path, None, deps))
+                runtime.block_on(heap(|| os_engine::resume_crawl(fetcher, path, None, deps)))
             })
             .await
             .map_err(err)?
             .map_err(err)?;
-            (h, file)
-        } else {
-            let id = app.config().ids.new_crawl_id(app.config().clock.now());
-            struct Fixed(os_model::CrawlId);
-            impl os_model::IdSource for Fixed {
-                fn new_crawl_id(&self, _: os_model::Timestamp) -> os_model::CrawlId {
-                    self.0
-                }
+            return Ok((h, file));
+        }
+        let id = app.config().ids.new_crawl_id(app.config().clock.now());
+        struct Fixed(os_model::CrawlId);
+        impl os_model::IdSource for Fixed {
+            fn new_crawl_id(&self, _: os_model::Timestamp) -> os_model::CrawlId {
+                self.0
             }
-            deps.ids = Arc::new(Fixed(id));
-            let dir =
-                crate::runtime::info::effective_crawls_dir(&app.settings_snapshot(), app.config());
-            let file = os_store::registry::path_for(&dir, &id);
-            let source = match source.ok_or_else(|| err("Missing source"))? {
-                SessionSource::Spider { url } => {
-                    policy.check_url(&url).map_err(SessionError::Invalid)?;
-                    os_engine::CrawlSource::Spider { start_url: url }
+        }
+        deps.ids = Arc::new(Fixed(id));
+        let dir =
+            crate::runtime::info::effective_crawls_dir(&app.settings_snapshot(), app.config());
+        let file = os_store::registry::path_for(&dir, &id);
+        let source = match source.ok_or_else(|| err("Missing source"))? {
+            SessionSource::Spider { url } => {
+                policy.check_url(&url).map_err(SessionError::Invalid)?;
+                os_engine::CrawlSource::Spider { start_url: url }
+            }
+            SessionSource::List { items, label } => {
+                for url in &items {
+                    policy.check_url(url).map_err(SessionError::Invalid)?;
                 }
-                SessionSource::List { items, label } => {
-                    for url in &items {
-                        policy.check_url(url).map_err(SessionError::Invalid)?;
-                    }
-                    os_engine::CrawlSource::List { items, label }
-                }
-            };
-            let mut config = config;
-            config.custom_js.output_dir = Some(dir);
-            let request = os_engine::CrawlRequest {
-                config,
-                source,
-                file: file.clone(),
-                project: String::new(),
-                name: "MCP".into(),
-            };
-            let h = tokio::task::spawn_blocking(move || {
-                runtime.block_on(os_engine::start_crawl(fetcher, request, deps))
-            })
-            .await
-            .map_err(err)?
-            .map_err(err)?;
-            (h, file)
+                os_engine::CrawlSource::List { items, label }
+            }
         };
+        let mut config = config;
+        config.custom_js.output_dir = Some(dir);
+        let request = os_engine::CrawlRequest {
+            config,
+            source,
+            file: file.clone(),
+            project: String::new(),
+            name: "MCP".into(),
+        };
+        let h = tokio::task::spawn_blocking(move || {
+            runtime.block_on(heap(|| os_engine::start_crawl(fetcher, request, deps)))
+        })
+        .await
+        .map_err(err)?
+        .map_err(err)?;
+        Ok((h, file))
+    }
+
+    /// Publishes a started engine as the app session.
+    async fn register(
+        app: &App,
+        handle: os_engine::CrawlHandle,
+        file: std::path::PathBuf,
+    ) -> Result<SessionCrawl, SessionError> {
         let key = CrawlKey(handle.crawl_id().to_string());
         app.register_crawl(key.clone(), file.clone());
         let (_, cfg, _) = session::feed::snapshot(app, key.clone())
@@ -163,6 +172,44 @@ impl Access {
         app.crawl_events().emit(app, CrawlEvent::Started(key));
         Ok(dto(s))
     }
+}
+
+/// Builds a future in this short-lived frame and moves it to the heap (AGENT-020).
+///
+/// In unoptimised builds `Box::pin(f(..))` still materialises the whole future in the caller's
+/// frame, which stays on the stack while the nested futures run.
+#[inline(never)]
+fn heap<F: std::future::Future>(make: impl FnOnce() -> F) -> std::pin::Pin<Box<F>> {
+    Box::pin(make())
+}
+
+/// The MCP fetcher with the connection-time target policy.
+fn protected_fetcher(
+    app: &App,
+    config: &CrawlConfig,
+    policy: &DomainPolicy,
+) -> Result<Arc<ProtectedFetcher>, SessionError> {
+    let network = app.settings_snapshot().network;
+    let mut fetch_config = os_fetch::FetchConfig::from_crawl_config(
+        config,
+        app.config().secrets.as_ref(),
+        app.config().clock.clone(),
+    )
+    .map_err(err)?
+    .with_network(&network);
+    fetch_config.proxy_password = app
+        .config()
+        .secrets
+        .try_get(os_fetch::net::PROXY_PASSWORD)
+        .map_err(err)?;
+    Ok(Arc::new(
+        ProtectedFetcher::new(
+            fetch_config,
+            policy.clone(),
+            policy.allows_private_targets(),
+        )
+        .map_err(err)?,
+    ))
 }
 impl SessionAccess for Access {
     fn current_config(&self) -> Option<CrawlConfig> {
@@ -220,8 +267,9 @@ impl SessionAccess for Access {
         policy: DomainPolicy,
     ) -> Result<SessionCrawl, SessionError> {
         let app = self.app()?;
-        app.handle()
-            .block_on(Self::launch(&app, Some(start.source), config, policy, None))
+        app.handle().block_on(heap(|| {
+            Self::launch(&app, Some(start.source), config, policy, None)
+        }))
     }
     fn stop_crawl(&self, id: &str) -> Result<(), SessionError> {
         let app = self.app()?;
@@ -248,12 +296,44 @@ impl SessionAccess for Access {
             .into_iter()
             .find(|s| s.key.0 == id)
             .ok_or_else(|| SessionError::NotFound(id.into()))?;
-        app.handle().block_on(Self::launch(
-            &app,
+        let config = (*s.config).clone();
+        app.handle()
+            .block_on(heap(|| Self::launch(&app, None, config, policy, Some(s))))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // spec: AGENT-020 [M2]
+    #[tokio::test]
+    async fn mcp_launch_future_has_bounded_size() {
+        let home = tempfile::tempdir().unwrap();
+        let app = App::new(crate::AppConfig::new(home.path())).unwrap();
+        for source in [
+            Some(SessionSource::Spider {
+                url: "http://127.0.0.1/".into(),
+            }),
+            Some(SessionSource::List {
+                items: vec![],
+                label: "size".into(),
+            }),
             None,
-            (*s.config).clone(),
-            policy,
-            Some(s),
-        ))
+        ] {
+            let future = Access::launch(
+                &app,
+                source,
+                CrawlConfig::default(),
+                DomainPolicy::default(),
+                None,
+            );
+            let bytes = std::mem::size_of_val(&future);
+            eprintln!("MCP launch future: {bytes} bytes");
+            assert!(
+                bytes <= 16 * 1024,
+                "MCP launch future: {bytes} bytes exceeds 16 KiB"
+            );
+        }
     }
 }

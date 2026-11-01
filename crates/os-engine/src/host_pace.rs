@@ -133,6 +133,10 @@ impl HostPacer {
     pub fn cancellation(&self) -> Arc<PaceCancellation> {
         self.cancellation.clone()
     }
+    /// Sleeps unless pause or stop cancels the crawl's network waits first.
+    pub async fn sleep_unless_cancelled(&self, wait: Duration) {
+        tokio::select! { _ = tokio::time::sleep(wait) => {}, _ = self.cancellation.cancelled() => {} }
+    }
     pub fn notices(&self) -> Arc<Mutex<Vec<String>>> {
         self.notices.clone()
     }

@@ -87,4 +87,8 @@ memoryUsedBytes?: number | null,
 /**
  * Vertragserweiterung M2-F05b: memory_limit_bytes.
  */
-memoryLimitBytes?: number | null, };
+memoryLimitBytes?: number | null, 
+/**
+ * CRAWL-126: the WAL is still being merged into the crawl file after a pause or an end.
+ */
+merging?: boolean | null, };

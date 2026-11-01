@@ -174,8 +174,20 @@ async fn invocation_log_redacts_credentials_and_records_sizes() {
 }
 
 // spec: AGENT-020 [M2]
-#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn http_crawl_uses_app_session_and_target_policy() {
+#[test]
+fn http_crawl_uses_app_session_and_target_policy() {
+    // Exercise the real MCP/store path on small worker AND blocking stacks.
+    // RUST_MIN_STACK alone depends on the runtime's builder configuration.
+    tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(2)
+        .thread_stack_size(320 * 1024)
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(http_crawl_fixture());
+}
+
+async fn http_crawl_fixture() {
     use os_mcp::SessionAccess;
     let home = tempfile::tempdir().unwrap();
     let app = App::new(AppConfig::new(home.path())).unwrap();

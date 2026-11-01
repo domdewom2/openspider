@@ -1,16 +1,20 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useContext, useLayoutEffect, useRef, useState } from "react";
 import { isSilentError } from "../../../ipc/errors";
 
 export const DetailVisible = createContext(true);
+/** An explicit tab click uses the existing selection without another selection debounce. */
+export const DetailRequestUrgent = createContext(false);
 
 export const SELECTION_DEBOUNCE_MS = 100;
 /** A new selection invalidates immediately. A revision revalidates plain data while keeping its last answer. */
 export function useDetailRequest<T>(key: string, load: (signal: AbortSignal) => Promise<T>, dispose?: (value: T) => void, revision?: string | number): { value?: T; error?: unknown; loading: boolean } {
   const visible = useContext(DetailVisible);
+  const urgent = useContext(DetailRequestUrgent);
+  const urgentRef = useRef(urgent); urgentRef.current = urgent;
   const shown = useRef(visible); shown.current = visible;
   const resume = useRef<(() => void) | undefined>(undefined);
   const [state, setState] = useState<{ key: string; value?: T; error?: unknown; loading: boolean }>({ key, loading: true });
-  useEffect(() => {
+  useLayoutEffect(() => {
     const controller = new AbortController();
     let value: T | undefined;
     let waiting = false;
@@ -25,7 +29,7 @@ export function useDetailRequest<T>(key: string, load: (signal: AbortSignal) => 
       }).catch(error => {
         if (!controller.signal.aborted && !isSilentError(error)) setState({ key, error, loading: false });
       });
-    }, SELECTION_DEBOUNCE_MS); };
+    }, urgentRef.current ? 0 : SELECTION_DEBOUNCE_MS); };
     const wake = () => { if (waiting) { waiting = false; schedule(); } };
     resume.current = wake;
     schedule();
@@ -33,6 +37,6 @@ export function useDetailRequest<T>(key: string, load: (signal: AbortSignal) => 
     // Key and revision describe the request; callbacks come from its owning render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, revision]);
-  useEffect(() => { if (visible) resume.current?.(); }, [visible]);
+  useLayoutEffect(() => { if (visible) resume.current?.(); }, [visible]);
   return state.key === key ? state : { loading: true };
 }

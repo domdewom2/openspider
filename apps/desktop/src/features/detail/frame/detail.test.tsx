@@ -56,6 +56,29 @@ beforeEach(async () => {
 afterEach(async () => { cleanup(); await settle(0); setClient(null); vi.useRealTimers(); vi.restoreAllMocks(); setDetailSelection({ urlIds: [] }); useSession.setState({ seq: -1, crawl: null, views: {} }); });
 
 describe("detail frame and URL properties", () => {
+  // spec: UI-018
+  // spec: UI-145
+  it("keeps detail panels stable across crawl progress ticks", async () => {
+    const crawl = { crawlId: "fixture", mode: "spider" as const, phase: "running" as const,
+      crawled: 10, queued: 90, discovered: 100, percent: 10, rate: 10, avgRate: 10,
+      elapsedS: 1, pausedS: 0, activeThreads: 4,
+      owner: { kind: "app" as const, live: true, controllable: true, pid: 1 } };
+    act(() => useSession.setState({ crawl }));
+    const panel = vi.fn(() => <p>Selected URL fixture</p>);
+    render(<DetailFrame selection={selection} actions={actions} plugins={[{ id: "urlDetails", Component: panel }]} />);
+    await settle();
+    const before = panel.mock.calls.length;
+    for (let i = 1; i <= 10; i++) {
+      act(() => useSession.setState({ crawl: { ...crawl, crawled: 10 + i, percent: 10 + i, elapsedS: 1 + i } }));
+      await settle(0);
+    }
+    expect(panel).toHaveBeenCalledTimes(before);
+    // A new crawl still updates the panel and reloads its configuration.
+    act(() => useSession.setState({ crawl: { ...crawl, crawlId: "next-fixture" } }));
+    await settle();
+    expect(panel.mock.calls.length).toBeGreaterThan(before);
+  });
+
   // spec: UI-030
   it("keeps the shell default and registers details as a separate region outside the upper table", async () => {
     const scaffold = render(<App />); await settle();
@@ -138,6 +161,30 @@ describe("detail frame and URL properties", () => {
 });
 
 describe("paged tables", () => {
+  // spec: UI-145
+  // spec: UI-030
+  it("loads an explicit tab immediately but still debounces a new URL selection", async () => {
+    const { rerender } = render(<DetailFrame selection={selection} actions={actions} />); await settle();
+    fireEvent.click(screen.getByRole("tab", { name: "Inlinks", hidden: true }));
+    await settle(0);
+    expect(opens()).toHaveLength(1);
+    const next = { ...selection, urlIds: [8], focus: 8 };
+    rerender(<DetailFrame selection={next} actions={actions} />);
+    await settle(99); expect(opens()).toHaveLength(1);
+    await settle(1); expect(opens()).toHaveLength(2);
+    expect(lastSpec()).toMatchObject({ urlIds: [8] });
+    fireEvent.click(screen.getByRole("tab", { name: "Outlinks", hidden: true })); await settle(0);
+    expect(opens()).toHaveLength(3);
+    // Changing request urgency must not dispose an already retained panel.
+    fireEvent.click(screen.getByRole("tab", { name: "Inlinks", hidden: true })); await settle(0);
+    expect(opens()).toHaveLength(3);
+    expect(screen.getByRole("table", { name: "Inlinks" })).toHaveTextContent("https://site.test/source");
+    // Revisiting a previously urgent selection is still a new URL selection.
+    rerender(<DetailFrame selection={selection} actions={actions} />);
+    await settle(99); expect(opens()).toHaveLength(3);
+    await settle(1); expect(opens()).toHaveLength(4);
+  });
+
   // spec: UI-032
   it("loads the union of selected URLs and keeps repeated inlinks as separate rows", async () => {
     render(<DetailFrame selection={selection} actions={actions} />); await settle(); await selectTab("Inlinks");
@@ -411,6 +458,23 @@ describe("headers and images", () => {
       expect(listener).toHaveBeenCalledOnce(); expect(popup).toHaveBeenCalledOnce();
     } finally { document.removeEventListener(DETAIL_OPEN_BROWSER_EVENT, listener); }
   });
+});
+
+// spec: UI-030
+// spec: UI-032
+// spec: UI-033
+// spec: UI-145
+it("loads the first bounded window before publishing the detail grid", async () => {
+  const original = fixture.core.handlers.get("view.rows")!;
+  let complete!: () => void;
+  fixture.core.handlers.set("view.rows", (args, ctx) => new Promise(resolve => {
+    complete = () => resolve(original(args, ctx));
+  }));
+  render(<DetailFrame selection={selection} actions={actions} />); await settle();
+  await selectTab("Inlinks");
+  expect(screen.queryByRole("table", { name: "Inlinks" })).toBeNull();
+  await act(async () => complete()); await settle(0);
+  expect(screen.getByRole("table", { name: "Inlinks" })).toHaveTextContent("https://site.test/source");
 });
 
 // spec: UI-030

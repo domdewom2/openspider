@@ -29,8 +29,10 @@ export function SidebarFrame({ panels = Object.values(modules).flatMap(m => m.pa
   const [configure, setConfigure] = useState(false);
   const crawl = useSession(s => s.crawl?.crawlId);
   const overview = useOverview();
-  // Keep header control acknowledgements ahead of the large filter overview.
-  const overviewData = useDeferredValue(overview.data);
+  // Defer refreshes behind control acknowledgements, but publish the first
+  // response immediately: continuous ticks can starve its background render.
+  const deferredOverview = useDeferredValue(overview.data);
+  const overviewData = deferredOverview ?? overview.data;
   const analysis = useAnalysis();
   const controls = useStartAnalysis();
   const ids = useMemo(() => [...new Set([...BASE, ...panels.filter(p => !p.embeddingsOnly || embeddingsEnabled).map(p => p.id)])], [panels, embeddingsEnabled]);

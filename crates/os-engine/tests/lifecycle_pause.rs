@@ -20,6 +20,78 @@ fn secs(s: f64) -> Duration {
 // ---------------------------------------------------------------------------------------------------
 // Pause in simulierter Zeit (Regel 2.8)
 
+/// Fetcher with a shared start limit like `HttpFetcher` (CRAWL-113): `fetch` waits for the slot
+/// without cancellation, `start_delay` reports the wait beforehand.
+struct StartLimited {
+    inner: Arc<SimFetcher>,
+    limiter: os_fetch::rate::RateLimiter,
+}
+
+impl os_fetch::Fetch for StartLimited {
+    fn start_delay(&self) -> Duration {
+        self.limiter.pending()
+    }
+
+    fn fetch(
+        &self,
+        req: os_fetch::FetchRequest,
+    ) -> std::pin::Pin<Box<dyn std::future::Future<Output = os_fetch::FetchResult> + Send + '_>>
+    {
+        Box::pin(async move {
+            self.limiter.acquire().await;
+            self.inner.fetch(req).await
+        })
+    }
+}
+
+// spec: CRAWL-126
+// spec: CRAWL-113
+#[tokio::test(start_paused = true)]
+async fn pause_cancels_the_wait_for_the_shared_start_slot() {
+    let sink = MemorySink::new();
+    let sim = SimFetcher::new(SimSite::tree("site.test", 50));
+    let fetcher = Arc::new(StartLimited {
+        inner: sim.clone(),
+        // one start every 5 s: robots.txt at 0 s, first page at 5 s, the next waits until 10 s
+        limiter: os_fetch::rate::RateLimiter::new(0.2, os_engine::testing::TokioClock::new())
+            .unwrap(),
+    });
+    let dir = tempfile::tempdir().unwrap();
+    let mut cfg = CrawlConfig::default();
+    cfg.speed.threads = 1;
+    let handle = start_crawl(
+        fetcher,
+        CrawlRequest {
+            config: cfg,
+            source: CrawlSource::Spider {
+                start_url: "https://site.test/".to_string(),
+            },
+            file: dir.path().join("crawl.ospider"),
+            project: "sim".to_string(),
+            name: "sim".to_string(),
+        },
+        sim_deps(&sink),
+    )
+    .await
+    .unwrap();
+    tokio::time::sleep(secs(7.0)).await;
+    handle.pause();
+    let summary = handle.wait().await.unwrap();
+    assert_eq!(summary.state, CrawlState::Paused);
+    // Without the cancellable wait the queued page would sit in the transport limit until 10 s and
+    // then start although the pause had been requested (simulated time also advances while the
+    // writer thread checkpoints, so a duration bound would not be meaningful here).
+    let late: Vec<_> = sim
+        .page_requests()
+        .into_iter()
+        .filter(|r| r.start > secs(7.0))
+        .collect();
+    assert!(
+        late.is_empty(),
+        "no request starts after the pause: {late:?}"
+    );
+}
+
 // spec: CRAWL-126
 #[tokio::test(start_paused = true)]
 async fn after_pause_no_request_starts_and_the_running_ones_are_stored() {
@@ -618,4 +690,56 @@ async fn pausing_with_a_million_queue_entries_takes_under_three_seconds() {
         pause < Duration::from_secs(3),
         "Pausieren dauerte {pause:?}"
     );
+}
+
+// spec: CRAWL-126
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn an_export_during_the_wal_merge_is_self_contained_and_paused() {
+    let site_dir = slow_site_dir(20);
+    let site = start_site(site_dir.path()).await;
+    let work = tempfile::tempdir().unwrap();
+    // The registry expects the file at its canonical name.
+    let id = os_model::IdSource::new_crawl_id(&os_model::RandomIds, os_model::Timestamp::now_utc());
+    struct Fixed(os_model::CrawlId);
+    impl os_model::IdSource for Fixed {
+        fn new_crawl_id(&self, _: os_model::Timestamp) -> os_model::CrawlId {
+            self.0
+        }
+    }
+    let path = os_store::registry::path_for(work.path(), &id);
+    let mut fixed = deps();
+    fixed.ids = Arc::new(Fixed(id));
+    let handle = start(config_for(&site, 1), &path, fixed).await;
+    until_crawled(&handle, 3).await;
+    // A reader holds a snapshot: the pause is acknowledged, the WAL merge continues in the background.
+    let held = open_ro(&path);
+    held.conn().execute_batch("BEGIN").unwrap();
+    scalar(&held, "SELECT COUNT(*) FROM urls");
+    handle.pause();
+    assert_eq!(run_to_end(handle).await.state, CrawlState::Paused);
+    assert!(os_store::open::wal_bytes(&path) > 0);
+    assert_eq!(open_ro(&path).meta().unwrap().crawl_id, id);
+    let export = work.path().join("export.ospider");
+    let cancel = std::sync::atomic::AtomicBool::new(false);
+    std::thread::scope(|scope| {
+        let merge = scope.spawn(|| os_store::open::merge_wal(&path, &cancel).unwrap());
+        let mut manager = os_store::registry::Manager::open(work.path()).unwrap();
+        manager
+            .export(&id, &export, os_model::Timestamp::now_utc(), &|_, _| true)
+            .unwrap();
+        assert!(!merge.is_finished(), "the merge still waits for the reader");
+        for suffix in ["-wal", "-shm", "-journal"] {
+            let mut name = export.as_os_str().to_owned();
+            name.push(suffix);
+            assert!(
+                !std::path::PathBuf::from(name).exists(),
+                "export without {suffix}"
+            );
+        }
+        let exported = open_ro(&export);
+        assert_eq!(exported.meta().unwrap().state, CrawlState::Paused);
+        drop(held);
+        assert!(merge.join().unwrap());
+    });
+    assert_eq!(os_store::open::wal_bytes(&path), 0);
 }

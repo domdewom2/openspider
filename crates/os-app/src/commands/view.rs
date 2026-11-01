@@ -29,6 +29,8 @@ use std::{
 
 /// Builds that take longer return `Building` with a cancellable operation (UI-141: indicator after 300 ms).
 pub const SYNC_BUILD: Duration = Duration::from_millis(300);
+/// Matches the bounded first block requested by the grid data source.
+const INITIAL_LINK_ROWS: u32 = 200;
 
 #[derive(Clone)]
 pub(crate) struct OpenView {
@@ -43,6 +45,8 @@ pub(crate) struct OpenView {
     pub links: Option<Arc<LinkView>>,
     /// First rows snapshot of an offset-based detail generation.
     pub detail_seq: Arc<Mutex<Option<u64>>>,
+    /// One bounded page, transferred to the first rows request without another DB read.
+    initial: Arc<Mutex<Option<DataPage>>>,
 }
 /// Link tables with a materialized ID list; the anchor aggregation stays a detail source.
 fn link_list(app: &App, s: &SessionInfo, spec: &ViewSpec) -> Option<Arc<LinkView>> {
@@ -945,29 +949,77 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
                     tab: Some(tab),
                     links: None,
                     detail_seq: Arc::default(),
+                    initial: Arc::default(),
                 },
             );
             return to_json(&h);
         }
-        let p = page(app, &s, args.spec.clone(), args.columns.clone(), 0, 1, None).await?;
-        let h = handle(id.clone(), p);
         let links = link_list(app, &s, &args.spec);
-        insert(
+        let p = detail_page(
             app,
-            id,
-            OpenView {
-                owner: ctx.window,
-                session: s,
-                spec: args.spec,
-                columns: args.columns,
-                version: h.version,
-                tab: None,
-                links,
-                detail_seq: Arc::default(),
-            },
-        );
+            &s,
+            args.spec.clone(),
+            args.columns.clone(),
+            links.as_ref(),
+        )
+        .await?;
+        let initial = Arc::new(Mutex::new(links.as_ref().map(|_| p.clone())));
+        let mut h = handle(id.clone(), p);
+        let opened = OpenView {
+            owner: ctx.window,
+            session: s,
+            spec: args.spec,
+            columns: args.columns,
+            version: h.version,
+            tab: None,
+            links,
+            detail_seq: Arc::default(),
+            initial,
+        };
+        if opened.links.is_some() {
+            h.initial_rows = initial_rows(&opened, &id, h.version, 0, INITIAL_LINK_ROWS, &[]);
+        }
+        insert(app, id, opened);
         to_json(&h)
     })
+}
+/// Materialize a link generation once, including its count. In a live crawl the
+/// incoming-link index can be deferred: COUNT + OFFSET followed by a lazy ID
+/// build used to scan the growing links table three times before showing rows.
+async fn detail_page(
+    app: &App,
+    s: &SessionInfo,
+    spec: ViewSpec,
+    columns: Vec<String>,
+    links: Option<&Arc<LinkView>>,
+) -> Result<DataPage, CmdError> {
+    let Some(links) = links else {
+        return page(app, s, spec, columns, 0, 1, None).await;
+    };
+    let (selection, req) = link_selection(&spec, &s.config, 0, 1)?;
+    let ids = links.ids(app, selection, req).await?;
+    let mut p = page_query(
+        app,
+        s,
+        spec,
+        columns,
+        0,
+        INITIAL_LINK_ROWS,
+        PageSelection {
+            expected: None,
+            ids: Some(
+                ids.iter()
+                    .take(INITIAL_LINK_ROWS as usize)
+                    .copied()
+                    .collect(),
+            ),
+            ordered: true,
+            detail_seq: None,
+        },
+    )
+    .await?;
+    p.total = ids.len() as u64;
+    Ok(p)
 }
 async fn link_ids(app: &App, v: &OpenView, links: &LinkView) -> Result<Arc<Vec<i64>>, CmdError> {
     let (selection, page) = link_selection(&v.spec, &v.session.config, 0, 1)?;
@@ -1025,6 +1077,7 @@ async fn settle(
                 })
             });
             Ok(ViewHandle {
+                initial_rows: None,
                 view_id: id.to_string(),
                 version: 0,
                 total: None,
@@ -1045,6 +1098,7 @@ fn tab_handle(view_id: String, spec: &ViewSpec, built: Built) -> ViewHandle {
         }
     );
     ViewHandle {
+        initial_rows: None,
         view_id,
         version: built.version,
         total: Some(built.total),
@@ -1056,6 +1110,7 @@ fn tab_handle(view_id: String, spec: &ViewSpec, built: Built) -> ViewHandle {
 }
 fn handle(view_id: String, p: DataPage) -> ViewHandle {
     ViewHandle {
+        initial_rows: None,
         view_id,
         version: p.version,
         total: Some(p.total),
@@ -1082,6 +1137,8 @@ fn update<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
             )),
             _ => None,
         };
+        let links = link_list(app, &v.session, &args.spec);
+        let mut initial = None;
         let h = if let Some(tab) = &tab {
             let built = start_build(
                 app,
@@ -1092,16 +1149,17 @@ fn update<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
             );
             settle(app, &args.view_id, &args.spec, built).await?
         } else {
-            let p = page(
+            let p = detail_page(
                 app,
                 &v.session,
                 args.spec.clone(),
                 v.columns.clone(),
-                0,
-                1,
-                None,
+                links.as_ref(),
             )
             .await?;
+            if links.is_some() {
+                initial = Some(p.clone());
+            }
             handle(args.view_id.clone(), p)
         };
         let state = registry(app);
@@ -1109,8 +1167,9 @@ fn update<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
         if !entries.contains_key(&args.view_id) {
             return Err(CmdError::new(ErrorCode::NotFound, "err-view-not-found"));
         }
-        v.links = link_list(app, &v.session, &args.spec);
+        v.links = links;
         v.detail_seq = Arc::default();
+        v.initial = Arc::new(Mutex::new(initial));
         v.spec = args.spec;
         v.version = h.version;
         v.tab = tab;
@@ -1174,6 +1233,16 @@ fn rows<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
         } else {
             args.columns
         };
+        if let Some(window) = initial_rows(
+            &v,
+            &args.view_id,
+            args.version,
+            args.offset,
+            args.limit,
+            &columns,
+        ) {
+            return to_json(&window);
+        }
         let p = if let Some(links) = &v.links {
             let ids = link_ids(app, &v, links).await?;
             let start = (args.offset.min(ids.len() as u64)) as usize;
@@ -1205,6 +1274,39 @@ fn rows<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
             cells: p.cells,
         })
     })
+}
+fn initial_rows(
+    v: &OpenView,
+    id: &str,
+    version: u64,
+    offset: u64,
+    limit: u32,
+    columns: &[String],
+) -> Option<RowWindow> {
+    let mut initial = v.initial.lock().unwrap_or_else(|p| p.into_inner());
+    let page = initial.as_ref()?;
+    let projected = page
+        .columns
+        .iter()
+        .map(|c| c.key.clone())
+        .collect::<Vec<_>>();
+    let end = offset.saturating_add(u64::from(limit)).min(page.total);
+    if (!columns.is_empty() && columns != projected) || offset > end || end > page.keys.len() as u64
+    {
+        return None;
+    }
+    let range = offset as usize..end as usize;
+    let window = RowWindow {
+        view_id: id.to_string(),
+        version,
+        offset,
+        columns: projected,
+        row_keys: page.keys[range.clone()].to_vec(),
+        cells: page.cells[range].to_vec(),
+    };
+    // The frontend now owns this block; do not retain a duplicate page per view.
+    initial.take();
+    Some(window)
 }
 fn locate<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {

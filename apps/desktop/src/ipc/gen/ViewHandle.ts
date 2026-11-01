@@ -2,6 +2,7 @@
 import type { ColumnMeta } from "./ColumnMeta";
 import type { EmptyState } from "./EmptyState";
 import type { OpHandle } from "./OpHandle";
+import type { RowWindow } from "./RowWindow";
 import type { ViewState } from "./ViewState";
 
 /**
@@ -35,4 +36,8 @@ op?: OpHandle | null,
 /**
  * Leerzustand, falls die View strukturell leer ist.
  */
-emptyState?: EmptyState | null, };
+emptyState?: EmptyState | null, 
+/**
+ * Optionales erstes, begrenztes Zeilenfenster ohne zweiten IPC-Umlauf (UI-145).
+ */
+initialRows?: RowWindow | null, };

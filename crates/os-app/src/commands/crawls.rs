@@ -14,6 +14,9 @@ use crate::registry::{CmdResult, CommandMeta, Registry};
 use crate::runtime::error::{internal, parse_args, store_error, to_json};
 use crate::runtime::{App, CallCtx};
 
+/// "Show in Finder" waits at most this long for a background WAL merge (CRAWL-126).
+const REVEAL_BUDGET: std::time::Duration = std::time::Duration::from_secs(2);
+
 #[derive(Default)]
 struct ManagementState {
     gate: Arc<tokio::sync::Mutex<()>>,
@@ -321,7 +324,21 @@ async fn short(app: &App, args: serde_json::Value, action: &'static str) -> CmdR
                     .join("\n"),
             )?;
         } else {
+            // CRAWL-126: prefer a self-contained file, but a foreign snapshot (e.g. a CLI query) must not
+            // block the call: after the budget the file is shown anyway, with a note.
+            let keys: Vec<_> = rows
+                .iter()
+                .map(|l| CrawlKey(l.meta.crawl_id.to_string()))
+                .collect();
+            let merged = crate::session::merge::wait_merged_within(app, &keys, REVEAL_BUDGET).await;
             desktop.reveal_paths(&rows.into_iter().map(|l| l.path).collect::<Vec<_>>())?;
+            if !merged {
+                app.push_notice(Notice {
+                    level: NoticeLevel::Warning,
+                    code: "crawl-merge-pending".into(),
+                    args: Default::default(),
+                });
+            }
         }
     }
     Ok(serde_json::Value::Null)
@@ -437,6 +454,12 @@ async fn batch(
         } else {
             None
         };
+        // CRAWL-126: move only a merged file; a file about to be deleted needs no merge.
+        if moving {
+            crate::session::merge::wait_merged(&app, &key).await;
+        } else if deleting {
+            crate::session::merge::cancel(&app, &key).await;
+        }
         if moving || deleting {
             app.write_queue().unregister(&key);
             app.write_queue().flush().await;

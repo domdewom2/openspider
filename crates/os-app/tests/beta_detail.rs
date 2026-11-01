@@ -4,6 +4,103 @@ use fixture::*;
 use os_app::CallCtx;
 use serde_json::json;
 
+// spec: UI-145
+#[test]
+fn legacy_view_handles_do_not_require_or_emit_an_initial_window() {
+    let legacy = json!({"viewId":"legacy", "version":1, "total":0, "columns":[],
+        "state":"ready", "op":null, "emptyState":null});
+    let handle: os_app::dto::ViewHandle = serde_json::from_value(legacy.clone()).unwrap();
+    assert!(handle.initial_rows.is_none());
+    assert_eq!(serde_json::to_value(handle).unwrap(), legacy);
+}
+
+// spec: UI-033
+// spec: UI-018
+#[tokio::test]
+async fn link_count_and_first_rows_share_the_opened_generation_until_update() {
+    let fx = Fx::new();
+    let spec = links(false);
+    let h = fx.open(spec.clone(), json!([])).await;
+    fx.write("INSERT INTO links(source_id,target_id,target_raw,link_type,position,anchor,follow) SELECT source_id,target_id,target_raw,link_type,position,anchor,follow FROM links WHERE id=1; UPDATE crawl_meta SET value=CAST(value AS INTEGER)+1 WHERE key='change_seq'");
+    let rows = fx.rows(&h, 0, 20, json!([])).await;
+    assert_eq!(
+        rows["rowKeys"].as_array().unwrap().len() as u64,
+        h["total"].as_u64().unwrap()
+    );
+    let fresh = fx
+        .call("view.update", json!({"viewId":h["viewId"],"spec":spec}))
+        .await;
+    assert_eq!(
+        fresh["total"].as_u64().unwrap(),
+        h["total"].as_u64().unwrap() + 1
+    );
+    let rows = fx.rows(&fresh, 0, 20, json!([])).await;
+    assert_eq!(
+        rows["rowKeys"].as_array().unwrap().len() as u64,
+        fresh["total"].as_u64().unwrap()
+    );
+}
+
+// spec: UI-032
+// spec: UI-033
+// spec: UI-145
+#[tokio::test]
+async fn opened_and_updated_link_generations_serve_first_rows_without_more_reads() {
+    for lane in ["detail-link-ids", "detail-window"] {
+        for incoming in [true, false] {
+            for update in [false, true] {
+                let fx = Fx::new();
+                let spec = links(incoming);
+                let mut h = fx.open(spec.clone(), json!([])).await;
+                if update {
+                    h = fx
+                        .call("view.update", json!({"viewId":h["viewId"],"spec":spec}))
+                        .await;
+                }
+                // Hold either reader after open/update. The initial bounded page
+                // must already be ready, even under reader load.
+                let app = fx.app.clone();
+                let (started, ready) = tokio::sync::oneshot::channel();
+                let (release, held) = std::sync::mpsc::channel();
+                let blocker = tokio::spawn(async move {
+                    app.read_pool()
+                        .run_cached(
+                            os_app::pool::CrawlKey("fx-ui-basic".into()),
+                            lane,
+                            os_model::CancelToken::default(),
+                            move |_, _| {
+                                started.send(()).unwrap();
+                                held.recv().unwrap();
+                                Ok(())
+                            },
+                        )
+                        .await
+                        .unwrap();
+                });
+                ready.await.unwrap();
+                let rows = if update {
+                    tokio::time::timeout(
+                        std::time::Duration::from_secs(2),
+                        fx.rows(&h, 0, 20, json!([])),
+                    )
+                    .await
+                } else {
+                    // Open already transfers the first window in its response.
+                    Ok(h["initialRows"].clone())
+                };
+                release.send(()).unwrap();
+                blocker.await.unwrap();
+                let rows = rows.expect("first rows must not queue another database read");
+                assert_eq!(
+                    rows["rowKeys"].as_array().unwrap().len() as u64,
+                    h["total"].as_u64().unwrap()
+                );
+                assert!(!rows["cells"].as_array().unwrap().is_empty());
+            }
+        }
+    }
+}
+
 // spec: UI-030
 // spec: UI-032
 // spec: UI-033

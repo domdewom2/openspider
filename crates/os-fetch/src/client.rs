@@ -436,7 +436,9 @@ impl HttpFetcher {
         if let Some(limiter) = &self.limiter {
             limiter.acquire().await;
         }
-        pinned.fetch_impl(req).await
+        // The protected fetch path is polled below the engine and robots state
+        // machines. Bound its caller's frame independently of the HTTP future.
+        Box::pin(pinned.fetch_impl(req)).await
     }
 
     /// Die wirksame Konfiguration.
@@ -543,7 +545,7 @@ impl HttpFetcher {
             max_body,
             req.body_limit.abort_media_after,
         );
-        let result = match tokio::time::timeout(budget, exchange).await {
+        let result = match tokio::time::timeout(budget, Box::pin(exchange)).await {
             Ok(r) => r,
             Err(_) => Err(Failure {
                 proxy_auth_required: false,
@@ -734,12 +736,7 @@ impl HttpFetcher {
         if ntlm.is_some() {
             headers.remove(header::AUTHORIZATION);
         }
-        let mut response = client
-            .get(url.clone())
-            .headers(headers.clone())
-            .send()
-            .await
-            .map_err(|e| classify(&e))?;
+        let mut response = send(client.get(url.clone()).headers(headers.clone())).await?;
         if let Some(c) = ntlm {
             if response.status().as_u16() == 401
                 && response
@@ -761,12 +758,7 @@ impl HttpFetcher {
                 .unwrap();
                 value.set_sensitive(true);
                 headers.insert(header::AUTHORIZATION, value);
-                response = client
-                    .get(url.clone())
-                    .headers(headers.clone())
-                    .send()
-                    .await
-                    .map_err(|e| classify(&e))?;
+                response = send(client.get(url.clone()).headers(headers.clone())).await?;
                 if response.status().as_u16() == 401 {
                     let challenge = response
                         .headers()
@@ -796,12 +788,8 @@ impl HttpFetcher {
                             .unwrap();
                             value.set_sensitive(true);
                             headers.insert(header::AUTHORIZATION, value);
-                            response = client
-                                .get(url.clone())
-                                .headers(headers.clone())
-                                .send()
-                                .await
-                                .map_err(|e| classify(&e))?;
+                            response =
+                                send(client.get(url.clone()).headers(headers.clone())).await?;
                         }
                     }
                 }
@@ -846,13 +834,7 @@ impl HttpFetcher {
             })?;
             value.set_sensitive(true);
             headers.insert(header::AUTHORIZATION, value);
-            response = self
-                .client
-                .get(url.clone())
-                .headers(headers.clone())
-                .send()
-                .await
-                .map_err(|e| classify(&e))?;
+            response = send(self.client.get(url.clone()).headers(headers.clone())).await?;
         }
         let request_headers = headers
             .iter()
@@ -951,6 +933,33 @@ struct Exchange {
     truncated: bool,
     /// Uhr-Zeit nach dem letzten empfangenen Body-Byte.
     finished: Duration,
+}
+
+/// Sends a request from a task of its own (AGENT-020, CRAWL-095).
+///
+/// reqwest's connect path (pool checkout, DNS, TCP and TLS handshake) is deep in unoptimised builds.
+/// Polled inline it sat on top of the engine, robots and fetch state machines and exhausted small
+/// worker stacks; as a task it starts at the base of a runtime thread on every platform. Dropping
+/// this future (timeout, pause, stop) aborts the task, as it dropped the inline request before.
+async fn send(request: reqwest::RequestBuilder) -> Result<reqwest::Response, Failure> {
+    use tracing::Instrument as _;
+    struct AbortOnDrop(tokio::task::AbortHandle);
+    impl Drop for AbortOnDrop {
+        fn drop(&mut self) {
+            self.0.abort();
+        }
+    }
+    let task = tokio::spawn(request.send().in_current_span());
+    let _abort = AbortOnDrop(task.abort_handle());
+    match task.await {
+        Ok(result) => result.map_err(|e| classify(&e)),
+        Err(e) if e.is_panic() => std::panic::resume_unwind(e.into_panic()),
+        Err(e) => Err(Failure {
+            proxy_auth_required: false,
+            reason: NoResponseReason::ConnectionError,
+            detail: e.to_string(),
+        }),
+    }
 }
 
 /// Dekomprimiert, zählt Bytes, bildet den MD5 und redigiert Header.
@@ -1112,6 +1121,11 @@ impl Fetch for HttpFetcher {
 
     fn network_settings(&self) -> Option<os_model::settings::NetworkSettings> {
         Some(self.cfg.network.clone())
+    }
+    fn start_delay(&self) -> Duration {
+        self.limiter
+            .as_ref()
+            .map_or(Duration::ZERO, RateLimiter::pending)
     }
     fn fetch(&self, req: FetchRequest) -> Pin<Box<dyn Future<Output = FetchResult> + Send + '_>> {
         Box::pin(self.fetch_impl(req))

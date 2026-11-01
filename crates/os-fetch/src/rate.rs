@@ -53,6 +53,13 @@ impl RateLimiter {
         self.interval
     }
 
+    /// Zeit bis zum nächsten freien Abrufbeginn, ohne ihn zu reservieren (CRAWL-113, CRAWL-126).
+    pub fn pending(&self) -> Duration {
+        let now = self.clock.monotonic();
+        let next = *self.next_free.lock().unwrap_or_else(|e| e.into_inner());
+        next.saturating_sub(now)
+    }
+
     /// Wartet, bis der Abruf beginnen darf. Reihenfolge der Aufrufer bleibt erhalten.
     pub async fn acquire(&self) {
         let wait = self.reserve();

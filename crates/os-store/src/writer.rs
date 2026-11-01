@@ -450,13 +450,74 @@ impl Drop for SqliteSink {
     }
 }
 
+/// Längste Wartezeit des abschließenden Checkpoints auf laufende Lesezugriffe (CRAWL-126, OS-Festlegung vom
+/// 01.11.2026). Hält ein Leser länger einen älteren Stand, bleibt der Rest im (synchronisierten) WAL; die App führt
+/// ihn im Hintergrund zurück ([`crate::open::merge_wal`]).
+pub const CHECKPOINT_READER_WAIT: std::time::Duration = std::time::Duration::from_millis(100);
+
+/// Wartezeit der Verbindung auf Sperren außerhalb des abschließenden Checkpoints.
+const BUSY_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
+
+/// Längste einzelne Schlafpause des begrenzten Busy-Handlers.
+const BOUNDED_BUSY_STEP: std::time::Duration = std::time::Duration::from_millis(2);
+
+thread_local! {
+    /// Wanduhr-Frist des laufenden begrenzten Aufrufs auf diesem Thread.
+    static BUSY_DEADLINE: std::cell::Cell<Option<std::time::Instant>> = const { std::cell::Cell::new(None) };
+}
+
+/// Busy-Handler mit Wanduhr-Frist. `busy_timeout` begrenzt nur die Summe der *angeforderten* Schlafpausen; macOS
+/// überschreitet einzelne Pausen unter Last deutlich (CI: 677 ms statt 100 ms). Hier zählt die gemessene Zeit.
+fn bounded_busy(_attempts: i32) -> bool {
+    BUSY_DEADLINE.with(|deadline| {
+        let Some(deadline) = deadline.get() else {
+            return false;
+        };
+        let now = std::time::Instant::now();
+        if now >= deadline {
+            return false;
+        }
+        std::thread::sleep((deadline - now).min(BOUNDED_BUSY_STEP));
+        true
+    })
+}
+
+/// Führt einen `wal_checkpoint`-Aufruf aus, der höchstens `wait` (Wanduhr) auf Leser und Schreiber wartet, und stellt
+/// danach den normalen Busy-Timeout der Verbindung wieder her (CRAWL-126).
+pub(crate) fn checkpoint_within<T>(
+    conn: &Connection,
+    wait: std::time::Duration,
+    sql: &str,
+    row: impl FnOnce(&rusqlite::Row<'_>) -> rusqlite::Result<T>,
+) -> Result<T, StoreError> {
+    /// Clears the deadline and restores the normal busy timeout, also when the call panics.
+    struct Restore<'c>(&'c Connection);
+    impl Drop for Restore<'_> {
+        fn drop(&mut self) {
+            BUSY_DEADLINE.with(|d| d.set(None));
+            let _ = self.0.busy_timeout(BUSY_TIMEOUT);
+        }
+    }
+    BUSY_DEADLINE.with(|d| d.set(Some(std::time::Instant::now() + wait)));
+    let guard = Restore(conn);
+    conn.busy_handler(Some(bounded_busy))?;
+    let value = conn.query_row(sql, [], row)?;
+    drop(guard);
+    // The restore in the guard cannot report errors; check the normal timeout explicitly.
+    conn.busy_timeout(BUSY_TIMEOUT)?;
+    Ok(value)
+}
+
 fn wal_checkpoint(conn: &Connection) -> Result<(), StoreError> {
     let phase = scale_phase_start(conn);
     let t = std::time::Instant::now();
     // Antwort: (busy, Frames im WAL, davon zurückgeführt)
-    let result = conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| {
-        r.get::<_, i64>(1)
-    });
+    let result = checkpoint_within(
+        conn,
+        CHECKPOINT_READER_WAIT,
+        "PRAGMA wal_checkpoint(TRUNCATE)",
+        |r| r.get::<_, i64>(1),
+    );
     crate::sink::diag::record_checkpoint(t, result.as_ref().map_or(0, |n| (*n).max(0) as u64));
     result?;
     scale_phase_end(conn, "checkpoint", phase);
@@ -485,6 +546,13 @@ fn scale_phase_end(conn: &Connection, name: &str, start: Option<(std::time::Inst
 }
 
 impl CrawlSink for SqliteSink {
+    fn durable(&mut self) -> Result<(), StoreError> {
+        self.file
+            .conn()
+            .pragma_update(None, "synchronous", "FULL")?;
+        Ok(())
+    }
+
     fn write(&mut self, batch: WriteBatch) -> Result<(), StoreError> {
         // Nur Batches mit neuen URLs brauchen den Trigger nicht (ein leerer Batch bleibt ein No-op ohne Schreibzugriff).
         if !batch.new_urls.is_empty() {

@@ -60,6 +60,8 @@ enum Msg {
     /// Antwort: `true` = alles geschrieben, `false` = die Senke hat einen Fehler gemeldet.
     Flush(oneshot::Sender<bool>),
     Checkpoint(oneshot::Sender<bool>),
+    /// Folgende Commits synchronisieren das WAL (End-Batch, CRAWL-126).
+    Durable(oneshot::Sender<bool>),
 }
 
 /// Zähler des Writers (für Tests und die Lastmessung).
@@ -182,6 +184,19 @@ impl WriterThread {
     /// Wartet, bis alles bisher Gesendete geschrieben ist.
     pub async fn flush(&self) -> Result<(), WriterGone> {
         self.sender.flush().await
+    }
+
+    /// Die nach diesem Aufruf gesendeten Batches werden mit `synchronous = FULL` geschrieben: ein danach
+    /// bestätigtes `flush` ist dauerhaft, auch wenn der Checkpoint das WAL nicht sofort zurückführen kann (CRAWL-126).
+    pub async fn durable(&self) -> Result<(), WriterGone> {
+        let (ack, wait) = oneshot::channel();
+        if self.sender.tx.send(Msg::Durable(ack)).await.is_err() {
+            return Err(WriterGone);
+        }
+        match wait.await {
+            Ok(true) => Ok(()),
+            _ => Err(WriterGone),
+        }
     }
 
     /// Schreibt ausstehende Daten dauerhaft (WAL-Checkpoint).
@@ -486,6 +501,11 @@ fn writer_loop(
     let mut batch = WriteBatch::default();
     let mut pages = 0usize;
     let mut first_at: Option<Instant> = None;
+    // An explicit checkpoint with no batch after it makes the closing one redundant: with a reader still holding a
+    // snapshot it would only wait another bounded interval (CRAWL-126). "Successful" means the call returned without
+    // error, not that the WAL is empty: frames a reader kept are merged later in the background (CRAWL-126), or by
+    // SQLite when the last connection closes.
+    let mut checkpointed = false;
     // Die Senke ist der Engpass: bei der letzten Nachricht oder nach dem letzten Schreiben stand Arbeit im Kanal.
     let mut behind = false;
 
@@ -541,6 +561,7 @@ fn writer_loop(
             .fetch_max(queued as u64, Ordering::Relaxed);
         match msg {
             Msg::Batch(b) => {
+                checkpointed = false;
                 pages += b.pages.len();
                 merge(&mut batch, *b);
                 first_at.get_or_insert_with(Instant::now);
@@ -575,12 +596,27 @@ fn writer_loop(
                 } else {
                     true
                 };
+                checkpointed = ok;
+                let _ = ack.send(ok);
+            }
+            Msg::Durable(ack) => {
+                write_out(&mut sink, &mut batch, &mut pages, &shared);
+                first_at = None;
+                behind = !rx.is_empty();
+                let ok = if shared.failed.load(Ordering::SeqCst) {
+                    false
+                } else if let Err(e) = sink.durable() {
+                    record_error(&shared, e);
+                    false
+                } else {
+                    true
+                };
                 let _ = ack.send(ok);
             }
         }
     }
     write_out(&mut sink, &mut batch, &mut pages, &shared);
-    if !shared.failed.load(Ordering::SeqCst) {
+    if !checkpointed && !shared.failed.load(Ordering::SeqCst) {
         if let Err(e) = sink.checkpoint() {
             record_error(&shared, e);
         }
@@ -926,6 +962,65 @@ mod tests {
         assert_eq!(codes, ["erst", "dann"]);
         drop(tx);
         w.finish().unwrap();
+    }
+
+    // spec: CRAWL-126
+    #[tokio::test]
+    async fn a_checkpoint_without_a_later_batch_skips_the_closing_checkpoint() {
+        let (s, log) = sink(Duration::ZERO, None);
+        let w = WriterThread::spawn(s);
+        let tx = w.sender();
+        tx.send(event("end")).await.unwrap();
+        w.durable().await.unwrap();
+        w.checkpoint().await.unwrap();
+        // Flush and durable write nothing new: the explicit checkpoint stays the last one.
+        w.flush().await.unwrap();
+        drop(tx);
+        w.finish().unwrap();
+        let log = log.lock().unwrap();
+        assert_eq!(
+            log.checkpoints, 1,
+            "no closing checkpoint after the explicit one"
+        );
+        assert_eq!(log.batches.len(), 1);
+    }
+
+    // spec: CRAWL-126
+    #[tokio::test]
+    async fn a_batch_after_the_checkpoint_gets_the_closing_checkpoint() {
+        let (s, log) = sink(Duration::ZERO, None);
+        let w = WriterThread::spawn(s);
+        let tx = w.sender();
+        tx.send(event("a")).await.unwrap();
+        w.checkpoint().await.unwrap();
+        tx.send(event("b")).await.unwrap();
+        drop(tx);
+        w.finish().unwrap();
+        let log = log.lock().unwrap();
+        assert_eq!(
+            log.checkpoints, 2,
+            "the batch after the checkpoint is checkpointed at the end"
+        );
+        let codes: Vec<_> = log
+            .batches
+            .iter()
+            .flat_map(|b| b.events.iter().map(|e| e.code.clone()))
+            .collect();
+        assert_eq!(codes, ["a", "b"]);
+    }
+
+    // spec: CRAWL-126
+    #[tokio::test]
+    async fn without_an_explicit_checkpoint_the_closing_checkpoint_runs() {
+        let (s, log) = sink(Duration::ZERO, None);
+        let w = WriterThread::spawn(s);
+        let tx = w.sender();
+        tx.send(event("a")).await.unwrap();
+        w.durable().await.unwrap();
+        w.flush().await.unwrap();
+        drop(tx);
+        w.finish().unwrap();
+        assert_eq!(log.lock().unwrap().checkpoints, 1);
     }
 }
 

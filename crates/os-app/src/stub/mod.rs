@@ -138,6 +138,7 @@ fn reverse(spec: &ViewSpec) -> Result<bool, CmdError> {
 }
 fn handle(id: String, v: &View) -> ViewHandle {
     ViewHandle {
+        initial_rows: None,
         view_id: id,
         version: v.version,
         total: Some(TOTAL),

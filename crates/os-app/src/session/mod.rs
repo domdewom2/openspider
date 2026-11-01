@@ -2,6 +2,7 @@
 pub mod analysis;
 pub mod control;
 pub mod feed;
+pub mod merge;
 pub mod selection;
 
 use crate::{
@@ -29,12 +30,15 @@ pub struct SessionService {
     pub(crate) listeners: Mutex<Vec<Arc<feed::ChangeListener>>>,
     pub(crate) active: std::sync::atomic::AtomicBool,
     pub(crate) quitting: std::sync::atomic::AtomicBool,
+    pub(crate) merges: merge::Merges,
 }
 impl TickSource for SessionService {
     fn collect(&self, parts: &mut TickParts) {
         let p = std::mem::take(&mut *self.parts.lock().unwrap_or_else(|p| p.into_inner()));
-        if p.crawl.is_some() {
-            parts.crawl = p.crawl;
+        if let Some(mut crawl) = p.crawl {
+            // CRAWL-126: "Paused – merging file" until the background WAL merge has ended.
+            crawl.merging = self.merges.active(&crawl.crawl_id).then_some(true);
+            parts.crawl = Some(crawl);
         }
         if p.analysis.is_some() {
             parts.analysis = p.analysis;

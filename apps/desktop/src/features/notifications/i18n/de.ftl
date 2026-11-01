@@ -28,4 +28,5 @@ notice-start-redirect-host = Die Startadresse leitet auf einen anderen Host um.
 notice-disk-low = Zu wenig freier Speicherplatz. Der Crawl wurde pausiert.
 notice-auth-required = Der Server verlangt eine Basic-Anmeldung.
 notice-crawl-completed = Crawl abgeschlossen
+notice-crawl-merge-pending = Die Crawl-Datei wird noch zusammengeführt. Bis dahin beim Kopieren die Datei „-wal“ daneben mitnehmen.
 notice-analysis-completed = Analyse abgeschlossen

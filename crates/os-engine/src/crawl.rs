@@ -203,7 +203,7 @@ pub async fn start_crawl<F: Fetch>(
     match &req.source {
         CrawlSource::Serp { rows, label } => {
             let (rows, label) = (rows.clone(), label.clone());
-            start_serp(fetcher, req, deps, rows, label).await
+            crate::heap(|| start_serp(fetcher, req, deps, rows, label)).await
         }
         CrawlSource::Spider { start_url } => {
             let mut start = os_url::parse_start_url(start_url)
@@ -214,11 +214,11 @@ pub async fn start_crawl<F: Fetch>(
                     start = crate::fragments::normalize(&start.url, true);
                 }
             }
-            start_spider(fetcher, req, deps, start).await
+            crate::heap(|| start_spider(fetcher, req, deps, start)).await
         }
         CrawlSource::List { items, label } => {
             let (items, label) = (items.clone(), label.clone());
-            start_list(fetcher, req, deps, items, label).await
+            crate::heap(|| start_list(fetcher, req, deps, items, label)).await
         }
     }
 }
@@ -808,7 +808,7 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
     let (progress_tx, progress_rx) = watch::channel(initial);
     let network_notices = sh.host_pacer.notices();
     let network_waits = sh.host_pacer.cancellation();
-    let task = tokio::spawn(run(RunParts {
+    let parts = RunParts {
         sh,
         writer,
         progress_tx,
@@ -818,7 +818,9 @@ pub(crate) fn launch<F: Fetch>(setup: Setup<F>) -> CrawlHandle {
         hook: deps.on_finished.clone(),
         seeds,
         clock: deps.clock.clone(),
-    }));
+    };
+    // Spawn only a pointer: the runner future is too large to be copied through Tokio's spawn frames.
+    let task = tokio::spawn(crate::heap(|| run(parts)));
     CrawlHandle {
         network_waits,
         network_notices,
@@ -905,14 +907,15 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
     // Sitemaps aus Konfiguration bzw. Start-URL bzw. Liste
     if !seeds.is_empty() {
         if let Err(worker::Failure::Engine(e)) =
-            crate::sitemap_ingest::ingest_sitemaps(&sh, seeds).await
+            crate::heap(|| crate::sitemap_ingest::ingest_sitemaps(&sh, seeds)).await
         {
             sh.fail(e);
         }
     }
 
     // INTEG-015/017: sitemap seeds are known; workers still use the regular frontier/robots gate.
-    let api_run = initialize_apis(&file, api_ctx, clock.clone(), &writer, &sh).await?;
+    let api_run =
+        crate::heap(|| initialize_apis(&file, api_ctx, clock.clone(), &writer, &sh)).await?;
 
     let mut set: JoinSet<()> = JoinSet::new();
     let mut progress_tick = interval(PROGRESS_INTERVAL);
@@ -1086,7 +1089,7 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
             .flush()
             .await
             .map_err(|_| EngineError::Join("Fragment-Basis nicht geschrieben".into()))?;
-        crate::fragments::materialize(&file, &sh.writer).await?;
+        crate::heap(|| crate::fragments::materialize(&file, &sh.writer)).await?;
     }
 
     let mut last = WriteBatch::default();
@@ -1126,14 +1129,17 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
             .push((format!("include_hits:{}", hit.line + 1), hit.hits as i64));
     }
     rule_events(&sh, &mut last);
-    let mut write_ok = sh.writer.send(last).await.is_ok();
+    // CRAWL-126 (OS-Festlegung vom 01.11.2026): Warteschlange und Endzustand sind dauerhaft geschrieben, bevor der
+    // Status gemeldet wird; der abschließende Checkpoint wartet danach nur kurz auf Leser.
+    let mut write_ok = writer.durable().await.is_ok();
+    write_ok = write_ok && sh.writer.send(last).await.is_ok();
     write_ok = write_ok && writer.flush().await.is_ok();
     write_ok = write_ok && writer.checkpoint().await.is_ok();
 
     let shared_error = sh.error.lock().unwrap_or_else(|p| p.into_inner()).take();
     // Reap the crawl's Chromium tree before wait() completes or a follow-up
     // crawl samples memory; async Drop cleanup can outlive the crawl runtime.
-    sh.render_session.close().await;
+    crate::heap(|| sh.render_session.close()).await;
     drop(sh); // gibt den letzten Absender frei, damit der Writer-Thread enden kann
     let finished = writer.finish();
 
@@ -1258,4 +1264,28 @@ async fn initialize_apis<F: Fetch>(
         .await
         .map_err(|_| EngineError::Join("API frontier write failed".into()))?;
     Ok(Some(run))
+}
+
+#[cfg(test)]
+mod future_size_tests {
+    use super::*;
+    use std::{future::Future, mem::size_of};
+
+    fn future_size<A, F: Future>(_: impl FnOnce(A) -> F) -> usize {
+        size_of::<F>()
+    }
+
+    // spec: AGENT-020 [M2]
+    // spec: CRAWL-001
+    #[test]
+    fn crawl_runner_future_has_bounded_size() {
+        let bytes = future_size(run::<os_fetch::HttpFetcher>);
+        eprintln!("Crawl runner future: {bytes} bytes");
+        // Sitemap ingest, API setup and fragment materialisation stay behind heap pointers
+        // (20.7 KiB inline before, x86_64 debug); the runner itself is spawned boxed.
+        assert!(
+            bytes <= 16 * 1024,
+            "Crawl runner future: {bytes} bytes exceeds 16 KiB"
+        );
+    }
 }

@@ -135,6 +135,11 @@ pub struct CrawlStatus {
     #[serde(default)]
     #[ts(optional = nullable)]
     pub memory_limit_bytes: Option<u64>,
+
+    /// CRAWL-126: the WAL is still being merged into the crawl file after a pause or an end.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional = nullable)]
+    pub merging: Option<bool>,
 }
 
 /// Zustand eines Analyse-Teilschritts.
