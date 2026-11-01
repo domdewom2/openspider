@@ -249,15 +249,16 @@ pub fn on_startup(app: &App) {
                 .await;
             match export {
                 Ok(Some(export)) => {
-                    let stored = app
-                        .write_queue()
-                        .submit_file(&session.key, move |file| {
-                            aggregates::live::persist(file, &export).map_err(|e| {
+                    // CRAWL-126: skipped once quitting has begun.
+                    let stored = crate::quit::submit_cache(&app, &session.key, move |file| {
+                        aggregates::live::persist(file, &export)
+                            .map(drop)
+                            .map_err(|e| {
                                 CmdError::new(ErrorCode::Store, "err-store")
                                     .with_detail(e.to_string())
                             })
-                        })
-                        .await;
+                    })
+                    .await;
                     if let Err(error) = stored {
                         tracing::debug!(?error, "Sidebar-Aggregate nicht gespeichert");
                     }

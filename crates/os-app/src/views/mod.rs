@@ -148,12 +148,13 @@ pub fn retained_bytes(app: &App) -> u64 {
 pub(crate) fn persist_facts(app: &App, key: &CrawlKey) {
     let (writer, key) = (app.clone(), key.clone());
     app.handle().spawn(async move {
-        let result = writer
-            .write_queue()
-            .submit_file(&key, |file| {
-                os_analyze::views::persist_facts(file).map_err(view_error)
-            })
-            .await;
+        // CRAWL-126: skipped once quitting has begun.
+        let result = crate::quit::submit_cache(&writer, &key, |file| {
+            os_analyze::views::persist_facts(file)
+                .map(drop)
+                .map_err(view_error)
+        })
+        .await;
         if let Err(error) = result {
             tracing::debug!(?error, "Ansichtsfakten nicht gespeichert");
         }
