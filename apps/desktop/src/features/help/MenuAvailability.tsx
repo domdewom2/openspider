@@ -1,4 +1,4 @@
-import { useMemo, useSyncExternalStore } from "react";
+import { useDeferredValue, useMemo, useSyncExternalStore } from "react";
 import { useT, useLanguageStore } from "../../i18n";
 import { useSession } from "../../state/session";
 import { currentPlatform } from "../../ui/platform";
@@ -11,7 +11,9 @@ const snapshot = () => revision;
 
 /** Native menu APIs expose no hover event; the status line provides the reasons by action name. */
 export function MenuAvailability() {
-  const contributions = useSyncExternalStore(subscribe, snapshot);
+  // The list of unavailable actions is informational: rebuilding it after a focus change or a new contribution
+  // runs as a deferred, interruptible render and never delays the response to the input itself (UI-145).
+  const contributions = useDeferredValue(useSyncExternalStore(subscribe, snapshot));
   const t = useT();
   const lang = useLanguageStore(s => s.lang);
   // Only the menu context, not every live tick (crawl progress), may rebuild the model (UI-018/UI-145).

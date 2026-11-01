@@ -21,7 +21,8 @@ export function McpMenu({ children }: { children: ReactNode }) {
   const crawlRunning = useSession((s) => s.crawl?.phase === "running");
   // The status bar re-renders with every live tick; the full menu model is only rebuilt when its inputs change (UI-145).
   const actions = useMemo(() => {
-    const model = buildMenuModel(allMenuContributions(), { platform: currentPlatform(), lang, t, ctx: { hasCrawl, crawlRunning }, native: false });
+    // Menus are built independently per menu id: building only the MCP contributions yields the same MCP menu.
+    const model = buildMenuModel(allMenuContributions().filter((c) => c.menu === "mcp"), { platform: currentPlatform(), lang, t, ctx: { hasCrawl, crawlRunning }, native: false });
     function entries(items: ResolvedItem[], parent = ""): MenuEntry[] {
       return items.flatMap((item) => item.kind === "separator" ? [] : item.items ? entries(item.items, `${parent}${item.label}: `) : [{
         id: item.id, label: parent + item.label, isDisabled: !item.enabled, disabledReason: item.disabledReason,
