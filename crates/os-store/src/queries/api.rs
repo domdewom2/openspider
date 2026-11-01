@@ -95,6 +95,7 @@ pub fn urls(
 /// Hochstufen auf Schreiben sofort `SQLITE_BUSY` (der Busy-Timeout wirkt dort nicht), solange eine andere
 /// Verbindung die Schreibsperre hält – etwa die WAL-Rückführung nach einer Pause (CRAWL-126). Läuft auf `conn`
 /// bereits eine Transaktion (der Aufrufer speichert die Konfiguration im selben Commit), wird sie mitbenutzt.
+/// Sie muss dann `BEGIN IMMEDIATE` sein oder bereits geschrieben haben, sonst gilt das Hochstufungsproblem erneut.
 pub fn invalidate(conn: &Connection, source: &str, remove: bool) -> Result<bool, StoreError> {
     let tx = conn
         .is_autocommit()
