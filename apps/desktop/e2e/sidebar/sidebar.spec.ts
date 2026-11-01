@@ -110,7 +110,12 @@ test("first filter count shows tab progress after 300 ms and cancels on request"
   await page.reload();
   await expect(page.locator('[data-sidebar-ready="true"]')).toBeVisible();
   const sidebar = page.getByRole("complementary", { name: "Sidebar" });
-  await expect(sidebar.getByText("Counting filters: 9 of 31 tabs")).toBeVisible();
+  // The reloaded page learns the open crawl from the next tick; repeat it until applied.
+  let seq = tick.seq + 100;
+  await expect(async () => {
+    bridge.core.emit("main", { kind: "tick", tick: { ...tick, seq: ++seq } as Tick });
+    await expect(sidebar.getByText("Counting filters: 9 of 31 tabs")).toBeVisible({ timeout: 1000 });
+  }).toPass();
   await expect(sidebar.getByRole("progressbar", { name: "Filter counting progress" })).toHaveAttribute("aria-valuenow", "9");
   await sidebar.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect.poll(() => bridge.core.calls.filter(c => c.cmd === "sidebar.countCancel").length).toBe(1);
