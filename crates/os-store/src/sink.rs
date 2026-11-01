@@ -12,6 +12,12 @@ pub trait CrawlSink: Send {
 
     /// Schreibt ausstehende Daten dauerhaft (WAL-Checkpoint).
     fn checkpoint(&mut self) -> Result<(), StoreError>;
+
+    /// Die folgenden Commits synchronisieren das WAL (`synchronous = FULL`): der End-Batch einer Pause oder eines
+    /// Endes ist dauerhaft geschrieben, bevor der Status gemeldet wird (CRAWL-126). Vorgabe: nichts zu tun.
+    fn durable(&mut self) -> Result<(), StoreError> {
+        Ok(())
+    }
 }
 
 /// Messzähler des Schreibpfads (M1-P30, Windows-Durchsatz): Zeit je Phase eines `SqliteSink`-Batches.

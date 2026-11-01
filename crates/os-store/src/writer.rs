@@ -450,15 +450,26 @@ impl Drop for SqliteSink {
     }
 }
 
+/// Längste Wartezeit des abschließenden Checkpoints auf laufende Lesezugriffe (CRAWL-126, OS-Festlegung vom
+/// 01.11.2026). Hält ein Leser länger einen älteren Stand, bleibt der Rest im (synchronisierten) WAL; die App führt
+/// ihn im Hintergrund zurück ([`crate::open::merge_wal`]).
+pub const CHECKPOINT_READER_WAIT: std::time::Duration = std::time::Duration::from_millis(100);
+
+/// Wartezeit der Verbindung auf Sperren außerhalb des abschließenden Checkpoints.
+const BUSY_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
+
 fn wal_checkpoint(conn: &Connection) -> Result<(), StoreError> {
     let phase = scale_phase_start(conn);
     let t = std::time::Instant::now();
+    conn.busy_timeout(CHECKPOINT_READER_WAIT)?;
     // Antwort: (busy, Frames im WAL, davon zurückgeführt)
     let result = conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| {
         r.get::<_, i64>(1)
     });
+    let restored = conn.busy_timeout(BUSY_TIMEOUT);
     crate::sink::diag::record_checkpoint(t, result.as_ref().map_or(0, |n| (*n).max(0) as u64));
     result?;
+    restored?;
     scale_phase_end(conn, "checkpoint", phase);
     Ok(())
 }
@@ -485,6 +496,13 @@ fn scale_phase_end(conn: &Connection, name: &str, start: Option<(std::time::Inst
 }
 
 impl CrawlSink for SqliteSink {
+    fn durable(&mut self) -> Result<(), StoreError> {
+        self.file
+            .conn()
+            .pragma_update(None, "synchronous", "FULL")?;
+        Ok(())
+    }
+
     fn write(&mut self, batch: WriteBatch) -> Result<(), StoreError> {
         // Nur Batches mit neuen URLs brauchen den Trigger nicht (ein leerer Batch bleibt ein No-op ohne Schreibzugriff).
         if !batch.new_urls.is_empty() {
