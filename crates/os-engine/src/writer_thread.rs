@@ -802,7 +802,8 @@ fn writer_loop(
                 let _ = ack.send(ok);
             }
             Msg::Durable(ack) => {
-                write_out(&mut sink, &mut batch, &mut pages, &shared);
+                write_out(&mut sink, &mut batch, &mut pages, &shared, &mut charges);
+                batch_bytes = 0;
                 first_at = None;
                 behind = !rx.is_empty();
                 let ok = if shared.failed.load(Ordering::SeqCst) {

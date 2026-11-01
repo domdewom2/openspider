@@ -505,7 +505,7 @@ pub fn merge_wal(path: &Path, cancel: &std::sync::atomic::AtomicBool) -> Result<
     if wal_bytes(path) == 0 {
         return Ok(true);
     }
-    let conn = open_sqlite(
+    let conn = Connection::open_with_flags(
         path,
         OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NO_MUTEX,
     )?;
