@@ -4,6 +4,11 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$script_dir/../../../.."
 [[ "$(uname -s)" == Darwin ]] || { echo "Reference A requires macOS" >&2; exit 1; }
+# A locked screen hides every WKWebView window: native rendering stalls (no animation frames).
+if [[ "$(ioreg -n Root -d1 -a | plutil -extract IOConsoleLocked raw -o - - 2>/dev/null)" == true ]]; then
+  echo "Screen is locked: native measurement requires an unlocked GUI session" >&2
+  exit 1
+fi
 export OS_PERF_LOAD_LIMIT="${OS_PERF_LOAD_LIMIT:-2.5}"
 export OS_PERF_ROWS=5000000
 export OS_PERF_FIXTURE="${OS_PERF_FIXTURE:-$PWD/target/ui-perf-reference.ospider}"
