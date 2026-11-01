@@ -634,3 +634,66 @@ wird nicht betreten. Vorbestehender UI-Flake.
 Zeitüberschreitung beim Warten auf das Wiederholungsziel nach dem Chromium-Crash.
 `os-render` ist in diesem Paket unverändert und hängt nicht von `os-fetch` ab.
 Runner-Flake, kein Codebezug.
+
+### Nachtrag 3: Option (a) umgesetzt (Entscheidung vom 01.11.2026)
+
+Die Spec-Ergänzung unter CRAWL-126 steht als eigener Commit (`e3d33150`).
+
+**Umsetzung.**
+
+- **Dauerhaftigkeit vor der Quittung (`218c2a44`, `858062d0`).** Vor dem End-Batch
+  sendet die Engine eine Markierung `durable` an den Writer. Die Senke stellt dann
+  `synchronous = FULL` ein, sodass der Commit des End-Batches das WAL synchronisiert.
+- **Begrenzter Checkpoint.** Der abschließende `TRUNCATE`-Checkpoint wartet höchstens
+  `CHECKPOINT_READER_WAIT` = 100 ms auf Leser (bisher bis zum Busy-Timeout von 5 s).
+- **Hintergrund-Merge.** `os_store::open::merge_wal` versucht den Merge in kurzen,
+  abbrechbaren `TRUNCATE`-Durchläufen (je höchstens 100 ms, dazwischen 50 ms Pause).
+- **App (`c3d01b46`).**
+  - Nach Abschluss der Engine (`settle`) startet der Merge im Hintergrund.
+  - „Fortsetzen“ (UI und MCP) bricht ihn vorher ab und wartet darauf.
+  - `quit::confirm` und `request_quit` warten auf `wait_merged` innerhalb des
+    3-s-Budgets.
+  - `crawls.reveal` und `crawls.move` warten auf den Merge, `crawls.delete` bricht ihn ab.
+  - Der Export per `VACUUM INTO` bleibt unabhängig.
+  - `CrawlStatus` hat ein optionales Feld `merging`; es wird nur gesendet, wenn es
+    gesetzt ist, deshalb bleiben die Wire-Fixtures unverändert.
+- **UI (`0953ecf0`).** Die Statuszeile zeigt „Pausiert – Datei wird zusammengeführt“
+  bzw. „Paused – merging file“ (`status-paused-merging`, DE/EN).
+
+**Tests (`// spec: CRAWL-126`).**
+
+| Test | Prüft |
+| --- | --- |
+| `os-store` `pause_merge` | Checkpoint mit haltendem Leser kehrt nach ≤ 300 ms zurück (Balanced und Maximale Geschwindigkeit); der Merge wartet auf den Leser; danach ist das WAL 0 Byte groß; ein abgebrochener Merge kehrt sofort zurück |
+| `os-engine` `lifecycle_crash` | Ein Kindprozess pausiert, während ein Leser das WAL festhält, und wird nach der Quittung hart beendet: Die Datei ist „Pausiert“, `integrity_check` ist ok, die Warteschlange ist vollständig |
+| `os-engine` `lifecycle_pause` | Export während des laufenden Merges: keine Begleitdateien, Status „Pausiert“ |
+| `os-engine` `n10_frontier` (erweitert) | Nach dem Merge nur die Hauptdatei kopieren, fortsetzen, Golden-Vergleich |
+| `os-app` `pause_merge` | Fortsetzen 50 ms nach der Quittung ohne Fehler; Beenden wartet auf den Merge (≤ 3 s), danach hat das WAL keinen Inhalt |
+| Vitest Statuszeile | Hinweis in DE und EN, Rückkehr zu „Paused“ |
+
+**Messung** (Server, `taskset -c 0,1`, WebKit, `control.spec.ts` 10× seriell, zwei Reihen):
+
+| Reihe | Latenz Median | Latenz Max | `ipcMs` Median | `ipcMs` Max |
+| --- | --- | --- | --- | --- |
+| 1 | 2.067 ms | 2.414 ms | 571 ms | 1.223 ms |
+| 2 | 2.134 ms | 2.499 ms | 566 ms | 1.132 ms |
+
+Vorher unter gleichen Bedingungen: Median 2,0–2,7 s, Maximum bis 3,2 s, `ipcMs`-Median
+1,0–1,4 s. Das 3-s-Budget bleibt unverändert (K2-63).
+
+Alle Playwright-Läufe mit `CI=true` (kein `reuseExistingServer`); Port 1420 war vor den
+Messungen frei, der Dev-Server stammt also aus diesem Worktree.
+
+**Prüfungen.**
+
+- fmt und clippy (`-D warnings`): grün.
+- Workspace: im ersten Lauf 4.099 bestanden, 1 Fehler (`dto_fixtures`, `merging: null`
+  im Wire-Format). Behoben mit `skip_serializing_if`; die betroffenen App-Suiten sind
+  danach grün. Schlusslauf: 4.100 bestanden, 0 Fehler, 49 Ignores, 568 Ziele.
+- Typecheck und Vitest: 871/871.
+- `e2e/beta` Chromium und WebKit: 28/28.
+
+Hinweis: Unter „Maximale Geschwindigkeit“ schreiben Hintergrund-Checkpoints während des
+Crawls weiterhin ohne fsync (bestehendes Profilverhalten). Der End-Batch ist jetzt
+synchronisiert; die Hauptdatei wird erst beim abschließenden Merge mit `NORMAL`
+synchronisiert.
