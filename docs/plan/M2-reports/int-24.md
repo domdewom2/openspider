@@ -66,15 +66,17 @@ CI der Pakete (GitHub, ohne Intel):
 |---|---|---|
 | FIX-STOP | 41325638841 (Versuch 2): ci windows-x64/macos-arm64, crawlfile load, cargo-deny grün; spec-coverage nach 1 h abgebrochen (Runner-Zeitlimit) | 41325641287: windows-chromium, linux-chromium, macos-webkit grün; linux-webkit rot nur `n04-live:74` (durch N24 behoben), im zweiten Versuch wieder dort und flaky `detail-during-crawl` |
 | FIX-TX | 41333352301: ci windows-x64/macos-arm64, crawlfile load, cargo-deny grün; spec-coverage nach 1 h abgebrochen (Runner-Zeitlimit) | 41333354811: windows-chromium, linux-chromium, linux-webkit grün; macos-webkit nach 1 h abgebrochen (Runner-Zeitlimit) |
-| N24 | 41337341565 | 41337343906 |
+| N24 | 41337341565: alle Jobs grün (inkl. spec-coverage) | 41337343906: windows-chromium, linux-chromium grün; linux-webkit `n04-live` grün, rot nur `config/dialog.spec.ts:135` (vorbestehender Flake, siehe unten); macos-webkit nach 1 h abgebrochen (Runner-Zeitlimit) |
 
 Der erste FIX-TX-Lauf (41326365487/41326367795) und der erste Windows-Job von FIX-STOP wurden von GitHub mit „internal error“ abgebrochen; der erste spec-coverage-Job von FIX-STOP scheiterte am Runner („os-parity: cannot execute binary file“). Die späteren Abbrüche sind Zeitüberschreitungen auf macOS-Runnern (GitHub meldete Kapazitätsengpässe für macOS arm64). Die abgebrochenen Jobs laufen im Integrationsbaum erneut.
+
+`config/dialog.spec.ts:135` (Regex-Tester, CRAWL-111) auf dem Server gegengeprüft, WebKit, `--repeat-each=20 --retries=0`: mit N24 3/20 rot, mit dem Frontend vor N24 4/20 rot (jeweils `regex-result` nicht binnen 5 s vorhanden). Vorbestehender Flake ohne Bezug zu N24.
 
 CI und ui-e2e des Integrationsbaums: werden nach dem Push nachgetragen.
 
 ## Folgearbeiten
 
 - **M2-FIX-WAL** (nach int-24, Festlegungen von Fable liegen vor): WAL leer nach Beenden (Schreibwarteschlange und View-Cache vor der Rückführung), Abschluss-Checkpoint der Analyse ≤ 100 ms mit Hintergrund-Merge (CRAWL-141), gemeinsamer Test Stopp → Analyse → Rückführung, Sperrtest `replace_values`.
-- Testrennen `os-cli` `cli_basics` (Port-Wiederverwendung) und `header.spec.ts:69` an die Spec-Besitzer.
+- Testrennen `os-cli` `cli_basics` (Port-Wiederverwendung), `header.spec.ts:69` und WebKit-Flake `config/dialog.spec.ts:135` (Regex-Tester, ~15–20 % rot auf Linux) an die Spec-Besitzer.
 - Spec-Frage UI-145 ↔ K-74 (`M2-backlog.md` Abschnitt 6).
 - Aus int-23 weiter offen: Zählregeln je Filter, N20-Folgeauflage `select!`, Sortier-Peak ~1 GB (N22); M2-Stand in die M3-Linie integrieren.
