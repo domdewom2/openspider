@@ -305,34 +305,32 @@ it("shows the configured thresholds instead of placeholders in issue names, navi
 // spec: UI-141
 // spec: UI-145
 it("shows the first filter count's progress after 300 ms in Overview and Issues and cancels it by button and Esc", async () => {
-  const pending: ((value: unknown) => void)[] = [];
-  core.handlers.set("sidebar.overview", () => new Promise(resolve => pending.push(resolve)));
-  core.handlers.set("sidebar.issues", () => new Promise(resolve => pending.push(resolve)));
-  const cancelled: unknown[] = [];
-  core.handlers.set("op.cancel", args => { cancelled.push(args); return null; });
-  const running = { opId: "count-1", labelKey: "sidebar-op-count", done: 12, total: 31, state: "running" as const };
-  useSession.setState({ ops: { "count-1": running, other: { ...running, opId: "other", labelKey: "export" } } });
+  core.handlers.set("sidebar.overview", () => new Promise(() => undefined));
+  core.handlers.set("sidebar.issues", () => new Promise(() => undefined));
+  let status = { running: true, done: 12, total: 31 };
+  core.handlers.set("sidebar.countStatus", () => status);
+  let cancels = 0;
+  core.handlers.set("sidebar.countCancel", () => { cancels++; return null; });
   mount();
   await screen.findByText("Loading…");
   expect(screen.queryByText(/Counting filters/)).toBeNull();
   expect(await screen.findByText("Counting filters: 12 of 31 tabs")).toBeVisible();
   expect(screen.getByRole("progressbar", { name: "Filter counting progress" })).toHaveAttribute("aria-valuenow", "12");
   fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-  await waitFor(() => expect(cancelled).toEqual([{ opId: "count-1" }]));
+  await waitFor(() => expect(cancels).toBe(1));
   fireEvent.keyDown(screen.getByRole("button", { name: "Cancel" }), { key: "Escape" });
-  await waitFor(() => expect(cancelled).toHaveLength(2));
+  await waitFor(() => expect(cancels).toBe(2));
   await tab("Issues");
   expect(await screen.findByText("Counting filters: 12 of 31 tabs")).toBeVisible();
-  // Finished or cancelled: no stale indicator.
-  act(() => useSession.setState({ ops: { "count-1": { ...running, state: "cancelled" } } }));
-  expect(screen.queryByText(/Counting filters/)).toBeNull();
-  expect(pending.length).toBeGreaterThan(0);
+  // Finished or cancelled: the hint disappears with the next status.
+  status = { running: false, done: 12, total: 31 };
+  await waitFor(() => expect(screen.queryByText(/Counting filters/)).toBeNull());
 });
 
 // spec: UI-141
-it("labels the counting operation in German and English", async () => {
+it("labels the counting progress in German and English", async () => {
   core.handlers.set("sidebar.overview", () => new Promise(() => undefined));
-  useSession.setState({ ops: { c: { opId: "c", labelKey: "sidebar-op-count", done: 3, total: 31, state: "running" } } });
+  core.handlers.set("sidebar.countStatus", () => ({ running: true, done: 3, total: 31 }));
   await setLanguage("de");
   mount();
   expect(await screen.findByText("Filterzähler werden berechnet: 3 von 31 Tabs")).toBeVisible();

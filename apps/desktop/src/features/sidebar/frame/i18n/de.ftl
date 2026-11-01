@@ -57,7 +57,6 @@ sidebar-loading = Wird geladen…
 sidebar-retry = Erneut versuchen
 sidebar-panel-unavailable = Dieser Bereich ist in diesem Build noch nicht verfügbar.
 sidebar-percent-total = % gesamt
-sidebar-op-count = Filterzähler berechnen
 sidebar-counting-label = Fortschritt der Filterzählung
 sidebar-counting-start = Filterzähler werden berechnet …
 sidebar-counting = Filterzähler werden berechnet: { $done } von { $total } Tabs

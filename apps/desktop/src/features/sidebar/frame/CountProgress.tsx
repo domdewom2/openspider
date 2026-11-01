@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../../ui/primitives/Button";
 import { ProgressBar } from "../../../ui/primitives/Feedback";
 import { useT } from "../../../i18n";
-import { op } from "../../../ipc/op";
+import { sidebar } from "../../../ipc/sidebar";
 import { useSession } from "../../../state/session";
-
-/** Label key of the core's one-time Overview/Issues count (`sidebar.rs`, `COUNT_LABEL`). */
-export const COUNT_OP = "sidebar-op-count";
 
 /**
  * UI-141/UI-145: while the core counts the filters of a crawl for the first time, Overview and Issues
@@ -15,8 +13,9 @@ export const COUNT_OP = "sidebar-op-count";
  */
 export function CountProgress() {
   const t = useT();
-  const status = useSession(s => Object.values(s.ops).find(o => o.labelKey === COUNT_OP && o.state === "running"));
-  const running = !!status;
+  const crawl = useSession(s => s.crawl?.crawlId);
+  const status = useQuery({ queryKey: ["sidebar", "count", crawl], queryFn: ({ signal }) => sidebar.countStatus(signal), enabled: !!crawl, refetchInterval: 250, gcTime: 0, retry: false });
+  const running = !!status.data?.running;
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     setVisible(false);
@@ -24,12 +23,12 @@ export function CountProgress() {
     const timer = setTimeout(() => setVisible(true), 300);
     return () => clearTimeout(timer);
   }, [running]);
-  if (!status || !visible) return null;
-  const total = status.total ?? null;
-  const cancel = () => void op.cancel({ opId: status.opId }).catch(() => undefined);
+  if (!status.data || !running || !visible) return null;
+  const { done, total } = status.data;
+  const cancel = () => void sidebar.countCancel().then(() => status.refetch()).catch(() => undefined);
   return <div className="os-sidebar-counting" role="status" onKeyDown={e => { if (e.key === "Escape") { e.preventDefault(); cancel(); } }}>
-    <ProgressBar label={t("sidebar-counting-label")} value={total ? status.done : null} max={total ?? 100} />
-    <span>{total ? t("sidebar-counting", { done: status.done, total }) : t("sidebar-counting-start")}</span>
+    <ProgressBar label={t("sidebar-counting-label")} value={total ? done : null} max={total || 100} />
+    <span>{total ? t("sidebar-counting", { done, total }) : t("sidebar-counting-start")}</span>
     <Button onPress={cancel}>{t("sidebar-counting-cancel")}</Button>
   </div>;
 }
