@@ -72,11 +72,19 @@ Der erste FIX-TX-Lauf (41326365487/41326367795) und der erste Windows-Job von FI
 
 `config/dialog.spec.ts:135` (Regex-Tester, CRAWL-111) auf dem Server gegengeprüft, WebKit, `--repeat-each=20 --retries=0`: mit N24 3/20 rot, mit dem Frontend vor N24 4/20 rot (jeweils `regex-result` nicht binnen 5 s vorhanden). Vorbestehender Flake ohne Bezug zu N24.
 
-CI und ui-e2e des Integrationsbaums: werden nach dem Push nachgetragen.
+CI und ui-e2e des Integrationsbaums (`a528c411` + Bericht):
+
+| Lauf | Ergebnis |
+|---|---|
+| CI 41338129716 (ohne Intel) | grün: rustfmt, cargo-deny, spec-coverage, ci windows-x64/macos-arm64, crawlfile load windows/macOS |
+| ui-e2e 41338132247 | windows-chromium, linux-chromium, linux-webkit grün; macos-webkit nach 1 h abgebrochen (Job-Zeitlimit), bis dahin 466/493 bestanden, 0 fehlgeschlagen |
+
+Der macos-webkit-Job liegt auch in früheren grünen Läufen bei 51–60 min (z. B. 59:47 am 01.11. vormittags) und damit am Zeitlimit; Folgearbeit: Job teilen oder Limit anheben (CI-Pflege, keine Budgetänderung).
 
 ## Folgearbeiten
 
 - **M2-FIX-WAL** (nach int-24, Festlegungen von Fable liegen vor): WAL leer nach Beenden (Schreibwarteschlange und View-Cache vor der Rückführung), Abschluss-Checkpoint der Analyse ≤ 100 ms mit Hintergrund-Merge (CRAWL-141), gemeinsamer Test Stopp → Analyse → Rückführung, Sperrtest `replace_values`.
 - Testrennen `os-cli` `cli_basics` (Port-Wiederverwendung), `header.spec.ts:69` und WebKit-Flake `config/dialog.spec.ts:135` (Regex-Tester, ~15–20 % rot auf Linux) an die Spec-Besitzer.
 - Spec-Frage UI-145 ↔ K-74 (`M2-backlog.md` Abschnitt 6).
+- ui-e2e macos-webkit liegt am 1-h-Job-Limit: in zwei Shards teilen oder Limit anheben.
 - Aus int-23 weiter offen: Zählregeln je Filter, N20-Folgeauflage `select!`, Sortier-Peak ~1 GB (N22); M2-Stand in die M3-Linie integrieren.
