@@ -316,12 +316,25 @@ fn checkpoint_phase(file: &CrawlFile, name: &str, always: bool) -> Result<(), An
     let timeout: i64 = file
         .conn()
         .pragma_query_value(None, "busy_timeout", |r| r.get(0))?;
-    file.conn().pragma_update(None, "busy_timeout", 5_000)?;
-    let result = file
-        .conn()
-        .query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| {
-            r.get::<_, i64>(0)
-        });
+    let result = if always {
+        // CRAWL-141 Ablaufpunkt 7: Der abschließende Checkpoint wartet höchstens 100 ms (Wanduhr) auf Leser; die
+        // Analyse ist mit ihrem letzten dauerhaften Commit abgeschlossen. Verbleibende Frames führt die App im
+        // Hintergrund zurück (CRAWL-126).
+        os_store::writer::checkpoint_within(
+            file.conn(),
+            os_store::writer::CHECKPOINT_READER_WAIT,
+            "PRAGMA wal_checkpoint(TRUNCATE)",
+            |r| r.get::<_, i64>(0),
+        )
+        .map_err(AnalyzeError::from)
+    } else {
+        file.conn().pragma_update(None, "busy_timeout", 5_000)?;
+        file.conn()
+            .query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| {
+                r.get::<_, i64>(0)
+            })
+            .map_err(AnalyzeError::from)
+    };
     file.conn().pragma_update(None, "busy_timeout", timeout)?;
     let busy = result?;
     if std::env::var_os("OS_SCALE_DIAG").is_some() {
