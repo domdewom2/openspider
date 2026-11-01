@@ -339,6 +339,8 @@ pub async fn resume(app: &App, ctx: CallCtx) -> Result<(), CmdError> {
     if app.ops().running() > 0 {
         return Err(super::busy());
     }
+    // A background WAL merge must not compete with the resumed writer (CRAWL-126).
+    super::merge::cancel(app, &s.key).await;
     let cfg = app
         .read_pool()
         .run_cached(
@@ -512,6 +514,8 @@ pub async fn settle(app: &App, s: &SessionInfo, action: Option<bool>) -> Result<
             os_store::meta::set_meta(conn, "progress_snapshot", &text)
         })
         .await?;
+    // CRAWL-126: the engine's checkpoint waited only briefly for readers; finish the merge in the background.
+    super::merge::start(app, &s.key, s.path.clone());
     if result.is_err() {
         crate::commands::mail::on_failed(app, &s.key);
     }

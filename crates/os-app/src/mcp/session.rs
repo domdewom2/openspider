@@ -84,6 +84,7 @@ impl Access {
         let runtime = app.handle();
         if let Some(s) = resume {
             control::ensure_idle(app, &s).await.map_err(err)?;
+            session::merge::cancel(app, &s.key).await;
             let file = s.path;
             let path = file.clone();
             let h = tokio::task::spawn_blocking(move || {

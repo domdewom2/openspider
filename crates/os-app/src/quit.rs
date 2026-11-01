@@ -9,6 +9,9 @@ use crate::{
 use futures_util::future::BoxFuture;
 use std::sync::atomic::Ordering;
 
+/// Pause, checkpoint and WAL merge before exit (CRAWL-126: ≤ 3 s).
+const QUIT_BUDGET: std::time::Duration = std::time::Duration::from_secs(3);
+
 pub struct SessionQuit;
 impl QuitHook for SessionQuit {
     fn request_quit(&self, app: App) -> BoxFuture<'static, QuitDecision> {
@@ -35,6 +38,10 @@ impl QuitHook for SessionQuit {
                 reasons.push(QuitReason::McpSessions);
             }
             if reasons.is_empty() {
+                // CRAWL-126: a paused crawl's file is merged before the app exits.
+                if !crate::session::merge::wait_all(&app, QUIT_BUDGET).await {
+                    tracing::warn!("WAL merge still running at quit");
+                }
                 QuitDecision::Quit
             } else {
                 QuitDecision::Confirm { reasons }
@@ -62,6 +69,7 @@ pub async fn confirm(app: &App, accepted: bool) -> Result<(), CmdError> {
     if service.quitting.swap(true, Ordering::SeqCst) {
         return Err(crate::session::busy());
     }
+    let started = std::time::Instant::now();
     let result = async {
         let active = app.ops().active_statuses();
         app.ops().cancel_all();
@@ -95,6 +103,12 @@ pub async fn confirm(app: &App, accepted: bool) -> Result<(), CmdError> {
             {
                 crate::session::control::settle(app, &s, Some(false)).await?;
             }
+        }
+        // CRAWL-126: exit only after the paused files are merged, within the quit budget.
+        if !crate::session::merge::wait_all(app, QUIT_BUDGET.saturating_sub(started.elapsed()))
+            .await
+        {
+            tracing::warn!("WAL merge still running at quit");
         }
         if mcp_connected(app).await {
             app.dispatch(

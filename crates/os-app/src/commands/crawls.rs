@@ -321,6 +321,11 @@ async fn short(app: &App, args: serde_json::Value, action: &'static str) -> CmdR
                     .join("\n"),
             )?;
         } else {
+            // CRAWL-126: reveal a self-contained file, not one whose WAL is still being merged.
+            for l in &rows {
+                crate::session::merge::wait_merged(app, &CrawlKey(l.meta.crawl_id.to_string()))
+                    .await;
+            }
             desktop.reveal_paths(&rows.into_iter().map(|l| l.path).collect::<Vec<_>>())?;
         }
     }
@@ -437,6 +442,12 @@ async fn batch(
         } else {
             None
         };
+        // CRAWL-126: move only a merged file; a file about to be deleted needs no merge.
+        if moving {
+            crate::session::merge::wait_merged(&app, &key).await;
+        } else if deleting {
+            crate::session::merge::cancel(&app, &key).await;
+        }
         if moving || deleting {
             app.write_queue().unregister(&key);
             app.write_queue().flush().await;
