@@ -41,3 +41,9 @@ Vollständige Liste mit Zielpaketen: `docs/plan/M2-reports/n02-auflagen.md`.
 - **Offen aus N01b:** Lighthouse-/KI-Zeilen im API-Tab brauchen neue `ApiKind`-Varianten (lokales Lighthouse, KI-Anbieter M4). `commands/viz.rs` übergibt `exclude_self_links = false` als UI-Standard, die Anchors-Aggregation schließt Selbstlinks aus (TECH-146), das klärt Fable.
 - **Offen aus N02a:** Nach einem Stopp lautet der Zustandstext „Completed“ (`EndReason::Stopped`); ein eigener Text bräuchte eine Engine-Phase. Den WebKit-Wettlauf A01-10 (1 von ~30 Läufen unter Last) beobachtet U32.
 - **Beobachten:** MCP-`start_crawl` wird bei jeder laufenden App-Operation abgelehnt (`os-app/src/mcp/session.rs`). Der Credentials-Wrapper in `os-app/src/session/control.rs` gilt für alle Crawls.
+
+## 6 Aus M2-N24 (int-24, Fable-Auflage A2)
+
+- **Spec-Frage UI-145 ↔ K-74:** UI-145 verlangt die erste Inlinks-Seite in ≤ 150 ms, auch bei 1 Mio. Inlinks. Während eines laufenden oder pausierten Crawls fehlt `links_target` absichtlich (K-74, bestätigt in K-84); jede Inlinks-Abfrage liest dann die ganze Tabelle `links` (N24: 60–150 ms bei ~40.000 Links im Debug-Build). Klären, ob das Kriterium nur für abgeschlossene Crawls (Fixture `gen-ui-large`) gilt; falls auch während des Crawls, braucht es eine Architekturentscheidung (z. B. Inlinks-Index für ausgewählte URLs).
+- **Folgekandidat:** Ein sichtbarer Inlinks-Tab materialisiert während des Crawls je Revision (alle 500 ms) die Link-ID-Liste aus der ganzen Tabelle `links` neu.
+- **Folgekandidat:** Die obere Tabelle lädt je Live-Tick 200 Zeilen × 77 Spalten (~120 KB).

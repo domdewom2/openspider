@@ -5045,5 +5045,28 @@
   "size": "S",
   "runner": "server+ci",
   "prompt_notes": "int-24: Fable approved mit Auflagen (Doc-Kommentar invalidate erledigt; Pflichttests auf dem Integrationsbaum; Folgearbeit Sperrtest replace_values in M2-FIX-WAL). Minimale Fremdänderungen in Dateien früherer Wellen (I01, K09, D03, K03) laut K2-92-Tabelle in M2-reports/fix-tx.md. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-N24",
+  "kind": "package",
+  "model": "opus",
+  "title": "Detailtabs während des Live-Crawls: Anfrage im Klick, keine Rerenders zurückgehaltener Panels, Menümodelle nicht im Eingabeereignis und nicht je Live-Tick",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-145"
+  ],
+  "owns": [
+   "apps/desktop/src/features/detail/frame/{DetailFrame.tsx,detail.test.tsx,request.ts}",
+   "apps/desktop/src/features/help/{menuContexts.ts,MenuAvailability.tsx,help.test.tsx}",
+   "apps/desktop/src/features/statusbar/McpMenu.tsx",
+   "docs/plan/M2-reports/n24.md"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "S",
+  "runner": "server+ci",
+  "prompt_notes": "int-24: Fable approved mit Auflagen (A1 K2-92-Tabelle in M2-reports/n24.md, A2 Spec-Frage UI-145 ↔ K-74 in M2-backlog.md; beide bei der Integration erfüllt). Nur Frontend; Ursache des Testrennens n04-live.spec.ts:74, Budget unverändert (K2-63). Sequenziell nach FIXE-PORT im Detailrahmen. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
  }
 ]
