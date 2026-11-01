@@ -72,12 +72,15 @@ fn relationship_filter(id: &'static str) -> FilterDef {
     if id == "Non-Canonical Return Links" {
         return filter(id, "u.state = 'done' AND u.status_code = 200 AND u.content_class = 'HTML' \
             AND u.canonical_count > 0 AND u.canonical_self = 0 \
-            AND EXISTS (SELECT 1 FROM hreflang h JOIN urls p ON p.id = h.url_id \
+            AND EXISTS (SELECT 1 FROM hreflang h CROSS JOIN urls p ON p.id = h.url_id \
                 WHERE h.target_id = u.id AND p.id <> u.id AND p.is_internal = 1 \
                 AND p.in_tables = 1 AND p.status_code BETWEEN 200 AND 299 AND p.content_class = 'HTML')");
     }
+    // UI-145/UI-147 (M2-N26): `CROSS JOIN` fixes the loop order annotation → target row. Without
+    // statistics SQLite otherwise drives the correlated subquery from `urls q` via `urls_state` or
+    // `urls_status` and scans every crawled URL per population row (O(n²): 2 s per filter at 5 600 URLs).
     let mut def = filter(id, intern(&format!(
-        "EXISTS (SELECT 1 FROM hreflang h JOIN urls q ON q.id = h.target_id WHERE h.url_id = u.id AND ({}))",
+        "EXISTS (SELECT 1 FROM hreflang h CROSS JOIN urls q ON q.id = h.target_id WHERE h.url_id = u.id AND ({}))",
         relationship_predicate(id)
     )));
     if id == "Unlinked Hreflang URLs" {
