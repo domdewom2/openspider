@@ -64,11 +64,11 @@ CI der Pakete (GitHub, ohne Intel):
 
 | Paket | CI | ui-e2e |
 |---|---|---|
-| FIX-STOP | 41325638841 (Wiederholung der Jobs nach Runner-Fehler) | 41325641287: windows-chromium, linux-chromium, macos-webkit grün; linux-webkit nur `n04-live:74` (durch N24 behoben), Wiederholung |
-| FIX-TX | 41333352301 | 41333354811 |
+| FIX-STOP | 41325638841 (Versuch 2): ci windows-x64/macos-arm64, crawlfile load, cargo-deny grün; spec-coverage nach 1 h abgebrochen (Runner-Zeitlimit) | 41325641287: windows-chromium, linux-chromium, macos-webkit grün; linux-webkit rot nur `n04-live:74` (durch N24 behoben), im zweiten Versuch wieder dort und flaky `detail-during-crawl` |
+| FIX-TX | 41333352301: ci windows-x64/macos-arm64, crawlfile load, cargo-deny grün; spec-coverage nach 1 h abgebrochen (Runner-Zeitlimit) | 41333354811: windows-chromium, linux-chromium, linux-webkit grün; macos-webkit nach 1 h abgebrochen (Runner-Zeitlimit) |
 | N24 | 41337341565 | 41337343906 |
 
-Der erste FIX-TX-Lauf (41326365487/41326367795) und der Windows-Job von FIX-STOP wurden von GitHub mit „internal error“ abgebrochen; der spec-coverage-Job von FIX-STOP scheiterte am Runner („os-parity: cannot execute binary file“).
+Der erste FIX-TX-Lauf (41326365487/41326367795) und der erste Windows-Job von FIX-STOP wurden von GitHub mit „internal error“ abgebrochen; der erste spec-coverage-Job von FIX-STOP scheiterte am Runner („os-parity: cannot execute binary file“). Die späteren Abbrüche sind Zeitüberschreitungen auf macOS-Runnern (GitHub meldete Kapazitätsengpässe für macOS arm64). Die abgebrochenen Jobs laufen im Integrationsbaum erneut.
 
 CI und ui-e2e des Integrationsbaums: werden nach dem Push nachgetragen.
 
