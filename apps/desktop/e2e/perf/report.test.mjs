@@ -96,3 +96,72 @@ test("RSS attribution excludes another workspace and the Rust backend", () => {
     [105],
   );
 });
+
+import { webkitXpcRenderers } from "./rss.mjs";
+// spec: UI-144
+test("macOS WebKit XPC renderers are attributed via own browser bundle and start", () => {
+  const root = "/Users/u/Library/Caches/ms-playwright/webkit-2370";
+  const xpc = (name) =>
+    `${root}/com.apple.WebKit.${name}.xpc/Contents/MacOS/com.apple.WebKit.${name}`;
+  const ui = `${root}/Playwright.app/Contents/MacOS/Playwright`;
+  const processes = [
+    { pid: 101, parent: 100, started: -51, command: "/bin/sh" },
+    { pid: 102, parent: 101, started: -50, command: ui },
+    { pid: 103, parent: 100, started: -52, command: "os-app-bridge" },
+    { pid: 201, parent: 1, started: -50, command: xpc("WebContent") },
+    {
+      pid: 202,
+      parent: 1,
+      started: -10,
+      command: `${xpc("WebContent")}.Development`,
+    },
+    { pid: 203, parent: 1, started: -100, command: xpc("WebContent") },
+    { pid: 204, parent: 1, started: -50, command: xpc("Networking") },
+    {
+      pid: 205,
+      parent: 1,
+      started: -5,
+      command:
+        "/System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.WebContent.xpc/Contents/MacOS/com.apple.WebKit.WebContent",
+    },
+    { pid: 206, parent: 102, started: -40, command: xpc("WebContent") },
+  ].map((p) => ({ bytes: 1, ...p }));
+  // Only launchd-started WebContent of the own bundle, not older than the browser.
+  assert.deepEqual(
+    webkitXpcRenderers(processes, 100).map((p) => p.pid),
+    [201, 202],
+  );
+  // Another workspace's tree has no Playwright browser: nothing attributable.
+  assert.deepEqual(webkitXpcRenderers(processes, 999), []);
+  // A browser of another Playwright bundle does not interfere.
+  const other = {
+    pid: 301,
+    parent: 300,
+    started: -60,
+    bytes: 1,
+    command:
+      "/opt/ms-playwright/webkit-9/Playwright.app/Contents/MacOS/Playwright",
+  };
+  assert.deepEqual(
+    webkitXpcRenderers([...processes, other], 100).map((p) => p.pid),
+    [201, 202],
+  );
+  // A foreign live browser of the same bundle that could own a candidate: no guess.
+  for (const started of [-60, -50, -20])
+    assert.throws(
+      () =>
+        webkitXpcRenderers(
+          [...processes, { ...other, started, command: ui }],
+          100,
+        ),
+      /Ambiguous WebKit renderer attribution/,
+    );
+  // Started after every candidate: it cannot own them.
+  assert.deepEqual(
+    webkitXpcRenderers(
+      [...processes, { ...other, started: -5, command: ui }],
+      100,
+    ).map((p) => p.pid),
+    [201, 202],
+  );
+});

@@ -88,20 +88,24 @@ const request = async (path, body, method = "POST") => {
 };
 const execute = (script) =>
   request(`/session/${session}/execute/sync`, { script, args: [] });
-async function until(fn, ms = 30000) {
+async function until(fn, ms = 30000, step = "readiness") {
   const deadline = performance.now() + ms;
   while (performance.now() < deadline) {
     const r = await fn();
     if (r) return r;
     await delay(50);
   }
-  throw new Error("Native readiness timeout");
+  throw new Error(`Native readiness timeout: ${step}`);
 }
 async function asyncExecute(expression) {
   await execute(
     `window.__perfResult=null; Promise.resolve(${expression}).then(value=>window.__perfResult={value},e=>window.__perfResult={error:String(e)});return true;`,
   );
-  const r = await until(() => execute("return window.__perfResult"), 120000);
+  const r = await until(
+    () => execute("return window.__perfResult"),
+    120000,
+    expression.slice(0, 80),
+  );
   if (r.error) throw new Error(r.error);
   return r.value;
 }
@@ -136,27 +140,50 @@ async function finishTrace() {
 }
 try {
   child.on("error", (e) => details.errors.push(String(e)));
-  await until(async () => {
-    try {
-      session = (
-        await request("/session", { capabilities: { alwaysMatch: {} } })
-      ).sessionId;
-      return session;
-    } catch {
-      if (child.exitCode !== null) throw new Error(`App exited: ${log}`);
-      return false;
-    }
-  });
-  await until(() =>
-    execute(
-      'return document.querySelector("[data-shell-ready]")?.getAttribute("data-shell-ready")==="true"',
-    ),
+  await until(
+    async () => {
+      try {
+        session = (
+          await request("/session", { capabilities: { alwaysMatch: {} } })
+        ).sessionId;
+        return session;
+      } catch {
+        if (child.exitCode !== null) throw new Error(`App exited: ${log}`);
+        return false;
+      }
+    },
+    30000,
+    "webdriver session",
+  );
+  await until(
+    () =>
+      execute(
+        'return document.querySelector("[data-shell-ready]")?.getAttribute("data-shell-ready")==="true"',
+      ),
+    30000,
+    "shell ready",
   );
   details.userAgent = await execute("return navigator.userAgent");
   metrics.coldStartMs = metric(
     performance.now() - started,
     process.platform === "darwin" ? 2000 : 3000,
   );
+  details.visibilityAtReadiness = await execute(
+    "return document.visibilityState",
+  );
+  // A hidden WKWebView (locked screen, occluded or never shown window) stops
+  // animation frames; rendering never completes and no measurement is valid.
+  // Fail with the cause instead of a later readiness timeout.
+  if (process.platform === "darwin")
+    await until(
+      () => execute('return document.visibilityState==="visible"'),
+      5000,
+      "window visible",
+    ).catch(() => {
+      throw new Error(
+        `Native window not visible (document ${details.visibilityAtReadiness}): unlocked GUI session with visible app window required`,
+      );
+    });
   if (process.platform === "win32") {
     const { chromium } = await import("playwright");
     const browser = await chromium.connectOverCDP(
@@ -175,6 +202,7 @@ try {
         `return [...document.querySelectorAll('[role="grid"]')].some(e=>e.textContent.includes("ui.test"))`,
       ),
     120000,
+    "grid rows painted",
   );
   metrics.openMs = metric(performance.now() - openStart, 3000);
   const overviewStart = performance.now();

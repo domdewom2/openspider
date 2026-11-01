@@ -14,6 +14,52 @@ function descendants(rows, rootPid) {
   }
   return rows.filter((p) => ids.has(p.pid));
 }
+// macOS Playwright WebKit starts WebContent as XPC services through launchd
+// (parent PID 1), so they are not descendants of the browser. Attribute them via
+// the browser bundle launched by this process tree and its start time. A live
+// browser of the same bundle outside this tree that could have started a
+// candidate makes attribution ambiguous: fail instead of guessing.
+const playwrightWebKit = /^(.+)\/Playwright\.app\/Contents\/MacOS\/Playwright$/;
+export function webkitXpcRenderers(rows, rootPid) {
+  const own = new Set(descendants(rows, rootPid).map((p) => p.pid));
+  const browsers = rows.flatMap((p) => {
+    const bundle = playwrightWebKit.exec(p.command)?.[1];
+    return bundle ? [{ ...p, bundle, own: own.has(p.pid) }] : [];
+  });
+  const result = [];
+  for (const bundle of new Set(
+    browsers.filter((b) => b.own).map((b) => b.bundle),
+  )) {
+    const service = `${bundle}/com.apple.WebKit.WebContent.xpc/Contents/MacOS/com.apple.WebKit.WebContent`;
+    const sameBundle = browsers.filter((b) => b.bundle === bundle);
+    for (const p of rows) {
+      if (
+        p.parent !== 1 ||
+        (p.command !== service && p.command !== `${service}.Development`)
+      )
+        continue;
+      if (!Number.isFinite(p.started)) continue;
+      const possible = sameBundle.filter((b) => b.started <= p.started);
+      if (!possible.some((b) => b.own)) continue;
+      if (possible.some((b) => !b.own))
+        throw new Error(
+          "Ambiguous WebKit renderer attribution: RSS measurement unavailable",
+        );
+      result.push(p);
+    }
+  }
+  return result;
+}
+const elapsedSeconds = (etime) => {
+  const [days, clock] = etime.includes("-") ? etime.split("-") : ["0", etime];
+  return (
+    Number(days) * 86400 +
+    clock
+      .split(":")
+      .reverse()
+      .reduce((n, v, i) => n + Number(v) * 60 ** i, 0)
+  );
+};
 export function rendererProcesses(rows, rootPid) {
   return descendants(rows, rootPid).filter((p) =>
     /--type=renderer|WebKitWebProcess|WPEWebProcess|com\.apple\.WebKit\.WebContent|msedgewebview2\.exe/i.test(
@@ -27,7 +73,7 @@ export function rendererProcesses(rows, rootPid) {
 export function rendererRss(rootPid = process.pid) {
   if (!Number.isInteger(rootPid) || rootPid < 1)
     throw new Error("Invalid RSS root PID");
-  let rows;
+  let rows, all;
   if (process.platform === "win32") {
     const script = `$all=@(Get-CimInstance Win32_Process); $ids=[System.Collections.Generic.HashSet[int]]::new(); [void]$ids.Add(${rootPid}); do { $changed=$false; foreach($p in $all) { if($ids.Contains([int]$p.ParentProcessId) -and $ids.Add([int]$p.ProcessId)) { $changed=$true } } } while($changed); ConvertTo-Json -Compress -InputObject @($all | Where-Object { $ids.Contains([int]$_.ProcessId) } | Select-Object ProcessId,ParentProcessId,WorkingSetSize,KernelModeTime,UserModeTime,CommandLine)`;
     rows = JSON.parse(
@@ -43,15 +89,31 @@ export function rendererRss(rootPid = process.pid) {
       command: p.CommandLine ?? "",
     }));
   } else {
-    rows = execFileSync("ps", ["-axo", "pid=,ppid=,rss=,time=,comm="], {
-      encoding: "utf8",
-      maxBuffer: 16 * 1024 * 1024,
-    })
+    const darwin = process.platform === "darwin";
+    all = execFileSync(
+      "ps",
+      [
+        "-axo",
+        darwin
+          ? "pid=,ppid=,rss=,time=,etime=,comm="
+          : "pid=,ppid=,rss=,time=,comm=",
+      ],
+      {
+        encoding: "utf8",
+        maxBuffer: 16 * 1024 * 1024,
+      },
+    )
       .trim()
       .split("\n")
       .map((line) => {
-        const [, pid, parent, rss, cpu, command] =
-          line.match(/^\s*(\d+)\s+(\d+)\s+(\d+)\s+([\d:.-]+)\s+(.*)$/) ?? [];
+        const [, pid, parent, rss, cpu, ...rest] =
+          line.match(
+            darwin
+              ? /^\s*(\d+)\s+(\d+)\s+(\d+)\s+([\d:.-]+)\s+([\d:-]+)\s+(.*)$/
+              : /^\s*(\d+)\s+(\d+)\s+(\d+)\s+([\d:.-]+)\s+(.*)$/,
+          ) ?? [];
+        const command = rest.at(-1);
+        const etime = darwin ? rest[0] : undefined;
         return {
           pid: Number(pid),
           parent: Number(parent),
@@ -60,10 +122,13 @@ export function rendererRss(rootPid = process.pid) {
             ?.split(":")
             .reverse()
             .reduce((n, v, i) => n + Number(v) * 60 ** i * 1000, 0),
+          // Relative start in seconds within this snapshot (macOS only).
+          ...(etime ? { started: -elapsedSeconds(etime) } : {}),
           command: command ?? "",
         };
       });
-    rows = descendants(rows, rootPid);
+    // Copies: command lines below must not replace executable paths in `all`.
+    rows = descendants(all, rootPid).map((p) => ({ ...p }));
     if (process.platform === "linux") {
       for (const p of rows) {
         try {
@@ -95,6 +160,11 @@ export function rendererRss(rootPid = process.pid) {
     }
   }
   let processes = rendererProcesses(rows, rootPid);
+  let scope = "renderer-processes";
+  if (!processes.length && process.platform === "darwin") {
+    processes = webkitXpcRenderers(all, rootPid);
+    scope = "webkit-xpc-renderers";
+  }
   if (process.platform === "linux") {
     const hz = Number(
       execFileSync("getconf", ["CLK_TCK"], { encoding: "utf8" }),
@@ -119,7 +189,7 @@ export function rendererRss(rootPid = process.pid) {
   return {
     scope: processes.some((p) => /msedgewebview2\.exe/i.test(p.command))
       ? "webview2-process-tree"
-      : "renderer-processes",
+      : scope,
     cpuMs: processes.every((p) => Number.isFinite(p.cpuMs))
       ? processes.reduce((n, p) => n + p.cpuMs, 0)
       : null,
