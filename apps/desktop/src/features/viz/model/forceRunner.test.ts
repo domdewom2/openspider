@@ -26,7 +26,8 @@ it("releases the settled worker VM and restarts dragging from final fixture posi
   const worker = TestWorker.all[0]!;
   runner.fix(2, 80, 90);
   const pos = new Float64Array(dto.nodes.length * 2).fill(20);
-  worker.onmessage!({ data: { type: "done", positions: pos, steps: 200, move: 0, reason: "converged" } } as MessageEvent<ForceReply>);
+  const velocities = new Float64Array(dto.nodes.length * 2).fill(0.01);
+  worker.onmessage!({ data: { type: "done", positions: pos, steps: 200, move: 0, reason: "converged", alpha: 0.002, velocities } } as MessageEvent<ForceReply>);
   expect(worker.terminated).toBe(true);
   expect(worker.onmessage).toBeNull();
   expect(listener).toHaveBeenCalledTimes(1);
@@ -37,6 +38,10 @@ it("releases the settled worker VM and restarts dragging from final fixture posi
   if (start.type !== "start") throw new Error("missing restart");
   expect(Array.from(start.input.init!)).toEqual(Array.from(pos));
   expect(Array.from(start.input.fixed!.slice(2, 6))).toEqual([100, 200, 80, 90]);
+  // The finished simulation resumes (alpha, steps, velocities); the drag itself follows as fix → reheat(0.3).
+  expect(start.input.resume).toMatchObject({ alpha: 0.002, steps: 200 });
+  expect(Array.from(start.input.resume!.velocities)).toEqual(Array.from(velocities));
+  expect(next.messages[1]).toEqual({ type: "fix", index: 1, x: 100, y: 200 });
   expect(input.fixed).toBeUndefined();
   runner.dispose(); runner.dispose();
   expect(next.terminated).toBe(true);

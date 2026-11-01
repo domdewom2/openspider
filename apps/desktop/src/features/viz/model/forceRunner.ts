@@ -1,5 +1,5 @@
 // Fensterseite des Layouts: startet den Worker (oder ohne Worker-Unterstützung denselben Treiber im Hauptthread).
-import { ForceDriver, type ForceInput, type ForceReply, type ForceRequest } from "./force";
+import { ForceDriver, type ForceInput, type ForceReply, type ForceRequest, type ForceResume } from "./force";
 
 export interface ForceRunner {
   start(input: ForceInput, maxMs?: number): void;
@@ -22,6 +22,7 @@ function workerRunner(listener: ForceListener): ForceRunner | null {
   }
   let current: Worker | null = worker;
   let input: ForceInput | null = null;
+  let resume: ForceResume | undefined;
   let maxMs: number | undefined;
   let disposed = false;
   const terminate = () => {
@@ -35,7 +36,10 @@ function workerRunner(listener: ForceListener): ForceRunner | null {
       if (target !== current || disposed) return;
       // A settled layout needs only its positions for the next interaction, not a live VM.
       if (input) input.init = e.data.positions;
-      if (e.data.type === "done") terminate();
+      if (e.data.type === "done") {
+        resume = { alpha: e.data.alpha, steps: e.data.steps, velocities: e.data.velocities };
+        terminate();
+      }
       listener(e.data);
     };
   };
@@ -45,8 +49,8 @@ function workerRunner(listener: ForceListener): ForceRunner | null {
     if (!current && input && (msg.type === "fix" || msg.type === "release")) {
       current = new Worker(new URL("./force.worker.ts", import.meta.url), { type: "module" });
       listen(current);
-      current.postMessage({ type: "start", input, maxMs } satisfies ForceRequest);
-      return;
+      // Resume the finished simulation, then apply the interaction exactly as before (fix/release + reheat 0.3).
+      current.postMessage({ type: "start", input: { ...input, resume }, maxMs } satisfies ForceRequest);
     }
     current?.postMessage(msg);
   };
@@ -55,6 +59,7 @@ function workerRunner(listener: ForceListener): ForceRunner | null {
       if (disposed) return;
       // Keep compact restart data; never mutate caller-owned arrays.
       input = { ...next, fixed: next.fixed?.slice() ?? new Float64Array(next.parent.length * 2).fill(Number.NaN) };
+      resume = undefined;
       maxMs = limit;
       if (!current) {
         current = new Worker(new URL("./force.worker.ts", import.meta.url), { type: "module" });
@@ -76,6 +81,7 @@ function workerRunner(listener: ForceListener): ForceRunner | null {
       disposed = true;
       terminate();
       input = null;
+      resume = undefined;
     },
   };
 }
