@@ -240,12 +240,13 @@ fn catalog_command<'a>(
         let s = catalog::session(app, &ctx)?;
         app.read_pool()
             .run_snapshot(s.key, move |file, _| {
-                // All report prerequisites belong to this one SQLite snapshot.
-                // Recomputing every filter for each report monopolized the read
-                // pool and delayed crawl control and status delivery.
-                let pending = os_analyze::views::filter_counts(file, &s.config)
-                    .map(|counts| os_export::reports::prereq::pending_analysis_filters(&counts))
-                    .unwrap_or_else(|_| vec!["analysis state unavailable".into()]);
+                // All report prerequisites belong to this one SQLite snapshot. Which
+                // filters await the crawl analysis needs no counting (M2-N25): a full
+                // count per data version kept a core and a read connection busy for
+                // the whole crawl and delayed crawl control and status delivery.
+                let pending =
+                    os_export::reports::prereq::pending_analysis_for_file(file, &s.config)
+                        .unwrap_or_else(|_| vec!["analysis state unavailable".into()]);
                 let groups = |kind| {
                     let entries = if kind == ExportKind::Bulk {
                         core::bulk_tables()
