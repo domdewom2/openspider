@@ -39,6 +39,15 @@ export interface ForceInput {
   /** Fixierte Positionen (NaN = frei); die erste Wurzel ist immer im Ursprung fixiert. */
   fixed?: Float64Array;
   params: ForceParams;
+  /** Endzustand einer beendeten Simulation (Neustart nach Beenden des Workers, UI-146): Alpha, Schrittzahl und
+   * Geschwindigkeiten werden übernommen, damit ein späteres Ziehen wie bisher nur mit `reheat` (0,3) anwärmt. */
+  resume?: ForceResume;
+}
+
+export interface ForceResume {
+  alpha: number;
+  steps: number;
+  velocities: Float64Array;
 }
 
 /** Kleiner, schneller, deterministischer Zufallsgenerator (mulberry32). */
@@ -78,6 +87,7 @@ export class ForceSim {
   private ccomx = new Float64Array(0);
   private ccomy = new Float64Array(0);
   private cells = 0;
+  private traversal = new Int32Array(0);
   private readonly nextPoint: Int32Array;
 
   constructor(input: ForceInput) {
@@ -107,6 +117,11 @@ export class ForceSim {
       this.fixed[root * 2 + 1] = 0;
     }
     this.place(input.init);
+    if (input.resume) {
+      this.alpha = input.resume.alpha;
+      this.steps = input.resume.steps;
+      this.vel.set(input.resume.velocities.subarray(0, this.n * 2));
+    }
   }
 
   /** Startpositionen: vorgegebene übernehmen, sonst um den Elternknoten in Federlänge (Zufall mit Startwert). */
@@ -355,7 +370,8 @@ export class ForceSim {
     const pos = this.pos;
     const vel = this.vel;
     const strength = -this.params.repulsion * this.alpha;
-    const stack = new Int32Array(this.cells);
+    if (this.traversal.length < this.cells) this.traversal = new Int32Array(this.cap);
+    const stack = this.traversal;
     for (let i = 0; i < this.n; i++) {
       const xi = pos[i * 2] as number;
       const yi = pos[i * 2 + 1] as number;
@@ -500,7 +516,7 @@ export type ForceRequest =
 
 export type ForceReply =
   | { type: "tick"; positions: Float64Array; steps: number; move: number }
-  | { type: "done"; positions: Float64Array; steps: number; move: number; reason: "converged" | "timeout" };
+  | { type: "done"; positions: Float64Array; steps: number; move: number; reason: "converged" | "timeout"; alpha: number; velocities: Float64Array };
 
 /**
  * Schrittweiser Treiber für Worker und Hauptthread: rechnet in Scheiben von `sliceMs`, meldet Zwischenstände und endet
@@ -528,8 +544,10 @@ export class ForceDriver {
         this.maxMs = msg.maxMs ?? MAX_LAYOUT_MS;
         this.started = this.now();
         this.paused = false;
-        this.finished = false;
-        this.kick();
+        // A resumed simulation is already finished: only the following fix/release reheats it (same as before the
+        // worker was released).
+        this.finished = !!msg.input.resume;
+        if (!this.finished) this.kick();
         break;
       case "fix":
         this.sim?.fix(msg.index, msg.x, msg.y);
@@ -582,7 +600,7 @@ export class ForceDriver {
     if (sim.converged() || this.now() - this.started >= this.maxMs) {
       this.running = false;
       this.finished = true;
-      this.post({ type: "done", positions, steps: sim.steps, move: sim.lastMove, reason: sim.converged() ? "converged" : "timeout" });
+      this.post({ type: "done", positions, steps: sim.steps, move: sim.lastMove, reason: sim.converged() ? "converged" : "timeout", alpha: sim.alpha, velocities: sim.vel.slice() });
       return;
     }
     this.post({ type: "tick", positions, steps: sim.steps, move: sim.lastMove });

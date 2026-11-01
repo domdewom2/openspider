@@ -42,7 +42,7 @@ export function ProgressBar({ label, value, max = 100 }: { label: string; value?
   const determinate = value !== undefined && value !== null;
   return (
     <RacProgressBar className="os-progress" aria-label={label} value={determinate ? value : undefined} maxValue={max} isIndeterminate={!determinate}>
-      {({ percentage }) => <div className="os-progress-track"><div className="os-progress-fill" style={determinate ? { width: `${percentage ?? 0}%` } : undefined} /></div>}
+      {({ percentage }) => <div className="os-progress-track"><div className="os-progress-fill" style={determinate ? { transform: `scaleX(${(percentage ?? 0) / 100})` } : undefined} /></div>}
     </RacProgressBar>
   );
 }

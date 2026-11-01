@@ -1,3 +1,4 @@
+import { useShallow } from "zustand/react/shallow";
 import { StatusCard } from "../statusbar/StatusCard";
 import { needsGuardConfirmation } from "../config/pages/auth-forms/session";
 import { useEffect, useRef, useState } from "react";
@@ -23,7 +24,12 @@ import "./header.css";
 
 export function Header() {
   const t = useT();
-  const status = useSession(s => s.crawl);
+  // Numeric telemetry belongs to StatusCard; controls only depend on permissions/phase.
+  const status = useSession(useShallow(s => s.crawl ? {
+    crawlId: s.crawl.crawlId, mode: s.crawl.mode, phase: s.crawl.phase,
+    endReason: s.crawl.endReason, activeThreads: s.crawl.activeThreads,
+    controllable: s.crawl.owner.controllable,
+  } : null));
   const { mode, url, scope } = useHeader();
   const [history, setHistory] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -43,7 +49,7 @@ export function Header() {
   const validSitemap = normalizedSitemap && /\.xml(?:\.gz)?$/i.test(new URL(normalizedSitemap).pathname);
   const running = status?.phase === "running";
   const resumable = status?.phase === "paused" || status?.phase === "incomplete";
-  const foreign = !!status && !status.owner.controllable;
+  const foreign = !!status && !status.controllable;
   const hasResults = !!status && status.phase !== "idle";
   const allowed = !busy && !pending && !foreign;
   const canStart = ["spider", "list", "apis"].includes(mode) && allowed && !running && !resumable && (mode === "spider" ? !!normalized : sitemapMode ? !!validSitemap : !!list.trim());

@@ -141,7 +141,11 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
           const ctx = off.getContext("2d");
           if (!ctx) return resolve(null);
           drawScene(ctx, live.current.scene, state(), live.current.style, factor);
-          off.toBlob((b) => resolve(b), "image/png");
+          off.toBlob((b) => {
+            off.width = 0;
+            off.height = 0;
+            resolve(b);
+          }, "image/png");
         }),
     }),
     [schedule, setTransform, state, transform],
@@ -177,6 +181,10 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
     return () => {
       ro?.disconnect();
       media?.removeEventListener?.("change", resize);
+      // Explicitly release native backing storage on close, including cached pages.
+      c.width = 0;
+      c.height = 0;
+      index.current = null;
     };
   }, [draw, schedule]);
 

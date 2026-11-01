@@ -205,6 +205,15 @@ export function DataGrid(props: DataGridProps) {
     ctx.textBaseline = "middle";
     metrics.current ??= new DisplayTextMetrics(measuring.current!);
     const measure = (text: string) => metrics.current!.width(text);
+    ctx.font = `${theme.fontSize}px ${theme.fontFamily}`;
+    metrics.current.setFont(ctx.font);
+    const painted = Array.from({ length: count + 1 }, (_, i) => layout.map(c => i === 0
+      ? { text: props.headerTitle?.(c.key) ?? (props.columnTitles?.[c.key] ?? c.key) + (c.sort ? ` ${c.sort === "asc" ? "↑" : "↓"} ${visible.filter(c => c.sort).findIndex(s => s.key === c.key) + 1}` : ""), color: t.text, align: "left" as const }
+      : cell(c.index, first + i - 1)));
+    metrics.current.prepare(painted.flatMap((row, i) => row.map((value, j) => {
+      const c = layout[j];
+      return { text: value.text, width: c.width - (c.key === "Address" ? (markerColumn === "Address" ? D.addressReserved : D.labelInset + D.addressAction) : i === 0 ? 30 : 16) };
+    })));
     for (let row = first - 1; row < first + count; row++) {
       const header = row === first - 1;
       const y = header ? 0 : headerHeight + (row - first) * rowHeight;
@@ -216,7 +225,7 @@ export function DataGrid(props: DataGridProps) {
       metrics.current.setFont(ctx.font);
       for (const c of layout) {
         ctx.save(); ctx.beginPath(); ctx.rect(c.clipLeft, y, c.clipRight - c.clipLeft, h); ctx.clip();
-        const value = header ? { text: props.headerTitle?.(c.key) ?? (props.columnTitles?.[c.key] ?? c.key) + (c.sort ? ` ${c.sort === "asc" ? "↑" : "↓"} ${visible.filter(c => c.sort).findIndex(s => s.key === c.key) + 1}` : ""), color: t.text, align: "left" as const } : cell(c.index, row);
+        const value = painted[row - first + 1][layout.indexOf(c)];
         const background = (value as { background?: string }).background;
         if (background) { ctx.fillStyle = background; ctx.fillRect(c.x, y, c.width, h); }
         const badge = header || background ? null : cellBadge(c.key, value.text, t);
@@ -233,7 +242,8 @@ export function DataGrid(props: DataGridProps) {
         }
         ctx.fillStyle = badge?.text ?? value.color; ctx.textAlign = value.align;
         const x = c.x + (value.align === "right" ? c.width - 8 : value.align === "center" ? c.width / 2 : c.key === "Address" && markerColumn === "Address" ? D.addressPadding : D.labelInset);
-        ctx.fillText(ellipsis(measure, value.text, c.width - (c.key === "Address" ? (markerColumn === "Address" ? D.addressReserved : D.labelInset + D.addressAction) : header ? 30 : 16)), x, y + h / 2);
+        const available = c.width - (c.key === "Address" ? (markerColumn === "Address" ? D.addressReserved : D.labelInset + D.addressAction) : header ? 30 : 16);
+        ctx.fillText(metrics.current.fits(value.text, available) ? value.text : ellipsis(measure, value.text, available), x, y + h / 2);
         if (!header && c.key === "Address") { ctx.textAlign = "right"; ctx.fillStyle = t["text.muted"]; ctx.fillText("⋮", c.x + c.width - D.labelInset, y + h / 2); }
         if (header) { ctx.textAlign = "right"; ctx.fillText("⋮", c.x + c.width - 8, y + h / 2); }
         ctx.strokeStyle = t.border; ctx.lineWidth = 1; ctx.strokeRect(c.x - 0.5, y - 0.5, c.width, h);
@@ -390,7 +400,9 @@ export function DataGrid(props: DataGridProps) {
       {Array.from({ length: Math.max(0, count) }, (_, index) => {
         const row = first + index, key = source.rowKey(row);
         return <div role="row" aria-rowindex={row + 2} aria-busy={key === undefined} aria-selected={key !== undefined && selection.has(key)} key={row}>
-          {layout.map(c => <div role="gridcell" id={cellId(c.index, row)} key={c.key} aria-colindex={c.index + 1}>{cell(c.index, row).text}</div>)}
+          {/* UI-144: the name text stays out of layout (WebKit retains text-width data for every distinct laid-out string). */}
+          {layout.map(c => <div role="gridcell" id={cellId(c.index, row)} key={c.key} aria-colindex={c.index + 1} aria-labelledby={`${cellId(c.index, row)}-t`}>
+            <span id={`${cellId(c.index, row)}-t`} hidden>{cell(c.index, row).text}</span></div>)}
         </div>;
       })}
     </div>

@@ -12,7 +12,10 @@ export function useStatusSnapshot(): SessionState {
   const [snapshot, setSnapshot] = useState(useSession.getState);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const off = useSession.subscribe(() => {
+    const off = useSession.subscribe((next, before) => {
+      if (next.crawl === before.crawl && next.mcp === before.mcp && next.throttled === before.throttled &&
+        next.crawlDelays === before.crawlDelays && next.openingCrawl === before.openingCrawl && next.openError === before.openError &&
+        next.analysis === before.analysis && next.analysisStarting === before.analysisStarting && next.analysisResult === before.analysisResult) return;
       timer ??= setTimeout(() => { timer = undefined; setSnapshot(useSession.getState()); }, 250);
     });
     setSnapshot(useSession.getState());
