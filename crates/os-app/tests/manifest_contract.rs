@@ -75,6 +75,8 @@ const CATALOG_4_4: &[&str] = &[
     "sidebar.overview",
     "sidebar.issues",
     "sidebar.issueExplain",
+    "sidebar.countStatus",
+    "sidebar.countCancel",
     "sidebar.siteStructure",
     "sidebar.responseTimes",
     "sidebar.segments",
