@@ -5006,13 +5006,44 @@
    "apps/desktop/src/features/statusbar/{Statusbar.tsx,Statusbar.test.tsx}",
    "apps/desktop/src/features/statusbar/i18n/{de,en}.ftl",
    "apps/desktop/src/features/notifications/i18n/{de,en}.ftl",
-   "apps/desktop/src/ipc/gen/{CrawlStatus,ViewHandle}.ts"
+   "apps/desktop/src/ipc/gen/{CrawlStatus,ViewHandle}.ts",
+   "docs/spec/05-ui.md (nur Querverweis UI-003 auf CRAWL-126)",
+   "docs/plan/M2-reports/fix-stop.md"
   ],
   "depends_on": [
    "M2-N02"
   ],
   "size": "M",
   "runner": "server+ci",
-  "prompt_notes": "int-23: Cherry-pick (-x) der FIX-E-Commits aus m3/fix-e (Basis M3 int-e, Spitze d9e96d9f) auf die integrierte M2-Linie nach N20/N21/N23; Fable int-22 Auflage a. Sequenzielle Überlagerung mit N04/N12/N15F/N20/N21/N23 über ERLAUBT in M2-check.py, kein paralleler Besitz. Reine M3-Berichtsdokumente nicht übernommen, Zusammenfassung in M2-reports/int-23.md. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+  "prompt_notes": "int-23: Cherry-pick (-x) der FIX-E-Commits aus m3/fix-e (Basis M3 int-e, Spitze d9e96d9f) auf die integrierte M2-Linie nach N20/N21/N23; Fable int-22 Auflage a. Sequenzielle Überlagerung mit N04/N12/N15F/N20/N21/N23 über ERLAUBT in M2-check.py, kein paralleler Besitz. Reine M3-Berichtsdokumente nicht übernommen, Zusammenfassung in M2-reports/int-23.md. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen. int-24: umfasst den Fix M2-FIX-STOP (m2/fix-stop, Fable approved): Stoppen aus Pausiert mit BEGIN IMMEDIATE und Merge nach dem Stopp, Statuszeile „Gestoppt – Datei wird zusammengeführt“, inkl. docs/spec/01-crawl.md, docs/spec/05-ui.md, M2-reports/fix-stop.md."
+ },
+ {
+  "id": "M2-FIX-TX",
+  "kind": "package",
+  "model": "opus",
+  "title": "Lesend-dann-schreibende Transaktionen mit BEGIN IMMEDIATE (Busy-Timeout greift während WAL-Rückführung), API-Einstellungen und Invalidierung in einem Commit",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "INTEG-010"
+  ],
+  "owns": [
+   "docs/spec/04-custom-integrations.md (nur INTEG-010)",
+   "crates/os-store/src/queries/api.rs (nur invalidate, replace_values)",
+   "crates/os-store/src/queries/detail_ext.rs (nur save_serp_edit)",
+   "crates/os-store/tests/fix_tx_immediate.rs",
+   "crates/os-analyze/src/analysis/steps/images.rs (nur Transaktionsgrenzen)",
+   "crates/os-analyze/src/aggregates/status.rs (nur on_config_changed)",
+   "crates/os-analyze/tests/fix_tx_immediate.rs",
+   "crates/os-app/src/commands/api.rs (nur api.setSettings)",
+   "crates/os-app/tests/{fix_tx_api,fix_tx_analysis}.rs",
+   "docs/plan/M2-reports/fix-tx.md"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "S",
+  "runner": "server+ci",
+  "prompt_notes": "int-24: Fable approved mit Auflagen (Doc-Kommentar invalidate erledigt; Pflichttests auf dem Integrationsbaum; Folgearbeit Sperrtest replace_values in M2-FIX-WAL). Minimale Fremdänderungen in Dateien früherer Wellen (I01, K09, D03, K03) laut K2-92-Tabelle in M2-reports/fix-tx.md. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
  }
 ]
