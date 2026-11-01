@@ -242,7 +242,8 @@ export function DataGrid(props: DataGridProps) {
         }
         ctx.fillStyle = badge?.text ?? value.color; ctx.textAlign = value.align;
         const x = c.x + (value.align === "right" ? c.width - 8 : value.align === "center" ? c.width / 2 : c.key === "Address" && markerColumn === "Address" ? D.addressPadding : D.labelInset);
-        ctx.fillText(ellipsis(measure, value.text, c.width - (c.key === "Address" ? (markerColumn === "Address" ? D.addressReserved : D.labelInset + D.addressAction) : header ? 30 : 16)), x, y + h / 2);
+        const available = c.width - (c.key === "Address" ? (markerColumn === "Address" ? D.addressReserved : D.labelInset + D.addressAction) : header ? 30 : 16);
+        ctx.fillText(metrics.current.fits(value.text, available) ? value.text : ellipsis(measure, value.text, available), x, y + h / 2);
         if (!header && c.key === "Address") { ctx.textAlign = "right"; ctx.fillStyle = t["text.muted"]; ctx.fillText("⋮", c.x + c.width - D.labelInset, y + h / 2); }
         if (header) { ctx.textAlign = "right"; ctx.fillText("⋮", c.x + c.width - 8, y + h / 2); }
         ctx.strokeStyle = t.border; ctx.lineWidth = 1; ctx.strokeRect(c.x - 0.5, y - 0.5, c.width, h);
