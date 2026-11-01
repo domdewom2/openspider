@@ -1,0 +1,37 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="1" time="1146.0963530000001">
+<testsuite name="perf.bench.ts" timestamp="2026-10-31T14:23:59.801Z" hostname="chromium" tests="1" failures="0" skipped="0" time="1143.804" errors="1">
+<testcase name="seeded random action soak and attributable renderer RSS" classname="perf.bench.ts" time="1143.804">
+<system-out>
+<![CDATA[[soak] chromium: warmup begins
+[soak] chromium: 1800s measurement begins
+
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-seeded-rando-7e9aa-d-attributable-renderer-RSS-chromium/error-context.md]]
+
+[[ATTACHMENT|../ui-perf-tests/perf.bench.ts-seeded-rando-7e9aa-d-attributable-renderer-RSS-chromium/error-context.md]]
+]]>
+</system-out>
+<error message="spawnSync ps ENOBUFS" type="Error">
+<![CDATA[  [chromium] › perf.bench.ts:214:1 › seeded random action soak and attributable renderer RSS ───────
+
+    Error: spawnSync ps ENOBUFS
+
+       at rss.mjs:25
+
+      23 |     }));
+      24 |   } else {
+    > 25 |     rows = execFileSync("ps", ["-axo", "pid=,ppid=,rss=,time=,args="], {
+         |            ^
+      26 |       encoding: "utf8",
+      27 |     })
+      28 |       .trim()
+        at rendererRss (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/rss.mjs:25:12)
+        at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:245:46
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-seeded-rando-7e9aa-d-attributable-renderer-RSS-chromium/error-context.md
+
+    Error Context: ../../../../target/ui-perf-tests/perf.bench.ts-seeded-rando-7e9aa-d-attributable-renderer-RSS-chromium/error-context.md
+]]>
+</error>
+</testcase>
+</testsuite>
+</testsuites>

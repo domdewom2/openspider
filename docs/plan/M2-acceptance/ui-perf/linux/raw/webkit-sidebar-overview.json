@@ -1,0 +1,14 @@
+{
+  "scenario": "sidebar-overview",
+  "engine": "webkit",
+  "size": "large",
+  "started_at": "2026-10-31T16:08:07.981Z",
+  "metrics": {},
+  "details": {
+    "error": "TimeoutError: page.waitForFunction: Timeout 30000ms exceeded.",
+    "scope": "Core RPC, excluding UI paint",
+    "original_report_timestamp": "2026-10-31T16:08:08.363Z",
+    "timestamp_alignment": "Playwright TestResult.startTime: playwright-named.json"
+  },
+  "passed": false
+}

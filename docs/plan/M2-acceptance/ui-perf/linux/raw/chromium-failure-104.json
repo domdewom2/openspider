@@ -1,0 +1,16 @@
+{
+  "scenario": "test-failure-104",
+  "engine": "chromium",
+  "size": "large",
+  "started_at": "2026-10-31T15:45:46.781Z",
+  "metrics": {},
+  "passed": false,
+  "details": {
+    "title": "cold browser context and open to first painted rows",
+    "errors": [
+      "Error: {\"browserContextToRowsMs\":{\"value\":43696.794014,\"budget\":3000,\"direction\":\"max\",\"passed\":false},\"openMs\":{\"value\":43467.79999999702,\"budget\":3000,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m"
+    ],
+    "original_report_timestamp": "2026-10-31T15:46:30.715Z",
+    "timestamp_alignment": "Playwright TestResult.startTime: playwright-named.json"
+  }
+}

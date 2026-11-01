@@ -1,0 +1,88 @@
+{
+  "scenario": "viz-memory",
+  "engine": "chromium",
+  "size": "large",
+  "started_at": "2026-10-31T15:45:37.008Z",
+  "metrics": {
+    "additionalRssBytes": {
+      "value": 287068160,
+      "budget": 314572800,
+      "direction": "max",
+      "passed": true
+    },
+    "freedBytes": {
+      "value": 271912960,
+      "budget": 1,
+      "direction": "min",
+      "passed": true
+    }
+  },
+  "details": {
+    "before": {
+      "scope": "renderer-processes",
+      "cpuMs": 300,
+      "bytes": 320983040,
+      "processes": [
+        {
+          "pid": 107005,
+          "bytes": 132866048
+        },
+        {
+          "pid": 107021,
+          "bytes": 74567680
+        },
+        {
+          "pid": 107027,
+          "bytes": 113549312
+        }
+      ]
+    },
+    "opened": {
+      "scope": "renderer-processes",
+      "cpuMs": 6730,
+      "bytes": 608051200,
+      "processes": [
+        {
+          "pid": 107005,
+          "bytes": 147095552
+        },
+        {
+          "pid": 107021,
+          "bytes": 271949824
+        },
+        {
+          "pid": 107027,
+          "bytes": 113831936
+        },
+        {
+          "pid": 107101,
+          "bytes": 75173888
+        }
+      ]
+    },
+    "closed": {
+      "scope": "renderer-processes",
+      "cpuMs": 400,
+      "bytes": 336138240,
+      "processes": [
+        {
+          "pid": 107005,
+          "bytes": 147132416
+        },
+        {
+          "pid": 107027,
+          "bytes": 113831936
+        },
+        {
+          "pid": 107101,
+          "bytes": 75173888
+        }
+      ]
+    },
+    "nodes": 10000,
+    "scope": "E2E-A browser indication; another blank page remains alive for attributable baseline",
+    "original_report_timestamp": "2026-10-31T15:45:46.665Z",
+    "timestamp_alignment": "Playwright TestResult.startTime: playwright-named.json"
+  },
+  "passed": true
+}

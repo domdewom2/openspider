@@ -1,0 +1,68 @@
+{
+  "scenario": "viz-memory",
+  "engine": "webkit",
+  "size": "large",
+  "started_at": "2026-10-31T16:18:55.643Z",
+  "metrics": {
+    "additionalRssBytes": {
+      "value": 549777408,
+      "budget": 314572800,
+      "direction": "max",
+      "passed": false
+    },
+    "freedBytes": {
+      "value": 63389696,
+      "budget": 1,
+      "direction": "min",
+      "passed": true
+    }
+  },
+  "details": {
+    "before": {
+      "scope": "renderer-processes",
+      "cpuMs": 270,
+      "bytes": 256786432,
+      "processes": [
+        {
+          "pid": 195452,
+          "bytes": 256786432
+        }
+      ]
+    },
+    "opened": {
+      "scope": "renderer-processes",
+      "cpuMs": 12930,
+      "bytes": 806563840,
+      "processes": [
+        {
+          "pid": 195452,
+          "bytes": 278265856
+        },
+        {
+          "pid": 195520,
+          "bytes": 528297984
+        }
+      ]
+    },
+    "closed": {
+      "scope": "renderer-processes",
+      "cpuMs": 12950,
+      "bytes": 743174144,
+      "processes": [
+        {
+          "pid": 195452,
+          "bytes": 278265856
+        },
+        {
+          "pid": 195520,
+          "bytes": 464908288
+        }
+      ]
+    },
+    "nodes": 10000,
+    "scope": "E2E-A browser indication; another blank page remains alive for attributable baseline",
+    "original_report_timestamp": "2026-10-31T16:18:55.958Z",
+    "timestamp_alignment": "Playwright TestResult.startTime: playwright.json"
+  },
+  "passed": false
+}

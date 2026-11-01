@@ -1,0 +1,254 @@
+{
+  "config": {
+    "argv": [
+      "/usr/bin/node",
+      "/home/build/Projects/openspider-wt/m2-u31/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      "e2e/perf/playwright.config.ts",
+      "--grep",
+      "real IPC"
+    ],
+    "configFile": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/playwright.config.ts",
+    "rootDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "testIgnore": [],
+        "testMatch": [
+          "*.bench.ts"
+        ],
+        "timeout": 180000
+      },
+      {
+        "outputDir": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "testIgnore": [],
+        "testMatch": [
+          "*.bench.ts"
+        ],
+        "timeout": 180000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "chromium",
+        "testDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "snapshotDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "testIgnore": [],
+        "testMatch": "*.bench.ts",
+        "timeout": 180000,
+        "use": {
+          "baseURL": "http://127.0.0.1:38731",
+          "viewport": {
+            "width": 1280,
+            "height": 800
+          },
+          "browserName": "chromium",
+          "launchOptions": {
+            "executablePath": "/home/build/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome"
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "chromium"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "webkit",
+        "testDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "snapshotDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "testIgnore": [],
+        "testMatch": "*.bench.ts",
+        "timeout": 180000,
+        "use": {
+          "baseURL": "http://127.0.0.1:38731",
+          "viewport": {
+            "width": 1280,
+            "height": 800
+          },
+          "browserName": "webkit"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "webkit"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/home/build/Projects/openspider-wt/m2-u31/target/loadtest/playwright.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "/home/build/Projects/openspider-wt/m2-u31/target/loadtest/junit.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": {
+      "command": "npx vite preview --config e2e/perf/vite.config.ts --host 127.0.0.1 --port 38731 --strictPort",
+      "url": "http://127.0.0.1:38731",
+      "reuseExistingServer": false
+    }
+  },
+  "suites": [
+    {
+      "title": "perf.bench.ts",
+      "file": "perf.bench.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "real IPC 200 rows × 20 columns p95 and payload",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 600000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 23041,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T16:11:46.748Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "ipc",
+                      "contentType": "application/json",
+                      "body": "eyJzY2VuYXJpbyI6ImlwYyIsInNpemUiOiJsYXJnZSIsInN0YXJ0ZWRfYXQiOiIyMDI2LTEwLTMxVDE2OjExOjQ2Ljc5N1oiLCJlbmdpbmUiOiJjaHJvbWl1bSIsIm1ldHJpY3MiOnsicm91bmR0cmlwUDk1TXMiOnsidmFsdWUiOjUuNzk5OTk5OTk3MDE5NzY4LCJidWRnZXQiOjMwLCJkaXJlY3Rpb24iOiJtYXgiLCJwYXNzZWQiOnRydWV9LCJwYXlsb2FkQnl0ZXMiOnsidmFsdWUiOjQ0MTg3LCJidWRnZXQiOjE1MDAwMCwiZGlyZWN0aW9uIjoibWF4IiwicGFzc2VkIjp0cnVlfX0sImRldGFpbHMiOnsic2FtcGxlcyI6W3sib2Zmc2V0Ijo0OTk5ODAwLCJtcyI6NS4yMDAwMDAwMDI5ODAyMzIsImJ5dGVzIjo0NDE4N30seyJvZmZzZXQiOjM2NjU4MDAsIm1zIjo1Ljc5OTk5OTk5NzAxOTc2OCwiYnl0ZXMiOjQyOTUzfSx7Im9mZnNldCI6NDYxMjQwMCwibXMiOjMuOTAwMDAwMDA1OTYwNDY0NSwiYnl0ZXMiOjQzNTgxfSx7Im9mZnNldCI6NTU5MjAwLCJtcyI6NS41LCJieXRlcyI6NDI3MzN9LHsib2Zmc2V0IjoxNTA1ODAwLCJtcyI6NS41LCJieXRlcyI6NDM1Njd9LHsib2Zmc2V0IjoyNDUyNDAwLCJtcyI6NC40MDAwMDAwMDU5NjA0NjQ1LCJieXRlcyI6NDQxODZ9LHsib2Zmc2V0IjozMzk5MDAwLCJtcyI6NS41LCJieXRlcyI6NDM1NjN9LHsib2Zmc2V0Ijo0MzQ1NjAwLCJtcyI6NS4zOTk5OTk5OTEwNTkzMDMsImJ5dGVzIjo0MzIyNH0seyJvZmZzZXQiOjI5MjQwMCwibXMiOjUuNzAwMDAwMDAyOTgwMjMyLCJieXRlcyI6NDM5NDV9LHsib2Zmc2V0IjoxMjM5MDAwLCJtcyI6NS42MDAwMDAwMDg5NDA2OTcsImJ5dGVzIjo0MzI1OH0seyJvZmZzZXQiOjIxODU2MDAsIm1zIjo1LjQwMDAwMDAwNTk2MDQ2NDUsImJ5dGVzIjo0MjY2MX0seyJvZmZzZXQiOjMxMzIyMDAsIm1zIjo1LjcwMDAwMDAwMjk4MDIzMiwiYnl0ZXMiOjQzNTMxfSx7Im9mZnNldCI6NDA3ODgwMCwibXMiOjUuMjk5OTk5OTk3MDE5NzY4LCJieXRlcyI6NDQxNzd9LHsib2Zmc2V0IjoyNTYwMCwibXMiOjUuNDAwMDAwMDA1OTYwNDY0NSwiYnl0ZXMiOjQzMTQ0fSx7Im9mZnNldCI6OTcyMjAwLCJtcyI6NS42MDAwMDAwMDg5NDA2OTcsImJ5dGVzIjo0MzQwNX0seyJvZmZzZXQiOjE5MTg4MDAsIm1zIjo1LjYwMDAwMDAwODk0MDY5NywiYnl0ZXMiOjQ0MTU0fSx7Im9mZnNldCI6Mjg2NTQwMCwibXMiOjUuMzk5OTk5OTkxMDU5MzAzLCJieXRlcyI6NDM1NTZ9LHsib2Zmc2V0IjozODEyMDAwLCJtcyI6NS41LCJieXRlcyI6NDI5Mzl9LHsib2Zmc2V0Ijo0NzU4NjAwLCJtcyI6NS4yOTk5OTk5OTcwMTk3NjgsImJ5dGVzIjo0Mjk4MH0seyJvZmZzZXQiOjcwNTQwMCwibXMiOjUuMjk5OTk5OTk3MDE5NzY4LCJieXRlcyI6NDI3Mzd9LHsib2Zmc2V0IjoxNjUyMDAwLCJtcyI6NS41OTk5OTk5OTQwMzk1MzU1LCJieXRlcyI6NDI5NTN9LHsib2Zmc2V0IjoyNTk4NjAwLCJtcyI6NS41LCJieXRlcyI6NDM1NDF9LHsib2Zmc2V0IjozNTQ1MjAwLCJtcyI6NS4yOTk5OTk5OTcwMTk3NjgsImJ5dGVzIjo0MzkxM30seyJvZmZzZXQiOjQ0OTE4MDAsIm1zIjo1LjY5OTk5OTk4ODA3OTA3MSwiYnl0ZXMiOjQzNTcxfSx7Im9mZnNldCI6NDM4NjAwLCJtcyI6NS4yOTk5OTk5OTcwMTk3NjgsImJ5dGVzIjo0MzM5OX0seyJvZmZzZXQiOjEzODUyMDAsIm1zIjo1LjUsImJ5dGVzIjo0Mzg1OH0seyJvZmZzZXQiOjIzMzE4MDAsIm1zIjo1LjU5OTk5OTk5NDAzOTUzNTUsImJ5dGVzIjo0MzUxNX0seyJvZmZzZXQiOjMyNzg0MDAsIm1zIjo1LjUsImJ5dGVzIjo0Mjk3NH0seyJvZmZzZXQiOjQyMjUwMDAsIm1zIjo1LjQwMDAwMDAwNTk2MDQ2NDUsImJ5dGVzIjo0Mjk1Mn0seyJvZmZzZXQiOjE3MTgwMCwibXMiOjUuNSwiYnl0ZXMiOjQyNzIxfSx7Im9mZnNldCI6MTExODQwMCwibXMiOjUuNSwiYnl0ZXMiOjQyOTU0fSx7Im9mZnNldCI6MjA2NTAwMCwibXMiOjUuNDAwMDAwMDA1OTYwNDY0NSwiYnl0ZXMiOjQzNTgzfSx7Im9mZnNldCI6MzAxMTYwMCwibXMiOjYsImJ5dGVzIjo0Mzg5NH0seyJvZmZzZXQiOjM5NTgyMDAsIm1zIjo1LjM5OTk5OTk5MTA1OTMwMywiYnl0ZXMiOjQzNTQyfSx7Im9mZnNldCI6NDkwNDgwMCwibXMiOjUuNSwiYnl0ZXMiOjQzMjQ4fSx7Im9mZnNldCI6ODUxNjAwLCJtcyI6NS41LCJieXRlcyI6NDMzNzR9LHsib2Zmc2V0IjoxNzk4MjAwLCJtcyI6NS41LCJieXRlcyI6NDMyMTJ9LHsib2Zmc2V0IjoyNzQ0ODAwLCJtcyI6NS4yMDAwMDAwMDI5ODAyMzIsImJ5dGVzIjo0MjY4N30seyJvZmZzZXQiOjM2OTE0MDAsIm1zIjo1LjgwMDAwMDAxMTkyMDkyOSwiYnl0ZXMiOjQzNTQxfSx7Im9mZnNldCI6NDYzODAwMCwibXMiOjUuMjAwMDAwMDAyOTgwMjMyLCJieXRlcyI6NDM4OTZ9LHsib2Zmc2V0Ijo1ODQ4MDAsIm1zIjo1LjY5OTk5OTk4ODA3OTA3MSwiYnl0ZXMiOjQzMzQyfSx7Im9mZnNldCI6MTUzMTQwMCwibXMiOjUuNjAwMDAwMDA4OTQwNjk3LCJieXRlcyI6NDQxNzh9LHsib2Zmc2V0IjoyNDc4MDAwLCJtcyI6NS42MDAwMDAwMDg5NDA2OTcsImJ5dGVzIjo0MzU5MH0seyJvZmZzZXQiOjM0MjQ2MDAsIm1zIjo1LjQwMDAwMDAwNTk2MDQ2NDUsImJ5dGVzIjo0MzQ5Nn0seyJvZmZzZXQiOjQzNzEyMDAsIm1zIjo1Ljc5OTk5OTk5NzAxOTc2OCwiYnl0ZXMiOjQyOTcwfSx7Im9mZnNldCI6MzE4MDAwLCJtcyI6NS42MDAwMDAwMDg5NDA2OTcsImJ5dGVzIjo0MzM1N30seyJvZmZzZXQiOjEyNjQ2MDAsIm1zIjo1LjcwMDAwMDAwMjk4MDIzMiwiYnl0ZXMiOjQyOTc0fSx7Im9mZnNldCI6MjIxMTIwMCwibXMiOjUuMzk5OTk5OTkxMDU5MzAzLCJieXRlcyI6NDI5NTZ9LHsib2Zmc2V0IjozMTU3ODAwLCJtcyI6NS41OTk5OTk5OTQwMzk1MzU1LCJieXRlcyI6NDQxMzR9LHsib2Zmc2V0Ijo0MTA0NDAwLCJtcyI6NS43OTk5OTk5OTcwMTk3NjgsImJ5dGVzIjo0MzYxMH1dLCJjb2x1bW5zIjpbIkFkZHJlc3MiLCJDb250ZW50IiwiU3RhdHVzIENvZGUiLCJTdGF0dXMiLCJJbmRleGFiaWxpdHkiLCJJbmRleGFiaWxpdHkgU3RhdHVzIiwiVGl0bGUgMSIsIlRpdGxlIDEgTGVuZ3RoIiwiVGl0bGUgMSBQaXhlbCBXaWR0aCIsIk1ldGEgRGVzY3JpcHRpb24gMSIsIk1ldGEgRGVzY3JpcHRpb24gMSBMZW5ndGgiLCJNZXRhIERlc2NyaXB0aW9uIDEgUGl4ZWwgV2lkdGgiLCJNZXRhIEtleXdvcmRzIDEiLCJNZXRhIEtleXdvcmRzIDEgTGVuZ3RoIiwiSDEtMSIsIkgxLTEgTGVuZ3RoIiwiSDItMSIsIkgyLTEgTGVuZ3RoIiwiTWV0YSBSb2JvdHMgMSIsIlgtUm9ib3RzLVRhZyAxIl0sInJvd3MiOjIwMH0sInBhc3NlZCI6dHJ1ZX0="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-0409dc6f336a9ac5582a",
+          "file": "perf.bench.ts",
+          "line": 130,
+          "column": 1
+        },
+        {
+          "title": "real IPC 200 rows × 20 columns p95 and payload",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 600000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 22758,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T16:12:10.634Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "ipc",
+                      "contentType": "application/json",
+                      "body": "eyJzY2VuYXJpbyI6ImlwYyIsInNpemUiOiJsYXJnZSIsInN0YXJ0ZWRfYXQiOiIyMDI2LTEwLTMxVDE2OjEyOjEwLjY5MloiLCJlbmdpbmUiOiJ3ZWJraXQiLCJtZXRyaWNzIjp7InJvdW5kdHJpcFA5NU1zIjp7InZhbHVlIjo2LCJidWRnZXQiOjMwLCJkaXJlY3Rpb24iOiJtYXgiLCJwYXNzZWQiOnRydWV9LCJwYXlsb2FkQnl0ZXMiOnsidmFsdWUiOjQ0MTg3LCJidWRnZXQiOjE1MDAwMCwiZGlyZWN0aW9uIjoibWF4IiwicGFzc2VkIjp0cnVlfX0sImRldGFpbHMiOnsic2FtcGxlcyI6W3sib2Zmc2V0Ijo0OTk5ODAwLCJtcyI6NSwiYnl0ZXMiOjQ0MTg3fSx7Im9mZnNldCI6MzY2NTgwMCwibXMiOjYsImJ5dGVzIjo0Mjk1M30seyJvZmZzZXQiOjQ2MTI0MDAsIm1zIjo2LCJieXRlcyI6NDM1ODF9LHsib2Zmc2V0Ijo1NTkyMDAsIm1zIjo2LCJieXRlcyI6NDI3MzN9LHsib2Zmc2V0IjoxNTA1ODAwLCJtcyI6NiwiYnl0ZXMiOjQzNTY3fSx7Im9mZnNldCI6MjQ1MjQwMCwibXMiOjYsImJ5dGVzIjo0NDE4Nn0seyJvZmZzZXQiOjMzOTkwMDAsIm1zIjo2LCJieXRlcyI6NDM1NjN9LHsib2Zmc2V0Ijo0MzQ1NjAwLCJtcyI6NiwiYnl0ZXMiOjQzMjI0fSx7Im9mZnNldCI6MjkyNDAwLCJtcyI6NywiYnl0ZXMiOjQzOTQ1fSx7Im9mZnNldCI6MTIzOTAwMCwibXMiOjYsImJ5dGVzIjo0MzI1OH0seyJvZmZzZXQiOjIxODU2MDAsIm1zIjo2LCJieXRlcyI6NDI2NjF9LHsib2Zmc2V0IjozMTMyMjAwLCJtcyI6NiwiYnl0ZXMiOjQzNTMxfSx7Im9mZnNldCI6NDA3ODgwMCwibXMiOjYsImJ5dGVzIjo0NDE3N30seyJvZmZzZXQiOjI1NjAwLCJtcyI6NSwiYnl0ZXMiOjQzMTQ0fSx7Im9mZnNldCI6OTcyMjAwLCJtcyI6NiwiYnl0ZXMiOjQzNDA1fSx7Im9mZnNldCI6MTkxODgwMCwibXMiOjYsImJ5dGVzIjo0NDE1NH0seyJvZmZzZXQiOjI4NjU0MDAsIm1zIjo1LCJieXRlcyI6NDM1NTZ9LHsib2Zmc2V0IjozODEyMDAwLCJtcyI6NiwiYnl0ZXMiOjQyOTM5fSx7Im9mZnNldCI6NDc1ODYwMCwibXMiOjYsImJ5dGVzIjo0Mjk4MH0seyJvZmZzZXQiOjcwNTQwMCwibXMiOjYsImJ5dGVzIjo0MjczN30seyJvZmZzZXQiOjE2NTIwMDAsIm1zIjo2LCJieXRlcyI6NDI5NTN9LHsib2Zmc2V0IjoyNTk4NjAwLCJtcyI6NSwiYnl0ZXMiOjQzNTQxfSx7Im9mZnNldCI6MzU0NTIwMCwibXMiOjYsImJ5dGVzIjo0MzkxM30seyJvZmZzZXQiOjQ0OTE4MDAsIm1zIjo2LCJieXRlcyI6NDM1NzF9LHsib2Zmc2V0Ijo0Mzg2MDAsIm1zIjo3LCJieXRlcyI6NDMzOTl9LHsib2Zmc2V0IjoxMzg1MjAwLCJtcyI6NiwiYnl0ZXMiOjQzODU4fSx7Im9mZnNldCI6MjMzMTgwMCwibXMiOjYsImJ5dGVzIjo0MzUxNX0seyJvZmZzZXQiOjMyNzg0MDAsIm1zIjo2LCJieXRlcyI6NDI5NzR9LHsib2Zmc2V0Ijo0MjI1MDAwLCJtcyI6NiwiYnl0ZXMiOjQyOTUyfSx7Im9mZnNldCI6MTcxODAwLCJtcyI6NiwiYnl0ZXMiOjQyNzIxfSx7Im9mZnNldCI6MTExODQwMCwibXMiOjYsImJ5dGVzIjo0Mjk1NH0seyJvZmZzZXQiOjIwNjUwMDAsIm1zIjo2LCJieXRlcyI6NDM1ODN9LHsib2Zmc2V0IjozMDExNjAwLCJtcyI6NSwiYnl0ZXMiOjQzODk0fSx7Im9mZnNldCI6Mzk1ODIwMCwibXMiOjYsImJ5dGVzIjo0MzU0Mn0seyJvZmZzZXQiOjQ5MDQ4MDAsIm1zIjo2LCJieXRlcyI6NDMyNDh9LHsib2Zmc2V0Ijo4NTE2MDAsIm1zIjo2LCJieXRlcyI6NDMzNzR9LHsib2Zmc2V0IjoxNzk4MjAwLCJtcyI6NiwiYnl0ZXMiOjQzMjEyfSx7Im9mZnNldCI6Mjc0NDgwMCwibXMiOjYsImJ5dGVzIjo0MjY4N30seyJvZmZzZXQiOjM2OTE0MDAsIm1zIjo2LCJieXRlcyI6NDM1NDF9LHsib2Zmc2V0Ijo0NjM4MDAwLCJtcyI6NiwiYnl0ZXMiOjQzODk2fSx7Im9mZnNldCI6NTg0ODAwLCJtcyI6NiwiYnl0ZXMiOjQzMzQyfSx7Im9mZnNldCI6MTUzMTQwMCwibXMiOjYsImJ5dGVzIjo0NDE3OH0seyJvZmZzZXQiOjI0NzgwMDAsIm1zIjo2LCJieXRlcyI6NDM1OTB9LHsib2Zmc2V0IjozNDI0NjAwLCJtcyI6NiwiYnl0ZXMiOjQzNDk2fSx7Im9mZnNldCI6NDM3MTIwMCwibXMiOjYsImJ5dGVzIjo0Mjk3MH0seyJvZmZzZXQiOjMxODAwMCwibXMiOjYsImJ5dGVzIjo0MzM1N30seyJvZmZzZXQiOjEyNjQ2MDAsIm1zIjo2LCJieXRlcyI6NDI5NzR9LHsib2Zmc2V0IjoyMjExMjAwLCJtcyI6NiwiYnl0ZXMiOjQyOTU2fSx7Im9mZnNldCI6MzE1NzgwMCwibXMiOjYsImJ5dGVzIjo0NDEzNH0seyJvZmZzZXQiOjQxMDQ0MDAsIm1zIjo1LCJieXRlcyI6NDM2MTB9XSwiY29sdW1ucyI6WyJBZGRyZXNzIiwiQ29udGVudCIsIlN0YXR1cyBDb2RlIiwiU3RhdHVzIiwiSW5kZXhhYmlsaXR5IiwiSW5kZXhhYmlsaXR5IFN0YXR1cyIsIlRpdGxlIDEiLCJUaXRsZSAxIExlbmd0aCIsIlRpdGxlIDEgUGl4ZWwgV2lkdGgiLCJNZXRhIERlc2NyaXB0aW9uIDEiLCJNZXRhIERlc2NyaXB0aW9uIDEgTGVuZ3RoIiwiTWV0YSBEZXNjcmlwdGlvbiAxIFBpeGVsIFdpZHRoIiwiTWV0YSBLZXl3b3JkcyAxIiwiTWV0YSBLZXl3b3JkcyAxIExlbmd0aCIsIkgxLTEiLCJIMS0xIExlbmd0aCIsIkgyLTEiLCJIMi0xIExlbmd0aCIsIk1ldGEgUm9ib3RzIDEiLCJYLVJvYm90cy1UYWcgMSJdLCJyb3dzIjoyMDB9LCJwYXNzZWQiOnRydWV9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-fd5fab317aa5ca235c71",
+          "file": "perf.bench.ts",
+          "line": 130,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-31T16:11:45.250Z",
+    "duration": 48585.576,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

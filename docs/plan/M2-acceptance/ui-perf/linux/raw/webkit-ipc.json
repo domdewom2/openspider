@@ -1,0 +1,300 @@
+{
+  "scenario": "ipc",
+  "size": "large",
+  "started_at": "2026-10-31T16:12:10.634Z",
+  "engine": "webkit",
+  "metrics": {
+    "roundtripP95Ms": {
+      "value": 6,
+      "budget": 30,
+      "direction": "max",
+      "passed": true
+    },
+    "payloadBytes": {
+      "value": 44187,
+      "budget": 150000,
+      "direction": "max",
+      "passed": true
+    }
+  },
+  "details": {
+    "samples": [
+      {
+        "offset": 4999800,
+        "ms": 5,
+        "bytes": 44187
+      },
+      {
+        "offset": 3665800,
+        "ms": 6,
+        "bytes": 42953
+      },
+      {
+        "offset": 4612400,
+        "ms": 6,
+        "bytes": 43581
+      },
+      {
+        "offset": 559200,
+        "ms": 6,
+        "bytes": 42733
+      },
+      {
+        "offset": 1505800,
+        "ms": 6,
+        "bytes": 43567
+      },
+      {
+        "offset": 2452400,
+        "ms": 6,
+        "bytes": 44186
+      },
+      {
+        "offset": 3399000,
+        "ms": 6,
+        "bytes": 43563
+      },
+      {
+        "offset": 4345600,
+        "ms": 6,
+        "bytes": 43224
+      },
+      {
+        "offset": 292400,
+        "ms": 7,
+        "bytes": 43945
+      },
+      {
+        "offset": 1239000,
+        "ms": 6,
+        "bytes": 43258
+      },
+      {
+        "offset": 2185600,
+        "ms": 6,
+        "bytes": 42661
+      },
+      {
+        "offset": 3132200,
+        "ms": 6,
+        "bytes": 43531
+      },
+      {
+        "offset": 4078800,
+        "ms": 6,
+        "bytes": 44177
+      },
+      {
+        "offset": 25600,
+        "ms": 5,
+        "bytes": 43144
+      },
+      {
+        "offset": 972200,
+        "ms": 6,
+        "bytes": 43405
+      },
+      {
+        "offset": 1918800,
+        "ms": 6,
+        "bytes": 44154
+      },
+      {
+        "offset": 2865400,
+        "ms": 5,
+        "bytes": 43556
+      },
+      {
+        "offset": 3812000,
+        "ms": 6,
+        "bytes": 42939
+      },
+      {
+        "offset": 4758600,
+        "ms": 6,
+        "bytes": 42980
+      },
+      {
+        "offset": 705400,
+        "ms": 6,
+        "bytes": 42737
+      },
+      {
+        "offset": 1652000,
+        "ms": 6,
+        "bytes": 42953
+      },
+      {
+        "offset": 2598600,
+        "ms": 5,
+        "bytes": 43541
+      },
+      {
+        "offset": 3545200,
+        "ms": 6,
+        "bytes": 43913
+      },
+      {
+        "offset": 4491800,
+        "ms": 6,
+        "bytes": 43571
+      },
+      {
+        "offset": 438600,
+        "ms": 7,
+        "bytes": 43399
+      },
+      {
+        "offset": 1385200,
+        "ms": 6,
+        "bytes": 43858
+      },
+      {
+        "offset": 2331800,
+        "ms": 6,
+        "bytes": 43515
+      },
+      {
+        "offset": 3278400,
+        "ms": 6,
+        "bytes": 42974
+      },
+      {
+        "offset": 4225000,
+        "ms": 6,
+        "bytes": 42952
+      },
+      {
+        "offset": 171800,
+        "ms": 6,
+        "bytes": 42721
+      },
+      {
+        "offset": 1118400,
+        "ms": 6,
+        "bytes": 42954
+      },
+      {
+        "offset": 2065000,
+        "ms": 6,
+        "bytes": 43583
+      },
+      {
+        "offset": 3011600,
+        "ms": 5,
+        "bytes": 43894
+      },
+      {
+        "offset": 3958200,
+        "ms": 6,
+        "bytes": 43542
+      },
+      {
+        "offset": 4904800,
+        "ms": 6,
+        "bytes": 43248
+      },
+      {
+        "offset": 851600,
+        "ms": 6,
+        "bytes": 43374
+      },
+      {
+        "offset": 1798200,
+        "ms": 6,
+        "bytes": 43212
+      },
+      {
+        "offset": 2744800,
+        "ms": 6,
+        "bytes": 42687
+      },
+      {
+        "offset": 3691400,
+        "ms": 6,
+        "bytes": 43541
+      },
+      {
+        "offset": 4638000,
+        "ms": 6,
+        "bytes": 43896
+      },
+      {
+        "offset": 584800,
+        "ms": 6,
+        "bytes": 43342
+      },
+      {
+        "offset": 1531400,
+        "ms": 6,
+        "bytes": 44178
+      },
+      {
+        "offset": 2478000,
+        "ms": 6,
+        "bytes": 43590
+      },
+      {
+        "offset": 3424600,
+        "ms": 6,
+        "bytes": 43496
+      },
+      {
+        "offset": 4371200,
+        "ms": 6,
+        "bytes": 42970
+      },
+      {
+        "offset": 318000,
+        "ms": 6,
+        "bytes": 43357
+      },
+      {
+        "offset": 1264600,
+        "ms": 6,
+        "bytes": 42974
+      },
+      {
+        "offset": 2211200,
+        "ms": 6,
+        "bytes": 42956
+      },
+      {
+        "offset": 3157800,
+        "ms": 6,
+        "bytes": 44134
+      },
+      {
+        "offset": 4104400,
+        "ms": 5,
+        "bytes": 43610
+      }
+    ],
+    "columns": [
+      "Address",
+      "Content",
+      "Status Code",
+      "Status",
+      "Indexability",
+      "Indexability Status",
+      "Title 1",
+      "Title 1 Length",
+      "Title 1 Pixel Width",
+      "Meta Description 1",
+      "Meta Description 1 Length",
+      "Meta Description 1 Pixel Width",
+      "Meta Keywords 1",
+      "Meta Keywords 1 Length",
+      "H1-1",
+      "H1-1 Length",
+      "H2-1",
+      "H2-1 Length",
+      "Meta Robots 1",
+      "X-Robots-Tag 1"
+    ],
+    "rows": 200,
+    "original_report_timestamp": "2026-10-31T16:12:10.692Z",
+    "timestamp_alignment": "Playwright TestResult.startTime: playwright-range.json"
+  },
+  "passed": true
+}

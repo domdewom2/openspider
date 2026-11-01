@@ -1,0 +1,1779 @@
+{
+  "size": "large",
+  "started_at": "2026-10-31T14:03:31.117Z",
+  "passed": false,
+  "reports": [
+    {
+      "scenario": "crawl-load",
+      "size": "large",
+      "started_at": "2026-10-31T14:12:45.249Z",
+      "engine": "chromium",
+      "metrics": {
+        "clickP95Ms": {
+          "value": 40.400000005960464,
+          "budget": 100,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "eventsPerSecond": {
+          "value": 1.8587023543501955,
+          "budget": 10,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "fixtureUrlsPerSecond": {
+          "value": 234.4776449034045,
+          "budget": 200,
+          "direction": "min",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "idleUiCpuPercent": {
+          "value": 19.050029971327223,
+          "budget": 15,
+          "direction": "max",
+          "passed": false,
+          "regression": {
+            "status": "no-baseline"
+          }
+        }
+      },
+      "details": {
+        "ticks": [
+          {
+            "at": 5891.5999999940395,
+            "phase": "running"
+          },
+          {
+            "at": 6490.5,
+            "phase": "running"
+          },
+          {
+            "at": 6991.0999999940395,
+            "phase": "running"
+          },
+          {
+            "at": 7494.29999999702,
+            "phase": "running"
+          },
+          {
+            "at": 8090.399999991059,
+            "phase": "running"
+          },
+          {
+            "at": 8590.79999999702,
+            "phase": "running"
+          },
+          {
+            "at": 9090.89999999106,
+            "phase": "running"
+          },
+          {
+            "at": 9697.89999999106,
+            "phase": "running"
+          },
+          {
+            "at": 10249.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 10791.29999999702,
+            "phase": "running"
+          },
+          {
+            "at": 11291.89999999106,
+            "phase": "running"
+          },
+          {
+            "at": 11791.29999999702,
+            "phase": "running"
+          },
+          {
+            "at": 12291.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 12891.09999999404,
+            "phase": "running"
+          },
+          {
+            "at": 13391.29999999702,
+            "phase": "running"
+          },
+          {
+            "at": 13990.79999999702,
+            "phase": "running"
+          },
+          {
+            "at": 14492.39999999106,
+            "phase": "running"
+          },
+          {
+            "at": 14991.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 15497.20000000298,
+            "phase": "running"
+          },
+          {
+            "at": 16002.09999999404,
+            "phase": "running"
+          },
+          {
+            "at": 16514.29999999702,
+            "phase": "running"
+          },
+          {
+            "at": 17092.89999999106,
+            "phase": "running"
+          },
+          {
+            "at": 17622.09999999404,
+            "phase": "running"
+          },
+          {
+            "at": 18092.09999999404,
+            "phase": "running"
+          },
+          {
+            "at": 18691.39999999106,
+            "phase": "running"
+          },
+          {
+            "at": 19191.39999999106,
+            "phase": "running"
+          },
+          {
+            "at": 19790.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 20391.09999999404,
+            "phase": "running"
+          },
+          {
+            "at": 20891.29999999702,
+            "phase": "running"
+          },
+          {
+            "at": 21391.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 21953.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 22490.89999999106,
+            "phase": "running"
+          },
+          {
+            "at": 22991,
+            "phase": "running"
+          },
+          {
+            "at": 23491.89999999106,
+            "phase": "running"
+          },
+          {
+            "at": 24076.59999999404,
+            "phase": "running"
+          },
+          {
+            "at": 24593.09999999404,
+            "phase": "running"
+          },
+          {
+            "at": 25091.79999999702,
+            "phase": "running"
+          },
+          {
+            "at": 25592.79999999702,
+            "phase": "running"
+          },
+          {
+            "at": 26102.09999999404,
+            "phase": "running"
+          },
+          {
+            "at": 26711.5,
+            "phase": "running"
+          },
+          {
+            "at": 27191.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 27786.09999999404,
+            "phase": "running"
+          },
+          {
+            "at": 28291.09999999404,
+            "phase": "running"
+          },
+          {
+            "at": 28801.20000000298,
+            "phase": "running"
+          },
+          {
+            "at": 29392,
+            "phase": "running"
+          },
+          {
+            "at": 29891,
+            "phase": "running"
+          },
+          {
+            "at": 30445.5,
+            "phase": "running"
+          },
+          {
+            "at": 30900.5,
+            "phase": "running"
+          },
+          {
+            "at": 31522.09999999404,
+            "phase": "running"
+          },
+          {
+            "at": 31990.89999999106,
+            "phase": "running"
+          },
+          {
+            "at": 32492.29999999702,
+            "phase": "running"
+          },
+          {
+            "at": 33026.89999999106,
+            "phase": "running"
+          },
+          {
+            "at": 33591.89999999106,
+            "phase": "running"
+          },
+          {
+            "at": 34190.79999999702,
+            "phase": "running"
+          },
+          {
+            "at": 34691.29999999702,
+            "phase": "running"
+          },
+          {
+            "at": 35290.79999999702,
+            "phase": "running"
+          },
+          {
+            "at": 35791,
+            "phase": "running"
+          },
+          {
+            "at": 36291.20000000298,
+            "phase": "running"
+          },
+          {
+            "at": 36791.39999999106,
+            "phase": "running"
+          },
+          {
+            "at": 37391.20000000298,
+            "phase": "running"
+          },
+          {
+            "at": 37891.29999999702,
+            "phase": "running"
+          },
+          {
+            "at": 38391.39999999106,
+            "phase": "running"
+          },
+          {
+            "at": 38891.5,
+            "phase": "running"
+          },
+          {
+            "at": 39391.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 39991.39999999106,
+            "phase": "running"
+          },
+          {
+            "at": 40491.39999999106,
+            "phase": "running"
+          },
+          {
+            "at": 40991.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 41591.59999999404,
+            "phase": "running"
+          },
+          {
+            "at": 42191.59999999404,
+            "phase": "running"
+          },
+          {
+            "at": 42791.39999999106,
+            "phase": "running"
+          },
+          {
+            "at": 43390.59999999404,
+            "phase": "running"
+          },
+          {
+            "at": 43891.29999999702,
+            "phase": "running"
+          },
+          {
+            "at": 44490.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 44991,
+            "phase": "running"
+          },
+          {
+            "at": 45491.5,
+            "phase": "running"
+          },
+          {
+            "at": 46091,
+            "phase": "running"
+          },
+          {
+            "at": 46690.5,
+            "phase": "running"
+          },
+          {
+            "at": 47191.5,
+            "phase": "running"
+          },
+          {
+            "at": 47691.29999999702,
+            "phase": "running"
+          },
+          {
+            "at": 48191.59999999404,
+            "phase": "running"
+          },
+          {
+            "at": 48790.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 49291,
+            "phase": "running"
+          },
+          {
+            "at": 49803,
+            "phase": "running"
+          },
+          {
+            "at": 50305.39999999106,
+            "phase": "running"
+          },
+          {
+            "at": 50890.79999999702,
+            "phase": "running"
+          },
+          {
+            "at": 51391.20000000298,
+            "phase": "running"
+          },
+          {
+            "at": 51903,
+            "phase": "running"
+          },
+          {
+            "at": 52490.89999999106,
+            "phase": "running"
+          },
+          {
+            "at": 52991.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 53491.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 54083.79999999702,
+            "phase": "running"
+          },
+          {
+            "at": 54591.20000000298,
+            "phase": "running"
+          },
+          {
+            "at": 55091.29999999702,
+            "phase": "running"
+          },
+          {
+            "at": 55591.59999999404,
+            "phase": "running"
+          },
+          {
+            "at": 56103.09999999404,
+            "phase": "running"
+          },
+          {
+            "at": 56691,
+            "phase": "running"
+          },
+          {
+            "at": 57191,
+            "phase": "running"
+          },
+          {
+            "at": 57691.5,
+            "phase": "running"
+          },
+          {
+            "at": 58198.20000000298,
+            "phase": "running"
+          },
+          {
+            "at": 58791.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 59391.5,
+            "phase": "running"
+          },
+          {
+            "at": 59891.39999999106,
+            "phase": "running"
+          },
+          {
+            "at": 60415.39999999106,
+            "phase": "running"
+          },
+          {
+            "at": 60991.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 61491.70000000298,
+            "phase": "running"
+          },
+          {
+            "at": 62091.20000000298,
+            "phase": "running"
+          },
+          {
+            "at": 62592,
+            "phase": "running"
+          },
+          {
+            "at": 63092.09999999404,
+            "phase": "running"
+          },
+          {
+            "at": 63601.79999999702,
+            "phase": "running"
+          },
+          {
+            "at": 64191,
+            "phase": "running"
+          },
+          {
+            "at": 64691.29999999702,
+            "phase": "running"
+          },
+          {
+            "at": 65191.59999999404,
+            "phase": "running"
+          },
+          {
+            "at": 65791.5,
+            "phase": "running"
+          },
+          {
+            "at": 66291.39999999106,
+            "phase": "running"
+          },
+          {
+            "at": 66890.79999999702,
+            "phase": "running"
+          },
+          {
+            "at": 67491.39999999106,
+            "phase": "running"
+          },
+          {
+            "at": 68050.39999999106,
+            "phase": "running"
+          },
+          {
+            "at": 68591.09999999404,
+            "phase": "running"
+          },
+          {
+            "at": 69091.59999999404,
+            "phase": "running"
+          }
+        ],
+        "clicks": [
+          24.799999997019768,
+          28.899999991059303,
+          23.399999991059303,
+          25.5,
+          24.200000002980232,
+          20.799999997019768,
+          31.400000005960464,
+          22,
+          27.5,
+          39.3999999910593,
+          26.5,
+          30.200000002980232,
+          25.399999991059303,
+          25.599999994039536,
+          23,
+          25.200000002980232,
+          45.70000000298023,
+          37.8999999910593,
+          16.900000005960464,
+          31.200000002980232,
+          18.099999994039536,
+          40.400000005960464,
+          33.30000001192093,
+          29,
+          18.5,
+          33.900000005960464,
+          13.799999997019768,
+          17.100000008940697,
+          15.799999997019768,
+          26.599999994039536
+        ],
+        "state": {
+          "activeThreads": 20,
+          "avgRate": 234.67655317956505,
+          "avgResponseTime": 0.0819090399701158,
+          "crawlId": "01a1924d-36e1-725f-bd3c-b35ac9123f47",
+          "crawled": 16062,
+          "discovered": 200002,
+          "elapsedS": 68,
+          "endReason": null,
+          "etaS": 751,
+          "fileBytes": 70008832,
+          "memoryLimitBytes": 32914487296,
+          "memoryStage": "normal",
+          "memoryUsedBytes": 289329152,
+          "mode": "spider",
+          "owner": {
+            "controllable": true,
+            "kind": "app",
+            "live": true,
+            "pid": 3959142
+          },
+          "pausedS": 0,
+          "percent": 8,
+          "phase": "running",
+          "queued": 183919,
+          "rate": 244.9
+        },
+        "intervals": [
+          598.9000000059605,
+          500.59999999403954,
+          503.20000000298023,
+          596.0999999940395,
+          500.40000000596046,
+          500.09999999403954,
+          607,
+          551.8000000119209,
+          541.5999999940395,
+          500.59999999403954,
+          499.40000000596046,
+          500.40000000596046,
+          599.3999999910593,
+          500.20000000298023,
+          599.5,
+          501.59999999403954,
+          499.30000001192093,
+          505.5,
+          504.8999999910593,
+          512.2000000029802,
+          578.5999999940395,
+          529.2000000029802,
+          470,
+          599.2999999970198,
+          500,
+          599.3000000119209,
+          600.3999999910593,
+          500.20000000298023,
+          500.40000000596046,
+          562,
+          537.1999999880791,
+          500.1000000089407,
+          500.8999999910593,
+          584.7000000029802,
+          516.5,
+          498.70000000298023,
+          501,
+          509.29999999701977,
+          609.4000000059605,
+          480.20000000298023,
+          594.3999999910593,
+          505,
+          510.1000000089407,
+          590.7999999970198,
+          499,
+          554.5,
+          455,
+          621.5999999940395,
+          468.79999999701977,
+          501.40000000596046,
+          534.5999999940395,
+          565,
+          598.9000000059605,
+          500.5,
+          599.5,
+          500.20000000298023,
+          500.20000000298023,
+          500.19999998807907,
+          599.8000000119209,
+          500.09999999403954,
+          500.09999999403954,
+          500.1000000089407,
+          500.20000000298023,
+          599.6999999880791,
+          500,
+          500.30000001192093,
+          599.8999999910593,
+          600,
+          599.7999999970198,
+          599.2000000029802,
+          500.70000000298023,
+          599.4000000059605,
+          500.29999999701977,
+          500.5,
+          599.5,
+          599.5,
+          501,
+          499.79999999701977,
+          500.29999999701977,
+          599.1000000089407,
+          500.29999999701977,
+          512,
+          502.3999999910593,
+          585.4000000059605,
+          500.40000000596046,
+          511.79999999701977,
+          587.8999999910593,
+          500.80000001192093,
+          500,
+          592.0999999940395,
+          507.40000000596046,
+          500.09999999403954,
+          500.29999999701977,
+          511.5,
+          587.9000000059605,
+          500,
+          500.5,
+          506.70000000298023,
+          593.5,
+          599.7999999970198,
+          499.8999999910593,
+          524,
+          576.3000000119209,
+          500,
+          599.5,
+          500.79999999701977,
+          500.09999999403954,
+          509.70000000298023,
+          589.2000000029802,
+          500.29999999701977,
+          500.29999999701977,
+          599.9000000059605,
+          499.8999999910593,
+          599.4000000059605,
+          600.5999999940395,
+          559,
+          540.7000000029802,
+          500.5
+        ],
+        "cpuBefore": {
+          "cpuMs": 14180,
+          "bytes": 557694976,
+          "processes": [
+            {
+              "pid": 3959303,
+              "bytes": 144310272
+            },
+            {
+              "pid": 3959314,
+              "bytes": 74252288
+            },
+            {
+              "pid": 3959315,
+              "bytes": 339132416
+            }
+          ]
+        },
+        "cpuAfter": {
+          "cpuMs": 19900,
+          "bytes": 557039616,
+          "processes": [
+            {
+              "pid": 3959303,
+              "bytes": 144375808
+            },
+            {
+              "pid": 3959314,
+              "bytes": 74252288
+            },
+            {
+              "pid": 3959315,
+              "bytes": 338411520
+            }
+          ]
+        },
+        "cpuPercent": 19.050029971327223,
+        "threads": 20,
+        "seconds": 64.023160955,
+        "responses": 15012
+      },
+      "passed": false
+    },
+    {
+      "scenario": "test-failure-108",
+      "engine": "chromium",
+      "size": "large",
+      "started_at": "2026-10-31T14:12:55.645Z",
+      "metrics": {},
+      "passed": false,
+      "details": {
+        "title": "200 URL/s fixture with 20 crawl threads: click latency and event cap",
+        "errors": [
+          "Error: {\"clickP95Ms\":{\"value\":40.400000005960464,\"budget\":100,\"direction\":\"max\",\"passed\":true},\"eventsPerSecond\":{\"value\":1.8587023543501955,\"budget\":10,\"direction\":\"max\",\"passed\":true},\"fixtureUrlsPerSecond\":{\"value\":234.4776449034045,\"budget\":200,\"direction\":\"min\",\"passed\":true},\"idleUiCpuPercent\":{\"value\":19.050029971327223,\"budget\":15,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m"
+        ]
+      }
+    },
+    {
+      "scenario": "test-failure-42",
+      "engine": "chromium",
+      "size": "large",
+      "started_at": "2026-10-31T14:03:45.435Z",
+      "metrics": {},
+      "passed": false,
+      "details": {
+        "title": "cold browser context and open to first painted rows",
+        "errors": [
+          "Error: {\"browserContextToRowsMs\":{\"value\":11539.648062,\"budget\":3000,\"direction\":\"max\",\"passed\":false},\"openMs\":{\"value\":11432.29999999702,\"budget\":3000,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m"
+        ]
+      }
+    },
+    {
+      "scenario": "test-failure-50",
+      "engine": "chromium",
+      "size": "large",
+      "started_at": "2026-10-31T14:07:39.513Z",
+      "metrics": {},
+      "passed": false,
+      "details": {
+        "title": "real IPC 200 rows × 20 columns p95 and payload",
+        "errors": [
+          "Error: {\"roundtripP95Ms\":{\"value\":5389.5999999940395,\"budget\":30,\"direction\":\"max\",\"passed\":false},\"payloadBytes\":{\"value\":43583,\"budget\":150000,\"direction\":\"max\",\"passed\":true}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m"
+        ]
+      }
+    },
+    {
+      "scenario": "test-failure-57",
+      "engine": "chromium",
+      "size": "large",
+      "started_at": "2026-10-31T14:08:18.654Z",
+      "metrics": {},
+      "passed": false,
+      "details": {
+        "title": "ten seconds vertical and horizontal 65-column scrolling and end jump",
+        "errors": [
+          "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m"
+        ]
+      }
+    },
+    {
+      "scenario": "test-failure-70",
+      "engine": "chromium",
+      "size": "large",
+      "started_at": "2026-10-31T14:08:33.668Z",
+      "metrics": {},
+      "passed": false,
+      "details": {
+        "title": "tab filter numeric text substring regex and reverse to painted rows",
+        "errors": [
+          "Error: page.evaluate: IpcError: err-stale\n    at x.accept (http://127.0.0.1:1431/assets/client-QFwNxEce.js:1:19642)\n    at Object.invoke (http://127.0.0.1:1431/assets/client-QFwNxEce.js:1:20169)\n    at async p (http://127.0.0.1:1431/assets/probe-DU8x5dlY.js:1:386)\n    at async Object.operations (http://127.0.0.1:1431/assets/probe-DU8x5dlY.js:1:1254)\n    at async <anonymous>:396:30"
+        ]
+      }
+    },
+    {
+      "scenario": "test-failure-78",
+      "engine": "chromium",
+      "size": "large",
+      "started_at": "2026-10-31T14:11:34.727Z",
+      "metrics": {},
+      "passed": false,
+      "details": {
+        "title": "overview issues and precomputed aggregate latency",
+        "errors": [
+          "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m"
+        ]
+      }
+    },
+    {
+      "scenario": "ipc",
+      "size": "large",
+      "started_at": "2026-10-31T14:07:39.503Z",
+      "engine": "chromium",
+      "metrics": {
+        "roundtripP95Ms": {
+          "value": 5389.5999999940395,
+          "budget": 30,
+          "direction": "max",
+          "passed": false,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "payloadBytes": {
+          "value": 43583,
+          "budget": 150000,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        }
+      },
+      "details": {
+        "samples": [
+          {
+            "ms": 4314.79999999702,
+            "bytes": 42955
+          },
+          {
+            "ms": 5802.5,
+            "bytes": 42976
+          },
+          {
+            "ms": 5247.5,
+            "bytes": 42621
+          },
+          {
+            "ms": 5493.0999999940395,
+            "bytes": 42373
+          },
+          {
+            "ms": 5022.79999999702,
+            "bytes": 43245
+          },
+          {
+            "ms": 5235.70000000298,
+            "bytes": 43257
+          },
+          {
+            "ms": 5389.5999999940395,
+            "bytes": 42355
+          },
+          {
+            "ms": 5162.4000000059605,
+            "bytes": 42926
+          },
+          {
+            "ms": 4375.399999991059,
+            "bytes": 42989
+          },
+          {
+            "ms": 4786.5,
+            "bytes": 42956
+          },
+          {
+            "ms": 3657.2999999970198,
+            "bytes": 42953
+          },
+          {
+            "ms": 2874.5,
+            "bytes": 42938
+          },
+          {
+            "ms": 4188,
+            "bytes": 42988
+          },
+          {
+            "ms": 4433.300000011921,
+            "bytes": 42341
+          },
+          {
+            "ms": 3998.0999999940395,
+            "bytes": 42930
+          },
+          {
+            "ms": 4222.100000008941,
+            "bytes": 42985
+          },
+          {
+            "ms": 3976.300000011921,
+            "bytes": 43537
+          },
+          {
+            "ms": 3302.9000000059605,
+            "bytes": 42402
+          },
+          {
+            "ms": 3324.199999988079,
+            "bytes": 42909
+          },
+          {
+            "ms": 3582.699999988079,
+            "bytes": 42962
+          },
+          {
+            "ms": 3891.199999988079,
+            "bytes": 42354
+          },
+          {
+            "ms": 3901.0999999940395,
+            "bytes": 42945
+          },
+          {
+            "ms": 2676.2000000029802,
+            "bytes": 43537
+          },
+          {
+            "ms": 2648,
+            "bytes": 42980
+          },
+          {
+            "ms": 3071.6000000089407,
+            "bytes": 42034
+          },
+          {
+            "ms": 3681.800000011921,
+            "bytes": 42919
+          },
+          {
+            "ms": 4002.2999999970198,
+            "bytes": 43010
+          },
+          {
+            "ms": 3998.8999999910593,
+            "bytes": 42659
+          },
+          {
+            "ms": 3573.7000000029802,
+            "bytes": 42947
+          },
+          {
+            "ms": 3898.5,
+            "bytes": 42975
+          },
+          {
+            "ms": 3853.9000000059605,
+            "bytes": 42916
+          },
+          {
+            "ms": 3855.5,
+            "bytes": 42074
+          },
+          {
+            "ms": 4251.5,
+            "bytes": 42953
+          },
+          {
+            "ms": 3621.8999999910593,
+            "bytes": 43583
+          },
+          {
+            "ms": 3454.2000000029802,
+            "bytes": 42921
+          },
+          {
+            "ms": 3917.8999999910593,
+            "bytes": 42356
+          },
+          {
+            "ms": 4216.4000000059605,
+            "bytes": 42923
+          },
+          {
+            "ms": 4553.20000000298,
+            "bytes": 43013
+          },
+          {
+            "ms": 4215.4000000059605,
+            "bytes": 42368
+          },
+          {
+            "ms": 3609.4000000059605,
+            "bytes": 43533
+          },
+          {
+            "ms": 3937.2999999970198,
+            "bytes": 43023
+          },
+          {
+            "ms": 3857.2999999970198,
+            "bytes": 42891
+          },
+          {
+            "ms": 3569.5999999940395,
+            "bytes": 42363
+          },
+          {
+            "ms": 3802.7999999970198,
+            "bytes": 42944
+          },
+          {
+            "ms": 3858,
+            "bytes": 42998
+          },
+          {
+            "ms": 3045.4000000059605,
+            "bytes": 43132
+          },
+          {
+            "ms": 3521.5999999940395,
+            "bytes": 43177
+          },
+          {
+            "ms": 3854.1000000089407,
+            "bytes": 43112
+          },
+          {
+            "ms": 4066,
+            "bytes": 43155
+          },
+          {
+            "ms": 3660.8999999910593,
+            "bytes": 42567
+          }
+        ],
+        "columns": [
+          "Address",
+          "Content",
+          "Status Code",
+          "Status",
+          "Indexability",
+          "Indexability Status",
+          "Title 1",
+          "Title 1 Length",
+          "Title 1 Pixel Width",
+          "Meta Description 1",
+          "Meta Description 1 Length",
+          "Meta Description 1 Pixel Width",
+          "Meta Keywords 1",
+          "Meta Keywords 1 Length",
+          "H1-1",
+          "H1-1 Length",
+          "H2-1",
+          "H2-1 Length",
+          "Meta Robots 1",
+          "X-Robots-Tag 1"
+        ],
+        "rows": 200
+      },
+      "passed": false
+    },
+    {
+      "scenario": "open",
+      "size": "large",
+      "started_at": "2026-10-31T14:03:45.425Z",
+      "engine": "chromium",
+      "metrics": {
+        "browserContextToRowsMs": {
+          "value": 11539.648062,
+          "budget": 3000,
+          "direction": "max",
+          "passed": false,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "openMs": {
+          "value": 11432.29999999702,
+          "budget": 3000,
+          "direction": "max",
+          "passed": false,
+          "regression": {
+            "status": "no-baseline"
+          }
+        }
+      },
+      "details": {
+        "scope": "Fresh browser context to painted real DataGrid; OS application cold start requires native E2E-B",
+        "rows": 5000000
+      },
+      "passed": false
+    },
+    {
+      "scenario": "viz-tree",
+      "size": "large",
+      "started_at": "2026-10-31T14:13:03.801Z",
+      "engine": "chromium",
+      "metrics": {
+        "collapse": {
+          "value": 38,
+          "budget": 200,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "expand": {
+          "value": 44.79999999701977,
+          "budget": 200,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        }
+      },
+      "passed": true
+    },
+    {
+      "scenario": "viz",
+      "size": "large",
+      "started_at": "2026-10-31T14:13:03.157Z",
+      "engine": "chromium",
+      "metrics": {
+        "firstFrameMs": {
+          "value": 182.8999999910593,
+          "budget": 2000,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "layoutMs": {
+          "value": 2757.1000000089407,
+          "budget": 10000,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "fps": {
+          "value": 60.00132599615461,
+          "budget": 30,
+          "direction": "min",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "svgMs": {
+          "value": 29,
+          "budget": 5000,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "svgBytes": {
+          "value": 1174006,
+          "budget": 20971520,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        }
+      },
+      "details": {
+        "firstFrameMs": 182.8999999910593,
+        "layoutMs": 2757.1000000089407,
+        "layoutSteps": 184,
+        "layoutReason": "converged",
+        "fps": 60.00132599615461,
+        "p95FrameMs": 16.700000000000728,
+        "maxFrameMs": 16.800000000000182,
+        "svg": {
+          "ms": 29,
+          "bytes": 1174006,
+          "circles": 10000
+        },
+        "strict": true
+      },
+      "passed": true
+    },
+    {
+      "scenario": "core",
+      "size": "large",
+      "started_at": "2026-10-31T14:03:31.117Z",
+      "engine": "core",
+      "metrics": {},
+      "details": {
+        "error": "\nthread 'main' (3907815) panicked at apps/desktop/e2e/perf/core.rs:131:40:\ncalled `Result::unwrap()` on an `Err` value: Search(Deadline)\nnote: run with `RUST_BACKTRACE=1` environment variable to display a backtrace\n",
+        "errorStatus": 101
+      },
+      "passed": false
+    },
+    {
+      "scenario": "test-failure-108",
+      "engine": "webkit",
+      "size": "large",
+      "started_at": "2026-10-31T14:21:02.845Z",
+      "metrics": {},
+      "passed": false,
+      "details": {
+        "title": "200 URL/s fixture with 20 crawl threads: click latency and event cap",
+        "errors": [
+          "Error: No attributable renderer process: RSS measurement unavailable"
+        ]
+      }
+    },
+    {
+      "scenario": "test-failure-42",
+      "engine": "webkit",
+      "size": "large",
+      "started_at": "2026-10-31T14:13:16.526Z",
+      "metrics": {},
+      "passed": false,
+      "details": {
+        "title": "cold browser context and open to first painted rows",
+        "errors": [
+          "Error: {\"browserContextToRowsMs\":{\"value\":11741.59813,\"budget\":3000,\"direction\":\"max\",\"passed\":false},\"openMs\":{\"value\":11585,\"budget\":3000,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m"
+        ]
+      }
+    },
+    {
+      "scenario": "test-failure-50",
+      "engine": "webkit",
+      "size": "large",
+      "started_at": "2026-10-31T14:16:14.245Z",
+      "metrics": {},
+      "passed": false,
+      "details": {
+        "title": "real IPC 200 rows × 20 columns p95 and payload",
+        "errors": [
+          "Error: {\"roundtripP95Ms\":{\"value\":4482,\"budget\":30,\"direction\":\"max\",\"passed\":false},\"payloadBytes\":{\"value\":43583,\"budget\":150000,\"direction\":\"max\",\"passed\":true}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m"
+        ]
+      }
+    },
+    {
+      "scenario": "test-failure-57",
+      "engine": "webkit",
+      "size": "large",
+      "started_at": "2026-10-31T14:16:56.228Z",
+      "metrics": {},
+      "passed": false,
+      "details": {
+        "title": "ten seconds vertical and horizontal 65-column scrolling and end jump",
+        "errors": [
+          "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m"
+        ]
+      }
+    },
+    {
+      "scenario": "test-failure-70",
+      "engine": "webkit",
+      "size": "large",
+      "started_at": "2026-10-31T14:17:11.495Z",
+      "metrics": {},
+      "passed": false,
+      "details": {
+        "title": "tab filter numeric text substring regex and reverse to painted rows",
+        "errors": [
+          "Error: page.evaluate: IpcError: err-stale"
+        ]
+      }
+    },
+    {
+      "scenario": "test-failure-78",
+      "engine": "webkit",
+      "size": "large",
+      "started_at": "2026-10-31T14:20:12.444Z",
+      "metrics": {},
+      "passed": false,
+      "details": {
+        "title": "overview issues and precomputed aggregate latency",
+        "errors": [
+          "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m"
+        ]
+      }
+    },
+    {
+      "scenario": "ipc",
+      "size": "large",
+      "started_at": "2026-10-31T14:16:14.232Z",
+      "engine": "webkit",
+      "metrics": {
+        "roundtripP95Ms": {
+          "value": 4482,
+          "budget": 30,
+          "direction": "max",
+          "passed": false,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "payloadBytes": {
+          "value": 43583,
+          "budget": 150000,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        }
+      },
+      "details": {
+        "samples": [
+          {
+            "ms": 4543,
+            "bytes": 42955
+          },
+          {
+            "ms": 3970,
+            "bytes": 42976
+          },
+          {
+            "ms": 2932,
+            "bytes": 42621
+          },
+          {
+            "ms": 2827,
+            "bytes": 42373
+          },
+          {
+            "ms": 2754,
+            "bytes": 43245
+          },
+          {
+            "ms": 2853,
+            "bytes": 43257
+          },
+          {
+            "ms": 2826,
+            "bytes": 42355
+          },
+          {
+            "ms": 2694,
+            "bytes": 42926
+          },
+          {
+            "ms": 2753,
+            "bytes": 42989
+          },
+          {
+            "ms": 2820,
+            "bytes": 42956
+          },
+          {
+            "ms": 2725,
+            "bytes": 42953
+          },
+          {
+            "ms": 4406,
+            "bytes": 42938
+          },
+          {
+            "ms": 3403,
+            "bytes": 42988
+          },
+          {
+            "ms": 2845,
+            "bytes": 42341
+          },
+          {
+            "ms": 2788,
+            "bytes": 42930
+          },
+          {
+            "ms": 2859,
+            "bytes": 42985
+          },
+          {
+            "ms": 2745,
+            "bytes": 43537
+          },
+          {
+            "ms": 2921,
+            "bytes": 42402
+          },
+          {
+            "ms": 3138,
+            "bytes": 42909
+          },
+          {
+            "ms": 3049,
+            "bytes": 42962
+          },
+          {
+            "ms": 2892,
+            "bytes": 42354
+          },
+          {
+            "ms": 2831,
+            "bytes": 42945
+          },
+          {
+            "ms": 3059,
+            "bytes": 43537
+          },
+          {
+            "ms": 3104,
+            "bytes": 42980
+          },
+          {
+            "ms": 2876,
+            "bytes": 42034
+          },
+          {
+            "ms": 3500,
+            "bytes": 42919
+          },
+          {
+            "ms": 2831,
+            "bytes": 43010
+          },
+          {
+            "ms": 2677,
+            "bytes": 42659
+          },
+          {
+            "ms": 2589,
+            "bytes": 42947
+          },
+          {
+            "ms": 2655,
+            "bytes": 42975
+          },
+          {
+            "ms": 2690,
+            "bytes": 42916
+          },
+          {
+            "ms": 2904,
+            "bytes": 42074
+          },
+          {
+            "ms": 2878,
+            "bytes": 42953
+          },
+          {
+            "ms": 3049,
+            "bytes": 43583
+          },
+          {
+            "ms": 3037,
+            "bytes": 42921
+          },
+          {
+            "ms": 2713,
+            "bytes": 42356
+          },
+          {
+            "ms": 2697,
+            "bytes": 42923
+          },
+          {
+            "ms": 3045,
+            "bytes": 43013
+          },
+          {
+            "ms": 3180,
+            "bytes": 42368
+          },
+          {
+            "ms": 3125,
+            "bytes": 43533
+          },
+          {
+            "ms": 2602,
+            "bytes": 43023
+          },
+          {
+            "ms": 2665,
+            "bytes": 42891
+          },
+          {
+            "ms": 2663,
+            "bytes": 42363
+          },
+          {
+            "ms": 2796,
+            "bytes": 42944
+          },
+          {
+            "ms": 4164,
+            "bytes": 42998
+          },
+          {
+            "ms": 4821,
+            "bytes": 43132
+          },
+          {
+            "ms": 3331,
+            "bytes": 43177
+          },
+          {
+            "ms": 3325,
+            "bytes": 43112
+          },
+          {
+            "ms": 2810,
+            "bytes": 43155
+          },
+          {
+            "ms": 4482,
+            "bytes": 42567
+          }
+        ],
+        "columns": [
+          "Address",
+          "Content",
+          "Status Code",
+          "Status",
+          "Indexability",
+          "Indexability Status",
+          "Title 1",
+          "Title 1 Length",
+          "Title 1 Pixel Width",
+          "Meta Description 1",
+          "Meta Description 1 Length",
+          "Meta Description 1 Pixel Width",
+          "Meta Keywords 1",
+          "Meta Keywords 1 Length",
+          "H1-1",
+          "H1-1 Length",
+          "H2-1",
+          "H2-1 Length",
+          "Meta Robots 1",
+          "X-Robots-Tag 1"
+        ],
+        "rows": 200
+      },
+      "passed": false
+    },
+    {
+      "scenario": "open",
+      "size": "large",
+      "started_at": "2026-10-31T14:13:16.508Z",
+      "engine": "webkit",
+      "metrics": {
+        "browserContextToRowsMs": {
+          "value": 11741.59813,
+          "budget": 3000,
+          "direction": "max",
+          "passed": false,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "openMs": {
+          "value": 11585,
+          "budget": 3000,
+          "direction": "max",
+          "passed": false,
+          "regression": {
+            "status": "no-baseline"
+          }
+        }
+      },
+      "details": {
+        "scope": "Fresh browser context to painted real DataGrid; OS application cold start requires native E2E-B",
+        "rows": 5000000
+      },
+      "passed": false
+    },
+    {
+      "scenario": "viz-tree",
+      "size": "large",
+      "started_at": "2026-10-31T14:21:11.231Z",
+      "engine": "webkit",
+      "metrics": {
+        "collapse": {
+          "value": 53,
+          "budget": 200,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "expand": {
+          "value": 40,
+          "budget": 200,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        }
+      },
+      "passed": true
+    },
+    {
+      "scenario": "viz",
+      "size": "large",
+      "started_at": "2026-10-31T14:21:10.486Z",
+      "engine": "webkit",
+      "metrics": {
+        "firstFrameMs": {
+          "value": 256,
+          "budget": 2000,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "layoutMs": {
+          "value": 2929,
+          "budget": 10000,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "fps": {
+          "value": 62,
+          "budget": 30,
+          "direction": "min",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "svgMs": {
+          "value": 16,
+          "budget": 5000,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        },
+        "svgBytes": {
+          "value": 1174006,
+          "budget": 20971520,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        }
+      },
+      "details": {
+        "firstFrameMs": 256,
+        "layoutMs": 2929,
+        "layoutSteps": 184,
+        "layoutReason": "converged",
+        "fps": 62,
+        "p95FrameMs": 17,
+        "maxFrameMs": 17,
+        "svg": {
+          "ms": 16,
+          "bytes": 1174006,
+          "circles": 10000
+        },
+        "strict": true
+      },
+      "passed": true
+    },
+    {
+      "scenario": "generator",
+      "engine": "core",
+      "size": "large",
+      "started_at": "2026-10-31T14:12:45.249Z",
+      "metrics": {
+        "elapsedMs": {
+          "value": 367546,
+          "budget": 600000,
+          "direction": "max",
+          "passed": true,
+          "regression": {
+            "status": "no-baseline"
+          }
+        }
+      },
+      "details": {
+        "rows": 5000000,
+        "links": 100000000,
+        "seed": 19,
+        "hub_inlinks": 1000000,
+        "html_bytes": 15728640,
+        "schema_version": 5,
+        "elapsed_ms": 367546,
+        "file_bytes": 16184975360
+      },
+      "passed": true
+    },
+    {
+      "scenario": "playwright-failures-playwright.json",
+      "engine": "runner",
+      "size": "large",
+      "started_at": "2026-10-31T14:12:45.249Z",
+      "metrics": {},
+      "details": {
+        "startTime": "2026-10-31T14:03:32.043Z",
+        "duration": 1059338.429,
+        "expected": 4,
+        "skipped": 2,
+        "unexpected": 12,
+        "flaky": 0
+      },
+      "passed": false
+    }
+  ],
+  "environment": {
+    "platform": "linux",
+    "arch": "x64",
+    "release": "7.0.0-30-generic",
+    "cpus": "AMD EPYC-Milan Processor",
+    "cores": 16,
+    "memory_bytes": 65828974592,
+    "load_average": [
+      7.35,
+      11.95,
+      14.68
+    ],
+    "node": "v22.23.4",
+    "revision": "72cedd9211273fe9c59b3746a2fac3b804b01044",
+    "rust": "rustc 1.99.1 (58cf8f9c3 2026-10-13)",
+    "playwright": "1.64.1",
+    "reference": false,
+    "browser_builds": [
+      {
+        "name": "chromium",
+        "revision": "1248",
+        "installByDefault": true,
+        "browserVersion": "156.0.8078.4",
+        "title": "Chrome for Testing"
+      },
+      {
+        "name": "webkit",
+        "revision": "2370",
+        "installByDefault": true,
+        "revisionOverrides": {
+          "mac14": "2251",
+          "mac14-arm64": "2251"
+        },
+        "browserVersion": "27.2",
+        "title": "WebKit"
+      }
+    ],
+    "frontend_version": "0.1.0"
+  },
+  "notes": [
+    "E2E-A browser indication; native evidence reported separately. Reference A: run apps/desktop/e2e/perf/run-reference.sh from a macOS GUI session."
+  ]
+}
