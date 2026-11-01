@@ -28,4 +28,5 @@ notice-start-redirect-host = The start address redirects to a different host.
 notice-disk-low = Low disk space. The crawl has been paused.
 notice-auth-required = The server requires Basic authentication.
 notice-crawl-completed = Crawl completed
+notice-crawl-merge-pending = The crawl file is still being merged. Until then, keep the "-wal" file next to it when copying.
 notice-analysis-completed = Analysis completed

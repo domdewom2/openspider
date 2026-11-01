@@ -134,3 +134,89 @@ async fn resume_right_after_the_ack_cancels_the_merge_and_quit_waits_for_it() {
     let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
     assert_eq!(file.meta().unwrap().state, os_model::CrawlState::Paused);
 }
+
+#[derive(Default)]
+struct Desktop(std::sync::Mutex<Vec<PathBuf>>);
+impl os_app::runtime::hooks::DesktopActions for Desktop {
+    fn write_clipboard(&self, _: &str) -> Result<(), os_app::CmdError> {
+        Ok(())
+    }
+    fn reveal_paths(&self, paths: &[PathBuf]) -> Result<(), os_app::CmdError> {
+        *self.0.lock().unwrap() = paths.to_vec();
+        Ok(())
+    }
+}
+
+// spec: CRAWL-126
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn reveal_waits_for_the_merge_only_within_its_budget() {
+    let home = tempfile::tempdir().unwrap();
+    let app = app(home.path());
+    let desktop = Arc::new(Desktop::default());
+    app.set_desktop_actions(desktop.clone());
+    let sink = Arc::new(os_app::events::CollectingSink::new());
+    app.subscribe(window(), sink.clone());
+    let site_dir = slow_site();
+    let site = os_testsite::TestSite::start_dir(site_dir.path(), 0)
+        .await
+        .unwrap();
+    let mut config = cfg();
+    config.speed.threads = 1;
+    let fetch = Arc::new(
+        os_fetch::HttpFetcher::new(
+            os_fetch::FetchConfig::from_crawl_config(
+                &config,
+                &os_fetch::MemorySecretStore::new(),
+                Arc::new(os_model::SystemClock),
+            )
+            .unwrap(),
+        )
+        .unwrap(),
+    );
+    let started = os_app::session::control::start_with_fetcher(
+        &app,
+        ctx(),
+        request(format!("http://127.0.0.1:{}/", site.port())),
+        config,
+        fetch,
+    )
+    .await
+    .unwrap();
+    let path = PathBuf::from(&started.file);
+    until_crawled(&path, 3).await;
+
+    // A foreign snapshot (e.g. a CLI query) keeps the merge pending: the file is shown after the budget anyway.
+    let held = reader(&path);
+    call(&app, "crawl.pause", json!(null)).await;
+    assert!(wal_bytes(&path) > 0);
+    let t = Instant::now();
+    call(&app, "crawls.reveal", json!({"ids":[started.crawl_id]})).await;
+    let took = t.elapsed();
+    assert!(took <= Duration::from_secs(3), "reveal took {took:?}");
+    assert_eq!(
+        desktop.0.lock().unwrap().as_slice(),
+        std::slice::from_ref(&path)
+    );
+    let mut notices = app
+        .assemble_tick()
+        .map(|tick| tick.notices)
+        .unwrap_or_default();
+    for event in sink.take() {
+        if let os_app::dto::UiEvent::Tick { tick } = event {
+            notices.extend(tick.notices);
+        }
+    }
+    assert!(
+        notices.iter().any(|n| n.code == "crawl-merge-pending"),
+        "{notices:?}"
+    );
+
+    // Once the snapshot ends, the merge completes and reveal shows a self-contained file.
+    drop(held);
+    let key = os_app::pool::CrawlKey(started.crawl_id.clone());
+    os_app::session::merge::wait_merged(&app, &key).await;
+    assert_eq!(wal_bytes(&path), 0);
+    let t = Instant::now();
+    call(&app, "crawls.reveal", json!({"ids":[started.crawl_id]})).await;
+    assert!(t.elapsed() < Duration::from_secs(1));
+}
