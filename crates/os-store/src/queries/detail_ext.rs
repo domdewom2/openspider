@@ -2,7 +2,7 @@
 use super::{serp, StoredHtml};
 use crate::{CrawlFile, StoreError};
 use os_model::UrlId;
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 
 pub struct SerpData {
     pub address: String,
@@ -38,12 +38,15 @@ pub fn serp_data(conn: &Connection, id: i64) -> Result<Option<SerpData>, StoreEr
     }))
 }
 /// Edit/reset and its feed stamp form one transaction. False means an unknown URL.
+///
+/// `BEGIN IMMEDIATE`: the transaction reads before it writes; a deferred one would fail with `SQLITE_BUSY` at the
+/// upgrade, without the busy timeout, while the background WAL merge holds the write lock (CRAWL-126).
 pub fn save_serp_edit(
     conn: &mut Connection,
     id: i64,
     edit: Option<&serp::SerpEdit>,
 ) -> Result<bool, StoreError> {
-    let tx = conn.transaction()?;
+    let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
     let exists = tx.query_row("SELECT EXISTS(SELECT 1 FROM urls WHERE id=?1)", [id], |r| {
         r.get::<_, bool>(0)
     })?;
