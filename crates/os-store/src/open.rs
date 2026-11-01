@@ -509,12 +509,16 @@ pub fn merge_wal(path: &Path, cancel: &std::sync::atomic::AtomicBool) -> Result<
         path,
         OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NO_MUTEX,
     )?;
-    conn.busy_timeout(crate::writer::CHECKPOINT_READER_WAIT)?;
     loop {
         if cancel.load(Ordering::SeqCst) {
             return Ok(false);
         }
-        let busy: i64 = conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| r.get(0))?;
+        let busy: i64 = crate::writer::checkpoint_within(
+            &conn,
+            crate::writer::CHECKPOINT_READER_WAIT,
+            "PRAGMA wal_checkpoint(TRUNCATE)",
+            |r| r.get(0),
+        )?;
         if busy == 0 {
             return Ok(true);
         }

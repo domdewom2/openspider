@@ -458,18 +458,60 @@ pub const CHECKPOINT_READER_WAIT: std::time::Duration = std::time::Duration::fro
 /// Wartezeit der Verbindung auf Sperren außerhalb des abschließenden Checkpoints.
 const BUSY_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
 
+/// Längste einzelne Schlafpause des begrenzten Busy-Handlers.
+const BOUNDED_BUSY_STEP: std::time::Duration = std::time::Duration::from_millis(2);
+
+thread_local! {
+    /// Wanduhr-Frist des laufenden begrenzten Aufrufs auf diesem Thread.
+    static BUSY_DEADLINE: std::cell::Cell<Option<std::time::Instant>> = const { std::cell::Cell::new(None) };
+}
+
+/// Busy-Handler mit Wanduhr-Frist. `busy_timeout` begrenzt nur die Summe der *angeforderten* Schlafpausen; macOS
+/// überschreitet einzelne Pausen unter Last deutlich (CI: 677 ms statt 100 ms). Hier zählt die gemessene Zeit.
+fn bounded_busy(_attempts: i32) -> bool {
+    BUSY_DEADLINE.with(|deadline| {
+        let Some(deadline) = deadline.get() else {
+            return false;
+        };
+        let now = std::time::Instant::now();
+        if now >= deadline {
+            return false;
+        }
+        std::thread::sleep((deadline - now).min(BOUNDED_BUSY_STEP));
+        true
+    })
+}
+
+/// Führt einen `wal_checkpoint`-Aufruf aus, der höchstens `wait` (Wanduhr) auf Leser und Schreiber wartet, und stellt
+/// danach den normalen Busy-Timeout der Verbindung wieder her (CRAWL-126).
+pub(crate) fn checkpoint_within<T>(
+    conn: &Connection,
+    wait: std::time::Duration,
+    sql: &str,
+    row: impl FnOnce(&rusqlite::Row<'_>) -> rusqlite::Result<T>,
+) -> Result<T, StoreError> {
+    BUSY_DEADLINE.with(|d| d.set(Some(std::time::Instant::now() + wait)));
+    let installed = conn.busy_handler(Some(bounded_busy));
+    let result = installed.and_then(|()| conn.query_row(sql, [], row));
+    BUSY_DEADLINE.with(|d| d.set(None));
+    let restored = conn.busy_timeout(BUSY_TIMEOUT);
+    let value = result?;
+    restored?;
+    Ok(value)
+}
+
 fn wal_checkpoint(conn: &Connection) -> Result<(), StoreError> {
     let phase = scale_phase_start(conn);
     let t = std::time::Instant::now();
-    conn.busy_timeout(CHECKPOINT_READER_WAIT)?;
     // Antwort: (busy, Frames im WAL, davon zurückgeführt)
-    let result = conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| {
-        r.get::<_, i64>(1)
-    });
-    let restored = conn.busy_timeout(BUSY_TIMEOUT);
+    let result = checkpoint_within(
+        conn,
+        CHECKPOINT_READER_WAIT,
+        "PRAGMA wal_checkpoint(TRUNCATE)",
+        |r| r.get::<_, i64>(1),
+    );
     crate::sink::diag::record_checkpoint(t, result.as_ref().map_or(0, |n| (*n).max(0) as u64));
     result?;
-    restored?;
     scale_phase_end(conn, "checkpoint", phase);
     Ok(())
 }
