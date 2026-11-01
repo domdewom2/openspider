@@ -1789,6 +1789,9 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
   - [ ] Fortsetzen nach App-Neustart: Gesamtergebnis identisch zu einem ununterbrochenen Crawl (Golden-Vergleich der URL-Menge, Statuscodes und Tiefen); keine URL im Request-Log doppelt.
   - [ ] Fortsetzen auf einem anderen Rechner: Crawl-Datei kopieren, öffnen, „Fortsetzen“ → gleiches Ergebnis wie oben.
   - [ ] Wird während der Pause ein Exclude ergänzt, werden passende Warteschlangeneinträge verworfen; der Zähler „verbleibend“ sinkt sofort nach „OK“ im Konfigurationsdialog.
+  - [ ] Hält ein Lesezugriff beim Pausieren einen älteren Stand, erscheint „Pausiert“ trotzdem nach dem dauerhaften Commit; die WAL-Datei wird im Hintergrund in die Hauptdatei zurückgeführt, die Statusleiste zeigt bis dahin „Pausiert – Datei wird zusammengeführt“ (OS-Festlegung vom 01.11.2026).
+  - [ ] Beenden der App wartet innerhalb von 3 s auf diese Rückführung; danach hat die WAL-Datei keinen Inhalt.
+  - [ ] „Im Finder zeigen“ wartet höchstens 2 s auf die Rückführung und zeigt die Datei danach in jedem Fall, gegebenenfalls mit dem Hinweis, dass sie noch zusammengeführt wird.
   - [ ] Wird das URL-Limit erhöht, setzt „Fortsetzen“ fort; wird es unter die bereits gecrawlte Anzahl gesenkt, endet der Crawl beim Fortsetzen sofort mit Status „Limit erreicht“.
   - [ ] Threads von 5 auf 1 geändert: nach dem Fortsetzen sieht der Fixture-Server nie mehr als 1 gleichzeitige Anfrage.
   - [ ] Versuch, während der Pause den Rendering-Modus zu ändern: Feld ist ausgegraut; per Profil-Laden erzwungene Änderung wird mit Meldung abgewiesen.
