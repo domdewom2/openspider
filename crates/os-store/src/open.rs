@@ -537,3 +537,36 @@ pub fn backup_path(path: &Path, old_version: u32) -> PathBuf {
         .map_or_else(|| "crawl".into(), |s| s.to_string_lossy().into_owned());
     path.with_file_name(format!("{stem}.v{old_version}.bak.ospider"))
 }
+
+/// Länge der `-wal`-Datei neben `path` in Byte (0, wenn sie fehlt).
+pub fn wal_bytes(path: &Path) -> u64 {
+    let mut name = path.as_os_str().to_owned();
+    name.push("-wal");
+    std::fs::metadata(PathBuf::from(name)).map_or(0, |m| m.len())
+}
+
+/// Führt das WAL nach einer Pause oder einem Ende vollständig in die Hauptdatei zurück (CRAWL-126, OS-Festlegung
+/// vom 01.11.2026): eine Schleife kurzer `TRUNCATE`-Versuche, die je höchstens
+/// [`crate::writer::CHECKPOINT_READER_WAIT`] auf laufende Leser warten. `true`, sobald das WAL leer ist; `false`,
+/// wenn `cancel` gesetzt wurde (etwa vor dem Fortsetzen), bevor das gelang. Läuft auf einem Blocking-Thread.
+pub fn merge_wal(path: &Path, cancel: &std::sync::atomic::AtomicBool) -> Result<bool, StoreError> {
+    use std::sync::atomic::Ordering;
+    if wal_bytes(path) == 0 {
+        return Ok(true);
+    }
+    let conn = open_sqlite(
+        path,
+        OpenFlags::SQLITE_OPEN_READ_WRITE | OpenFlags::SQLITE_OPEN_NO_MUTEX,
+    )?;
+    conn.busy_timeout(crate::writer::CHECKPOINT_READER_WAIT)?;
+    loop {
+        if cancel.load(Ordering::SeqCst) {
+            return Ok(false);
+        }
+        let busy: i64 = conn.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |r| r.get(0))?;
+        if busy == 0 {
+            return Ok(true);
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+}
