@@ -266,8 +266,13 @@ pub fn on_startup(app: &App) {
                 Err(error) => tracing::warn!(?error, "Vorberechnung der Sidebar fehlgeschlagen"),
             }
             if overview && !token.is_cancelled() {
-                // UI-141: visible, cancellable operation with progress (tabs counted).
-                super::sidebar::count_op(&app, &session);
+                // Quiet precomputation after opening/completion. A waiting Overview/Issues request
+                // starts the visible operation with progress (UI-141) and shares the stored steps.
+                if let Err(error) =
+                    super::sidebar::count_steps(&app, &session, &token, |_, _| {}).await
+                {
+                    tracing::debug!(?error, "Vorberechnung der Übersicht nicht abgeschlossen");
+                }
             }
         });
     }));

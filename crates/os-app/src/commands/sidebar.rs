@@ -171,6 +171,53 @@ pub(crate) fn cancel_count(app: &App, key: &CrawlKey) {
     }
 }
 
+/// Counts the missing Overview/Issues pieces: first report immediately (stored pieces only), then up
+/// to four tabs per step (counted at once); every step is stored before the next, so an interrupted
+/// count (cancel, closed crawl, ended process) resumes where it stopped.
+pub(crate) async fn count_steps(
+    app: &App,
+    session: &crate::runtime::sessions::SessionInfo,
+    token: &os_model::CancelToken,
+    report: impl Fn(u64, u64),
+) -> Result<(), CmdError> {
+    let mut step = 0;
+    loop {
+        let cfg = session.config.clone();
+        let progress = app
+            .read_pool()
+            .run_cached(
+                session.key.clone(),
+                "overview",
+                token.clone(),
+                move |file, cancel| {
+                    Ok(os_analyze::views::overview_progress(
+                        file, &cfg, cancel, step,
+                    ))
+                },
+            )
+            .await?
+            .map_err(view_error)?;
+        report(progress.done as u64, progress.total as u64);
+        // Stored pieces are an optional cache: a read-only crawl keeps them in memory.
+        let stored = app
+            .write_queue()
+            .submit_file(&session.key, |file| {
+                os_analyze::views::persist_facts(file).map_err(view_error)
+            })
+            .await;
+        if let Err(error) = stored {
+            tracing::debug!(?error, "Overview-Zähler nicht gespeichert");
+        }
+        if progress.complete() {
+            return Ok(());
+        }
+        if token.is_cancelled() {
+            return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
+        }
+        step = 4;
+    }
+}
+
 /// Starts the one-time count of the missing Overview/Issues pieces as a cancellable operation, or
 /// joins the running one. Up to four tabs per step (counted at once); every step is stored before
 /// the next, so an interrupted count (cancel, closed crawl, ended process) resumes where it stopped.
@@ -190,43 +237,11 @@ pub(crate) fn count_op(app: &App, s: &crate::runtime::sessions::SessionInfo) -> 
     let (worker, session) = (app.clone(), s.clone());
     let handle = app.ops().spawn(COUNT_LABEL, true, move |token, sink| {
         Box::pin(async move {
-            let mut step = 0;
-            loop {
-                let cfg = session.config.clone();
-                let progress = worker
-                    .read_pool()
-                    .run_cached(
-                        session.key.clone(),
-                        "overview",
-                        token.clone(),
-                        move |file, cancel| {
-                            Ok(os_analyze::views::overview_progress(
-                                file, &cfg, cancel, step,
-                            ))
-                        },
-                    )
-                    .await?
-                    .map_err(view_error)?;
-                sink.report(progress.done as u64, Some(progress.total as u64));
-                // Stored pieces are an optional cache: a read-only crawl keeps them in memory.
-                let stored = worker
-                    .write_queue()
-                    .submit_file(&session.key, |file| {
-                        os_analyze::views::persist_facts(file).map_err(view_error)
-                    })
-                    .await;
-                if let Err(error) = stored {
-                    tracing::debug!(?error, "Overview-Zähler nicht gespeichert");
-                }
-                if progress.complete() {
-                    return Ok(serde_json::Value::Null);
-                }
-                if token.is_cancelled() {
-                    return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
-                }
-                // First report immediately (stored pieces only), then four tabs per step.
-                step = 4;
-            }
+            count_steps(&worker, &session, &token, |done, total| {
+                sink.report(done, Some(total))
+            })
+            .await?;
+            Ok(serde_json::Value::Null)
         })
     });
     running.insert(s.key.clone(), handle.op_id.clone());
