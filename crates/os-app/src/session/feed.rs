@@ -96,6 +96,7 @@ pub fn from_progress(id: String, m: CrawlModeDto, owner: CrawlOwner, p: &Progres
         file_bytes: p.file_bytes,
         memory_used_bytes: p.memory_used_bytes,
         memory_limit_bytes: p.memory_limit_bytes,
+        merging: None,
     }
 }
 
@@ -282,6 +283,7 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
                         owner: owner.clone(),
                         memory_used_bytes: None,
                         memory_limit_bytes: None,
+                        merging: None,
                     });
                     if before.last.is_none() || seq != before.seq {
                         let counts = os_store::queries::session_counts(&tx)?;
