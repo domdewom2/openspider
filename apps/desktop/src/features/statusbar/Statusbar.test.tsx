@@ -165,3 +165,18 @@ it("reports a paused crawl at once and notes the background file merge until it 
   publish(4, { phase: "paused", merging: true });
   expect(screen.getByTestId("crawl-phase")).toHaveTextContent("Pausiert – Datei wird zusammengeführt");
 });
+
+// spec: CRAWL-126
+// spec: UI-003
+it("reports a stopped crawl at once and notes the background file merge until it has ended", async () => {
+  useSession.getState().applyTick(tick); render(<Statusbar />);
+  publish(2, { phase: "completed", endReason: "stopped", merging: true });
+  expect(screen.getByTestId("crawl-phase")).toHaveTextContent("Stopped – merging file");
+  publish(3, { phase: "completed", endReason: "stopped", merging: null });
+  expect(screen.getByTestId("crawl-phase")).toHaveTextContent(/^Stopped$/);
+  await setLanguage("de");
+  publish(4, { phase: "completed", endReason: "stopped", merging: true });
+  expect(screen.getByTestId("crawl-phase")).toHaveTextContent("Gestoppt – Datei wird zusammengeführt");
+  publish(5, { phase: "completed", endReason: "stopped", merging: null });
+  expect(screen.getByTestId("crawl-phase")).toHaveTextContent(/^Gestoppt$/);
+});
