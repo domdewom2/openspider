@@ -109,6 +109,17 @@ pub async fn wait_merged(app: &App, key: &CrawlKey) {
     }
 }
 
+/// Waits for the merges of these crawls, at most `limit` in total; `false` if one is still running.
+pub async fn wait_merged_within(app: &App, keys: &[CrawlKey], limit: Duration) -> bool {
+    tokio::time::timeout(limit, async {
+        for key in keys {
+            wait_merged(app, key).await;
+        }
+    })
+    .await
+    .is_ok()
+}
+
 /// Waits for every running merge, at most `limit`; `false` if one is still running.
 pub async fn wait_all(app: &App, limit: Duration) -> bool {
     let all: Vec<_> = app
