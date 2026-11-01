@@ -399,7 +399,9 @@ export function DataGrid(props: DataGridProps) {
       {Array.from({ length: Math.max(0, count) }, (_, index) => {
         const row = first + index, key = source.rowKey(row);
         return <div role="row" aria-rowindex={row + 2} aria-busy={key === undefined} aria-selected={key !== undefined && selection.has(key)} key={row}>
-          {layout.map(c => <div role="gridcell" id={cellId(c.index, row)} key={c.key} aria-colindex={c.index + 1}>{cell(c.index, row).text}</div>)}
+          {/* UI-144: the name text stays out of layout (WebKit retains text-width data for every distinct laid-out string). */}
+          {layout.map(c => <div role="gridcell" id={cellId(c.index, row)} key={c.key} aria-colindex={c.index + 1} aria-labelledby={`${cellId(c.index, row)}-t`}>
+            <span id={`${cellId(c.index, row)}-t`} hidden>{cell(c.index, row).text}</span></div>)}
         </div>;
       })}
     </div>
