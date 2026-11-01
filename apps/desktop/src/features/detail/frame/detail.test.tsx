@@ -185,6 +185,32 @@ describe("paged tables", () => {
     await settle(1); expect(opens()).toHaveLength(4);
   });
 
+  // spec: UI-145
+  it("sends the request of a clicked tab within the click, without waiting for a timer", async () => {
+    render(<DetailFrame selection={selection} actions={actions} />); await settle();
+    const before = opens().length;
+    await act(async () => { fireEvent.click(screen.getByRole("tab", { name: "Inlinks", hidden: true })); await Promise.resolve(); });
+    // No timer has been advanced: the request left with the click (microtask after its commit).
+    expect(opens()).toHaveLength(before + 1);
+    expect(lastSpec()).toMatchObject({ kind: "inlinks", urlIds: [1, 2, 3] });
+  });
+
+  // spec: UI-030
+  // spec: UI-145
+  it("does not re-render a hidden retained panel when another tab is clicked", async () => {
+    const inlinks = vi.fn(() => <p>retained inlinks</p>);
+    render(<DetailFrame selection={selection} actions={actions} plugins={[{ id: "inlinks", Component: inlinks }]} />); await settle();
+    await selectTab("Inlinks");
+    const shown = inlinks.mock.calls.length;
+    expect(shown).toBeGreaterThan(0);
+    await selectTab("Outlinks");
+    await selectTab("URL Details");
+    expect(inlinks).toHaveBeenCalledTimes(shown);
+    await selectTab("Inlinks");
+    expect(screen.getByText("retained inlinks")).toBeVisible();
+    expect(inlinks).toHaveBeenCalledTimes(shown);
+  });
+
   // spec: UI-032
   it("loads the union of selected URLs and keeps repeated inlinks as separate rows", async () => {
     render(<DetailFrame selection={selection} actions={actions} />); await settle(); await selectTab("Inlinks");

@@ -1,6 +1,6 @@
 import { ComparisonDetail } from "../../compare/ComparisonDetail";
 import { useComparison } from "../../compare/model";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { RegionBoundary } from "../../../app/ErrorBoundary";
 import { config } from "../../../ipc/config";
 import { eventBus } from "../../../ipc/events";
@@ -38,6 +38,10 @@ const extensionModules = import.meta.glob<{ detailTab?: DetailPlugin }>("../*/in
 const PANELS: Partial<Record<DetailTabId, DetailPlugin["Component"]>> = { urlDetails: UrlDetails, inlinks: Inlinks, outlinks: Outlinks, images: Images, resources: Resources, headers: Headers, cookies: Cookies };
 const UNION_TABS = new Set<DetailTabId>(["inlinks", "outlinks", "images", "resources", "nGrams"]);
 const DEFAULT_POSITIONS = ["Head", "Header", "Nav", "Content", "Sidebar", "Footer"];
+/** A retained panel re-renders only when its props or its visibility change, not on every tab click (UI-030/UI-145). */
+const RetainedPanel = memo(function RetainedPanel({ Panel, panelProps }: { Panel: DetailPlugin["Component"]; panelProps: DetailPanelProps }) {
+  return <Panel {...panelProps} />;
+});
 export interface DetailFrameProps {
   selection?: DetailSelection;
   actions?: Partial<DetailActions>;
@@ -110,11 +114,16 @@ function RegularDetailFrame(props: DetailFrameProps) {
   const cacheable = ["inlinks", "outlinks", "images", "resources", "duplicates"].includes(tab);
   const visited = retained.key === retentionKey ? retained.tabs : [];
   const shown = [...new Set([...visited, ...(cacheable ? [tab] : [])])];
-  useEffect(() => { setRetained({ key: retentionKey, tabs: shown }); }, [retentionKey, tab]);
+  // Adjust during render instead of in an effect: an effect re-rendered the whole frame a second time after every
+  // tab click, before the click's detail request could leave (UI-145, ~100 ms during a live crawl).
+  if (retained.key !== retentionKey || shown.length !== visited.length) setRetained({ key: retentionKey, tabs: shown });
   const Panel = panels[tab];
-  const effectiveSelection = { ...selection, crawlId: selection.crawlId ?? crawlId };
-  const panelProps: DetailPanelProps = { selection: effectiveSelection, actions, rendering: props.rendering ?? features.rendering,
-    htmlStored: props.htmlStored ?? features.htmlStored, storeUncrawlable: props.storeUncrawlable ?? features.storeUncrawlable, positions: props.positions ?? features.positions, listMode: props.listMode ?? crawlMode === "list" };
+  const effectiveSelection = useMemo(() => ({ ...selection, crawlId: selection.crawlId ?? crawlId }), [selection, crawlId]);
+  const rendering = props.rendering ?? features.rendering; const htmlStored = props.htmlStored ?? features.htmlStored;
+  const storeUncrawlable = props.storeUncrawlable ?? features.storeUncrawlable; const positions = props.positions ?? features.positions;
+  const listMode = props.listMode ?? crawlMode === "list";
+  const panelProps: DetailPanelProps = useMemo(() => ({ selection: effectiveSelection, actions, rendering, htmlStored, storeUncrawlable, positions, listMode }),
+    [effectiveSelection, actions, rendering, htmlStored, storeUncrawlable, positions, listMode]);
   const [configure, setConfigure] = useState(false);
   const layout = { order: preferences.order, hidden: preferences.hidden, mandatory: "urlDetails" };
   const reset = () => { if (!loaded) return; savePreferences({ order: [], hidden: [] }); setActive("urlDetails"); };
@@ -149,7 +158,7 @@ function RegularDetailFrame(props: DetailFrameProps) {
         {shown.map(id => {
           const CachedPanel = panels[id];
           return CachedPanel && <div key={`${retentionKey}:${id}`} hidden={id !== tab} style={id === tab ? { display: "contents" } : undefined}>
-            <DetailVisible.Provider value={id === tab}><RegionBoundary name="detail"><CachedPanel {...panelProps} /></RegionBoundary></DetailVisible.Provider>
+            <DetailVisible.Provider value={id === tab}><RegionBoundary name="detail"><RetainedPanel Panel={CachedPanel} panelProps={panelProps} /></RegionBoundary></DetailVisible.Provider>
           </div>;
         })}
         {!cacheable && (Panel ? <RegionBoundary key={`${tab}:${retentionKey}`} name="detail"><Panel {...panelProps} /></RegionBoundary> : <DetailEmpty state={{ code: "NO_DATA_YET" }} />)}
