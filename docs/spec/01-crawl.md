@@ -1791,7 +1791,7 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
   - [ ] Fortsetzen auf einem anderen Rechner: Crawl-Datei kopieren, öffnen, „Fortsetzen“ → gleiches Ergebnis wie oben.
   - [ ] Wird während der Pause ein Exclude ergänzt, werden passende Warteschlangeneinträge verworfen; der Zähler „verbleibend“ sinkt sofort nach „OK“ im Konfigurationsdialog.
   - [ ] Hält ein Lesezugriff beim Pausieren einen älteren Stand, erscheint „Pausiert“ trotzdem nach dem dauerhaften Commit; die WAL-Datei wird im Hintergrund in die Hauptdatei zurückgeführt, die Statusleiste zeigt bis dahin „Pausiert – Datei wird zusammengeführt“ (OS-Festlegung vom 01.11.2026).
-  - [ ] Beenden der App wartet innerhalb von 3 s auf diese Rückführung; danach hat die WAL-Datei keinen Inhalt.
+  - [ ] Beenden der App führt zuerst ausstehende eigene Schreibaufträge (Schreibwarteschlange, View-Cache) aus und wartet dann innerhalb von 3 s auf die Rückführung; danach hat die WAL-Datei keinen Inhalt, unabhängig davon, welcher Dienst der App zuletzt geschrieben hat (OS-Festlegung vom 01.11.2026). Reicht das Budget nicht, wird dies protokolliert; die Datei bleibt konsistent und wird beim nächsten Öffnen zurückgeführt.
   - [ ] „Im Finder zeigen“ wartet höchstens 2 s auf die Rückführung und zeigt die Datei danach in jedem Fall, gegebenenfalls mit dem Hinweis, dass sie noch zusammengeführt wird.
   - [ ] „Stoppen“ aus „Pausiert“, während ein Lesezugriff einen älteren Stand hält: „Gestoppt“ erscheint nach dem dauerhaften Commit ohne Fehlermeldung; nach Ende des Lesezugriffs ist die WAL-Datei ohne weitere Nutzeraktion leer (OS-Festlegung vom 01.11.2026).
   - [ ] Wird das URL-Limit erhöht, setzt „Fortsetzen“ fort; wird es unter die bereits gecrawlte Anzahl gesenkt, endet der Crawl beim Fortsetzen sofort mit Status „Limit erreicht“.
@@ -1978,6 +1978,7 @@ Die folgenden Einträge wurden nach dem Review angehängt. Sie gehören thematis
   4. Abbruch: Bereits fertige Teilschritte bleiben gültig, abgebrochene bleiben „ausstehend“.
   5. Ergebnisse werden in der Crawl-Datei gespeichert; erneutes Öffnen zeigt sie ohne Neuberechnung.
   6. Veraltung: Nach „Neu crawlen“, „Entfernen“, „URLs hinzufügen“ (CRAWL-131) oder einer Konfigurationsänderung, die einen Teilschritt betrifft, gilt die Analyse als veraltet; sie wird nicht automatisch neu gestartet.
+  7. Der abschließende Checkpoint der Crawl-Analyse wartet höchstens 100 ms auf laufende Lesezugriffe; verbleibende WAL-Frames werden wie nach einer Pause im Hintergrund zurückgeführt (CRAWL-126). Die Analyse gilt als abgeschlossen, sobald ihr letzter Commit dauerhaft ist, nicht erst nach der Rückführung (OS-Festlegung vom 01.11.2026).
 - **Ausgabe:** Zustand der Analyse je Crawl (nicht gestartet / läuft / abgeschlossen / unvollständig / veraltet) und je Teilschritt (ausstehend / fertig / übersprungen / nicht anwendbar); Crawl-Übersicht vermerkt Zeitpunkt der letzten Analyse.
 - **Akzeptanzkriterien:**
   - [ ] Schalter an: Endet ein Crawl regulär (Warteschlange leer) oder durch ein Limit (CRAWL-066 ff.), startet die Analyse innerhalb von 1 s automatisch; Filter „Verwaiste URLs“ der Fixture ist danach befüllt.
