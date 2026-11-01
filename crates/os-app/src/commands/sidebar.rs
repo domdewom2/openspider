@@ -5,7 +5,7 @@ use crate::{
     dto::*,
     registry::{CmdResult, CommandMeta, Registry},
     runtime::{
-        error::{parse_args, to_json},
+        error::{internal, parse_args, to_json},
         App, CallCtx,
     },
 };
@@ -128,14 +128,19 @@ pub(crate) async fn overview_facts(
         .await?
         .map_err(view_error)?;
     if !progress.complete() {
-        let op = count_op(app, s);
-        let status = crate::views::until_cancelled(&cancel, app.ops().wait(&op)).await?;
-        match status.map(|st| (st.state, st.error)) {
-            Some((OpState::Cancelled, _)) => {
-                return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"))
-            }
-            Some((OpState::Failed, Some(error))) => return Err(error),
-            _ => {}
+        let job = count_job(app, s);
+        let mut finished = job.finished.subscribe();
+        let result = crate::views::until_cancelled(&cancel, async move {
+            finished
+                .wait_for(Option::is_some)
+                .await
+                .map(|r| r.clone().unwrap_or(Ok(())))
+        })
+        .await?;
+        match result {
+            Ok(Ok(())) => {}
+            Ok(Err(error)) => return Err(error),
+            Err(_) => return Err(internal("sidebar.count", "Zählung beendet")),
         }
     }
     let cfg = s.config.clone();
@@ -152,22 +157,50 @@ pub(crate) async fn overview_facts(
     Ok(facts)
 }
 
-/// Label (i18n key) of the counting operation.
-pub(crate) const COUNT_LABEL: &str = "sidebar-op-count";
+/// One-time count of the missing Overview/Issues pieces of a crawl (UI-141, UI-145). Not an `Ops`
+/// operation: it is derivable background work and must neither block resuming a crawl nor ask for
+/// confirmation on quit. Progress and cancellation via `sidebar.countStatus`/`sidebar.countCancel`.
+pub(crate) struct CountJob {
+    token: os_model::CancelToken,
+    progress: std::sync::Mutex<(u64, u64)>,
+    finished: tokio::sync::watch::Sender<Option<Result<(), CmdError>>>,
+}
+impl CountJob {
+    /// Completion of the count (`Some` once finished).
+    #[cfg(test)]
+    pub(crate) fn finished(&self) -> tokio::sync::watch::Receiver<Option<Result<(), CmdError>>> {
+        self.finished.subscribe()
+    }
+    fn running(&self) -> bool {
+        self.finished.borrow().is_none()
+    }
+    fn progress(&self) -> (u64, u64) {
+        *self.progress.lock().unwrap_or_else(|p| p.into_inner())
+    }
+}
 
-/// Running counting operation per crawl.
+/// Running count per crawl.
 #[derive(Default)]
-pub(crate) struct CountOps(std::sync::Mutex<std::collections::HashMap<CrawlKey, String>>);
-impl CountOps {
-    fn lock(&self) -> std::sync::MutexGuard<'_, std::collections::HashMap<CrawlKey, String>> {
+pub(crate) struct CountJobs(
+    std::sync::Mutex<std::collections::HashMap<CrawlKey, std::sync::Arc<CountJob>>>,
+);
+impl CountJobs {
+    fn lock(
+        &self,
+    ) -> std::sync::MutexGuard<'_, std::collections::HashMap<CrawlKey, std::sync::Arc<CountJob>>>
+    {
         self.0.lock().unwrap_or_else(|p| p.into_inner())
     }
 }
 
-/// Cancels the crawl's counting operation (closed, cleared or started crawl).
-pub(crate) fn cancel_count(app: &App, key: &CrawlKey) {
-    if let Some(op) = app.ext::<CountOps>().lock().remove(key) {
-        app.ops().cancel(&op);
+/// Cancels the crawl's count (closed, cleared or started crawl, or the user).
+pub(crate) fn cancel_count(app: &App, key: &CrawlKey) -> bool {
+    match app.ext::<CountJobs>().lock().get(key) {
+        Some(job) if job.running() => {
+            job.token.cancel();
+            true
+        }
+        _ => false,
     }
 }
 
@@ -218,34 +251,53 @@ pub(crate) async fn count_steps(
     }
 }
 
-/// Starts the one-time count of the missing Overview/Issues pieces as a cancellable operation, or
-/// joins the running one. Up to four tabs per step (counted at once); every step is stored before
-/// the next, so an interrupted count (cancel, closed crawl, ended process) resumes where it stopped.
-/// Progress: counted tabs of all tabs.
-pub(crate) fn count_op(app: &App, s: &crate::runtime::sessions::SessionInfo) -> String {
-    let registry = app.ext::<CountOps>();
-    let mut running = registry.lock();
-    if let Some(op) = running.get(&s.key) {
-        if app
-            .ops()
-            .status(op)
-            .is_some_and(|st| st.state == OpState::Running)
-        {
-            return op.clone();
-        }
+/// Starts the one-time count of the missing pieces, or joins the running one.
+pub(crate) fn count_job(
+    app: &App,
+    s: &crate::runtime::sessions::SessionInfo,
+) -> std::sync::Arc<CountJob> {
+    let jobs = app.ext::<CountJobs>();
+    let mut running = jobs.lock();
+    if let Some(job) = running.get(&s.key).filter(|j| j.running()) {
+        return job.clone();
     }
-    let (worker, session) = (app.clone(), s.clone());
-    let handle = app.ops().spawn(COUNT_LABEL, true, move |token, sink| {
-        Box::pin(async move {
-            count_steps(&worker, &session, &token, |done, total| {
-                sink.report(done, Some(total))
-            })
-            .await?;
-            Ok(serde_json::Value::Null)
-        })
+    let (finished, _) = tokio::sync::watch::channel(None);
+    let job = std::sync::Arc::new(CountJob {
+        token: os_model::CancelToken::new(),
+        progress: std::sync::Mutex::new((0, 0)),
+        finished,
     });
-    running.insert(s.key.clone(), handle.op_id.clone());
-    handle.op_id
+    running.insert(s.key.clone(), job.clone());
+    let (worker, session, task) = (app.clone(), s.clone(), job.clone());
+    app.handle().spawn(async move {
+        let result = count_steps(&worker, &session, &task.token, |done, total| {
+            *task.progress.lock().unwrap_or_else(|p| p.into_inner()) = (done, total);
+        })
+        .await;
+        task.finished.send_replace(Some(result));
+    });
+    job
+}
+
+fn count_status<'a>(app: &'a App, ctx: CallCtx, _: serde_json::Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let s = session(app, &ctx)?;
+        let job = app.ext::<CountJobs>().lock().get(&s.key).cloned();
+        let (running, (done, total)) = job.map_or((false, (0, 0)), |j| (j.running(), j.progress()));
+        to_json(&CountStatus {
+            running,
+            done,
+            total,
+        })
+    })
+}
+
+fn count_cancel<'a>(app: &'a App, ctx: CallCtx, _: serde_json::Value) -> BoxFuture<'a, CmdResult> {
+    Box::pin(async move {
+        let s = session(app, &ctx)?;
+        cancel_count(app, &s.key);
+        Ok(serde_json::Value::Null)
+    })
 }
 fn explain<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
@@ -300,6 +352,8 @@ pub fn register(r: &mut Registry) {
             "IssueText",
             explain,
         ),
+        ("sidebar.countStatus", "void", "CountStatus", count_status),
+        ("sidebar.countCancel", "void", "void", count_cancel),
     ] {
         r.register(
             CommandMeta {

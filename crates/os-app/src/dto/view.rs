@@ -593,3 +593,15 @@ pub enum LinkMode {
     Links,
     Anchors,
 }
+
+/// Stand der einmaligen Overview-/Issues-Zählung eines Crawls (UI-141, UI-145).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct CountStatus {
+    /// Die Zählung läuft.
+    pub running: bool,
+    /// Gezählte Tabs.
+    pub done: u64,
+    /// Alle Tabs (0, solange unbekannt).
+    pub total: u64,
+}

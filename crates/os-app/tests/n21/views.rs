@@ -325,8 +325,7 @@ async fn opening_a_saved_crawl_stores_derivable_view_facts_for_the_next_open() {
 // spec: UI-141
 // spec: UI-145
 #[tokio::test]
-async fn first_count_is_a_cancellable_operation_with_tab_progress_and_resumes() {
-    use crate::dto::OpState;
+async fn first_count_is_cancellable_reports_tab_progress_and_resumes() {
     let (_dir, app, _clock, path) = fixture();
     open_crawl(&app, &path).await;
     let session = app
@@ -337,21 +336,29 @@ async fn first_count_is_a_cancellable_operation_with_tab_progress_and_resumes() 
         let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
         os_analyze::tabs::configured_for_file(&CrawlConfig::default(), &file).len() as u64
     };
-    // Cancelled before or during its first step: Cancelled (or already Done on a fast runner).
-    let first = crate::commands::sidebar::count_op(&app, &session);
-    app.ops().cancel(&first);
-    let status = app.ops().wait(&first).await.unwrap();
-    assert!(
-        matches!(status.state, OpState::Cancelled | OpState::Done),
-        "{status:?}"
-    );
-    // A request after the cancel resumes and answers.
+    // Cancelled before or during its first step: Cancelled (or already finished on a fast runner).
+    let job = crate::commands::sidebar::count_job(&app, &session);
+    call(&app, "sidebar.countCancel", Value::Null).await;
+    let mut finished = job.finished();
+    let result = finished
+        .wait_for(Option::is_some)
+        .await
+        .unwrap()
+        .clone()
+        .unwrap();
+    if let Err(error) = &result {
+        assert_eq!(error.message_key, "err-cancelled");
+    }
+    // Background derivable work: no operation that would block resume or quit.
+    assert!(app.ops().active_statuses().is_empty());
+    // A request after the cancel resumes and answers; the status then reports all tabs.
     let overview = call(&app, "sidebar.overview", json!({})).await;
     assert!(!overview["tabs"].as_array().unwrap().is_empty());
-    // Complete facts: a new count only reports the stored tabs.
-    let again = crate::commands::sidebar::count_op(&app, &session);
-    let status = app.ops().wait(&again).await.unwrap();
-    assert_eq!(status.state, OpState::Done);
-    assert_eq!((status.done, status.total), (tabs, Some(tabs)));
-    assert_eq!(status.label_key, crate::commands::sidebar::COUNT_LABEL);
+    let again = crate::commands::sidebar::count_job(&app, &session);
+    again.finished().wait_for(Option::is_some).await.unwrap();
+    let status = call(&app, "sidebar.countStatus", Value::Null).await;
+    assert_eq!(
+        status,
+        json!({"running": false, "done": tabs, "total": tabs})
+    );
 }
