@@ -224,3 +224,59 @@ async fn a_killed_crawl_is_incomplete_and_consistent_and_resumes_to_the_referenc
         "{repeated} wiederholte Abrufe (Grenze {bound})"
     );
 }
+
+// spec: CRAWL-126
+// spec: CRAWL-125
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn a_paused_crawl_killed_before_its_wal_merge_opens_paused_and_complete() {
+    let site = site().await;
+    let work = tempfile::tempdir().unwrap();
+    let path = crawl_file_in(&work, "paused.ospider");
+    let mut child = Command::new(child_binary())
+        .arg("--file")
+        .arg(&path)
+        .args(["--start", &start_url()])
+        .args(["--resolve", &format!("*.test={}", site.addr())])
+        .args(["--threads", &THREADS.to_string()])
+        .args(["--pause-after", "200"])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::inherit())
+        .spawn()
+        .expect("crawl_child startet");
+    let lines = lines_of(&mut child);
+    let deadline = Instant::now() + Duration::from_secs(60);
+    let mut done = None;
+    let wal = loop {
+        let line = lines
+            .recv_timeout(deadline.saturating_duration_since(Instant::now()))
+            .expect("das Kind meldet die quittierte Pause");
+        if line.starts_with("DONE ") {
+            done = Some(line.clone());
+        }
+        if let Some(bytes) = line.strip_prefix("HOLDING wal=") {
+            break bytes.parse::<u64>().unwrap();
+        }
+    };
+    assert!(
+        done.as_deref().is_some_and(|l| l.contains("state=Paused")),
+        "{done:?}"
+    );
+    assert!(wal > 0, "der Leser hält Frames im WAL fest");
+    child.kill().expect("hart beenden");
+    let _ = child.wait();
+
+    let file = open_ro(&path);
+    assert!(file.integrity_check().unwrap(), "PRAGMA integrity_check");
+    assert_eq!(file.meta().unwrap().state, CrawlState::Paused);
+    let queued = scalar(&file, "SELECT COUNT(*) FROM urls WHERE state = 'queued'");
+    assert!(queued > 0, "die Warteschlange ist nicht leer");
+    assert!(scalar(&file, "SELECT COUNT(*) FROM queue") >= queued);
+    assert_eq!(
+        scalar(
+            &file,
+            "SELECT COUNT(*) FROM urls WHERE state = 'queued' AND id NOT IN (SELECT url_id FROM queue)"
+        ),
+        0,
+        "Warteschlange vollständig"
+    );
+}

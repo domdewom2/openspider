@@ -73,6 +73,8 @@ enum Msg {
     /// Antwort: `true` = alles geschrieben, `false` = die Senke hat einen Fehler gemeldet.
     Flush(oneshot::Sender<bool>),
     Checkpoint(oneshot::Sender<bool>),
+    /// Folgende Commits synchronisieren das WAL (End-Batch, CRAWL-126).
+    Durable(oneshot::Sender<bool>),
 }
 
 /// Zähler des Writers (für Tests und die Lastmessung).
@@ -276,6 +278,19 @@ impl WriterThread {
     /// Wartet, bis alles bisher Gesendete geschrieben ist.
     pub async fn flush(&self) -> Result<(), WriterGone> {
         self.sender.flush().await
+    }
+
+    /// Die nach diesem Aufruf gesendeten Batches werden mit `synchronous = FULL` geschrieben: ein danach
+    /// bestätigtes `flush` ist dauerhaft, auch wenn der Checkpoint das WAL nicht sofort zurückführen kann (CRAWL-126).
+    pub async fn durable(&self) -> Result<(), WriterGone> {
+        let (ack, wait) = oneshot::channel();
+        if self.sender.tx.send(Msg::Durable(ack)).await.is_err() {
+            return Err(WriterGone);
+        }
+        match wait.await {
+            Ok(true) => Ok(()),
+            _ => Err(WriterGone),
+        }
     }
 
     /// Schreibt ausstehende Daten dauerhaft (WAL-Checkpoint).
@@ -774,6 +789,20 @@ fn writer_loop(
                 let ok = if shared.failed.load(Ordering::SeqCst) {
                     false
                 } else if let Err(e) = sink.checkpoint() {
+                    record_error(&shared, e);
+                    false
+                } else {
+                    true
+                };
+                let _ = ack.send(ok);
+            }
+            Msg::Durable(ack) => {
+                write_out(&mut sink, &mut batch, &mut pages, &shared);
+                first_at = None;
+                behind = !rx.is_empty();
+                let ok = if shared.failed.load(Ordering::SeqCst) {
+                    false
+                } else if let Err(e) = sink.durable() {
                     record_error(&shared, e);
                     false
                 } else {

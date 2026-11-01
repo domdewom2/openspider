@@ -1129,7 +1129,10 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
             .push((format!("include_hits:{}", hit.line + 1), hit.hits as i64));
     }
     rule_events(&sh, &mut last);
-    let mut write_ok = sh.writer.send(last).await.is_ok();
+    // CRAWL-126 (OS-Festlegung vom 01.11.2026): Warteschlange und Endzustand sind dauerhaft geschrieben, bevor der
+    // Status gemeldet wird; der abschließende Checkpoint wartet danach nur kurz auf Leser.
+    let mut write_ok = writer.durable().await.is_ok();
+    write_ok = write_ok && sh.writer.send(last).await.is_ok();
     write_ok = write_ok && writer.flush().await.is_ok();
     write_ok = write_ok && writer.checkpoint().await.is_ok();
 

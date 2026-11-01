@@ -73,17 +73,42 @@ async fn hidden_relations_do_not_create_table_rows_or_shorten_followed_paths() {
 // spec: CRAWL-056
 #[tokio::test]
 async fn checkpoint_resume_keeps_hidden_relations_and_later_promotes_followed_targets() {
-    let site = start_site(&os_testsite::fixtures_root().join("n10-links")).await;
+    // The start page answers late, so a reader can hold a snapshot before the crawl ends (CRAWL-126).
+    let site_dir = tempfile::tempdir().unwrap();
+    copy_dir(
+        &os_testsite::fixtures_root().join("n10-links"),
+        site_dir.path(),
+    );
+    std::fs::write(
+        site_dir.path().join("scenario.toml"),
+        "[[route]]\npath = \"/\"\ndelay_ms = 300\n",
+    )
+    .unwrap();
+    let site = start_site(site_dir.path()).await;
     let work = tempfile::tempdir().unwrap();
     let full_path = work.path().join("full.ospider");
-    let path = work.path().join("resumed.ospider");
+    let written = work.path().join("written.ospider");
     let mut cfg = config();
     cfg.network.resolve = config_for(&site, 1).network.resolve;
     run_to_end(start(cfg.clone(), &full_path, deps()).await).await;
     cfg.limits.max_urls = 2;
-    let paused = run_to_end(start(cfg, &path, deps()).await).await;
+    let handle = start(cfg, &written, deps()).await;
+    let held = CrawlFile::open(&written, OpenMode::ReadOnly).unwrap();
+    held.conn().execute_batch("BEGIN").unwrap();
+    scalar(&held, "SELECT COUNT(*) FROM urls");
+    let paused = run_to_end(handle).await;
     assert_eq!(paused.end_reason, Some(EndReason::LimitReached));
     assert_eq!(paused.crawled, 2);
+    // The final checkpoint did not wait for the reader; what `wait_merged()` runs completes after it ends.
+    assert!(os_store::open::wal_bytes(&written) > 0);
+    drop(held);
+    let cancel = std::sync::atomic::AtomicBool::new(false);
+    assert!(os_store::open::merge_wal(&written, &cancel).unwrap());
+    assert_eq!(os_store::open::wal_bytes(&written), 0);
+    // Only the main file goes to "another machine".
+    let other = tempfile::tempdir().unwrap();
+    let path = other.path().join("resumed.ospider");
+    std::fs::copy(&written, &path).unwrap();
     let limited = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
     assert!(scalar(&limited, "SELECT COUNT(*) FROM queue") > 0);
     let hidden = snapshot_n10(&limited)
