@@ -278,6 +278,14 @@ pub fn on_startup(app: &App) {
     }));
 }
 
+/// Bricht die stille Vorberechnung eines Crawls ab (`sidebar.countCancel`, UI-141). Gespeicherte
+/// Schritte bleiben; die nächste Anfrage setzt dort fort.
+pub(crate) fn cancel_precompute(app: &App, key: &CrawlKey) {
+    if let Some(token) = lock(&app.ext::<Precompute>().0).remove(key) {
+        token.cancel();
+    }
+}
+
 /// Abbruchmarken der Hintergrund-Vorberechnung je Crawl.
 #[derive(Default)]
 struct Precompute(std::sync::Mutex<std::collections::HashMap<CrawlKey, os_model::CancelToken>>);

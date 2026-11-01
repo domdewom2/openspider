@@ -108,9 +108,10 @@ fn issues<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
 }
 
 /// UI-145/UI-147: Overview and Issues share one fact set per data version. Missing pieces are
-/// counted by one cancellable operation per crawl ([`count_op`], progress in `Tick.ops`, UI-141);
-/// a request joins it instead of scanning the crawl a second time. Cancelling the operation ends
-/// the waiting requests with `Cancelled`; the next request resumes from the stored pieces.
+/// counted by one cancellable background count per crawl ([`count_job`], progress and cancel via
+/// `sidebar.countStatus`/`sidebar.countCancel`, UI-141); a request joins it instead of scanning the
+/// crawl a second time. Cancelling ends the waiting requests with `Cancelled`; the next request
+/// resumes from the stored pieces.
 pub(crate) async fn overview_facts(
     app: &App,
     s: &crate::runtime::sessions::SessionInfo,
@@ -164,6 +165,9 @@ pub(crate) struct CountJob {
     token: os_model::CancelToken,
     progress: std::sync::Mutex<(u64, u64)>,
     finished: tokio::sync::watch::Sender<Option<Result<(), CmdError>>>,
+    /// First report (stored pieces only): proves resuming without recounting.
+    #[cfg(test)]
+    pub(crate) first: std::sync::Mutex<Option<(u64, u64)>>,
 }
 impl CountJob {
     /// Completion of the count (`Some` once finished).
@@ -176,6 +180,10 @@ impl CountJob {
     }
     fn progress(&self) -> (u64, u64) {
         *self.progress.lock().unwrap_or_else(|p| p.into_inner())
+    }
+    #[cfg(test)]
+    pub(crate) fn progress_for_test(&self) -> std::sync::MutexGuard<'_, (u64, u64)> {
+        self.progress.lock().unwrap_or_else(|p| p.into_inner())
     }
 }
 
@@ -193,7 +201,8 @@ impl CountJobs {
     }
 }
 
-/// Cancels the crawl's count (closed, cleared or started crawl, or the user).
+/// Cancels the crawl's visible count (closed, cleared or started crawl, or the user). The quiet
+/// precomputation after opening shares the `overview` lane; `sidebar.countCancel` stops it as well.
 pub(crate) fn cancel_count(app: &App, key: &CrawlKey) -> bool {
     match app.ext::<CountJobs>().lock().get(key) {
         Some(job) if job.running() => {
@@ -214,6 +223,7 @@ pub(crate) async fn count_steps(
     report: impl Fn(u64, u64),
 ) -> Result<(), CmdError> {
     let mut step = 0;
+    let mut last = 0;
     loop {
         let cfg = session.config.clone();
         let progress = app
@@ -247,6 +257,31 @@ pub(crate) async fn count_steps(
         if token.is_cancelled() {
             return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
         }
+        if step > 0 && progress.done <= last {
+            // UI-141: a new data version (running crawl) discarded the counted steps, and a
+            // running crawl stores nothing. Finish in one snapshot instead of restarting forever.
+            let cfg = session.config.clone();
+            let progress = app
+                .read_pool()
+                .run_cached(
+                    session.key.clone(),
+                    "overview",
+                    token.clone(),
+                    move |file, cancel| {
+                        Ok(os_analyze::views::overview_progress(
+                            file,
+                            &cfg,
+                            cancel,
+                            usize::MAX,
+                        ))
+                    },
+                )
+                .await?
+                .map_err(view_error)?;
+            report(progress.done as u64, progress.total as u64);
+            return Ok(());
+        }
+        last = progress.done;
         step = 4;
     }
 }
@@ -266,15 +301,31 @@ pub(crate) fn count_job(
         token: os_model::CancelToken::new(),
         progress: std::sync::Mutex::new((0, 0)),
         finished,
+        #[cfg(test)]
+        first: std::sync::Mutex::new(None),
     });
     running.insert(s.key.clone(), job.clone());
     let (worker, session, task) = (app.clone(), s.clone(), job.clone());
     app.handle().spawn(async move {
         let result = count_steps(&worker, &session, &task.token, |done, total| {
             *task.progress.lock().unwrap_or_else(|p| p.into_inner()) = (done, total);
+            #[cfg(test)]
+            task.first
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .get_or_insert((done, total));
         })
         .await;
         task.finished.send_replace(Some(result));
+        // A finished count is not kept: waiting callers hold their own reference.
+        let jobs = worker.ext::<CountJobs>();
+        let mut jobs = jobs.lock();
+        if jobs
+            .get(&session.key)
+            .is_some_and(|j| std::sync::Arc::ptr_eq(j, &task))
+        {
+            jobs.remove(&session.key);
+        }
     });
     job
 }
@@ -296,6 +347,7 @@ fn count_cancel<'a>(app: &'a App, ctx: CallCtx, _: serde_json::Value) -> BoxFutu
     Box::pin(async move {
         let s = session(app, &ctx)?;
         cancel_count(app, &s.key);
+        super::sidebar_ext::cancel_precompute(app, &s.key);
         Ok(serde_json::Value::Null)
     })
 }

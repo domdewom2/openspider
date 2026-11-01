@@ -322,10 +322,35 @@ async fn opening_a_saved_crawl_stores_derivable_view_facts_for_the_next_open() {
     );
 }
 
+/// Waits until the quiet precomputation after opening has counted every tab of the current version.
+async fn precomputed(path: &std::path::Path) {
+    let file = CrawlFile::open(path, OpenMode::ReadOnly).unwrap();
+    let cfg = CrawlConfig::default();
+    let deadline = std::time::Instant::now() + Duration::from_secs(30);
+    while !os_analyze::views::overview_progress(&file, &cfg, &Default::default(), 0)
+        .unwrap()
+        .complete()
+    {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "precomputation did not finish"
+        );
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+}
+
+/// A new data version without a crawl: change_seq advances, nothing is stored for it yet.
+fn new_version(path: &std::path::Path) -> u64 {
+    let file = CrawlFile::open(path, OpenMode::ReadWrite).unwrap();
+    let seq = os_store::queries::change_seq(file.conn()).unwrap() + 1;
+    file.set_meta("change_seq", &seq.to_string()).unwrap();
+    seq
+}
+
 // spec: UI-141
 // spec: UI-145
 #[tokio::test]
-async fn first_count_is_cancellable_reports_tab_progress_and_resumes() {
+async fn cancelled_count_resumes_from_stored_tabs_without_recounting_them() {
     let (_dir, app, _clock, path) = fixture();
     open_crawl(&app, &path).await;
     let session = app
@@ -336,11 +361,26 @@ async fn first_count_is_cancellable_reports_tab_progress_and_resumes() {
         let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
         os_analyze::tabs::configured_for_file(&CrawlConfig::default(), &file).len() as u64
     };
-    // Cancelled before or during its first step: Cancelled (or already finished on a fast runner).
+    precomputed(&path).await;
+    new_version(&path);
+    // An interrupted count of the new version: four tabs counted and stored, then cancelled.
+    {
+        let reader = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+        let partial = os_analyze::views::overview_progress(
+            &reader,
+            &CrawlConfig::default(),
+            &Default::default(),
+            4,
+        )
+        .unwrap();
+        assert_eq!(partial.done, 4);
+        let writer = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+        assert!(os_analyze::views::persist_facts(&writer).unwrap());
+    }
     let job = crate::commands::sidebar::count_job(&app, &session);
     call(&app, "sidebar.countCancel", Value::Null).await;
-    let mut finished = job.finished();
-    let result = finished
+    let result = job
+        .finished()
         .wait_for(Option::is_some)
         .await
         .unwrap()
@@ -351,14 +391,62 @@ async fn first_count_is_cancellable_reports_tab_progress_and_resumes() {
     }
     // Background derivable work: no operation that would block resume or quit.
     assert!(app.ops().active_statuses().is_empty());
-    // A request after the cancel resumes and answers; the status then reports all tabs.
-    let overview = call(&app, "sidebar.overview", json!({})).await;
-    assert!(!overview["tabs"].as_array().unwrap().is_empty());
+    // Resuming starts at the stored tabs (first report before any counting), then completes.
     let again = crate::commands::sidebar::count_job(&app, &session);
     again.finished().wait_for(Option::is_some).await.unwrap();
+    let first = again.first.lock().unwrap().unwrap();
+    assert!(first.0 >= 4, "stored tabs are not counted again: {first:?}");
+    assert_eq!(first.1, tabs);
+    assert_eq!(*again.progress_for_test(), (tabs, tabs));
+    let overview = call(&app, "sidebar.overview", json!({})).await;
+    assert!(!overview["tabs"].as_array().unwrap().is_empty());
+    // Finished counts are not kept.
     let status = call(&app, "sidebar.countStatus", Value::Null).await;
-    assert_eq!(
-        status,
-        json!({"running": false, "done": tabs, "total": tabs})
-    );
+    assert_eq!(status, json!({"running": false, "done": 0, "total": 0}));
+}
+
+// spec: UI-141
+// spec: UI-145
+#[tokio::test]
+async fn waiting_overview_ends_while_a_writer_keeps_changing_the_data_version() {
+    let (_dir, app, _clock, path) = fixture();
+    open_crawl(&app, &path).await;
+    precomputed(&path).await;
+    // A running crawl's feed: every few milliseconds a new change_seq, nothing stored meanwhile.
+    let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let writer = {
+        let (stop, path) = (stop.clone(), path.clone());
+        std::thread::spawn(move || {
+            let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+            file.set_meta("state", "Running").unwrap();
+            let mut seq = os_store::queries::change_seq(file.conn()).unwrap();
+            while !stop.load(std::sync::atomic::Ordering::Relaxed) {
+                seq += 1;
+                file.set_meta("change_seq", &seq.to_string()).unwrap();
+                std::thread::sleep(Duration::from_millis(1));
+            }
+            file.set_meta("state", "Completed").unwrap();
+        })
+    };
+    // The request starts on a data version without stored counts.
+    let start = {
+        let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+        os_store::queries::change_seq(file.conn()).unwrap()
+    };
+    loop {
+        let file = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+        if os_store::queries::change_seq(file.conn()).unwrap() > start + 2 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(5)).await;
+    }
+    let answer = tokio::time::timeout(
+        Duration::from_secs(60),
+        call(&app, "sidebar.overview", json!({})),
+    )
+    .await;
+    stop.store(true, std::sync::atomic::Ordering::Relaxed);
+    writer.join().unwrap();
+    let overview = answer.expect("the waiting request must end under a running feed");
+    assert!(!overview["tabs"].as_array().unwrap().is_empty());
 }
