@@ -95,7 +95,13 @@ pub fn on_config_changed(
     new: &CrawlConfig,
 ) -> Result<(), crate::AnalyzeError> {
     let records = persist::read_steps(file)?;
-    let tx = file.conn().unchecked_transaction()?;
+    // IMMEDIATE: liest Metadaten und schreibt danach. Eine verzögerte Transaktion scheiterte beim Hochstufen sofort
+    // mit SQLITE_BUSY, solange die WAL-Rückführung nach einer Pause die Schreibsperre hält (CRAWL-126: Konfiguration
+    // ist während der Pause änderbar).
+    let tx = rusqlite::Transaction::new_unchecked(
+        file.conn(),
+        rusqlite::TransactionBehavior::Immediate,
+    )?;
     let mut stale = Vec::new();
     for &step in AnalysisStep::ALL {
         if step_config_hash(step, old) == step_config_hash(step, new) {
