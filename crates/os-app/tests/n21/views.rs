@@ -341,7 +341,10 @@ async fn first_count_is_a_cancellable_operation_with_tab_progress_and_resumes() 
     let first = crate::commands::sidebar::count_op(&app, &session);
     app.ops().cancel(&first);
     let status = app.ops().wait(&first).await.unwrap();
-    assert!(matches!(status.state, OpState::Cancelled | OpState::Done), "{status:?}");
+    assert!(
+        matches!(status.state, OpState::Cancelled | OpState::Done),
+        "{status:?}"
+    );
     // A request after the cancel resumes and answers.
     let overview = call(&app, "sidebar.overview", json!({})).await;
     assert!(!overview["tabs"].as_array().unwrap().is_empty());

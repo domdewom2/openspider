@@ -1,5 +1,6 @@
 //! Overview and issues share the analyze filter counts and issue resources.
 use super::catalog::{self, session, view_error};
+use crate::pool::CrawlKey;
 use crate::{
     dto::*,
     registry::{CmdResult, CommandMeta, Registry},
@@ -8,7 +9,6 @@ use crate::{
         App, CallCtx,
     },
 };
-use crate::pool::CrawlKey;
 use futures_util::future::BoxFuture;
 /// UI-061 summary shares one denominator and rounding rule with its export.
 pub(crate) fn summary_rows(summary: Vec<(String, u64)>) -> Vec<SummaryRow> {
@@ -119,9 +119,12 @@ pub(crate) async fn overview_facts(
     let cfg = s.config.clone();
     let progress = app
         .read_pool()
-        .run_cached(s.key.clone(), "overview", cancel.clone(), move |file, cancel| {
-            Ok(os_analyze::views::overview_progress(file, &cfg, cancel, 0))
-        })
+        .run_cached(
+            s.key.clone(),
+            "overview",
+            cancel.clone(),
+            move |file, cancel| Ok(os_analyze::views::overview_progress(file, &cfg, cancel, 0)),
+        )
         .await?
         .map_err(view_error)?;
     if !progress.complete() {
@@ -197,7 +200,9 @@ pub(crate) fn count_op(app: &App, s: &crate::runtime::sessions::SessionInfo) -> 
                         "overview",
                         token.clone(),
                         move |file, cancel| {
-                            Ok(os_analyze::views::overview_progress(file, &cfg, cancel, step))
+                            Ok(os_analyze::views::overview_progress(
+                                file, &cfg, cancel, step,
+                            ))
                         },
                     )
                     .await?

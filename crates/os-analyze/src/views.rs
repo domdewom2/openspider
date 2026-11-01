@@ -45,8 +45,8 @@ pub fn filter_members_in(
     counts::members_in(tabs, file, cfg, ids)
 }
 pub use facts::{
-    overview_facts, overview_progress, persist as persist_overview_facts, OverviewProgress,
-    persist_all as persist_facts, OverviewFacts,
+    overview_facts, overview_progress, persist as persist_overview_facts,
+    persist_all as persist_facts, OverviewFacts, OverviewProgress,
 };
 
 #[cfg(test)]
