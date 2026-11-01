@@ -8,7 +8,7 @@ import { startVizBridge } from "../viz/viz-bridge";
 import { rendererRss } from "./rss.mjs";
 
 // spec: UI-144
-test("visualization memory: 10000 nodes add at most 300 MiB and closing releases RSS", async ({
+test("visualization memory: 10000 nodes add at most 300 MB and closing releases RSS", async ({
   page,
   context,
 }, info) => {
@@ -39,9 +39,9 @@ test("visualization memory: 10000 nodes add at most 300 MiB and closing releases
       metrics: {
         additionalRssBytes: {
           value: additional,
-          budget: 300 * 1024 * 1024,
+          budget: 300_000_000,
           direction: "max",
-          passed: additional <= 300 * 1024 * 1024,
+          passed: additional <= 300_000_000,
         },
         freedBytes: {
           value: freed,
@@ -58,7 +58,7 @@ test("visualization memory: 10000 nodes add at most 300 MiB and closing releases
         scope:
           "E2E-A browser indication; another blank page remains alive for attributable baseline",
       },
-      passed: additional <= 300 * 1024 * 1024 && freed > 0,
+      passed: additional <= 300_000_000 && freed > 0,
     };
     await mkdir(resolve("../../target/loadtest/raw"), { recursive: true });
     await writeFile(

@@ -1,8 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 // UI-146 Visualisierungs-Performance im Frame-Recorder (src/grid/recorder.ts): 2D-Graph und Baum mit 10 000 Knoten
-// (gen-ui-large-Teilmenge). Verbindlich sind die Werte auf Referenzhardware A (K2-12); in Cloud/CI gelten sie als Indiz
-// mit Faktor `SLACK`, außer OS_VIZ_STRICT_BUDGETS=1. Messwerte stehen als Anhang `ui-146` am Testergebnis.
+// (gen-ui-large-Teilmenge). Messwerte stehen als Anhang `ui-146` am Testergebnis.
 import { expect, test } from "@playwright/test";
 import { FakeVizCore } from "../../src/features/viz/fixtures/fakeCore";
 import { genUiLarge } from "../../src/features/viz/fixtures/synthetic";

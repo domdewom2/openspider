@@ -164,6 +164,7 @@ try {
     "shell ready",
   );
   details.userAgent = await execute("return navigator.userAgent");
+  // spec: UI-147 [P1]
   metrics.coldStartMs = metric(
     performance.now() - started,
     process.platform === "darwin" ? 2000 : 3000,
@@ -231,7 +232,8 @@ try {
     metrics[`${axis}MaxFrameMs`] = metric(frames.maxFrameMs, 50);
   }
   await finishTrace();
-  // spec: UI-147 [P1]
+  // spec: UI-144
+  // 30-minute soak (WebView2 only): peak RSS and growth after warm-up.
   const seconds =
     process.platform === "win32"
       ? Number(process.env.OS_PERF_SOAK_SECONDS ?? 1800)
@@ -264,7 +266,7 @@ try {
     });
     metrics.peakRssBytes = metric(
       Math.max(...details.samples.map((s) => s.bytes)),
-      400 * 1024 * 1024,
+      400_000_000,
     );
     metrics.growthPercent = metric(
       (details.samples.at(-1).bytes / details.samples[0].bytes - 1) * 100,

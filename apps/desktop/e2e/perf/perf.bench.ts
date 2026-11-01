@@ -271,7 +271,7 @@ test("seeded random action soak and attributable renderer RSS", async ({
     {
       peakRssBytes: metric(
         Math.max(...samples.map((s) => s.bytes)),
-        400 * 1024 * 1024,
+        400_000_000,
       ),
       growthPercent: metric(growth, 10),
       durationSeconds: metric((clock.now() - start) / 1000, seconds, "min"),
