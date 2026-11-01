@@ -483,8 +483,9 @@ fn bounded_busy(_attempts: i32) -> bool {
 }
 
 /// Führt einen `wal_checkpoint`-Aufruf aus, der höchstens `wait` (Wanduhr) auf Leser und Schreiber wartet, und stellt
-/// danach den normalen Busy-Timeout der Verbindung wieder her (CRAWL-126).
-pub(crate) fn checkpoint_within<T>(
+/// danach den normalen Busy-Timeout der Verbindung wieder her (CRAWL-126). Auch für den abschließenden Checkpoint der
+/// Crawl-Analyse (CRAWL-141 Ablaufpunkt 7).
+pub fn checkpoint_within<T>(
     conn: &Connection,
     wait: std::time::Duration,
     sql: &str,
