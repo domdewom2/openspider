@@ -1,0 +1,27 @@
+filter SQL: SELECT u.id FROM urls u WHERE ((u.is_internal = 1 AND u.in_tables = 1)) AND ((u.content_class = 'HTML')) 
+filter PLAN: SEARCH u USING INDEX urls_class (is_internal=? AND content_class=?)
+numeric SQL: SELECT u.id,u.status_code FROM urls u WHERE ((u.is_internal = 1 AND u.in_tables = 1)) AND ((1)) ORDER BY (CASE WHEN (u.status_code) IS NULL OR (u.status_code) = '' THEN 1 ELSE 0 END) ASC, (CASE WHEN (CASE WHEN (u.status_code) IS NULL OR (u.status_code) = '' THEN 1 ELSE 0 END) = 1 THEN NULL ELSE (u.status_code) END) ASC, u.address ASC, u.id ASC
+numeric PLAN: SEARCH u USING INDEX urls_class (is_internal=?)
+numeric PLAN: USE TEMP B-TREE FOR ORDER BY
+text SQL: SELECT u.id,u.title_1 FROM urls u WHERE ((u.is_internal = 1 AND u.in_tables = 1)) AND ((1)) ORDER BY (CASE WHEN (CASE WHEN u.content_class IN ('HTML', 'PDF') AND u.status_code BETWEEN 200 AND 299 THEN u.title_1 END) IS NULL OR (CASE WHEN u.content_class IN ('HTML', 'PDF') AND u.status_code BETWEEN 200 AND 299 THEN u.title_1 END) = '' THEN 1 ELSE 0 END) ASC, (CASE WHEN (CASE WHEN (CASE WHEN u.content_class IN ('HTML', 'PDF') AND u.status_code BETWEEN 200 AND 299 THEN u.title_1 END) IS NULL OR (CASE WHEN u.content_class IN ('HTML', 'PDF') AND u.status_code BETWEEN 200 AND 299 THEN u.title_1 END) = '' THEN 1 ELSE 0 END) = 1 THEN NULL ELSE (CASE WHEN u.content_class IN ('HTML', 'PDF') AND u.status_code BETWEEN 200 AND 299 THEN u.title_1 END) END) COLLATE OS_TEXT ASC, u.address ASC, u.id ASC
+text PLAN: SEARCH u USING INDEX urls_class (is_internal=?)
+text PLAN: USE TEMP B-TREE FOR ORDER BY
+address SQL: SELECT u.id,u.address FROM urls u WHERE ((u.is_internal = 1 AND u.in_tables = 1)) AND ((1)) 
+address PLAN: SEARCH u USING INDEX urls_class (is_internal=?)
+legacy numeric permutation SQL: SELECT u.id,u.status_code FROM urls u ORDER BY u.status_code ASC
+legacy numeric permutation PLAN: SCAN u USING COVERING INDEX urls_status
+legacy text extraction SQL: SELECT u.id,CASE WHEN u.content_class IN ('HTML','PDF') AND u.status_code BETWEEN 200 AND 299 THEN u.title_1 END FROM urls u
+legacy text extraction PLAN: SCAN u
+new numeric extraction SQL: SELECT u.id,u.status_code,u.address FROM urls u
+new numeric extraction PLAN: SCAN u
+new text extraction SQL: SELECT u.id,CASE WHEN u.content_class IN ('HTML','PDF') AND u.status_code BETWEEN 200 AND 299 THEN u.title_1 END,u.address FROM urls u
+new text extraction PLAN: SCAN u
+legacy address search SQL: SELECT u.id,u.address FROM urls u LEFT JOIN url_counters c ON c.url_id=u.id WHERE u.is_internal=1 AND u.in_tables=1
+legacy address search PLAN: SEARCH u USING INDEX urls_class (is_internal=?)
+new address search SQL: SELECT u.id,u.address FROM urls u WHERE u.is_internal=1 AND u.in_tables=1
+new address search PLAN: SEARCH u USING INDEX urls_class (is_internal=?)
+legacy numeric key scan: rows=5000000 bytes=0 ms=511.773
+legacy text key scan: rows=5000000 bytes=149284592 ms=1645.503
+numeric extraction: rows=5000000 bytes=144999987 ms=1520.020
+text extraction: rows=5000000 bytes=294284579 ms=2202.845
+address extraction: rows=5000000 bytes=144999987 ms=1845.325

@@ -54,3 +54,14 @@ pub fn compare(a: &str, b: &str) -> Ordering {
         None => a.cmp(b),
     }
 }
+
+/// Disposable ICU secondary key, bytewise equivalent to [`compare`]. Never store across builds:
+/// ICU/Unicode data versions can change the encoding. Uses the same fallback as `compare`.
+pub fn sort_key(text: &str) -> Vec<u8> {
+    let Some(collator) = collator() else {
+        return text.as_bytes().to_vec();
+    };
+    let mut key = Vec::with_capacity(text.len() + 8);
+    let Ok(()) = collator.write_sort_key_to(text, &mut key);
+    key
+}

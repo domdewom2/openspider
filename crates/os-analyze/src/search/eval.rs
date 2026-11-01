@@ -394,6 +394,56 @@ fn text(value: &serde_json::Value) -> String {
     }
 }
 impl Atom {
+    fn scalar_text(
+        &self,
+        value: &str,
+        is_null: bool,
+        sensitive: bool,
+    ) -> Result<bool, SearchError> {
+        use std::borrow::Cow;
+        let empty = is_null || value.is_empty();
+        if self.op == RuleOp::IsEmpty {
+            return Ok(empty);
+        }
+        if self.op == RuleOp::IsNotEmpty {
+            return Ok(!empty);
+        }
+        let positive = if let Some(regex) = &self.regex {
+            regex.is_match(value).map_err(|e| match e {
+                fancy_regex::Error::RuntimeError(
+                    fancy_regex::RuntimeError::BacktrackLimitExceeded,
+                ) => SearchError::StepLimit,
+                _ => SearchError::InvalidRegex(e.to_string()),
+            })?
+        } else {
+            // ASCII without uppercase is already folded. Non-ASCII always uses the existing
+            // full Unicode folding, including expansions, without normalization.
+            let value = if sensitive
+                || (value.is_ascii() && !value.bytes().any(|b| b.is_ascii_uppercase()))
+            {
+                Cow::Borrowed(value)
+            } else {
+                Cow::Owned(fold(value))
+            };
+            match self.op {
+                RuleOp::Contains | RuleOp::NotContains => value.contains(&self.value),
+                RuleOp::Equals | RuleOp::NotEquals => *value == self.value,
+                RuleOp::StartsWith => value.starts_with(&self.value),
+                RuleOp::EndsWith => value.ends_with(&self.value),
+                RuleOp::Greater => value.as_ref() > self.value.as_str(),
+                RuleOp::Less => value.as_ref() < self.value.as_str(),
+                RuleOp::GreaterOrEqual => value.as_ref() >= self.value.as_str(),
+                RuleOp::LessOrEqual => value.as_ref() <= self.value.as_str(),
+                _ => false,
+            }
+        };
+        Ok(if negative(self.op) {
+            !positive
+        } else {
+            positive
+        })
+    }
+
     fn scalar(&self, value: &serde_json::Value, sensitive: bool) -> Result<bool, SearchError> {
         let empty = value.is_null() || value.as_str() == Some("");
         if self.op == RuleOp::IsEmpty {
@@ -588,7 +638,79 @@ impl CompiledSearch {
         check(deadline, cancel)?;
         result
     }
+    /// One scalar string column: borrow SQLite's cell, avoid JSON and per-batch worker startup.
+    fn scan_scalar(
+        &self,
+        atom: &Atom,
+        file: &CrawlFile,
+        deadline: Instant,
+        cancel: &CancelToken,
+        predicate: &str,
+        params: &[(String, Value)],
+    ) -> Result<RoaringBitmap, SearchError> {
+        let from = if atom.sql.contains("c.") || predicate.contains("c.") {
+            URLS_FROM
+        } else {
+            "urls u"
+        };
+        let mut stmt = file.conn().prepare(&format!(
+            "SELECT u.id,({}) FROM {from} WHERE {predicate}",
+            atom.sql
+        ))?;
+        super::view::bind(&mut stmt, params)?;
+        let mut rows = stmt.raw_query();
+        let mut result = RoaringBitmap::new();
+        let mut count = 0usize;
+        while let Some(row) = rows.next()? {
+            if count.is_multiple_of(1024) {
+                check(deadline, cancel)?;
+            }
+            count += 1;
+            let id = u32::try_from(row.get::<_, i64>(0)?)
+                .map_err(|_| invalid("url-id-outside-bitmap-range"))?;
+            let cell = row.get_ref(1)?;
+            let matched = match cell {
+                ValueRef::Null => atom.scalar_text("", true, self.program.case_sensitive)?,
+                ValueRef::Text(t) | ValueRef::Blob(t) => atom.scalar_text(
+                    &String::from_utf8_lossy(t),
+                    false,
+                    self.program.case_sensitive,
+                )?,
+                ValueRef::Integer(n) => {
+                    atom.scalar(&serde_json::Value::from(n), self.program.case_sensitive)?
+                }
+                ValueRef::Real(n) => {
+                    atom.scalar(&serde_json::Value::from(n), self.program.case_sensitive)?
+                }
+            };
+            if matched {
+                result.insert(id);
+            }
+        }
+        check(deadline, cancel)?;
+        Ok(result)
+    }
+
     fn scan(
+        &self,
+        file: &CrawlFile,
+        deadline: Instant,
+        cancel: &CancelToken,
+        predicate: &str,
+        params: &[(String, Value)],
+    ) -> Result<RoaringBitmap, SearchError> {
+        if let Node::Atom(0) = self.program.node {
+            let atom = &self.program.atoms[0];
+            if !atom.list
+                && atom.number.is_none()
+                && matches!(atom.kind, ColumnKind::Text | ColumnKind::Url)
+            {
+                return self.scan_scalar(atom, file, deadline, cancel, predicate, params);
+            }
+        }
+        self.scan_general(file, deadline, cancel, predicate, params)
+    }
+    fn scan_general(
         &self,
         file: &CrawlFile,
         deadline: Instant,
@@ -672,5 +794,130 @@ impl CompiledSearch {
             })?;
         }
         Ok(result)
+    }
+}
+
+#[cfg(test)]
+mod n22_tests {
+    use super::*;
+    use os_model::{
+        time::{IdSource, SeededIds},
+        CrawlConfig, CrawlMode, Timestamp,
+    };
+    use os_store::{CrawlInit, StorageProfile};
+
+    // spec: UI-141
+    #[test]
+    fn borrowed_scalar_scan_equals_general_scan_on_unicode_fixture() {
+        let dir = tempfile::tempdir().unwrap();
+        let at = Timestamp::from_db("2026-10-13T00:00:00.000Z").unwrap();
+        let file = CrawlFile::create(
+            &dir.path().join("n22-search.ospider"),
+            &CrawlInit {
+                crawl_id: SeededIds::new(19).new_crawl_id(at),
+                mode: CrawlMode::Spider,
+                start_url: Some("https://n22.test/".into()),
+                list_source: None,
+                project: "N22".into(),
+                name: "Unicode fixture".into(),
+                config: CrawlConfig::default(),
+                created_at: at,
+            },
+            StorageProfile::Balanced,
+        )
+        .unwrap();
+        let texts = [
+            Some(""),
+            None,
+            Some("Straße"),
+            Some("STRASSE"),
+            Some("İıI"),
+            Some("Σσς"),
+            Some("e\u{301}"),
+            Some("é"),
+            Some("東京😀"),
+            Some("ſﬃµ"),
+            Some("ascii/lower"),
+        ];
+        for (i, value) in texts.iter().enumerate() {
+            let address = format!("https://n22.test/{i}");
+            file.conn().execute("INSERT INTO urls(id,url,address,origin,is_internal,state,discovered_via,folder_depth,url_length,content_class,status_code,title_1) VALUES (?1,?2,?2,'https://n22.test',1,'Done','Start',0,length(?2),'HTML',200,?3)",
+                rusqlite::params![i as i64 + 1, address, value]).unwrap();
+        }
+        // Title 1 has a readiness expression: prove the fixture exposes its actual Unicode cells.
+        let probe = compile(
+            &RuleNode::Rule(Rule {
+                column: "Title 1".into(),
+                op: RuleOp::Contains,
+                value: "ss".into(),
+            }),
+            false,
+        )
+        .unwrap();
+        assert_eq!(
+            probe
+                .scan(
+                    &file,
+                    Instant::now() + Duration::from_secs(10),
+                    &CancelToken::new(),
+                    "1",
+                    &[]
+                )
+                .unwrap()
+                .iter()
+                .collect::<Vec<_>>(),
+            vec![3, 4]
+        );
+        for sensitive in [false, true] {
+            for op in [
+                RuleOp::Contains,
+                RuleOp::NotContains,
+                RuleOp::Equals,
+                RuleOp::NotEquals,
+                RuleOp::StartsWith,
+                RuleOp::EndsWith,
+                RuleOp::Regex,
+                RuleOp::NotRegex,
+                RuleOp::IsEmpty,
+                RuleOp::IsNotEmpty,
+            ] {
+                for needle in [
+                    "", "ss", "S", "σ", "é", "e\u{301}", "İ", "ffi", "東京", "^.*$",
+                ] {
+                    let compiled = compile(
+                        &RuleNode::Rule(Rule {
+                            column: "Title 1".into(),
+                            op,
+                            value: needle.into(),
+                        }),
+                        sensitive,
+                    )
+                    .unwrap();
+                    let deadline = Instant::now() + Duration::from_secs(10);
+                    let cancel = CancelToken::new();
+                    assert_eq!(
+                        compiled
+                            .scan(
+                                &file,
+                                deadline,
+                                &cancel,
+                                "u.id > :lo",
+                                &[(":lo".into(), Value::Int(0))]
+                            )
+                            .unwrap(),
+                        compiled
+                            .scan_general(
+                                &file,
+                                deadline,
+                                &cancel,
+                                "u.id > :lo",
+                                &[(":lo".into(), Value::Int(0))]
+                            )
+                            .unwrap(),
+                        "{op:?} {needle:?} sensitive={sensitive}"
+                    );
+                }
+            }
+        }
     }
 }
