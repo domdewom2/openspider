@@ -720,6 +720,9 @@ async fn stop_checkpoint(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
             Ok(())
         })
         .await?;
+    // CRAWL-126 (OS-Festlegung "Stoppen" während der Rückführung): the stop commit leaves frames in the WAL; a running
+    // merge takes another round, otherwise a new one starts. Stop itself neither waits for nor cancels it.
+    super::merge::start(app, &s.key, s.path.clone());
     super::state(app, &s.key, CrawlState::Completed);
     if !feed::stopped(app, s) {
         feed::invalidate(app, &s.key);
