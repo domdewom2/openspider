@@ -502,7 +502,9 @@ fn writer_loop(
     let mut pages = 0usize;
     let mut first_at: Option<Instant> = None;
     // An explicit checkpoint with no batch after it makes the closing one redundant: with a reader still holding a
-    // snapshot it would only wait another bounded interval (CRAWL-126).
+    // snapshot it would only wait another bounded interval (CRAWL-126). "Successful" means the call returned without
+    // error, not that the WAL is empty: frames a reader kept are merged later in the background (CRAWL-126), or by
+    // SQLite when the last connection closes.
     let mut checkpointed = false;
     // Die Senke ist der Engpass: bei der letzten Nachricht oder nach dem letzten Schreiben stand Arbeit im Kanal.
     let mut behind = false;
@@ -960,6 +962,65 @@ mod tests {
         assert_eq!(codes, ["erst", "dann"]);
         drop(tx);
         w.finish().unwrap();
+    }
+
+    // spec: CRAWL-126
+    #[tokio::test]
+    async fn a_checkpoint_without_a_later_batch_skips_the_closing_checkpoint() {
+        let (s, log) = sink(Duration::ZERO, None);
+        let w = WriterThread::spawn(s);
+        let tx = w.sender();
+        tx.send(event("end")).await.unwrap();
+        w.durable().await.unwrap();
+        w.checkpoint().await.unwrap();
+        // Flush and durable write nothing new: the explicit checkpoint stays the last one.
+        w.flush().await.unwrap();
+        drop(tx);
+        w.finish().unwrap();
+        let log = log.lock().unwrap();
+        assert_eq!(
+            log.checkpoints, 1,
+            "no closing checkpoint after the explicit one"
+        );
+        assert_eq!(log.batches.len(), 1);
+    }
+
+    // spec: CRAWL-126
+    #[tokio::test]
+    async fn a_batch_after_the_checkpoint_gets_the_closing_checkpoint() {
+        let (s, log) = sink(Duration::ZERO, None);
+        let w = WriterThread::spawn(s);
+        let tx = w.sender();
+        tx.send(event("a")).await.unwrap();
+        w.checkpoint().await.unwrap();
+        tx.send(event("b")).await.unwrap();
+        drop(tx);
+        w.finish().unwrap();
+        let log = log.lock().unwrap();
+        assert_eq!(
+            log.checkpoints, 2,
+            "the batch after the checkpoint is checkpointed at the end"
+        );
+        let codes: Vec<_> = log
+            .batches
+            .iter()
+            .flat_map(|b| b.events.iter().map(|e| e.code.clone()))
+            .collect();
+        assert_eq!(codes, ["a", "b"]);
+    }
+
+    // spec: CRAWL-126
+    #[tokio::test]
+    async fn without_an_explicit_checkpoint_the_closing_checkpoint_runs() {
+        let (s, log) = sink(Duration::ZERO, None);
+        let w = WriterThread::spawn(s);
+        let tx = w.sender();
+        tx.send(event("a")).await.unwrap();
+        w.durable().await.unwrap();
+        w.flush().await.unwrap();
+        drop(tx);
+        w.finish().unwrap();
+        assert_eq!(log.lock().unwrap().checkpoints, 1);
     }
 }
 
