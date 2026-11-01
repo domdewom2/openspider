@@ -47,3 +47,7 @@ Vollständige Liste mit Zielpaketen: `docs/plan/M2-reports/n02-auflagen.md`.
 - **Spec-Frage UI-145 ↔ K-74:** UI-145 verlangt die erste Inlinks-Seite in ≤ 150 ms, auch bei 1 Mio. Inlinks. Während eines laufenden oder pausierten Crawls fehlt `links_target` absichtlich (K-74, bestätigt in K-84); jede Inlinks-Abfrage liest dann die ganze Tabelle `links` (N24: 60–150 ms bei ~40.000 Links im Debug-Build). Klären, ob das Kriterium nur für abgeschlossene Crawls (Fixture `gen-ui-large`) gilt; falls auch während des Crawls, braucht es eine Architekturentscheidung (z. B. Inlinks-Index für ausgewählte URLs).
 - **Folgekandidat:** Ein sichtbarer Inlinks-Tab materialisiert während des Crawls je Revision (alle 500 ms) die Link-ID-Liste aus der ganzen Tabelle `links` neu.
 - **Folgekandidat:** Die obere Tabelle lädt je Live-Tick 200 Zeilen × 77 Spalten (~120 KB).
+
+## 7 CI-Pflege aus int-24 (Fable-Auflage 2)
+
+- **ui-e2e macos-webkit am Job-Limit:** 493 Specs auf einem Worker brauchen auf `macos-15` 51–60 min; int-24 (Lauf 41338132247) brach bei 466/493 (0 rot) am 60-min-Limit ab. Sofortmaßnahme in `m2/ci-e2e-limit`: Job-Limit nur für macos-webkit auf 90 min (`matrix.timeout`), keine Änderung an Spec-Timeouts oder Budgets (K2-63). Dauerhafte Lösung offen: macos-webkit in zwei Shards teilen (`--shard`), sobald die Runner-Kapazität für macOS arm64 es zulässt.

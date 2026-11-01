@@ -42,7 +42,9 @@ jobs:
     # Pull-Requests von m2/*-Zweigen überspringen den Job: derselbe Stand läuft schon über den Push-Lauf (K2-67, keine Doppelläufe).
     if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'm2/') }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    # macos-webkit braucht mit 493 Specs auf einem Worker 51–60 min und lief am 60-min-Limit ab (int-24, Lauf 41338132247).
+    # Nur das Job-Limit ist höher; Testbudgets und Timeouts der Specs bleiben unverändert (K2-63).
+    timeout-minutes: ${{ matrix.timeout }}
     strategy:
       fail-fast: false
       matrix:
@@ -53,18 +55,22 @@ jobs:
             os: macos-15
             projects: webkit
             browsers: webkit
+            timeout: 90
           - name: windows-chromium
             os: windows-latest
             projects: chromium
             browsers: chromium
+            timeout: 60
           - name: linux-chromium
             os: ubuntu-latest
             projects: chromium
             browsers: chromium
+            timeout: 60
           - name: linux-webkit
             os: ubuntu-latest
             projects: webkit
             browsers: webkit
+            timeout: 60
     defaults:
       run:
         shell: bash
