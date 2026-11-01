@@ -121,20 +121,109 @@ aktuell. Alle Zahlen oben stammen aus Läufen nach einem nachweislich neuen Buil
 verglichen). Für künftige Pakete: nach lokalen Änderungen während eines Server-Builds die geänderten Dateien vor dem
 Sync per `touch` neu stempeln.
 
-## Spec-Lücke (Vorschlag, nicht umgesetzt)
+## Spec-Lücke → OS-Festlegung (entschieden)
 
-CRAWL-126/UI-003 regeln nicht, wie „Stoppen“ aus „Pausiert“ mit dem laufenden Hintergrund-Merge umgeht. Vorschlag für
-eine OS-Festlegung:
+Die im ersten Bericht gemeldete Lücke ist entschieden: Fable bewertete das Paket mit „APPROVED MIT AUFLAGEN“, und der
+Orchestrator hat die Festlegung in f026087c in die Spezifikation übernommen. CRAWL-126 hat jetzt den Absatz
+„OS-Festlegung ‚Stoppen‘ während der Rückführung“ und ein neues Akzeptanzkriterium; UI-003 verweist darauf. Kern:
 
-> „Stoppen“ aus „Pausiert“ wartet weder auf die Rückführung des WAL noch bricht es sie ab. Der Stopp-Commit wartet
-> höchstens auf die Schreibsperre (Busy-Timeout). Die Rückführung läuft danach im Hintergrund weiter bzw. wird nach dem
-> Stopp-Commit neu angestoßen. Die Statusleiste zeigt bis dahin „Gestoppt – Datei wird zusammengeführt“. Beenden und
-> „Im Finder zeigen“ warten wie nach der Pause (3 s bzw. 2 s).
+- „Stoppen“ aus „Pausiert“ bricht eine laufende Rückführung weder ab noch wartet es auf sie. Der Stopp-Commit wartet
+  höchstens auf die Schreibsperre (Busy-Timeout der Schreibwarteschlange, 5 s).
+- Verbleiben danach Frames im WAL, auch nur die des Stopp-Commits, wird die Rückführung fortgesetzt bzw. neu
+  angestoßen. Die Statusleiste zeigt bis dahin „Gestoppt – Datei wird zusammengeführt“.
+- Beenden (3 s), „Im Finder zeigen“ (2 s) und Verschieben warten wie nach einer Pause; Löschen bricht ab. Dasselbe gilt
+  für „Stoppen“ aus „Läuft“.
 
-Damit verbunden, ebenfalls offen und nicht umgesetzt: Nach einem Stop aus „Pausiert“ stößt `stop_checkpoint` – anders
-als `settle` nach dem Stop eines laufenden Crawls – keinen neuen Merge an. Läuft beim Stop noch ein Merge (wie im Test),
-führt er auch die Stopp-Frames zurück. Ist er schon beendet, bleiben die wenigen Stopp-Frames bis zum nächsten
-Checkpoint oder Schließen im WAL. Ob das gewollt ist, gehört zur obigen Festlegung.
+## Auflagen und Umsetzung (zweite Runde)
+
+**Auflage B – Rückführung nach dem Stopp anstoßen.** `stop_checkpoint` ruft nach dem dauerhaften Commit
+`super::merge::start(app, &s.key, s.path.clone())` auf, wie `settle`. `merge::start` ist dabei echt idempotent geworden:
+
+- Läuft schon ein Merge (der von der Pause), wird kein zweiter gestartet. Der laufende erhält das neue Flag `again` und
+  macht nach seinem Ende eine weitere Runde.
+- Prüfen und Setzen von `again` in `start` und das Prüfen plus Fertigmelden im Merge-Task geschehen unter derselben
+  Sperre der Merge-Tabelle. Dadurch geht keine Anforderung verloren.
+- Ohne das Flag gäbe es ein kleines Rennen: Der laufende Merge leert das WAL, der Stopp-Commit schreibt danach neue
+  Frames, `start` sieht den Merge noch als „läuft“ und tut nichts. Die Stopp-Frames blieben dann im WAL, was dem neuen
+  Akzeptanzkriterium widerspräche.
+- Ein Abbruch (`cancel`: Fortsetzen, MCP, Löschen) beendet den Merge wie bisher ohne weitere Runde.
+
+**Beenden, Finder, Verschieben, Löschen nach einem Stopp.** Alle vier hängen am selben Merge-Eintrag je Crawl. Nach
+Auflage B gibt es diesen Eintrag auch nach dem Stopp; es war keine weitere Änderung nötig.
+
+| Aktion | Code | Verhalten |
+|---|---|---|
+| Beenden | `quit.rs`, `merge::wait_all` | höchstens 3 s |
+| „Im Finder zeigen“ | `commands/crawls.rs`, `wait_merged_within` | höchstens 2 s, danach Hinweis `crawl-merge-pending` |
+| Verschieben | `commands/crawls.rs`, `crawls.move`, `wait_merged` | wartet ohne Frist, wie nach einer Pause |
+| Löschen | `commands/crawls.rs`, `crawls.delete`, `merge::cancel` | bricht ab |
+
+Verschieben war also schon vorhanden; es gibt keine Lücke zu melden. Für den Stopp-Fall belegt das der Code, nicht ein
+eigener Test: Die Pfade sind identisch, und die bestehenden Tests für Beenden und Finder decken den Merge-Eintrag ab.
+
+**Statustext.** Der Kern meldet `merging` bereits unabhängig von der Phase (`session/mod.rs`, Tick). `Statusbar.tsx`
+zeigt bei `endReason === "stopped"` und laufendem Merge jetzt `status-stopped-merging`:
+„Gestoppt – Datei wird zusammengeführt“ bzw. „Stopped – merging file“ in `i18n/{de,en}.ftl`. Ohne Merge bleibt es bei
+„Gestoppt“/„Stopped“.
+
+**Tests.**
+
+- `stop_from_paused_succeeds_while_the_merge_waits_for_a_reader` prüft zusätzlich: Nach Ende des Lesers und
+  `wait_merged` ist `wal_bytes == 0`.
+- Neu und deterministisch: `stop_from_paused_waits_for_the_writer_lock_and_merges_its_own_commit`
+  (`// spec: CRAWL-126`, `// spec: UI-003`).
+  - Ablauf: Pause, Merge abwarten, dann hält eine zweite Verbindung 200 ms lang `BEGIN IMMEDIATE`, währenddessen „Stop“.
+  - Erwartet: Stop gelingt nach ≥ 150 ms Wartezeit, die Datei steht auf `Completed`/`stopped`.
+  - Danach startet der Stopp einen neuen Merge, und das WAL wird ohne weitere Aktion leer.
+- `Statusbar.test.tsx`: neuer Test (`// spec: CRAWL-126`, `// spec: UI-003`) für „Stopped – merging file“ →
+  „Stopped“ und dieselbe Abfolge auf Deutsch.
+
+Gegenproben auf dem Server mit absichtlich zurückgebautem Code:
+
+- **Ohne `merge::start` in `stop_checkpoint`:** Der deterministische Test scheitert an `wal_bytes == 0` (3 von 3
+  Läufen, WAL 8272 Byte). Die übrigen drei Tests bleiben grün.
+- **Mit `TransactionBehavior::Deferred` statt `Immediate`:** Beide Stop-Tests scheitern mit `err-db-busy`,
+  „database is locked“.
+
+Commits der zweiten Runde (lokal, Branch `m2/fix-stop`, auf f026087c):
+
+- `app: Stopp stößt die WAL-Rückführung an, laufender Merge macht eine weitere Runde (CRAWL-126)` –
+  `crates/os-app/src/session/control.rs`, `crates/os-app/src/session/merge.rs`
+- `test: Stopp mit gehaltener Schreibsperre und leerem WAL danach (CRAWL-126, UI-003)` –
+  `crates/os-app/tests/pause_merge.rs`
+- `ui: Statusleiste „Gestoppt – Datei wird zusammengeführt“ (CRAWL-126)` – `apps/desktop/src/features/statusbar/`
+  (`Statusbar.tsx`, `Statusbar.test.tsx`, `i18n/de.ftl`, `i18n/en.ftl`)
+- `docs: M2-FIX-STOP-Bericht um Auflagen und Festlegung ergänzen`
+
+**K2-92 (Owns):** Alle in diesem Paket geänderten Dateien liegen in den Owns von M2-FIXE-PORT; der Orchestrator
+vermerkt das in der Planung.
+
+- `crates/os-app/src/session/control.rs`
+- `crates/os-app/src/session/merge.rs`
+- `crates/os-app/tests/pause_merge.rs`
+- `apps/desktop/src/features/statusbar/Statusbar.tsx`
+- `apps/desktop/src/features/statusbar/Statusbar.test.tsx`
+- `apps/desktop/src/features/statusbar/i18n/de.ftl`
+- `apps/desktop/src/features/statusbar/i18n/en.ftl`
+- `docs/plan/M2-reports/fix-stop.md`
+
+**Abnahme-Gates der zweiten Runde (Server):** grün.
+
+- `cargo fmt --all --check` und `cargo clippy --workspace --all-targets -- -D warnings`: grün.
+- `cargo test --workspace` (über `~/ws-slot.sh`): 4076 bestanden, 0 fehlgeschlagen.
+- `npm run -w apps/desktop typecheck`: grün. `npm run -w apps/desktop test`: 100 Dateien, 883 Tests grün.
+- `pause_merge` vollständig: 4/4 grün.
+- E2E mit `--retries=0`, Chromium + WebKit:
+  - `beta/control.spec.ts` + `header/header.spec.ts` je 5×: 30/30 grün.
+  - `beta/control.spec.ts` 10×: 20/20 grün.
+  - In keinem Lauf „database is locked“.
+- Platte: Nach dem Workspace-Lauf war der Server knapp (18 GB frei). Ich habe die Testbinärdateien in
+  `target/debug/deps` und `target/debug/incremental` gelöscht und danach nur Bridge und Werkzeuge neu gebaut. Kein Lauf
+  scheiterte an Platzmangel.
+
+Hinweis E2E: `control.spec.ts:59` wartet bis 15 s auf den exakten Text „Stopped“. Läuft der Merge nach dem Stopp noch,
+steht zwischenzeitlich „Stopped – merging file“ da; das ist laut Festlegung richtig und bleibt im Zeitbudget, solange
+die UI-Leser das WAL innerhalb von 15 s freigeben (im Windows-Lauf war der Merge nach 1–2 s beendet).
 
 ## Folgerisiko außerhalb dieses Pakets
 
