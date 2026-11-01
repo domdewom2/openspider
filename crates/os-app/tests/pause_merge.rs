@@ -220,3 +220,155 @@ async fn reveal_waits_for_the_merge_only_within_its_budget() {
     call(&app, "crawls.reveal", json!({"ids":[started.crawl_id]})).await;
     assert!(t.elapsed() < Duration::from_secs(1));
 }
+
+// spec: CRAWL-126
+// spec: UI-003
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn stop_from_paused_succeeds_while_the_merge_waits_for_a_reader() {
+    // Windows CI (M2-FIX-STOP): "Stop" after "Pause" failed with "database is locked" while the background merge
+    // held the writer lock during its bounded wait for a reader. The merge holds that lock for most of each attempt;
+    // several crawls make a hit of that window certain in practice.
+    let home = tempfile::tempdir().unwrap();
+    let app = app(home.path());
+    let site_dir = slow_site();
+    let site = os_testsite::TestSite::start_dir(site_dir.path(), 0)
+        .await
+        .unwrap();
+    for round in 0..6 {
+        let mut config = cfg();
+        config.speed.threads = 1;
+        let fetch = Arc::new(
+            os_fetch::HttpFetcher::new(
+                os_fetch::FetchConfig::from_crawl_config(
+                    &config,
+                    &os_fetch::MemorySecretStore::new(),
+                    Arc::new(os_model::SystemClock),
+                )
+                .unwrap(),
+            )
+            .unwrap(),
+        );
+        let started = os_app::session::control::start_with_fetcher(
+            &app,
+            ctx(),
+            request(format!("http://127.0.0.1:{}/", site.port())),
+            config,
+            fetch,
+        )
+        .await
+        .unwrap();
+        let path = PathBuf::from(&started.file);
+        until_crawled(&path, 3).await;
+
+        // A reader keeps an older snapshot: "Paused" is acknowledged and the merge keeps retrying in the background.
+        let held = reader(&path);
+        call(&app, "crawl.pause", json!(null)).await;
+        assert!(
+            wal_bytes(&path) > 0,
+            "round {round}: the merge waits for the reader"
+        );
+        tokio::time::sleep(Duration::from_millis(20 * round)).await;
+        let stopped = app.dispatch(ctx(), "crawl.stop", json!(null)).await;
+        assert!(
+            stopped.is_ok(),
+            "round {round}: stop during the merge: {stopped:?}"
+        );
+        let state = {
+            let check = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+            let state = check.meta().unwrap().state;
+            let reason = check.get_meta("end_reason").unwrap();
+            (state, reason)
+        };
+        assert_eq!(
+            state,
+            (os_model::CrawlState::Completed, Some("stopped".to_string())),
+            "round {round}"
+        );
+        // The merge continues after the stop and also takes the stop commit back into the main file.
+        drop(held);
+        let key = os_app::pool::CrawlKey(started.crawl_id.clone());
+        os_app::session::merge::wait_merged(&app, &key).await;
+        assert_eq!(
+            wal_bytes(&path),
+            0,
+            "round {round}: WAL empty after the merge"
+        );
+    }
+}
+
+/// Starts a one-thread crawl on the slow site and waits for three crawled URLs.
+async fn started_crawl(app: &os_app::App, site: &os_testsite::TestSite) -> (PathBuf, String) {
+    let mut config = cfg();
+    config.speed.threads = 1;
+    let fetch = Arc::new(
+        os_fetch::HttpFetcher::new(
+            os_fetch::FetchConfig::from_crawl_config(
+                &config,
+                &os_fetch::MemorySecretStore::new(),
+                Arc::new(os_model::SystemClock),
+            )
+            .unwrap(),
+        )
+        .unwrap(),
+    );
+    let started = os_app::session::control::start_with_fetcher(
+        app,
+        ctx(),
+        request(format!("http://127.0.0.1:{}/", site.port())),
+        config,
+        fetch,
+    )
+    .await
+    .unwrap();
+    let path = PathBuf::from(&started.file);
+    until_crawled(&path, 3).await;
+    (path, started.crawl_id)
+}
+
+// spec: CRAWL-126
+// spec: UI-003
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn stop_from_paused_waits_for_the_writer_lock_and_merges_its_own_commit() {
+    // Deterministic variant: another connection holds the writer lock for 200 ms, as the merge does while it waits
+    // for readers. The stop commit waits for the lock (busy timeout) instead of failing with "database is locked".
+    let home = tempfile::tempdir().unwrap();
+    let app = app(home.path());
+    let site_dir = slow_site();
+    let site = os_testsite::TestSite::start_dir(site_dir.path(), 0)
+        .await
+        .unwrap();
+    let (path, crawl_id) = started_crawl(&app, &site).await;
+    let key = os_app::pool::CrawlKey(crawl_id);
+    call(&app, "crawl.pause", json!(null)).await;
+    os_app::session::merge::wait_merged(&app, &key).await;
+
+    let writer = rusqlite::Connection::open(&path).unwrap();
+    writer.execute_batch("BEGIN IMMEDIATE").unwrap();
+    let release = std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_millis(200));
+        writer.execute_batch("COMMIT").unwrap();
+    });
+    let t = Instant::now();
+    let stopped = app.dispatch(ctx(), "crawl.stop", json!(null)).await;
+    let took = t.elapsed();
+    release.join().unwrap();
+    assert!(
+        stopped.is_ok(),
+        "stop while the writer lock is held: {stopped:?}"
+    );
+    assert!(
+        took >= Duration::from_millis(150),
+        "the stop commit waited for the lock ({took:?})"
+    );
+    let check = CrawlFile::open(&path, OpenMode::ReadOnly).unwrap();
+    assert_eq!(check.meta().unwrap().state, os_model::CrawlState::Completed);
+    assert_eq!(
+        check.get_meta("end_reason").unwrap().as_deref(),
+        Some("stopped")
+    );
+    drop(check);
+
+    // The merge of the pause had ended: the stop starts a new one, which empties the WAL without further action.
+    os_app::session::merge::wait_merged(&app, &key).await;
+    assert_eq!(wal_bytes(&path), 0, "the stop commit is merged");
+}

@@ -687,10 +687,14 @@ async fn stop_checkpoint(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
     app.write_queue()
         .submit_file(&s.key, move |f| {
             // One atomic commit instead of five Windows disk synchronizations.
-            let tx = f
-                .conn()
-                .unchecked_transaction()
-                .map_err(|e| crate::runtime::error::store_error(&e.into()))?;
+            // CRAWL-126: take the writer lock before reading. The background WAL merge holds it while it waits for
+            // readers; a deferred read upgraded to a write would fail at once with SQLITE_BUSY ("database is
+            // locked") instead of waiting via the busy timeout.
+            let tx = rusqlite::Transaction::new_unchecked(
+                f.conn(),
+                rusqlite::TransactionBehavior::Immediate,
+            )
+            .map_err(|e| crate::runtime::error::store_error(&e.into()))?;
             let state = f
                 .meta()
                 .map_err(|e| crate::runtime::error::store_error(&e))?
@@ -716,6 +720,9 @@ async fn stop_checkpoint(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
             Ok(())
         })
         .await?;
+    // CRAWL-126 (OS-Festlegung "Stoppen" während der Rückführung): the stop commit leaves frames in the WAL; a running
+    // merge takes another round, otherwise a new one starts. Stop itself neither waits for nor cancels it.
+    super::merge::start(app, &s.key, s.path.clone());
     super::state(app, &s.key, CrawlState::Completed);
     if !feed::stopped(app, s) {
         feed::invalidate(app, &s.key);
