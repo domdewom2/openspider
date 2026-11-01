@@ -153,3 +153,15 @@ it("keeps structured opening reasons inspectable when no free-text detail exists
   expect(error).toHaveTextContent('"supported":1');
   expect(screen.getByText("Technical details")).toBeInTheDocument();
 });
+
+// spec: CRAWL-126
+it("reports a paused crawl at once and notes the background file merge until it has ended", async () => {
+  useSession.getState().applyTick(tick); render(<Statusbar />);
+  publish(2, { phase: "paused", merging: true });
+  expect(screen.getByTestId("crawl-phase")).toHaveTextContent("Paused – merging file");
+  publish(3, { phase: "paused", merging: null });
+  expect(screen.getByTestId("crawl-phase")).toHaveTextContent(/^Paused$/);
+  await setLanguage("de");
+  publish(4, { phase: "paused", merging: true });
+  expect(screen.getByTestId("crawl-phase")).toHaveTextContent("Pausiert – Datei wird zusammengeführt");
+});
