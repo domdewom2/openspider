@@ -490,13 +490,21 @@ pub(crate) fn checkpoint_within<T>(
     sql: &str,
     row: impl FnOnce(&rusqlite::Row<'_>) -> rusqlite::Result<T>,
 ) -> Result<T, StoreError> {
+    /// Clears the deadline and restores the normal busy timeout, also when the call panics.
+    struct Restore<'c>(&'c Connection);
+    impl Drop for Restore<'_> {
+        fn drop(&mut self) {
+            BUSY_DEADLINE.with(|d| d.set(None));
+            let _ = self.0.busy_timeout(BUSY_TIMEOUT);
+        }
+    }
     BUSY_DEADLINE.with(|d| d.set(Some(std::time::Instant::now() + wait)));
-    let installed = conn.busy_handler(Some(bounded_busy));
-    let result = installed.and_then(|()| conn.query_row(sql, [], row));
-    BUSY_DEADLINE.with(|d| d.set(None));
-    let restored = conn.busy_timeout(BUSY_TIMEOUT);
-    let value = result?;
-    restored?;
+    let guard = Restore(conn);
+    conn.busy_handler(Some(bounded_busy))?;
+    let value = conn.query_row(sql, [], row)?;
+    drop(guard);
+    // The restore in the guard cannot report errors; check the normal timeout explicitly.
+    conn.busy_timeout(BUSY_TIMEOUT)?;
     Ok(value)
 }
 
