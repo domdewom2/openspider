@@ -3968,7 +3968,8 @@
    "apps/desktop/e2e/perf/**",
    "apps/desktop/e2e-b/perf/**",
    ".github/workflows/ui-nightly.yml",
-   "docs/plan/M2-acceptance/ui-perf/**"
+   "docs/plan/M2-acceptance/ui-perf/**",
+   "docs/plan/M2-reports/u31.md"
   ],
   "depends_on": [
    "M2-K05",
@@ -3978,7 +3979,7 @@
   ],
   "size": "M",
   "runner": "cloud+ci+local-mac",
-  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Bericht target/loadtest/ui-report.json (Format PERF-009). Messung auf Referenzhardware A lokal durch den Orchestrator; Windows-Werte aus CI (Klärung K2-12). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen."
+  "prompt_notes": "Regeln: docs/plan/M2.md Abschnitt 2 (Arbeitsregeln) und 2a (Cloud-Ausführung C1–C14) gehen vor; nur Dateien aus owns ändern, sonst abbrechen und melden (Datei, Diff-Auszug, Grund). Bericht target/loadtest/ui-report.json (Format PERF-009). Messung auf Referenzhardware A lokal durch den Orchestrator; Windows-Werte aus CI (Klärung K2-12). B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok (`// spec: <ID> [P1]` bzw. `[M2]`; Liste M2.md Anhang B); übrige extra_spec_ids nur mitprüfen. int-23: integriert mit dem macOS-Harness U31-MAC (m2/u31-mac, Fable approved mit Auflagen; Dateien innerhalb dieser owns). Budgets UI-144 dezimal (400_000_000 bzw. 300_000_000 B)."
  },
  {
   "id": "M2-U32",
@@ -4881,13 +4882,36 @@
    "UI-145",
    "UI-147"
   ],
-  "owns": [],
+  "owns": [
+   "crates/os-store/src/counters.rs (nur counters::discovered)",
+   "crates/os-analyze/src/views.rs (nur Filter-Bitmaps/Zählungen)",
+   "crates/os-analyze/src/views/{counts,exec,facts,facts_n21_tests,membership,n21_catalog_test}.rs",
+   "crates/os-analyze/src/views/session/{mod,projection,n21_tests}.rs",
+   "crates/os-analyze/src/aggregates/{live,mod,n21_tests}.rs",
+   "crates/os-analyze/src/tabs/internal.rs (nur Sichtbarkeit PCT_OF_TOTAL)",
+   "crates/os-app/src/commands/{sidebar,sidebar_ext,view}.rs",
+   "crates/os-app/src/dto/{mod,view}.rs (nur CountStatus und Registrierung)",
+   "crates/os-app/src/session/feed.rs (nur Öffnungs-Snapshot)",
+   "crates/os-app/src/views/mod.rs",
+   "crates/os-app/tests/{cmd_view_session,manifest_contract}.rs",
+   "crates/os-app/tests/n21/**",
+   "apps/desktop/src/features/sidebar/frame/**",
+   "apps/desktop/src/features/sidebar/issues/Issues.tsx",
+   "apps/desktop/src/ipc/{client.ts,commands.json,sidebar.ts}",
+   "apps/desktop/src/ipc/gen/CountStatus.ts",
+   "apps/desktop/src/ipc/transport/ipc.test.ts",
+   "apps/desktop/e2e/sidebar/sidebar.spec.ts",
+   "apps/desktop/e2e/perf/n21-profile.{rs,mjs}",
+   "docs/plan/M2-acceptance/ui-perf/linux/n21/**",
+   "docs/plan/M2-ui-concept.md (nur Abschnitt 4.4, sidebar.countStatus/countCancel)",
+   "docs/plan/M2-reports/n21.md"
+  ],
   "depends_on": [
    "M2-U31"
   ],
   "size": "M",
   "runner": "server+ci",
-  "prompt_notes": "Vormerkung int-22, Umsetzung läuft separat und wird hier nicht integriert. Owns werden mit der konkreten Paketabnahme ergänzt; dieser Eintrag reserviert noch keine Dateien. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+  "prompt_notes": "Fable approved nach Nachprüfung; integriert in int-23 (cf7af3d1). Owns aus der K2-92-Tabelle in n21.md; Diagnosezeilen in e2e/perf/{scene.tsx,perf.bench.ts} gehören weiter U31. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
  },
  {
   "id": "M2-N22",
@@ -4899,13 +4923,21 @@
   "extra_spec_ids": [
    "UI-141"
   ],
-  "owns": [],
+  "owns": [
+   "crates/os-analyze/src/views/session/permutation.rs",
+   "crates/os-analyze/src/search/eval.rs",
+   "crates/os-store/src/collation.rs (nur additiv sort_key, K2-92)",
+   "crates/os-analyze/tests/n22_parity.rs",
+   "crates/os-loadtest/diagnostics/**",
+   "docs/plan/M2-reports/n22.md",
+   "docs/plan/M2-reports/n22-data/**"
+  ],
   "depends_on": [
    "M2-U31"
   ],
   "size": "M",
   "runner": "server+ci",
-  "prompt_notes": "Vormerkung int-22, Umsetzung läuft separat und wird hier nicht integriert. Owns werden mit der konkreten Paketabnahme ergänzt; dieser Eintrag reserviert noch keine Dateien. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+  "prompt_notes": "Fable approved mit Auflagen; integriert in int-23 (8a714fbd). collation.rs nur additiv sort_key (K2-92-Begründung in n22.md). Sortier-Peak ~1 GB RSS je Sitzung bleibt Folgearbeit. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
  },
  {
   "id": "M2-N23",
@@ -4920,12 +4952,67 @@
    "UI-144",
    "UI-146"
   ],
-  "owns": [],
+  "owns": [
+   "apps/desktop/e2e/perf/n23-*",
+   "apps/desktop/src/app/{viz-entry.tsx,windowLifetime.ts,windowLifetime.test.ts}",
+   "apps/desktop/src/features/header/{Header.tsx,n23-performance.test.tsx}",
+   "apps/desktop/src/features/statusbar/{StatusCard.tsx,Statusbar.tsx}",
+   "apps/desktop/src/features/viz/{GraphCanvas.tsx,GraphView.tsx,n23-canvas.test.tsx}",
+   "apps/desktop/src/features/viz/model/{force.ts,force.worker.ts,forceRunner.ts,forceRunner.test.ts,n23-forceResume.test.ts}",
+   "apps/desktop/src/grid/{DataGrid.tsx,textMetrics.ts} (nur Zeilen-Rendering, K2-92)",
+   "apps/desktop/src/state/{session.ts,n23-session.test.ts}",
+   "apps/desktop/src/ui/{n23-a11yLayer.test.tsx,n23-textMetrics.test.ts,ui.css}",
+   "apps/desktop/src/ui/primitives/{Feedback.tsx,TabBar.tsx,n23-progress.test.tsx,n23-tabbar.test.tsx}",
+   "docs/plan/M2-reports/n23.md"
+  ],
   "depends_on": [
    "M2-U31"
   ],
   "size": "M",
   "runner": "server+ci",
-  "prompt_notes": "Vormerkung int-22, Umsetzung läuft separat und wird hier nicht integriert. Owns werden mit der konkreten Paketabnahme ergänzt; dieser Eintrag reserviert noch keine Dateien. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+  "prompt_notes": "Fable approved mit Auflagen, Auflagen A1–A3 erfüllt; integriert in int-23 (7ed36ac3). Owns aus der K2-92-Tabelle in n23.md. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-FIXE-PORT",
+  "kind": "package",
+  "model": "opus",
+  "title": "Port FIX-E aus der M3-Linie: Pause mit dauerhaftem Commit und WAL-Merge im Hintergrund, Detail- und Overview-Erstantwort, begrenzte Future-Stacks",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "CRAWL-126"
+  ],
+  "owns": [
+   "docs/spec/01-crawl.md (nur CRAWL-126)",
+   "crates/os-engine/src/{crawl,worker,writer_thread,lib,host_pace,resume}.rs",
+   "crates/os-engine/examples/crawl_child.rs",
+   "crates/os-engine/tests/{lifecycle_crash,lifecycle_pause,n10_frontier}.rs",
+   "crates/os-store/src/{open,sink,writer}.rs",
+   "crates/os-store/tests/pause_merge.rs",
+   "crates/os-fetch/src/{client,http,rate}.rs",
+   "crates/os-fetch/tests/http_fetch.rs",
+   "crates/os-mcp/src/target.rs",
+   "crates/os-mcp/src/tools/crawl.rs",
+   "crates/os-app/src/commands/{compare,crawls,view}.rs",
+   "crates/os-app/src/dto/{events,view}.rs (nur merging bzw. initial_rows, skip_serializing_if)",
+   "crates/os-app/src/mcp/session.rs",
+   "crates/os-app/src/{pool,quit}.rs",
+   "crates/os-app/src/session/{control,feed,merge,mod}.rs",
+   "crates/os-app/src/stub/mod.rs",
+   "crates/os-app/tests/{beta_detail,cmd_mcp_service,crawl_future_size,pause_merge}.rs",
+   "apps/desktop/src/data/{ViewDataSource.ts,ViewDataSource.test.ts}",
+   "apps/desktop/src/features/detail/frame/{DetailFrame.tsx,TablePanel.tsx,detail.test.tsx,request.ts}",
+   "apps/desktop/src/features/sidebar/frame/{SidebarFrame.tsx,sidebar.test.tsx}",
+   "apps/desktop/src/features/statusbar/{Statusbar.tsx,Statusbar.test.tsx}",
+   "apps/desktop/src/features/statusbar/i18n/{de,en}.ftl",
+   "apps/desktop/src/features/notifications/i18n/{de,en}.ftl",
+   "apps/desktop/src/ipc/gen/{CrawlStatus,ViewHandle}.ts"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "M",
+  "runner": "server+ci",
+  "prompt_notes": "int-23: Cherry-pick (-x) der FIX-E-Commits aus m3/fix-e (Basis M3 int-e, Spitze d9e96d9f) auf die integrierte M2-Linie nach N20/N21/N23; Fable int-22 Auflage a. Sequenzielle Überlagerung mit N04/N12/N15F/N20/N21/N23 über ERLAUBT in M2-check.py, kein paralleler Besitz. Reine M3-Berichtsdokumente nicht übernommen, Zusammenfassung in M2-reports/int-23.md. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
  }
 ]
