@@ -687,10 +687,14 @@ async fn stop_checkpoint(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
     app.write_queue()
         .submit_file(&s.key, move |f| {
             // One atomic commit instead of five Windows disk synchronizations.
-            let tx = f
-                .conn()
-                .unchecked_transaction()
-                .map_err(|e| crate::runtime::error::store_error(&e.into()))?;
+            // CRAWL-126: take the writer lock before reading. The background WAL merge holds it while it waits for
+            // readers; a deferred read upgraded to a write would fail at once with SQLITE_BUSY ("database is
+            // locked") instead of waiting via the busy timeout.
+            let tx = rusqlite::Transaction::new_unchecked(
+                f.conn(),
+                rusqlite::TransactionBehavior::Immediate,
+            )
+            .map_err(|e| crate::runtime::error::store_error(&e.into()))?;
             let state = f
                 .meta()
                 .map_err(|e| crate::runtime::error::store_error(&e))?
