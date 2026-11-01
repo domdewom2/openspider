@@ -732,3 +732,33 @@ Einzustufen als vorbestehender Flake beim Kaltstart von Chromium.
 
 Linux-Server nach der Änderung: fmt und clippy (`-D warnings`) grün; Workspace 4.100 bestanden,
 0 Fehler, 49 Ignores.
+
+### Nachtrag 5: Auflage aus der Freigabe (Fable, 01.11.2026)
+
+**„Im Finder zeigen“ ist jetzt begrenzt.** `crawls.reveal` wartet auf den Merge höchstens
+`REVEAL_BUDGET` = 2 s (für alle gewählten Crawls zusammen, analog zu `QUIT_BUDGET`). Danach
+zeigt die App die Datei in jedem Fall. Läuft der Merge noch, erscheint der Hinweis
+`crawl-merge-pending` (DE/EN): Die Datei wird noch zusammengeführt; beim Kopieren gehört
+die „-wal“-Datei bis dahin dazu.
+
+Neuer Test `reveal_waits_for_the_merge_only_within_its_budget` (CRAWL-126): Ein fremder
+Snapshot hält den Merge offen. Der Aufruf kehrt nach ≤ 3 s zurück, zeigt den Pfad und
+meldet den Hinweis. Nach dem Ende des Snapshots ist das WAL leer, und „Zeigen“ kehrt
+sofort zurück. Ohne Budget wartet der Aufruf, solange der Snapshot gehalten wird.
+
+**Optionale Hinweise umgesetzt.**
+
+- (a) `checkpoint_within`: Ein Drop-Guard löscht die Frist und stellt den Busy-Timeout
+  auch bei einem Panic wieder her.
+- (b) Der Writer-Thread überspringt den abschließenden Checkpoint, wenn nach einem
+  erfolgreichen expliziten Checkpoint kein Batch mehr kam. Mit haltendem Leser fallen so
+  die zweiten 100 ms weg. Ohne expliziten Checkpoint bleibt der Abschluss-Checkpoint.
+- (c) Unter CRAWL-126 stehen drei neue Akzeptanzpunkte (Hintergrund-Merge mit Hinweis in
+  der Statusleiste, Beenden wartet, Zeigen wartet höchstens 2 s).
+
+Prüfungen auf dem Server:
+
+- fmt, clippy (`-D warnings`) und Neutralität grün.
+- Workspace 4.101 bestanden, 0 Fehler, 49 Ignores.
+- Typecheck grün; Vitest 871/871.
+- `os-app` `pause_merge` 2/2, `os-store` `pause_merge` 2/2, `writer_thread`-Unit-Tests 10/10.
