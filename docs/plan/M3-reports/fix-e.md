@@ -762,3 +762,67 @@ Prüfungen auf dem Server:
 - Workspace 4.101 bestanden, 0 Fehler, 49 Ignores.
 - Typecheck grün; Vitest 871/871.
 - `os-app` `pause_merge` 2/2, `os-store` `pause_merge` 2/2, `writer_thread`-Unit-Tests 10/10.
+
+### Nachtrag 6: ui-e2e rot auf `d9e96d9f` (Lauf 41287318605)
+
+**Befund.** Rot waren `beta/n04-live.spec.ts:17` (Zeile 74, Inlinks/Outlinks-Grid nicht
+innerhalb 1 s) auf allen drei Plattformen und `header/header.spec.ts:23` (Zeile 69, zweite
+Pause) auf Linux. Beides ist **kein Regress aus `deba2e77`/`152f8c55`**, sondern sind
+vorbestehende Flakes. Es gibt keinen Code-Fix für die Specs. Test, Budgets und Fixtures
+bleiben unverändert (K2-63).
+
+**Belege aus CI.**
+
+- Im „grünen“ Lauf 41279051227 auf `5f500611` scheiterte n04 auf linux-chromium und
+  linux-webkit im ersten Versuch an derselben Zeile 74 („element(s) not found“). Grün war
+  der Lauf nur dank des Retrys. Header und n04 fielen schon früher so aus, unter anderem
+  auf `main` `bc964d71` (Lauf 41238238849, beide Versuche).
+- Die Runner waren im roten Lauf langsamer. Median der Testdauern rot/grün über rund 490
+  gemeinsame Tests: linux-webkit 1,31, windows-chromium 1,06, linux-chromium 1,00.
+- Der Rerun derselben Jobs auf unverändertem `d9e96d9f` ist auf allen vier Plattformen
+  grün, n04 und Header jeweils im ersten Versuch. Flaky war je ein anderer Test:
+  linux-chromium `beta/quit.spec.ts:6`, linux-webkit `config/bridge.spec.ts:69`.
+- Header-Trace (linux-chromium): Beim zweiten Klick auf „Pause“ waren 86–91 von 96–101
+  URLs fertig. Der Klick brauchte 0,5–0,9 s, weil der Haupt-Thread der Seite belegt war.
+  Danach zeigte der Snapshot „Completed 101/101“. Die Fixture (101 URLs à 200 ms) ist also
+  vor der zweiten Pause fertig. Das ist dasselbe Bild wie im Abschnitt „Header-Flake“ oben.
+- n04-Trace: `view.open` für Inlinks dauerte 155–1.300 ms, und der Tab-Klick selbst bis
+  2,5 s. Dieses Bild ist bei `5f500611` (erste Versuche) und bei `d9e96d9f` gleich.
+
+**Bisect auf dem Server.** Hetzner, `taskset -c 0-3` (vier Kerne wie der Runner),
+`--retries=0`. Als Basis dienten die sechs zwischen `5f500611` und `d9e96d9f` geänderten
+Quelldateien (Engine, Store, App, FTL), jeweils dateiweise auf den alten Stand gesetzt.
+
+| Spec, Engine | `5f500611` rot | `d9e96d9f` rot |
+|---|---|---|
+| header, chromium | 2/70 | 5/70 |
+| header, webkit | 5/20 | 3/20 |
+| n04, chromium | 2/6 (alle Zeile 74) | 3/6 (alle Zeile 74) |
+
+Zusammen sind das beim Header 7/90 gegen 8/90. Ein Unterschied ist nicht nachweisbar.
+
+Pause-Latenz aus Traces (chromium, je 30): Klick bis „Paused“ im Median 1.871 ms gegen
+1.722 ms, Maximum 2.762 gegen 2.544 ms. Fortsetzen bis „Running“ 827 gegen 844 ms. Das
+Überspringen des zweiten Abschluss-Checkpoints macht die Pause also eher schneller.
+Langsamer macht es sie nicht.
+
+**`checkpointed` und das busy-Flag (Hinweis aus der int-23-Prüfung).** `wal_checkpoint`
+wertet nur die Frame-Zahl aus. Nach einem expliziten Checkpoint, den ein Leser
+unvollständig ließ, entfällt deshalb der abschließende Checkpoint. Das ist so gewollt:
+CRAWL-126 begrenzt das Warten auf Leser auf 100 ms. Den Rest führt die App im Hintergrund
+zurück (`merge::start` nach `settle`; MCP-Crawls laufen über dieselbe Sitzung). Ohne App
+(CLI) räumt SQLite das WAL beim Schließen der letzten Verbindung auf, sofern kein fremder
+Leser es hält. Hält ein fremder Leser es, blieb die `-wal` auch vor `152f8c55` nach 2 × 100 ms
+stehen. Neu ist nur der Fall, dass ein Leser genau zwischen 100 und 200 ms loslässt. Mit
+den roten Specs hängt das nicht zusammen, denn beide laufen in der App mit Merge. Der
+Kommentar im Writer-Thread sagt jetzt, dass „erfolgreich“ kein leeres WAL bedeutet. Drei
+Unit-Tests sichern das Verhalten (`dd02fe65`, CRAWL-126):
+
+- Checkpoint ohne folgenden Batch: kein zweiter Checkpoint.
+- Batch danach: Der Abschluss-Checkpoint läuft.
+- Ohne expliziten Checkpoint: Der Abschluss-Checkpoint läuft.
+
+**Prüfung auf `dd02fe65` (Server, alle Kerne).** Header chromium 5/5 und webkit 5/5,
+n04 chromium 3/3 und webkit 3/3. `writer_thread`-Unit-Tests 13/13.
+Außerdem grün: fmt, clippy (`-D warnings`), Workspace 4.104 bestanden, 0 Fehler,
+49 Ignores. Typecheck grün, Vitest 871/871.
