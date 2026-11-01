@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import { useT, useLanguageStore } from "../../i18n";
 import { useSession } from "../../state/session";
 import { currentPlatform } from "../../ui/platform";
@@ -11,15 +11,20 @@ const snapshot = () => revision;
 
 /** Native menu APIs expose no hover event; the status line provides the reasons by action name. */
 export function MenuAvailability() {
-  useSyncExternalStore(subscribe, snapshot);
+  const contributions = useSyncExternalStore(subscribe, snapshot);
   const t = useT();
   const lang = useLanguageStore(s => s.lang);
-  const { crawl, analysis } = useSession();
-  const model = buildMenuModel(allMenuContributions(), {
-    platform: currentPlatform(), lang, t, native: false,
-    ctx: { hasCrawl: !!crawl, crawlRunning: crawl?.phase === "running", hasData: (crawl?.crawled ?? 0) > 0, analysisRunning: analysis?.running === true },
-  });
-  const entries = [...new Map(flattenItems(model.menus.flatMap(menu => menu.items)).filter(item => !item.enabled && item.disabledReason).map(item => [item.id, item])).values()];
+  // Only the menu context, not every live tick (crawl progress), may rebuild the model (UI-018/UI-145).
+  const hasCrawl = useSession(s => !!s.crawl);
+  const crawlRunning = useSession(s => s.crawl?.phase === "running");
+  const hasData = useSession(s => (s.crawl?.crawled ?? 0) > 0);
+  const analysisRunning = useSession(s => s.analysis?.running === true);
+  const entries = useMemo(() => {
+    const model = buildMenuModel(allMenuContributions(), { platform: currentPlatform(), lang, t, native: false, ctx: { hasCrawl, crawlRunning, hasData, analysisRunning } });
+    return [...new Map(flattenItems(model.menus.flatMap(menu => menu.items)).filter(item => !item.enabled && item.disabledReason).map(item => [item.id, item])).values()];
+    // `contributions` is the revision of the registered menus (actions, focus context, states of their owners).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contributions, lang, t, hasCrawl, crawlRunning, hasData, analysisRunning]);
   if (!entries.length) return null;
   return <details className="os-menu-availability">
     <summary>{t("u04-unavailable-actions", { count: entries.length })}</summary>
