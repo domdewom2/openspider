@@ -697,3 +697,38 @@ Hinweis: Unter „Maximale Geschwindigkeit“ schreiben Hintergrund-Checkpoints 
 Crawls weiterhin ohne fsync (bestehendes Profilverhalten). Der End-Batch ist jetzt
 synchronisiert; die Hauptdatei wird erst beim abschließenden Merge mit `NORMAL`
 synchronisiert.
+
+### Nachtrag 4: CI auf `324cd5a7` (macos-arm64, linux-chromium)
+
+**macos-arm64 `os-store` `pause_merge`.** Gemessen wurden 677 ms statt höchstens 300 ms.
+Ursache: `busy_timeout` begrenzt nur die Summe der *angeforderten* Schlafpausen des
+SQLite-Busy-Handlers (1, 2, 5, 10, 15, 20, 25 ms …), nicht die tatsächlich verstrichene
+Zeit. macOS verlängert einzelne Pausen merklich, unter Runner-Last stark.
+
+Gemessen auf dem Mac mini (M1, eigener Klon `~/Projects/wt-fix-e`, `nice`, Start bei
+Last < 3, Diagnosetest nicht committet):
+
+| Messung | Ergebnis |
+| --- | --- |
+| `PASSIVE`-Checkpoint mit haltendem Leser | 1,4 ms, also keine Synchronisationskosten |
+| `TRUNCATE` mit `busy_timeout(100 ms)` | 135–137 ms |
+| Abschluss-Checkpoint der Senke | 147 ms |
+| `fullfsync` / `checkpoint_fullfsync` | 0 |
+
+F_FULLFSYNC scheidet damit aus; die Zeit liegt vollständig im Busy-Handler.
+
+**Änderung.** Ein eigener Busy-Handler mit Wanduhr-Frist (thread-lokal, Schlafschritte
+≤ 2 ms) gilt für den Abschluss-Checkpoint und jeden Merge-Versuch. Danach wird der normale
+Busy-Timeout von 5 s wiederhergestellt. Grenze und Test bleiben unverändert (K2-63).
+
+Mac mini danach: Abschluss-Checkpoint 100,4–100,5 ms, `pause_merge` 10/10.
+
+**linux-chromium `auth/bridge.spec.ts:26`.** Kein Bezug zu diesem Paket. Der Test
+scheitert schon im ersten Durchlauf beim Warten auf das CDP-Ziel des Login-Browsers
+(`LoginSession::open`, `os-render`). In diesem Test wird kein Crawl gestartet, deshalb
+laufen weder Pause- und Endpfad noch Merge. `os-render` und `auth_login` sind in diesem
+Paket unverändert. Auf demselben Branch lief der Test in den drei Läufen davor grün.
+Einzustufen als vorbestehender Flake beim Kaltstart von Chromium.
+
+Linux-Server nach der Änderung: fmt und clippy (`-D warnings`) grün; Workspace 4.100 bestanden,
+0 Fehler, 49 Ignores.
