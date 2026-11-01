@@ -34,7 +34,7 @@ Prüfergebnisse:
 
 | `cargo test --workspace -j 6 --locked` ohne Ausschluss | 4031 bestanden, 49 bestehende Ignores, 546 Testprogramme inkl. Doc-Tests; keine Fehler oder Wiederholungen | 25 min 5 s |
 
-Workspace-Test: 18:07:57–18:33:02 UTC. `beta_n04`: alle fünf Tests bestanden, einschließlich des 5.000-Seiten-Crawls (25,81 s). Kein Lastflake. Danach ausschließlich abgeschlossene Test-Executables aus diesem Worktree entfernt (626 Dateien, rund 56,6 GB); Bibliotheken für die Werkzeugbauten erhalten. Übrige Prüfergebnisse und Messwerte werden nach Abschluss ergänzt. Rohprotokolle dieser Ausführung liegen unter `/tmp/openspider-int22`.
+Workspace-Test: 18:07:57–18:33:02 UTC. `beta_n04`: alle fünf Tests bestanden, einschließlich des 5.000-Seiten-Crawls (25,81 s). Kein Lastflake. Danach ausschließlich abgeschlossene Test-Executables aus diesem Worktree entfernt (626 Dateien, rund 56,6 GB); Bibliotheken für die Werkzeugbauten erhalten. Übrige Prüfergebnisse und Messwerte stehen im Abschnitt „Abschluss durch den Orchestrator“. Rohprotokolle dieser Ausführung liegen unter `/tmp/openspider-int22`.
 
 ## Offene Folgearbeiten
 
