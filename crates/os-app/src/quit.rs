@@ -26,26 +26,21 @@ pub(crate) struct CacheGate {
     sealed: Arc<AtomicBool>,
 }
 
-/// Stores derivable view facts (N21 counts and memberships, sidebar aggregates) through the write queue, unless the
-/// app is quitting (CRAWL-126). Callers treat a skipped write like a failed one: the cache is rebuilt later.
-pub(crate) async fn submit_cache(
-    app: &App,
-    key: &crate::pool::CrawlKey,
-    f: impl FnOnce(&mut os_store::CrawlFile) -> Result<(), CmdError> + Send + 'static,
-) -> Result<(), CmdError> {
+/// Permission to store derivable view facts (N21 counts and memberships, sidebar aggregates) through the write queue
+/// (CRAWL-126). `None` once quitting has begun: callers submit nothing. A ticket taken just before is checked again on
+/// the writer thread with [`CacheTicket::open`]; a skipped write is treated like a failed one (rebuilt later).
+pub(crate) fn cache_ticket(app: &App) -> Option<CacheTicket> {
     let gate = app.ext::<CacheGate>();
-    if gate.closing.load(Ordering::SeqCst) {
-        return Ok(());
+    (!gate.closing.load(Ordering::SeqCst)).then(|| CacheTicket(gate.sealed.clone()))
+}
+
+/// See [`cache_ticket`].
+pub(crate) struct CacheTicket(Arc<AtomicBool>);
+impl CacheTicket {
+    /// `false` once the quit drain has run the jobs queued before it: the write is skipped.
+    pub(crate) fn open(&self) -> bool {
+        !self.0.load(Ordering::SeqCst)
     }
-    let sealed = gate.sealed.clone();
-    app.write_queue()
-        .submit_file(key, move |file| {
-            if sealed.load(Ordering::SeqCst) {
-                return Ok(());
-            }
-            f(file)
-        })
-        .await
 }
 
 /// Quitting begins: no new view-cache writes from here on (CRAWL-126).
@@ -203,6 +198,7 @@ pub async fn confirm(app: &App, accepted: bool) -> Result<(), CmdError> {
 }
 
 #[cfg(test)]
+#[allow(clippy::disallowed_types, clippy::disallowed_methods)]
 mod tests {
     use super::*;
     use crate::AppConfig;
@@ -222,6 +218,23 @@ mod tests {
                     CmdError::new(ErrorCode::Store, "err-store").with_detail(e.to_string())
                 })
         }
+    }
+
+    /// The callers' pattern (views, sidebar): no submission without a ticket, the ticket checked on the writer thread.
+    async fn submit_cache(
+        app: &App,
+        key: &crate::pool::CrawlKey,
+        f: impl FnOnce(&mut os_store::CrawlFile) -> Result<(), CmdError> + Send + 'static,
+    ) -> Result<(), CmdError> {
+        let Some(ticket) = cache_ticket(app) else {
+            return Ok(());
+        };
+        app.write_queue()
+            .submit_file(
+                key,
+                move |file| if ticket.open() { f(file) } else { Ok(()) },
+            )
+            .await
     }
 
     fn stored(path: &std::path::Path, key: &str) -> bool {
