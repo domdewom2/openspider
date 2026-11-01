@@ -28,6 +28,12 @@ use std::collections::{BTreeMap, BTreeSet};
 use os_model::{ImageRow, LinkRow, LinkType};
 use rusqlite::{params, Connection};
 
+/// URL total for the opening summary (UI-147). Unlike session reconciliation,
+/// this does not read the payload of every crawled URL to count discarded fields.
+pub fn discovered(conn: &Connection) -> Result<u64, StoreError> {
+    Ok(conn.query_row("SELECT COUNT(*) FROM urls", [], |row| row.get(0))?)
+}
+
 use crate::error::StoreError;
 
 /// Zählung der Links einer Seite auf ein Ziel.

@@ -6,6 +6,9 @@ pub mod live;
 pub mod scoped;
 pub mod status;
 
+#[cfg(test)]
+mod n21_tests;
+
 use std::collections::BTreeMap;
 
 use os_store::CrawlFile;

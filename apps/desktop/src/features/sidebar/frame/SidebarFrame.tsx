@@ -11,6 +11,7 @@ import { Overview, overviewRows } from "../overview/Overview";
 import { Issues } from "../issues/Issues";
 import { AnalysisNotice, useStartAnalysis } from "../analysis/AnalysisNotice";
 import { QueryFeedback } from "./QueryFeedback";
+import { CountProgress } from "./CountProgress";
 import { PanelActions } from "./PanelActions";
 import { RegionBoundary } from "../../../app/ErrorBoundary";
 import "../../shell/tabbar.css";
@@ -48,7 +49,7 @@ export function SidebarFrame({ panels = Object.values(modules).flatMap(m => m.pa
   const needsAnalysis = !!analysis.data?.steps.some(s => s.stale || s.state === "pending") || !!overview.data?.tabs.some(tab => tab.filters.some(f => f.state.kind === "needsCrawlAnalysis"));
   const content = (id: string) => {
     if (id === "issues") return <Issues needsAnalysis={needsAnalysis} />;
-    if (id === "overview") return <><QueryFeedback error={overview.error} loading={!!crawl && overview.isPending} retry={() => void overview.refetch()} />{!crawl && <p>{t("sidebar-no-crawl")}</p>}{overviewData && <><PanelActions which="overview" rows={overviewRows(overviewData, t)} /><Overview data={overviewData} staleSteps={staleSteps} collapsed={layout.collapsed} toggle={toggle} startAnalysis={startAnalysis} /></>}</>;
+    if (id === "overview") return <><QueryFeedback error={overview.error} loading={!!crawl && overview.isPending} retry={() => void overview.refetch()} />{!!crawl && overview.isPending && <CountProgress />}{!crawl && <p>{t("sidebar-no-crawl")}</p>}{overviewData && <><PanelActions which="overview" rows={overviewRows(overviewData, t)} /><Overview data={overviewData} staleSteps={staleSteps} collapsed={layout.collapsed} toggle={toggle} startAnalysis={startAnalysis} /></>}</>;
     const Panel = panels.find(p => p.id === id)?.Component;
     return Panel ? <Panel /> : <p>{t("sidebar-panel-unavailable")}</p>;
   };

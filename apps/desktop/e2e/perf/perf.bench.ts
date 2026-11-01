@@ -122,6 +122,7 @@ test("cold browser context and open to first painted rows", async ({
       scope:
         "Fresh browser context to painted real DataGrid; OS application cold start requires native E2E-B",
       rows,
+      snapshot: await page.evaluate(() => window.uiPerf.snapshot()),
     },
   );
 });

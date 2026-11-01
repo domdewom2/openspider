@@ -189,6 +189,15 @@ fn header(cols: &[SelectedColumn<'_>], plans: &[ColExec]) -> Vec<String> {
     out
 }
 
+#[cfg(test)]
+thread_local! {
+    static MULTI_FULLSCAN_STEPS: std::cell::Cell<u64> = const { std::cell::Cell::new(0) };
+}
+
+#[cfg(test)]
+#[path = "n21_catalog_test.rs"]
+mod n21_catalog_test;
+
 /// Anzahl nummerierter Spalten einer Mehrfachspalte: Maximum über die Ansicht und alle Teillisten,
 /// mindestens 1.
 fn multi_count(
@@ -199,13 +208,29 @@ fn multi_count(
 ) -> Result<usize, ViewError> {
     let mut max_count: i64 = 0;
     for part in parts {
+        // UI-147: enumerate child groups once, rather than probing the child
+        // table for every URL merely to construct the column catalogue.
+        let grouped = match part.list_sql {
+            crate::tabs::internal::META_ROBOTS_LIST => Some("SELECT url_id, COUNT(*) AS n FROM directives WHERE source='meta_robots' AND applies=1 GROUP BY url_id"),
+            crate::tabs::internal::X_ROBOTS_LIST => Some("SELECT url_id, COUNT(*) AS n FROM directives WHERE source='x_robots_tag' AND applies=1 GROUP BY url_id"),
+            crate::tabs::internal::CANONICAL_LIST => Some("SELECT url_id, COUNT(*) AS n FROM canonicals WHERE source='html' GROUP BY url_id"),
+            _ => None,
+        };
         let correlated = part.list_sql.replace("?1", "u.id");
-        let sql =
+        let scope = if crawl_wide {
+            "1".to_owned()
+        } else {
+            where_sql(&built.plan)
+        };
+        let sql = if let Some(grouped) = grouped {
+            format!("SELECT COALESCE(MAX(child.n),0) FROM ({grouped}) child CROSS JOIN urls u LEFT JOIN url_counters c ON c.url_id=u.id WHERE u.id=child.url_id AND ({scope})")
+        } else {
             format!(
             "SELECT COALESCE(MAX(c), 0) FROM (SELECT (SELECT COUNT(*) FROM ({correlated})) AS c \
              FROM {URLS_FROM} WHERE {})",
-            if crawl_wide { "1".to_owned() } else { where_sql(&built.plan) }
-        );
+            scope
+            )
+        };
         let mut stmt = conn.prepare(&sql)?;
         bind_named(&mut stmt, &built.plan.params, &[])?;
         let mut rows = stmt.raw_query();
@@ -213,6 +238,15 @@ fn multi_count(
             Some(r) => r.get(0)?,
             None => 0,
         };
+        #[cfg(test)]
+        {
+            drop(rows);
+            MULTI_FULLSCAN_STEPS.with(|steps| {
+                steps.set(
+                    steps.get() + stmt.get_status(rusqlite::StatementStatus::FullscanStep) as u64,
+                )
+            });
+        }
         max_count = max_count.max(max);
     }
     Ok((max_count.max(1)) as usize)

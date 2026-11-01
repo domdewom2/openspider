@@ -11,6 +11,7 @@ import type { IssuePriorityDto } from "../../../ipc/gen/IssuePriorityDto";
 import { useSession } from "../../../state/session";
 import { useSidebarNavigation } from "../frame/state";
 import { QueryFeedback } from "../frame/QueryFeedback";
+import { CountProgress } from "../frame/CountProgress";
 import { IssueBadge } from "./IssueBadge";
 import { IssueExplanation } from "./IssueExplanation";
 import { PanelActions } from "../frame/PanelActions";
@@ -63,6 +64,7 @@ function RegularIssues({ needsAnalysis }: { needsAnalysis: boolean }) {
     <label>{t("sidebar-search")}<input type="search" value={search} onChange={e => setSearch(e.target.value)} /></label></div>
     {needsAnalysis && <p role="status">{t("sidebar-more-issues")}</p>}
     <QueryFeedback error={query.error} loading={!!crawl && query.isPending} retry={() => void query.refetch()} />
+    {!!crawl && query.isPending && <CountProgress />}
     {!crawl && <p>{t("sidebar-no-crawl")}</p>}
     {query.data && <><PanelActions which="issues" rows={issueRows(rows.map(r => ({ ...r, filter: named(r.filter) })), t)} /><table className="os-sidebar-table"><thead><tr><th>{t("sidebar-issue-name")}</th><th>{t("sidebar-type")}</th><th>{t("sidebar-priority")}</th><th>{t("sidebar-urls")}</th><th>{t("sidebar-percent-total")}</th></tr></thead><tbody>{rows.map(row => <tr key={row.id} aria-selected={selected === row.id}>
       <th scope="row"><button type="button" onClick={() => { setSelected(row.id); navigate(row.tab, row.filter); }} onDoubleClick={() => navigate(row.tab, row.filter, true)}>{row.tab}: {named(row.filter)}</button>

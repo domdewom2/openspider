@@ -29,6 +29,9 @@ export class VersionGuard {
   /** Wirft `Stale`, wenn die Antwort älter ist als die zuletzt gesehene. */
   accept<T>(value: T): T {
     if (typeof value === "object" && value !== null) {
+      // Building is an operation acknowledgement, not a published data version.
+      // Keep the watermark so late rows from the previous generation still fail.
+      if ("state" in value && value.state === "building") return value;
       const v = value as { viewId?: unknown; version?: unknown };
       if (typeof v.viewId === "string" && typeof v.version === "number") {
         const seen = this.latest.get(v.viewId);

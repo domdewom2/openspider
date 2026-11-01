@@ -1,0 +1,7 @@
+fmt exit=0 secs=4
+clippy exit=0 secs=3
+workspace exit=0 secs=1141
+manifest exit=0 secs=1
+bridge exit=0 secs=0
+e2e-beta-a11y exit=0 secs=936
+CHECKS_DONE

@@ -1,0 +1,72 @@
+{
+  "scenario": "operations",
+  "size": "large",
+  "started_at": "2026-10-31T22:14:21.997Z",
+  "engine": "chromium",
+  "metrics": {
+    "tabMs": {
+      "value": 108.40000000596046,
+      "budget": 200,
+      "direction": "max",
+      "passed": true
+    },
+    "tabReturnMs": {
+      "value": 39.20000000298023,
+      "budget": 200,
+      "direction": "max",
+      "passed": true
+    },
+    "filterMs": {
+      "value": 83.20000000298023,
+      "budget": 200,
+      "direction": "max",
+      "passed": true
+    },
+    "numericMs": {
+      "value": 4916.300000011921,
+      "budget": 5000,
+      "direction": "max",
+      "passed": true
+    },
+    "reverseMs": {
+      "value": 116.6000000089407,
+      "budget": 200,
+      "direction": "max",
+      "passed": true
+    },
+    "textMs": {
+      "value": 14299.29999999702,
+      "budget": 8000,
+      "direction": "max",
+      "passed": false
+    },
+    "substringMs": {
+      "value": null,
+      "budget": 3000,
+      "direction": "max",
+      "passed": false
+    },
+    "regexMs": {
+      "value": 4714.79999999702,
+      "budget": 10000,
+      "direction": "max",
+      "passed": true
+    }
+  },
+  "details": {
+    "times": {
+      "tabMs": 108.40000000596046,
+      "tabReturnMs": 39.20000000298023,
+      "filterMs": 83.20000000298023,
+      "numericMs": 4916.300000011921,
+      "reverseMs": 116.6000000089407,
+      "textMs": 14299.29999999702,
+      "substringMs": null,
+      "regexMs": 4714.79999999702
+    },
+    "errors": [
+      "substringMs: Error: {\"done\":0,\"error\":{\"args\":{},\"code\":\"Timeout\",\"detail\":null,\"field\":null,\"messageKey\":\"err-search-timeout\",\"retryable\":false},\"labelKey\":\"view-build\",\"opId\":\"01a19407-8132-79c2-9383-1106b7a07b55\",\"result\":null,\"state\":\"failed\",\"total\":null}"
+    ]
+  },
+  "passed": false
+}

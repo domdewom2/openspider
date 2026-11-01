@@ -1,0 +1,13 @@
+fmt exit=0 secs=3
+clippy exit=0 secs=2
+workspace exit=101 secs=469
+deny exit=0 secs=2
+neutral exit=0 secs=0
+typecheck exit=0 secs=2
+desktop exit=0 secs=100
+bins exit=0 secs=0
+bridge exit=0 secs=29
+parity exit=0 secs=300
+e2e-beta-a11y exit=1 secs=930
+visual-after exit=0 secs=431
+CHECKS_DONE

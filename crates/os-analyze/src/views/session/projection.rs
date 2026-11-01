@@ -210,10 +210,23 @@ impl Projection {
     pub fn build(
         conn: &Connection,
         built: &Built<'_>,
-        params: Vec<(String, Value)>,
+        mut params: Vec<(String, Value)>,
         ready: bool,
+        html_2xx: Option<i64>,
     ) -> Result<Self, ViewError> {
-        let prepared = prepare_columns(conn, built, ready)?;
+        let mut prepared = prepare_columns(conn, built, ready)?;
+        // UI-140/UI-142: the denominator belongs to the published snapshot,
+        // not to each row window. Preserve the original ONPAGE-015 population.
+        let denominator = crate::tabs::internal::PCT_OF_TOTAL;
+        if ready && prepared.select_list.contains(denominator) {
+            let total = match html_2xx {
+                Some(total) => total,
+                None => super::super::internal_html_2xx_count(conn)?,
+            };
+            prepared.select_list = prepared.select_list.replace(denominator,
+                "CASE WHEN :os_html_2xx_total=0 THEN NULL ELSE 100.0*c.html_2xx_sources/:os_html_2xx_total END");
+            params.push((":os_html_2xx_total".into(), Value::Int(total)));
+        }
         let columns = header(&built.columns, &prepared.plans);
         Ok(Self {
             prepared,

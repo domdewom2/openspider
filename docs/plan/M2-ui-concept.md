@@ -515,6 +515,8 @@ Spalte „Quelle“: **M1** = existiert laut M1 3.6 (Funktion in Klammern), **K-
 | `sidebar.overview` | `segment?, compare?` | `OverviewDto { summary: Row[], tabs: [{tab, filters: FilterInfo[]}] }` | UI-061, OUT-142 | M1 (`filter_counts`) + K-1 |
 | `sidebar.issues` | `type?, priority?, search?, segment?, compare?` | `IssueRow[]` (inkl. Segmentanteile) | UI-062, OUT-143 | M1 (`issues_from_counts`) |
 | `sidebar.issueExplain` | `issueId, lang` | `IssueText { what, why, fix, rule, learnMoreUrl }` | UI-065, AGENT-013 | M1 (`issues::texts` mit what/why/fix und Platzhalterersetzung, M1-P12; F-4 entschieden) |
+| `sidebar.countStatus` | – | `CountStatus { running, done, total }` | UI-141, UI-145 | N21: einmalige, abbrechbare Overview-/Issues-Zählung (gezählte Tabs von allen) |
+| `sidebar.countCancel` | – | – | UI-141 | N21: bricht die Zählung ab; die nächste Anfrage setzt mit den gespeicherten Tabs fort |
 | `sidebar.siteStructure` | `view: Indexability\|ResponseCodes\|CrawlDepth, segment?` | `{ paths: PathNode[], depths: DepthRow[] }` | UI-066 | K-5 (Aggregate) |
 | `sidebar.responseTimes` | `scope: All\|InternalHtml` | `{ buckets: Bucket[], noResponse }` | UI-069 | K-5 |
 | `sidebar.segments` | `view` | `SegmentRow[]` | UI-067 | K-5, CRAWL-134 |

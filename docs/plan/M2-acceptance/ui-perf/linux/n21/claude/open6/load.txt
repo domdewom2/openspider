@@ -1,0 +1,4 @@
+run 1 load 2.54 4.89 6.82
+run 2 load 2.49 4.84 6.80
+run 3 load 2.45 4.79 6.77
+OPEN_DONE

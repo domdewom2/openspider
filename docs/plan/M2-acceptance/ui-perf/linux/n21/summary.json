@@ -1,0 +1,527 @@
+{
+  "fixture": {
+    "rows": 5000000,
+    "links": 100000000,
+    "seed": 19,
+    "hub_inlinks": 1000000,
+    "html_bytes": 15728640,
+    "schema_version": 5,
+    "elapsed_ms": 528234,
+    "file_bytes": 16184975360
+  },
+  "scope": "selected unchanged U31 budget cases, Linux indication only",
+  "cases": [
+    {
+      "spec": "UI-147",
+      "scenario": "open",
+      "metric": "openMs",
+      "measurements": {
+        "before": {
+          "chromium": {
+            "value": 28905.29999999702,
+            "budget": 3000,
+            "direction": "max",
+            "passed": false
+          },
+          "webkit": {
+            "value": 19810,
+            "budget": 3000,
+            "direction": "max",
+            "passed": false
+          }
+        },
+        "after": {
+          "chromium": {
+            "value": 5390.5,
+            "budget": 3000,
+            "direction": "max",
+            "passed": false
+          },
+          "webkit": {
+            "value": 5431,
+            "budget": 3000,
+            "direction": "max",
+            "passed": false
+          }
+        }
+      }
+    },
+    {
+      "spec": "UI-141/tab",
+      "scenario": "operations",
+      "metric": "tabMs",
+      "measurements": {
+        "before": {
+          "chromium": {
+            "value": 2541.2999999970198,
+            "budget": 200,
+            "direction": "max",
+            "passed": false
+          },
+          "webkit": {
+            "value": 2308,
+            "budget": 200,
+            "direction": "max",
+            "passed": false
+          }
+        },
+        "after": {
+          "chromium": {
+            "value": 2564.6000000089407,
+            "budget": 200,
+            "direction": "max",
+            "passed": false
+          },
+          "webkit": {
+            "value": 2231,
+            "budget": 200,
+            "direction": "max",
+            "passed": false
+          }
+        }
+      }
+    },
+    {
+      "spec": "UI-141/return",
+      "scenario": "operations",
+      "metric": "tabReturnMs",
+      "measurements": {
+        "before": {
+          "chromium": {
+            "value": 21215.70000000298,
+            "budget": 200,
+            "direction": "max",
+            "passed": false
+          },
+          "webkit": {
+            "value": 19594,
+            "budget": 200,
+            "direction": "max",
+            "passed": false
+          }
+        },
+        "after": {
+          "chromium": {
+            "value": 66.1000000089407,
+            "budget": 200,
+            "direction": "max",
+            "passed": true
+          },
+          "webkit": {
+            "value": 101,
+            "budget": 200,
+            "direction": "max",
+            "passed": true
+          }
+        }
+      }
+    },
+    {
+      "spec": "UI-141/filter",
+      "scenario": "operations",
+      "metric": "filterMs",
+      "measurements": {
+        "before": {
+          "chromium": {
+            "value": null,
+            "budget": 200,
+            "direction": "max",
+            "passed": false
+          },
+          "webkit": {
+            "value": null,
+            "budget": 200,
+            "direction": "max",
+            "passed": false
+          }
+        },
+        "after": {
+          "chromium": {
+            "value": 82.70000000298023,
+            "budget": 200,
+            "direction": "max",
+            "passed": true
+          },
+          "webkit": {
+            "value": 110,
+            "budget": 200,
+            "direction": "max",
+            "passed": true
+          }
+        }
+      }
+    },
+    {
+      "spec": "UI-140",
+      "scenario": "scroll",
+      "metric": "jumpMs",
+      "measurements": {
+        "before": {
+          "chromium": {
+            "value": 5057.79999999702,
+            "budget": 150,
+            "direction": "max",
+            "passed": false
+          },
+          "webkit": {
+            "value": 5053,
+            "budget": 150,
+            "direction": "max",
+            "passed": false
+          }
+        },
+        "after": {
+          "chromium": {
+            "value": 61.400000005960464,
+            "budget": 150,
+            "direction": "max",
+            "passed": true
+          },
+          "webkit": {
+            "value": 80,
+            "budget": 150,
+            "direction": "max",
+            "passed": true
+          }
+        }
+      }
+    },
+    {
+      "spec": "UI-145/overview",
+      "scenario": "sidebar-overview",
+      "measurements": {
+        "before": {
+          "chromium": {
+            "scenario": "sidebar-overview",
+            "engine": "chromium",
+            "size": "large",
+            "started_at": "2026-10-31T17:35:29.652Z",
+            "metrics": {
+              "ms": {
+                "value": 24194.714167000002,
+                "budget": 100,
+                "completed": false,
+                "passed": false
+              }
+            },
+            "details": {
+              "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          },
+          "webkit": {
+            "scenario": "sidebar-overview",
+            "engine": "webkit",
+            "size": "large",
+            "started_at": "2026-10-31T17:40:35.352Z",
+            "metrics": {
+              "ms": {
+                "value": 20654.803248000004,
+                "budget": 100,
+                "completed": false,
+                "passed": false
+              }
+            },
+            "details": {
+              "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          }
+        },
+        "after": {
+          "chromium": {
+            "scenario": "sidebar-overview",
+            "engine": "chromium",
+            "size": "large",
+            "started_at": "2026-10-31T17:47:31.243Z",
+            "metrics": {
+              "ms": {
+                "value": 39535.62206,
+                "budget": 100,
+                "completed": false,
+                "passed": false
+              }
+            },
+            "details": {
+              "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          },
+          "webkit": {
+            "scenario": "sidebar-overview",
+            "engine": "webkit",
+            "size": "large",
+            "started_at": "2026-10-31T17:51:37.317Z",
+            "metrics": {
+              "ms": {
+                "value": 39968.470741,
+                "budget": 100,
+                "completed": false,
+                "passed": false
+              }
+            },
+            "details": {
+              "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          }
+        }
+      }
+    },
+    {
+      "spec": "UI-145/issues",
+      "scenario": "sidebar-issues",
+      "measurements": {
+        "before": {
+          "chromium": {
+            "scenario": "sidebar-issues",
+            "engine": "chromium",
+            "size": "large",
+            "started_at": "2026-10-31T17:36:15.403Z",
+            "metrics": {
+              "ms": {
+                "value": 16411.738778,
+                "budget": 100,
+                "completed": false,
+                "passed": false
+              }
+            },
+            "details": {
+              "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          },
+          "webkit": {
+            "scenario": "sidebar-issues",
+            "engine": "webkit",
+            "size": "large",
+            "started_at": "2026-10-31T17:41:21.053Z",
+            "metrics": {
+              "ms": {
+                "value": 16373.315593,
+                "budget": 100,
+                "completed": false,
+                "passed": false
+              }
+            },
+            "details": {
+              "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          }
+        },
+        "after": {
+          "chromium": {
+            "scenario": "sidebar-issues",
+            "engine": "chromium",
+            "size": "large",
+            "started_at": "2026-10-31T17:48:17.080Z",
+            "metrics": {
+              "ms": {
+                "value": 37713.610454999995,
+                "budget": 100,
+                "completed": false,
+                "passed": false
+              }
+            },
+            "details": {
+              "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          },
+          "webkit": {
+            "scenario": "sidebar-issues",
+            "engine": "webkit",
+            "size": "large",
+            "started_at": "2026-10-31T17:52:23.122Z",
+            "metrics": {
+              "ms": {
+                "value": 39800.89103299999,
+                "budget": 100,
+                "completed": false,
+                "passed": false
+              }
+            },
+            "details": {
+              "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          }
+        }
+      }
+    },
+    {
+      "spec": "UI-145/siteStructure",
+      "scenario": "sidebar-siteStructure",
+      "measurements": {
+        "before": {
+          "chromium": {
+            "scenario": "sidebar-siteStructure",
+            "engine": "chromium",
+            "size": "large",
+            "started_at": "2026-10-31T17:37:01.101Z",
+            "metrics": {
+              "ms": {
+                "value": 25491.444076999996,
+                "budget": 1000,
+                "completed": false,
+                "passed": false
+              }
+            },
+            "details": {
+              "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          },
+          "webkit": {
+            "scenario": "sidebar-siteStructure",
+            "engine": "webkit",
+            "size": "large",
+            "started_at": "2026-10-31T17:42:06.797Z",
+            "metrics": {
+              "ms": {
+                "value": 18654.67337,
+                "budget": 1000,
+                "completed": false,
+                "passed": false
+              }
+            },
+            "details": {
+              "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          }
+        },
+        "after": {
+          "chromium": {
+            "scenario": "sidebar-siteStructure",
+            "engine": "chromium",
+            "size": "large",
+            "started_at": "2026-10-31T17:49:02.780Z",
+            "metrics": {
+              "ms": {
+                "value": 40251.870071,
+                "budget": 1000,
+                "completed": false,
+                "passed": false
+              }
+            },
+            "details": {
+              "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          },
+          "webkit": {
+            "scenario": "sidebar-siteStructure",
+            "engine": "webkit",
+            "size": "large",
+            "started_at": "2026-10-31T17:53:08.970Z",
+            "metrics": {
+              "ms": {
+                "value": 39532.260578999994,
+                "budget": 1000,
+                "completed": false,
+                "passed": false
+              }
+            },
+            "details": {
+              "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          }
+        }
+      }
+    },
+    {
+      "spec": "UI-145/responseTimes",
+      "scenario": "sidebar-responseTimes",
+      "measurements": {
+        "before": {
+          "chromium": {
+            "scenario": "sidebar-responseTimes",
+            "engine": "chromium",
+            "size": "large",
+            "started_at": "2026-10-31T17:37:46.784Z",
+            "metrics": {
+              "ms": {
+                "value": 23593.819349,
+                "budget": 1000,
+                "completed": false,
+                "passed": false
+              }
+            },
+            "details": {
+              "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          },
+          "webkit": {
+            "scenario": "sidebar-responseTimes",
+            "engine": "webkit",
+            "size": "large",
+            "started_at": "2026-10-31T17:42:52.557Z",
+            "metrics": {},
+            "details": {
+              "error": "TimeoutError: page.waitForFunction: Timeout 30000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          }
+        },
+        "after": {
+          "chromium": {
+            "scenario": "sidebar-responseTimes",
+            "engine": "chromium",
+            "size": "large",
+            "started_at": "2026-10-31T17:49:48.573Z",
+            "metrics": {
+              "ms": {
+                "value": 40426.919109999995,
+                "budget": 1000,
+                "completed": false,
+                "passed": false
+              }
+            },
+            "details": {
+              "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          },
+          "webkit": {
+            "scenario": "sidebar-responseTimes",
+            "engine": "webkit",
+            "size": "large",
+            "started_at": "2026-10-31T17:53:54.744Z",
+            "metrics": {
+              "ms": {
+                "value": 38930.731502,
+                "budget": 1000,
+                "completed": false,
+                "passed": false
+              }
+            },
+            "details": {
+              "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+              "scope": "Core RPC, excluding UI paint"
+            },
+            "passed": false
+          }
+        }
+      }
+    }
+  ]
+}
