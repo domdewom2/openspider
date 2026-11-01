@@ -76,8 +76,12 @@ fn relationship_filter(id: &'static str) -> FilterDef {
                 WHERE h.target_id = u.id AND p.id <> u.id AND p.is_internal = 1 \
                 AND p.in_tables = 1 AND p.status_code BETWEEN 200 AND 299 AND p.content_class = 'HTML')");
     }
+    // CROSS JOIN fixes the join order (SQLite never reorders it): annotations of `u` first, then their
+    // target by rowid. With a plain JOIN the planner may walk every crawled URL `q` through an index on
+    // `urls` and probe `hreflang` per pair, which is quadratic in the crawl size even without any
+    // annotation (M2-N25: 84 s for 8 000 pages; PERF-004, UI-141).
     let mut def = filter(id, intern(&format!(
-        "EXISTS (SELECT 1 FROM hreflang h JOIN urls q ON q.id = h.target_id WHERE h.url_id = u.id AND ({}))",
+        "EXISTS (SELECT 1 FROM hreflang h CROSS JOIN urls q ON q.id = h.target_id WHERE h.url_id = u.id AND ({}))",
         relationship_predicate(id)
     )));
     if id == "Unlinked Hreflang URLs" {
