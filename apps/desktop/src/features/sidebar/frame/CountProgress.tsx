@@ -26,6 +26,9 @@ export function CountProgress() {
   if (!status.data || !running || !visible) return null;
   const { done, total } = status.data;
   const cancel = () => void sidebar.countCancel().then(() => status.refetch()).catch(() => undefined);
+  // Esc cancels only with focus in the hint: the window-wide Esc is the global search.clear shortcut
+  // (captured, TabControls.tsx), and a second global Esc consumer would cancel two things at once.
+  // The cancel button is focusable, so Esc works after Tab/click into the hint.
   return <div className="os-sidebar-counting" role="status" onKeyDown={e => { if (e.key === "Escape") { e.preventDefault(); cancel(); } }}>
     <ProgressBar label={t("sidebar-counting-label")} value={total ? done : null} max={total || 100} />
     <span>{total ? t("sidebar-counting", { done, total }) : t("sidebar-counting-start")}</span>
