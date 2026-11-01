@@ -917,12 +917,22 @@ fn set_settings<'a>(
             let source = name(args.kind);
             app.write_queue()
                 .submit_file(&s.key, move |file| {
+                    let store = |e: rusqlite::Error| crate::runtime::error::rusqlite_error(&e);
+                    // Configuration and invalidation in one commit (INTEG-010). IMMEDIATE takes the write lock
+                    // within the busy timeout; a deferred upgrade would fail at once while the WAL merge after a
+                    // pause holds it (CRAWL-126).
+                    let tx = rusqlite::Transaction::new_unchecked(
+                        file.conn(),
+                        rusqlite::TransactionBehavior::Immediate,
+                    )
+                    .map_err(store)?;
                     file.set_config(&new_cfg)
                         .map_err(|e| crate::runtime::error::store_error(&e))?;
                     if changed {
                         os_store::queries::api::invalidate(file.conn(), source, remove)
                             .map_err(|e| crate::runtime::error::store_error(&e))?;
                     }
+                    tx.commit().map_err(store)?;
                     Ok(())
                 })
                 .await?;
