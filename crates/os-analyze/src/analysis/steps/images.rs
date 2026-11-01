@@ -2,6 +2,17 @@
 use crate::{analysis::CancelToken, AnalyzeError};
 use os_model::{CrawlConfig, RenderingMode, StepState};
 use os_store::{queries, CrawlFile};
+use rusqlite::{Transaction, TransactionBehavior};
+
+/// Entfernt die TEMP-Tabellen des Schritts auch bei Abbruch oder Fehler (nach dem Rollback der Transaktion).
+struct Scratch<'a>(&'a rusqlite::Connection);
+impl Drop for Scratch<'_> {
+    fn drop(&mut self) {
+        let _ = self.0.execute_batch(
+            "DROP TABLE IF EXISTS temp.d03_changed; DROP TABLE IF EXISTS temp.d03_background;",
+        );
+    }
+}
 
 pub fn run(
     file: &CrawlFile,
@@ -14,15 +25,26 @@ pub fn run(
     if cfg.rendering.mode != RenderingMode::JavaScript && !cfg.images.parse_inline_css_backgrounds {
         return Ok(StepState::NotApplicable);
     }
-    let tx = file.conn().unchecked_transaction()?;
+    let conn = file.conn();
+    let _scratch = Scratch(conn);
+    // Sammeln ohne Schreibsperre: `image_instances` sind Crawl-Daten, die kein Analyseschritt ändert. Die
+    // Leseanweisung gibt ihren Snapshot danach wieder frei (Autocommit).
     // Nicht korreliert: alle img/srcset-Ziele einmal lesen, nicht je Hintergrundinstanz.
-    tx.execute_batch("DROP TABLE IF EXISTS temp.d03_background;
+    conn.execute_batch("DROP TABLE IF EXISTS temp.d03_background;
       DROP TABLE IF EXISTS temp.d03_changed;
       CREATE TEMP TABLE d03_background(id INTEGER PRIMARY KEY);
       INSERT INTO d03_background SELECT DISTINCT image_id FROM image_instances
         WHERE image_id IS NOT NULL AND (source='css' OR origin='Dynamically Loaded')
-        AND image_id NOT IN (SELECT image_id FROM image_instances WHERE source IN ('img','srcset') AND image_id IS NOT NULL);
-      CREATE TEMP TABLE d03_changed(id INTEGER PRIMARY KEY);
+        AND image_id NOT IN (SELECT image_id FROM image_instances WHERE source IN ('img','srcset') AND image_id IS NOT NULL);")?;
+    if cancel.checkpoint().is_err() {
+        return Ok(StepState::Pending);
+    }
+    // Vergleich und Veröffentlichung unter BEGIN IMMEDIATE: Eine verzögerte Transaktion, die erst `url_flags` liest
+    // und dann schreibt, scheitert beim Hochstufen sofort mit SQLITE_BUSY (Busy-Timeout wirkt dort nicht), solange
+    // die WAL-Rückführung nach Pause/Ende (CRAWL-126) die Schreibsperre hält, und mit SQLITE_BUSY_SNAPSHOT, wenn ein
+    // paralleler Teilschritt inzwischen veröffentlicht hat (CRAWL-141).
+    let tx = Transaction::new_unchecked(conn, TransactionBehavior::Immediate)?;
+    tx.execute_batch("CREATE TEMP TABLE d03_changed(id INTEGER PRIMARY KEY);
       INSERT INTO d03_changed SELECT id FROM d03_background WHERE id NOT IN (SELECT url_id FROM url_flags WHERE flag='image_background')
         UNION SELECT url_id FROM url_flags WHERE flag='image_background' AND url_id NOT IN (SELECT id FROM d03_background);")?;
     if cancel.checkpoint().is_err() {
@@ -43,7 +65,6 @@ pub fn run(
             [seq.to_string()],
         )?;
     }
-    tx.execute_batch("DROP TABLE d03_changed; DROP TABLE d03_background;")?;
     if cancel.checkpoint().is_err() {
         return Ok(StepState::Pending);
     }
