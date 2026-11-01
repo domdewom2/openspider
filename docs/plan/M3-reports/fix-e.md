@@ -577,3 +577,60 @@ WebKit-Instanzen, außerhalb des Pause-Pfads.
 | `cargo test --workspace` | 4.095 bestanden, 0 Fehler, 49 Ignores |
 | `e2e/beta` Chromium + WebKit, 2 Worker | 28/28 |
 | `control.spec.ts` 10× seriell je Engine | 10/10 und 10/10 |
+
+### Nachtrag 2: CI 41254618922 / 41254617243 auf `7cca5846`
+
+**linux-webkit `control.spec.ts:6`.** Werte aus den Traces: Latenz 3.869 und 3.903 ms,
+IPC 2.647 und 2.579 ms. Nach der IPC-Antwort vergehen also noch 0,7 bis 0,8 s
+(Antwort annehmen und rendern), vorher 0,5 s künstliche Testverzögerung.
+
+Das mitgeschnittene WebSocket-Protokoll zeigt: Die Pause-Antwort (+2.647 ms) kommt
+unmittelbar nach den Lesekommandos, die bei der Pause liefen oder kurz danach
+starteten. Das sind `catalog.filterCounts` (−102 → +2.176), `sidebar.overview`
+(+514 → +2.604) und `export.catalog` (+513 → +2.646).
+
+Reproduktion auf dem Server mit `taskset -c 0,1` (WebKit, seriell, Median 2,0–2,7 s,
+vereinzelt über 3 s). Temporäre, nicht committete Messung mit Wanduhr-Abgleich von
+Bridge und Browser:
+
+- Backend-Pause 0,36–1,16 s; davon `wal_checkpoint(TRUNCATE)` 0,34–1,14 s.
+- Zustellung im WebSocket/Browser zusätzlich 0,4–0,5 s.
+- UI nach der Antwort 0,2–1,5 s.
+
+TRUNCATE wartet im Busy-Handler (45 bis 216 Aufrufe) und endet in 5/5 Läufen genau
+mit dem letzten überlappenden `ReadPool::run_snapshot`-Leser. Das sind Übersicht,
+Katalog und Export; jeder dieser Leser braucht auf 2 Kernen 0,6–1,1 s.
+
+Gegenproben (2 Kerne, abwechselnd), alle ohne messbaren Unterschied:
+
+- Bridge `e4fb1fe1` gegen aktuell: alt ebenfalls ein Lauf mit 3.116 ms.
+- Seitenleiste vor gegen nach `b1ed83de`: der alte Stand war eher langsamer.
+- SQLite mit `opt-level 3`.
+- UI-Aktualisierungen während „Pausing …“ zurückhalten.
+
+Das ist also keine Regression dieses Pakets: Die Pause-Quittung enthält den
+abschließenden TRUNCATE-Checkpoint (CRAWL-126 „Pause + Checkpoint“, portable Datei mit
+zusammengeführtem WAL). Dieser Checkpoint muss laufende Snapshot-Leser abwarten.
+
+Probe ohne Commit: TRUNCATE-Wartezeit auf ≈ 100 ms begrenzt. Der IPC-Median sank
+damit auf 0,44–0,80 s, die Datei bliebe aber bis zum Ende der Leser unzusammengeführt.
+Mögliche Wege, die eine Entscheidung brauchen:
+
+- (a) Begrenztes TRUNCATE. Dauerhaft ist die Pause trotzdem, weil das WAL synchronisiert
+  ist; ein nachgelagerter TRUNCATE nach der Quittung macht die Datei wieder portabel.
+- (b) Laufende Snapshot-Leser bei Pause unterbrechen. Die UI müsste „Cancelled“ still
+  verwerfen; `QueryFeedback` zeigt es heute als Alarm.
+- (c) Übersicht, Katalog und Export als Leser verbilligen.
+
+Keine Produktänderung ohne Entscheidung.
+
+**linux-chromium `table/bridge.spec.ts:7`.** Beide Versuche hängen am Klick auf „Recrawl“.
+Im CI ist kein Menü offen; lokal ist der Menüpunkt deaktiviert. Abwechselnd je 15× auf dem
+Server: Bridge `e4fb1fe1` 1/15 rot, aktuell 2/15 rot, beide mit demselben Bild. Der
+Test setzt keine URL-Rate, daher ist `start_delay` null und der Pfad aus `94db9704`
+wird nicht betreten. Vorbestehender UI-Flake.
+
+**macos-arm64 `os-render` `requires_chromium_retries_target_crash_exactly_once`.**
+Zeitüberschreitung beim Warten auf das Wiederholungsziel nach dem Chromium-Crash.
+`os-render` ist in diesem Paket unverändert und hängt nicht von `os-fetch` ab.
+Runner-Flake, kein Codebezug.
