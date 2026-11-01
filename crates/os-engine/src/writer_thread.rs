@@ -501,6 +501,9 @@ fn writer_loop(
     let mut batch = WriteBatch::default();
     let mut pages = 0usize;
     let mut first_at: Option<Instant> = None;
+    // An explicit checkpoint with no batch after it makes the closing one redundant: with a reader still holding a
+    // snapshot it would only wait another bounded interval (CRAWL-126).
+    let mut checkpointed = false;
     // Die Senke ist der Engpass: bei der letzten Nachricht oder nach dem letzten Schreiben stand Arbeit im Kanal.
     let mut behind = false;
 
@@ -556,6 +559,7 @@ fn writer_loop(
             .fetch_max(queued as u64, Ordering::Relaxed);
         match msg {
             Msg::Batch(b) => {
+                checkpointed = false;
                 pages += b.pages.len();
                 merge(&mut batch, *b);
                 first_at.get_or_insert_with(Instant::now);
@@ -590,6 +594,7 @@ fn writer_loop(
                 } else {
                     true
                 };
+                checkpointed = ok;
                 let _ = ack.send(ok);
             }
             Msg::Durable(ack) => {
@@ -609,7 +614,7 @@ fn writer_loop(
         }
     }
     write_out(&mut sink, &mut batch, &mut pages, &shared);
-    if !shared.failed.load(Ordering::SeqCst) {
+    if !checkpointed && !shared.failed.load(Ordering::SeqCst) {
         if let Err(e) = sink.checkpoint() {
             record_error(&shared, e);
         }
