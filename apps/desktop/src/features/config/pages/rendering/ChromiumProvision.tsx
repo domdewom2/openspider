@@ -141,7 +141,8 @@ export function ChromiumProvision() {
       )}
       <div className="os-chromium-provision-actions">
         {canDownload && download}
-        {busy && job !== "installing" && (
+        {/* Abbrechen nur während der Übertragung; Prüfung und Einrichtung laufen kurz und werden nicht unterbrochen. */}
+        {downloading && (
           <Button onPress={() => void run(render_provision.cancel)}>{t("chromium-prov-cancel")}</Button>
         )}
         {!busy && installed !== null && status.supported && installed !== status.version && (
