@@ -51,19 +51,20 @@ jobs:
         include:
           # macos-15 statt macos-14: der für macOS 14 eingefrorene Playwright-WebKit-Build meldet
           # „Page.overrideSetting: Unknown setting: PushAPIEnabled“ und startet keine Seite (Lauf 39024277294).
-          # Zwei Shards je ≈ 30 min statt eines Jobs mit 50–60 min. Das Perf-Projekt (UI-146) läuft nur im zweiten Shard.
+          # Zwei Shards statt eines Jobs mit 50–60 min. Das Perf-Projekt (UI-146) läuft nur im ersten, kürzeren Shard
+          # (Lauf 41535769537: Shard 1 20 min, Shard 2 29 min Testzeit).
           - name: macos-webkit-1
             os: macos-15
             projects: webkit
             browsers: webkit
             shard: 1/2
+            perf: true
             timeout: 60
           - name: macos-webkit-2
             os: macos-15
             projects: webkit
             browsers: webkit
             shard: 2/2
-            perf: true
             timeout: 60
           - name: windows-chromium
             os: windows-latest
@@ -153,11 +154,13 @@ jobs:
           PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report-perf
         run: npm run -w apps/desktop e2e -- --project=${{ matrix.projects }}-perf --no-deps --output=test-results-perf 2>&1 | tee -a e2e.log
 
+      # Die Transport-Zeile steht nicht in jedem Log (ein Shard kann ohne sie auskommen); fehlt sie, darf der Schritt
+      # nicht scheitern (grep endet sonst mit pipefail auf 1).
       - name: Transport
         if: always()
         run: |
-          used=$(grep -h '^\[e2e\] Transport:' e2e.log | sort -u | tr '\n' ' ')
-          echo "E2E-A (${{ matrix.name }}): ${used:-kein Lauf}" >> "$GITHUB_STEP_SUMMARY"
+          used=$( (grep -h '^\[e2e\] Transport:' e2e.log || true) | sort -u | tr '\n' ' ')
+          echo "E2E-A (${{ matrix.name }}): ${used:-keine Transport-Zeile im Log}" >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         if: always()
