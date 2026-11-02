@@ -42,8 +42,8 @@ jobs:
     # Pull-Requests von m2/*-Zweigen überspringen den Job: derselbe Stand läuft schon über den Push-Lauf (K2-67, keine Doppelläufe).
     if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'm2/') }}
     runs-on: ${{ matrix.os }}
-    # macos-webkit braucht mit 493 Specs auf einem Worker 51–60 min und lief am 60-min-Limit ab (int-24, Lauf 41338132247).
-    # Nur das Job-Limit ist höher; Testbudgets und Timeouts der Specs bleiben unverändert (K2-63).
+    # macos-webkit brauchte mit 500 Specs auf einem Worker 51–60 min (int-24, Lauf 41338132247; zuletzt 41496427535: 57 min)
+    # und läuft deshalb in zwei Shards (`matrix.shard`). Testbudgets und Timeouts der Specs bleiben unverändert (K2-63).
     timeout-minutes: ${{ matrix.timeout }}
     strategy:
       fail-fast: false
@@ -51,11 +51,20 @@ jobs:
         include:
           # macos-15 statt macos-14: der für macOS 14 eingefrorene Playwright-WebKit-Build meldet
           # „Page.overrideSetting: Unknown setting: PushAPIEnabled“ und startet keine Seite (Lauf 39024277294).
-          - name: macos-webkit
+          # Zwei Shards je ≈ 30 min statt eines Jobs mit 50–60 min. Das Perf-Projekt (UI-146) läuft nur im zweiten Shard.
+          - name: macos-webkit-1
             os: macos-15
             projects: webkit
             browsers: webkit
-            timeout: 90
+            shard: 1/2
+            timeout: 60
+          - name: macos-webkit-2
+            os: macos-15
+            projects: webkit
+            browsers: webkit
+            shard: 2/2
+            perf: true
+            timeout: 60
           - name: windows-chromium
             os: windows-latest
             projects: chromium
@@ -125,7 +134,24 @@ jobs:
           OS_E2E_PROJECTS: ${{ matrix.projects }}
           CI: "true"
           # Die Bridge-Binärdatei liegt im Workspace-Zielordner; der Pfad wird von e2e/support/bridge.ts gefunden.
-        run: npm run -w apps/desktop e2e 2>&1 | tee e2e.log
+        # Mit Shard nur das Hauptprojekt: `<engine>-perf` hängt davon ab, und Playwright teilt nur Projekte ohne
+        # Abhängige auf; die Abhängigkeit liefe sonst ungeteilt in jedem Shard mit.
+        run: |
+          if [ -n "${{ matrix.shard }}" ]; then
+            npm run -w apps/desktop e2e -- --project=${{ matrix.projects }} --shard=${{ matrix.shard }} 2>&1 | tee e2e.log
+          else
+            npm run -w apps/desktop e2e 2>&1 | tee e2e.log
+          fi
+
+      # Laufzeitbudgets (UI-146) wie bisher nach den übrigen Tests (hier: des Shards) und ohne parallele Last, ohne die
+      # Projektabhängigkeit (--no-deps). Eigene Ausgabeordner, damit Report und Traces des Hauptlaufs erhalten bleiben.
+      - name: E2E-A Laufzeitbudgets (Shard)
+        if: matrix.perf
+        env:
+          OS_E2E_PROJECTS: ${{ matrix.projects }}
+          CI: "true"
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report-perf
+        run: npm run -w apps/desktop e2e -- --project=${{ matrix.projects }}-perf --no-deps --output=test-results-perf 2>&1 | tee -a e2e.log
 
       - name: Transport
         if: always()
@@ -140,4 +166,6 @@ jobs:
           path: |
             apps/desktop/playwright-report/
             apps/desktop/test-results/
+            apps/desktop/playwright-report-perf/
+            apps/desktop/test-results-perf/
           if-no-files-found: ignore
