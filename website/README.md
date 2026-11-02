@@ -3,7 +3,10 @@
 `site/` enthält die direkt auslieferbare Website: Deutsch unter `/`, Englisch unter
 `/en/`, jeweils Funktionen, Download/Installation, FAQ, Impressum und Datenschutz und
 404-Seite. Gemeinsames CSS, Bilder und Icons liegen unter `site/assets/`.
-Kein Build-Schritt, keine Laufzeitabhängigkeiten, kein ausführbares Browser-JavaScript.
+Kein Build-Schritt, keine Laufzeitabhängigkeiten. Einziges Browser-JavaScript ist das optionale
+`assets/beta-feedback.js` (Versionsvorbelegung im Beta-Formular); alle Seiten funktionieren ohne.
+Das Formular sendet an `POST /api/feedback`, siehe `api/README.md` (PHP, nicht Teil von `site/`).
+Die Danke-Seiten `/beta/danke/` und `/en/beta/thanks/` sind `noindex` und stehen nicht in der Sitemap.
 Das bestehende Verzeichnis `placeholder/` bleibt unverändert.
 
 ## Auslieferung (erst nach Nutzer-Go, D12)
