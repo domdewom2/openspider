@@ -55,6 +55,9 @@ jobs:
         run: |
           df -h / | tail -n 1
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          # int-g: mit dem M3-Stand lief die Platte erneut voll ("No space left on device", Lauf 41496422333).
+          sudo rm -rf /usr/share/swift /usr/local/share/boost /usr/local/share/powershell /opt/az /usr/local/julia* /opt/microsoft
+          sudo docker image prune --all --force > /dev/null 2>&1 || true
           df -h / | tail -n 1
 
       # Rust laut rust-toolchain.toml (legt M2-F01 an); bis dahin die aktuelle stabile Version wie in ci.yml.
