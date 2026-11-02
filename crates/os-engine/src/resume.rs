@@ -251,6 +251,9 @@ pub(crate) fn restore(
             }
             if in_tables != 0 {
                 flags |= F_IN_TABLES;
+            } else if via == "robots_txt" || sitemap_rows.contains(&id) {
+                // UI-061: verborgene Hilfsabrufe zählen nicht als gefunden (`os_store::counters::encountered`).
+                core.auxiliary.insert(UrlId(id));
             }
             if state == "done" && via != "robots_txt" && !sitemap_rows.contains(&id) {
                 crawled += 1;

@@ -163,6 +163,8 @@ fn build_authorized_batch(
                 None => {
                     let id = core.alloc_id();
                     core.register(&norm.encoded, id, None, F_QUEUED | F_RULE_OK);
+                    // UI-061: Sitemap-Datei (Hilfsabruf), keine gefundene URL.
+                    core.auxiliary.insert(id);
                     // Die Start-URL einer Sitemap-Datei ist Tiefe 0; alle anderen Dateien haben keine Tiefe.
                     let is_start = fs.found_via == "start" && fs.parent.is_none();
                     batch.new_urls.push(os_model::NewUrl {

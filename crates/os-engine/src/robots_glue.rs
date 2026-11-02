@@ -248,6 +248,8 @@ pub(crate) async fn record_robots<F: Fetch>(
             // Tabellen-Sichtbarkeit gespeichert; sie erscheint in keinem Tab, Filter, Zähler oder Export.
             let flags = F_QUEUED | F_RULE_OK;
             core.register(&norm.encoded, id, None, flags);
+            // UI-061: Hilfsabruf, keine gefundene URL.
+            core.auxiliary.insert(id);
             batch.new_urls.push(os_model::NewUrl {
                 id,
                 url: norm.encoded.clone(),

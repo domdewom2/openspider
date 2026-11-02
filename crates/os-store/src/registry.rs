@@ -34,7 +34,7 @@ pub struct CrawlListing {
     pub path: PathBuf,
     /// Metadaten (ohne Migration gelesen).
     pub meta: CrawlMeta,
-    /// Anzahl der URLs in der Datei.
+    /// Gefundene URLs (`os_store::counters::encountered`, UI-061): ohne robots.txt-Zeilen und Sitemap-Dateien.
     pub url_count: u64,
     /// Sperre des Crawls oder seines Projekts.
     pub locked: bool,
@@ -126,7 +126,18 @@ pub fn read_listing(path: &Path) -> Result<CrawlListing, StoreError> {
 
 fn read_listing_conn(path: &Path, conn: &Connection) -> Result<CrawlListing, StoreError> {
     let meta = read_meta(conn)?;
-    let url_count: u64 = conn.query_row("SELECT COUNT(*) FROM urls", [], |r| r.get(0))?;
+    // UI-061/CRAWL-130: the same total as the opened crawl's summary and the Overview (M2-N28). A file is read
+    // without migration; one without the tables of auxiliary fetches has none of them.
+    let auxiliary_tables: u64 = conn.query_row(
+        "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name IN ('robots_files', 'sitemaps')",
+        [],
+        |r| r.get(0),
+    )?;
+    let url_count: u64 = if auxiliary_tables == 2 {
+        crate::counters::encountered(conn)?
+    } else {
+        conn.query_row("SELECT COUNT(*) FROM urls", [], |r| r.get(0))?
+    };
     let queued: u64 = conn.query_row("SELECT COUNT(*) FROM queue", [], |r| r.get(0))?;
     let locked = conn
         .query_row("SELECT value FROM crawl_meta WHERE key='locked'", [], |r| {
