@@ -259,7 +259,23 @@ pub(crate) fn guard_start<F: os_fetch::Fetch>(sh: &crate::worker::Shared<F>) {
     }
 }
 
+/// Wie [`tick_live`] mit der Thread-Zahl der Startkonfiguration als Wunschwert.
 pub fn tick(input: &MemoryInputs<'_>) -> MemoryAction {
+    tick_live(input, input.config.speed.threads)
+}
+
+/// Obergrenze gleichzeitiger Abrufe bei wenig freiem RAM (N04, M2-N31): die Hälfte der höheren der beiden Zahlen
+/// „Threads der Startkonfiguration“ und „live gewünschte Threads“ (`CrawlHandle::set_threads`), mindestens 1.
+///
+/// Eine live erhöhte Zahl hebt die Grenze (Start 1, live 4 → 2 statt 1); eine live gesenkte Zahl senkt sie nicht
+/// unter die Hälfte der Startkonfiguration (N04: Start 20, live 16 unter Engpass → wirksam 10). Wirksam ist immer
+/// das Minimum aus Wunschwert und dieser Grenze.
+pub fn throttle_threads(configured: u32, live: u32) -> u32 {
+    (configured.max(live) / 2).max(1)
+}
+
+/// Sekündliche Speicherprüfung der Steuerschleife; `live_threads` ist die live gewünschte Thread-Zahl.
+pub fn tick_live(input: &MemoryInputs<'_>, live_threads: u32) -> MemoryAction {
     #[cfg(test)]
     TICKS.with(|ticks| ticks.borrow_mut().push(input.progress.elapsed_s));
     let measured = sample();
@@ -290,7 +306,7 @@ pub fn tick(input: &MemoryInputs<'_>) -> MemoryAction {
                 "Wenig verfügbarer RAM – Crawl gedrosselt"
             );
         }
-        MemoryAction::Throttle((input.config.speed.threads / 2).max(1))
+        MemoryAction::Throttle(throttle_threads(input.config.speed.threads, live_threads))
     } else {
         if previous.is_some_and(|previous| previous != 0) {
             tracing::info!("Speicherengpass beendet – Crawl-Drosselung aufgehoben");
@@ -522,6 +538,21 @@ mod n04_tests {
             for _ in 0..60 {
                 assert_eq!(tick(&input), MemoryAction::Throttle(2));
             }
+            // M2-N31: the throttle follows the live thread count (start 4).
+            assert_eq!(tick_live(&input, 12), MemoryAction::Throttle(6));
+            assert_eq!(tick_live(&input, 1), MemoryAction::Throttle(2));
+            let mut single = config.clone();
+            single.speed.threads = 1;
+            let started_with_one = MemoryInputs {
+                progress: &progress,
+                config: &single,
+            };
+            assert_eq!(tick(&started_with_one), MemoryAction::Throttle(1));
+            assert_eq!(
+                tick_live(&started_with_one, 4),
+                MemoryAction::Throttle(2),
+                "start with 1 thread, live 4: the throttle must not stay at the start value"
+            );
             assert_eq!(events.load(std::sync::atomic::Ordering::SeqCst), 1);
             available.store(8 << 30, std::sync::atomic::Ordering::SeqCst);
             assert_eq!(tick(&input), MemoryAction::Throttle(u32::MAX));
@@ -678,6 +709,20 @@ mod n04_tests {
             vec![20, 2, 2, 2, 10, 16],
             "start, live reduction, pressure, recovery, live raise under pressure, recovery"
         );
+    }
+    // spec: CRAWL-112, CRAWL-126, CRAWL-129
+    #[test]
+    fn throttle_limit_follows_the_live_thread_count() {
+        // Live raise lifts the limit: start 1, live 4 -> 2 (the start configuration alone gave 1).
+        assert_eq!(throttle_threads(1, 4), 2);
+        assert_eq!(throttle_threads(4, 4), 2);
+        assert_eq!(throttle_threads(4, 12), 6);
+        // N04: a live reduction keeps half of the start configuration (start 20, live 2 or 16 -> 10).
+        assert_eq!(throttle_threads(20, 2), 10);
+        assert_eq!(throttle_threads(20, 16), 10);
+        assert_eq!(throttle_threads(20, 40), 20);
+        assert_eq!(throttle_threads(1, 1), 1);
+        assert_eq!(throttle_threads(0, 0), 1);
     }
     // spec: CRAWL-129
     #[test]
