@@ -8,6 +8,7 @@ import { startAlphaBridge, startSite } from "../alpha/support";
 // spec: UI-036
 // spec: UI-145
 // spec: UI-143
+// spec: UI-142
 test("detail pages survive writes between opening and reading; External stays responsive", async ({ page }) => {
   test.setTimeout(60_000);
   const site = await startSite();
@@ -27,6 +28,7 @@ test("detail pages survive writes between opening and reading; External stays re
       const { view } = await import(/* @vite-ignore */ String("/src/ipc/view.ts"));
       const { useSession } = await import(/* @vite-ignore */ String("/src/state/session.ts"));
       const { setDetailSelection } = await import(/* @vite-ignore */ String("/src/features/detail/frame/selection.ts"));
+      const { toCmdError } = await import(/* @vite-ignore */ String("/src/ipc/errors.ts"));
       const waitCount = async (count: number) => {
         const deadline = performance.now() + 15_000;
         while ((useSession.getState().crawl?.crawled ?? 0) < count) {
@@ -52,13 +54,25 @@ test("detail pages survive writes between opening and reading; External stays re
           sizes.push(rows.cells.length);
         } finally { await view.close({ viewId: handle.viewId }); }
       }
+      // UI-142: the crawl may give the fresh External view a new version between view.open and the first view.rows. Like the UI,
+      // the stale answer is dropped: close, reopen, read again. externalMs runs from the first open to the first page actually
+      // read (reopening included); a view that stays stale beyond MAX_STALE_REOPENS still fails.
+      const MAX_STALE_REOPENS = 3;
       const started = performance.now();
-      const external = await view.open({ spec: { kind: "tab", tab: "External", filter: "All", search: null, sort: [] }, columns: ["Address"] });
-      if (external.state !== "ready") throw new Error("External was not ready within synchronous build budget");
-      await view.rows({ viewId: external.viewId, version: external.version, offset: 0, limit: 20, columns: ["Address"] });
-      const externalMs = performance.now() - started;
-      await view.close({ viewId: external.viewId });
-      return { sizes, externalMs, phase: useSession.getState().crawl?.phase };
+      let externalMs: number | undefined;
+      let externalReopens = 0;
+      while (externalMs === undefined) {
+        const external = await view.open({ spec: { kind: "tab", tab: "External", filter: "All", search: null, sort: [] }, columns: ["Address"] });
+        try {
+          if (external.state !== "ready") throw new Error("External was not ready within synchronous build budget");
+          await view.rows({ viewId: external.viewId, version: external.version, offset: 0, limit: 20, columns: ["Address"] });
+          externalMs = performance.now() - started;
+        } catch (error) {
+          if (toCmdError(error).code !== "Stale" || externalReopens >= MAX_STALE_REOPENS) throw error;
+          externalReopens++;
+        } finally { await view.close({ viewId: external.viewId }); }
+      }
+      return { sizes, externalMs, externalReopens, phase: useSession.getState().crawl?.phase };
     });
     expect(result.phase).toBe("running");
     expect(result.sizes).toHaveLength(4);
