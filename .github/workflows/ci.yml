@@ -42,6 +42,9 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
+  # int-g: macOS-arm64 lief mit dem M3-Stand während der Rust-Tests voll ("disk I/O error", Lauf 41478757473);
+  # inkrementelle Artefakte bringen in der CI nichts und belegen mehrere zehn GB.
+  CARGO_INCREMENTAL: 0
 
 jobs:
   fmt:
