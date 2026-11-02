@@ -1013,7 +1013,7 @@ async fn run<F: Fetch>(parts: RunParts<F>) -> Result<CrawlSummary, EngineError> 
                 if now.saturating_sub(last_snapshot) >= Duration::from_secs(1) {
                     last_snapshot = now;
                     let snapshot = progress_tx.borrow().clone();
-                    match crate::memory::tick(&crate::memory::MemoryInputs { progress: &snapshot, config: &sh.cfg }) {
+                    match crate::memory::tick_live(&crate::memory::MemoryInputs { progress: &snapshot, config: &sh.cfg }, ctl.threads.load(Ordering::SeqCst)) {
                         crate::memory::MemoryAction::None => {},
                         crate::memory::MemoryAction::Throttle(n) => { ctl.memory_threads.store(n.max(1), Ordering::SeqCst); },
                         crate::memory::MemoryAction::Pause(reason) => {
