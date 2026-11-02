@@ -75,7 +75,7 @@ it("Issues tab keeps its list visible while a new data version is counted", asyn
 });
 
 // spec: UI-018
-it("Overview names the age of a running crawl's shared count from 2 s on, and never for exact or paused states", async () => {
+it("Overview names the age of a running crawl's shared count from 2 s on, and never for exact answers", async () => {
   let ageMs: number | undefined = 12_000;
   core.handlers.set("sidebar.overview", () => ({ ...fixture.overview, ...(ageMs === undefined ? {} : { ageMs }) }));
   render(<Providers><SidebarFrame /></Providers>);
@@ -89,12 +89,21 @@ it("Overview names the age of a running crawl's shared count from 2 s on, and ne
   newVersion(71);
   await waitFor(() => expect(core.calls.filter(c => c.cmd === "sidebar.overview").length).toBeGreaterThanOrEqual(3), { timeout: 3_000 });
   expect(screen.queryByText(/^As of/)).toBeNull();
-  // Paused crawl: no age, even for an old answer.
-  ageMs = 30_000;
-  newVersion(72);
-  expect(await screen.findByText("As of 30 s ago", {}, { timeout: 3_000 })).toBeVisible();
+});
+
+// spec: UI-018
+it("after a pause the throttled state keeps its age until the exact count of the paused state replaces it", async () => {
+  let ageMs: number | undefined = 30_000;
+  core.handlers.set("sidebar.overview", () => ({ ...fixture.overview, ...(ageMs === undefined ? {} : { ageMs }) }));
+  render(<Providers><SidebarFrame /></Providers>);
+  expect(await screen.findByText("As of 30 s ago")).toBeVisible();
+  // Paused: the shown numbers are still the throttled count, so its age stays visible.
   act(() => useSession.setState({ crawl: { ...(tick.crawl as CrawlStatus), phase: "paused" } }));
-  expect(screen.queryByText(/^As of/)).toBeNull();
+  expect(screen.getByText("As of 30 s ago")).toBeVisible();
+  // The exact count of the paused state (no age) arrives with the next version: the label goes.
+  ageMs = undefined;
+  newVersion(80);
+  await waitFor(() => expect(screen.queryByText(/^As of/)).toBeNull(), { timeout: 3_000 });
 });
 
 // spec: UI-018
