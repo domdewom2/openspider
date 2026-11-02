@@ -1,10 +1,11 @@
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createBridgeTransport, toUiEvent, type WebSocketLike } from "./bridge";
 import { createClient, detectTransport, setClient, VersionGuard } from "../client";
 import { classifyError, describeError, IpcError, isSilentError, localError, toCmdError } from "../errors";
 import { bindVisibility, connectWindowEvents, createEventBus } from "../events";
 import { MockCore, mergePatch } from "./mock";
-import { tauriCommandName } from "./tauri";
+import { TAURI_CORE_PLUGINS, tauriCommandName } from "./tauri";
 import { settings } from "../settings";
 import { view } from "../view";
 import { exportApi } from "../export";
@@ -144,6 +145,22 @@ describe("Client", () => {
   it("bildet Tauri-Commandnamen auf Plugin-Aufrufe ab", () => {
     expect(tauriCommandName("view.rows")).toBe("plugin:view|rows");
     expect(tauriCommandName("crawl.validateStartUrl")).toBe("plugin:crawl|validateStartUrl");
+  });
+
+  // spec: UI-127
+  it("leitet Domänen mit dem Namen eines Tauri-Kern-Plugins auf das os-Präfix um", () => {
+    // Die Hülle registriert `app` als `os-app` (src-tauri/src/plugin_names.rs); `plugin:app|info` träfe das Kern-Plugin.
+    expect(tauriCommandName("app.info")).toBe("plugin:os-app|info");
+    expect(tauriCommandName("events.subscribe")).toBe("plugin:events|subscribe");
+  });
+
+  // spec: UI-127
+  it("kennt dieselben Tauri-Kern-Plugins wie die Hülle", () => {
+    const rust = readFileSync("src-tauri/src/plugin_names.rs", "utf8");
+    const list = /TAURI_CORE_PLUGINS: &\[&str\] = &\[([^\]]*)\]/.exec(rust)?.[1] ?? "";
+    const names = [...list.matchAll(/"([^"]+)"/g)].map(m => m[1]).sort();
+    expect(names.length).toBeGreaterThan(0);
+    expect([...TAURI_CORE_PLUGINS].sort()).toEqual(names);
   });
 });
 
