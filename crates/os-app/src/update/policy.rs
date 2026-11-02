@@ -4,9 +4,9 @@ use os_model::settings::{NetworkSettings, UpdateSettings};
 use std::{sync::Mutex, time::Duration};
 pub const USER_AGENT: &str = "OpenSpider-Updater";
 pub const STABLE_ENDPOINT: &str =
-    "https://github.com/domdewom2/openspider/releases/latest/download/latest.json";
+    "https://github.com/wojcikdominik/openspider/releases/latest/download/latest.json";
 pub const BETA_ENDPOINT: &str =
-    "https://github.com/domdewom2/openspider/releases/latest/download/latest-beta.json";
+    "https://github.com/wojcikdominik/openspider/releases/latest/download/latest-beta.json";
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Disabled {
     Settings,

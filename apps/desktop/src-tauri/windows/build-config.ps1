@@ -35,7 +35,7 @@ $manifest = if ($Channel -eq 'beta') { 'latest-beta.json' } else { 'latest.json'
 $config = @{
     bundle = @{ createUpdaterArtifacts = [bool]$Updater; windows = $windows }
     plugins = @{ updater = @{
-        endpoints = @("https://github.com/domdewom2/openspider/releases/latest/download/$manifest")
+        endpoints = @("https://github.com/wojcikdominik/openspider/releases/latest/download/$manifest")
         pubkey = if ($Updater) { $env:OPENSPIDER_UPDATER_PUBKEY } else { '' }
     } }
 }

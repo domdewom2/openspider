@@ -263,7 +263,7 @@ jobs:
           channel = '-beta' if os.environ['OPENSPIDER_UPDATE_BETA'] == '1' else ''
           config = {'bundle': {'createUpdaterArtifacts': enabled}, 'plugins': {'updater': {
               'pubkey': os.environ['OPENSPIDER_UPDATER_PUBKEY'],
-              'endpoints': [f'https://github.com/domdewom2/openspider/releases/latest/download/latest{channel}.json']}}}
+              'endpoints': [f'https://github.com/wojcikdominik/openspider/releases/latest/download/latest{channel}.json']}}}
           with open(os.environ['RUNNER_TEMP'] + '/macos-build.json', 'w') as f:
               json.dump(config, f)
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:

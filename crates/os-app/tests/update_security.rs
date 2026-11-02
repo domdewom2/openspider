@@ -91,9 +91,9 @@ fn build_beta_variable_selects_endpoint_and_manifest_policy_together() {
     assert_eq!(
         context.endpoint,
         if beta {
-            "https://github.com/domdewom2/openspider/releases/latest/download/latest-beta.json"
+            "https://github.com/wojcikdominik/openspider/releases/latest/download/latest-beta.json"
         } else {
-            "https://github.com/domdewom2/openspider/releases/latest/download/latest.json"
+            "https://github.com/wojcikdominik/openspider/releases/latest/download/latest.json"
         }
     );
     let mut manifest: UpdateManifest = serde_json::from_str(MANIFEST).unwrap();
