@@ -134,3 +134,21 @@ Erwartungsänderung (K2-63).
 | `crates/os-store/src/open.rs` | M2-FIX-E-Port (main), M3 Windows-Langpfad | `merge_wal` öffnet über `open_sqlite` |
 | 14 FIX-E-Dateien (Tabelle oben) | M3-FIX-E / M2-FIX-E-Port und Nachfolger | main-Fassung übernommen, ohne eigene Änderung |
 | `docs/plan/M3-reports/int-g.md` | int-g | neu |
+
+## Nachtrag: Läufe, Folgecommits und Freigabe (03.11.2026)
+
+| Lauf | Stand | Ergebnis |
+|---|---|---|
+| ui-e2e 41478764308 | `9056cc93` | grün auf allen vier Plattformen |
+| CI 41478757473 | `9056cc93` | grün außer macOS-arm64 (Runner-Platte voll, „disk I/O error“) |
+| ui-e2e 41496427535 | `227d8942` | grün auf allen vier Plattformen |
+| CI 41496422512 Versuch 2 | `227d8942` | grün (Versuch 1: macOS und spec-coverage von GitHub mangels Runner-Kapazität abgebrochen) |
+| linux-core 41496422333 | `227d8942` | rot: „No space left on device“ |
+| linux-core 41542256744 | `42ddfe78` | grün (mit Platten-Fix) |
+| release-windows 41479100877 | `7471fcc6` (m3/fix-sign) | grün, Authenticode gültig für CLI, Setup, MSI |
+
+Folgecommits nach dem Bericht: `5bd171af` Merge m2/n34, `fe4a508c` Merge m3/fix-sign (frischer OIDC-Login vor dem Signieren), `227d8942` ci `CARGO_INCREMENTAL=0`, `8b736eb1` linux-core räumt mehr Runner-SDKs ab, `b4c47a61` README, `42ddfe78` Spec K3-01 (Nutzer 03.11.) und Plan.
+
+Fable: approved unter der Bedingung CI 41496422512 grün (erfüllt). Auflagen als Folgepakete: (2) `open_sqlite` auf `os-analyze/views/membership.rs`, `os-store/write_queue.rs`, `compare/change/auto.rs` ausweiten; (3) vor dem ersten echten Release Ticket auch ins Updater-Archiv heften oder als Online-Gatekeeper-Prüfung dokumentieren; (4) kein Tag `v*` und kein `RELEASE_PACKAGES_ENABLED` ohne Nutzer-Go.
+
+GitHub-Konto am 02.11.2026 von `domdewom2` in `wojcikdominik` umbenannt; Azure-Verbundanmeldung vom Nutzer angepasst. Code-Referenzen folgen in einem eigenen Commit.
