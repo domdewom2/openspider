@@ -5177,12 +5177,13 @@
   "id": "M2-CI-E2E",
   "kind": "package",
   "model": "opus",
-  "title": "ui-e2e macos-webkit Job-Limit 90 min (int-24 Fable-Auflage 2)",
+  "title": "CI-Job-Limits: ui-e2e macos-webkit und spec-coverage 90 min (int-24 Fable-Auflage 2)",
   "wave": "4n",
   "spec_ids": [],
   "extra_spec_ids": [],
   "owns": [
    ".github/workflows/ui-e2e.yml (nur matrix.timeout)",
+   ".github/workflows/ci.yml (nur timeout-minutes von spec-coverage)",
    "docs/plan/M2-backlog.md (nur Abschnitt 7)"
   ],
   "depends_on": [

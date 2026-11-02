@@ -12,7 +12,7 @@ Fable-Auflage 1 (vollständiger macos-webkit-Lauf auf dem main-Stand): ui-e2e 41
 |---|---|---|---|---|
 | 1 | FIX-WAL (`m2/fix-wal`, Spec `ae2c58b6`) | `15bb2c6f` | `0bf3d579` | approved |
 | 2 | N26 (`m2/n26`) | `8a975a37` | `f5b78f6f` | approved mit Auflagen, Auflagen erfüllt |
-| 3 | FIX-ABOUT (`m2/fix-about`) | `c-fix-about` Spitze | `aa531627` | Orchestrator-Fix (UI-127), Tests grün |
+| 3 | FIX-ABOUT (`m2/fix-about`) | `20494c6f` | `aa531627` | Orchestrator-Fix (UI-127), Tests grün |
 | 4 | CI-E2E (`m2/ci-e2e-limit`) | – | `3c8450eb` | int-24-Auflage 2 |
 | 5 | N25 (`m2/n25`) | `f585094f` | `668b6651` | approved mit Auflagen, Auflagen erfüllt |
 
@@ -24,7 +24,7 @@ Konflikt: `crates/os-analyze/src/tabs/hreflang.rs` beim Merge von N25. N25 und N
 - **N26 (UI-145, UI-147):** „Top-Probleme“/„Befunde“ luden nach Crawl-Ende 9–16 s. Ursache: vier Hreflang-Beziehungsfilter mit quadratischem Abfrageplan. `sidebar.issues` 9,1 s → 0,57 s.
 - **N25 (Beta-Befunde):** `export.catalog` und die Report-Verfügbarkeit bestimmen analyseabhängige Filter ohne Vollzählung (1.358 → 56 ms je Katalogabfrage); `crawl.open` stellt steuerbare Crawls vor dem Öffnen der Leser auf WAL um (behebt das CI-Rennen `pending_w1_o02` „database is locked“); Diagnosewerkzeuge unter `crates/os-loadtest/diagnostics/n25-*`. Der gemeldete Ratenabfall nach dem Fortsetzen ist auf Testsites nicht reproduziert (Backlog).
 - **FIX-ABOUT (UI-127):** „Über OpenSpider“ zeigte im nativen Build „unerwarteter Fehler“: Der Tauri-Transport rief `plugin:app|info` und traf das Tauri-Kern-Plugin `app`; die Hülle registriert die Domäne als `os-app`. Der Transport wendet jetzt dieselbe Kern-Plugin-Liste an; ein Test vergleicht sie mit `src-tauri/src/plugin_names.rs`.
-- **CI-E2E:** Job-Limit nur für macos-webkit auf 90 min (`matrix.timeout`), keine Änderung an Specs oder Budgets.
+- **CI-E2E:** Job-Limit nur für macos-webkit auf 90 min (`matrix.timeout`); nachträglich in dieser Runde auch `spec-coverage` (`ci.yml`) auf 90 min, weil grüne Läufe 50–58 min brauchen und der Job bei 60 min wiederholt abbrach. Keine Änderung an Specs oder Budgets.
 
 ## Auflagen
 
@@ -64,12 +64,20 @@ CI der Pakete (GitHub, ohne Intel):
 
 `n04-live.spec.ts:74` (Detailtab-Grid ≤ 1 s während des Live-Crawls): N24 hat das Rennen unter WebKit behoben (2/10 → 0/10); auf windows-chromium trat es im N26-Lauf in beiden Versuchen wieder auf. N26 ändert kein Frontend. Wird es im Integrationslauf erneut rot, folgt ein eigenes Paket für den Windows-Pfad (Budget unverändert, K2-63).
 
-CI und ui-e2e des Integrationsbaums: werden nach dem Push nachgetragen.
+CI und ui-e2e des Integrationsbaums (`a2f4a58f` + Bericht):
+
+| Lauf | Ergebnis |
+|---|---|
+| ui-e2e 41368453747 | grün auf allen vier Plattformen (macos-webkit 59 min, windows-chromium inkl. `n04-live`) |
+| CI 41368451527 | rustfmt, cargo-deny, spec-coverage (43 min), ci macos-arm64, crawlfile load grün; ci windows-x64 rot nur `os-app` `views::n21_tests::filter_open_reuses_the_tab_session_but_keeps_closed_handles_revoked` (`tests/n21/views.rs:230`, Tab-Sitzung nicht wiederverwendet) – im FIX-WAL-Lauf auf Windows grün; Wiederholung des Jobs siehe unten |
+
+Windows-Zeitabhängigkeiten: In den Läufen dieser Runde fielen auf Windows drei verschiedene Tests einmalig aus (`pending_w1_o02` – durch N25 behoben; `cmd_config_runtime.rs:391` 2-s-Warten auf Threadwechsel; `n21/views.rs:230` Tab-Sitzung nach Dateiänderung neu). Folgepaket M2-N30: zeitabhängige os-app-Tests auf Windows stabilisieren (Ursache je Test belegen, keine Budgetlockerung).
 
 ## Folgearbeiten
 
 - M2-N27, M2-N28 (laufen, Basis `m2/int-25`), M2-N29.
 - Inkrementelle Zähler nach UI-145 (nach der Beta).
-- `n04-live.spec.ts:74` auf windows-chromium.
+- `n04-live.spec.ts:74` auf windows-chromium (im Integrationslauf grün, beobachten).
+- M2-N30 Windows-Zeitabhängigkeiten in os-app-Tests.
 - Auswertung der Nutzer-Crawl-Datei mit `n25-tail.py` (Ratenabfall nach Fortsetzen).
 - Aus int-24 weiter offen: Testrennen `cli_basics` (Port), `header.spec.ts:69`, `config/dialog.spec.ts:135`; macos-webkit in Shards teilen.
