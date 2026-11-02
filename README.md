@@ -6,7 +6,7 @@
 Open-source website crawler and technical SEO auditor – built for AI agents and humans alike.</p>
 
 <p align="center">
-  <a href="https://github.com/domdewom2/openspider/actions/workflows/ci.yml"><img src="https://github.com/domdewom2/openspider/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://github.com/wojcikdominik/openspider/actions/workflows/ci.yml"><img src="https://github.com/wojcikdominik/openspider/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License: Apache-2.0"></a>
   <img src="https://img.shields.io/badge/platforms-macOS%20(Apple%20Silicon%20%26%20Intel)%20%7C%20Windows-lightgrey.svg" alt="Platforms">
   <img src="https://img.shields.io/badge/core-Rust-orange.svg" alt="Rust">
@@ -73,7 +73,7 @@ Memory for an open view over 5 million rows stays around 60 MB. The table never 
 
 ## Installation
 
-Version 1.0 and the public beta are being prepared. The [download page](https://openspider.de/download/)
+The public beta starts in November 2026 – see the [beta page](https://openspider.de/en/beta/). The [download page](https://openspider.de/download/)
 contains clearly marked GitHub Releases asset URL templates and SHA256SUMS guidance;
 these templates are not live downloads. Desktop targets: macOS 13+ (Apple Silicon/Intel),
 Windows 10 1809+ / Windows 11 x64, and Windows on ARM via x64 emulation.
@@ -97,7 +97,7 @@ Settings → Updates or with `OPENSPIDER_DISABLE_UPDATE_CHECK=1`.
 ### Build the CLI from source
 
 ```bash
-git clone https://github.com/domdewom2/openspider.git
+git clone https://github.com/wojcikdominik/openspider.git
 cd openspider
 cargo build --release -p os-cli          # binary: target/release/openspider
 ```
@@ -154,7 +154,7 @@ The file format is documented and versioned, so scripts and dashboards keep work
 flowchart LR
     A[Frontier &amp; robots.txt] --> B[Fetch<br/>HTTP · TLS]
     B --> C[Parse<br/>HTML · headers · sitemaps]
-    C --> R[Render<br/>Chromium, coming in M2]
+    C --> R[Render<br/>headless Chromium · JavaScript]
     C --> D[(SQLite crawl file<br/>.ospider)]
     R --> D
     D --> E[Analyze<br/>filters · issues · reports]
@@ -170,8 +170,8 @@ A Cargo workspace of focused crates (`os-fetch`, `os-parse`, `os-render`, `os-st
 | Milestone | Content | Status |
 |---|---|---|
 | **M1** | Crawl core, storage, CLI, MCP (read-only), core analyses | ✅ done |
-| **M2** | Desktop app, all analysis tabs, reports, JavaScript rendering, Google APIs | 🚧 in progress – alpha planned for late October 2026 |
-| **M3** | Signed installers, auto-update → **1.0** | planned |
+| **M2** | Desktop app, all analysis tabs, reports, JavaScript rendering, Google APIs | ✅ done |
+| **M3** | Signed installers, auto-update, public beta → **1.0** | 🚧 in progress – public beta in November 2026 |
 | **M4** | AI features: page classification, optimization suggestions, “ask your crawl”, AI search visibility (Claude, OpenAI, OpenRouter, Ollama) | after 1.0 |
 | **M5** | External SEO data (keywords, backlinks, SERP, LLM mentions) | after 1.0 |
 
