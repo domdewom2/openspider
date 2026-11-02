@@ -20,6 +20,10 @@ const REVEAL_BUDGET: std::time::Duration = std::time::Duration::from_secs(2);
 #[derive(Default)]
 struct ManagementState {
     gate: Arc<tokio::sync::Mutex<()>>,
+    /// Register und Metadatenindex (`.registry.sqlite`, `.index.sqlite`): Verwaltungsaufträge der Hauptspur lesen
+    /// geteilt, die Aufbewahrung auf der Wartungsspur exklusiv (M2-N31). So greifen nie zwei Verbindungen der App
+    /// gleichzeitig schreibend auf den Index zu, und die Hauptspur wartet nie im `busy_timeout` auf die Aufbewahrung.
+    registry: Arc<tokio::sync::RwLock<()>>,
     retention_task: Mutex<Option<tokio::task::JoinHandle<()>>>,
     retention_settings: Mutex<Option<AppSettings>>,
 }
@@ -63,10 +67,39 @@ pub(super) async fn admin<T: Send + 'static>(
     app: &App,
     f: impl FnOnce(&mut Manager) -> Result<T, CmdError> + Send + 'static,
 ) -> Result<T, CmdError> {
+    let _registry = app
+        .ext::<ManagementState>()
+        .registry
+        .clone()
+        .read_owned()
+        .await;
     let root = app.config().paths.crawls.clone();
     let dir = destination(app);
     app.write_queue()
         .submit_admin(move || {
+            let mut manager = Manager::open(&root).map_err(|e| store_error(&e))?;
+            manager.add_location(&dir).map_err(|e| store_error(&e))?;
+            f(&mut manager)
+        })
+        .await
+}
+
+/// Wie [`admin`], aber im Hintergrund auf der Wartungsspur der Schreibwarteschlange (M2-N31): Nutzeraufträge der
+/// Hauptspur warten nicht dahinter. Nur für Arbeit an nicht geöffneten Crawl-Dateien (Aufbewahrung).
+async fn maintenance<T: Send + 'static>(
+    app: &App,
+    f: impl FnOnce(&mut Manager) -> Result<T, CmdError> + Send + 'static,
+) -> Result<T, CmdError> {
+    let _registry = app
+        .ext::<ManagementState>()
+        .registry
+        .clone()
+        .write_owned()
+        .await;
+    let root = app.config().paths.crawls.clone();
+    let dir = destination(app);
+    app.write_queue()
+        .submit_maintenance(move || {
             let mut manager = Manager::open(&root).map_err(|e| store_error(&e))?;
             manager.add_location(&dir).map_err(|e| store_error(&e))?;
             f(&mut manager)
@@ -588,6 +621,10 @@ pub fn register(r: &mut Registry) {
 }
 
 /// Führt eine Aufbewahrungsrunde aus (mit injizierter Uhr testbar).
+///
+/// Läuft auf der Wartungsspur (M2-N31): Schreibaufträge des Nutzers (Konfiguration, Segmente, View-Cache) warten nicht
+/// hinter ihr, auch nicht direkt nach dem Start. Andere Verwaltungsaufträge (Crawl-Liste, Löschen, Verschieben …)
+/// bleiben mit ihr serialisiert.
 pub async fn run_retention(app: &App) -> Result<usize, CmdError> {
     let _guard = management_guard(app).await;
     let settings = app.settings_snapshot().retention;
@@ -607,7 +644,7 @@ pub async fn run_retention(app: &App) -> Result<usize, CmdError> {
         .filter_map(|s| s.key.0.parse().ok())
         .collect();
     let now = app.config().clock.now();
-    let deletions = admin(app, move |m| {
+    let deletions = maintenance(app, move |m| {
         m.retain_with(days, settings.keep_last, now, &open, |d| {
             tracing::info!(crawl_id=%d.id,name=%d.name,age_days=d.age_days,"Crawl durch Aufbewahrung gelöscht");
         })
