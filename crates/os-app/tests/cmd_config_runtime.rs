@@ -386,9 +386,101 @@ async fn threads_change_reaches_the_running_engine_without_pause() {
     assert!(common::eventually(Duration::from_secs(3), || fetcher.requests().len() >= 5).await);
     assert_eq!(fetcher.max_concurrency(), 1);
     cfg.speed.threads = 4;
-    let result = call(&app, "config.set", dto(&cfg)).await;
+    // CRAWL-112: within 2 s of the change itself, however long the durable write queues behind other
+    // jobs of the app's write queue (M2-N30). Pausing right after the effect keeps the end state
+    // independent of that write's duration (the crawl would otherwise finish meanwhile).
+    let (result, reached) = tokio::join!(call(&app, "config.set", dto(&cfg)), async {
+        let reached =
+            common::eventually(Duration::from_secs(2), || fetcher.max_concurrency() > 1).await;
+        engine.handle.lock().unwrap().as_ref().unwrap().pause();
+        reached
+    });
     assert_eq!(result["deferred"], json!([]));
-    assert!(common::eventually(Duration::from_secs(2), || fetcher.max_concurrency() > 1).await);
+    assert!(reached);
+    let handle = engine.handle.lock().unwrap().take().unwrap();
+    assert_eq!(handle.wait().await.unwrap().state, CrawlState::Paused);
+}
+
+// spec: CRAWL-112
+// spec: CRAWL-126 [M2]
+#[tokio::test]
+async fn failed_threads_write_restores_the_running_engine_thread_count() {
+    use os_app::runtime::sessions::EngineControl;
+    use os_engine::{
+        start_crawl,
+        testing::{test_deps, SimFetcher, SimSite},
+        CrawlRequest, CrawlSource,
+    };
+    use std::time::Duration;
+    let dir = tempfile::tempdir().unwrap();
+    let app = common::new_app(dir.path());
+    let mut cfg = CrawlConfig::default();
+    cfg.speed.threads = 1;
+    cfg.speed.max_per_host = Some(8);
+    let path = dir.path().join("live.ospider");
+    // Enough pages that four threads cannot finish the crawl while a slow write is still failing.
+    let fetcher =
+        SimFetcher::new(SimSite::tree("site.test", 5000).delay(Duration::from_millis(15)));
+    let handle = start_crawl(
+        fetcher.clone(),
+        CrawlRequest {
+            config: cfg.clone(),
+            source: CrawlSource::Spider {
+                start_url: "https://site.test/".into(),
+            },
+            file: path.clone(),
+            project: "fixture".into(),
+            name: "live threads rollback".into(),
+        },
+        test_deps(),
+    )
+    .await
+    .unwrap();
+    let engine = Arc::new(EngineControl {
+        handle: Mutex::new(Some(handle)),
+    });
+    let key = CrawlKey("live".into());
+    app.register_crawl(key.clone(), path.clone());
+    app.sessions().set_current(
+        WindowId("main".into()),
+        SessionInfo {
+            key: key.clone(),
+            path,
+            config: Arc::new(cfg.clone()),
+            state: CrawlState::Running,
+            writable: true,
+            engine: Some(engine.clone()),
+        },
+    );
+    app.write_queue()
+        .submit(key, |conn| {
+            conn.execute_batch("CREATE TRIGGER fail_config BEFORE UPDATE ON crawl_config BEGIN SELECT RAISE(ABORT, 'fixture'); END;")?;
+            Ok(())
+        })
+        .await
+        .unwrap();
+    assert!(common::eventually(Duration::from_secs(3), || fetcher.requests().len() >= 5).await);
+    let mut changed = cfg.clone();
+    changed.speed.threads = 4;
+    assert!(app
+        .dispatch(common::ctx(), "config.set", dto(&changed))
+        .await
+        .is_err());
+    // At most four fetches were started with the briefly raised count; every later one waits until the engine is
+    // idle again (one thread).
+    let from = fetcher.requests().len() + 4;
+    assert!(
+        common::eventually(Duration::from_secs(30), || fetcher.requests().len()
+            >= from + 8)
+        .await,
+        "the crawl keeps running"
+    );
+    let later: Vec<_> = fetcher.requests()[from..from + 8]
+        .iter()
+        .map(|r| r.concurrent)
+        .collect();
+    assert_eq!(later, vec![1; 8]);
+    assert_eq!(call(&app, "config.get", Value::Null).await, dto(&cfg));
     let handle = engine.handle.lock().unwrap().take().unwrap();
     handle.pause();
     assert_eq!(handle.wait().await.unwrap().state, CrawlState::Paused);
