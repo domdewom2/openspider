@@ -129,7 +129,8 @@ pub async fn snapshot(
                 };
                 // UI-147: opening needs only the URL total. Do not scan crawled
                 // rows (including their table payload) for counters discarded here.
-                let urls = os_store::counters::discovered(f.conn())?;
+                // UI-061/CRAWL-130: the same total as Overview, report and status bar.
+                let urls = os_store::counters::encountered(f.conn())?;
                 let file_bytes = std::fs::metadata(f.path())
                     .map_err(|e| os_store::StoreError::Io {
                         path: f.path().to_path_buf(),

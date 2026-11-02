@@ -191,7 +191,9 @@ fn summary(file: &CrawlFile, rows: &mut Vec<OverviewRow>) -> Result<(), ExportEr
         None,
     ));
 
-    let encountered = count(file, "SELECT COUNT(*) FROM urls WHERE in_tables = 1")?;
+    // UI-061 (OS-Festlegung 02.11.2026) und CRAWL-130: dieselbe Zahl wie Overview und Statusleiste, mit
+    // verborgenen URLs, ohne Hilfsabrufe (robots.txt-Zeilen, K-54; Sitemap-Dateien).
+    let encountered = db(os_store::counters::encountered(file.conn()))?;
     let crawled = count(
         file,
         "SELECT COUNT(*) FROM urls WHERE in_tables = 1 AND state = 'done' AND robots_blocked = 0",
