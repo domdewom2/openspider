@@ -66,9 +66,11 @@ impl Throttle {
 /// How a count is taken.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Mode {
-    /// All tabs in one serial pass over one snapshot, nothing written: a running crawl, and the count
-    /// right after leaving `Running` (exact for the paused/final version).
+    /// Running crawl: all tabs in one serial pass over one snapshot, nothing written.
     Live,
+    /// Right after leaving `Running`: the paused/final version in one snapshot with the parallel
+    /// readers of the exact count, pieces kept in memory only (nothing written while the WAL merges).
+    Settled,
     /// Exact data version through the stored tab pieces.
     Exact,
 }
@@ -150,6 +152,7 @@ impl Default for SharedCounts {
                     Box::pin(async move {
                         match mode {
                             Mode::Live => live_count(&app, &session, token).await,
+                            Mode::Settled => settled_count(&app, &session, token).await,
                             Mode::Exact => super::exact_facts(&app, &session, token).await,
                         }
                     })
@@ -361,6 +364,32 @@ async fn live_count(app: &App, s: &SessionInfo, token: CancelToken) -> Result<Co
         .map_err(super::view_error)
 }
 
+/// Count of the paused/final version right after leaving `Running`: summary and all tabs in one
+/// snapshot (parallel readers, UI-145), the pieces stay in memory; nothing is written.
+async fn settled_count(
+    app: &App,
+    s: &SessionInfo,
+    token: CancelToken,
+) -> Result<Counted, CmdError> {
+    let cfg = s.config.clone();
+    app.read_pool()
+        .run_cached(s.key.clone(), "overview", token, move |file, cancel| {
+            let conn = file.conn();
+            let _snapshot = conn.unchecked_transaction()?;
+            let seq = os_store::queries::change_seq(conn)?;
+            let stamp = os_analyze::views::filter_cache_stamp(file)?;
+            Ok(
+                os_analyze::views::overview_facts(file, &cfg, cancel).map(|(facts, _)| Counted {
+                    facts,
+                    seq,
+                    stamp,
+                }),
+            )
+        })
+        .await?
+        .map_err(super::view_error)
+}
+
 /// Whether a shared count of the crawl is running (`sidebar.countStatus`, UI-141).
 pub(crate) fn counting(app: &App, key: &CrawlKey) -> bool {
     lock(&app.ext::<SharedCounts>().crawls)
@@ -428,7 +457,15 @@ pub(crate) fn observe_state(app: &App, key: &CrawlKey, state: CrawlState) {
     app.handle().spawn(async move {
         // One snapshot without writing: a paused or stopped crawl's WAL is merged right now (CRAWL-126,
         // FIX-WAL) and must stay empty; the stored pieces follow with the next exact request or opening.
-        match exact(&worker, &service, &session, &CancelToken::new(), Mode::Live).await {
+        match exact(
+            &worker,
+            &service,
+            &session,
+            &CancelToken::new(),
+            Mode::Settled,
+        )
+        .await
+        {
             Ok(_) => announce(&worker),
             Err(error) if error.code == ErrorCode::Cancelled => {}
             Err(error) => tracing::debug!(?error, "Exakte Zählung nach Crawl-Ende fehlgeschlagen"),
