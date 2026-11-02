@@ -10,6 +10,9 @@ use crate::{
     },
 };
 use futures_util::future::BoxFuture;
+
+pub(crate) mod counts;
+
 /// UI-061 summary shares one denominator and rounding rule with its export.
 pub(crate) fn summary_rows(summary: Vec<(String, u64)>) -> Vec<SummaryRow> {
     let encountered = summary.first().map_or(0, |r| r.1);
@@ -43,7 +46,10 @@ fn overview<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFutur
         };
         catalog::check_scope(&args.segment, &compare_scope)?;
         let s = session(app, &ctx)?;
-        let facts = overview_facts(app, &s, ctx.cancel.clone()).await?;
+        // UI-018 (M2-N27): the shared count of Overview, Issues and filter counts.
+        let shared = counts::shared_facts(app, &s, &ctx.cancel).await?;
+        let age_ms = shared.age_ms();
+        let facts = shared.facts;
         app.read_pool()
             .run_snapshot(s.key, move |file, _| {
                 let summary = summary_rows(facts.summary.clone());
@@ -65,7 +71,11 @@ fn overview<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFutur
                         })
                     })
                     .collect();
-                Ok(to_json(&OverviewDto { summary, tabs }))
+                Ok(to_json(&OverviewDto {
+                    summary,
+                    tabs,
+                    age_ms,
+                }))
             })
             .await?
     })
@@ -102,21 +112,20 @@ fn issues<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
         let args: IssuesArgs = parse_args(args)?;
         catalog::check_scope(&args.segment, &args.compare)?;
         let s = session(app, &ctx)?;
-        let facts = overview_facts(app, &s, ctx.cancel.clone()).await?;
+        let facts = counts::shared_facts(app, &s, &ctx.cancel).await?.facts;
         to_json(&issue_rows(&facts.counts, &args))
     })
 }
 
-/// UI-145/UI-147: Overview and Issues share one fact set per data version. Missing pieces are
-/// counted by one cancellable background count per crawl ([`count_job`], progress and cancel via
-/// `sidebar.countStatus`/`sidebar.countCancel`, UI-141); a request joins it instead of scanning the
-/// crawl a second time. Cancelling ends the waiting requests with `Cancelled`; the next request
-/// resumes from the stored pieces.
-pub(crate) async fn overview_facts(
+/// UI-145/UI-147: exact facts of the current data version (crawl not running, [`counts`]). Missing
+/// pieces are counted by one cancellable background count per crawl ([`count_job`], progress and
+/// cancel via `sidebar.countStatus`/`sidebar.countCancel`, UI-141); the stored pieces are reused.
+/// Cancelling ends the count with `Cancelled`; the next count resumes from the stored pieces.
+pub(crate) async fn exact_facts(
     app: &App,
     s: &crate::runtime::sessions::SessionInfo,
     cancel: os_model::CancelToken,
-) -> Result<std::sync::Arc<os_analyze::views::OverviewFacts>, CmdError> {
+) -> Result<counts::Counted, CmdError> {
     let cfg = s.config.clone();
     let progress = app
         .read_pool()
@@ -145,17 +154,22 @@ pub(crate) async fn overview_facts(
         }
     }
     let cfg = s.config.clone();
-    let (facts, pending) = app
+    let (facts, pending, seq, stamp) = app
         .read_pool()
         .run_cached(s.key.clone(), "overview", cancel, move |file, cancel| {
-            Ok(os_analyze::views::overview_facts(file, &cfg, cancel))
+            // Data version and facts from one snapshot (M2-N27: the shared count keys on it).
+            let _snapshot = file.conn().unchecked_transaction()?;
+            let seq = os_store::queries::change_seq(file.conn())?;
+            let stamp = os_analyze::views::filter_cache_stamp(file)?;
+            Ok(os_analyze::views::overview_facts(file, &cfg, cancel)
+                .map(|(facts, pending)| (facts, pending, seq, stamp)))
         })
         .await?
         .map_err(view_error)?;
     if pending {
         crate::views::persist_facts(app, &s.key);
     }
-    Ok(facts)
+    Ok(counts::Counted { facts, seq, stamp })
 }
 
 /// One-time count of the missing Overview/Issues pieces of a crawl (UI-141, UI-145). Not an `Ops`
@@ -201,9 +215,15 @@ impl CountJobs {
     }
 }
 
-/// Cancels the crawl's visible count (closed, cleared or started crawl, or the user). The quiet
-/// precomputation after opening shares the `overview` lane; `sidebar.countCancel` stops it as well.
+/// Cancels the crawl's visible count and forgets its shared count state (closed, cleared or
+/// started crawl). The quiet precomputation after opening shares the `overview` lane;
+/// `sidebar.countCancel` stops it as well.
 pub(crate) fn cancel_count(app: &App, key: &CrawlKey) -> bool {
+    let shared = counts::forget(app, key);
+    cancel_job(app, key) | shared
+}
+
+fn cancel_job(app: &App, key: &CrawlKey) -> bool {
     match app.ext::<CountJobs>().lock().get(key) {
         Some(job) if job.running() => {
             job.token.cancel();
@@ -342,7 +362,12 @@ fn count_status<'a>(app: &'a App, ctx: CallCtx, _: serde_json::Value) -> BoxFutu
     Box::pin(async move {
         let s = session(app, &ctx)?;
         let job = app.ext::<CountJobs>().lock().get(&s.key).cloned();
-        let (running, (done, total)) = job.map_or((false, (0, 0)), |j| (j.running(), j.progress()));
+        let (mut running, (mut done, mut total)) =
+            job.map_or((false, (0, 0)), |j| (j.running(), j.progress()));
+        if !running && counts::counting(app, &s.key) {
+            // UI-141: a shared count of the running crawl counts all tabs in one pass, without steps.
+            (running, done, total) = (true, 0, 0);
+        }
         to_json(&CountStatus {
             running,
             done,
@@ -354,7 +379,9 @@ fn count_status<'a>(app: &'a App, ctx: CallCtx, _: serde_json::Value) -> BoxFutu
 fn count_cancel<'a>(app: &'a App, ctx: CallCtx, _: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let s = session(app, &ctx)?;
-        cancel_count(app, &s.key);
+        // The user's cancel keeps the last shared count visible (UI-018, M2-N27).
+        cancel_job(app, &s.key);
+        counts::cancel_flight(app, &s.key);
         super::sidebar_ext::cancel_precompute(app, &s.key);
         Ok(serde_json::Value::Null)
     })
