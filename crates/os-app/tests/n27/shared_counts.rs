@@ -369,3 +369,71 @@ async fn after_a_pause_the_paused_version_is_counted_exactly_without_a_request()
     assert_eq!(counts["version"], json!(paused));
     assert_eq!(service.started(), counted);
 }
+
+/// `view_cache` entries stored for data version `seq`.
+fn cached_at(path: &std::path::Path, seq: u64) -> i64 {
+    let file = CrawlFile::open(path, OpenMode::ReadOnly).unwrap();
+    file.conn()
+        .query_row(
+            "SELECT COUNT(*) FROM view_cache WHERE built_seq = ?1",
+            [seq as i64],
+            |r| r.get(0),
+        )
+        .unwrap()
+}
+
+// spec: UI-018
+// spec: CRAWL-126
+#[tokio::test]
+async fn a_request_right_after_a_pause_shares_the_one_count_and_writes_nothing() {
+    let (_dir, app, path) = fixture();
+    let session = opened(&app, &path).await;
+    let service = app.ext::<SharedCounts>();
+    let key = session.key.clone();
+    // The quiet precomputation after opening stores pieces; it ends before the data version changes.
+    call(&app, "sidebar.countCancel", Value::Null).await;
+    let paused = new_version(&path);
+    app.sessions().update_state(&key, CrawlState::Running);
+    super::observe_state(&app, &key, CrawlState::Running);
+    let (started, modes) = (service.started(), service.modes().len());
+    crate::session::state(&app, &key, CrawlState::Paused);
+    assert_eq!(
+        service.settling(&key),
+        1,
+        "set before any request can count"
+    );
+    // The UI asks at once, racing the count that leaving `Running` started.
+    let overview = call(&app, "sidebar.overview", json!({})).await;
+    assert!(overview.get("ageMs").is_none(), "exact after the pause");
+    tokio::time::timeout(Duration::from_secs(60), async {
+        while service.settling(&key) > 0 || service.flight(&key).is_some() {
+            match service.flight(&key) {
+                Some(flight) => flight.ended().await,
+                None => tokio::task::yield_now().await,
+            }
+        }
+    })
+    .await
+    .expect("the count of the paused version ends");
+    assert_eq!(
+        service.started() - started,
+        1,
+        "one count for the request and the pause"
+    );
+    assert_eq!(
+        service.modes()[modes..],
+        [Mode::Settled],
+        "taken without writing"
+    );
+    // Every write queued so far has run: nothing was stored for the paused version.
+    app.write_queue()
+        .submit_file(&key, |_| Ok(()))
+        .await
+        .unwrap();
+    assert_eq!(
+        cached_at(&path, paused),
+        0,
+        "no view_cache write while the WAL merges"
+    );
+    assert_eq!(service.last_seq(&key), Some(paused));
+}

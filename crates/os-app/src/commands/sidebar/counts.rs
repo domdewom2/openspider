@@ -132,6 +132,10 @@ struct Crawl {
     flight: Option<Arc<Flight>>,
     throttle: Throttle,
     observed: Option<CrawlState>,
+    /// Counts of a paused/final version pending since `Running` ended ([`observe_state`]): until
+    /// they are done, every count of this crawl is taken without writing (`Mode::Settled`), also
+    /// one a request starts first (CRAWL-126: the WAL is merged right now).
+    settling: u32,
 }
 
 /// Shared count state of all crawls of the app.
@@ -140,6 +144,8 @@ pub(crate) struct SharedCounts {
     clock: Mutex<Arc<Clock>>,
     counter: Mutex<Arc<Counter>>,
     started: AtomicU64,
+    #[cfg(test)]
+    modes: Mutex<Vec<Mode>>,
 }
 impl Default for SharedCounts {
     fn default() -> Self {
@@ -159,6 +165,8 @@ impl Default for SharedCounts {
                 },
             )),
             started: AtomicU64::new(0),
+            #[cfg(test)]
+            modes: Mutex::default(),
         }
     }
 }
@@ -194,6 +202,8 @@ impl SharedCounts {
         crawl.flight = Some(flight.clone());
         drop(crawls);
         let number = self.started.fetch_add(1, Ordering::SeqCst) + 1;
+        #[cfg(test)]
+        lock(&self.modes).push(mode);
         tracing::debug!(?mode, number, crawl = %s.key.0, "Gemeinsame Zählung gestartet");
         let counter = lock(&self.counter).clone();
         let (service, worker, session, task) =
@@ -317,7 +327,7 @@ async fn exact(
 ) -> Result<Answer, CmdError> {
     let current = version(app, s).await?;
     for attempt in 0..2 {
-        let flight = {
+        let (flight, mode) = {
             let mut crawls = lock(&service.crawls);
             let crawl = crawls.entry(s.key.clone()).or_default();
             if let Some(last) = crawl
@@ -327,7 +337,13 @@ async fn exact(
             {
                 return Ok(service.answer(last, false));
             }
-            crawl.flight.clone()
+            // A request right after a pause or stop must not write either (CRAWL-126, FIX-WAL).
+            let mode = if crawl.settling > 0 {
+                Mode::Settled
+            } else {
+                mode
+            };
+            (crawl.flight.clone(), mode)
         };
         let flight = flight.unwrap_or_else(|| service.join_or_start(app, s, mode));
         let snapshot = wait(&flight, cancel).await?;
@@ -439,17 +455,20 @@ pub(crate) fn observe_state(app: &App, key: &CrawlKey, state: CrawlState) {
     let service = app.ext::<SharedCounts>();
     let ended = {
         let mut crawls = lock(&service.crawls);
-        let previous = crawls
-            .entry(key.clone())
-            .or_default()
-            .observed
-            .replace(state);
-        previous == Some(CrawlState::Running) && state != CrawlState::Running
+        let crawl = crawls.entry(key.clone()).or_default();
+        let previous = crawl.observed.replace(state);
+        let ended = previous == Some(CrawlState::Running) && state != CrawlState::Running;
+        // Set synchronously, before any request of the new state can start a count.
+        crawl.settling += u32::from(ended);
+        ended
     };
     if !ended {
         return;
     }
     let Some(session) = app.sessions().all().into_iter().find(|s| &s.key == key) else {
+        if let Some(crawl) = lock(&service.crawls).get_mut(key) {
+            crawl.settling = crawl.settling.saturating_sub(1);
+        }
         return;
     };
     let session = SessionInfo { state, ..session };
@@ -457,15 +476,18 @@ pub(crate) fn observe_state(app: &App, key: &CrawlKey, state: CrawlState) {
     app.handle().spawn(async move {
         // One snapshot without writing: a paused or stopped crawl's WAL is merged right now (CRAWL-126,
         // FIX-WAL) and must stay empty; the stored pieces follow with the next exact request or opening.
-        match exact(
+        let result = exact(
             &worker,
             &service,
             &session,
             &CancelToken::new(),
             Mode::Settled,
         )
-        .await
-        {
+        .await;
+        if let Some(crawl) = lock(&service.crawls).get_mut(&session.key) {
+            crawl.settling = crawl.settling.saturating_sub(1);
+        }
+        match result {
             Ok(_) => announce(&worker),
             Err(error) if error.code == ErrorCode::Cancelled => {}
             Err(error) => tracing::debug!(?error, "Exakte Zählung nach Crawl-Ende fehlgeschlagen"),
@@ -480,6 +502,14 @@ impl SharedCounts {
     }
     pub(crate) fn set_counter(&self, counter: Arc<Counter>) {
         *lock(&self.counter) = counter;
+    }
+    /// Pending counts of a paused/final version of `key`.
+    pub(crate) fn settling(&self, key: &CrawlKey) -> u32 {
+        lock(&self.crawls).get(key).map_or(0, |c| c.settling)
+    }
+    /// Modes of the counts started so far.
+    pub(crate) fn modes(&self) -> Vec<Mode> {
+        lock(&self.modes).clone()
     }
     /// Counts started so far.
     pub(crate) fn started(&self) -> u64 {
