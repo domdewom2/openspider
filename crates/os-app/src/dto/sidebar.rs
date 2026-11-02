@@ -39,6 +39,12 @@ pub struct OverviewDto {
     pub summary: Vec<SummaryRow>,
     /// Tabs mit Filtern.
     pub tabs: Vec<OverviewTab>,
+    /// Alter des Zählstands in Millisekunden, nur während eines laufenden Crawls: Overview, Issues und
+    /// Filterzähler teilen sich dann eine gedrosselte Zählung je Datenstand (UI-018, M2-N27). Fehlt der
+    /// Wert, ist der Stand exakt.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub age_ms: Option<u64>,
 }
 
 /// Argumente von `sidebar.issues` (UI-062).

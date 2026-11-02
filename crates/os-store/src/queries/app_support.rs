@@ -172,10 +172,16 @@ pub fn selected_links(
 }
 
 /// The nine stable UI-061 summary counters, including hidden encountered URLs.
+/// `Total URLs Encountered` is [`crate::counters::encountered`] (UI-061, M2-N28): auxiliary fetches
+/// (robots.txt rows, K-54; sitemap files) are neither encountered nor crawled URLs (CRAWL-130).
 pub fn overview_summary(conn: &Connection) -> Result<Vec<(String, u64)>, StoreError> {
+    let encountered = crate::counters::encountered(conn)?;
+    let crawled = format!(
+        "state='done' AND robots_blocked=0 AND id NOT IN ({})",
+        crate::counters::HIDDEN_AUXILIARY_IDS
+    );
     let definitions = [
-        ("Total URLs Encountered", "1"),
-        ("Total URLs Crawled", "state='done' AND robots_blocked=0"),
+        ("Total URLs Crawled", crawled.as_str()),
         ("Total Internal Blocked by robots.txt", "is_internal=1 AND robots_blocked=1"),
         ("Total External Blocked by robots.txt", "is_internal=0 AND robots_blocked=1"),
         ("Total URLs Displayed", "in_tables=1"),
@@ -189,15 +195,16 @@ pub fn overview_summary(conn: &Connection) -> Result<Vec<(String, u64)>, StoreEr
         .map(|(_, p)| format!("COALESCE(SUM(CASE WHEN {p} THEN 1 ELSE 0 END),0)"))
         .collect::<Vec<_>>()
         .join(",");
-    Ok(
+    let mut rows: Vec<(String, u64)> =
         conn.query_row(&format!("SELECT {expressions} FROM urls"), [], |r| {
             definitions
                 .iter()
                 .enumerate()
                 .map(|(i, (name, _))| Ok((name.to_string(), r.get(i)?)))
                 .collect()
-        })?,
-    )
+        })?;
+    rows.insert(0, ("Total URLs Encountered".to_string(), encountered));
+    Ok(rows)
 }
 
 /// HTTP version of this response, including redirects. No request is performed.

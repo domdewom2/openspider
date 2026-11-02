@@ -1,0 +1,27 @@
+[
+  {
+    "check": "actionlint",
+    "command": [
+      "/tmp/u31-actionlint",
+      ".github/workflows/ui-nightly.yml"
+    ],
+    "exit_code": 0
+  },
+  {
+    "check": "bash-syntax",
+    "command": [
+      "bash",
+      "-n",
+      "apps/desktop/e2e/perf/run-reference.sh"
+    ],
+    "exit_code": 0
+  },
+  {
+    "check": "neutral-final",
+    "command": [
+      "bash",
+      "scripts/check-neutral.sh"
+    ],
+    "exit_code": 0
+  }
+]

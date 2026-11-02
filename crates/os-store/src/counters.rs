@@ -28,6 +28,39 @@ use std::collections::{BTreeMap, BTreeSet};
 use os_model::{ImageRow, LinkRow, LinkType};
 use rusqlite::{params, Connection};
 
+/// Kennungen der Hilfsabrufe ohne Tabellen-Sichtbarkeit (UI-061, OS-Festlegung vom 02.11.2026): die
+/// robots.txt-Zeile jedes Hosts (K-54, `discovered_via = 'robots_txt'`) und die URL-Zeilen der Sitemap-Dateien
+/// (K-40, `sitemaps.url_id`). Wird eine solche Zeile später verlinkt und dadurch angezeigt (`in_tables = 1`), zählt
+/// sie wie jede angezeigte Zeile, damit `Total URLs Displayed` ≤ `Total URLs Encountered` gilt.
+///
+/// Gesucht wird nur über die kleinen Tabellen `robots_files` (eine Zeile je Origin, über `UNIQUE(url)`) und
+/// `sitemaps`, nie über einen Lauf durch `urls` (UI-147). Die robots.txt-Zeile trägt die normalisierte Adresse
+/// von `robots_files.robots_url`; die Engine bildet beide aus derselben URL, die Normalisierung lässt sie
+/// unverändert (`os-engine` `robots_glue::record_robots`; Gleichheit mit dem Lauf über `urls` prüft
+/// `crates/os-store/tests/n28_encountered.rs`).
+pub const HIDDEN_AUXILIARY_IDS: &str =
+    "SELECT x.id FROM urls x WHERE x.in_tables = 0 AND x.id IN (\
+     SELECT s.url_id FROM sitemaps s WHERE s.url_id IS NOT NULL \
+     UNION SELECT r.id FROM robots_files f CROSS JOIN urls r ON r.url = f.robots_url \
+     WHERE r.discovered_via = 'robots_txt')";
+
+/// `Total URLs Encountered` (UI-061, CRAWL-130): eindeutige normalisierte URLs, die der Crawl als Ziel
+/// kennengelernt hat – angezeigte und verborgene Zeilen (robots-gesperrt ohne Anzeige, ausgeschlossen, Limit,
+/// nur per hreflang/Canonical/Sitemap bekannt), ohne die Hilfsabrufe aus [`HIDDEN_AUXILIARY_IDS`]. Eine
+/// Definition für Overview, Bericht „Crawl-Übersicht“, Statusleiste, Crawl-Liste und Fortschritt.
+///
+/// Kosten: `COUNT(*)` über den kleinsten Index von `urls` und Suchen je Hilfsabruf; die Nutzdaten der Zeilen
+/// werden nicht gelesen (UI-147).
+pub fn encountered(conn: &Connection) -> Result<u64, StoreError> {
+    Ok(conn.query_row(
+        &format!(
+            "SELECT (SELECT COUNT(*) FROM urls) - (SELECT COUNT(*) FROM ({HIDDEN_AUXILIARY_IDS}))"
+        ),
+        [],
+        |row| row.get(0),
+    )?)
+}
+
 use crate::error::StoreError;
 
 /// Zählung der Links einer Seite auf ein Ziel.

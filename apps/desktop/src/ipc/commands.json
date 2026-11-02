@@ -426,6 +426,18 @@
     "longRunning": false
   },
   {
+    "name": "sidebar.countStatus",
+    "args": "void",
+    "ret": "CountStatus",
+    "longRunning": false
+  },
+  {
+    "name": "sidebar.countCancel",
+    "args": "void",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
     "name": "sidebar.siteStructure",
     "args": "SiteStructureArgs",
     "ret": "SiteStructure",

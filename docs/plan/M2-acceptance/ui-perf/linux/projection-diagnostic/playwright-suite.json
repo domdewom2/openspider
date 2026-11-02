@@ -1,0 +1,1381 @@
+{
+  "config": {
+    "argv": [
+      "/usr/bin/node",
+      "/home/build/Projects/openspider-wt/m2-u31/node_modules/.bin/playwright",
+      "test",
+      "--config",
+      "e2e/perf/playwright.config.ts"
+    ],
+    "configFile": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/playwright.config.ts",
+    "rootDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "testIgnore": [],
+        "testMatch": [
+          "*.bench.ts"
+        ],
+        "timeout": 180000
+      },
+      {
+        "outputDir": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "testIgnore": [],
+        "testMatch": [
+          "*.bench.ts"
+        ],
+        "timeout": 180000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "chromium",
+        "testDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "snapshotDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "testIgnore": [],
+        "testMatch": "*.bench.ts",
+        "timeout": 180000,
+        "use": {
+          "baseURL": "http://127.0.0.1:1431",
+          "viewport": {
+            "width": 1280,
+            "height": 800
+          },
+          "browserName": "chromium",
+          "launchOptions": {
+            "executablePath": "/home/build/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome"
+          }
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "chromium"
+      },
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "webkit",
+        "testDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "snapshotDir": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf",
+        "testIgnore": [],
+        "testMatch": "*.bench.ts",
+        "timeout": 180000,
+        "use": {
+          "baseURL": "http://127.0.0.1:1431",
+          "viewport": {
+            "width": 1280,
+            "height": 800
+          },
+          "browserName": "webkit"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": "webkit"
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "/home/build/Projects/openspider-wt/m2-u31/target/loadtest/playwright.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "/home/build/Projects/openspider-wt/m2-u31/target/loadtest/junit.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": {
+      "command": "npx vite preview --config e2e/perf/vite.config.ts --host 127.0.0.1 --port 1431 --strictPort",
+      "url": "http://127.0.0.1:1431",
+      "reuseExistingServer": false
+    }
+  },
+  "suites": [
+    {
+      "title": "perf.bench.ts",
+      "file": "perf.bench.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "cold browser context and open to first painted rows",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 11710,
+                  "error": {
+                    "message": "Error: {\"browserContextToRowsMs\":{\"value\":11539.648062,\"budget\":3000,\"direction\":\"max\",\"passed\":false},\"openMs\":{\"value\":11432.29999999702,\"budget\":3000,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: {\"browserContextToRowsMs\":{\"value\":11539.648062,\"budget\":3000,\"direction\":\"max\",\"passed\":false},\"openMs\":{\"value\":11432.29999999702,\"budget\":3000,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:38:50)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:45:3",
+                    "location": {
+                      "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                      "column": 50,
+                      "line": 38
+                    },
+                    "snippet": "  36 |   await writeFile(resolve(output, `${info.project.name}-${scenario}.json`), JSON.stringify(report, null, 2));\n  37 |   await info.attach(scenario, { body: JSON.stringify(report), contentType: \"application/json\" });\n> 38 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);\n     |                                                  ^\n  39 | }\n  40 | const p95 = (v: number[]) => [...v].sort((a,b) => a-b)[Math.ceil(v.length*.95)-1];\n  41 | // spec: UI-147 [P1]"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                        "column": 50,
+                        "line": 38
+                      },
+                      "message": "Error: {\"browserContextToRowsMs\":{\"value\":11539.648062,\"budget\":3000,\"direction\":\"max\",\"passed\":false},\"openMs\":{\"value\":11432.29999999702,\"budget\":3000,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  36 |   await writeFile(resolve(output, `${info.project.name}-${scenario}.json`), JSON.stringify(report, null, 2));\n  37 |   await info.attach(scenario, { body: JSON.stringify(report), contentType: \"application/json\" });\n> 38 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);\n     |                                                  ^\n  39 | }\n  40 | const p95 = (v: number[]) => [...v].sort((a,b) => a-b)[Math.ceil(v.length*.95)-1];\n  41 | // spec: UI-147 [P1]\n    at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:38:50)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:45:3"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T14:03:33.570Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "open",
+                      "contentType": "application/json",
+                      "body": "eyJzY2VuYXJpbyI6Im9wZW4iLCJzaXplIjoibGFyZ2UiLCJzdGFydGVkX2F0IjoiMjAyNi0xMC0zMVQxNDowMzo0NS40MjVaIiwiZW5naW5lIjoiY2hyb21pdW0iLCJtZXRyaWNzIjp7ImJyb3dzZXJDb250ZXh0VG9Sb3dzTXMiOnsidmFsdWUiOjExNTM5LjY0ODA2MiwiYnVkZ2V0IjozMDAwLCJkaXJlY3Rpb24iOiJtYXgiLCJwYXNzZWQiOmZhbHNlfSwib3Blbk1zIjp7InZhbHVlIjoxMTQzMi4yOTk5OTk5OTcwMiwiYnVkZ2V0IjozMDAwLCJkaXJlY3Rpb24iOiJtYXgiLCJwYXNzZWQiOmZhbHNlfX0sImRldGFpbHMiOnsic2NvcGUiOiJGcmVzaCBicm93c2VyIGNvbnRleHQgdG8gcGFpbnRlZCByZWFsIERhdGFHcmlkOyBPUyBhcHBsaWNhdGlvbiBjb2xkIHN0YXJ0IHJlcXVpcmVzIG5hdGl2ZSBFMkUtQiIsInJvd3MiOjUwMDAwMDB9LCJwYXNzZWQiOmZhbHNlfQ=="
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-cold-browser-0b209--open-to-first-painted-rows-chromium/error-context.md"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-cold-browser-0b209--open-to-first-painted-rows-chromium/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                    "column": 50,
+                    "line": 38
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-3c2d106280e7772672e0",
+          "file": "perf.bench.ts",
+          "line": 42,
+          "column": 1
+        },
+        {
+          "title": "real IPC 200 rows × 20 columns p95 and payload",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 600000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 233359,
+                  "error": {
+                    "message": "Error: {\"roundtripP95Ms\":{\"value\":5389.5999999940395,\"budget\":30,\"direction\":\"max\",\"passed\":false},\"payloadBytes\":{\"value\":43583,\"budget\":150000,\"direction\":\"max\",\"passed\":true}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: {\"roundtripP95Ms\":{\"value\":5389.5999999940395,\"budget\":30,\"direction\":\"max\",\"passed\":false},\"payloadBytes\":{\"value\":43583,\"budget\":150000,\"direction\":\"max\",\"passed\":true}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:38:50)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:53:3",
+                    "location": {
+                      "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                      "column": 50,
+                      "line": 38
+                    },
+                    "snippet": "  36 |   await writeFile(resolve(output, `${info.project.name}-${scenario}.json`), JSON.stringify(report, null, 2));\n  37 |   await info.attach(scenario, { body: JSON.stringify(report), contentType: \"application/json\" });\n> 38 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);\n     |                                                  ^\n  39 | }\n  40 | const p95 = (v: number[]) => [...v].sort((a,b) => a-b)[Math.ceil(v.length*.95)-1];\n  41 | // spec: UI-147 [P1]"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                        "column": 50,
+                        "line": 38
+                      },
+                      "message": "Error: {\"roundtripP95Ms\":{\"value\":5389.5999999940395,\"budget\":30,\"direction\":\"max\",\"passed\":false},\"payloadBytes\":{\"value\":43583,\"budget\":150000,\"direction\":\"max\",\"passed\":true}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  36 |   await writeFile(resolve(output, `${info.project.name}-${scenario}.json`), JSON.stringify(report, null, 2));\n  37 |   await info.attach(scenario, { body: JSON.stringify(report), contentType: \"application/json\" });\n> 38 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);\n     |                                                  ^\n  39 | }\n  40 | const p95 = (v: number[]) => [...v].sort((a,b) => a-b)[Math.ceil(v.length*.95)-1];\n  41 | // spec: UI-147 [P1]\n    at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:38:50)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:53:3"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T14:03:46.032Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "ipc",
+                      "contentType": "application/json",
+                      "body": "eyJzY2VuYXJpbyI6ImlwYyIsInNpemUiOiJsYXJnZSIsInN0YXJ0ZWRfYXQiOiIyMDI2LTEwLTMxVDE0OjA3OjM5LjUwM1oiLCJlbmdpbmUiOiJjaHJvbWl1bSIsIm1ldHJpY3MiOnsicm91bmR0cmlwUDk1TXMiOnsidmFsdWUiOjUzODkuNTk5OTk5OTk0MDM5NSwiYnVkZ2V0IjozMCwiZGlyZWN0aW9uIjoibWF4IiwicGFzc2VkIjpmYWxzZX0sInBheWxvYWRCeXRlcyI6eyJ2YWx1ZSI6NDM1ODMsImJ1ZGdldCI6MTUwMDAwLCJkaXJlY3Rpb24iOiJtYXgiLCJwYXNzZWQiOnRydWV9fSwiZGV0YWlscyI6eyJzYW1wbGVzIjpbeyJtcyI6NDMxNC43OTk5OTk5OTcwMiwiYnl0ZXMiOjQyOTU1fSx7Im1zIjo1ODAyLjUsImJ5dGVzIjo0Mjk3Nn0seyJtcyI6NTI0Ny41LCJieXRlcyI6NDI2MjF9LHsibXMiOjU0OTMuMDk5OTk5OTk0MDM5NSwiYnl0ZXMiOjQyMzczfSx7Im1zIjo1MDIyLjc5OTk5OTk5NzAyLCJieXRlcyI6NDMyNDV9LHsibXMiOjUyMzUuNzAwMDAwMDAyOTgsImJ5dGVzIjo0MzI1N30seyJtcyI6NTM4OS41OTk5OTk5OTQwMzk1LCJieXRlcyI6NDIzNTV9LHsibXMiOjUxNjIuNDAwMDAwMDA1OTYwNSwiYnl0ZXMiOjQyOTI2fSx7Im1zIjo0Mzc1LjM5OTk5OTk5MTA1OSwiYnl0ZXMiOjQyOTg5fSx7Im1zIjo0Nzg2LjUsImJ5dGVzIjo0Mjk1Nn0seyJtcyI6MzY1Ny4yOTk5OTk5OTcwMTk4LCJieXRlcyI6NDI5NTN9LHsibXMiOjI4NzQuNSwiYnl0ZXMiOjQyOTM4fSx7Im1zIjo0MTg4LCJieXRlcyI6NDI5ODh9LHsibXMiOjQ0MzMuMzAwMDAwMDExOTIxLCJieXRlcyI6NDIzNDF9LHsibXMiOjM5OTguMDk5OTk5OTk0MDM5NSwiYnl0ZXMiOjQyOTMwfSx7Im1zIjo0MjIyLjEwMDAwMDAwODk0MSwiYnl0ZXMiOjQyOTg1fSx7Im1zIjozOTc2LjMwMDAwMDAxMTkyMSwiYnl0ZXMiOjQzNTM3fSx7Im1zIjozMzAyLjkwMDAwMDAwNTk2MDUsImJ5dGVzIjo0MjQwMn0seyJtcyI6MzMyNC4xOTk5OTk5ODgwNzksImJ5dGVzIjo0MjkwOX0seyJtcyI6MzU4Mi42OTk5OTk5ODgwNzksImJ5dGVzIjo0Mjk2Mn0seyJtcyI6Mzg5MS4xOTk5OTk5ODgwNzksImJ5dGVzIjo0MjM1NH0seyJtcyI6MzkwMS4wOTk5OTk5OTQwMzk1LCJieXRlcyI6NDI5NDV9LHsibXMiOjI2NzYuMjAwMDAwMDAyOTgwMiwiYnl0ZXMiOjQzNTM3fSx7Im1zIjoyNjQ4LCJieXRlcyI6NDI5ODB9LHsibXMiOjMwNzEuNjAwMDAwMDA4OTQwNywiYnl0ZXMiOjQyMDM0fSx7Im1zIjozNjgxLjgwMDAwMDAxMTkyMSwiYnl0ZXMiOjQyOTE5fSx7Im1zIjo0MDAyLjI5OTk5OTk5NzAxOTgsImJ5dGVzIjo0MzAxMH0seyJtcyI6Mzk5OC44OTk5OTk5OTEwNTkzLCJieXRlcyI6NDI2NTl9LHsibXMiOjM1NzMuNzAwMDAwMDAyOTgwMiwiYnl0ZXMiOjQyOTQ3fSx7Im1zIjozODk4LjUsImJ5dGVzIjo0Mjk3NX0seyJtcyI6Mzg1My45MDAwMDAwMDU5NjA1LCJieXRlcyI6NDI5MTZ9LHsibXMiOjM4NTUuNSwiYnl0ZXMiOjQyMDc0fSx7Im1zIjo0MjUxLjUsImJ5dGVzIjo0Mjk1M30seyJtcyI6MzYyMS44OTk5OTk5OTEwNTkzLCJieXRlcyI6NDM1ODN9LHsibXMiOjM0NTQuMjAwMDAwMDAyOTgwMiwiYnl0ZXMiOjQyOTIxfSx7Im1zIjozOTE3Ljg5OTk5OTk5MTA1OTMsImJ5dGVzIjo0MjM1Nn0seyJtcyI6NDIxNi40MDAwMDAwMDU5NjA1LCJieXRlcyI6NDI5MjN9LHsibXMiOjQ1NTMuMjAwMDAwMDAyOTgsImJ5dGVzIjo0MzAxM30seyJtcyI6NDIxNS40MDAwMDAwMDU5NjA1LCJieXRlcyI6NDIzNjh9LHsibXMiOjM2MDkuNDAwMDAwMDA1OTYwNSwiYnl0ZXMiOjQzNTMzfSx7Im1zIjozOTM3LjI5OTk5OTk5NzAxOTgsImJ5dGVzIjo0MzAyM30seyJtcyI6Mzg1Ny4yOTk5OTk5OTcwMTk4LCJieXRlcyI6NDI4OTF9LHsibXMiOjM1NjkuNTk5OTk5OTk0MDM5NSwiYnl0ZXMiOjQyMzYzfSx7Im1zIjozODAyLjc5OTk5OTk5NzAxOTgsImJ5dGVzIjo0Mjk0NH0seyJtcyI6Mzg1OCwiYnl0ZXMiOjQyOTk4fSx7Im1zIjozMDQ1LjQwMDAwMDAwNTk2MDUsImJ5dGVzIjo0MzEzMn0seyJtcyI6MzUyMS41OTk5OTk5OTQwMzk1LCJieXRlcyI6NDMxNzd9LHsibXMiOjM4NTQuMTAwMDAwMDA4OTQwNywiYnl0ZXMiOjQzMTEyfSx7Im1zIjo0MDY2LCJieXRlcyI6NDMxNTV9LHsibXMiOjM2NjAuODk5OTk5OTkxMDU5MywiYnl0ZXMiOjQyNTY3fV0sImNvbHVtbnMiOlsiQWRkcmVzcyIsIkNvbnRlbnQiLCJTdGF0dXMgQ29kZSIsIlN0YXR1cyIsIkluZGV4YWJpbGl0eSIsIkluZGV4YWJpbGl0eSBTdGF0dXMiLCJUaXRsZSAxIiwiVGl0bGUgMSBMZW5ndGgiLCJUaXRsZSAxIFBpeGVsIFdpZHRoIiwiTWV0YSBEZXNjcmlwdGlvbiAxIiwiTWV0YSBEZXNjcmlwdGlvbiAxIExlbmd0aCIsIk1ldGEgRGVzY3JpcHRpb24gMSBQaXhlbCBXaWR0aCIsIk1ldGEgS2V5d29yZHMgMSIsIk1ldGEgS2V5d29yZHMgMSBMZW5ndGgiLCJIMS0xIiwiSDEtMSBMZW5ndGgiLCJIMi0xIiwiSDItMSBMZW5ndGgiLCJNZXRhIFJvYm90cyAxIiwiWC1Sb2JvdHMtVGFnIDEiXSwicm93cyI6MjAwfSwicGFzc2VkIjpmYWxzZX0="
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-real-IPC-200-rows-×-20-columns-p95-and-payload-chromium/error-context.md"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-real-IPC-200-rows-×-20-columns-p95-and-payload-chromium/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                    "column": 50,
+                    "line": 38
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-0409dc6f336a9ac5582a",
+          "file": "perf.bench.ts",
+          "line": 50,
+          "column": 1
+        },
+        {
+          "title": "ten seconds vertical and horizontal 65-column scrolling and end jump",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 38268,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:64:29",
+                    "location": {
+                      "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                      "column": 29,
+                      "line": 64
+                    },
+                    "snippet": "  62 |   const metrics: Record<string, Metric> = { jumpMs: metric(jump.contentMs, 150), domRows: metric(jump.domRows, 299), cachedRows: metric(jump.cachedRows, 20_000) };\n  63 |   for (const frame of frames) { metrics[`${frame.axis}Fps`] = metric(frame.fps, 55, \"min\"); metrics[`${frame.axis}MaxFrameMs`] = metric(frame.maxFrameMs, 50); }\n> 64 |   expect(jump.contentReady).toBe(true); expect(jump.requestedVisible).toBe(true);\n     |                             ^\n  65 |   expect(jump.columns).toBeGreaterThanOrEqual(65);\n  66 |   await evidence(info, \"scroll\", metrics, { frames, jump });\n  67 | });"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                        "column": 29,
+                        "line": 64
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  62 |   const metrics: Record<string, Metric> = { jumpMs: metric(jump.contentMs, 150), domRows: metric(jump.domRows, 299), cachedRows: metric(jump.cachedRows, 20_000) };\n  63 |   for (const frame of frames) { metrics[`${frame.axis}Fps`] = metric(frame.fps, 55, \"min\"); metrics[`${frame.axis}MaxFrameMs`] = metric(frame.maxFrameMs, 50); }\n> 64 |   expect(jump.contentReady).toBe(true); expect(jump.requestedVisible).toBe(true);\n     |                             ^\n  65 |   expect(jump.columns).toBeGreaterThanOrEqual(65);\n  66 |   await evidence(info, \"scroll\", metrics, { frames, jump });\n  67 | });\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:64:29"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T14:07:40.324Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-ten-seconds--c5560-lumn-scrolling-and-end-jump-chromium/error-context.md"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-ten-seconds--c5560-lumn-scrolling-and-end-jump-chromium/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                    "column": 29,
+                    "line": 64
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-8d14834fa8f802c4001c",
+          "file": "perf.bench.ts",
+          "line": 57,
+          "column": 1
+        },
+        {
+          "title": "tab filter numeric text substring regex and reverse to painted rows",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 13957,
+                  "error": {
+                    "message": "Error: page.evaluate: IpcError: err-stale\n    at x.accept (http://127.0.0.1:1431/assets/client-QFwNxEce.js:1:19642)\n    at Object.invoke (http://127.0.0.1:1431/assets/client-QFwNxEce.js:1:20169)\n    at async p (http://127.0.0.1:1431/assets/probe-DU8x5dlY.js:1:386)\n    at async Object.operations (http://127.0.0.1:1431/assets/probe-DU8x5dlY.js:1:1254)\n    at async <anonymous>:396:30",
+                    "stack": "Error: page.evaluate: IpcError: err-stale\n    at x.accept (http://127.0.0.1:1431/assets/client-QFwNxEce.js:1:19642)\n    at Object.invoke (http://127.0.0.1:1431/assets/client-QFwNxEce.js:1:20169)\n    at async p (http://127.0.0.1:1431/assets/probe-DU8x5dlY.js:1:386)\n    at async Object.operations (http://127.0.0.1:1431/assets/probe-DU8x5dlY.js:1:1254)\n    at async <anonymous>:396:30\n    at x.accept (http://127.0.0.1:1431/assets/client-QFwNxEce.js:1:19642)\n    at Object.invoke (http://127.0.0.1:1431/assets/client-QFwNxEce.js:1:20169)\n    at async p (http://127.0.0.1:1431/assets/probe-DU8x5dlY.js:1:386)\n    at async Object.operations (http://127.0.0.1:1431/assets/probe-DU8x5dlY.js:1:1254)\n    at async <anonymous>:396:30\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:71:46",
+                    "location": {
+                      "file": "http://127.0.0.1:1431/assets/client-QFwNxEce.js",
+                      "column": 19642,
+                      "line": 1
+                    }
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "http://127.0.0.1:1431/assets/client-QFwNxEce.js",
+                        "column": 19642,
+                        "line": 1
+                      },
+                      "message": "Error: page.evaluate: IpcError: err-stale\n    at x.accept (http://127.0.0.1:1431/assets/client-QFwNxEce.js:1:19642)\n    at Object.invoke (http://127.0.0.1:1431/assets/client-QFwNxEce.js:1:20169)\n    at async p (http://127.0.0.1:1431/assets/probe-DU8x5dlY.js:1:386)\n    at async Object.operations (http://127.0.0.1:1431/assets/probe-DU8x5dlY.js:1:1254)\n    at async <anonymous>:396:30\n    at x.accept (http://127.0.0.1:1431/assets/client-QFwNxEce.js:1:19642)\n    at Object.invoke (http://127.0.0.1:1431/assets/client-QFwNxEce.js:1:20169)\n    at async p (http://127.0.0.1:1431/assets/probe-DU8x5dlY.js:1:386)\n    at async Object.operations (http://127.0.0.1:1431/assets/probe-DU8x5dlY.js:1:1254)\n    at async <anonymous>:396:30\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:71:46"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T14:08:19.604Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-tab-filter-n-6f199-and-reverse-to-painted-rows-chromium/error-context.md"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-tab-filter-n-6f199-and-reverse-to-painted-rows-chromium/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "http://127.0.0.1:1431/assets/client-QFwNxEce.js",
+                    "column": 19642,
+                    "line": 1
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-d6d013b1886c57acf62d",
+          "file": "perf.bench.ts",
+          "line": 70,
+          "column": 1
+        },
+        {
+          "title": "overview issues and precomputed aggregate latency",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "timedOut",
+                  "duration": 180180,
+                  "error": {
+                    "message": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m",
+                    "stack": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "message": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m"
+                    },
+                    {
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                        "column": 46,
+                        "line": 79
+                      },
+                      "message": "Error: page.evaluate: Test timeout of 180000ms exceeded.\n\n  77 | });\n  78 | // spec: UI-145\n> 79 | test(\"overview issues and precomputed aggregate latency\", async ({ page }, info) => {\n     |                                              ^\n  80 |   await open(page); const times = await page.evaluate(() => window.uiPerf.sidebars());\n  81 |   await evidence(info, \"sidebar\", Object.fromEntries(Object.entries(times).map(([k,v]) => [k, metric(v, /siteStructure|responseTimes/.test(k) ? 1000 : 100)])), times);\n  82 | });\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:79:46"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T14:08:34.445Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-overview-iss-d79d7-ecomputed-aggregate-latency-chromium/error-context.md"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-overview-iss-d79d7-ecomputed-aggregate-latency-chromium/error-context.md"
+                    }
+                  ]
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-441a502d9da2f066fe8b",
+          "file": "perf.bench.ts",
+          "line": 78,
+          "column": 1
+        },
+        {
+          "title": "seeded random action soak and attributable renderer RSS",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Soak runs once per suite; reference selects WebKit",
+                  "location": {
+                    "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                    "line": 85,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 151,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T14:11:35.374Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Soak runs once per suite; reference selects WebKit",
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                        "line": 85,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-92eb5487772b1215a84e",
+          "file": "perf.bench.ts",
+          "line": 83,
+          "column": 1
+        },
+        {
+          "title": "200 URL/s fixture with 20 crawl threads: click latency and event cap",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 80196,
+                  "error": {
+                    "message": "Error: {\"clickP95Ms\":{\"value\":40.400000005960464,\"budget\":100,\"direction\":\"max\",\"passed\":true},\"eventsPerSecond\":{\"value\":1.8587023543501955,\"budget\":10,\"direction\":\"max\",\"passed\":true},\"fixtureUrlsPerSecond\":{\"value\":234.4776449034045,\"budget\":200,\"direction\":\"min\",\"passed\":true},\"idleUiCpuPercent\":{\"value\":19.050029971327223,\"budget\":15,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: {\"clickP95Ms\":{\"value\":40.400000005960464,\"budget\":100,\"direction\":\"max\",\"passed\":true},\"eventsPerSecond\":{\"value\":1.8587023543501955,\"budget\":10,\"direction\":\"max\",\"passed\":true},\"fixtureUrlsPerSecond\":{\"value\":234.4776449034045,\"budget\":200,\"direction\":\"min\",\"passed\":true},\"idleUiCpuPercent\":{\"value\":19.050029971327223,\"budget\":15,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:38:50)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:136:5",
+                    "location": {
+                      "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                      "column": 50,
+                      "line": 38
+                    },
+                    "snippet": "  36 |   await writeFile(resolve(output, `${info.project.name}-${scenario}.json`), JSON.stringify(report, null, 2));\n  37 |   await info.attach(scenario, { body: JSON.stringify(report), contentType: \"application/json\" });\n> 38 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);\n     |                                                  ^\n  39 | }\n  40 | const p95 = (v: number[]) => [...v].sort((a,b) => a-b)[Math.ceil(v.length*.95)-1];\n  41 | // spec: UI-147 [P1]"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                        "column": 50,
+                        "line": 38
+                      },
+                      "message": "Error: {\"clickP95Ms\":{\"value\":40.400000005960464,\"budget\":100,\"direction\":\"max\",\"passed\":true},\"eventsPerSecond\":{\"value\":1.8587023543501955,\"budget\":10,\"direction\":\"max\",\"passed\":true},\"fixtureUrlsPerSecond\":{\"value\":234.4776449034045,\"budget\":200,\"direction\":\"min\",\"passed\":true},\"idleUiCpuPercent\":{\"value\":19.050029971327223,\"budget\":15,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  36 |   await writeFile(resolve(output, `${info.project.name}-${scenario}.json`), JSON.stringify(report, null, 2));\n  37 |   await info.attach(scenario, { body: JSON.stringify(report), contentType: \"application/json\" });\n> 38 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);\n     |                                                  ^\n  39 | }\n  40 | const p95 = (v: number[]) => [...v].sort((a,b) => a-b)[Math.ceil(v.length*.95)-1];\n  41 | // spec: UI-147 [P1]\n    at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:38:50)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:136:5"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T14:11:35.709Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "crawl-load",
+                      "contentType": "application/json",
+                      "body": "eyJzY2VuYXJpbyI6ImNyYXdsLWxvYWQiLCJzaXplIjoibGFyZ2UiLCJzdGFydGVkX2F0IjoiMjAyNi0xMC0zMVQxNDoxMjo0NS4yNDlaIiwiZW5naW5lIjoiY2hyb21pdW0iLCJtZXRyaWNzIjp7ImNsaWNrUDk1TXMiOnsidmFsdWUiOjQwLjQwMDAwMDAwNTk2MDQ2NCwiYnVkZ2V0IjoxMDAsImRpcmVjdGlvbiI6Im1heCIsInBhc3NlZCI6dHJ1ZX0sImV2ZW50c1BlclNlY29uZCI6eyJ2YWx1ZSI6MS44NTg3MDIzNTQzNTAxOTU1LCJidWRnZXQiOjEwLCJkaXJlY3Rpb24iOiJtYXgiLCJwYXNzZWQiOnRydWV9LCJmaXh0dXJlVXJsc1BlclNlY29uZCI6eyJ2YWx1ZSI6MjM0LjQ3NzY0NDkwMzQwNDUsImJ1ZGdldCI6MjAwLCJkaXJlY3Rpb24iOiJtaW4iLCJwYXNzZWQiOnRydWV9LCJpZGxlVWlDcHVQZXJjZW50Ijp7InZhbHVlIjoxOS4wNTAwMjk5NzEzMjcyMjMsImJ1ZGdldCI6MTUsImRpcmVjdGlvbiI6Im1heCIsInBhc3NlZCI6ZmFsc2V9fSwiZGV0YWlscyI6eyJ0aWNrcyI6W3siYXQiOjU4OTEuNTk5OTk5OTk0MDM5NSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NjQ5MC41LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo2OTkxLjA5OTk5OTk5NDAzOTUsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjc0OTQuMjk5OTk5OTk3MDIsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjgwOTAuMzk5OTk5OTkxMDU5LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo4NTkwLjc5OTk5OTk5NzAyLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo5MDkwLjg5OTk5OTk5MTA2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo5Njk3Ljg5OTk5OTk5MTA2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoxMDI0OS43MDAwMDAwMDI5OCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MTA3OTEuMjk5OTk5OTk3MDIsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjExMjkxLjg5OTk5OTk5MTA2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoxMTc5MS4yOTk5OTk5OTcwMiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MTIyOTEuNzAwMDAwMDAyOTgsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjEyODkxLjA5OTk5OTk5NDA0LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoxMzM5MS4yOTk5OTk5OTcwMiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MTM5OTAuNzk5OTk5OTk3MDIsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjE0NDkyLjM5OTk5OTk5MTA2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoxNDk5MS43MDAwMDAwMDI5OCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MTU0OTcuMjAwMDAwMDAyOTgsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjE2MDAyLjA5OTk5OTk5NDA0LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoxNjUxNC4yOTk5OTk5OTcwMiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MTcwOTIuODk5OTk5OTkxMDYsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjE3NjIyLjA5OTk5OTk5NDA0LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoxODA5Mi4wOTk5OTk5OTQwNCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MTg2OTEuMzk5OTk5OTkxMDYsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjE5MTkxLjM5OTk5OTk5MTA2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoxOTc5MC43MDAwMDAwMDI5OCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MjAzOTEuMDk5OTk5OTk0MDQsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjIwODkxLjI5OTk5OTk5NzAyLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoyMTM5MS43MDAwMDAwMDI5OCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MjE5NTMuNzAwMDAwMDAyOTgsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjIyNDkwLjg5OTk5OTk5MTA2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoyMjk5MSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MjM0OTEuODk5OTk5OTkxMDYsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjI0MDc2LjU5OTk5OTk5NDA0LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoyNDU5My4wOTk5OTk5OTQwNCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MjUwOTEuNzk5OTk5OTk3MDIsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjI1NTkyLjc5OTk5OTk5NzAyLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoyNjEwMi4wOTk5OTk5OTQwNCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MjY3MTEuNSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MjcxOTEuNzAwMDAwMDAyOTgsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjI3Nzg2LjA5OTk5OTk5NDA0LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoyODI5MS4wOTk5OTk5OTQwNCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6Mjg4MDEuMjAwMDAwMDAyOTgsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjI5MzkyLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjoyOTg5MSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MzA0NDUuNSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MzA5MDAuNSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MzE1MjIuMDk5OTk5OTk0MDQsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjMxOTkwLjg5OTk5OTk5MTA2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjozMjQ5Mi4yOTk5OTk5OTcwMiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MzMwMjYuODk5OTk5OTkxMDYsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjMzNTkxLjg5OTk5OTk5MTA2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjozNDE5MC43OTk5OTk5OTcwMiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MzQ2OTEuMjk5OTk5OTk3MDIsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjM1MjkwLjc5OTk5OTk5NzAyLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjozNTc5MSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6MzYyOTEuMjAwMDAwMDAyOTgsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjM2NzkxLjM5OTk5OTk5MTA2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjozNzM5MS4yMDAwMDAwMDI5OCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6Mzc4OTEuMjk5OTk5OTk3MDIsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjM4MzkxLjM5OTk5OTk5MTA2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjozODg5MS41LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0IjozOTM5MS43MDAwMDAwMDI5OCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6Mzk5OTEuMzk5OTk5OTkxMDYsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjQwNDkxLjM5OTk5OTk5MTA2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo0MDk5MS43MDAwMDAwMDI5OCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NDE1OTEuNTk5OTk5OTk0MDQsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjQyMTkxLjU5OTk5OTk5NDA0LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo0Mjc5MS4zOTk5OTk5OTEwNiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NDMzOTAuNTk5OTk5OTk0MDQsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjQzODkxLjI5OTk5OTk5NzAyLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo0NDQ5MC43MDAwMDAwMDI5OCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NDQ5OTEsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjQ1NDkxLjUsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjQ2MDkxLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo0NjY5MC41LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo0NzE5MS41LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo0NzY5MS4yOTk5OTk5OTcwMiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NDgxOTEuNTk5OTk5OTk0MDQsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjQ4NzkwLjcwMDAwMDAwMjk4LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo0OTI5MSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NDk4MDMsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjUwMzA1LjM5OTk5OTk5MTA2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo1MDg5MC43OTk5OTk5OTcwMiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NTEzOTEuMjAwMDAwMDAyOTgsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjUxOTAzLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo1MjQ5MC44OTk5OTk5OTEwNiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NTI5OTEuNzAwMDAwMDAyOTgsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjUzNDkxLjcwMDAwMDAwMjk4LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo1NDA4My43OTk5OTk5OTcwMiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NTQ1OTEuMjAwMDAwMDAyOTgsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjU1MDkxLjI5OTk5OTk5NzAyLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo1NTU5MS41OTk5OTk5OTQwNCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NTYxMDMuMDk5OTk5OTk0MDQsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjU2NjkxLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo1NzE5MSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NTc2OTEuNSwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NTgxOTguMjAwMDAwMDAyOTgsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjU4NzkxLjcwMDAwMDAwMjk4LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo1OTM5MS41LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo1OTg5MS4zOTk5OTk5OTEwNiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NjA0MTUuMzk5OTk5OTkxMDYsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjYwOTkxLjcwMDAwMDAwMjk4LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo2MTQ5MS43MDAwMDAwMDI5OCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NjIwOTEuMjAwMDAwMDAyOTgsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjYyNTkyLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo2MzA5Mi4wOTk5OTk5OTQwNCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NjM2MDEuNzk5OTk5OTk3MDIsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjY0MTkxLCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo2NDY5MS4yOTk5OTk5OTcwMiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NjUxOTEuNTk5OTk5OTk0MDQsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjY1NzkxLjUsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjY2MjkxLjM5OTk5OTk5MTA2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo2Njg5MC43OTk5OTk5OTcwMiwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6Njc0OTEuMzk5OTk5OTkxMDYsInBoYXNlIjoicnVubmluZyJ9LHsiYXQiOjY4MDUwLjM5OTk5OTk5MTA2LCJwaGFzZSI6InJ1bm5pbmcifSx7ImF0Ijo2ODU5MS4wOTk5OTk5OTQwNCwicGhhc2UiOiJydW5uaW5nIn0seyJhdCI6NjkwOTEuNTk5OTk5OTk0MDQsInBoYXNlIjoicnVubmluZyJ9XSwiY2xpY2tzIjpbMjQuNzk5OTk5OTk3MDE5NzY4LDI4Ljg5OTk5OTk5MTA1OTMwMywyMy4zOTk5OTk5OTEwNTkzMDMsMjUuNSwyNC4yMDAwMDAwMDI5ODAyMzIsMjAuNzk5OTk5OTk3MDE5NzY4LDMxLjQwMDAwMDAwNTk2MDQ2NCwyMiwyNy41LDM5LjM5OTk5OTk5MTA1OTMsMjYuNSwzMC4yMDAwMDAwMDI5ODAyMzIsMjUuMzk5OTk5OTkxMDU5MzAzLDI1LjU5OTk5OTk5NDAzOTUzNiwyMywyNS4yMDAwMDAwMDI5ODAyMzIsNDUuNzAwMDAwMDAyOTgwMjMsMzcuODk5OTk5OTkxMDU5MywxNi45MDAwMDAwMDU5NjA0NjQsMzEuMjAwMDAwMDAyOTgwMjMyLDE4LjA5OTk5OTk5NDAzOTUzNiw0MC40MDAwMDAwMDU5NjA0NjQsMzMuMzAwMDAwMDExOTIwOTMsMjksMTguNSwzMy45MDAwMDAwMDU5NjA0NjQsMTMuNzk5OTk5OTk3MDE5NzY4LDE3LjEwMDAwMDAwODk0MDY5NywxNS43OTk5OTk5OTcwMTk3NjgsMjYuNTk5OTk5OTk0MDM5NTM2XSwic3RhdGUiOnsiYWN0aXZlVGhyZWFkcyI6MjAsImF2Z1JhdGUiOjIzNC42NzY1NTMxNzk1NjUwNSwiYXZnUmVzcG9uc2VUaW1lIjowLjA4MTkwOTAzOTk3MDExNTgsImNyYXdsSWQiOiIwMWExOTI0ZC0zNmUxLTcyNWYtYmQzYy1iMzVhYzkxMjNmNDciLCJjcmF3bGVkIjoxNjA2MiwiZGlzY292ZXJlZCI6MjAwMDAyLCJlbGFwc2VkUyI6NjgsImVuZFJlYXNvbiI6bnVsbCwiZXRhUyI6NzUxLCJmaWxlQnl0ZXMiOjcwMDA4ODMyLCJtZW1vcnlMaW1pdEJ5dGVzIjozMjkxNDQ4NzI5NiwibWVtb3J5U3RhZ2UiOiJub3JtYWwiLCJtZW1vcnlVc2VkQnl0ZXMiOjI4OTMyOTE1MiwibW9kZSI6InNwaWRlciIsIm93bmVyIjp7ImNvbnRyb2xsYWJsZSI6dHJ1ZSwia2luZCI6ImFwcCIsImxpdmUiOnRydWUsInBpZCI6Mzk1OTE0Mn0sInBhdXNlZFMiOjAsInBlcmNlbnQiOjgsInBoYXNlIjoicnVubmluZyIsInF1ZXVlZCI6MTgzOTE5LCJyYXRlIjoyNDQuOX0sImludGVydmFscyI6WzU5OC45MDAwMDAwMDU5NjA1LDUwMC41OTk5OTk5OTQwMzk1NCw1MDMuMjAwMDAwMDAyOTgwMjMsNTk2LjA5OTk5OTk5NDAzOTUsNTAwLjQwMDAwMDAwNTk2MDQ2LDUwMC4wOTk5OTk5OTQwMzk1NCw2MDcsNTUxLjgwMDAwMDAxMTkyMDksNTQxLjU5OTk5OTk5NDAzOTUsNTAwLjU5OTk5OTk5NDAzOTU0LDQ5OS40MDAwMDAwMDU5NjA0Niw1MDAuNDAwMDAwMDA1OTYwNDYsNTk5LjM5OTk5OTk5MTA1OTMsNTAwLjIwMDAwMDAwMjk4MDIzLDU5OS41LDUwMS41OTk5OTk5OTQwMzk1NCw0OTkuMzAwMDAwMDExOTIwOTMsNTA1LjUsNTA0Ljg5OTk5OTk5MTA1OTMsNTEyLjIwMDAwMDAwMjk4MDIsNTc4LjU5OTk5OTk5NDAzOTUsNTI5LjIwMDAwMDAwMjk4MDIsNDcwLDU5OS4yOTk5OTk5OTcwMTk4LDUwMCw1OTkuMzAwMDAwMDExOTIwOSw2MDAuMzk5OTk5OTkxMDU5Myw1MDAuMjAwMDAwMDAyOTgwMjMsNTAwLjQwMDAwMDAwNTk2MDQ2LDU2Miw1MzcuMTk5OTk5OTg4MDc5MSw1MDAuMTAwMDAwMDA4OTQwNyw1MDAuODk5OTk5OTkxMDU5Myw1ODQuNzAwMDAwMDAyOTgwMiw1MTYuNSw0OTguNzAwMDAwMDAyOTgwMjMsNTAxLDUwOS4yOTk5OTk5OTcwMTk3Nyw2MDkuNDAwMDAwMDA1OTYwNSw0ODAuMjAwMDAwMDAyOTgwMjMsNTk0LjM5OTk5OTk5MTA1OTMsNTA1LDUxMC4xMDAwMDAwMDg5NDA3LDU5MC43OTk5OTk5OTcwMTk4LDQ5OSw1NTQuNSw0NTUsNjIxLjU5OTk5OTk5NDAzOTUsNDY4Ljc5OTk5OTk5NzAxOTc3LDUwMS40MDAwMDAwMDU5NjA0Niw1MzQuNTk5OTk5OTk0MDM5NSw1NjUsNTk4LjkwMDAwMDAwNTk2MDUsNTAwLjUsNTk5LjUsNTAwLjIwMDAwMDAwMjk4MDIzLDUwMC4yMDAwMDAwMDI5ODAyMyw1MDAuMTk5OTk5OTg4MDc5MDcsNTk5LjgwMDAwMDAxMTkyMDksNTAwLjA5OTk5OTk5NDAzOTU0LDUwMC4wOTk5OTk5OTQwMzk1NCw1MDAuMTAwMDAwMDA4OTQwNyw1MDAuMjAwMDAwMDAyOTgwMjMsNTk5LjY5OTk5OTk4ODA3OTEsNTAwLDUwMC4zMDAwMDAwMTE5MjA5Myw1OTkuODk5OTk5OTkxMDU5Myw2MDAsNTk5Ljc5OTk5OTk5NzAxOTgsNTk5LjIwMDAwMDAwMjk4MDIsNTAwLjcwMDAwMDAwMjk4MDIzLDU5OS40MDAwMDAwMDU5NjA1LDUwMC4yOTk5OTk5OTcwMTk3Nyw1MDAuNSw1OTkuNSw1OTkuNSw1MDEsNDk5Ljc5OTk5OTk5NzAxOTc3LDUwMC4yOTk5OTk5OTcwMTk3Nyw1OTkuMTAwMDAwMDA4OTQwNyw1MDAuMjk5OTk5OTk3MDE5NzcsNTEyLDUwMi4zOTk5OTk5OTEwNTkzLDU4NS40MDAwMDAwMDU5NjA1LDUwMC40MDAwMDAwMDU5NjA0Niw1MTEuNzk5OTk5OTk3MDE5NzcsNTg3Ljg5OTk5OTk5MTA1OTMsNTAwLjgwMDAwMDAxMTkyMDkzLDUwMCw1OTIuMDk5OTk5OTk0MDM5NSw1MDcuNDAwMDAwMDA1OTYwNDYsNTAwLjA5OTk5OTk5NDAzOTU0LDUwMC4yOTk5OTk5OTcwMTk3Nyw1MTEuNSw1ODcuOTAwMDAwMDA1OTYwNSw1MDAsNTAwLjUsNTA2LjcwMDAwMDAwMjk4MDIzLDU5My41LDU5OS43OTk5OTk5OTcwMTk4LDQ5OS44OTk5OTk5OTEwNTkzLDUyNCw1NzYuMzAwMDAwMDExOTIwOSw1MDAsNTk5LjUsNTAwLjc5OTk5OTk5NzAxOTc3LDUwMC4wOTk5OTk5OTQwMzk1NCw1MDkuNzAwMDAwMDAyOTgwMjMsNTg5LjIwMDAwMDAwMjk4MDIsNTAwLjI5OTk5OTk5NzAxOTc3LDUwMC4yOTk5OTk5OTcwMTk3Nyw1OTkuOTAwMDAwMDA1OTYwNSw0OTkuODk5OTk5OTkxMDU5Myw1OTkuNDAwMDAwMDA1OTYwNSw2MDAuNTk5OTk5OTk0MDM5NSw1NTksNTQwLjcwMDAwMDAwMjk4MDIsNTAwLjVdLCJjcHVCZWZvcmUiOnsiY3B1TXMiOjE0MTgwLCJieXRlcyI6NTU3Njk0OTc2LCJwcm9jZXNzZXMiOlt7InBpZCI6Mzk1OTMwMywiYnl0ZXMiOjE0NDMxMDI3Mn0seyJwaWQiOjM5NTkzMTQsImJ5dGVzIjo3NDI1MjI4OH0seyJwaWQiOjM5NTkzMTUsImJ5dGVzIjozMzkxMzI0MTZ9XX0sImNwdUFmdGVyIjp7ImNwdU1zIjoxOTkwMCwiYnl0ZXMiOjU1NzAzOTYxNiwicHJvY2Vzc2VzIjpbeyJwaWQiOjM5NTkzMDMsImJ5dGVzIjoxNDQzNzU4MDh9LHsicGlkIjozOTU5MzE0LCJieXRlcyI6NzQyNTIyODh9LHsicGlkIjozOTU5MzE1LCJieXRlcyI6MzM4NDExNTIwfV19LCJjcHVQZXJjZW50IjoxOS4wNTAwMjk5NzEzMjcyMjMsInRocmVhZHMiOjIwLCJzZWNvbmRzIjo2NC4wMjMxNjA5NTUsInJlc3BvbnNlcyI6MTUwMTJ9LCJwYXNzZWQiOmZhbHNlfQ=="
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-chromium/error-context.md"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-chromium/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                    "column": 50,
+                    "line": 38
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-09e2bdfe0ad55ccf817b",
+          "file": "perf.bench.ts",
+          "line": 108,
+          "column": 1
+        },
+        {
+          "title": "cold browser context and open to first painted rows",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 7,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 12096,
+                  "error": {
+                    "message": "Error: {\"browserContextToRowsMs\":{\"value\":11741.59813,\"budget\":3000,\"direction\":\"max\",\"passed\":false},\"openMs\":{\"value\":11585,\"budget\":3000,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: {\"browserContextToRowsMs\":{\"value\":11741.59813,\"budget\":3000,\"direction\":\"max\",\"passed\":false},\"openMs\":{\"value\":11585,\"budget\":3000,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:38:50)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:45:3",
+                    "location": {
+                      "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                      "column": 50,
+                      "line": 38
+                    },
+                    "snippet": "  36 |   await writeFile(resolve(output, `${info.project.name}-${scenario}.json`), JSON.stringify(report, null, 2));\n  37 |   await info.attach(scenario, { body: JSON.stringify(report), contentType: \"application/json\" });\n> 38 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);\n     |                                                  ^\n  39 | }\n  40 | const p95 = (v: number[]) => [...v].sort((a,b) => a-b)[Math.ceil(v.length*.95)-1];\n  41 | // spec: UI-147 [P1]"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                        "column": 50,
+                        "line": 38
+                      },
+                      "message": "Error: {\"browserContextToRowsMs\":{\"value\":11741.59813,\"budget\":3000,\"direction\":\"max\",\"passed\":false},\"openMs\":{\"value\":11585,\"budget\":3000,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  36 |   await writeFile(resolve(output, `${info.project.name}-${scenario}.json`), JSON.stringify(report, null, 2));\n  37 |   await info.attach(scenario, { body: JSON.stringify(report), contentType: \"application/json\" });\n> 38 |   expect(report.passed, JSON.stringify(metrics)).toBe(true);\n     |                                                  ^\n  39 | }\n  40 | const p95 = (v: number[]) => [...v].sort((a,b) => a-b)[Math.ceil(v.length*.95)-1];\n  41 | // spec: UI-147 [P1]\n    at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:38:50)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:45:3"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T14:13:04.344Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "open",
+                      "contentType": "application/json",
+                      "body": "eyJzY2VuYXJpbyI6Im9wZW4iLCJzaXplIjoibGFyZ2UiLCJzdGFydGVkX2F0IjoiMjAyNi0xMC0zMVQxNDoxMzoxNi41MDhaIiwiZW5naW5lIjoid2Via2l0IiwibWV0cmljcyI6eyJicm93c2VyQ29udGV4dFRvUm93c01zIjp7InZhbHVlIjoxMTc0MS41OTgxMywiYnVkZ2V0IjozMDAwLCJkaXJlY3Rpb24iOiJtYXgiLCJwYXNzZWQiOmZhbHNlfSwib3Blbk1zIjp7InZhbHVlIjoxMTU4NSwiYnVkZ2V0IjozMDAwLCJkaXJlY3Rpb24iOiJtYXgiLCJwYXNzZWQiOmZhbHNlfX0sImRldGFpbHMiOnsic2NvcGUiOiJGcmVzaCBicm93c2VyIGNvbnRleHQgdG8gcGFpbnRlZCByZWFsIERhdGFHcmlkOyBPUyBhcHBsaWNhdGlvbiBjb2xkIHN0YXJ0IHJlcXVpcmVzIG5hdGl2ZSBFMkUtQiIsInJvd3MiOjUwMDAwMDB9LCJwYXNzZWQiOmZhbHNlfQ=="
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-cold-browser-0b209--open-to-first-painted-rows-webkit/error-context.md"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-cold-browser-0b209--open-to-first-painted-rows-webkit/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                    "column": 50,
+                    "line": 38
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-f8a8e4e6eebf15d925b4",
+          "file": "perf.bench.ts",
+          "line": 42,
+          "column": 1
+        },
+        {
+          "title": "real IPC 200 rows × 20 columns p95 and payload",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 600000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 177012,
+                  "error": {
+                    "message": "Error: {\"roundtripP95Ms\":{\"value\":4482,\"budget\":30,\"direction\":\"max\",\"passed\":false},\"payloadBytes\":{\"value\":43583,\"budget\":150000,\"direction\":\"max\",\"passed\":true}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: {\"roundtripP95Ms\":{\"value\":4482,\"budget\":30,\"direction\":\"max\",\"passed\":false},\"payloadBytes\":{\"value\":43583,\"budget\":150000,\"direction\":\"max\",\"passed\":true}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:38:50)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:53:3",
+                    "location": {
+                      "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                      "column": 50,
+                      "line": 38
+                    },
+                    "snippet": "  36 |         details: {\n  37 |           title: info.title,\n> 38 |           errors: info.errors.map((e) => e.message),\n     |                                                  ^\n  39 |         },\n  40 |       }),\n  41 |     );"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                        "column": 50,
+                        "line": 38
+                      },
+                      "message": "Error: {\"roundtripP95Ms\":{\"value\":4482,\"budget\":30,\"direction\":\"max\",\"passed\":false},\"payloadBytes\":{\"value\":43583,\"budget\":150000,\"direction\":\"max\",\"passed\":true}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  36 |         details: {\n  37 |           title: info.title,\n> 38 |           errors: info.errors.map((e) => e.message),\n     |                                                  ^\n  39 |         },\n  40 |       }),\n  41 |     );\n    at evidence (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:38:50)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:53:3"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T14:13:17.161Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "ipc",
+                      "contentType": "application/json",
+                      "body": "eyJzY2VuYXJpbyI6ImlwYyIsInNpemUiOiJsYXJnZSIsInN0YXJ0ZWRfYXQiOiIyMDI2LTEwLTMxVDE0OjE2OjE0LjIzMloiLCJlbmdpbmUiOiJ3ZWJraXQiLCJtZXRyaWNzIjp7InJvdW5kdHJpcFA5NU1zIjp7InZhbHVlIjo0NDgyLCJidWRnZXQiOjMwLCJkaXJlY3Rpb24iOiJtYXgiLCJwYXNzZWQiOmZhbHNlfSwicGF5bG9hZEJ5dGVzIjp7InZhbHVlIjo0MzU4MywiYnVkZ2V0IjoxNTAwMDAsImRpcmVjdGlvbiI6Im1heCIsInBhc3NlZCI6dHJ1ZX19LCJkZXRhaWxzIjp7InNhbXBsZXMiOlt7Im1zIjo0NTQzLCJieXRlcyI6NDI5NTV9LHsibXMiOjM5NzAsImJ5dGVzIjo0Mjk3Nn0seyJtcyI6MjkzMiwiYnl0ZXMiOjQyNjIxfSx7Im1zIjoyODI3LCJieXRlcyI6NDIzNzN9LHsibXMiOjI3NTQsImJ5dGVzIjo0MzI0NX0seyJtcyI6Mjg1MywiYnl0ZXMiOjQzMjU3fSx7Im1zIjoyODI2LCJieXRlcyI6NDIzNTV9LHsibXMiOjI2OTQsImJ5dGVzIjo0MjkyNn0seyJtcyI6Mjc1MywiYnl0ZXMiOjQyOTg5fSx7Im1zIjoyODIwLCJieXRlcyI6NDI5NTZ9LHsibXMiOjI3MjUsImJ5dGVzIjo0Mjk1M30seyJtcyI6NDQwNiwiYnl0ZXMiOjQyOTM4fSx7Im1zIjozNDAzLCJieXRlcyI6NDI5ODh9LHsibXMiOjI4NDUsImJ5dGVzIjo0MjM0MX0seyJtcyI6Mjc4OCwiYnl0ZXMiOjQyOTMwfSx7Im1zIjoyODU5LCJieXRlcyI6NDI5ODV9LHsibXMiOjI3NDUsImJ5dGVzIjo0MzUzN30seyJtcyI6MjkyMSwiYnl0ZXMiOjQyNDAyfSx7Im1zIjozMTM4LCJieXRlcyI6NDI5MDl9LHsibXMiOjMwNDksImJ5dGVzIjo0Mjk2Mn0seyJtcyI6Mjg5MiwiYnl0ZXMiOjQyMzU0fSx7Im1zIjoyODMxLCJieXRlcyI6NDI5NDV9LHsibXMiOjMwNTksImJ5dGVzIjo0MzUzN30seyJtcyI6MzEwNCwiYnl0ZXMiOjQyOTgwfSx7Im1zIjoyODc2LCJieXRlcyI6NDIwMzR9LHsibXMiOjM1MDAsImJ5dGVzIjo0MjkxOX0seyJtcyI6MjgzMSwiYnl0ZXMiOjQzMDEwfSx7Im1zIjoyNjc3LCJieXRlcyI6NDI2NTl9LHsibXMiOjI1ODksImJ5dGVzIjo0Mjk0N30seyJtcyI6MjY1NSwiYnl0ZXMiOjQyOTc1fSx7Im1zIjoyNjkwLCJieXRlcyI6NDI5MTZ9LHsibXMiOjI5MDQsImJ5dGVzIjo0MjA3NH0seyJtcyI6Mjg3OCwiYnl0ZXMiOjQyOTUzfSx7Im1zIjozMDQ5LCJieXRlcyI6NDM1ODN9LHsibXMiOjMwMzcsImJ5dGVzIjo0MjkyMX0seyJtcyI6MjcxMywiYnl0ZXMiOjQyMzU2fSx7Im1zIjoyNjk3LCJieXRlcyI6NDI5MjN9LHsibXMiOjMwNDUsImJ5dGVzIjo0MzAxM30seyJtcyI6MzE4MCwiYnl0ZXMiOjQyMzY4fSx7Im1zIjozMTI1LCJieXRlcyI6NDM1MzN9LHsibXMiOjI2MDIsImJ5dGVzIjo0MzAyM30seyJtcyI6MjY2NSwiYnl0ZXMiOjQyODkxfSx7Im1zIjoyNjYzLCJieXRlcyI6NDIzNjN9LHsibXMiOjI3OTYsImJ5dGVzIjo0Mjk0NH0seyJtcyI6NDE2NCwiYnl0ZXMiOjQyOTk4fSx7Im1zIjo0ODIxLCJieXRlcyI6NDMxMzJ9LHsibXMiOjMzMzEsImJ5dGVzIjo0MzE3N30seyJtcyI6MzMyNSwiYnl0ZXMiOjQzMTEyfSx7Im1zIjoyODEwLCJieXRlcyI6NDMxNTV9LHsibXMiOjQ0ODIsImJ5dGVzIjo0MjU2N31dLCJjb2x1bW5zIjpbIkFkZHJlc3MiLCJDb250ZW50IiwiU3RhdHVzIENvZGUiLCJTdGF0dXMiLCJJbmRleGFiaWxpdHkiLCJJbmRleGFiaWxpdHkgU3RhdHVzIiwiVGl0bGUgMSIsIlRpdGxlIDEgTGVuZ3RoIiwiVGl0bGUgMSBQaXhlbCBXaWR0aCIsIk1ldGEgRGVzY3JpcHRpb24gMSIsIk1ldGEgRGVzY3JpcHRpb24gMSBMZW5ndGgiLCJNZXRhIERlc2NyaXB0aW9uIDEgUGl4ZWwgV2lkdGgiLCJNZXRhIEtleXdvcmRzIDEiLCJNZXRhIEtleXdvcmRzIDEgTGVuZ3RoIiwiSDEtMSIsIkgxLTEgTGVuZ3RoIiwiSDItMSIsIkgyLTEgTGVuZ3RoIiwiTWV0YSBSb2JvdHMgMSIsIlgtUm9ib3RzLVRhZyAxIl0sInJvd3MiOjIwMH0sInBhc3NlZCI6ZmFsc2V9"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-real-IPC-200-rows-×-20-columns-p95-and-payload-webkit/error-context.md"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-real-IPC-200-rows-×-20-columns-p95-and-payload-webkit/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                    "column": 50,
+                    "line": 38
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-fd5fab317aa5ca235c71",
+          "file": "perf.bench.ts",
+          "line": 50,
+          "column": 1
+        },
+        {
+          "title": "ten seconds vertical and horizontal 65-column scrolling and end jump",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 9,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 40810,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:64:29",
+                    "location": {
+                      "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                      "column": 29,
+                      "line": 64
+                    },
+                    "snippet": "  62 | ): Metric {\n  63 |   return {\n> 64 |     value,\n     |           ^\n  65 |     budget,\n  66 |     direction,\n  67 |     passed:"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                        "column": 29,
+                        "line": 64
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  62 | ): Metric {\n  63 |   return {\n> 64 |     value,\n     |           ^\n  65 |     budget,\n  66 |     direction,\n  67 |     passed:\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:64:29"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T14:16:15.207Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-ten-seconds--c5560-lumn-scrolling-and-end-jump-webkit/error-context.md"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-ten-seconds--c5560-lumn-scrolling-and-end-jump-webkit/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                    "column": 29,
+                    "line": 64
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-aa33bc526f16c6bb65b7",
+          "file": "perf.bench.ts",
+          "line": 57,
+          "column": 1
+        },
+        {
+          "title": "tab filter numeric text substring regex and reverse to painted rows",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 14426,
+                  "error": {
+                    "message": "Error: page.evaluate: IpcError: err-stale",
+                    "stack": "Error: page.evaluate: IpcError: err-stale\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:71:46",
+                    "location": {
+                      "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                      "column": 46,
+                      "line": 71
+                    },
+                    "snippet": "  69 |       (direction === \"max\" ? value <= budget : value >= budget),\n  70 |   };\n> 71 | }\n     |  ^\n  72 | async function evidence(\n  73 |   info: TestInfo,\n  74 |   scenario: string,"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                        "column": 46,
+                        "line": 71
+                      },
+                      "message": "Error: page.evaluate: IpcError: err-stale\n\n  69 |       (direction === \"max\" ? value <= budget : value >= budget),\n  70 |   };\n> 71 | }\n     |  ^\n  72 | async function evidence(\n  73 |   info: TestInfo,\n  74 |   scenario: string,\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:71:46"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T14:16:56.949Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-tab-filter-n-6f199-and-reverse-to-painted-rows-webkit/error-context.md"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-tab-filter-n-6f199-and-reverse-to-painted-rows-webkit/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                    "column": 46,
+                    "line": 71
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-329e734affbf048927fd",
+          "file": "perf.bench.ts",
+          "line": 70,
+          "column": 1
+        },
+        {
+          "title": "overview issues and precomputed aggregate latency",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 11,
+                  "parallelIndex": 0,
+                  "status": "timedOut",
+                  "duration": 180213,
+                  "error": {
+                    "message": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m",
+                    "stack": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "message": "\u001b[31mTest timeout of 180000ms exceeded.\u001b[39m"
+                    },
+                    {
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                        "column": 46,
+                        "line": 79
+                      },
+                      "message": "Error: page.evaluate: Test timeout of 180000ms exceeded.\n\n  77 | ) {\n  78 |   const report = {\n> 79 |     scenario,\n     |              ^\n  80 |     size: rows === 5_000_000 ? \"large\" : \"small\",\n  81 |     started_at: new Date().toISOString(),\n  82 |     engine: info.project.name,\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:79:46"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T14:17:12.159Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-overview-iss-d79d7-ecomputed-aggregate-latency-webkit/error-context.md"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-overview-iss-d79d7-ecomputed-aggregate-latency-webkit/error-context.md"
+                    }
+                  ]
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-cb863abc1d84e00437cd",
+          "file": "perf.bench.ts",
+          "line": 78,
+          "column": 1
+        },
+        {
+          "title": "seeded random action soak and attributable renderer RSS",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [
+                {
+                  "type": "skip",
+                  "description": "Soak runs once per suite; reference selects WebKit",
+                  "location": {
+                    "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                    "line": 85,
+                    "column": 8
+                  }
+                }
+              ],
+              "expectedStatus": "skipped",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "skipped",
+                  "duration": 253,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T14:20:13.285Z",
+                  "annotations": [
+                    {
+                      "type": "skip",
+                      "description": "Soak runs once per suite; reference selects WebKit",
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts",
+                        "line": 85,
+                        "column": 8
+                      }
+                    }
+                  ],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-f83762c498c8aafeb445",
+          "file": "perf.bench.ts",
+          "line": 83,
+          "column": 1
+        },
+        {
+          "title": "200 URL/s fixture with 20 crawl threads: click latency and event cap",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 49307,
+                  "error": {
+                    "message": "Error: No attributable renderer process: RSS measurement unavailable",
+                    "stack": "Error: No attributable renderer process: RSS measurement unavailable\n    at rendererRss (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/rss.mjs:22:32)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:129:21",
+                    "location": {
+                      "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/rss.mjs",
+                      "column": 32,
+                      "line": 22
+                    },
+                    "snippet": "\u001b[90m   at \u001b[39mrss.mjs:22\n\n  20 |       bytes: Number(p.WorkingSetSize),\n  21 |       cpuMs: (Number(p.KernelModeTime) + Number(p.UserModeTime)) / 10000,\n> 22 |       command: p.CommandLine ?? \"\",\n     |                                ^\n  23 |     }));\n  24 |   } else {\n  25 |     rows = execFileSync(\"ps\", [\"-axo\", \"pid=,ppid=,rss=,time=,args=\"], {"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/rss.mjs",
+                        "column": 32,
+                        "line": 22
+                      },
+                      "message": "Error: No attributable renderer process: RSS measurement unavailable\n\n   at rss.mjs:22\n\n  20 |       bytes: Number(p.WorkingSetSize),\n  21 |       cpuMs: (Number(p.KernelModeTime) + Number(p.UserModeTime)) / 10000,\n> 22 |       command: p.CommandLine ?? \"\",\n     |                                ^\n  23 |     }));\n  24 |   } else {\n  25 |     rows = execFileSync(\"ps\", [\"-axo\", \"pid=,ppid=,rss=,time=,args=\"], {\n    at rendererRss (/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/rss.mjs:22:32)\n    at /home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/perf.bench.ts:129:21"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-31T14:20:13.755Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-webkit/error-context.md"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/home/build/Projects/openspider-wt/m2-u31/target/ui-perf-tests/perf.bench.ts-200-URL-s-fi-fe0fa-click-latency-and-event-cap-webkit/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/rss.mjs",
+                    "column": 32,
+                    "line": 22
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8faa7337f27ee6473f05-39dd0b883485b915c171",
+          "file": "perf.bench.ts",
+          "line": 108,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "viz.bench.ts",
+      "file": "viz.bench.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "UI-146 Budgets",
+          "file": "viz.bench.ts",
+          "line": 25,
+          "column": 6,
+          "specs": [
+            {
+              "title": "2D-Graph 10 000 Knoten: erstes Bild ≤ 2 s, Layout-Konvergenz im Worker ≤ 10 s, Zoom/Pan ≥ 30 fps, SVG-Export ≤ 5 s und ≤ 20 MB",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/viz.bench.ts",
+                        "line": 25,
+                        "column": 6
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6538,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[ui-146] {\"firstFrameMs\":182.8999999910593,\"layoutMs\":2757.1000000089407,\"layoutSteps\":184,\"layoutReason\":\"converged\",\"fps\":60.00132599615461,\"p95FrameMs\":16.700000000000728,\"maxFrameMs\":16.800000000000182,\"svg\":{\"ms\":29,\"bytes\":1174006,\"circles\":10000},\"strict\":true}\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-31T14:12:56.443Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/viz.bench.ts",
+                            "line": 25,
+                            "column": 6
+                          }
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "ui-146",
+                          "contentType": "application/json",
+                          "body": "ewogICJmaXJzdEZyYW1lTXMiOiAxODIuODk5OTk5OTkxMDU5MywKICAibGF5b3V0TXMiOiAyNzU3LjEwMDAwMDAwODk0MDcsCiAgImxheW91dFN0ZXBzIjogMTg0LAogICJsYXlvdXRSZWFzb24iOiAiY29udmVyZ2VkIiwKICAiZnBzIjogNjAuMDAxMzI1OTk2MTU0NjEsCiAgInA5NUZyYW1lTXMiOiAxNi43MDAwMDAwMDAwMDA3MjgsCiAgIm1heEZyYW1lTXMiOiAxNi44MDAwMDAwMDAwMDAxODIsCiAgInN2ZyI6IHsKICAgICJtcyI6IDI5LAogICAgImJ5dGVzIjogMTE3NDAwNiwKICAgICJjaXJjbGVzIjogMTAwMDAKICB9LAogICJzdHJpY3QiOiB0cnVlCn0="
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9920fafe12a6018245a6-d09bf6309b5dd7bc3d26",
+              "file": "viz.bench.ts",
+              "line": 30,
+              "column": 3
+            },
+            {
+              "title": "Baumgraph 10 000 Knoten: Auf- und Zuklappen ≤ 200 ms bis zum gezeichneten Bild",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/viz.bench.ts",
+                        "line": 25,
+                        "column": 6
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 6,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 593,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[ui-146-tree] {\"collapse\":38,\"expand\":44.79999999701977}\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-31T14:13:03.217Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/viz.bench.ts",
+                            "line": 25,
+                            "column": 6
+                          }
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "ui-146-tree",
+                          "contentType": "application/json",
+                          "body": "eyJjb2xsYXBzZSI6MzgsImV4cGFuZCI6NDQuNzk5OTk5OTk3MDE5NzcsInN0cmljdCI6dHJ1ZX0="
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9920fafe12a6018245a6-84ccbc13923c147d320b",
+              "file": "viz.bench.ts",
+              "line": 90,
+              "column": 3
+            },
+            {
+              "title": "2D-Graph 10 000 Knoten: erstes Bild ≤ 2 s, Layout-Konvergenz im Worker ≤ 10 s, Zoom/Pan ≥ 30 fps, SVG-Export ≤ 5 s und ≤ 20 MB",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/viz.bench.ts",
+                        "line": 25,
+                        "column": 6
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6772,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[ui-146] {\"firstFrameMs\":256,\"layoutMs\":2929,\"layoutSteps\":184,\"layoutReason\":\"converged\",\"fps\":62,\"p95FrameMs\":17,\"maxFrameMs\":17,\"svg\":{\"ms\":16,\"bytes\":1174006,\"circles\":10000},\"strict\":true}\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-31T14:21:03.585Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/viz.bench.ts",
+                            "line": 25,
+                            "column": 6
+                          }
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "ui-146",
+                          "contentType": "application/json",
+                          "body": "ewogICJmaXJzdEZyYW1lTXMiOiAyNTYsCiAgImxheW91dE1zIjogMjkyOSwKICAibGF5b3V0U3RlcHMiOiAxODQsCiAgImxheW91dFJlYXNvbiI6ICJjb252ZXJnZWQiLAogICJmcHMiOiA2MiwKICAicDk1RnJhbWVNcyI6IDE3LAogICJtYXhGcmFtZU1zIjogMTcsCiAgInN2ZyI6IHsKICAgICJtcyI6IDE2LAogICAgImJ5dGVzIjogMTE3NDAwNiwKICAgICJjaXJjbGVzIjogMTAwMDAKICB9LAogICJzdHJpY3QiOiB0cnVlCn0="
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9920fafe12a6018245a6-392a96d6ac65a2bd5db3",
+              "file": "viz.bench.ts",
+              "line": 30,
+              "column": 3
+            },
+            {
+              "title": "Baumgraph 10 000 Knoten: Auf- und Zuklappen ≤ 200 ms bis zum gezeichneten Bild",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 90000,
+                  "annotations": [
+                    {
+                      "type": "serial",
+                      "location": {
+                        "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/viz.bench.ts",
+                        "line": 25,
+                        "column": 6
+                      }
+                    }
+                  ],
+                  "expectedStatus": "passed",
+                  "projectId": "webkit",
+                  "projectName": "webkit",
+                  "results": [
+                    {
+                      "workerIndex": 13,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 707,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "[ui-146-tree] {\"collapse\":53,\"expand\":40}\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-10-31T14:21:10.521Z",
+                      "annotations": [
+                        {
+                          "type": "serial",
+                          "location": {
+                            "file": "/home/build/Projects/openspider-wt/m2-u31/apps/desktop/e2e/perf/viz.bench.ts",
+                            "line": 25,
+                            "column": 6
+                          }
+                        }
+                      ],
+                      "attachments": [
+                        {
+                          "name": "ui-146-tree",
+                          "contentType": "application/json",
+                          "body": "eyJjb2xsYXBzZSI6NTMsImV4cGFuZCI6NDAsInN0cmljdCI6dHJ1ZX0="
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "9920fafe12a6018245a6-79af78cb5eb84a6c641b",
+              "file": "viz.bench.ts",
+              "line": 90,
+              "column": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-31T14:03:32.043Z",
+    "duration": 1059338.429,
+    "expected": 4,
+    "skipped": 2,
+    "unexpected": 12,
+    "flaky": 0
+  }
+}

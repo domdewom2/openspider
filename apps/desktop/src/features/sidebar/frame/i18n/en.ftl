@@ -57,3 +57,7 @@ sidebar-loading = Loading…
 sidebar-retry = Retry
 sidebar-panel-unavailable = This panel is not available in this build.
 sidebar-percent-total = % of Total
+sidebar-counting-label = Filter counting progress
+sidebar-counting-start = Counting filters…
+sidebar-counting = Counting filters: { $done } of { $total } tabs
+sidebar-counting-cancel = Cancel

@@ -12,7 +12,10 @@ export function useStatusSnapshot(): SessionState {
   const [snapshot, setSnapshot] = useState(useSession.getState);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const off = useSession.subscribe(() => {
+    const off = useSession.subscribe((next, before) => {
+      if (next.crawl === before.crawl && next.mcp === before.mcp && next.throttled === before.throttled &&
+        next.crawlDelays === before.crawlDelays && next.openingCrawl === before.openingCrawl && next.openError === before.openError &&
+        next.analysis === before.analysis && next.analysisStarting === before.analysisStarting && next.analysisResult === before.analysisResult) return;
       timer ??= setTimeout(() => { timer = undefined; setSnapshot(useSession.getState()); }, 250);
     });
     setSnapshot(useSession.getState());
@@ -35,8 +38,9 @@ export function Statusbar() {
     return () => { live = false; clearInterval(timer); };
   }, [c?.crawlId]);
   const chosenMode = useHeader((s) => s.mode);
-  // CRAWL-126: a paused crawl reports "Paused" at once; the WAL merge may still finish in the background.
-  const phase = analysis?.running ? t("status-analysis") : c?.endReason === "stopped" ? t("n03-status-stopped") : c?.phase === "paused" && c.merging ? t("status-paused-merging") : t(`status-${c?.phase ?? "idle"}`);
+  // CRAWL-126: "Paused"/"Stopped" are reported at once; the WAL merge may still finish in the background.
+  const stopped = c?.endReason === "stopped";
+  const phase = analysis?.running ? t("status-analysis") : stopped && c?.merging ? t("status-stopped-merging") : stopped ? t("n03-status-stopped") : c?.phase === "paused" && c.merging ? t("status-paused-merging") : t(`status-${c?.phase ?? "idle"}`);
   const unknown = "–";
   const current = analysis?.steps.find((s) => s.step === analysis.current);
   const index = current ? analysis!.steps.indexOf(current) + 1 : null;

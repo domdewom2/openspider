@@ -18,6 +18,8 @@
 .os-sidebar-priority-low { color:var(--os-text-muted); }
 .os-sidebar-stale { color:var(--os-text-muted); }
 .os-sidebar-filters, .os-sidebar-actions { display:flex; flex-wrap:wrap; gap:var(--os-size-8); padding:var(--os-size-8); }
+.os-sidebar-counting { display:flex; flex-wrap:wrap; align-items:center; gap:var(--os-size-8); padding:var(--os-size-8); }
+.os-sidebar-counting .os-progress { flex:1 1 100%; }
 .os-sidebar-filters label { display:flex; flex-direction:column; min-width:0; }
 .os-sidebar-filters input { max-width:100%; }
 .os-sidebar-explanation { padding:var(--os-size-8); }

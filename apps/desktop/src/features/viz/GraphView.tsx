@@ -92,6 +92,18 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
   const runIds = useRef<number[]>([]);
   const pendingView = useRef<Transform | "reset" | null>("reset");
   const loadSeq = useRef(0);
+  const exportOff = useRef<(() => void) | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      loadSeq.current++;
+      exportOff.current?.();
+      exportOff.current = null;
+      delete window.__osViz;
+    };
+  }, []);
   const timing = useRef({ start: performance.now(), firstFrame: null as number | null, loaded: null as number | null });
   const style = useRenderStyle(opts.lineWidth);
   const enc = useMemo(() => encodeOptions(kind, opts), [kind, opts]);
@@ -187,7 +199,7 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
   // gehen an die jeweils aktuelle Szene (Farbwechsel baut die Szene neu, ohne das Layout neu zu starten).
   const sceneRef = useRef<Scene | null>(null);
   sceneRef.current = scene;
-  const radiusKey = scene && layout === "force" ? scene.nodes.map((n) => n.r).join(",") : "";
+  const radiusKey = useMemo(() => scene && layout === "force" ? scene.nodes.map((n) => n.r).join(",") : "", [scene, layout]);
   useEffect(() => {
     if (layout !== "force" || !scene || !tree) return;
     const ids = scene.nodes.map((n) => n.id);
@@ -217,7 +229,12 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
     const onReply = (r: ForceReply) => {
       if (runIds.current !== ids) return;
       if (sceneRef.current) applyPositions(sceneRef.current, ids, r.positions);
-      ids.forEach((id, i) => positions.current.set(id, [r.positions[i * 2] as number, r.positions[i * 2 + 1] as number]));
+      ids.forEach((id, i) => {
+        const p = positions.current.get(id);
+        const x = r.positions[i * 2] as number, y = r.positions[i * 2 + 1] as number;
+        if (p) { p[0] = x; p[1] = y; }
+        else positions.current.set(id, [x, y]);
+      });
       canvas.current?.redraw();
       bumpFrame();
       if (r.type === "done") setLayoutState({ phase: "done", steps: r.steps, reason: r.reason, ms: performance.now() - startedAt });
@@ -408,13 +425,17 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
       const payload = csvPayload(tree, scene);
       setExportState({ kind: "running" });
       const handle = await viz.exportCsv({ snapshotId, dir, nodes: payload.nodes, edges: payload.edges, layout: kind });
+      if (!mounted.current) return;
+      exportOff.current?.();
       const off = eventBus.on("tick", (tick) => {
         const op: OpStatus | undefined = tick.ops.find((o) => o.opId === handle.opId);
         if (!op || op.state === "running") return;
         off();
+        exportOff.current = null;
         if (op.state === "done") setExportState({ kind: "done", path: dir });
         else setExportState({ kind: "failed", message: op.error ? describeError(t, op.error).text : t("viz-export-failed") });
       });
+      exportOff.current = off;
     } catch (e) {
       setExportState({ kind: "failed", message: describeError(t, toCmdError(e)).text });
     }

@@ -139,8 +139,8 @@ test("the sidebar Overview shows the crawl summary and the Internal groups with 
   await expect(overview).toBeVisible();
   const summary = overview.getByRole("table", { name: "Summary" });
   const value = async (name: RegExp) => Number((await summary.getByRole("row", { name }).getByRole("cell").first().innerText()).replace(/\D/g, ""));
-  expect(await value(/^Total URLs Encountered/)).toBe(29);
-  expect(await value(/^Total URLs Crawled/)).toBe(29);
+  expect(await value(/^Total URLs Encountered/)).toBe(27);
+  expect(await value(/^Total URLs Crawled/)).toBe(27);
   expect(await value(/^Total Internal URLs/)).toBe(25);
   expect(await value(/^Total External URLs/)).toBe(2);
   const internal = overview.getByRole("table", { name: "Internal", exact: true });

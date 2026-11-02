@@ -2,5 +2,5 @@
 import { ForceDriver, type ForceReply, type ForceRequest } from "./force";
 
 const scope = self as unknown as { postMessage(msg: ForceReply, transfer: Transferable[]): void; onmessage: ((e: MessageEvent<ForceRequest>) => void) | null };
-const driver = new ForceDriver((reply) => scope.postMessage(reply, [reply.positions.buffer]));
+const driver = new ForceDriver((reply) => scope.postMessage(reply, reply.type === "done" ? [reply.positions.buffer, reply.velocities.buffer] : [reply.positions.buffer]));
 scope.onmessage = (e) => driver.handle(e.data);

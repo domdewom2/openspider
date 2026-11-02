@@ -232,6 +232,16 @@ impl EngineCrawler {
         extra.insert("reference_peak_rss_bytes".into(), json!(ref_rss));
         extra.insert("rss_ratio".into(), json!(judged.ratio.map(|q| round(q, 3))));
         extra.insert("rss_scaling_rule".into(), json!(judged.rule));
+        if judged.rule == "cache-bounded-growth" {
+            extra.insert(
+                "rss_growth_bytes".into(),
+                json!(rss.unwrap_or(0).saturating_sub(ref_rss.unwrap_or(0))),
+            );
+            extra.insert(
+                "rss_growth_limit_bytes".into(),
+                json!(cache_growth_limit(file_bytes, ref_file_bytes)),
+            );
+        }
         extra.insert("file_bytes".into(), json!(file_bytes));
         extra.insert("reference_file_bytes".into(), json!(ref_file_bytes));
         extra.insert("profile_cache_bytes".into(), json!(cache_bytes));
@@ -890,19 +900,19 @@ pub fn judge_rss_scaling(s: RssScaling) -> ScalingVerdict {
         };
     }
     let growth = s.rss.saturating_sub(s.reference_rss);
-    let file_growth = s.file_bytes.saturating_sub(s.reference_file_bytes);
-    let allowed = file_growth + file_growth / 4 + GROWTH_SLACK_BYTES;
+    let allowed = cache_growth_limit(s.file_bytes, s.reference_file_bytes);
     let verdict = if growth <= allowed {
         Ok(())
     } else {
         Err(format!(
-            "PERF-001: RSS wächst von {} auf {} MB (+{} MB), mehr als 125 % des Dateizuwachses + 64 MiB ({} MB) bei {} gegen {} Seiten",
+            "PERF-001: RSS wächst von {} auf {} MB (+{} MB), mehr als 125 % des Dateizuwachses + 64 MiB ({} MB) bei {} gegen {} Seiten; Zuwachs {growth} Bytes, Grenze {allowed} Bytes, Überschreitung {} Bytes",
             s.reference_rss / 1_000_000,
             s.rss / 1_000_000,
             growth / 1_000_000,
             allowed / 1_000_000,
             s.pages,
-            s.reference_pages
+            s.reference_pages,
+            growth - allowed
         ))
     };
     ScalingVerdict {
@@ -910,6 +920,11 @@ pub fn judge_rss_scaling(s: RssScaling) -> ScalingVerdict {
         rule: "cache-bounded-growth",
         verdict,
     }
+}
+
+fn cache_growth_limit(file_bytes: u64, reference_file_bytes: u64) -> u64 {
+    let file_growth = file_bytes.saturating_sub(reference_file_bytes);
+    file_growth + file_growth / 4 + GROWTH_SLACK_BYTES
 }
 
 // ---- Cache-Grenze (K-16) ------------------------------------------------------------------------------------
@@ -1045,6 +1060,30 @@ mod tests {
         // gemessen im Profil „Maximale Geschwindigkeit“: 63 -> 416 MB bei 5 und 302 MB Dateigröße
         assert!(scaling(416, 63, 302, 30).verdict.is_ok());
         assert!(scaling(0, 30, 59, 6).verdict.is_err());
+    }
+
+    // spec: PERF-001
+    #[test]
+    fn small_rss_boundary_is_exact_even_when_megabytes_round_to_the_same_value() {
+        // A 90 MB file increase permits 112.5 MB + 64 MiB = 179_608_864 bytes.
+        let input = RssScaling {
+            pages: 10_000,
+            reference_pages: 1_000,
+            rss: 49_000_000 + 179_608_864,
+            reference_rss: 49_000_000,
+            file_bytes: 100_000_000,
+            reference_file_bytes: 10_000_000,
+            cache_bytes: 268_435_456,
+        };
+        assert!(judge_rss_scaling(input).verdict.is_ok());
+        let bad = judge_rss_scaling(RssScaling {
+            rss: input.rss + 1,
+            ..input
+        })
+        .verdict
+        .unwrap_err();
+        assert!(bad.contains("Zuwachs 179608865 Bytes, Grenze 179608864 Bytes"));
+        assert!(bad.contains("Überschreitung 1 Bytes"));
     }
 
     fn counts(pairs: &[(&str, u64)]) -> BTreeMap<String, u64> {

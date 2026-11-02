@@ -254,6 +254,26 @@ fn set<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> 
                     .cloned()
                     .collect();
             }
+            // CRAWL-112: the thread count reaches a running engine within 2 s of the change. The durable write below
+            // queues behind every earlier job of the app's main write lane (view caches; retention runs on its own
+            // maintenance lane since M2-N31) and behind the engine writer's lock, so the engine gets the new value
+            // first; a failed write restores the old one (M2-N30).
+            let threads = |n: u32| {
+                if let Some(engine) = &session.engine {
+                    if let Some(handle) = engine
+                        .handle
+                        .lock()
+                        .unwrap_or_else(|p| p.into_inner())
+                        .as_ref()
+                    {
+                        handle.set_threads(n);
+                    }
+                }
+            };
+            let live_threads = paths.iter().any(|p| p == "speed.threads");
+            if live_threads {
+                threads(cfg.speed.threads);
+            }
             let (before, after, cancel, clock, stale) = (
                 old.clone(),
                 cfg.clone(),
@@ -261,7 +281,8 @@ fn set<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> 
                 app.config().clock.clone(),
                 steps.clone(),
             );
-            app.write_queue()
+            let written = app
+                .write_queue()
                 .submit_file(&session.key, move |file| {
                     os_store::profile::config_transaction(
                         file,
@@ -331,18 +352,12 @@ fn set<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> 
                         },
                     )
                 })
-                .await?;
-            if paths.iter().any(|p| p == "speed.threads") {
-                if let Some(engine) = &session.engine {
-                    if let Some(handle) = engine
-                        .handle
-                        .lock()
-                        .unwrap_or_else(|p| p.into_inner())
-                        .as_ref()
-                    {
-                        handle.set_threads(cfg.speed.threads);
-                    }
+                .await;
+            if let Err(error) = written {
+                if live_threads {
+                    threads(old.speed.threads);
                 }
+                return Err(error);
             }
             app.sessions().update_config(&session.key, cfg.clone());
             app.crawl_events().emit(

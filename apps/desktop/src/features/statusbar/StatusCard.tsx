@@ -1,10 +1,11 @@
+import { memo } from "react";
 import { useFormat, useT } from "../../i18n";
 import { ProgressBar } from "../../ui/primitives/Feedback";
 import { useStatusSnapshot } from "./Statusbar";
 import "./statusbar.css";
 
 /** Presentation of the existing throttled session snapshot; no timers or commands. */
-export function StatusCard() {
+export const StatusCard = memo(function StatusCard() {
   const t = useT();
   const f = useFormat();
   const { crawl: c } = useStatusSnapshot();
@@ -17,4 +18,4 @@ export function StatusCard() {
     <span>{t("u35-card-elapsed", { value: f.duration(c?.elapsedS ?? 0) })}</span>
     <span>{t("u35-card-eta", { value: c?.etaS == null ? "–" : f.duration(c.etaS) })}</span>
   </section>;
-}
+});

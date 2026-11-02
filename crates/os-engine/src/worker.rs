@@ -218,6 +218,12 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
     }
 
     // 2. Abruf: Tempo-Fachmodul erhält die inzwischen geladene robots.txt sowie die injizierte Uhr.
+    sh.writer.wait_for_bytes().await;
+    // Stop is checked again after byte backpressure, before opening a request.
+    if sh.ctl.stop.load(Ordering::SeqCst) != STOP_NONE {
+        sh.lock_core().requeue(item.clone());
+        return Ok(());
+    }
     sh.host_pacer
         .before_fetch(
             &url,
@@ -261,6 +267,18 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         diag::inc(&diag::STATS.fetch_slow);
     }
 
+    let fetched_bytes = match &result.outcome {
+        FetchOutcome::Response(r) => r.body.len() as u64,
+        FetchOutcome::NoResponse { detail, .. } => detail.capacity() as u64,
+    };
+    let mut fetched_charge = sh.writer.fetched_bytes(fetched_bytes);
+    let fetch_stage = diag::StageGuard::new(
+        &diag::STATS.mem_fetch_entries,
+        &diag::STATS.mem_fetch_bytes,
+        &diag::STATS.mem_fetch_entries_max,
+        &diag::STATS.mem_fetch_bytes_max,
+        fetched_bytes,
+    );
     sh.host_pacer.on_result(&url, &result, cfg, &*sh.clock);
     if let crate::retry::RetryDecision::RetryAfter(delay) =
         crate::retry::decide(&result, item.attempt, cfg)
@@ -273,6 +291,13 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         return Ok(());
     }
     // 3. Auswertung
+    let mut parse_stage = diag::StageGuard::new(
+        &diag::STATS.mem_parse_entries,
+        &diag::STATS.mem_parse_bytes,
+        &diag::STATS.mem_parse_entries_max,
+        &diag::STATS.mem_parse_bytes_max,
+        0,
+    );
     let t = std::time::Instant::now();
     let mut analysis = crate::heap(|| analyze(sh, item, &url, &result)).await;
     diag::add(&diag::STATS.analyze_ns, t);
@@ -287,6 +312,13 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         analysis.facts.robots_txt_url = Some(robots_url.clone());
     }
 
+    // Analysis owns its derived facts; release the response before producing rows.
+    drop(result);
+    drop(fetch_stage);
+    let analysis_bytes = analysis.estimate_bytes();
+    fetched_charge.resize(analysis_bytes);
+    parse_stage.resize(analysis_bytes);
+
     // 4./5. Ziele entdecken und Schreibmodell bilden
     let response_ms = analysis
         .facts
@@ -294,9 +326,11 @@ async fn run_item<F: Fetch>(sh: &Arc<Shared<F>>, item: &QueueItem) -> Result<(),
         .filter(|_| analysis.facts.status_code != 0);
     let t = std::time::Instant::now();
     let batch = crate::heap(|| assemble(sh, item, analysis)).await?;
+    parse_stage.resize(crate::writer_thread::estimate_bytes(&batch));
     diag::add(&diag::STATS.assemble_ns, t);
     let t = std::time::Instant::now();
-    crate::heap(|| sh.writer.send(batch)).await?;
+    crate::heap(|| sh.writer.send_admitted(batch, fetched_charge)).await?;
+    drop(parse_stage);
     diag::add_max(&diag::STATS.send_ns, &diag::STATS.send_max_ns, t);
     sh.progress
         .lock()
@@ -482,6 +516,78 @@ struct Analysis {
     pdf: Option<PdfMeta>,
     redirect: Option<RedirectTarget>,
     refresh: Vec<os_model::RefreshRef>,
+}
+
+impl Analysis {
+    /// Capacity-based estimate of retained parse payload; excludes temporary DOM
+    /// nodes and optional nested extension structures, like the writer estimate.
+    fn estimate_bytes(&self) -> u64 {
+        fn vec_bytes<T>(v: &Vec<T>) -> usize {
+            v.capacity() * std::mem::size_of::<T>()
+        }
+        let opt = |v: &Option<String>| v.as_ref().map_or(0, String::capacity);
+        let mut bytes = crate::writer_thread::estimate_bytes(&self.extra) as usize
+            + vec_bytes(&self.headers)
+            + vec_bytes(&self.css_links)
+            + vec_bytes(&self.refresh);
+        if let Some(html) = &self.html {
+            bytes += html.body.capacity() + opt(&html.encoding);
+        }
+        for h in &self.headers {
+            bytes += h.name.capacity() + h.value.capacity();
+        }
+        if let Some(p) = &self.parsed {
+            bytes += p.base_url.capacity()
+                + opt(&p.charset)
+                + vec_bytes(&p.links)
+                + vec_bytes(&p.images)
+                + vec_bytes(&p.canonicals)
+                + vec_bytes(&p.directives)
+                + vec_bytes(&p.refresh)
+                + vec_bytes(&p.hreflang)
+                + vec_bytes(&p.pagination)
+                + vec_bytes(&p.ext)
+                + vec_bytes(&p.structured_data)
+                + vec_bytes(&p.sd_findings)
+                + vec_bytes(&p.forms)
+                + vec_bytes(&p.custom_search)
+                + vec_bytes(&p.custom_extraction);
+            for texts in [
+                &p.titles,
+                &p.meta_descriptions,
+                &p.meta_keywords,
+                &p.h1,
+                &p.h2,
+            ] {
+                bytes += vec_bytes(texts);
+                bytes += texts.iter().map(|t| t.text.capacity()).sum::<usize>();
+            }
+            for l in &p.links {
+                bytes += l.href_raw.capacity()
+                    + opt(&l.resolved)
+                    + opt(&l.anchor)
+                    + opt(&l.alt_text)
+                    + opt(&l.rel)
+                    + opt(&l.target)
+                    + l.xpath.capacity();
+            }
+            for image in &p.images {
+                bytes += image.src_raw.capacity()
+                    + opt(&image.resolved)
+                    + opt(&image.alt)
+                    + opt(&image.width_attr)
+                    + opt(&image.height_attr)
+                    + image.xpath.capacity();
+            }
+            bytes += p.minhash.as_ref().map_or(0, vec_bytes);
+            for (_, value) in &p.ext {
+                if let os_model::Value::Text(text) = value {
+                    bytes += text.capacity();
+                }
+            }
+        }
+        bytes as u64
+    }
 }
 
 async fn analyze<F: Fetch>(
@@ -702,6 +808,13 @@ async fn render_page<F: Fetch>(
     a: &mut Analysis,
 ) -> ParsedPage {
     let opts = crate::render_glue::options(sh, item, resp);
+    let mut render_stage = diag::StageGuard::new(
+        &diag::STATS.mem_render_entries,
+        &diag::STATS.mem_render_bytes,
+        &diag::STATS.mem_render_entries_max,
+        &diag::STATS.mem_render_bytes_max,
+        0,
+    );
     let outcome = sh.render_session.render(url.as_str(), &opts).await;
     let mut write = os_model::RenderWrite {
         url_id: item.id,
@@ -717,6 +830,7 @@ async fn render_page<F: Fetch>(
     };
     let page = match outcome {
         Ok(mut rendered) => {
+            render_stage.resize(rendered.dom_html.capacity() as u64);
             a.extra
                 .custom_js
                 .extend(os_render::snippets::writes(item.id, &rendered.snippets));
@@ -1468,7 +1582,7 @@ async fn assemble<F: Fetch>(
     // Discovery unter der Sperre, Nachricht mit den neuen URLs vor der Seite in den Kanal
     let depth = item.depth.map(|d| d + 1);
     let t = std::time::Instant::now();
-    let slot = sh.writer.reserve().await?;
+    let slot = sh.writer.reserve_admitted().await?;
     diag::add_max(&diag::STATS.reserve_ns, &diag::STATS.reserve_max_ns, t);
     let mut disc = WriteBatch::default();
     let mut ids: Vec<Option<UrlId>> = Vec::with_capacity(refs.len());

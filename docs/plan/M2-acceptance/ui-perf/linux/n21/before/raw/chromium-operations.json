@@ -1,0 +1,77 @@
+{
+  "scenario": "operations",
+  "size": "large",
+  "started_at": "2026-10-31T17:34:39.520Z",
+  "engine": "chromium",
+  "metrics": {
+    "tabMs": {
+      "value": 2541.2999999970198,
+      "budget": 200,
+      "direction": "max",
+      "passed": false
+    },
+    "tabReturnMs": {
+      "value": 21215.70000000298,
+      "budget": 200,
+      "direction": "max",
+      "passed": false
+    },
+    "filterMs": {
+      "value": null,
+      "budget": 200,
+      "direction": "max",
+      "passed": false
+    },
+    "numericMs": {
+      "value": null,
+      "budget": 5000,
+      "direction": "max",
+      "passed": false
+    },
+    "reverseMs": {
+      "value": null,
+      "budget": 200,
+      "direction": "max",
+      "passed": false
+    },
+    "textMs": {
+      "value": null,
+      "budget": 8000,
+      "direction": "max",
+      "passed": false
+    },
+    "substringMs": {
+      "value": null,
+      "budget": 3000,
+      "direction": "max",
+      "passed": false
+    },
+    "regexMs": {
+      "value": null,
+      "budget": 10000,
+      "direction": "max",
+      "passed": false
+    }
+  },
+  "details": {
+    "times": {
+      "tabMs": 2541.2999999970198,
+      "tabReturnMs": 21215.70000000298,
+      "filterMs": null,
+      "numericMs": null,
+      "reverseMs": null,
+      "textMs": null,
+      "substringMs": null,
+      "regexMs": null
+    },
+    "errors": [
+      "filterMs: IpcError: err-stale",
+      "numericMs: IpcError: err-stale",
+      "reverseMs: IpcError: err-stale",
+      "textMs: IpcError: err-stale",
+      "substringMs: IpcError: err-stale",
+      "regexMs: IpcError: err-stale"
+    ]
+  },
+  "passed": false
+}

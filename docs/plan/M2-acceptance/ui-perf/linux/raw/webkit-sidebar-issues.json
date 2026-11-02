@@ -1,0 +1,21 @@
+{
+  "scenario": "sidebar-issues",
+  "engine": "webkit",
+  "size": "large",
+  "started_at": "2026-10-31T16:08:39.203Z",
+  "metrics": {
+    "ms": {
+      "value": 21461.811006999997,
+      "budget": 100,
+      "completed": false,
+      "passed": false
+    }
+  },
+  "details": {
+    "error": "Error: page.evaluate: Test timeout of 45000ms exceeded.",
+    "scope": "Core RPC, excluding UI paint",
+    "original_report_timestamp": "2026-10-31T16:08:39.617Z",
+    "timestamp_alignment": "Playwright TestResult.startTime: playwright-named.json"
+  },
+  "passed": false
+}

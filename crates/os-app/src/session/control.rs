@@ -304,10 +304,17 @@ pub async fn open(
     if let Some(s) = existing {
         app.sessions().set_current(ctx.window, s);
     } else {
-        app.read_pool().register(key.clone(), report.path.clone());
         if summary.owner.controllable {
             app.write_queue().register(key.clone(), report.path.clone());
+            // A copy made with `VACUUM INTO` (duplicate, import, migration) is in rollback-journal mode. The
+            // first writer switches it to WAL, which needs the file exclusively: once the readers of this
+            // session hold read transactions (overview precomputation), a resume right after opening waited
+            // 5 s and failed with "database is locked" (M2-N25, CI windows-x64). Switch before any reader.
+            if let Err(error) = app.write_queue().submit_file(&key, |_| Ok(())).await {
+                tracing::warn!(?error, "Crawl-Datei nicht im WAL-Modus geöffnet");
+            }
         }
+        app.read_pool().register(key.clone(), report.path.clone());
         app.sessions().set_current(
             ctx.window,
             SessionInfo {
@@ -687,10 +694,14 @@ async fn stop_checkpoint(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
     app.write_queue()
         .submit_file(&s.key, move |f| {
             // One atomic commit instead of five Windows disk synchronizations.
-            let tx = f
-                .conn()
-                .unchecked_transaction()
-                .map_err(|e| crate::runtime::error::store_error(&e.into()))?;
+            // CRAWL-126: take the writer lock before reading. The background WAL merge holds it while it waits for
+            // readers; a deferred read upgraded to a write would fail at once with SQLITE_BUSY ("database is
+            // locked") instead of waiting via the busy timeout.
+            let tx = rusqlite::Transaction::new_unchecked(
+                f.conn(),
+                rusqlite::TransactionBehavior::Immediate,
+            )
+            .map_err(|e| crate::runtime::error::store_error(&e.into()))?;
             let state = f
                 .meta()
                 .map_err(|e| crate::runtime::error::store_error(&e))?
@@ -716,6 +727,9 @@ async fn stop_checkpoint(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
             Ok(())
         })
         .await?;
+    // CRAWL-126 (OS-Festlegung "Stoppen" während der Rückführung): the stop commit leaves frames in the WAL; a running
+    // merge takes another round, otherwise a new one starts. Stop itself neither waits for nor cancels it.
+    super::merge::start(app, &s.key, s.path.clone());
     super::state(app, &s.key, CrawlState::Completed);
     if !feed::stopped(app, s) {
         feed::invalidate(app, &s.key);

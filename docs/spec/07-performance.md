@@ -2,6 +2,8 @@
 
 Ziel: Große Crawls dürfen weder an Arbeitsspeicher scheitern noch die Oberfläche einfrieren. Jede Anforderung wird durch einen automatisierten Lasttest gegen `os-testsite` (synthetische Sites) geprüft. Referenzhardware: MacBook Apple Silicon, 16 GB RAM, SSD; Windows-x64-Runner in CI für die Smoke-Varianten.
 
+OS-Festlegung (Entscheidung des Nutzers vom 02.11.2026, Fable-Empfehlung): Zeitbudgets dieser Spec und von UI-143/UI-145 werden im Release-Build auf der Referenzhardware gemessen; E2E-Läufe gegen den Entwicklungs-Server prüfen nur Regressionen mit eigenen Schwellen.
+
 ### PERF-001 Speicherobergrenze im Textmodus
 - **Priorität:** P0
 - **Beschreibung:** Der Speicherverbrauch des Crawlers wächst nicht linear mit der Anzahl der URLs. Crawl-Daten liegen in der Crawl-Datei, im RAM nur begrenzte Caches und Warteschlangen.

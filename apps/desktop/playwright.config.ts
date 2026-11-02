@@ -8,8 +8,10 @@ const wanted = (process.env.OS_E2E_PROJECTS ?? "chromium,webkit").split(",").map
 // Laufzeitbudgets (UI-146) werden erst nach allen übrigen Tests und ohne parallele Last gemessen: je Engine ein eigenes
 // Projekt `<engine>-perf`, das vom Hauptprojekt abhängt. `OS_E2E_PROJECTS` nennt weiterhin nur die Engines.
 const PERF = /viz[\\/]perf\.spec\.ts$/;
-// Visual snapshots require the dedicated platform/scale configuration.
-const MAIN_IGNORE = [PERF, /visual[\\/]/];
+// Visual snapshots require the dedicated platform/scale configuration. Node tests of the U31 perf harness
+// (`e2e/perf/**/*.test.mjs`, `*.nodetest.mts`) run under `node --test`, not in `npm run e2e`.
+const PERF_NODE_TESTS = [/perf[\\/].*\.test\.mjs$/, /\.nodetest\.mts$/];
+const MAIN_IGNORE = [PERF, /visual[\\/]/, ...PERF_NODE_TESTS];
 const engines = [
   { name: "chromium", use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 800 } } },
   { name: "webkit", use: { ...devices["Desktop Safari"], viewport: { width: 1280, height: 800 } } },

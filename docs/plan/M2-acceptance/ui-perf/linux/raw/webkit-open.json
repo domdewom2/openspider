@@ -1,0 +1,27 @@
+{
+  "scenario": "open",
+  "size": "large",
+  "started_at": "2026-10-31T16:03:08.079Z",
+  "engine": "webkit",
+  "metrics": {
+    "browserContextToRowsMs": {
+      "value": 25689.120243,
+      "budget": 3000,
+      "direction": "max",
+      "passed": false
+    },
+    "openMs": {
+      "value": 25563,
+      "budget": 3000,
+      "direction": "max",
+      "passed": false
+    }
+  },
+  "details": {
+    "scope": "Fresh browser context to painted real DataGrid; OS application cold start requires native E2E-B",
+    "rows": 5000000,
+    "original_report_timestamp": "2026-10-31T16:03:34.154Z",
+    "timestamp_alignment": "Playwright TestResult.startTime: playwright-named.json"
+  },
+  "passed": false
+}

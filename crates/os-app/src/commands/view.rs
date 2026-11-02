@@ -60,6 +60,17 @@ fn link_list(app: &App, s: &SessionInfo, spec: &ViewSpec) -> Option<Arc<LinkView
 struct Views {
     initialized: AtomicBool,
     entries: Mutex<HashMap<String, OpenView>>,
+    dormant: Mutex<HashMap<String, (Duration, OpenView)>>,
+}
+/// Closed handles stop serving requests immediately; their tab sessions remain
+/// reusable for the UI-142 idle window and share the core's memory budget.
+pub(crate) fn release_closed(app: &App) {
+    let now = app.config().clock.monotonic();
+    app.ext::<Views>()
+        .dormant
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .retain(|_, (closed, _)| now.saturating_sub(*closed) < Duration::from_secs(60));
 }
 fn registry(app: &App) -> std::sync::Arc<Views> {
     let views = app.ext::<Views>();
@@ -70,6 +81,11 @@ fn registry(app: &App) -> std::sync::Arc<Views> {
                 .lock()
                 .unwrap_or_else(|p| p.into_inner())
                 .retain(|_, v| &v.owner != window);
+            app.ext::<Views>()
+                .dormant
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .retain(|_, (_, v)| &v.owner != window);
         }));
         app.crawl_events().subscribe(Box::new(|app, event| {
             use crate::runtime::lifecycle_bus::CrawlEvent;
@@ -79,6 +95,11 @@ fn registry(app: &App) -> std::sync::Arc<Views> {
                     .lock()
                     .unwrap_or_else(|p| p.into_inner())
                     .retain(|_, v| &v.session.key != key);
+                app.ext::<Views>()
+                    .dormant
+                    .lock()
+                    .unwrap_or_else(|p| p.into_inner())
+                    .retain(|_, (_, v)| &v.session.key != key);
             }
         }));
     }
@@ -927,6 +948,51 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
             .ids
             .new_crawl_id(app.config().clock.now())
             .to_string();
+        release_closed(app);
+        let cached = {
+            let views = registry(app);
+            let mut dormant = views.dormant.lock().unwrap_or_else(|p| p.into_inner());
+            let id = dormant.iter().filter(|(_, (_, v))| {
+                v.owner == ctx.window
+                    && v.session.key == s.key
+                    && v.session.path == s.path
+                    && v.session.config == s.config
+                    && matches!((&v.spec, &args.spec), (ViewSpec::Tab { tab: a, .. }, ViewSpec::Tab { tab: b, .. }) if a == b)
+            }).max_by_key(|(_, (closed, v))| (v.spec == args.spec && v.columns == args.columns, *closed))
+                .map(|(id, _)| id.clone());
+            id.and_then(|id| dormant.remove(&id).map(|(_, v)| v))
+        };
+        if let Some(v) = cached {
+            let tab = v.tab.as_ref().expect("only tab views are retained");
+            if let Some(built) = tab.cached(app).await? {
+                tab.rebind(id.clone());
+                let h = if v.spec == args.spec && v.columns == args.columns {
+                    tab_handle(id.clone(), &args.spec, built)
+                } else {
+                    settle(
+                        app,
+                        &id,
+                        &args.spec,
+                        start_build(app, tab, s.clone(), args.spec.clone(), args.columns.clone()),
+                    )
+                    .await?
+                };
+                insert(
+                    app,
+                    id,
+                    OpenView {
+                        session: s,
+                        spec: args.spec,
+                        columns: args.columns,
+                        version: h.version,
+                        ..v
+                    },
+                );
+                return to_json(&h);
+            }
+            // A reset may lower change_seq. Rebuild under a new handle so the
+            // client watermark of the old snapshot remains valid.
+        }
         if matches!(args.spec, ViewSpec::Tab { .. }) {
             let tab = TabView::new(app, id.clone(), s.key.clone());
             let built = start_build(
@@ -1373,7 +1439,26 @@ fn close<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'
         {
             return Err(CmdError::new(ErrorCode::NotFound, "err-view-not-found"));
         }
-        entries.remove(&args.view_id);
+        let v = entries.remove(&args.view_id).expect("checked owner");
+        drop(entries);
+        if v.tab
+            .as_ref()
+            .and_then(|tab| tab.published())
+            .is_some_and(|p| p.spec == v.spec)
+        {
+            let mut dormant = views.dormant.lock().unwrap_or_else(|p| p.into_inner());
+            // Bound handle metadata too; materialized data obeys the shared LRU.
+            if dormant.len() >= 32 {
+                if let Some(oldest) = dormant
+                    .iter()
+                    .min_by_key(|(_, (closed, _))| *closed)
+                    .map(|(id, _)| id.clone())
+                {
+                    dormant.remove(&oldest);
+                }
+            }
+            dormant.insert(args.view_id, (app.config().clock.monotonic(), v));
+        }
         to_json(&())
     })
 }

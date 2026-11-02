@@ -1,10 +1,11 @@
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createBridgeTransport, toUiEvent, type WebSocketLike } from "./bridge";
 import { createClient, detectTransport, setClient, VersionGuard } from "../client";
 import { classifyError, describeError, IpcError, isSilentError, localError, toCmdError } from "../errors";
 import { bindVisibility, connectWindowEvents, createEventBus } from "../events";
 import { MockCore, mergePatch } from "./mock";
-import { tauriCommandName } from "./tauri";
+import { TAURI_CORE_PLUGINS, tauriCommandName } from "./tauri";
 import { settings } from "../settings";
 import { view } from "../view";
 import { exportApi } from "../export";
@@ -12,6 +13,7 @@ import type { Tick } from "../gen/Tick";
 import type { UiEvent } from "../gen/UiEvent";
 import cmdErrorFixture from "../__fixtures__/CmdError.json";
 import tickFixture from "../__fixtures__/UiEvent.tick.json";
+import viewFixture from "../__fixtures__/k06/fx-ui-basic/ViewHandle.json";
 
 afterEach(() => setClient(null));
 
@@ -110,6 +112,18 @@ describe("Client", () => {
     await expect(view.rows({} as never)).rejects.toMatchObject({ code: "Stale" });
   });
 
+  // spec: UI-142
+  it("keeps the published version across a building control handle", () => {
+    const g = new VersionGuard();
+    const ready = { ...viewFixture, viewId: "n21", version: 3, state: "ready" };
+    expect(g.accept(ready)).toBe(ready);
+    const building = { ...ready, version: 0, state: "building", total: null, columns: [], op: { opId: "n21-build", cancellable: true } };
+    expect(g.accept(building)).toBe(building);
+    expect(() => g.accept({ viewId: ready.viewId, version: 2, cells: [["late"]] })).toThrow(IpcError);
+    expect(g.accept({ ...ready, version: 4 })).toMatchObject({ version: 4 });
+    expect(() => g.accept({ viewId: ready.viewId, version: 3, cells: [["old"]] })).toThrow(IpcError);
+  });
+
   it("VersionGuard unterscheidet Ansichten und kann vergessen", () => {
     const g = new VersionGuard();
     g.accept({ viewId: "a", version: 3 });
@@ -131,6 +145,22 @@ describe("Client", () => {
   it("bildet Tauri-Commandnamen auf Plugin-Aufrufe ab", () => {
     expect(tauriCommandName("view.rows")).toBe("plugin:view|rows");
     expect(tauriCommandName("crawl.validateStartUrl")).toBe("plugin:crawl|validateStartUrl");
+  });
+
+  // spec: UI-127
+  it("leitet Domänen mit dem Namen eines Tauri-Kern-Plugins auf das os-Präfix um", () => {
+    // Die Hülle registriert `app` als `os-app` (src-tauri/src/plugin_names.rs); `plugin:app|info` träfe das Kern-Plugin.
+    expect(tauriCommandName("app.info")).toBe("plugin:os-app|info");
+    expect(tauriCommandName("events.subscribe")).toBe("plugin:events|subscribe");
+  });
+
+  // spec: UI-127
+  it("kennt dieselben Tauri-Kern-Plugins wie die Hülle", () => {
+    const rust = readFileSync("src-tauri/src/plugin_names.rs", "utf8");
+    const list = /TAURI_CORE_PLUGINS: &\[&str\] = &\[([^\]]*)\]/.exec(rust)?.[1] ?? "";
+    const names = [...list.matchAll(/"([^"]+)"/g)].map(m => m[1]).sort();
+    expect(names.length).toBeGreaterThan(0);
+    expect([...TAURI_CORE_PLUGINS].sort()).toEqual(names);
   });
 });
 

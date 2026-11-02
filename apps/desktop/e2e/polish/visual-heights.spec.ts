@@ -84,9 +84,9 @@ test("overview shows real fixture counts and problems navigate to their filter",
   const dashboard = alpha.page.locator('[data-dashboard]');
   await expect(dashboard).toContainText('Status distribution');
   await expect(alpha.page.getByRole('region', { name: 'Details', exact: true })).toBeHidden();
-  await expect(dashboard.locator('.os-dashboard-metrics')).toContainText('29');
-  // The overview includes robots/sitemap fetches; table rows are 27.
-  await expect(dashboard.locator('.os-dashboard-metrics strong')).toHaveText(['29', '29', '0', '21', '2']);
+  await expect(dashboard.locator('.os-dashboard-metrics')).toContainText('27');
+  // UI-061 (OS-Festlegung 02.11.2026): robots.txt/sitemap fetches are not encountered URLs; table rows are 27.
+  await expect(dashboard.locator('.os-dashboard-metrics strong')).toHaveText(['27', '27', '0', '21', '2']);
   const problem = dashboard.locator('.os-dashboard-sections > section').last().getByRole('button').first();
   await expect(problem).toBeVisible();
   await problem.click();

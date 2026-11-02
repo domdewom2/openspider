@@ -1,0 +1,16 @@
+{
+  "scenario": "test-failure-298",
+  "engine": "webkit",
+  "size": "large",
+  "started_at": "2026-10-31T16:19:02.730Z",
+  "metrics": {},
+  "passed": false,
+  "details": {
+    "title": "200 URL/s fixture with 20 crawl threads: click latency and event cap",
+    "errors": [
+      "Error: {\"clickP95Ms\":{\"value\":92,\"budget\":100,\"direction\":\"max\",\"passed\":true},\"validClickSamples\":{\"value\":30,\"budget\":30,\"direction\":\"min\",\"passed\":true},\"crawlFps\":{\"value\":59.26469117696077,\"budget\":50,\"direction\":\"min\",\"passed\":true},\"eventsPerSecond\":{\"value\":1.8744600721133238,\"budget\":10,\"direction\":\"max\",\"passed\":true},\"fixtureUrlsPerSecond\":{\"value\":232.82684307484905,\"budget\":200,\"direction\":\"min\",\"passed\":true},\"idleUiCpuPercent\":{\"value\":59.577963163391075,\"budget\":15,\"direction\":\"max\",\"passed\":false}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m"
+    ],
+    "original_report_timestamp": "2026-10-31T16:19:02.796Z",
+    "timestamp_alignment": "Playwright TestResult.startTime: playwright.json"
+  }
+}

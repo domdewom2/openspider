@@ -368,18 +368,19 @@ fn counts<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<
         };
         check_scope(&args.segment, &compare_scope)?;
         let s = session(app, &ctx)?;
+        // UI-018 (M2-N27): the selection lists read the shared count of Overview and Issues instead
+        // of counting all filters of all tabs a second time.
+        let shared = super::sidebar::counts::shared_facts(app, &s, &ctx.cancel).await?;
         app.read_pool()
             .run_snapshot(s.key, move |file, _| {
                 let registry = tabs::configured_for_file(&s.config, file);
-                let version = os_store::queries::change_seq(file.conn())?;
-                Ok(views::filter_counts_in(&registry, file, &s.config)
-                    .map_err(view_error)
-                    .and_then(|counts| {
-                        let mut filters = count_rows(&registry, &s.config, &counts);
-                        filters.retain(|r| r.tab != "Change Detection");
-                        filters.extend(change_rows);
-                        to_json(&FilterCounts { version, filters })
-                    }))
+                let mut filters = count_rows(&registry, &s.config, &shared.facts.counts);
+                filters.retain(|r| r.tab != "Change Detection");
+                filters.extend(change_rows);
+                Ok(to_json(&FilterCounts {
+                    version: shared.seq,
+                    filters,
+                }))
             })
             .await?
     })

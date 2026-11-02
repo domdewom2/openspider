@@ -1,0 +1,102 @@
+{
+  "source_revision": "a9780581c3dc27121c725a012418f8769993e14e",
+  "exit_codes": {
+    "clippy": 0,
+    "crates": 0,
+    "workspace": 0,
+    "parity": 0,
+    "fmt": 0,
+    "neutral": 0
+  },
+  "parity_exports_passed": 218,
+  "parity_exports_total": 218,
+  "ci_run_id": null,
+  "push": false,
+  "mac_reference": "pending orchestrator",
+  "performance_acceptance": "open",
+  "logs": {
+    "workspace": {
+      "timing": "log creation to final write",
+      "rust_tests_passed": 4032,
+      "rust_tests_failed": 0,
+      "rust_tests_ignored": 49,
+      "log_activity_seconds": 1551.061
+    },
+    "parity": {
+      "timing": "log creation to final write",
+      "rust_tests_passed": 0,
+      "rust_tests_failed": 0,
+      "rust_tests_ignored": 0,
+      "log_activity_seconds": 343.587
+    },
+    "fmt": {
+      "timing": "log creation to final write",
+      "rust_tests_passed": 0,
+      "rust_tests_failed": 0,
+      "rust_tests_ignored": 0,
+      "log_activity_seconds": 0.0
+    },
+    "neutral": {
+      "timing": "log creation to final write",
+      "rust_tests_passed": 0,
+      "rust_tests_failed": 0,
+      "rust_tests_ignored": 0,
+      "log_activity_seconds": 0.342
+    },
+    "clippy": {
+      "timing": "log creation to final write",
+      "rust_tests_passed": 0,
+      "rust_tests_failed": 0,
+      "rust_tests_ignored": 0,
+      "log_activity_seconds": 25.677
+    },
+    "crates": {
+      "timing": "log creation to final write",
+      "rust_tests_passed": 1433,
+      "rust_tests_failed": 0,
+      "rust_tests_ignored": 30,
+      "log_activity_seconds": 566.56
+    },
+    "deny": {
+      "timing": "log creation to final write",
+      "rust_tests_passed": 0,
+      "rust_tests_failed": 0,
+      "rust_tests_ignored": 0,
+      "log_activity_seconds": 1.812
+    },
+    "desktop-typecheck": {
+      "timing": "log creation to final write",
+      "rust_tests_passed": 0,
+      "rust_tests_failed": 0,
+      "rust_tests_ignored": 0,
+      "log_activity_seconds": 0.33
+    },
+    "desktop-tests": {
+      "timing": "log creation to final write",
+      "rust_tests_passed": 0,
+      "rust_tests_failed": 0,
+      "rust_tests_ignored": 0,
+      "log_activity_seconds": 171.813
+    },
+    "static": {
+      "timing": "log creation to final write",
+      "rust_tests_passed": 0,
+      "rust_tests_failed": 0,
+      "rust_tests_ignored": 0,
+      "log_activity_seconds": 4.956
+    }
+  },
+  "cleanup": {
+    "fixture_deleted": true,
+    "target_deleted": true,
+    "desktop_target_deleted": true
+  },
+  "frontend": {
+    "typecheck": "passed",
+    "test_exit_code": 0,
+    "files_passed": 90,
+    "tests_passed": 861,
+    "static_tests_passed": 29
+  },
+  "documentation_neutral_check": "passed"
+}

@@ -1,7 +1,7 @@
 //! API-Fakten, letzte Fehler je URL und Änderungsfeed; keine Zugangsdaten.
 use crate::StoreError;
 use os_model::{ApiValueWrite, Timestamp, UrlId};
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, Transaction, TransactionBehavior};
 
 #[derive(Debug, Clone)]
 pub struct Status {
@@ -89,9 +89,18 @@ pub fn urls(
         .query_map([source], |r| Ok((UrlId(r.get(0)?), r.get(1)?)))?
         .collect::<Result<_, _>>()?)
 }
+/// Markiert bzw. entfernt die API-Fakten einer Quelle nach einer Konfigurationsänderung (INTEG-010).
+///
+/// Liest erst und schreibt dann; deshalb mit `BEGIN IMMEDIATE`: Eine verzögerte Transaktion bekäme beim
+/// Hochstufen auf Schreiben sofort `SQLITE_BUSY` (der Busy-Timeout wirkt dort nicht), solange eine andere
+/// Verbindung die Schreibsperre hält – etwa die WAL-Rückführung nach einer Pause (CRAWL-126). Läuft auf `conn`
+/// bereits eine Transaktion (der Aufrufer speichert die Konfiguration im selben Commit), wird sie mitbenutzt.
+/// Sie muss dann `BEGIN IMMEDIATE` sein oder bereits geschrieben haben, sonst gilt das Hochstufungsproblem erneut.
 pub fn invalidate(conn: &Connection, source: &str, remove: bool) -> Result<bool, StoreError> {
-    let tx = conn.unchecked_transaction()?;
-    let conn = &tx;
+    let tx = conn
+        .is_autocommit()
+        .then(|| Transaction::new_unchecked(conn, TransactionBehavior::Immediate))
+        .transpose()?;
     let exists: bool = conn.query_row(
         "SELECT EXISTS(SELECT 1 FROM api_values WHERE source=?1)",
         [source],
@@ -110,7 +119,9 @@ pub fn invalidate(conn: &Connection, source: &str, remove: bool) -> Result<bool,
         }
         conn.execute("INSERT INTO api_status(source,state,detail) VALUES(?1,'idle',?2) ON CONFLICT(source) DO UPDATE SET detail=excluded.detail",params![source,if remove {None}else{Some("Daten stammen aus einer früheren Konfiguration")}])?;
     }
-    tx.commit()?;
+    if let Some(tx) = tx {
+        tx.commit()?;
+    }
     Ok(exists)
 }
 /// Ersetzt alle Metriken nur der erfolgreich neu angeforderten URL/Quelle (INTEG-009).
@@ -120,7 +131,9 @@ pub fn replace_values(
     successful: &[(UrlId, String)],
     values: &[ApiValueWrite],
 ) -> Result<(), StoreError> {
-    let tx = conn.transaction()?;
+    // IMMEDIATE: ohne erfolgreiche URL und Werte liest die Transaktion zuerst (`change_seq`) und stuft dann hoch
+    // (CRAWL-126, API-Abruf während der Pause und der WAL-Rückführung).
+    let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
     for (id, url) in successful {
         tx.execute(
             "DELETE FROM api_values WHERE url_id=?1 AND source=?2",

@@ -201,34 +201,104 @@ pub fn on_config_changed(
 
 /// Bereitet den Cache beim Öffnen vor; das Lesen einer Sidebar muss danach nur
 /// noch den Feed nachführen. Fremde, laufende Dateien bleiben schreibgeschützt.
+/// UI-145/UI-147: Ein Kaltaufbau wird über die Schreibwarteschlange als verwerfbarer
+/// Cache gespeichert (K-1a); nach dem Öffnen bzw. Abschluss folgen die Overview-/
+/// Issues-Zähler auf ihrer eigenen Spur, nacheinander statt parallel zum ersten View.
 pub fn on_startup(app: &App) {
     app.crawl_events().subscribe(Box::new(|app, event| {
         use crate::runtime::lifecycle_bus::CrawlEvent;
-        let key = match event {
-            CrawlEvent::Opened(key) | CrawlEvent::Started(key) | CrawlEvent::Completed(key) => key,
+        let (key, overview) = match event {
+            CrawlEvent::Opened(key) | CrawlEvent::Completed(key) => (key, true),
+            CrawlEvent::Started(key) => (key, false),
+            CrawlEvent::Closed(key) | CrawlEvent::Cleared(key) => {
+                // A closed crawl must not keep a reader busy with precomputation.
+                if let Some(token) = lock(&app.ext::<Precompute>().0).remove(key) {
+                    token.cancel();
+                }
+                let _ = super::sidebar::cancel_count(app, key);
+                return;
+            }
             _ => return,
         };
         let Some(session) = app.sessions().all().into_iter().find(|s| &s.key == key) else {
             return;
         };
+        if !overview {
+            // A started crawl changes the data: an older count would be discarded anyway.
+            let _ = super::sidebar::cancel_count(app, key);
+        }
+        let token = os_model::CancelToken::new();
+        if let Some(previous) = lock(&app.ext::<Precompute>().0).insert(key.clone(), token.clone())
+        {
+            previous.cancel();
+        }
         let app = app.clone();
         app.handle().spawn(async move {
-            if let Err(error) = app
+            let config = session.config.clone();
+            let export = app
                 .read_pool()
                 .run_cached(
-                    session.key,
+                    session.key.clone(),
                     "sidebar",
-                    Default::default(),
+                    token.clone(),
                     move |file, cancel| {
-                        aggregates::live::refresh_with_cancel(file, &session.config, cancel)
+                        aggregates::live::refresh_with_cancel(file, &config, cancel)?;
+                        aggregates::live::take_export(file)
                     },
                 )
-                .await
-            {
-                tracing::warn!(?error, "Vorberechnung der Sidebar fehlgeschlagen");
+                .await;
+            match export {
+                Ok(Some(export)) => {
+                    // CRAWL-126: no new view-cache write once quitting has begun.
+                    let stored = match crate::quit::cache_ticket(&app) {
+                        None => Ok(false),
+                        Some(ticket) => {
+                            app.write_queue()
+                                .submit_file(&session.key, move |file| {
+                                    if !ticket.open() {
+                                        return Ok(false);
+                                    }
+                                    aggregates::live::persist(file, &export).map_err(|e| {
+                                        CmdError::new(ErrorCode::Store, "err-store")
+                                            .with_detail(e.to_string())
+                                    })
+                                })
+                                .await
+                        }
+                    };
+                    if let Err(error) = stored {
+                        tracing::debug!(?error, "Sidebar-Aggregate nicht gespeichert");
+                    }
+                }
+                Ok(None) => {}
+                Err(error) => tracing::warn!(?error, "Vorberechnung der Sidebar fehlgeschlagen"),
+            }
+            if overview && !token.is_cancelled() {
+                // Quiet precomputation after opening/completion. A waiting Overview/Issues request
+                // starts the visible operation with progress (UI-141) and shares the stored steps.
+                if let Err(error) =
+                    super::sidebar::count_steps(&app, &session, &token, |_, _| {}).await
+                {
+                    tracing::debug!(?error, "Vorberechnung der Übersicht nicht abgeschlossen");
+                }
             }
         });
     }));
+}
+
+/// Bricht die stille Vorberechnung eines Crawls ab (`sidebar.countCancel`, UI-141). Gespeicherte
+/// Schritte bleiben; die nächste Anfrage setzt dort fort.
+pub(crate) fn cancel_precompute(app: &App, key: &CrawlKey) {
+    if let Some(token) = lock(&app.ext::<Precompute>().0).remove(key) {
+        token.cancel();
+    }
+}
+
+/// Abbruchmarken der Hintergrund-Vorberechnung je Crawl.
+#[derive(Default)]
+struct Precompute(std::sync::Mutex<std::collections::HashMap<CrawlKey, os_model::CancelToken>>);
+fn lock<T>(m: &std::sync::Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    m.lock().unwrap_or_else(|p| p.into_inner())
 }
 
 /// Abbildung für `analysis.status` (Command-Besitzer K04). Der Kernvertrag bleibt

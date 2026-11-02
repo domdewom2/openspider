@@ -4,6 +4,7 @@ import { ChevronsRight } from "lucide-react";
 import { Menu, type MenuEntry } from "./Menu";
 import { IconButton } from "./Button";
 import { cx } from "./cx";
+import { usePrefs } from "../../state/prefs";
 
 export const tabId = (panelId: string, id: string) => `${panelId}-tab-${encodeURIComponent(id)}`;
 
@@ -111,6 +112,10 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
   const [dragFrom, setDragFrom] = useState<number | null>(null);
   const selectedIndex = Math.max(0, tabs.findIndex((t) => t.id === selected));
   const alwaysMenu = !!config || !!overflowEntries;
+  const appearance = usePrefs(s => s.appearance);
+  // Parents rebuild their item arrays on live ticks; equal labels do not need
+  // another full DOM/style measurement. Include order and IDs as well as text.
+  const measurementKey = JSON.stringify(tabs.map(t => [t.id, t.label]));
 
   // The latest measurement; one observer per bar calls it (a new observer per render reported "ResizeObserver loop" in WebKit).
   const measureNow = useRef<() => void>(() => undefined);
@@ -145,7 +150,7 @@ export function TabBar({ tabs, selected, onSelect, label, overflowLabel, onReord
       .map((t) => t.dataset.tabId as string);
     setTruncated((old) => (old.length === cut.length && old.every((v, i) => v === cut[i]) ? old : cut));
   };
-  useLayoutEffect(() => { measureNow.current(); }, [tabs, selectedIndex, measure, alwaysMenu, hidden]);
+  useLayoutEffect(() => { measureNow.current(); }, [measurementKey, selectedIndex, measure, alwaysMenu, hidden, className, appearance]);
   useEffect(() => {
     const el = root.current;
     if (!el || typeof ResizeObserver === "undefined") return;

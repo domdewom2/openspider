@@ -7,7 +7,10 @@ use crate::{pool::CrawlKey, session::SessionService, App};
 use std::{
     collections::HashMap,
     path::PathBuf,
-    sync::{atomic::AtomicBool, Arc, Mutex},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc, Mutex,
+    },
     time::Duration,
 };
 use tokio::sync::watch;
@@ -17,6 +20,8 @@ pub(crate) struct Merges(Mutex<HashMap<CrawlKey, Merge>>);
 
 struct Merge {
     cancel: Arc<AtomicBool>,
+    /// A write after the merge's last attempt (e.g. a stop commit) asks for another round.
+    again: Arc<AtomicBool>,
     done: watch::Receiver<bool>,
 }
 
@@ -32,22 +37,26 @@ impl Merges {
     }
 }
 
-/// Starts the merge when the WAL still holds frames; a running merge for the crawl is kept.
+/// Starts the merge when the WAL still holds frames. A running merge for the crawl is kept and does one more round,
+/// so frames written meanwhile (e.g. by a stop from "Paused") are merged as well.
 pub(crate) fn start(app: &App, key: &CrawlKey, path: PathBuf) {
     if os_store::open::wal_bytes(&path) == 0 {
         return;
     }
     let service = app.ext::<SessionService>();
     let mut merges = service.merges.lock();
-    if merges.get(key).is_some_and(|m| !*m.done.borrow()) {
+    if let Some(running) = merges.get(key).filter(|m| !*m.done.borrow()) {
+        running.again.store(true, Ordering::SeqCst);
         return;
     }
     let cancel = Arc::new(AtomicBool::new(false));
+    let again = Arc::new(AtomicBool::new(false));
     let (tx, done) = watch::channel(false);
     merges.insert(
         key.clone(),
         Merge {
             cancel: cancel.clone(),
+            again: again.clone(),
             done,
         },
     );
@@ -55,16 +64,33 @@ pub(crate) fn start(app: &App, key: &CrawlKey, path: PathBuf) {
     let weak = app.downgrade();
     let key = key.clone();
     app.handle().spawn(async move {
-        let merged =
-            tokio::task::spawn_blocking(move || os_store::open::merge_wal(&path, &cancel)).await;
-        match merged {
-            Ok(Ok(_)) => {}
-            Ok(Err(e)) => tracing::warn!(error = %e, "WAL merge failed"),
-            Err(e) => tracing::warn!(error = %e, "WAL merge task failed"),
-        }
-        let _ = tx.send(true);
-        if let Some(app) = weak.upgrade() {
-            finished(&app, &key);
+        loop {
+            let (file, stop) = (path.clone(), cancel.clone());
+            let merged =
+                tokio::task::spawn_blocking(move || os_store::open::merge_wal(&file, &stop)).await;
+            match merged {
+                Ok(Ok(_)) => {}
+                Ok(Err(e)) => tracing::warn!(error = %e, "WAL merge failed"),
+                Err(e) => tracing::warn!(error = %e, "WAL merge task failed"),
+            }
+            let Some(app) = weak.upgrade() else {
+                let _ = tx.send(true);
+                return;
+            };
+            // Serialised with `start` under the map lock: a request for another round is never lost.
+            let ended = {
+                let service = app.ext::<SessionService>();
+                let _merges = service.merges.lock();
+                let ended = cancel.load(Ordering::SeqCst) || !again.swap(false, Ordering::SeqCst);
+                if ended {
+                    let _ = tx.send(true);
+                }
+                ended
+            };
+            if ended {
+                finished(&app, &key);
+                return;
+            }
         }
     });
 }
@@ -144,7 +170,7 @@ pub async fn cancel(app: &App, key: &CrawlKey) {
         let service = app.ext::<SessionService>();
         let merges = service.merges.lock();
         merges.get(key).map(|m| {
-            m.cancel.store(true, std::sync::atomic::Ordering::SeqCst);
+            m.cancel.store(true, Ordering::SeqCst);
             m.done.clone()
         })
     };

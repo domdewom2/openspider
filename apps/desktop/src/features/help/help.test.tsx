@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { createClient, setClient } from "../../ipc/client";
 import { MockCore } from "../../ipc/transport/mock";
 import { registerAction, runAction, hasAction } from "../../ui/actions";
-import { allMenuContributions } from "../../ui/menu/registry";
+import { allMenuContributions, registerMenuContributions } from "../../ui/menu/registry";
 import { buildMenuModel, flattenItems } from "../../ui/menu/build";
 import { makeT, setLanguage } from "../../i18n";
 import { SHORTCUTS, shortcutTable } from "../../ui/shortcuts";
@@ -338,6 +338,31 @@ it("Native Menüaktionen beachten Textfeld- und Dialog-Scopes auch vor dem Menü
     modal.removeAttribute("aria-modal");
     expect(entry()?.enabled).toBe(true);
   } finally { off(); field.remove(); modal.remove(); }
+});
+
+// spec: UI-018
+// spec: UI-145
+it("Menümodelle folgen Fokuswechseln außerhalb des Eingabeereignisses und nicht jedem Live-Tick", async () => {
+  dispose = installMainMenus();
+  const enabled = vi.fn(() => true);
+  const off = registerMenuContributions("n24/probe", [{ menu: "file", group: "n24", order: 99, items: [{ id: "n24.probe", action: "n24.probe", labelKey: "n24-probe", enabled }] }]);
+  const { MenuAvailability } = await import("./MenuAvailability");
+  const field = document.createElement("input");
+  document.body.append(field);
+  try {
+    render(<MenuAvailability />);
+    const crawl = { crawlId: "fixture", mode: "spider" as const, phase: "running" as const, crawled: 10, queued: 90, discovered: 100, percent: 10, rate: 10, avgRate: 10,
+      elapsedS: 1, pausedS: 0, activeThreads: 4, owner: { kind: "app" as const, live: true, controllable: true, pid: 1 } };
+    act(() => useSession.setState({ crawl }));
+    const built = enabled.mock.calls.length;
+    // Progress ticks of a running crawl do not rebuild the status-line menu model.
+    for (let i = 1; i <= 5; i++) act(() => useSession.setState({ crawl: { ...crawl, crawled: 10 + i, percent: 10 + i } }));
+    expect(enabled.mock.calls.length).toBe(built);
+    // A focus change (e.g. a click into another region) rebuilds the menus one task later, not inside the event.
+    act(() => field.focus());
+    expect(enabled.mock.calls.length).toBe(built);
+    await waitFor(() => expect(enabled.mock.calls.length).toBeGreaterThan(built));
+  } finally { off(); field.remove(); }
 });
 
 // spec: UI-002

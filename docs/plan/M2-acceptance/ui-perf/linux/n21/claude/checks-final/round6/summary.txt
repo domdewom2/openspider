@@ -1,0 +1,9 @@
+fmt exit=0 secs=4
+clippy exit=0 secs=17
+crates exit=0 secs=572
+workspace exit=0 secs=1521
+typecheck exit=0 secs=2
+vitest exit=0 secs=102
+bridge exit=0 secs=51
+e2e-sidebar exit=0 secs=43
+CHECKS_DONE

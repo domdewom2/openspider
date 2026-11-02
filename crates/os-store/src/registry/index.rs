@@ -76,7 +76,9 @@ impl MetadataIndex {
 
 fn fingerprint(path: &Path) -> Result<String, StoreError> {
     crate::files::probe_header(path)?;
-    let mut stamp = String::new();
+    // Version of the cached payload: `n28` = `url_count` without auxiliary fetches (UI-061). Entries
+    // written before carry no version and are read again once.
+    let mut stamp = String::from("n28;");
     for p in [path.to_path_buf(), companion(path, "-wal")] {
         match std::fs::metadata(&p) {
             Ok(m) => stamp.push_str(&format!(

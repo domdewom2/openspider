@@ -50,7 +50,10 @@ async fn synthetic_5000_live_details_filter_pause_resume_and_reopen() {
                 .read_pool()
                 .run(key(&first), |f, _| {
                     Ok(f.conn().query_row(
-                        "SELECT COUNT(*) FROM urls WHERE state='done'",
+                        // Wait for the same population as the Internal/HTML view below.
+                        // Completed robots.txt rows are hidden (in_tables=0), so counting
+                        // all done URLs can release the view check with only 199 HTML pages.
+                        "SELECT COUNT(*) FROM urls WHERE state='done' AND is_internal=1 AND in_tables=1 AND content_class='HTML'",
                         [],
                         |r| r.get::<_, u64>(0),
                     )?)

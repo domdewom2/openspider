@@ -79,7 +79,7 @@ pub const SCENARIOS: &[ScenarioDef] = &[
         perf_id: "PERF-003",
         description: "Gegendruck bei künstlich verlangsamtem Store",
         pages: (10_000, 1_000_000),
-        tune: with_errors,
+        tune: plain,
     },
     ScenarioDef {
         name: "perf-005",

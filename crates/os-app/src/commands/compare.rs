@@ -1075,6 +1075,7 @@ pub async fn change_overview(
             to_json(&OverviewDto {
                 summary: super::sidebar::summary_rows(summary),
                 tabs: grouped,
+                age_ms: None,
             })
         })
         .await,

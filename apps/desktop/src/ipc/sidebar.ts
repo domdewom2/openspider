@@ -1,5 +1,6 @@
 // Generiert von scripts/gen-ipc.mjs aus src/ipc/commands.json – nicht von Hand ändern (npm run gen:ipc).
 import type { ApiRow } from "./gen/ApiRow";
+import type { CountStatus } from "./gen/CountStatus";
 import type { IssueExplainArgs } from "./gen/IssueExplainArgs";
 import type { IssueRow } from "./gen/IssueRow";
 import type { IssueText } from "./gen/IssueText";
@@ -21,6 +22,10 @@ export const sidebar = {
   issues: (args: IssuesArgs, signal?: AbortSignal) => client.invoke<IssueRow[]>("sidebar.issues", args, signal),
   /** `sidebar.issueExplain` */
   issueExplain: (args: IssueExplainArgs, signal?: AbortSignal) => client.invoke<IssueText>("sidebar.issueExplain", args, signal),
+  /** `sidebar.countStatus` */
+  countStatus: (signal?: AbortSignal) => client.invoke<CountStatus>("sidebar.countStatus", undefined, signal),
+  /** `sidebar.countCancel` */
+  countCancel: (signal?: AbortSignal) => client.invoke<void>("sidebar.countCancel", undefined, signal),
   /** `sidebar.siteStructure` */
   siteStructure: (args: SiteStructureArgs, signal?: AbortSignal) => client.invoke<SiteStructure>("sidebar.siteStructure", args, signal),
   /** `sidebar.responseTimes` */

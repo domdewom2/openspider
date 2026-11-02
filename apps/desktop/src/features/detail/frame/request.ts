@@ -18,10 +18,14 @@ export function useDetailRequest<T>(key: string, load: (signal: AbortSignal) => 
     const controller = new AbortController();
     let value: T | undefined;
     let waiting = false;
-    let timer: ReturnType<typeof setTimeout>;
-    const schedule = () => { timer = setTimeout(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const run = () => {
       if (!shown.current) { waiting = true; return; }
-      setState(previous => ({ key, loading: true, ...(revision !== undefined && previous.key === key ? { value: previous.value } : {}) }));
+      setState(previous => {
+        const next = { key, loading: true, ...(revision !== undefined && previous.key === key ? { value: previous.value } : {}) };
+        // Keep the same state object when nothing changes: the first request of a freshly mounted panel must not cost another render.
+        return previous.key === key && previous.loading && previous.error === undefined && previous.value === next.value ? previous : next;
+      });
       void load(controller.signal).then(result => {
         if (controller.signal.aborted) { dispose?.(result); return; }
         value = result;
@@ -29,7 +33,14 @@ export function useDetailRequest<T>(key: string, load: (signal: AbortSignal) => 
       }).catch(error => {
         if (!controller.signal.aborted && !isSilentError(error)) setState({ key, error, loading: false });
       });
-    }, urgentRef.current ? 0 : SELECTION_DEBOUNCE_MS); };
+    };
+    // UI-145: an explicit tab click sends its request within the click task (microtask after the commit). A timer
+    // task would queue behind painting and live updates (measured up to 275 ms during a crawl); selection changes
+    // keep the debounce. An effect cleaned up in the same commit (remount) sends nothing.
+    const schedule = () => {
+      if (urgentRef.current) queueMicrotask(() => { if (!controller.signal.aborted) run(); });
+      else timer = setTimeout(run, SELECTION_DEBOUNCE_MS);
+    };
     const wake = () => { if (waiting) { waiting = false; schedule(); } };
     resume.current = wake;
     schedule();

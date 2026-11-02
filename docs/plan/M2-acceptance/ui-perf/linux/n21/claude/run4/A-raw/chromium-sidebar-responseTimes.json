@@ -1,0 +1,19 @@
+{
+  "scenario": "sidebar-responseTimes",
+  "engine": "chromium",
+  "size": "large",
+  "started_at": "2026-10-31T20:51:34.980Z",
+  "metrics": {
+    "ms": {
+      "value": 7.600000008940697,
+      "budget": 1000,
+      "completed": true,
+      "passed": true
+    }
+  },
+  "details": {
+    "error": "",
+    "scope": "Core RPC, excluding UI paint"
+  },
+  "passed": true
+}

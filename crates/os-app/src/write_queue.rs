@@ -6,6 +6,15 @@
 //! `SQLITE_BUSY` zu scheitern. Die Datei wird nie migriert: ein Schema, das nicht dem der App entspricht, ist ein
 //! Fehler (die Engine migriert beim Öffnen).
 //!
+//! Hintergrund-Verwaltung (M2-N31): Aufträge, die keine registrierte Crawl-Datei beschreiben und nicht auf eine Antwort
+//! des Nutzers warten (Aufbewahrung beim Start und stündlich, OUT-229), laufen über [`WriteQueue::submit_maintenance`]
+//! auf einer eigenen Wartungsspur mit eigenem Thread. Ein Nutzerauftrag der Hauptspur (`config.set`, Segmente,
+//! View-Cache …) wartet daher nie hinter einer langen Verwaltungsrunde; untereinander bleiben die Wartungsaufträge
+//! strikt geordnet. [`WriteQueue::flush`] wartet nur auf die Hauptspur.
+//! Beenden (`quit::drain`, CRAWL-126) wartet ebenfalls nur auf die Hauptspur, nicht auf eine laufende Aufbewahrungsrunde:
+//! Eine abgebrochene Runde ist absturzsicher (Löschen = Checkpoint, Datei entfernen, Indexeintrag; der Index liegt im
+//! WAL, `list()` räumt Einträge ohne Datei auf) und wird beim nächsten Start wiederholt.
+//!
 //! Dies ist neben `pool` die einzige Datei von `os-app`, in der `rusqlite` direkt benannt werden darf.
 #![allow(clippy::disallowed_types, clippy::disallowed_methods)]
 
@@ -100,6 +109,49 @@ pub struct WriteQueue {
     tx: Mutex<Option<mpsc::Sender<Msg>>>,
     thread: Mutex<Option<std::thread::JoinHandle<()>>>,
     paths: Registry,
+    maintenance: Lane,
+}
+
+type Task = Box<dyn FnOnce() + Send>;
+
+/// Wartungsspur: eigener Thread, Aufträge strikt in Einreihungsreihenfolge, unabhängig von der Hauptspur.
+struct Lane {
+    tx: Mutex<Option<mpsc::Sender<Task>>>,
+    thread: Mutex<Option<std::thread::JoinHandle<()>>>,
+}
+
+impl Lane {
+    fn start(name: &str) -> Lane {
+        let (tx, rx) = mpsc::channel::<Task>();
+        let thread = std::thread::Builder::new()
+            .name(name.into())
+            .spawn(move || {
+                while let Ok(task) = rx.recv() {
+                    task();
+                }
+            })
+            .ok();
+        Lane {
+            tx: Mutex::new(Some(tx)),
+            thread: Mutex::new(thread),
+        }
+    }
+
+    fn send(&self, task: Task) -> bool {
+        let guard = self.tx.lock().unwrap_or_else(|p| p.into_inner());
+        guard.as_ref().is_some_and(|tx| tx.send(task).is_ok())
+    }
+
+    /// Schließt die Spur; der Thread beendet sich nach den bereits eingereihten Aufträgen.
+    fn shutdown(&self) {
+        self.tx.lock().unwrap_or_else(|p| p.into_inner()).take();
+        let handle = self.thread.lock().unwrap_or_else(|p| p.into_inner()).take();
+        if let Some(h) = handle {
+            if h.thread().id() != std::thread::current().id() {
+                let _ = h.join();
+            }
+        }
+    }
 }
 
 impl std::fmt::Debug for WriteQueue {
@@ -172,6 +224,7 @@ impl WriteQueue {
             tx: Mutex::new(Some(tx)),
             thread: Mutex::new(thread),
             paths,
+            maintenance: Lane::start("os-app-maintenance"),
         }
     }
 
@@ -266,6 +319,35 @@ impl WriteQueue {
             .map_err(|_| internal("WriteQueue::submit_admin", "Auftrag verworfen"))?
     }
 
+    /// Führt einen Verwaltungsauftrag im Hintergrund auf der Wartungsspur aus (eigener Thread, M2-N31).
+    ///
+    /// Für Arbeit, auf die kein Nutzer wartet und die keine registrierte Crawl-Datei beschreibt (Aufbewahrung,
+    /// OUT-229). Aufträge der Hauptspur ([`submit`](Self::submit), [`submit_file`](Self::submit_file),
+    /// [`submit_admin`](Self::submit_admin)) überholen einen laufenden Wartungsauftrag; Wartungsaufträge laufen
+    /// untereinander strikt in Einreihungsreihenfolge.
+    pub async fn submit_maintenance<T: Send + 'static>(
+        &self,
+        f: impl FnOnce() -> Result<T, CmdError> + Send + 'static,
+    ) -> Result<T, CmdError> {
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        if !self.maintenance.send(Box::new(move || {
+            let result = std::panic::catch_unwind(AssertUnwindSafe(f)).unwrap_or_else(|p| {
+                Err(internal(
+                    "WriteQueue::submit_maintenance",
+                    panic_text(p.as_ref()),
+                ))
+            });
+            let _ = tx.send(result);
+        })) {
+            return Err(internal(
+                "WriteQueue::submit_maintenance",
+                "Warteschlange geschlossen",
+            ));
+        }
+        rx.await
+            .map_err(|_| internal("WriteQueue::submit_maintenance", "Auftrag verworfen"))?
+    }
+
     /// Die Closure muss jede selbst eröffnete Transaktion vor der Rückkehr committen oder zurückrollen;
     /// sie darf keine Transaktion offen lassen (auch nicht im Fehlerfall).
     /// Datei-Auftrag, strikt mit SQL- und Verwaltungsaufträgen serialisiert, ohne implizite Migration.
@@ -315,7 +397,7 @@ impl WriteQueue {
             .map_err(|_| internal("WriteQueue::submit_file", "Auftrag verworfen"))?
     }
 
-    /// Wartet, bis alle bisher eingereihten Aufträge gelaufen sind.
+    /// Wartet, bis alle bisher eingereihten Aufträge der Hauptspur gelaufen sind (die Wartungsspur zählt nicht).
     pub async fn flush(&self) {
         let (tx, rx) = tokio::sync::oneshot::channel::<()>();
         if self.send(Msg::Job(Box::new(move |_w: &mut Worker| {
@@ -325,7 +407,7 @@ impl WriteQueue {
         }
     }
 
-    /// Beendet den Thread nach den eingereihten Aufträgen und schließt alle Verbindungen.
+    /// Beendet beide Threads nach den eingereihten Aufträgen und schließt alle Verbindungen.
     pub fn shutdown(&self) {
         let _ = self.send(Msg::Close);
         self.tx.lock().unwrap_or_else(|p| p.into_inner()).take();
@@ -335,6 +417,7 @@ impl WriteQueue {
                 let _ = h.join();
             }
         }
+        self.maintenance.shutdown();
     }
 }
 

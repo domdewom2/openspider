@@ -1,0 +1,16 @@
+{
+  "scenario": "test-failure-147",
+  "engine": "chromium",
+  "size": "large",
+  "started_at": "2026-10-31T15:46:58.036Z",
+  "metrics": {},
+  "passed": false,
+  "details": {
+    "title": "ten seconds vertical and horizontal 65-column scrolling and end jump",
+    "errors": [
+      "Error: {\"jumpMs\":{\"value\":5056,\"budget\":150,\"direction\":\"max\",\"passed\":false},\"domRows\":{\"value\":28,\"budget\":299,\"direction\":\"max\",\"passed\":true},\"cachedRows\":{\"value\":2000,\"budget\":20000,\"direction\":\"max\",\"passed\":true},\"verticalFps\":{\"value\":60.002196419835656,\"budget\":55,\"direction\":\"min\",\"passed\":true},\"verticalMaxFrameMs\":{\"value\":16.80000000000291,\"budget\":50,\"direction\":\"max\",\"passed\":true},\"horizontalFps\":{\"value\":60.002196419835734,\"budget\":55,\"direction\":\"min\",\"passed\":true},\"horizontalMaxFrameMs\":{\"value\":16.80000000000291,\"budget\":50,\"direction\":\"max\",\"passed\":true},\"jumpReady\":{\"value\":0,\"budget\":1,\"direction\":\"min\",\"passed\":false},\"jumpVisible\":{\"value\":1,\"budget\":1,\"direction\":\"min\",\"passed\":true},\"columns\":{\"value\":65,\"budget\":65,\"direction\":\"min\",\"passed\":true}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m"
+    ],
+    "original_report_timestamp": "2026-10-31T15:48:50.112Z",
+    "timestamp_alignment": "Playwright TestResult.startTime: playwright-named.json"
+  }
+}

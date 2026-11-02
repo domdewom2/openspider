@@ -98,3 +98,27 @@ test("keeps the selected issue and refreshes its core explanation when the title
   await expect(explanation).toContainText("limit of 65 characters");
   await expect(explanation).not.toContainText("limit of 60 characters");
 });
+
+// spec: UI-141
+// spec: UI-145
+test("first filter count shows tab progress after 300 ms and cancels on request", async ({ page }) => {
+  let release: (() => void) | undefined;
+  let status = { running: true, done: 9, total: 31 };
+  bridge.core.handlers.set("sidebar.overview", () => new Promise(resolve => { release = () => resolve(fixture.overview); }));
+  bridge.core.handlers.set("sidebar.countStatus", () => status);
+  bridge.core.handlers.set("sidebar.countCancel", () => { status = { ...status, running: false }; release?.(); return null; });
+  await page.reload();
+  await expect(page.locator('[data-sidebar-ready="true"]')).toBeVisible();
+  const sidebar = page.getByRole("complementary", { name: "Sidebar" });
+  // The reloaded page learns the open crawl from the next tick; repeat it until applied.
+  let seq = tick.seq + 100;
+  await expect(async () => {
+    bridge.core.emit("main", { kind: "tick", tick: { ...tick, seq: ++seq } as Tick });
+    await expect(sidebar.getByText("Counting filters: 9 of 31 tabs")).toBeVisible({ timeout: 1000 });
+  }).toPass();
+  await expect(sidebar.getByRole("progressbar", { name: "Filter counting progress" })).toHaveAttribute("aria-valuenow", "9");
+  await sidebar.getByRole("button", { name: "Cancel", exact: true }).click();
+  await expect.poll(() => bridge.core.calls.filter(c => c.cmd === "sidebar.countCancel").length).toBe(1);
+  await expect(sidebar.getByText(/Counting filters/)).toHaveCount(0);
+  await expect(sidebar.getByRole("table", { name: "Summary" })).toBeVisible();
+});

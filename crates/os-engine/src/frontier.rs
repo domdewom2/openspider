@@ -305,6 +305,10 @@ pub struct Core {
     /// Listenmodus (CRAWL-028): Das Tiefenlimit gilt streng, auch für Ressourcen und externe Prüfungen der
     /// letzten Ebene, und die Einträge einer Sitemap sind Listen-URLs der Tiefe 0.
     pub list_mode: bool,
+    /// Hilfsabrufe ohne Tabellen-Sichtbarkeit im Seen-Set (robots.txt-Zeilen, K-54; Sitemap-Dateien, K-40). Sie
+    /// zählen nicht als gefundene URLs (UI-061, CRAWL-130; gleiche Definition wie
+    /// `os_store::counters::encountered`). Eine Kennung je Host bzw. Sitemap-Datei.
+    pub auxiliary: std::collections::HashSet<UrlId>,
 }
 
 impl Core {
@@ -380,6 +384,7 @@ impl Core {
             sitemap_keys: std::collections::HashSet::new(),
             sitemap_hreflang_next: HashMap::new(),
             list_mode: false,
+            auxiliary: std::collections::HashSet::new(),
         }
     }
 
@@ -455,9 +460,9 @@ impl Core {
             .begin_job(self.next_seq, std::time::Instant::now())
     }
 
-    /// Anzahl bekannter URLs.
+    /// Anzahl gefundener URLs (`Total URLs Encountered`, UI-061): bekannte URLs ohne verborgene Hilfsabrufe.
     pub fn discovered(&self) -> u64 {
-        self.seen.len() as u64
+        (self.seen.len() as u64).saturating_sub(self.auxiliary.len() as u64)
     }
 
     /// Geschätzte Größe der Kernstrukturen für die Speicherzähler (`diag`, M1-P33).
@@ -713,6 +718,8 @@ impl Core {
                     && !self.respect_hidden.contains(&id)
                 {
                     e.flags |= F_IN_TABLES;
+                    // Eine verlinkte robots.txt/Sitemap-Datei wird angezeigt und zählt damit als gefunden.
+                    self.auxiliary.remove(&id);
                     batch
                         .url_updates
                         .push(UrlUpdate::InTables { id, value: true });
@@ -757,6 +764,7 @@ impl Core {
                 if adm.in_tables && e.flags & F_IN_TABLES == 0 && !self.respect_hidden.contains(&id)
                 {
                     e.flags |= F_IN_TABLES;
+                    self.auxiliary.remove(&id);
                     batch
                         .url_updates
                         .push(UrlUpdate::InTables { id, value: true });

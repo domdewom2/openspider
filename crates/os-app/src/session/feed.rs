@@ -17,7 +17,13 @@ pub(crate) struct Cursor {
     pending: Option<ChangeSet>,
     pub(super) status: Option<CrawlStatus>,
     memory_throttled: bool,
-    delays: std::collections::HashMap<String, (f64, bool)>,
+    /// Crawl-delay notices already pushed per origin, `(seconds, applied)`. Shared by every clone of the
+    /// cursor, so concurrent refreshes (poll and control paths, e.g. around a resume) push each notice once
+    /// (M2-N28, CRAWL-145). It lives as long as the cursor: pause and resume keep it.
+    delays: Arc<std::sync::Mutex<std::collections::HashMap<String, (f64, bool)>>>,
+    /// Parsed `Crawl-delay` per origin (`None`: none for the effective agent). A stored robots.txt does not
+    /// change during a crawl; each origin is read and parsed once, not on every data version (UI-145).
+    robots: Arc<std::sync::Mutex<std::collections::HashMap<String, Option<f64>>>>,
 }
 #[derive(Clone, Debug)]
 pub struct ChangeSet {
@@ -127,7 +133,10 @@ pub async fn snapshot(
                     live,
                     controllable: !live || pid == Some(std::process::id()),
                 };
-                let urls = os_store::queries::session_counts(f.conn())?.discovered;
+                // UI-147: opening needs only the URL total. Do not scan crawled
+                // rows (including their table payload) for counters discarded here.
+                // UI-061/CRAWL-130: the same total as Overview, report and status bar.
+                let urls = os_store::counters::encountered(f.conn())?;
                 let file_bytes = std::fs::metadata(f.path())
                     .map_err(|e| os_store::StoreError::Io {
                         path: f.path().to_path_buf(),
@@ -162,13 +171,14 @@ pub async fn snapshot(
 
 pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
     let service = app.ext::<SessionService>();
+    // The entry is created here, so concurrent first refreshes share its notice state (`Cursor::delays`).
     let mut old = service
         .feeds
         .lock()
         .unwrap_or_else(|p| p.into_inner())
-        .get(&s.key)
-        .cloned()
-        .unwrap_or_default();
+        .entry(s.key.clone())
+        .or_default()
+        .clone();
     let now = app.config().clock.monotonic();
     if old
         .last
@@ -341,21 +351,44 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
     let changed = old.last.is_none() || old.seq != seq || old.reset != reset;
     if changed {
         let token = os_fetch::user_agents::resolve(&s.config.user_agent).robots_token;
+        let known: Vec<String> = old
+            .robots
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .keys()
+            .cloned()
+            .collect();
         let bodies = app
             .read_pool()
             .run_cached(
                 s.key.clone(),
                 "session-feed",
                 crate::runtime::current_cancel(),
-                |f, _| os_analyze::aggregates::status::robots_bodies(f),
+                move |f, _| os_analyze::aggregates::status::robots_bodies(f, &known),
             )
             .await?;
-        for (origin, body) in bodies {
-            let Some(seconds) = os_fetch::robots::parse(&body).crawl_delay(&token) else {
-                continue;
-            };
-            let applied = s.config.robots.respect_crawl_delay;
-            if old.delays.insert(origin.clone(), (seconds, applied)) != Some((seconds, applied)) {
+        let delays: Vec<(String, f64)> = {
+            let mut robots = old.robots.lock().unwrap_or_else(|p| p.into_inner());
+            for (origin, body) in bodies {
+                let delay = os_fetch::robots::parse(&body).crawl_delay(&token);
+                robots.insert(origin, delay);
+            }
+            let mut delays: Vec<_> = robots
+                .iter()
+                .filter_map(|(origin, delay)| delay.map(|seconds| (origin.clone(), seconds)))
+                .collect();
+            delays.sort_by(|a, b| a.0.cmp(&b.0));
+            delays
+        };
+        let applied = s.config.robots.respect_crawl_delay;
+        for (origin, seconds) in delays {
+            let fresh = old
+                .delays
+                .lock()
+                .unwrap_or_else(|p| p.into_inner())
+                .insert(origin.clone(), (seconds, applied))
+                != Some((seconds, applied));
+            if fresh {
                 app.push_notice(Notice {
                     level: NoticeLevel::Info,
                     code: "crawl-delay".into(),

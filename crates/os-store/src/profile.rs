@@ -178,6 +178,43 @@ pub fn read(conn: &Connection) -> Result<AppliedPragmas, StoreError> {
     })
 }
 
+#[cfg(target_os = "macos")]
+#[link(name = "System")]
+unsafe extern "C" {
+    // Public SDK API since macOS 10.7; not declared by the locked libc 0.2.190.
+    fn malloc_zone_pressure_relief(
+        zone: *mut libc::malloc_zone_t,
+        goal: libc::size_t,
+    ) -> libc::size_t;
+}
+
+/// Bittet den Systemallocator um Rückgabe bereits freigegebener Heap-Seiten.
+///
+/// Best effort nach großen Crawl-Batches (PERF-003); aktive Allokationen und die
+/// SQLite-Cacheprofile bleiben erhalten. `true` bedeutet, dass die native API
+/// eine Freigabe gemeldet hat. Auf anderen Plattformen geschieht nichts.
+/// GNU: <https://man7.org/linux/man-pages/man3/malloc_trim.3.html>.
+/// macOS: <https://github.com/apple-oss-distributions/libmalloc/blob/main/include/malloc/malloc.h>.
+pub fn release_system_heap() -> bool {
+    #[cfg(all(target_os = "linux", target_env = "gnu"))]
+    {
+        // SAFETY: malloc_trim ist MT-Safe und gibt nur unbenutzte Seiten zurück;
+        // pad=0 benötigt keinen vom Aufrufer verwalteten Speicher.
+        unsafe { libc::malloc_trim(0) != 0 }
+    }
+    #[cfg(target_os = "macos")]
+    {
+        // SAFETY: Die SDK-API erlaubt NULL für alle registrierten Zonen und 0
+        // für maximale Entlastung. Verwaltung/Synchronisation übernimmt malloc;
+        // es werden keine Rust-Zeiger übergeben oder aktive Werte freigegeben.
+        unsafe { malloc_zone_pressure_relief(std::ptr::null_mut(), 0) > 0 }
+    }
+    #[cfg(not(any(all(target_os = "linux", target_env = "gnu"), target_os = "macos")))]
+    {
+        false
+    }
+}
+
 /// Physischer Arbeitsspeicher in Bytes; `None`, wenn er nicht ermittelbar ist.
 #[cfg(unix)]
 pub fn physical_ram_bytes() -> Option<u64> {

@@ -350,10 +350,12 @@ Summe: 154 Funktionen (P0: 28, P1: 102, P2: 24). Davon sind 6 Einträge Verweis-
 - **Beschreibung:** Werden GA4- oder Search-Console-Einstellungen geändert, die die Daten beeinflussen (Property, Zeitraum, Metriken, Dimension, Filter, Suchtyp), fragt OpenSpider, ob vorhandene Daten dieser Integration gelöscht und neu geladen werden sollen.
 - **Eingaben/Konfiguration:** Dialog mit „Löschen und neu laden" / „Behalten".
 - **Ausgabe:** Bei „Behalten" wird im Tab ein Hinweis angezeigt, dass die Daten nicht der aktuellen Konfiguration entsprechen.
+- **OS-Festlegung (Entscheidung (Fable-Empfehlung) vom 01.11.2026):** Die geänderte Konfiguration und die Invalidierung der betroffenen API-Daten („Löschen und neu laden“: Entfernen der Werte; „Behalten“: Hinweis „Daten stammen aus einer früheren Konfiguration“) werden in **einem** Commit der Crawl-Datei gespeichert. Es gibt keinen dauerhaften Zustand, in dem die neue Konfiguration ohne Hinweis bzw. ohne Löschung vorliegt. Scheitert der Commit (etwa an einer Sperre), bleibt die alte Konfiguration vollständig erhalten und der Dialog meldet den Fehler.
 - **Akzeptanzkriterien:**
   - [ ] Änderung des GA4-Zeitraums nach einem Crawl löst den Dialog aus; „Löschen und neu laden" entfernt alle GA4-Werte und lädt sie mit dem neuen Zeitraum.
   - [ ] Reine UI-Änderungen (z. B. Spaltenreihenfolge) lösen keinen Dialog aus.
   - [ ] Bei „Behalten" bleiben die Werte unverändert und der Hinweis „Daten stammen aus einer früheren Konfiguration" ist sichtbar.
+  - [ ] Eine Einstellungsänderung, die während der WAL-Rückführung (CRAWL-126) oder einer kurzen fremden Schreibsperre gespeichert wird, wartet im Busy-Timeout statt zu scheitern; danach sind Konfiguration und Hinweis bzw. Löschung gemeinsam gespeichert.
 - **Testfixture:** gespeicherter Crawl mit GA4-Mockdaten; Mock liefert pro Zeitraum unterschiedliche Sessions.
 
 ### INTEG-011 Automatisch verbinden beim Start
