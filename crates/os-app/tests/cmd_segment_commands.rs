@@ -111,8 +111,31 @@ async fn command_fixture_roundtrip_preview_save_validate_reassign_delete() {
         0
     );
 }
+/// `change_seq` der Crawl-Datei (Änderungsfeed).
+fn change_seq(file: &CrawlFile) -> u64 {
+    file.get_meta("change_seq")
+        .unwrap()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0)
+}
+/// Wartet auf den Abschluss des automatischen Zuordnungsauftrags für einen Stand nach `seq`: der Auftrag schreibt
+/// `segments.assignment_seq` in derselben Transaktion wie die Zuordnung (M2-N31). Die Grenze ist nur Hängeschutz;
+/// das Warten endet auf das Ereignis, und der Aufrufer misst die verstrichene Zeit selbst.
+async fn assignment_after(file: &CrawlFile, seq: u64) {
+    let assigned = || {
+        file.get_meta("segments.assignment_seq")
+            .unwrap()
+            .and_then(|s| s.parse::<u64>().ok())
+            .is_some_and(|assigned| assigned > seq)
+    };
+    assert!(
+        common::eventually(Duration::from_secs(60), assigned).await,
+        "automatic segment assignment never completed after change_seq {seq}"
+    );
+}
 // spec: UI-067 [P1]
 // spec: UI-020 [P1]
+// spec: CRAWL-134
 #[tokio::test]
 async fn sidebar_and_automatic_new_url_assignment_consume_saved_definitions() {
     let dir = tempfile::tempdir().unwrap();
@@ -130,16 +153,22 @@ async fn sidebar_and_automatic_new_url_assignment_consume_saved_definitions() {
     assert!(rows[1]["name"].is_null());
     assert_eq!(rows[1]["urls"], 2);
     file.conn().execute_batch("INSERT INTO urls(id,url,address,origin,is_internal,state,discovered_via,folder_depth,url_length) VALUES(4,'https://site.test/new/b','https://site.test/new/b','https://site.test',1,'done','link',0,28); UPDATE crawl_meta SET value=CAST(value AS INTEGER)+1 WHERE key='change_seq'").unwrap();
+    let saved = std::time::Instant::now();
+    let seq = change_seq(&file);
+    assignment_after(&file, seq).await;
+    let elapsed = saved.elapsed();
+    assert!(file
+        .conn()
+        .query_row(
+            "SELECT EXISTS(SELECT 1 FROM url_segments WHERE url_id=4)",
+            [],
+            |r| r.get::<_, bool>(0)
+        )
+        .unwrap());
+    // CRAWL-134: a new URL is assigned at most 1 s after it was saved.
     assert!(
-        common::eventually(Duration::from_secs(1), || file
-            .conn()
-            .query_row(
-                "SELECT EXISTS(SELECT 1 FROM url_segments WHERE url_id=4)",
-                [],
-                |r| r.get::<_, bool>(0)
-            )
-            .unwrap())
-        .await
+        elapsed <= Duration::from_secs(1),
+        "automatic assignment took {elapsed:?}"
     );
     assert_eq!(
         file.conn()
