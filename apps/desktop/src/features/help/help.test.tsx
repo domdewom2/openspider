@@ -15,6 +15,7 @@ import { HelpDialogs, ShortcutHelp, DebugHelp } from "./HelpDialogs";
 import { installMainMenus } from "./install";
 import { loadRecent, normalizeRecent } from "./recent";
 import { useHelp } from "./state";
+import { feedbackUrl } from "./feedback";
 let core: MockCore;
 let dispose: (() => void) | undefined;
 beforeEach(() => {
@@ -288,6 +289,35 @@ it("Das Handbuch verwendet in Tauri den nativen Command", async () => {
   dispose = installMainMenus();
   runAction("help.manual", { source: "menu" });
   await waitFor(() => expect(core.calls.some(call => call.cmd === "open_manual")).toBe(true));
+  expect(open).not.toHaveBeenCalled();
+});
+
+// spec: UI-130
+it("Feedback-URL enthält App-Version, Sprache und Sprungmarke; Sonderzeichen bleiben im Query-Wert", () => {
+  expect(feedbackUrl("de", "1.0.0-beta.2")).toBe("https://openspider.de/beta/?version=1.0.0-beta.2#feedback");
+  expect(feedbackUrl("en", "1.0.0-beta.2")).toBe("https://openspider.de/en/beta/?version=1.0.0-beta.2#feedback");
+  expect(feedbackUrl("fr", " 1.0 &x=#y ")).toBe("https://openspider.de/en/beta/?version=1.0+%26x%3D%23y#feedback");
+  expect(feedbackUrl("de", null)).toBe("https://openspider.de/beta/#feedback");
+});
+
+// spec: UI-130
+it("Hilfe → Feedback geben öffnet die Beta-Seite der Oberflächensprache mit der App-Version im Standardbrowser", async () => {
+  setClient(createClient({ ...core.transport(), name: "tauri" }));
+  core.handlers.set("browser_open", () => undefined);
+  const open = vi.spyOn(window, "open").mockReturnValue(null);
+  for (const [lang, label, url] of [
+    ["de", "Feedback geben…", "https://openspider.de/beta/?version=0.1.0#feedback"],
+    ["en", "Send feedback…", "https://openspider.de/en/beta/?version=0.1.0#feedback"],
+  ] as const) {
+    await setLanguage(lang);
+    dispose = installMainMenus();
+    const help = buildMenuModel(allMenuContributions(), { platform: "mac", lang, t: makeT(lang), ctx: {}, native: false }).menus.find(menu => menu.id === "help")!;
+    expect(help.items.find(item => item.id === "help.feedback")).toMatchObject({ label: label, enabled: true });
+    core.calls.length = 0;
+    runAction("help.feedback", { source: "menu" });
+    await waitFor(() => expect(core.calls.find(call => call.cmd === "browser_open")?.args).toEqual({ urls: [url] }));
+    dispose(); dispose = undefined;
+  }
   expect(open).not.toHaveBeenCalled();
 });
 
