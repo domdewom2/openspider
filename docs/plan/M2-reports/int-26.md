@@ -74,6 +74,28 @@ CI und ui-e2e des Integrationsbaums (`41ae1fb3`; erste Läufe auf `a391962e` weg
 
 `n04-live:74` war auf linux-webkit zuvor im Integrationslauf grün (N27 allein, N28 allein, N30) und ist auch auf `m2/n31` (`940b310f`, enthält N27+N28+N30) in beiden Versuchen rot. Schon vor int-26 war n04-live im ersten Versuch rot (main `ef543f55`, n25 `f585094f`) und erst im Retry grün; der Test ist also vorbelastet, int-26 hat die Rate deutlich verschlechtert. Behandlung als Regression der Runde, nicht als Flake: Ursachensuche per Bisect auf dem Server, Fix M2-FIX-LIVE (Budget unverändert, K2-63).
 
+CI und ui-e2e des finalen Stands (FIX-LIVE und Bericht `354388d2`, dazu `f0b31b23` cargo-deny):
+
+| Lauf | Stand | Ergebnis |
+|---|---|---|
+| CI 41431753725 | `354388d2` | alle Jobs grün außer cargo-deny: neues Advisory RUSTSEC-2026-0429 (zip 8.6.0, `ZipArchive::extract`, veröffentlicht 22.10., trifft main ebenso) |
+| CI 41442098727 | `f0b31b23` | grün (alle Jobs ohne Intel) |
+| ui-e2e 41431695026 Versuch 1 | `354388d2` | linux-webkit (inkl. `n04-live:74`), macos-webkit, windows-chromium grün; linux-chromium rot: `beta/detail-during-crawl.spec.ts:11`, Versuch 1 `externalMs` 368 ms (Grenze 300), Retry `err-view-stale` |
+| ui-e2e 41431695026 Versuch 2 (Job-Rerun) | `354388d2` | grün auf allen vier Plattformen (linux-chromium 493 bestanden) |
+
+cargo-deny: Ausnahme RUSTSEC-2026-0429 mit derselben Begründung wie RUSTSEC-2026-0367/-0368/-0369 (zip 8 nur transitiv über calamine 0.36.1, `extract` nicht erreichbar, K-82). Neu ist: calamine 0.38.0 verwendet zip ^9; der Wechsel ist Folgepaket M2-N33 und hebt alle vier zip-Ausnahmen auf.
+
+`detail-during-crawl:11` (Server, Chromium, Kopie des Tests mit Protokoll der Stufe, Erwartungen unverändert):
+
+| Stand | Bedingung | `err-view-stale` | `externalMs` ≥ 300 ms |
+|---|---|---|---|
+| int-26 | 20×, 1 Worker | 0 | 0/20 |
+| int-26 | 40×, 1 Worker, 2 Kerne | 0 | 0/40 |
+| int-26 / main | 40×, 1 Worker, 1 Kern | 0 / 0 | 6/40 / 2/40 |
+| int-26 / main | 40×, 4 Worker auf 2 Kernen | 1 / 2 | 28/37 / 22/36 |
+
+Keine Regression der Runde: `err-view-stale` kommt in beiden Ständen immer aus `view.rows` auf dem External-Handle (`crates/os-app/src/commands/view.rs:1259–1260`, Versionsvergleich). Die Pflege der Tab-View aus dem Änderungsfeed (`views/mod.rs` `maintain_locked`) erhöht die Version, wenn der Crawl zwischen Öffnen und erstem Lesen schreibt; unter Last ist dieses Fenster 380–560 ms groß. Beide Dateien sind zwischen main und int-26 unverändert. Das Produktverhalten entspricht UI-142 (veraltete Antworten werden verworfen); der Test erwartet mehr, als die Spec zusichert. Folgepaket M2-N34 (Spec-Frage, siehe Folgearbeiten); die 300-ms-Grenze reißt unter Last auf beiden Ständen (Spec-Frage Zeitbudgets, M2-N32).
+
 ### Bisect n04-live (Server, Diagnosekopie, 4 Kerne/2 Worker, 10 Läufe je Stand)
 
 | Stand | Nachlauf > 1000 ms | Nachlauf Median / Max | Main-Thread-Blockaden ≥ 500 ms |
@@ -121,3 +143,5 @@ Server-Gates auf `d0ea1bf0` (Rust unverändert gegenüber `41ae1fb3`, daher kein
 - M2-N32 „Live-Latenz Detailfenster“ (`view.open` Inlinks/Outlinks im Live-Crawl 300–600 ms, unter Last 1,8 s, Ziel UI-145 150 ms erste Seite; erst messen, dann erste Seite ohne Gesamtzahl, Renderlast senken; Abnahme im Release-Build auf Referenzhardware, n04-live linux-webkit 10 Läufe). Wortlaut in `M2-backlog.md` Abschnitt 9.
 - Flaky `e2e/polish/visual-heights.spec.ts:81/87` (Dashboard-Kennzahlen „–“), Zusammenhang mit N27 möglich, nicht untersucht.
 - Spec-Frage Zeitbudgets (Fable-Empfehlung, wartet auf Nutzerbestätigung, Spec unverändert): UI-145/UI-143/PERF-004 gelten im Release-Build auf der Referenzhardware (`docs/spec/07-performance.md`); E2E gegen den Dev-Server ist Regressions-Smoke mit eigenen Schwellen.
+- M2-N33 calamine 0.36.1 → 0.38.0 (zip 9), danach die vier zip-Ausnahmen in `deny.toml` streichen.
+- M2-N34 `detail-during-crawl.spec.ts:11` liest ein frisch geöffnetes External-Handle roh, während der Crawl schreibt; `err-view-stale` ist nach UI-142 zulässig. Entscheidung offen (K2-63, kein Lockern ohne Spec): entweder reagiert der Test wie die UI auf Stale (neu öffnen, `externalMs` bis zur ersten gelesenen Seite), oder die Spec sichert zu, dass ein Handle bis zum ersten `rows` lesbar bleibt.
