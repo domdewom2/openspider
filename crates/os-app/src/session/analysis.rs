@@ -200,7 +200,8 @@ async fn execute(
     let a = app.clone();
     let key = s.key.clone();
     let clock = app.config().clock.clone();
-    app.write_queue()
+    let outcome = app
+        .write_queue()
         .submit_file(&s.key, move |f| {
             let options = runner::RunOptions {
                 clock: clock.as_ref(),
@@ -260,7 +261,12 @@ async fn execute(
             }
             Ok(outcome)
         })
-        .await
+        .await;
+    // CRAWL-141 Ablaufpunkt 7: the final checkpoint waited at most 100 ms for readers. Frames it left (and later
+    // writes such as the incomplete state) are merged in the background like after a pause (CRAWL-126). Still under
+    // the lifecycle guard, so a resume afterwards cancels this merge before the engine writes again.
+    super::merge::start(app, &s.key, s.path.clone());
+    outcome
 }
 async fn wait_cancel(cancel: &CancelToken) {
     while !cancel.is_cancelled() {

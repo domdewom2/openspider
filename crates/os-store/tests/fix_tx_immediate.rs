@@ -188,3 +188,41 @@ fn serp_edit_waits_for_a_held_write_lock_instead_of_failing_busy() {
     assert!(matches!(result, Ok(true)), "{result:?} after {waited:?}");
     assert!(waited >= HOLD / 2, "waited only {waited:?} for the lock");
 }
+
+// spec: CRAWL-126
+// spec: INTEG-009
+#[test]
+fn replace_values_waits_for_a_held_write_lock() {
+    // Randfall ohne erfolgreiche URL und ohne Werte: Die Transaktion liest zuerst `change_seq` und schreibt dann.
+    // Verzögert bekäme sie beim Hochstufen sofort `SQLITE_BUSY`; mit `BEGIN IMMEDIATE` wartet sie auf die Sperre.
+    let dir = tempfile::tempdir().unwrap();
+    let path = crawl_with_api_values(dir.path());
+    let mut conn = writer(&path);
+    let seq = |conn: &Connection| -> u64 {
+        conn.query_row(
+            "SELECT value FROM crawl_meta WHERE key='change_seq'",
+            [],
+            |r| r.get::<_, String>(0),
+        )
+        .unwrap()
+        .parse()
+        .unwrap()
+    };
+    let before = seq(&conn);
+    let lock = hold_write_lock(&path);
+    let t = Instant::now();
+    let result = api::replace_values(&mut conn, "ga4", &[], &[]);
+    let waited = t.elapsed();
+    lock.join().unwrap();
+    assert!(result.is_ok(), "{result:?} after {waited:?}");
+    assert!(waited >= HOLD / 2, "waited only {waited:?} for the lock");
+    assert_eq!(seq(&conn), before + 1, "the change feed advanced");
+    let values: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM api_values WHERE source='ga4'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(values, 1, "no successful URL: the stored values stay");
+}

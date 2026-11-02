@@ -249,15 +249,23 @@ pub fn on_startup(app: &App) {
                 .await;
             match export {
                 Ok(Some(export)) => {
-                    let stored = app
-                        .write_queue()
-                        .submit_file(&session.key, move |file| {
-                            aggregates::live::persist(file, &export).map_err(|e| {
-                                CmdError::new(ErrorCode::Store, "err-store")
-                                    .with_detail(e.to_string())
-                            })
-                        })
-                        .await;
+                    // CRAWL-126: no new view-cache write once quitting has begun.
+                    let stored = match crate::quit::cache_ticket(&app) {
+                        None => Ok(false),
+                        Some(ticket) => {
+                            app.write_queue()
+                                .submit_file(&session.key, move |file| {
+                                    if !ticket.open() {
+                                        return Ok(false);
+                                    }
+                                    aggregates::live::persist(file, &export).map_err(|e| {
+                                        CmdError::new(ErrorCode::Store, "err-store")
+                                            .with_detail(e.to_string())
+                                    })
+                                })
+                                .await
+                        }
+                    };
                     if let Err(error) = stored {
                         tracing::debug!(?error, "Sidebar-Aggregate nicht gespeichert");
                     }

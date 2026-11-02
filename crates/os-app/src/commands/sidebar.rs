@@ -242,12 +242,20 @@ pub(crate) async fn count_steps(
             .map_err(view_error)?;
         report(progress.done as u64, progress.total as u64);
         // Stored pieces are an optional cache: a read-only crawl keeps them in memory.
-        let stored = app
-            .write_queue()
-            .submit_file(&session.key, |file| {
-                os_analyze::views::persist_facts(file).map_err(view_error)
-            })
-            .await;
+        // CRAWL-126: no new view-cache write once quitting has begun.
+        let stored = match crate::quit::cache_ticket(app) {
+            None => Ok(false),
+            Some(ticket) => {
+                app.write_queue()
+                    .submit_file(&session.key, move |file| {
+                        if !ticket.open() {
+                            return Ok(false);
+                        }
+                        os_analyze::views::persist_facts(file).map_err(view_error)
+                    })
+                    .await
+            }
+        };
         if let Err(error) = stored {
             tracing::debug!(?error, "Overview-Zähler nicht gespeichert");
         }
