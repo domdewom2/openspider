@@ -44,3 +44,11 @@ Audisto ist ein Cloud-Crawler mit Schwerpunkt Monitoring und Linkgraph-Analyse. 
 - Sitemap-`lastmod`-Plausibilität (lastmod gegen Last-Modified/Inhaltsänderung).
 - Mustergestützte Seitentyp-Segmentierung mit Strukturvergleich je Typ (überschneidet sich mit R3).
 - Web Vitals segmentiert (je Seitentyp/Segment).
+
+## Idee: Mobile App (Nutzer 02.11.2026, Backlog, nicht eingeplant)
+
+Brainstorming vom 02.11.2026. Ein vollständiger Crawler auf dem Telefon ist nicht sinnvoll (Laufzeit, Speicher, Hintergrundbeschränkungen von iOS/Android).
+Empfohlene Reihenfolge, frühestens nach 1.0:
+- **D – Lite-Inspector:** einzelne URL prüfen (Status, Weiterleitungen, Title/Description, Canonical, hreflang, robots, strukturierte Daten), ohne Konto und ohne Server.
+- **B – Companion-App:** Status laufender Crawls auf dem eigenen Rechner ansehen, Benachrichtigung bei Crawl-Ende, Overview/Top-Probleme lesen. Setzt eine Verbindung Rechner ↔ Telefon voraus (lokal oder über einen Relay-/Push-Dienst).
+Offene Fragen an den Nutzer: Zielgruppe (Agentur unterwegs, Inhouse, Kunde), ob ein eigener Relay-/Push-Dienst betrieben werden soll, Plattformen (iOS, Android, beide).

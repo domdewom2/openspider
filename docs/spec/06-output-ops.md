@@ -2396,7 +2396,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-260 macOS Apple Silicon (arm64)
 - **Priorität:** P0
-- **Beschreibung:** Native arm64-Builds von App, CLI und gebündelten Komponenten (inkl. Chromium für Rendering).
+- **Beschreibung:** Native arm64-Builds von App, CLI und gebündelten Komponenten. **OS-Festlegung (Nutzer 03.11.2026, K3-01):** Chromium für das Rendering wird nicht gebündelt, sondern auf Anfrage als feste, per SHA-256 geprüfte Version heruntergeladen (System-Chrome als Rückfall); es läuft nativ in der jeweiligen Architektur.
 - **Akzeptanzkriterien:**
   - [ ] Unterstützt macOS 13 (Ventura) und neuer **(OS-Festlegung;** Entscheidung (Fable-Empfehlung) vom 13.10.2026: WKWebView ab Safari 16.2 wird für `color-mix(in oklch)`, `forced-colors` und das Canvas-Verhalten der Tabelle vorausgesetzt; vorher macOS 12**)**. `LSMinimumSystemVersion` = 13.0.
   - [ ] Kein Prozess läuft unter Rosetta 2 (Prüfung über Aktivitätsanzeige/`sysctl.proc_translated`).
@@ -2450,7 +2450,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - **Beschreibung:** Auslieferung als signiertes, notarisiertes DMG mit Hardened Runtime; App startet ohne Gatekeeper-Warnung.
 - **Akzeptanzkriterien:**
   - [ ] `spctl --assess --type execute OpenSpider.app` → accepted; `stapler validate` → ok.
-  - [ ] Alle eingebetteten Binärdateien (CLI, Chromium, Hilfsprozesse) sind signiert.
+  - [ ] Alle eingebetteten Binärdateien (CLI, Hilfsprozesse) sind signiert. Chromium ist nicht eingebettet (K3-01, Nutzer 03.11.2026); das auf Anfrage geladene Chromium trägt die Signatur seines Herstellers und wird vor dem Entpacken per SHA-256 geprüft.
   - [ ] Benötigte Berechtigungen sind minimal (Netzwerk-Client; keine Kamera/Mikrofon; Zugriff auf vom Nutzer gewählte Dateien).
 - **Testfixture:** Release-Pipeline-Check.
 
