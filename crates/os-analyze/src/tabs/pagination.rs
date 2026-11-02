@@ -57,7 +57,10 @@ pub fn tab() -> TabDef {
             filter("First Page", "EXISTS (SELECT 1 FROM pagination p WHERE p.url_id = u.id AND p.rel = 'next') AND NOT EXISTS (SELECT 1 FROM pagination p WHERE p.url_id = u.id AND p.rel = 'prev')", false),
             filter("Paginated 2+ Pages", "EXISTS (SELECT 1 FROM pagination p WHERE p.url_id = u.id AND p.rel = 'prev')", false),
             filter("Pagination URL Not In Anchor Tag", "EXISTS (SELECT 1 FROM pagination p WHERE p.url_id = u.id) AND EXISTS (SELECT 1 FROM url_ext e WHERE e.url_id = u.id AND e.key = 'pagination.not_in_anchor' AND e.v_int = 1)", false),
-            filter("Non-200 Pagination URLs", "EXISTS (SELECT 1 FROM pagination p JOIN urls t ON t.id = p.target_id WHERE p.url_id = u.id AND t.state = 'done' AND COALESCE(t.status_code, 0) <> 200)", false),
+            // `CROSS JOIN` fixes the loop order (M2-N28, as the Hreflang relationship filters in M2-N26): the page's
+            // pagination rows first, then the target row by its primary key. A plain `JOIN` let SQLite search all
+            // crawled URLs (`urls_state`) per page (UI-145, PERF-004). Same rows, SQLite treats it as an inner join.
+            filter("Non-200 Pagination URLs", "EXISTS (SELECT 1 FROM pagination p CROSS JOIN urls t ON t.id = p.target_id WHERE p.url_id = u.id AND t.state = 'done' AND COALESCE(t.status_code, 0) <> 200)", false),
             filter("Unlinked Pagination URLs", "EXISTS (SELECT 1 FROM url_flags f WHERE f.url_id = u.id AND f.flag = 'pagination_unlinked')", true),
             filter("Non-Indexable", "u.indexability = 'Non-Indexable' AND EXISTS (SELECT 1 FROM pagination p WHERE p.url_id = u.id)", false),
             filter("Multiple Pagination URLs", "EXISTS (SELECT 1 FROM pagination p WHERE p.url_id = u.id GROUP BY p.rel HAVING COUNT(*) >= 2)", false),
