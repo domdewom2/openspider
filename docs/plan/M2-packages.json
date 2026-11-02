@@ -5068,5 +5068,128 @@
   "size": "S",
   "runner": "server+ci",
   "prompt_notes": "int-24: Fable approved mit Auflagen (A1 K2-92-Tabelle in M2-reports/n24.md, A2 Spec-Frage UI-145 ↔ K-74 in M2-backlog.md; beide bei der Integration erfüllt). Nur Frontend; Ursache des Testrennens n04-live.spec.ts:74, Budget unverändert (K2-63). Sequenziell nach FIXE-PORT im Detailrahmen. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-FIX-WAL",
+  "kind": "package",
+  "model": "opus",
+  "title": "WAL leer nach Beenden (Schreibaufträge vor der Rückführung), Abschluss-Checkpoint der Analyse ≤ 100 ms mit Hintergrund-Merge",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "CRAWL-126",
+   "CRAWL-141"
+  ],
+  "owns": [
+   "docs/spec/01-crawl.md (nur CRAWL-126 Beenden-Kriterium, CRAWL-141 Ablaufpunkt 7)",
+   "crates/os-app/src/quit.rs",
+   "crates/os-app/src/session/analysis.rs",
+   "crates/os-app/src/views/mod.rs (nur View-Cache-Sperre beim Beenden)",
+   "crates/os-app/src/commands/{sidebar,sidebar_ext}.rs (nur Ticketprüfung der View-Cache-Sperre)",
+   "crates/os-analyze/src/analysis/runner.rs (nur Abschluss-Checkpoint)",
+   "crates/os-store/src/writer.rs (nur checkpoint_within pub)",
+   "crates/os-analyze/tests/fix_wal_checkpoint.rs",
+   "crates/os-app/tests/fix_wal/**",
+   "crates/os-app/tests/stop_analysis_merge.rs",
+   "crates/os-store/tests/fix_tx_immediate.rs (nur replace_values-Sperrtest)",
+   "docs/plan/M2-reports/fix-wal.md"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "S",
+  "runner": "server+ci",
+  "prompt_notes": "int-25: Fable approved; Festlegungen A–D vom 01.11. (Spec ae2c58b6). Offene Folgefrage CRAWL-141 Zwischen-Checkpoints 5 s, Hinweis View-Cache-Sperre im Pfad ohne Rückfrage (M2-backlog.md Abschnitt 8). Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-N25",
+  "kind": "package",
+  "model": "opus",
+  "title": "Beta-Befunde Fortsetzen/CPU/Overview: Export-Katalog und Report-Verfügbarkeit ohne Vollzählung, WAL-Umstellung beim Öffnen vor den Lesern, Diagnosewerkzeuge",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-145",
+   "CRAWL-126",
+   "CRAWL-130"
+  ],
+  "owns": [
+   "crates/os-app/src/commands/export.rs (nur Katalog ohne Zählung)",
+   "crates/os-export/src/reports/prereq.rs (nur pending_analysis_for_file, availability)",
+   "crates/os-app/src/session/control.rs (nur WAL-Umstellung in crawl.open)",
+   "crates/os-analyze/tests/n25_hreflang_scaling.rs",
+   "crates/os-app/tests/{n25_export_catalog_cost,n25_resume_after_open}.rs",
+   "crates/os-loadtest/diagnostics/n25-*",
+   "docs/plan/M2-reports/n25.md"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "S",
+  "runner": "server+ci",
+  "prompt_notes": "int-25: Fable approved mit Auflagen (A1 warn statt debug, A2 availability ohne Zählung; beide erfüllt f585094f). Hreflang-Fix identisch mit N26, Integration übernimmt die N26-Fassung. Entscheidungen F1 (Beta: gemeinsame gedrosselte Zählung, danach inkrementell) und F2 (UI-061 gefunden ohne Hilfsabrufe) als Folgepakete N27/N28. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-N26",
+  "kind": "package",
+  "model": "opus",
+  "title": "Top-Probleme/Befunde laden lange: Hreflang-Beziehungsfilter mit fester Join-Reihenfolge",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-145",
+   "UI-147"
+  ],
+  "owns": [
+   "crates/os-analyze/src/tabs/hreflang.rs (nur Join-Reihenfolge der Beziehungsfilter)",
+   "crates/os-analyze/tests/n26_hreflang_plans.rs",
+   "crates/os-app/tests/n26_issues_latency.rs",
+   "docs/plan/M2-reports/n26.md"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "S",
+  "runner": "server+ci",
+  "prompt_notes": "int-25: Fable approved mit Auflagen (A1 Testgrenze 10 s erfüllt 8a975a37, A2 Planeintrag hier). Folgepakete: useIssues-Hook, inkrementelle Zählung (UI-145), pagination.rs CROSS JOIN. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-FIX-ABOUT",
+  "kind": "package",
+  "model": "opus",
+  "title": "„Über OpenSpider“: app.*-Commands über das os-app-Plugin aufrufen",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-127"
+  ],
+  "owns": [
+   "apps/desktop/src/ipc/transport/{tauri.ts,ipc.test.ts}"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "S",
+  "runner": "server+ci",
+  "prompt_notes": "int-25: Orchestrator-Fix nach Beta-Befund (Dialog zeigte „unerwarteter Fehler“); Kern-Plugin-Liste gegen src-tauri/src/plugin_names.rs getestet. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-CI-E2E",
+  "kind": "package",
+  "model": "opus",
+  "title": "ui-e2e macos-webkit Job-Limit 90 min (int-24 Fable-Auflage 2)",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [],
+  "owns": [
+   ".github/workflows/ui-e2e.yml (nur matrix.timeout)",
+   "docs/plan/M2-backlog.md (nur Abschnitt 7)"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "S",
+  "runner": "server+ci",
+  "prompt_notes": "int-25: reine CI-Pflege, keine Budget-/Teständerung (K2-63). Dauerhafte Lösung Shards offen. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
  }
 ]

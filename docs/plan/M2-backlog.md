@@ -51,3 +51,10 @@ Vollständige Liste mit Zielpaketen: `docs/plan/M2-reports/n02-auflagen.md`.
 ## 7 CI-Pflege aus int-24 (Fable-Auflage 2)
 
 - **ui-e2e macos-webkit am Job-Limit:** 493 Specs auf einem Worker brauchen auf `macos-15` 51–60 min; int-24 (Lauf 41338132247) brach bei 466/493 (0 rot) am 60-min-Limit ab. Sofortmaßnahme in `m2/ci-e2e-limit`: Job-Limit nur für macos-webkit auf 90 min (`matrix.timeout`), keine Änderung an Spec-Timeouts oder Budgets (K2-63). Dauerhafte Lösung offen: macos-webkit in zwei Shards teilen (`--shard`), sobald die Runner-Kapazität für macOS arm64 es zulässt.
+
+## 8 Aus int-25 (FIX-WAL, N25, N26)
+
+- **CRAWL-141 Zwischen-Checkpoints:** Die Analyse-Zwischen-Checkpoints (WAL ≥ 64 MB) warten bei gehaltenem Leser weiter bis 5 s je Phasengrenze; OS-Festlegung (100 ms oder PASSIVE) und Scale-Lauf nötig (Fable, FIX-WAL Frage 2).
+- **View-Cache-Sperre beim Beenden ohne Rückfrage:** Scheitert danach `quitApp()` im Frontend, bleibt die Sperre bis zum Neustart geschlossen (funktional unschädlich); `reopen_cache` bei Fehlschlag des Host-Exits.
+- **Rate nach Fortsetzen (N25 Befund 1):** auf Testsites nicht reproduziert; Auswertung der Nutzer-Crawl-Datei mit `crates/os-loadtest/diagnostics/n25-tail.py` steht aus.
+- **Zustandslogik doppelt:** `os-export` `prereq.rs` und `os-analyze` `state.rs`; `os-analyze` soll `filter_states(file, cfg)` ohne Zählung exportieren.
