@@ -119,7 +119,7 @@ CPU-Profil (Chromium, gleicher Ausschnitt): Main-Thread belegt 12,1 s (main) →
 
 Der 2-Kerne-Ausreißer (Fix 0/10) ist ungeklärt und wird ausdrücklich nicht weggelassen. 2 Kerne werden als Bewertungsgrundlage verworfen: Der Main-Thread ist dort zu 93–96 % blockiert, auch main schafft nur 4/10; die Diagnose unter 2 Kernen zeigte für den Fix einen besseren Nachlauf-Median (550 statt 1314 ms). Nachmessung auf dem finalen Stand: Fable-Auflage 3, Abschnitt unten.
 
-Fable-Entscheidung main-Merge: mit grünem ui-e2e; ein im Retry grüner linux-webkit-Lauf genügt; sind beide Versuche rot, wird int-26 nicht gemergt.
+Fable-Freigabe main-Merge nach finaler CI (`2487b514`): approved mit Auflagen – M2-N33 Pflicht-Folgepaket, nicht vor der Beta; Begründung der zip-Ausnahmen in N33 korrigieren (os-cli `browser.rs:134` entpackt das Chromium-Archiv über zip 9.0.4). Ursprüngliche Regel: mit grünem ui-e2e; ein im Retry grüner linux-webkit-Lauf genügt; sind beide Versuche rot, wird int-26 nicht gemergt.
 
 ### Auflage 3: n04-live original, 2 Kerne / 1 Worker, finaler Stand und main
 
