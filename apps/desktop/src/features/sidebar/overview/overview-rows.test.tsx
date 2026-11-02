@@ -14,6 +14,7 @@ import { SidebarFrame } from "../frame/SidebarFrame";
 import { useSidebarNavigation } from "../frame/state";
 
 // M2-FIX-LIVE: every Overview filter row renders its FilterStatus exactly once per render, so the wrapper counts row renders.
+// The counts hold without StrictMode only: Providers does not wrap in StrictMode; under StrictMode every number doubles.
 const rows = vi.hoisted(() => ({ rendered: 0 }));
 vi.mock("../analysis/FilterStatus", async importOriginal => {
   const actual = await importOriginal<typeof import("../analysis/FilterStatus")>();
