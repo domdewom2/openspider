@@ -58,7 +58,7 @@ Server (Linux x86_64), Integrationsbaum:
 
 N30 ändert nur os-app (ein Quell- und zwei Testdateien); der volle Workspace lief auf N30s Basis grün (4.099/0, N30-Bericht).
 
-N31 lief auf seiner Basis `a391962e` mit vollem Workspace grün (4.118/0, N31-Bericht); auf dem Integrationsbaum mit N31: siehe unten.
+Integrationsbaum mit N31 (`41ae1fb3`): `cargo fmt`, `cargo clippy --workspace --all-targets -D warnings` grün; `cargo test --workspace --no-fail-fast` 4.118 bestanden, 0 fehlgeschlagen; M2-check OK.
 
 CI und ui-e2e des Integrationsbaums: werden nachgetragen (erste Läufe 41386002985/41386005096 auf `a391962e` wegen der Aufnahme von N31 abgebrochen).
 
