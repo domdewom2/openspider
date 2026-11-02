@@ -58,3 +58,9 @@ Vollständige Liste mit Zielpaketen: `docs/plan/M2-reports/n02-auflagen.md`.
 - **View-Cache-Sperre beim Beenden ohne Rückfrage:** Scheitert danach `quitApp()` im Frontend, bleibt die Sperre bis zum Neustart geschlossen (funktional unschädlich); `reopen_cache` bei Fehlschlag des Host-Exits.
 - **Rate nach Fortsetzen (N25 Befund 1):** auf Testsites nicht reproduziert; Auswertung der Nutzer-Crawl-Datei mit `crates/os-loadtest/diagnostics/n25-tail.py` steht aus.
 - **Zustandslogik doppelt:** `os-export` `prereq.rs` und `os-analyze` `state.rs`; `os-analyze` soll `filter_states(file, cfg)` ohne Zählung exportieren.
+
+## 9 Aus int-26 (N27, N28)
+
+- **Gemeinsame Zählung während der Crawl-Analyse:** Jeder Analyseschritt ist ein neuer Datenstand und wird ungedrosselt gezählt; Drosselung wie bei `Running`, exakte Zählung am Ende der Analyse (Fable, N27 Frage 3).
+- **Zielwert exakter Stand nach Pause:** ≤ 3 × letzte Live-Zähldauer (N27: 6,2 s nach Pause, 12,9 s nach Ende inkl. Analyse).
+- **CRAWL-130 „gecrawlt“ (Fable-Wortlaut, F1 N28):** „‚gecrawlt‘ = Anzahl der URL-Zeilen mit `state='done'`, die nicht robots-gesperrt sind, ohne Hilfsabrufe (robots.txt-Zeilen, Sitemap-Dateien), unabhängig von der Tabellensichtbarkeit. Statusleiste, Overview `Total URLs Crawled`, Bericht ‚Crawl-Übersicht‘ und CLI verwenden dieselbe Zahl.“ Dazu Bericht (`in_tables = 1` streichen), Engine (`Progress::crawled` ohne robots-gesperrte) und zwei Randfälle: robots.txt-URL mit Punkt am Hostende (`robots_glue.rs`: `write.robots_url = norm.encoded`), Sitemap-Datei, die vorher als verborgene URL bekannt war.

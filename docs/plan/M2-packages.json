@@ -5192,5 +5192,84 @@
   "size": "S",
   "runner": "server+ci",
   "prompt_notes": "int-25: reine CI-Pflege, keine Budget-/Teständerung (K2-63). Dauerhafte Lösung Shards offen. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-N27",
+  "kind": "package",
+  "model": "opus",
+  "title": "Eine gemeinsame, während des Crawls gedrosselte Zählung je Datenstand für Overview, Issues und Filterzähler; Altersanzeige; useIssues",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-018",
+   "UI-061",
+   "UI-145"
+  ],
+  "owns": [
+   "docs/spec/05-ui.md (nur UI-018 OS-Festlegung gemeinsame Zählung)",
+   "crates/os-app/src/commands/sidebar/counts.rs",
+   "crates/os-app/src/commands/sidebar.rs (nur Anbindung der gemeinsamen Zählung)",
+   "crates/os-app/src/commands/catalog.rs (nur filterCounts aus den gemeinsamen Fakten)",
+   "crates/os-app/src/commands/compare.rs (nur age_ms: None)",
+   "crates/os-app/src/session/mod.rs (nur observe_state-Aufruf)",
+   "crates/os-app/src/dto/sidebar.rs (nur OverviewDto.age_ms)",
+   "apps/desktop/src/ipc/gen/OverviewDto.ts",
+   "crates/os-app/tests/n27/**",
+   "apps/desktop/src/features/sidebar/overview-age/**",
+   "apps/desktop/src/features/sidebar/frame/{useSidebarQuery.ts,SidebarFrame.tsx,n27.test.tsx}",
+   "apps/desktop/src/features/sidebar/issues/Issues.tsx (nur useIssues)",
+   "apps/desktop/src/features/dashboard/Dashboard.tsx (nur useIssues, Altersanzeige)",
+   "apps/desktop/src/features/table/{UpperTable.tsx,n27-live-chip.test.tsx} (nur Live-Zähler des aktiven Filters)",
+   "crates/os-loadtest/diagnostics/n27-*",
+   "docs/plan/M2-reports/n27.md"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "M",
+  "runner": "server+ci",
+  "prompt_notes": "int-26: Fable approved mit Auflagen (A1 settling-Flag gegen view_cache-Schreiben nach Pause, A2 Altersanzeige nach Pause; erfüllt 188f0a82/afe5329a). Entscheidungen: Live ≤ 1 s nur Chip/Fuß des aktiven Filters bis UI-145; seriell; Drosselung während der Crawl-Analyse als Folgepaket. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-N28",
+  "kind": "package",
+  "model": "opus",
+  "title": "UI-061 Total URLs Encountered ohne Hilfsabrufe, eine Zählfunktion; Feed parst robots.txt je Origin einmal; Pagination-Join fest",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "UI-061",
+   "CRAWL-130",
+   "UI-145"
+  ],
+  "owns": [
+   "docs/spec/05-ui.md (nur UI-061 OS-Festlegung Encountered)",
+   "crates/os-store/src/counters.rs",
+   "crates/os-store/src/queries/{app_support,mod}.rs (nur overview_summary/Zählfunktion)",
+   "crates/os-store/src/registry.rs",
+   "crates/os-store/src/registry/index.rs (nur url_count/Fingerprint n28)",
+   "crates/os-engine/src/{frontier,resume,robots_glue,sitemap_ingest}.rs (nur Hilfsabruf-Zählung)",
+   "crates/os-export/src/reports/overview.rs (nur Encountered/Crawled)",
+   "crates/os-analyze/src/aggregates/status.rs (nur Encountered)",
+   "crates/os-analyze/src/views/facts.rs (nur summary_signature)",
+   "crates/os-analyze/src/views/facts_n28_tests.rs",
+   "crates/os-analyze/src/tabs/pagination.rs (nur Join-Reihenfolge)",
+   "crates/os-app/src/session/feed.rs (nur robots.txt-Cursor, Hinweis einmal)",
+   "crates/os-store/tests/n28_encountered.rs",
+   "crates/os-engine/tests/n28_encountered.rs",
+   "crates/os-analyze/tests/n28_pagination_plans.rs",
+   "crates/os-app/tests/n28_counts.rs",
+   "apps/desktop/e2e/alpha/detail-sidebar.spec.ts (nur Erwartung 27, K2-63)",
+   "apps/desktop/e2e/polish/visual-heights.spec.ts (nur Erwartung 27, K2-63)",
+   "apps/desktop/e2e/beta/overview.spec.ts (nur Kommentar)",
+   "apps/desktop/e2e/perf/n21-profile.rs (nur counters::encountered)",
+   "docs/plan/M2-reports/n28.md"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "M",
+  "runner": "server+ci",
+  "prompt_notes": "int-26: Fable approved mit Auflagen (A1 n21-profile.rs, A2 Kommentar; erfüllt 9ce1e731), Nachtrag summary_signature 352bebe7. Entscheidungen: F1 Spec-Festlegung CRAWL-130 „gecrawlt“ + Folgepaket; F2 reicht; F3 keine Spec-Ergänzung. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
  }
 ]
