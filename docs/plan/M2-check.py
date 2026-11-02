@@ -105,6 +105,7 @@ ERLAUBT = {
     frozenset({"M2-FIX-TX", "M2-N28"}): "int-26: N28 ändert in aggregates/status.rs nur die Encountered-Zählung, FIX-TX nur on_config_changed",
     frozenset({"M2-FIX-WAL", "M2-N27"}): "int-26: N27 nach FIX-WAL; sidebar.rs: Ticketprüfung (FIX-WAL) bleibt, N27 bindet die gemeinsame Zählung an",
     frozenset({"M2-N27", "M2-N28"}): "int-26: zwei getrennte OS-Festlegungen in 05-ui.md (UI-018 bzw. UI-061), gleiche Integrationsrunde",
+    frozenset({"M2-N21", "M2-N30"}): "int-26: N30 ergänzt in tests/n21/views.rs nur die Synchronisation auf eine ruhende Sitzung (UI-141/142), keine Erwartungsänderung",
     frozenset({"M2-N04", "M2-N12"}): "Integrationsrunde 17: N04 bereits integriert; N12-Owns-Ausweitung auf UpperTable und e2e/* vom Orchestrator ausdrücklich bestätigt",
     frozenset({"M2-U31", "M2-U32"}): "e2e-b/** ohne perf (U32) vs. e2e-b/perf/** (U31)",
     frozenset({"M2-N07", "M2-N08"}): "os-model config.rs nur SpiderConfig (N07) vs. nur ContentAreaConfig (N08); Schema und default.osconfig nur Neuerzeugung (K2-83)",

@@ -5271,5 +5271,29 @@
   "size": "M",
   "runner": "server+ci",
   "prompt_notes": "int-26: Fable approved mit Auflagen (A1 n21-profile.rs, A2 Kommentar; erfüllt 9ce1e731), Nachtrag summary_signature 352bebe7. Entscheidungen: F1 Spec-Festlegung CRAWL-130 „gecrawlt“ + Folgepaket; F2 reicht; F3 keine Spec-Ergänzung. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-N30",
+  "kind": "package",
+  "model": "opus",
+  "title": "Windows-Zeitabhängigkeiten: Threads-Änderung wirkt sofort auf die Engine, n21-Test auf ruhende Sitzung synchronisiert",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "CRAWL-112",
+   "UI-141"
+  ],
+  "owns": [
+   "crates/os-app/src/commands/config.rs (nur set_threads vor dem Speichern, Rücksetzen)",
+   "crates/os-app/tests/cmd_config_runtime.rs (nur Threadtest und Rücksetztest)",
+   "crates/os-app/tests/n21/views.rs (nur Synchronisation feed_maintenance_settled)",
+   "docs/plan/M2-reports/n30.md"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "S",
+  "runner": "server+ci",
+  "prompt_notes": "int-26: Fable approved. Folgepaket M2-N31: Aufbewahrungsprüfung beim Start nicht vor Nutzeraufträgen in der Schreibwarteschlange; cmd_segment_commands.rs:134 ereignisbasiert. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
  }
 ]
