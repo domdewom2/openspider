@@ -5295,5 +5295,34 @@
   "size": "S",
   "runner": "server+ci",
   "prompt_notes": "int-26: Fable approved. Folgepaket M2-N31: Aufbewahrungsprüfung beim Start nicht vor Nutzeraufträgen in der Schreibwarteschlange; cmd_segment_commands.rs:134 ereignisbasiert. Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
+ },
+ {
+  "id": "M2-N31",
+  "kind": "package",
+  "model": "opus",
+  "title": "Aufbewahrung beim Start auf eigener Wartungsspur der Schreibwarteschlange; Segmenttest ereignisbasiert; Speicherdrosselung mit live geänderter Thread-Zahl",
+  "wave": "4n",
+  "spec_ids": [],
+  "extra_spec_ids": [
+   "OUT-229",
+   "CRAWL-134",
+   "CRAWL-129"
+  ],
+  "owns": [
+   "crates/os-app/src/write_queue.rs (nur Wartungsspur, Sperre)",
+   "crates/os-app/src/commands/crawls.rs (nur run_retention/start_retention)",
+   "crates/os-app/tests/n31_retention_lane.rs",
+   "crates/os-app/tests/cmd_segment_commands.rs (nur Synchronisation auf assignment_seq)",
+   "crates/os-engine/src/memory.rs (nur Grenze max(Start, live)/2)",
+   "crates/os-engine/src/crawl.rs (nur Übergabe der live Thread-Zahl an memory::tick)",
+   "crates/os-app/src/commands/config.rs (nur Kommentar, Integration)",
+   "docs/plan/M2-reports/n31.md"
+  ],
+  "depends_on": [
+   "M2-N02"
+  ],
+  "size": "S",
+  "runner": "server+ci",
+  "prompt_notes": "int-26: Fable approved mit Auflagen (Kommentar config.rs, Backlog retain_with, Modulkopf write_queue.rs: Beenden wartet nicht auf die Wartungsspur; bei der Integration erfüllt). Entscheidung: Drosselung max(Start, live)/2 bleibt (N04-Festlegung). Regeln M2.md Abschnitt 2/2a. B2: je [P1]-/7.3-Kriterium der extra_spec_ids mindestens ein getaggter Test mit Ergebnis ok; übrige extra_spec_ids mitprüfen."
  }
 ]

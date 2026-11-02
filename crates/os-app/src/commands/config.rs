@@ -255,9 +255,9 @@ fn set<'a>(app: &'a App, ctx: CallCtx, args: Value) -> BoxFuture<'a, CmdResult> 
                     .collect();
             }
             // CRAWL-112: the thread count reaches a running engine within 2 s of the change. The durable write below
-            // queues behind every earlier job of the app's single write queue (start-up retention, view caches) and
-            // behind the engine writer's lock, so the engine gets the new value first; a failed write restores the
-            // old one (M2-N30).
+            // queues behind every earlier job of the app's main write lane (view caches; retention runs on its own
+            // maintenance lane since M2-N31) and behind the engine writer's lock, so the engine gets the new value
+            // first; a failed write restores the old one (M2-N30).
             let threads = |n: u32| {
                 if let Some(engine) = &session.engine {
                     if let Some(handle) = engine

@@ -11,6 +11,9 @@
 //! auf einer eigenen Wartungsspur mit eigenem Thread. Ein Nutzerauftrag der Hauptspur (`config.set`, Segmente,
 //! View-Cache …) wartet daher nie hinter einer langen Verwaltungsrunde; untereinander bleiben die Wartungsaufträge
 //! strikt geordnet. [`WriteQueue::flush`] wartet nur auf die Hauptspur.
+//! Beenden (`quit::drain`, CRAWL-126) wartet ebenfalls nur auf die Hauptspur, nicht auf eine laufende Aufbewahrungsrunde:
+//! Eine abgebrochene Runde ist absturzsicher (Löschen = Checkpoint, Datei entfernen, Indexeintrag; der Index liegt im
+//! WAL, `list()` räumt Einträge ohne Datei auf) und wird beim nächsten Start wiederholt.
 //!
 //! Dies ist neben `pool` die einzige Datei von `os-app`, in der `rusqlite` direkt benannt werden darf.
 #![allow(clippy::disallowed_types, clippy::disallowed_methods)]
