@@ -52,13 +52,14 @@ node website/check-site.mjs
 bash scripts/check-neutral.sh
 ```
 
-Der Node-Check benötigt keine Abhängigkeiten. Er prüft alle 14 HTML-Seiten,
+Der Node-Check benötigt keine Abhängigkeiten. Er prüft alle 20 HTML-Seiten,
 interne Links einschließlich Sprungmarken, Assets, erlaubte externe Links,
 eindeutige Titel/Beschreibungen, Canonicals, gegenseitige hreflang-Paare,
 Sprachwechsel, Überschriften, alt-Attribute, Social-Metadaten, JSON-LD,
-Sitemap, robots.txt, OG-Bildmaße und das Gewicht beider Startseiten.
+Sitemap (ohne noindex-Seiten), robots.txt, OG-Bildmaße, das Formularziel `/api/feedback`,
+das einzige erlaubte Skript und das Gewicht beider Startseiten.
 Unkomprimiert einschließlich CSS, Logo und aller referenzierten Icons:
-DE **76.325 Byte**, EN **76.080 Byte**; jeweils unter 200.000 Byte.
+DE **77.865 Byte**, EN **77.643 Byte**; jeweils unter 200.000 Byte.
 Das nur in Metadaten referenzierte OG-Bild wird beim Seitenaufruf nicht geladen.
 Im ursprünglichen Website-Lauf wurde der Check zusätzlich mit absichtlich beschädigten Links, Bildern,
 alt-Attributen, hreflang und h1 geprüft; alle Fehler wurden erkannt.
