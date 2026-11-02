@@ -66,8 +66,17 @@ fn tab_signature(tab: &TabDef, cfg: &str) -> String {
     }
     crate::cursor::query_hash(&parts)
 }
+/// Definition of the summary rows beyond the build version: `n28` = `Total URLs Encountered`/`Crawled` without
+/// auxiliary fetches (UI-061, M2-N28). A piece stored before (same version in dev/beta builds) is computed again
+/// once instead of showing the old count; the SQL of the auxiliary set is part of the hash as well.
+const SUMMARY_DEFINITION: &str = "n28";
 fn summary_signature() -> String {
-    crate::cursor::query_hash(&["summary-v1", env!("CARGO_PKG_VERSION")])
+    crate::cursor::query_hash(&[
+        "summary-v1",
+        env!("CARGO_PKG_VERSION"),
+        SUMMARY_DEFINITION,
+        os_store::counters::HIDDEN_AUXILIARY_IDS,
+    ])
 }
 
 struct Version {
@@ -339,3 +348,7 @@ pub(super) fn forget(file: &CrawlFile) {
 #[cfg(test)]
 #[path = "facts_n21_tests.rs"]
 mod n21_tests;
+
+#[cfg(test)]
+#[path = "facts_n28_tests.rs"]
+mod n28_tests;
