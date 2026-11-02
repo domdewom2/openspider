@@ -15,6 +15,45 @@ use crate::catalog::reports::ReportRequirement;
 /// Höchstzahl der genannten Beispiele je Hinweis.
 const EXAMPLES: usize = 5;
 
+/// Wie [`pending_analysis_filters`] über `os_analyze::views::filter_counts`, aber ohne zu zählen: Ob ein Filter
+/// auf die Crawl-Analyse wartet, hängt nur von Konfiguration und Analysezustand ab. Der Export-Katalog fragt das
+/// bei jedem Datenstand eines laufenden Crawls ab; eine volle Zählung aller Filter je Abfrage hielt dort dauerhaft
+/// einen Kern und eine Leseverbindung belegt (M2-N25, UI-145, CRAWL-130).
+pub fn pending_analysis_for_file(
+    file: &os_store::CrawlFile,
+    cfg: &CrawlConfig,
+) -> Result<Vec<String>, os_analyze::AnalyzeError> {
+    let analysis = os_analyze::state::AnalysisSnapshot::load(file)?;
+    let cfg_json = serde_json::to_value(cfg).unwrap_or(Json::Null);
+    let mut states = Vec::new();
+    for tab in os_analyze::tabs::configured_for_file(cfg, file) {
+        // Stub-Tabs und Stub-Filter zählt `filter_counts` nicht (dort `countable`).
+        if tab.is_stub() {
+            continue;
+        }
+        for def in tab.filters.iter().filter(|f| !f.is_stub()) {
+            let mut state = os_analyze::state::filter_state(def, cfg, &cfg_json, &analysis);
+            if state.yields_rows() {
+                if let Some(required) = os_analyze::tabs::dynamic_api::orphan_state(
+                    def, &tab, cfg, &cfg_json, &analysis,
+                ) {
+                    state = required;
+                }
+            }
+            states.push(FilterCount {
+                tab: tab.id.to_string(),
+                filter: def.id.to_string(),
+                label: os_analyze::names::label_with(def.id, &cfg_json),
+                count: None,
+                pct: None,
+                state,
+                version: 0,
+            });
+        }
+    }
+    Ok(pending_analysis_filters(&states))
+}
+
 /// Filter, die wegen der Crawl-Analyse leer sind (`NeedsCrawlAnalysis`/`Stale`), als `Tab:Filter`.
 pub fn pending_analysis_filters(counts: &[FilterCount]) -> Vec<String> {
     counts
@@ -97,8 +136,8 @@ pub fn availability(
     cfg: &CrawlConfig,
 ) -> Availability {
     let pending = if requires.contains(&ReportRequirement::CrawlAnalysis) {
-        os_analyze::views::filter_counts(file, cfg)
-            .map(|counts| pending_analysis_filters(&counts))
+        // Ohne Zählung: wird je Report aufgerufen, eine Vollzählung je Aufruf kostete N Zählungen je Export.
+        pending_analysis_for_file(file, cfg)
             .unwrap_or_else(|_| vec!["analysis state unavailable".into()])
     } else {
         Vec::new()

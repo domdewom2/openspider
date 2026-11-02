@@ -304,10 +304,17 @@ pub async fn open(
     if let Some(s) = existing {
         app.sessions().set_current(ctx.window, s);
     } else {
-        app.read_pool().register(key.clone(), report.path.clone());
         if summary.owner.controllable {
             app.write_queue().register(key.clone(), report.path.clone());
+            // A copy made with `VACUUM INTO` (duplicate, import, migration) is in rollback-journal mode. The
+            // first writer switches it to WAL, which needs the file exclusively: once the readers of this
+            // session hold read transactions (overview precomputation), a resume right after opening waited
+            // 5 s and failed with "database is locked" (M2-N25, CI windows-x64). Switch before any reader.
+            if let Err(error) = app.write_queue().submit_file(&key, |_| Ok(())).await {
+                tracing::warn!(?error, "Crawl-Datei nicht im WAL-Modus geöffnet");
+            }
         }
+        app.read_pool().register(key.clone(), report.path.clone());
         app.sessions().set_current(
             ctx.window,
             SessionInfo {
