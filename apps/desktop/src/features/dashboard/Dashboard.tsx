@@ -1,12 +1,11 @@
 import { SUMMARY_KEYS } from "../sidebar/overview/Overview";
-import { useQuery } from "@tanstack/react-query";
 import { useFormat, useT } from "../../i18n";
 import { filterLabel, tabLabel } from "../../i18n/canon";
-import { sidebar } from "../../ipc/sidebar";
 import { useSession } from "../../state/session";
 import { useTabs } from "../../state/tabs";
 import { EmptyState } from "../../ui/primitives/EmptyState";
-import { useOverview } from "../sidebar/frame/useSidebarQuery";
+import { useIssues, useOverview } from "../sidebar/frame/useSidebarQuery";
+import { OverviewAge } from "../sidebar/overview-age/OverviewAge";
 import { QueryFeedback } from "../sidebar/frame/QueryFeedback";
 import { useSidebarNavigation } from "../sidebar/frame/state";
 import { sortIssues } from "../sidebar/issues/Issues";
@@ -20,10 +19,9 @@ export function Dashboard() {
   const overview = useOverview();
   const crawl = useSession(s => s.crawl?.crawlId);
   const queued = useSession(s => s.crawl?.queued);
-  const version = useSession(s => s.issuesVersion);
-  const counts = useSession(s => s.countsVersion);
   const scope = useSidebarNavigation(s => s.scope);
-  const issues = useQuery({ queryKey: ["sidebar", "issues", crawl, { ...scope, type: null, priority: null, search: null }, version, counts], queryFn: ({ signal }) => sidebar.issues({ ...scope, type: null, priority: null, search: null }, signal), enabled: !!crawl, gcTime: 0 });
+  // UI-018 (M2-N27): „Top-Probleme“ keeps its last list while a new data version is counted.
+  const issues = useIssues({ ...scope, type: null, priority: null, search: null });
   const navigate = (tab: string, filter: string) => {
     useTabs.getState().select(tab, filter);
     useSidebarNavigation.getState().navigate(tab, filter, true);
@@ -34,6 +32,7 @@ export function Dashboard() {
   const top = sortIssues(issues.data ?? []).slice(0, 5);
   return <section className="os-dashboard" aria-label={t("u34-nav-overview")} data-dashboard="">
     <QueryFeedback error={overview.error} loading={!data && overview.isPending} retry={() => void overview.refetch()} />
+    {data && <OverviewAge ageMs={data.ageMs} receivedAt={overview.dataUpdatedAt} />}
     {data && <>
       <div className="os-dashboard-metrics">{([0, 1, "remaining", 7, 8] as const).map(i => {
         const key = i === "remaining" ? null : SUMMARY_KEYS[i];

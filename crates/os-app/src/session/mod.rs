@@ -107,6 +107,8 @@ pub fn busy() -> CmdError {
 /// Updates every window pointing at this crawl (including in-app MCP sessions).
 pub fn state(app: &App, key: &CrawlKey, state: CrawlState) {
     app.sessions().update_state(key, state);
+    // UI-018 (M2-N27): leaving `Running` recounts the paused/final data version without user action.
+    crate::commands::sidebar::counts::observe_state(app, key, state);
 }
 
 pub async fn poll(app: &App) -> Result<(), CmdError> {

@@ -13,4 +13,10 @@ summary: Array<SummaryRow>,
 /**
  * Tabs mit Filtern.
  */
-tabs: Array<OverviewTab>, };
+tabs: Array<OverviewTab>, 
+/**
+ * Alter des Zählstands in Millisekunden, nur während eines laufenden Crawls: Overview, Issues und
+ * Filterzähler teilen sich dann eine gedrosselte Zählung je Datenstand (UI-018, M2-N27). Fehlt der
+ * Wert, ist der Stand exakt.
+ */
+ageMs?: number, };
