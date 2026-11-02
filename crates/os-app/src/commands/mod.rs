@@ -80,6 +80,7 @@ pub fn register_all(r: &mut Registry) {
     auth_login::register(r);
     mail::register(r);
     update::register(r);
+    render_provision::register(r);
 }
 
 pub mod app_quit;
@@ -92,3 +93,6 @@ pub mod settings_network;
 pub mod crawl_files;
 
 pub mod update;
+
+/// Chromium-Bereitstellung nach K3-01 (M3-K01, Registrierung additiv nach K2-61).
+pub mod render_provision;

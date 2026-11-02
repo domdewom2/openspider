@@ -1150,5 +1150,29 @@
     "args": "UpdateSetAutoArgs",
     "ret": "void",
     "longRunning": false
+  },
+  {
+    "name": "render_provision.status",
+    "args": "ChromiumStatusArgs",
+    "ret": "ChromiumStatus",
+    "longRunning": false
+  },
+  {
+    "name": "render_provision.download",
+    "args": "ChromiumStatusArgs",
+    "ret": "ChromiumStatus",
+    "longRunning": false
+  },
+  {
+    "name": "render_provision.cancel",
+    "args": "ChromiumStatusArgs",
+    "ret": "ChromiumStatus",
+    "longRunning": false
+  },
+  {
+    "name": "render_provision.remove",
+    "args": "ChromiumStatusArgs",
+    "ret": "ChromiumStatus",
+    "longRunning": false
   }
 ]
