@@ -311,7 +311,7 @@ pub async fn open(
             // session hold read transactions (overview precomputation), a resume right after opening waited
             // 5 s and failed with "database is locked" (M2-N25, CI windows-x64). Switch before any reader.
             if let Err(error) = app.write_queue().submit_file(&key, |_| Ok(())).await {
-                tracing::debug!(?error, "Crawl-Datei nicht im WAL-Modus geöffnet");
+                tracing::warn!(?error, "Crawl-Datei nicht im WAL-Modus geöffnet");
             }
         }
         app.read_pool().register(key.clone(), report.path.clone());

@@ -136,8 +136,8 @@ pub fn availability(
     cfg: &CrawlConfig,
 ) -> Availability {
     let pending = if requires.contains(&ReportRequirement::CrawlAnalysis) {
-        os_analyze::views::filter_counts(file, cfg)
-            .map(|counts| pending_analysis_filters(&counts))
+        // Ohne Zählung: wird je Report aufgerufen, eine Vollzählung je Aufruf kostete N Zählungen je Export.
+        pending_analysis_for_file(file, cfg)
             .unwrap_or_else(|_| vec!["analysis state unavailable".into()])
     } else {
         Vec::new()
