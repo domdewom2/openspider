@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "product": "Chrome for Testing",
+  "version": "156.0.8078.80",
+  "source": "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json",
+  "determined": "2026-11-03",
+  "platforms": {
+    "mac-arm64": {
+      "url": "https://storage.googleapis.com/chrome-for-testing-public/156.0.8078.80/mac-arm64/chrome-mac-arm64.zip",
+      "size": 195027080,
+      "sha256": "8bc590d1b1acac042a000234c768f31830f25a3983a83ed5e067114c87c4cad1"
+    },
+    "mac-x64": {
+      "url": "https://storage.googleapis.com/chrome-for-testing-public/156.0.8078.80/mac-x64/chrome-mac-x64.zip",
+      "size": 205782188,
+      "sha256": "672b79dc79fdf28bb2ec9787b7fa33810c2b3cfd946a0fb4d3b72775f4e6fd9a"
+    },
+    "win64": {
+      "url": "https://storage.googleapis.com/chrome-for-testing-public/156.0.8078.80/win64/chrome-win64.zip",
+      "size": 208152768,
+      "sha256": "16edb57d6107bf1c48a7c149b8d78b155fe614410093796dd72441fd6640540f"
+    }
+  }
+}
