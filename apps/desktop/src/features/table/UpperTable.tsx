@@ -90,7 +90,14 @@ function RegularUpperTable() {
   const browserResolve = useRef<((ok: boolean) => void) | undefined>(undefined);
   const count = source ? controller.selection.count(source.total) : 0;
   const current = tabs.catalog.find(tab => tab.id === tabs.active);
+  // UI-018 (M2-N27): while the crawl runs, filter counts come from the shared, throttled count. The active filter's
+  // chip, list entry and the footer follow the live view total instead (≤ 1 s) when the view is exactly that filter.
+  const running = useSession(s => s.crawl?.phase === "running");
+  const liveKey = running && !query.search && !query.rules && !segments.filter ? `${crawlId ?? ""}|${tabs.active}|${query.filter}` : null;
+  const openedFor = useRef<string | null>(null);
+  const liveTotal = source && liveKey !== null && openedFor.current === liveKey ? source.total : undefined;
   const filters = (current?.filters ?? []).map(f => controller.counts.filters.find(row => row.tab === tabs.active && row.filter.id === f.id)?.filter ?? f)
+    .map(f => liveTotal !== undefined && f.id === query.filter && f.state.kind === "ready" ? { ...f, count: liveTotal } : f)
     .sort((a, b) => a.id === "All" ? -1 : b.id === "All" ? 1 : 0);
   const activeFilter = filters.find(f => f.id === query.filter);
   const total = filters.find(f => f.id === "All")?.count;
@@ -128,6 +135,7 @@ function RegularUpperTable() {
   }, [tabs.active, crawlId]);
   useEffect(() => {
     if (!tabs.loaded) return;
+    openedFor.current = !query.search && !query.rules && !segments.filter ? `${crawlId ?? ""}|${tabs.active}|${query.filter}` : null;
     void controller.open(tabs.active, query);
     setText(query.search);
     if (query.rules) setText(query.rules.text);

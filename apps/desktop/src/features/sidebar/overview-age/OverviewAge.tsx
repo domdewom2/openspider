@@ -1,0 +1,29 @@
+import { useEffect, useState } from "react";
+import { useT } from "../../../i18n";
+import { useSession } from "../../../state/session";
+
+/** Shown from this age on (UI-018: the throttled count of a running crawl is at least 2 s apart). */
+export const SHOWN_FROM_MS = 2_000;
+
+/**
+ * UI-018 (M2-N27): while the crawl runs, Overview, Issues and the filter counts share one throttled count; the
+ * Overview names the age of its state ("As of 12 s ago"). `ageMs` is the age at the answer, `receivedAt` its
+ * arrival (ms since epoch); the label counts on every second until the next answer. Hidden for exact answers,
+ * below {@link SHOWN_FROM_MS} and without a running crawl.
+ */
+export function OverviewAge({ ageMs, receivedAt }: { ageMs?: number | null; receivedAt: number }) {
+  const t = useT();
+  const running = useSession(s => s.crawl?.phase === "running");
+  const active = running && ageMs != null;
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!active) return;
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 1_000);
+    return () => clearInterval(timer);
+  }, [active, receivedAt]);
+  if (!active) return null;
+  const age = ageMs + Math.max(0, now - receivedAt);
+  if (age < SHOWN_FROM_MS) return null;
+  return <p className="os-hint os-overview-age" data-overview-age={Math.round(age / 1_000)}>{t("n27-overview-age", { seconds: Math.round(age / 1_000) })}</p>;
+}

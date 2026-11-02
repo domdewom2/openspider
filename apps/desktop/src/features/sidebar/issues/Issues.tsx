@@ -3,7 +3,6 @@ import { useComparison } from "../../compare/model";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useT, useFormat, type TFn } from "../../../i18n";
-import { sidebar } from "../../../ipc/sidebar";
 import { config } from "../../../ipc/config";
 import type { IssueRow } from "../../../ipc/gen/IssueRow";
 import type { IssueTypeDto } from "../../../ipc/gen/IssueTypeDto";
@@ -11,6 +10,7 @@ import type { IssuePriorityDto } from "../../../ipc/gen/IssuePriorityDto";
 import { useSession } from "../../../state/session";
 import { useSidebarNavigation } from "../frame/state";
 import { QueryFeedback } from "../frame/QueryFeedback";
+import { useIssues } from "../frame/useSidebarQuery";
 import { CountProgress } from "../frame/CountProgress";
 import { IssueBadge } from "./IssueBadge";
 import { IssueExplanation } from "./IssueExplanation";
@@ -49,10 +49,9 @@ function RegularIssues({ needsAnalysis }: { needsAnalysis: boolean }) {
   const navigate = useSidebarNavigation(s => s.navigate);
   const setScope = useSidebarNavigation(s => s.setScope);
   const crawl = useSession(s => s.crawl?.crawlId);
-  const version = useSession(s => s.issuesVersion);
-  const counts = useSession(s => s.countsVersion);
   const args = { ...scope, type: type || null, priority: priority || null, search: search || null };
-  const query = useQuery({ queryKey: ["sidebar", "issues", crawl, args, version, counts], queryFn: ({ signal }) => sidebar.issues(args, signal), enabled: !!crawl, gcTime: 0 });
+  // UI-018 (M2-N27): new data versions refresh the list in the background; the last list stays visible.
+  const query = useIssues(args);
   // Keep the same contract even when a fixture supplies an unfiltered list.
   const settings = useQuery({ queryKey: ["sidebar", "issues-config", crawl], queryFn: ({ signal }) => config.get(signal), enabled: !!crawl, gcTime: 0 });
   const named = (name: string) => resolveThresholds(name, settings.data?.config);
