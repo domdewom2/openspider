@@ -25,7 +25,7 @@ pub enum RenderError {
     #[error("nicht implementiert: {0}")]
     NotImplemented(&'static str),
     #[error(
-        "err-chromium-missing: Chromium fehlt unter {path}. Chrome/Chromium installieren oder OPENSPIDER_CHROMIUM bzw. rendering.chromium_path setzen."
+        "err-chromium-missing: Chromium fehlt unter {path}. Chromium unter Konfiguration › Spider › Rendering herunterladen, Chrome/Chromium installieren oder OPENSPIDER_CHROMIUM bzw. rendering.chromium_path setzen."
     )]
     ChromiumMissing { path: String },
     #[error("Chromium nicht startbar: {0}")]
