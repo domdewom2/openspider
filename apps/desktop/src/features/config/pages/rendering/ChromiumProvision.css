@@ -1,0 +1,5 @@
+/* M3-K01: Abschnitt „Chromium-Bereitstellung“ (Spider › Rendering). */
+.os-chromium-provision { display: flex; flex-direction: column; gap: var(--os-space-8); margin-block-end: var(--os-space-16); }
+.os-chromium-provision > p { margin: 0; }
+.os-chromium-provision-actions { display: flex; flex-wrap: wrap; gap: var(--os-space-8); }
+.os-chromium-provision-actions:empty { display: none; }
