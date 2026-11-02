@@ -132,11 +132,19 @@ pub fn on_config_changed(
 
 /// Stored robots bodies for the app's effective-agent pacing notice (CRAWL-145).
 /// Only the small per-origin table is read; URL tables are never scanned.
-pub fn robots_bodies(file: &CrawlFile) -> Result<Vec<(String, String)>, StoreError> {
-    let mut statement = file
-        .conn()
-        .prepare("SELECT origin, body FROM robots_files WHERE body IS NOT NULL")?;
-    let rows = statement.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?;
+/// Origins in `known` are skipped without reading their body: a stored robots.txt does not change
+/// during a crawl, so the feed parses each origin once (M2-N28, UI-145).
+pub fn robots_bodies(
+    file: &CrawlFile,
+    known: &[String],
+) -> Result<Vec<(String, String)>, StoreError> {
+    let known =
+        serde_json::to_string(known).map_err(|e| StoreError::InvalidInput(e.to_string()))?;
+    let mut statement = file.conn().prepare(
+        "SELECT origin, body FROM robots_files WHERE body IS NOT NULL \
+         AND origin NOT IN (SELECT value FROM json_each(?1))",
+    )?;
+    let rows = statement.query_map([known], |row| Ok((row.get(0)?, row.get(1)?)))?;
     rows.collect::<Result<Vec<_>, _>>()
         .map_err(StoreError::from)
 }
