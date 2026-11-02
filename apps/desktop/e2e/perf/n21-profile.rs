@@ -67,7 +67,7 @@ fn main() {
         return;
     }
     let at = Instant::now();
-    let count = os_store::counters::discovered(file.conn()).unwrap();
+    let count = os_store::counters::encountered(file.conn()).unwrap();
     mark("opening.url_total", at);
     println!("rows={count}");
     let tabs = os_analyze::tabs::configured_for_file(&cfg, &file);

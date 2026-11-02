@@ -41,7 +41,7 @@ test("overview retains its last response during crawl updates and after resume",
       observer.observe(host, { childList: true, subtree: true, characterData: true });
       Object.assign(window, { __n03Overview: { samples, observer } });
     });
-    // Bound the sample to a live crawl: the fixture has 29 encountered URLs.
+    // Bound the sample to a live crawl: the fixture has 27 encountered URLs (UI-061, without robots.txt rows).
     await expect.poll(() => page.evaluate(async () => {
       const { useSession } = await import(/* @vite-ignore */ String("/src/state/session.ts"));
       return useSession.getState().crawl?.crawled ?? 0;
