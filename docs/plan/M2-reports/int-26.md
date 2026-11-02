@@ -60,7 +60,14 @@ N30 ändert nur os-app (ein Quell- und zwei Testdateien); der volle Workspace li
 
 Integrationsbaum mit N31 (`41ae1fb3`): `cargo fmt`, `cargo clippy --workspace --all-targets -D warnings` grün; `cargo test --workspace --no-fail-fast` 4.118 bestanden, 0 fehlgeschlagen; M2-check OK.
 
-CI und ui-e2e des Integrationsbaums: werden nachgetragen (erste Läufe 41386002985/41386005096 auf `a391962e` wegen der Aufnahme von N31 abgebrochen).
+CI und ui-e2e des Integrationsbaums (`41ae1fb3`; erste Läufe auf `a391962e` wegen der Aufnahme von N31 abgebrochen):
+
+| Lauf | Ergebnis |
+|---|---|
+| CI 41390554949 | grün (alle Jobs ohne Intel) |
+| ui-e2e 41390556980 | linux-chromium, macos-webkit, windows-chromium grün; linux-webkit rot: `beta/n04-live.spec.ts:74` (Grid „Inlinks“ nicht innerhalb von 1 s während des Live-Crawls), in beiden Versuchen; flaky `polish/visual-heights.spec.ts:81` |
+
+`n04-live:74` war auf linux-webkit zuvor grün (main `ef543f55`, N27 allein, N28 allein, N30) und ist auch auf `m2/n31` (`940b310f`, enthält N27+N28+N30) in beiden Versuchen rot. Behandlung als Regression der Runde, nicht als Flake: Ursachensuche per Bisect auf dem Server läuft (Paket M2-FIX-LIVE, Budget unverändert, K2-63). int-26 geht erst nach dem Fix nach main.
 
 ## Folgearbeiten
 
