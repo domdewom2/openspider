@@ -16,6 +16,8 @@ use std::sync::Arc;
 use tokio::sync::oneshot;
 
 pub mod ahrefs;
+/// Chromium-Archiv mit Range-Unterstützung (M3-K01); nicht in der Registry, das Archiv erzeugt der Test.
+pub mod chromium;
 pub mod common;
 pub mod drive;
 pub mod ga4;
