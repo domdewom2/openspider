@@ -86,6 +86,47 @@ async fn open_spec(app: &App, spec: Value, columns: Value) -> Value {
     }
 }
 
+/// Waits until the session feed has delivered its first change set after `crawl.open` and the maintenance it
+/// started on the view behind `handle` has finished (M2-N30). The poll loop delivers that first change set as a
+/// reset 0 to 100 ms after opening; a cache probe during the resulting maintenance is a miss by design
+/// (`cache_probe_does_not_wait_for_live_maintenance`). The manual clock stays still, so the feed delivers no
+/// further change set afterwards. The deadline only guards against a hang; the wait ends on the event.
+async fn feed_maintenance_settled(app: &App, handle: &Value) {
+    let tab = crate::commands::view::get(
+        app,
+        &CallCtx::for_window("main"),
+        handle["viewId"].as_str().unwrap(),
+    )
+    .unwrap()
+    .tab
+    .unwrap();
+    let key = app
+        .sessions()
+        .current(&CallCtx::for_window("main").window)
+        .unwrap()
+        .key;
+    let delivered = || {
+        app.ext::<crate::session::SessionService>()
+            .feeds
+            .lock()
+            .unwrap()
+            .contains_key(&key)
+    };
+    let idle = || {
+        !tab.worker.load(std::sync::atomic::Ordering::SeqCst)
+            && super::lock(&tab.pending).is_none()
+            && tab.builder.try_lock().is_ok()
+    };
+    let deadline = std::time::Instant::now() + Duration::from_secs(30);
+    while !(delivered() && idle()) {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "feed delivery or view maintenance did not finish"
+        );
+        tokio::time::sleep(Duration::from_millis(1)).await;
+    }
+}
+
 // spec: UI-141
 // spec: UI-142
 #[tokio::test]
@@ -143,6 +184,7 @@ async fn closed_fixture_tab_is_reused_and_released_after_sixty_seconds() {
     let summary = open_crawl(&app, &path).await;
     assert_eq!(summary["urls"], 8); // includes external and hidden discovered URLs
     let first = open_view(&app).await;
+    feed_maintenance_settled(&app, &first).await;
     let core = generation(&app, &first);
     call(&app, "view.close", json!({"viewId":first["viewId"]})).await;
     assert!(app.dispatch(CallCtx::for_window("main"), "view.rows", json!({"viewId":first["viewId"],"version":first["version"],"offset":0,"limit":1,"columns":[]})).await.is_err());
@@ -212,6 +254,7 @@ async fn filter_open_reuses_the_tab_session_but_keeps_closed_handles_revoked() {
     .unwrap()
     .tab
     .unwrap();
+    feed_maintenance_settled(&app, &all).await;
     call(&app, "view.close", json!({"viewId":all["viewId"]})).await;
     let html = open_spec(
         &app,
