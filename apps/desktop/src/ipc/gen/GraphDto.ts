@@ -25,4 +25,8 @@ edges: Array<GraphEdge>,
 /**
  * Das Knotenbudget hat gekürzt.
  */
-truncated: boolean, };
+truncated: boolean, 
+/**
+ * Eingeblendete Links (UI-097): Anzahl eindeutiger Links gemäß Optionen, auch zu nicht dargestellten Knoten.
+ */
+linkTotal?: number | null, };

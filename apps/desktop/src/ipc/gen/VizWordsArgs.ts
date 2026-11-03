@@ -40,4 +40,8 @@ includeNofollow?: boolean | null,
 /**
  * Links auf dieselbe URL ausschließen.
  */
-excludeSelfLinks?: boolean | null, };
+excludeSelfLinks?: boolean | null, 
+/**
+ * Mindestlänge eines Worts in Zeichen (Body-Text, UI-100; Standard 3).
+ */
+minLength?: number | null, };

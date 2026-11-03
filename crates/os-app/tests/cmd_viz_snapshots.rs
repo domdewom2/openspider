@@ -271,17 +271,26 @@ async fn missing_crawl_and_unsupported_p2_kinds_return_explicit_errors() {
         .code,
         ErrorCode::NoCrawl
     );
-    assert_eq!(
-        app.dispatch(
-            CallCtx::for_window("main"),
-            "viz.open",
-            json!({"kind":"bodyWords"})
-        )
-        .await
-        .unwrap_err()
-        .code,
-        ErrorCode::Unsupported
-    );
+    // M3-V02: alle Arten sind freigeschaltet; ohne Crawl gilt für jede derselbe Fehler.
+    for kind in [
+        "directoryGraph",
+        "crawlGraph3d",
+        "directoryGraph3d",
+        "bodyWords",
+    ] {
+        assert_eq!(
+            app.dispatch(
+                CallCtx::for_window("main"),
+                "viz.open",
+                json!({ "kind": kind })
+            )
+            .await
+            .unwrap_err()
+            .code,
+            ErrorCode::NoCrawl,
+            "{kind}"
+        );
+    }
 }
 
 // spec: UI-096

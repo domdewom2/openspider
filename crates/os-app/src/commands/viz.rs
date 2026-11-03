@@ -1,10 +1,15 @@
-//! Graph-Schnappschüsse je Fenster und CSV-Export (M2-K16).
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+//! Graph-Schnappschüsse je Fenster und CSV-Export (M2-K16); Verzeichnisgraph, 3D-Varianten, eingeblendete Links und
+//! Body-Text-Wortwolke (M3-V02: UI-094, UI-097, UI-098, UI-100).
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::sync::{Arc, Mutex, OnceLock};
 use std::time::Duration;
 
 use futures_util::future::BoxFuture;
-use os_analyze::graph::{GraphOptions, Snapshot, WordOptions, WordUnit};
+use os_analyze::analysis::CancelToken;
+use os_analyze::graph::{
+    body_terms, BodyWordOptions, CaptureScope, GraphOptions, LinkDirection, LinkOverlayOptions,
+    Snapshot, WordOptions, WordUnit, MAX_BUDGET_2D, MAX_BUDGET_3D,
+};
 
 use crate::dto::*;
 use crate::pool::CrawlKey;
@@ -22,6 +27,8 @@ struct Entry {
     root: Option<i64>,
     last_graph: Option<GraphDto>,
     last_options: Option<GraphOptions>,
+    /// Sichtbarer Body-Text der Wurzel-URL beim Öffnen einer Body-Wortwolke (Schnappschuss, UI-100).
+    body: Option<(i64, Result<String, CmdError>)>,
     notified: bool,
     wake: Arc<tokio::sync::Notify>,
 }
@@ -84,12 +91,64 @@ fn invalid(field: &str) -> CmdError {
 fn entry(app: &App, id: &str) -> Result<Entry, CmdError> {
     state(app).lock().get(id).cloned().ok_or_else(stale)
 }
+/// Datengrundlage einer Graphart: `true` = Verzeichnisbaum (UI-093/094), `false` = Entdeckungsbaum.
 fn graph_kind(kind: VizKind) -> Result<bool, CmdError> {
     match kind {
-        VizKind::CrawlTree | VizKind::CrawlGraph => Ok(false),
-        VizKind::DirectoryTree => Ok(true),
-        _ => Err(CmdError::new(ErrorCode::Unsupported, "err-viz-kind")),
+        VizKind::CrawlTree | VizKind::CrawlGraph | VizKind::CrawlGraph3d => Ok(false),
+        VizKind::DirectoryTree | VizKind::DirectoryGraph | VizKind::DirectoryGraph3d => Ok(true),
+        VizKind::AnchorWords | VizKind::BodyWords => {
+            Err(CmdError::new(ErrorCode::Unsupported, "err-viz-kind"))
+        }
     }
+}
+fn is_words(kind: VizKind) -> bool {
+    matches!(kind, VizKind::AnchorWords | VizKind::BodyWords)
+}
+fn is_3d(kind: VizKind) -> bool {
+    matches!(kind, VizKind::CrawlGraph3d | VizKind::DirectoryGraph3d)
+}
+/// Umfang der Aufnahme: 3D bis 100 000 Knoten ohne Ankertexte (UI-098; `links` wird dann nur ohne Entdeckungsherkunft
+/// gelesen), Body-Wortwolke ohne Ankertexte; die 2D-Arten und die Ankertext-Wortwolke wie bisher (M2-K16: `viz.words`
+/// mit Quelle Ankertexte arbeitet auf jedem dieser Schnappschüsse mit eingefrorenen Zählern).
+fn capture_scope(kind: VizKind) -> CaptureScope {
+    match kind {
+        k if is_3d(k) => CaptureScope::graph(MAX_BUDGET_3D),
+        VizKind::BodyWords => CaptureScope::graph(MAX_BUDGET_2D),
+        _ => CaptureScope::default(),
+    }
+}
+/// Hinweis nach UI-016 (`HTML_NOT_STORED`), wenn für die URL kein HTML gespeichert ist.
+fn html_not_stored() -> CmdError {
+    CmdError::new(ErrorCode::Unsupported, "err-viz-html-not-stored").with_arg(
+        "state",
+        serde_json::json!({"code": "HTML_NOT_STORED", "action": {"kind": "openSetting", "anchor": "extraction.store_html"}}),
+    )
+}
+/// Sichtbarer Body-Text wie die Wortzahl (ONPAGE-141) und View Source/Text (UI-041): dieselbe Extraktion
+/// `os_parse::content::area_text_flat` mit dem Inhaltsbereich der Crawl-Konfiguration.
+async fn body_text(
+    app: &App,
+    key: CrawlKey,
+    cancel: CancelToken,
+    url: i64,
+) -> Result<String, CmdError> {
+    let (stored, area) = app
+        .read_pool()
+        .run_with(key, cancel, move |file, _| {
+            Ok((
+                os_store::queries::stored_html(file, os_model::UrlId(url))?,
+                file.config()?.content.area,
+            ))
+        })
+        .await?;
+    let Some(stored) = stored else {
+        return Err(html_not_stored());
+    };
+    let html = crate::source::load(Some(stored), SourceWhich::Original)?;
+    Ok(os_parse::content::area_text_flat(
+        &os_parse::dom::Document::parse(&html),
+        &area,
+    ))
 }
 fn window_name(id: &str) -> String {
     // Der F05-Vertrag kodiert Snapshot-ID-Bytes im Fensterlabel hexadezimal.
@@ -105,9 +164,11 @@ fn window_name(id: &str) -> String {
 fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let args: VizOpenArgs = parse_args(args)?;
-        if !matches!(args.kind, VizKind::AnchorWords) {
-            graph_kind(args.kind)?;
-        }
+        let directory = if is_words(args.kind) {
+            false
+        } else {
+            graph_kind(args.kind)?
+        };
         let previous = args
             .refresh_snapshot_id
             .as_deref()
@@ -128,14 +189,24 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
                 .ok_or_else(|| no_crawl(&ctx.window.0))?;
             (session.key, ctx.window.clone(), args.root_url_id)
         };
+        let scope = capture_scope(args.kind);
         let data = Arc::new(
             app.read_pool()
-                .run_with(key.clone(), ctx.cancel, |file, _| Snapshot::capture(file))
+                .run_with(key.clone(), ctx.cancel.clone(), move |file, _| {
+                    Snapshot::capture_scoped(file, scope)
+                })
                 .await?,
         );
-        if root.is_some_and(|id| !data.contains_node(id, args.kind == VizKind::DirectoryTree)) {
+        if root.is_some_and(|id| !data.contains_node(id, directory)) {
             return Err(invalid("rootUrlId"));
         }
+        let body = match (args.kind, root) {
+            (VizKind::BodyWords, Some(url)) => Some((
+                url,
+                body_text(app, key.clone(), ctx.cancel.clone(), url).await,
+            )),
+            _ => None,
+        };
         let id = args.refresh_snapshot_id.unwrap_or_else(|| {
             app.config()
                 .ids
@@ -153,6 +224,7 @@ fn open<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a
             root,
             last_graph: None,
             last_options: None,
+            body,
             notified: false,
             wake: Arc::new(tokio::sync::Notify::new()),
         };
@@ -265,8 +337,24 @@ fn graph<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'
     Box::pin(async move {
         let args: VizGraphArgs = parse_args(args)?;
         let old = entry(app, &args.snapshot_id)?;
+        let directory = graph_kind(args.kind)?;
+        let links = args
+            .links_node
+            .map(|node| {
+                Ok::<_, CmdError>(LinkOverlayOptions {
+                    node,
+                    direction: LinkDirection::parse(
+                        args.links_mode.as_deref().unwrap_or("inlinks"),
+                    )
+                    .ok_or_else(|| invalid("linksMode"))?,
+                    directory,
+                    include_nofollow: args.links_include_nofollow.unwrap_or(true),
+                    exclude_nav_footer: args.links_exclude_nav_footer.unwrap_or(false),
+                })
+            })
+            .transpose()?;
         let mut options = GraphOptions {
-            directory: graph_kind(args.kind)?,
+            directory,
             root: args.root.or(old.root),
             budget: args.budget,
             expand_depth: args.expand_depth.unwrap_or(3),
@@ -276,6 +364,11 @@ fn graph<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'
             include_non_indexable: args.include_non_indexable.unwrap_or(true),
             metric: args.metric,
             color_metric: args.color_metric,
+            max_budget: if is_3d(args.kind) {
+                MAX_BUDGET_3D
+            } else {
+                MAX_BUDGET_2D
+            },
         };
         if let (Some(_), Some(previous)) = (options.explore_node, old.last_options.as_ref()) {
             let mut base = previous.clone();
@@ -299,7 +392,7 @@ fn graph<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'
         if ctx.cancel.is_cancelled() {
             return Err(CmdError::new(ErrorCode::Cancelled, "err-cancelled"));
         }
-        let dto = GraphDto {
+        let mut dto = GraphDto {
             available_metrics: old.data.available_metrics().into_iter().collect(),
             provenance_missing: old.data.provenance_missing,
             nodes: graph
@@ -328,10 +421,38 @@ fn graph<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'
             edges: graph
                 .edges
                 .into_iter()
-                .map(|(source, target)| GraphEdge { source, target })
+                .map(|(source, target)| GraphEdge {
+                    source,
+                    target,
+                    edge_type: None,
+                })
                 .collect(),
             truncated: graph.truncated,
+            link_total: None,
         };
+        if let Some(links) = links {
+            // Eingeblendete Links (UI-097): nur zwischen dargestellten Knoten, Gesamtzahl gemäß Optionen.
+            let kind = if links.direction.inbound() {
+                "inlink"
+            } else {
+                "outlink"
+            };
+            let shown: HashSet<i64> = dto.nodes.iter().map(|n| n.id).collect();
+            let data = old.data.clone();
+            let overlay = app
+                .read_pool()
+                .run_with(old.key.clone(), ctx.cancel.clone(), move |file, _| {
+                    data.link_overlay(file, &links, &shown)
+                })
+                .await?;
+            dto.edges
+                .extend(overlay.edges.into_iter().map(|(source, target)| GraphEdge {
+                    source,
+                    target,
+                    edge_type: Some(kind.into()),
+                }));
+            dto.link_total = Some(overlay.total);
+        }
         {
             let state = state(app);
             let mut entries = state.lock();
@@ -349,8 +470,8 @@ fn graph<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'
 fn words<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let args: VizWordsArgs = parse_args(args)?;
-        if args.kind != WordSource::Anchors {
-            return Err(CmdError::new(ErrorCode::Unsupported, "err-viz-kind"));
+        if args.kind == WordSource::Body {
+            return body_words(app, ctx, args).await;
         }
         let options = WordOptions {
             unit: match args.mode.as_deref().unwrap_or("phrase") {
@@ -391,6 +512,49 @@ fn words<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'
                 .collect::<Vec<_>>(),
         )
     })
+}
+
+/// Body-Text-Wortwolke (UI-100): Text der Wurzel aus dem Schnappschuss, für andere URLs beim Aufruf gelesen.
+async fn body_words(app: &App, ctx: CallCtx, args: VizWordsArgs) -> CmdResult {
+    let options = BodyWordOptions {
+        remove_stopwords: args.remove_stopwords.unwrap_or(true),
+        language: args.language.unwrap_or_else(|| "en".into()),
+        min_length: args.min_length.unwrap_or(3),
+        max_terms: args.max_terms.unwrap_or(100),
+    };
+    let snapshot = entry(app, &args.snapshot_id)?;
+    if !snapshot.data.contains_url(args.url_id) {
+        return Err(invalid("urlId"));
+    }
+    let text = match snapshot.body {
+        Some((url, ref text)) if url == args.url_id => text.clone()?,
+        _ => body_text(app, snapshot.key.clone(), ctx.cancel.clone(), args.url_id).await?,
+    };
+    let unsupported_language = options
+        .stopwords_unavailable()
+        .then(|| options.language.clone());
+    let terms = tokio::task::spawn_blocking(move || body_terms(&text, &options))
+        .await
+        .map_err(|e| internal("viz.words", e.to_string()))?
+        .map_err(|e| store_error(&e))?;
+    if let Some(language) = unsupported_language {
+        app.send_event(
+            &ctx.window,
+            UiEvent::Notice {
+                notice: Notice {
+                    level: NoticeLevel::Info,
+                    code: "viz-stopwords-unavailable".into(),
+                    args: BTreeMap::from([("language".into(), serde_json::json!(language))]),
+                },
+            },
+        );
+    }
+    to_json(
+        &terms
+            .into_iter()
+            .map(|(word, count)| WordFreq { word, count })
+            .collect::<Vec<_>>(),
+    )
 }
 
 fn focus<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
@@ -453,12 +617,16 @@ fn export<'a>(app: &'a App, _ctx: CallCtx, args: serde_json::Value) -> BoxFuture
         let mut args: VizExportArgs = parse_args(args)?;
         let snapshot = entry(app, &args.snapshot_id)?;
         let displayed = snapshot.last_graph.ok_or_else(|| invalid("nodes"))?;
-        let expected_edges: BTreeSet<_> = displayed
-            .edges
-            .iter()
-            .map(|e| (e.source, e.target))
-            .collect();
-        let actual_edges: BTreeSet<_> = args.edges.iter().map(|e| (e.source, e.target)).collect();
+        // Baum- und Linkkanten zwischen denselben Knoten sind verschiedene Kanten (Art gehört zum Schlüssel).
+        let edge_key = |e: &GraphEdge| {
+            (
+                e.source,
+                e.target,
+                e.edge_type.clone().unwrap_or_else(|| "tree".into()),
+            )
+        };
+        let expected_edges: BTreeSet<_> = displayed.edges.iter().map(edge_key).collect();
+        let actual_edges: BTreeSet<_> = args.edges.iter().map(edge_key).collect();
         if args.nodes.len() != displayed.nodes.len()
             || args.edges.len() != expected_edges.len()
             || actual_edges != expected_edges
@@ -516,7 +684,12 @@ fn export_csv(
         return Err(invalid("dir"));
     }
     std::fs::create_dir_all(&dir).map_err(io)?;
-    let parents: HashMap<_, _> = args.edges.iter().map(|e| (e.target, e.source)).collect();
+    let parents: HashMap<_, _> = args
+        .edges
+        .iter()
+        .filter(|e| e.edge_type.as_deref().is_none_or(|t| t == "tree"))
+        .map(|e| (e.target, e.source))
+        .collect();
     let total = (args.nodes.len() + args.edges.len()) as u64;
     let nonce = uuid::Uuid::new_v4();
     let nodes_path = dir.join(format!(".nodes-{nonce}.tmp"));
@@ -560,7 +733,12 @@ fn export_csv(
         }
         for e in &args.edges {
             check()?;
-            writeln!(edges, "{},{},tree\r", e.source, e.target).map_err(io)?;
+            let kind = match e.edge_type.as_deref() {
+                Some("inlink") => "inlink",
+                Some("outlink") => "outlink",
+                _ => "tree",
+            };
+            writeln!(edges, "{},{},{kind}\r", e.source, e.target).map_err(io)?;
             progress.advance(1);
         }
         nodes.flush().map_err(io)?;

@@ -44,4 +44,20 @@ exploreNode?: number | null,
 /**
  * Kennzahl für die Färbung der Knoten.
  */
-colorMetric?: string | null, };
+colorMetric?: string | null, 
+/**
+ * Links dieses Knotens einblenden (UI-097); ohne Angabe nur die Baumkanten.
+ */
+linksNode?: number | null, 
+/**
+ * Richtung der eingeblendeten Links: `inlinks`, `childInlinks`, `outlinks` oder `childOutlinks`.
+ */
+linksMode?: string | null, 
+/**
+ * Links mit nofollow einbeziehen (Standard an).
+ */
+linksIncludeNofollow?: boolean | null, 
+/**
+ * Links in Navigation und Footer (Linkposition) ausschließen (Standard aus).
+ */
+linksExcludeNavFooter?: boolean | null, };

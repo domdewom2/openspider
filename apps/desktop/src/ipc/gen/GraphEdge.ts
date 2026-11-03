@@ -11,4 +11,9 @@ source: number,
 /**
  * Ziel.
  */
-target: number, };
+target: number, 
+/**
+ * Art der Kante wie in `edges.csv` (UI-090): `inlink` bzw. `outlink` für eingeblendete Links (UI-097);
+ * ohne Angabe eine Baumkante (`tree`).
+ */
+edgeType?: string | null, };
