@@ -12,12 +12,17 @@ struct Host<R: Runtime>(AppHandle<R>, crate::window::Quitting, std::thread::Thre
 fn failure(e: impl std::fmt::Display) -> CmdError {
     CmdError::new(ErrorCode::Io, "err-desktop-action").with_detail(e.to_string())
 }
+/// Seite des Visualisierungsfensters (eigener Einstieg `viz.html`, nicht das Hauptfenster).
+/// Kodierung über URL-Query verhindert eine Interpretation der Kennung als Pfad/Fragment.
+fn viz_page(snapshot_id: &str) -> String {
+    let mut url = tauri::Url::parse("https://localhost/").expect("feste Basis-URL");
+    url.query_pairs_mut().append_pair("snapshotId", snapshot_id);
+    format!("viz.html?{}", url.query().unwrap_or_default())
+}
+
 impl<R: Runtime> WindowHost for Host<R> {
     fn open_viz(&self, snapshot_id: &str) -> Result<(), CmdError> {
-        // Kodierung über URL-Query verhindert eine Interpretation der Kennung als Pfad/Fragment.
-        let mut url = tauri::Url::parse("https://localhost/").map_err(failure)?;
-        url.query_pairs_mut().append_pair("snapshotId", snapshot_id);
-        let path = format!("index.html?{}", url.query().unwrap_or_default());
+        let path = viz_page(snapshot_id);
         let window = WebviewWindowBuilder::new(
             &self.0,
             format!(
@@ -348,5 +353,19 @@ mod export_tests {
             ErrorCode::InvalidInput
         );
         assert!(export_output_path(fixture.join("missing.csv").to_str().unwrap()).is_err());
+    }
+}
+
+#[cfg(test)]
+mod viz_window_tests {
+    use super::*;
+
+    // spec: UI-090
+    #[test]
+    fn visualisation_window_loads_the_viz_entry_with_an_encoded_snapshot_id() {
+        assert_eq!(viz_page("snap-1"), "viz.html?snapshotId=snap-1");
+        assert_eq!(viz_page("a/b#c&d"), "viz.html?snapshotId=a%2Fb%23c%26d");
+        // Der Einstieg muss im Vite-Build existieren, sonst startet wieder das Hauptfenster.
+        assert!(include_str!("../../vite.config.ts").contains("\"viz.html\""));
     }
 }
