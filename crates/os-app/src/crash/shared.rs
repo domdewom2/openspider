@@ -382,6 +382,8 @@ pub fn build(
             .chain(backtrace.iter().map(String::as_str))
             .chain(log_lines.iter().map(String::as_str)),
     );
+    // Erst filtern (eigene Module jedes Levels, Fremd-Crates nur warn/error ohne Text), dann auf 200 kürzen.
+    let log_lines = filter_log_lines(&log_lines);
     let skip = log_lines.len().saturating_sub(MAX_LOG_LINES);
     let log_tail: Vec<&String> = log_lines.iter().skip(skip).collect();
     Report {
@@ -405,6 +407,94 @@ pub fn build(
         sent: None,
         server_ref: None,
     }
+}
+
+/// Platzhalter für den weggelassenen Text einer Fremdzeile.
+pub const OMITTED: &str = "<omitted>";
+
+/// Stammt das Ziel (`target`) aus OpenSpider? Eigene Crates (`os_*`, `openspider*`), die Panic-Zeile des Hooks und
+/// das Log der Oberfläche (`frontend`).
+pub fn own_target(target: &str) -> bool {
+    target.starts_with("os_")
+        || target.starts_with("openspider")
+        || target == "panic"
+        || target == "frontend"
+}
+
+/// Filtert Logzeilen für `log_tail` (OUT-246, keine Crawl-Daten): Zeilen eigener Module bleiben unabhängig vom Level;
+/// Zeilen fremder Crates (auch über die `log`-Brücke) nur bei `WARN`/`ERROR` und dann **ohne** Nachrichtentext und
+/// Felder (`<zeit> <LEVEL> <ziel>: <omitted>`), weil HTML-Bibliotheken und HTTP-Clients Seiteninhalte, Pfade und
+/// Hostnamen in ihre Meldungen schreiben. Nicht erkennbare Zeilen entfallen. Text- und JSON-Format (`--log-format json`).
+pub fn filter_log_lines(lines: &[String]) -> Vec<String> {
+    lines
+        .iter()
+        .filter_map(|line| filter_log_line(line))
+        .collect()
+}
+
+fn filter_log_line(line: &str) -> Option<String> {
+    let trimmed = line.trim_start();
+    if trimmed.starts_with('{') {
+        let value: serde_json::Value = serde_json::from_str(trimmed).ok()?;
+        let level = value.get("level")?.as_str()?.to_ascii_uppercase();
+        let module = value.get("module")?.as_str()?;
+        if own_target(module) {
+            return Some(line.to_string());
+        }
+        if !matches!(level.as_str(), "WARN" | "ERROR") {
+            return None;
+        }
+        let target = value
+            .pointer("/fields/log.target")
+            .and_then(|t| t.as_str())
+            .filter(|t| {
+                t.chars()
+                    .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | ':' | '-'))
+            })
+            .unwrap_or(module);
+        return Some(
+            serde_json::json!({
+                "timestamp": value.get("timestamp").cloned().unwrap_or_default(),
+                "level": level,
+                "module": target,
+                "message": OMITTED,
+            })
+            .to_string(),
+        );
+    }
+    let mut parts = trimmed.splitn(4, ' ');
+    let time = parts.next()?;
+    let level = parts.next()?;
+    let target = parts.next()?.strip_suffix(':')?;
+    if !matches!(level, "TRACE" | "DEBUG" | "INFO" | "WARN" | "ERROR")
+        || !target
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | ':' | '-'))
+    {
+        return None;
+    }
+    if own_target(target) {
+        return Some(line.to_string());
+    }
+    if !matches!(level, "WARN" | "ERROR") {
+        return None;
+    }
+    // Über die `log`-Brücke steht das eigentliche Ziel im Feld `log.target`.
+    let bridged = (target == "log")
+        .then(|| {
+            let rest = parts.next()?;
+            let start = rest.find("log.target=\"")? + "log.target=\"".len();
+            let end = rest[start..].find('"')? + start;
+            let t = &rest[start..end];
+            t.chars()
+                .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | ':' | '-'))
+                .then(|| t.to_string())
+        })
+        .flatten();
+    Some(format!(
+        "{time} {level} {}: {OMITTED}",
+        bridged.as_deref().unwrap_or(target)
+    ))
 }
 
 /// Text der Panic-Nutzlast.
@@ -711,7 +801,12 @@ mod tests {
     fn oversized_report_trims_log_tail_from_the_front_then_backtrace() {
         let dir = tempfile::tempdir().unwrap();
         let tail: Vec<String> = (0..200)
-            .map(|n| format!("{n:03} {}", "x".repeat(1000)))
+            .map(|n| {
+                format!(
+                    "2026-11-03T10:00:00.000+00:00 INFO os_app::test: {n:03} {}",
+                    "x".repeat(1000)
+                )
+            })
             .collect();
         let frames: Vec<String> = (0..64).map(|n| format!("f{n}")).collect();
         let mut r = build(
@@ -732,7 +827,7 @@ mod tests {
         );
         assert!(r.log_tail.len() < 200 && !r.log_tail.is_empty());
         assert!(
-            r.log_tail.last().unwrap().starts_with("199 "),
+            r.log_tail.last().unwrap().contains(": 199 "),
             "newest lines kept"
         );
         // Nur noch Backtrace zu groß
@@ -799,6 +894,52 @@ mod tests {
             .path()
             .join("crash-20261103-100000-frontend.json")
             .exists());
+    }
+
+    // spec: OUT-246
+    #[test]
+    fn log_tail_keeps_own_modules_and_only_bare_foreign_warnings() {
+        let lines: Vec<String> = [
+            "2026-11-03T10:00:00.000+00:00 DEBUG os_fetch::client: Abruf abgeschlossen [url=\"https://a.test/x\"]",
+            "2026-11-03T10:00:00.001+00:00 DEBUG selectors::matching: Matching complex selector for <meta content=\"Home page of the basic OpenSpider fixture site.\"> []",
+            "2026-11-03T10:00:00.002+00:00 DEBUG log: starting new connection [log.target=\"reqwest::connect\"]",
+            "2026-11-03T10:00:00.003+00:00 WARN html5ever::tree_builder: Unexpected token in /about.html <title>Kunde</title> []",
+            "2026-11-03T10:00:00.004+00:00 ERROR log: connection reset for /about.html [log.target=\"hyper_util::client\" log.file=\"/x\"]",
+            "2026-11-03T10:00:00.005+00:00 ERROR panic: panicked at os-cli/src/x.rs:1:1",
+            "2026-11-03T10:00:00.006+00:00 INFO frontend: region failed [context=\"x\"]",
+            "2026-11-03T10:00:00.007+00:00 INFO openspider_desktop: start []",
+            "   frei stehende Fortsetzung mit Seiteninhalt",
+            "{\"timestamp\":\"t1\",\"level\":\"DEBUG\",\"module\":\"selectors::matching\",\"fields\":{\"message\":\"<p>Home page</p>\"}}",
+            "{\"timestamp\":\"t2\",\"level\":\"WARN\",\"module\":\"log\",\"fields\":{\"message\":\"/about.html\",\"log.target\":\"reqwest::connect\"}}",
+            "{\"timestamp\":\"t3\",\"level\":\"INFO\",\"module\":\"os_engine::crawl\",\"fields\":{\"message\":\"Crawl gestartet\"}}",
+        ]
+        .map(String::from)
+        .to_vec();
+        let kept = filter_log_lines(&lines);
+        assert_eq!(
+            kept,
+            [
+                lines[0].clone(),
+                "2026-11-03T10:00:00.003+00:00 WARN html5ever::tree_builder: <omitted>".to_string(),
+                "2026-11-03T10:00:00.004+00:00 ERROR hyper_util::client: <omitted>".to_string(),
+                lines[5].clone(),
+                lines[6].clone(),
+                lines[7].clone(),
+                serde_json::json!({"timestamp": "t2", "level": "WARN", "module": "reqwest::connect", "message": "<omitted>"}).to_string(),
+                lines[11].clone(),
+            ]
+        );
+        let all = kept.join("\n");
+        assert!(
+            !all.contains("Home page") && !all.contains("/about.html") && !all.contains("Kunde")
+        );
+        // Gefiltert wird vor dem Kürzen: 300 fremde Debug-Zeilen verdrängen keine eigene Zeile.
+        let dir = tempfile::tempdir().unwrap();
+        let mut flood = vec![lines[0].clone()];
+        flood.extend(std::iter::repeat_n(lines[1].clone(), 300));
+        let r = build(&ctx(dir.path()), KIND_PANIC, "", "m", "", vec![], flood);
+        assert_eq!(r.log_tail.len(), 1);
+        assert!(r.log_tail[0].contains("Abruf abgeschlossen"));
     }
 
     // spec: OUT-246

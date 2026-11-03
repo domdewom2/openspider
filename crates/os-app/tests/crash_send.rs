@@ -752,3 +752,59 @@ async fn delete_removes_a_report_and_unknown_ids_are_not_found() {
     assert_eq!(result.results[0].failure, Some(CrashSendFailure::NotFound));
     assert!(mock.requests().is_empty());
 }
+
+// spec: OUT-246
+#[tokio::test]
+async fn app_log_tail_has_no_page_content_from_foreign_crates() {
+    use std::io::Write;
+    let mock = Mock::start().await;
+    let home = tempfile::tempdir().unwrap();
+    let app = start(home.path(), &mock);
+    // Zeilen dieses Laufs (nach dem Start-Versatz): eigene Module jedes Levels, Fremd-Crates mit Seiteninhalt.
+    std::fs::create_dir_all(home.path().join("logs")).unwrap();
+    let mut log = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(home.path().join("logs").join("openspider.log"))
+        .unwrap();
+    writeln!(log, "2026-11-03T10:00:00.000+00:00 DEBUG os_engine::crawl: Seite abgerufen [url=\"https://kunde.example/about.html\"]").unwrap();
+    for _ in 0..300 {
+        writeln!(log, "2026-11-03T10:00:00.001+00:00 DEBUG selectors::matching: Matching complex selector for <meta content=\"Home page of the basic OpenSpider fixture site.\"> []").unwrap();
+    }
+    writeln!(log, "2026-11-03T10:00:00.002+00:00 WARN html5ever::tree_builder: Unexpected token in /about.html <title>Kunde</title> []").unwrap();
+    drop(log);
+    call(
+        &app,
+        "crash.reportFrontend",
+        json!({"message":"boom","componentStack":"","region":"table"}),
+    )
+    .await
+    .unwrap();
+    let id = overview(&app).await.reports[0].id.clone();
+    let text = call(&app, "crash.read", json!({"id": id})).await.unwrap();
+    let text = text.as_str().unwrap();
+    for content in [
+        "Home page of the basic OpenSpider fixture site",
+        "/about.html",
+        "<title",
+        "kunde.example",
+    ] {
+        assert!(!text.contains(content), "{content} im Bericht:\n{text}");
+    }
+    let report: Value = serde_json::from_str(text).unwrap();
+    let tail: Vec<&str> = report["log_tail"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|l| l.as_str().unwrap())
+        .collect();
+    assert!(tail.contains(&"2026-11-03T10:00:00.000+00:00 DEBUG os_engine::crawl: Seite abgerufen [url=\"<url>\"]"), "{tail:?}");
+    assert!(
+        tail.contains(&"2026-11-03T10:00:00.002+00:00 WARN html5ever::tree_builder: <omitted>"),
+        "{tail:?}"
+    );
+    assert!(
+        tail.iter().all(|l| !l.contains("selectors::matching")),
+        "{tail:?}"
+    );
+}

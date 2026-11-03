@@ -115,7 +115,11 @@ fn crash_test_trigger(log_path: &std::path::Path) {
                 if let Some(line) = text.lines().find(|l| l.contains(&needle)) {
                     let home = std::env::var("OPENSPIDER_HOME").unwrap_or_default();
                     tracing::warn!("crash test contact ops-246@crash-secret.test home={home}");
-                    panic!("crash test after: {line}");
+                    // E-Mail und Heimatpfad auch in der Meldung: der Test hängt nicht davon ab, welche Logzeilen
+                    // bis zum Panic noch geschrieben werden.
+                    panic!(
+                        "crash test contact ops-246@crash-secret.test home={home} after: {line}"
+                    );
                 }
                 std::thread::sleep(std::time::Duration::from_millis(10));
             }

@@ -118,6 +118,36 @@ async fn privacy_no_host_secret_email_or_home_path_in_the_report() {
     assert!(raw.contains("<email>"), "{raw}");
     let r = &reports[0].1;
     assert_eq!(r["thread"], "crash-test");
+    // Deterministisch über die Meldung (nicht über das Timing der letzten Logzeilen).
+    let message = r["message"].as_str().unwrap();
+    assert!(
+        message.starts_with("crash test contact <email> home=~ after: "),
+        "{message}"
+    );
+    // Keine Crawl-Daten: Seiteninhalte und Pfade der Fixture (Debug-Zeilen fremder Crates) fehlen.
+    for content in [
+        "Home page of the basic OpenSpider fixture site",
+        "/about.html",
+        "<meta",
+        "<title",
+    ] {
+        assert!(!raw.contains(content), "{content} im Bericht:\n{raw}");
+    }
+    let tail: Vec<&str> = r["log_tail"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|l| l.as_str().unwrap())
+        .collect();
+    for line in &tail {
+        let target = line.split(' ').nth(2).unwrap_or("");
+        let own =
+            target.starts_with("os_") || target.starts_with("openspider") || target == "panic:";
+        assert!(
+            own || line.ends_with(": <omitted>"),
+            "Fremdzeile mit Text: {line}"
+        );
+    }
     assert!(r["log_tail"].as_array().unwrap().len() <= 200);
     // Das Log selbst enthält die E-Mail (nur der Bericht wird bereinigt).
     let logs: String = std::fs::read_dir(env.home.path().join("logs"))

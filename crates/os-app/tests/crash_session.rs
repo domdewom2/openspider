@@ -32,7 +32,7 @@ fn child_entry() {
     let app = App::new(AppConfig::new(&home)).unwrap();
     match mode.as_str() {
         "run" => {
-            tracing::info!("child-run-marker pid={}", std::process::id());
+            tracing::info!(target: "os_app::crash_test", "child-run-marker pid={}", std::process::id());
             println!("READY");
             std::thread::sleep(std::time::Duration::from_secs(120));
         }

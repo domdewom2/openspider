@@ -55,7 +55,15 @@ fn reports(home: &Path) -> Vec<(PathBuf, Value)> {
 fn panic_writes_exactly_one_report_before_the_process_ends() {
     if let Some(home) = in_child() {
         let app = App::new(AppConfig::new(&home)).unwrap();
-        tracing::info!("child-run-marker visited https://crash-secret.test/?token=SEKRET-246");
+        tracing::info!(
+            target: "os_app::crash_test",
+            "child-run-marker visited https://crash-secret.test/?token=SEKRET-246"
+        );
+        // Fremd-Crate mit Seiteninhalt: nur die Zeile ohne Text gehört in den Bericht (OUT-246).
+        tracing::warn!(
+            target: "selectors::matching",
+            "<meta content=\"Home page of the basic OpenSpider fixture site.\"> /about.html"
+        );
         let worker = std::thread::Builder::new()
             .name("crash-worker".into())
             .spawn(|| {
@@ -121,6 +129,17 @@ fn panic_writes_exactly_one_report_before_the_process_ends() {
     assert!(
         !text.contains("crash-secret.test") && !text.contains("SEKRET-246"),
         "{text}"
+    );
+    // Keine Crawl-Daten aus Fremd-Crates: Zeile nur mit Ziel, ohne Text.
+    assert!(
+        !text.contains("Home page of the basic OpenSpider fixture site")
+            && !text.contains("/about.html"),
+        "{text}"
+    );
+    assert!(
+        tail.iter()
+            .any(|l| l.ends_with("WARN selectors::matching: <omitted>")),
+        "{tail:?}"
     );
     assert!(r["sent"].is_null() && r["server_ref"].is_null());
     // OUT-240: Der Backtrace-Eintrag im Log bleibt bestehen.

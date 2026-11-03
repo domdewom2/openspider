@@ -239,7 +239,10 @@ mod tests {
         let log = dir.path().join("openspider.log");
         fs::write(
             &log,
-            "earlier run\nrun line 1 https://crash-secret.test/x\nrun line 2\n",
+            "earlier run\n\
+             2026-11-03T10:00:00.000+00:00 INFO os_app::x: run line 1 https://crash-secret.test/x\n\
+             2026-11-03T10:00:00.001+00:00 DEBUG html5ever::tree: <title>Seite</title>\n\
+             2026-11-03T10:00:00.002+00:00 INFO os_app::x: run line 2\n",
         )
         .unwrap();
         let mut m = marker(42, 1000);
@@ -252,7 +255,13 @@ mod tests {
         assert_eq!(r.app_version, "0.9.0");
         assert_eq!(r.build, "old1234");
         assert!(r.crawl_running);
-        assert_eq!(r.log_tail, ["run line 1 <url>", "run line 2"]);
+        assert_eq!(
+            r.log_tail,
+            [
+                "2026-11-03T10:00:00.000+00:00 INFO os_app::x: run line 1 <url>",
+                "2026-11-03T10:00:00.002+00:00 INFO os_app::x: run line 2"
+            ]
+        );
         assert!(!marker_path(&ctx.dir, 42).exists());
         assert_eq!(shared::list(&ctx.dir).len(), 1);
     }
