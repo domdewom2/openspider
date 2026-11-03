@@ -215,6 +215,7 @@ pub async fn run(
     match crawler.crawl(job).await {
         Ok(mut outcome) => {
             metrics.insert("crawler_available".into(), json!(true));
+            metrics.insert("acceptance_complete".into(), json!(true));
             metrics.insert("crawler_urls_crawled".into(), json!(outcome.urls_crawled));
             metrics.insert(
                 "crawler_seconds".into(),
@@ -252,9 +253,16 @@ pub async fn run(
         }
         Err(CrawlerError::NotImplemented) => {
             metrics.insert("crawler_available".into(), json!(false));
+            metrics.insert("acceptance_complete".into(), json!(false));
+            metrics.insert("measurement_status".into(), json!("server_only"));
+            metrics.insert(
+                "crawler_not_measured_reason".into(),
+                json!("Kein Adapter; separate Produkt-Benchmarks erforderlich"),
+            );
         }
         Err(CrawlerError::Failed(msg)) => {
             metrics.insert("crawler_available".into(), json!(true));
+            metrics.insert("acceptance_complete".into(), json!(false));
             metrics.insert("crawler_error".into(), json!(msg));
             crawler_ok = false;
         }
