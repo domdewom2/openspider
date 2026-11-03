@@ -1,4 +1,4 @@
-// UI-102 live run: a real crawl of fx-ui-basic (50 ms delay) over the real bridge; the table view of the chart area
+// UI-102 live run: a real crawl of fx-ui-basic (50 ms delay, 0.5 URL/s for enough updates) over the real bridge; the table view of the chart area
 // must agree with the Overview rows at every Overview update and after the crawl, and selecting calls no command.
 import { test, expect, type Page } from "@playwright/test";
 import { startAlphaBridge, startSite } from "../alpha/support";
@@ -38,7 +38,7 @@ function compare(s: Snapshot): string[] {
 // spec: UI-102
 // spec: UI-018
 test("live crawl of fx-ui-basic: chart table equals the Overview rows at every update and after the crawl; no IPC on selection", async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(240_000);
   const site = await startSite();
   const bridge = await startAlphaBridge();
   try {
@@ -49,7 +49,7 @@ test("live crawl of fx-ui-basic: chart table equals the Overview rows at every u
       const { config } = await import(/* @vite-ignore */ String("/src/ipc/config.ts"));
       const dto = await config.get();
       const root = dto.config as Record<string, Record<string, unknown>>;
-      await config.set({ ...dto, config: { ...root, speed: { ...root.speed, threads: 1, max_urls_per_sec: 1 }, analysis: { ...root.analysis, auto_at_end: false } } });
+      await config.set({ ...dto, config: { ...root, speed: { ...root.speed, threads: 1, max_urls_per_sec: 0.5 }, analysis: { ...root.analysis, auto_at_end: false } } });
       // Count every command from here on (UI-102: selecting an entry calls none).
       const w = window as unknown as { __v01Calls: string[] };
       w.__v01Calls = [];
@@ -70,7 +70,7 @@ test("live crawl of fx-ui-basic: chart table equals the Overview rows at every u
     expect(added).toEqual([]);
     const states = new Map<string, Snapshot>();
     const problems: string[] = [];
-    const deadline = Date.now() + 90_000;
+    const deadline = Date.now() + 150_000;
     let finished = false;
     while (Date.now() < deadline) {
       const s = await snapshot(page);
