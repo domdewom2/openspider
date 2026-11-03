@@ -143,6 +143,11 @@ const CATALOG_3_6A: &[&str] = &[
     "update.download",
     "update.install",
     "update.set_auto",
+    // M3-K01 (K3-01): Chromium-Bereitstellung.
+    "chromium.status",
+    "chromium.download",
+    "chromium.cancel",
+    "chromium.remove",
     "app.requestQuit",
     "app.confirmQuit",
     "config.testRobots",
@@ -287,6 +292,8 @@ fn domains_are_the_documented_ones() {
         "app", "events", "settings", "uistate", "diag", "crawl", "analysis", "catalog", "view",
         "search", "op", "detail", "sidebar", "config", "crawls", "projects", "export", "compare",
         "viz", "mcp", "api", "tasks", "segment", "auth", "profile", "mail", "update",
+        // M3-K01 (K3-01)
+        "chromium",
     ]
     .into_iter()
     .collect();

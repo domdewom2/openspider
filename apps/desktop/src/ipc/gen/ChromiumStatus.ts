@@ -3,7 +3,7 @@ import type { ChromiumJob } from "./ChromiumJob";
 import type { ChromiumSource } from "./ChromiumSource";
 
 /**
- * Antwort aller `render_provision.*`-Commands.
+ * Antwort aller `chromium.*`-Commands.
  */
 export type ChromiumStatus = { 
 /**

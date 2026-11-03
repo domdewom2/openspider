@@ -1152,25 +1152,25 @@
     "longRunning": false
   },
   {
-    "name": "render_provision.status",
+    "name": "chromium.status",
     "args": "ChromiumStatusArgs",
     "ret": "ChromiumStatus",
     "longRunning": false
   },
   {
-    "name": "render_provision.download",
+    "name": "chromium.download",
     "args": "ChromiumStatusArgs",
     "ret": "ChromiumStatus",
     "longRunning": false
   },
   {
-    "name": "render_provision.cancel",
+    "name": "chromium.cancel",
     "args": "ChromiumStatusArgs",
     "ret": "ChromiumStatus",
     "longRunning": false
   },
   {
-    "name": "render_provision.remove",
+    "name": "chromium.remove",
     "args": "ChromiumStatusArgs",
     "ret": "ChromiumStatus",
     "longRunning": false

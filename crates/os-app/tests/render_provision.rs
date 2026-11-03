@@ -1,4 +1,4 @@
-//! M3-K01: Commands `render_provision.*` mit dem echten HTTP-Transport der App gegen den os-testsite-Mock
+//! M3-K01: Commands `chromium.*` mit dem echten HTTP-Transport der App gegen den os-testsite-Mock
 //! (`mocks::chromium`), über den app-weiten Proxy (OUT-269, CRAWL-122).
 use std::{
     io::{Cursor, Write},
@@ -80,7 +80,7 @@ async fn call(app: &App, name: &str) -> Value {
 async fn settled(app: &App) -> Value {
     tokio::time::timeout(Duration::from_secs(60), async {
         loop {
-            let status = call(app, "render_provision.status").await;
+            let status = call(app, "chromium.status").await;
             let job = &status["job"];
             if !(job.get("downloading").is_some() || job == "verifying" || job == "installing") {
                 return status;
@@ -161,7 +161,7 @@ async fn download_through_app_proxy_installs_and_becomes_active() {
     }}}))
     .unwrap();
 
-    let before = call(&app, "render_provision.status").await;
+    let before = call(&app, "chromium.status").await;
     assert_eq!(before["supported"], true);
     assert_eq!(before["version"], VERSION);
     assert_eq!(before["downloadBytes"], bytes.len());
@@ -169,7 +169,7 @@ async fn download_through_app_proxy_installs_and_becomes_active() {
     assert_eq!(before["active"], "none");
     assert_eq!(before["job"], "idle");
 
-    let started = call(&app, "render_provision.download").await;
+    let started = call(&app, "chromium.download").await;
     assert!(started["job"].get("downloading").is_some(), "{started}");
     let after = settled(&app).await;
     assert_eq!(after["job"], "idle", "{after}");
@@ -195,7 +195,7 @@ async fn download_through_app_proxy_installs_and_becomes_active() {
     let status = app
         .dispatch(
             CallCtx::for_window("main"),
-            "render_provision.status",
+            "chromium.status",
             json!({"configuredPath": configured.display().to_string()}),
         )
         .await
@@ -222,7 +222,7 @@ async fn wrong_checksum_fails_visibly_and_installs_nothing() {
     );
     app.apply_settings_patch(&json!({"network":{"proxy":{"mode":"none"}}}))
         .unwrap();
-    call(&app, "render_provision.download").await;
+    call(&app, "chromium.download").await;
     let status = settled(&app).await;
     assert_eq!(
         status["job"]["failed"]["messageKey"], "err-chromium-checksum",
@@ -254,11 +254,11 @@ async fn cancel_keeps_partial_resume_completes_and_remove_cleans_up() {
     );
     app.apply_settings_patch(&json!({"network":{"proxy":{"mode":"none"}}}))
         .unwrap();
-    call(&app, "render_provision.download").await;
+    call(&app, "chromium.download").await;
     // Warten, bis die erste Hälfte da ist (danach stockt der Mock), dann abbrechen.
     tokio::time::timeout(Duration::from_secs(30), async {
         loop {
-            let status = call(&app, "render_provision.status").await;
+            let status = call(&app, "chromium.status").await;
             if status["job"]["downloading"]["done"].as_u64() >= Some(bytes.len() as u64 / 2) {
                 break;
             }
@@ -267,7 +267,7 @@ async fn cancel_keeps_partial_resume_completes_and_remove_cleans_up() {
     })
     .await
     .unwrap();
-    call(&app, "render_provision.cancel").await;
+    call(&app, "chromium.cancel").await;
     let cancelled = settled(&app).await;
     assert_eq!(
         cancelled["job"]["failed"]["messageKey"], "err-chromium-cancelled",
@@ -276,7 +276,7 @@ async fn cancel_keeps_partial_resume_completes_and_remove_cleans_up() {
     assert_eq!(cancelled["partialBytes"], bytes.len() / 2);
     assert_eq!(cancelled["installed"], Value::Null);
 
-    call(&app, "render_provision.download").await;
+    call(&app, "chromium.download").await;
     let done = settled(&app).await;
     assert_eq!(done["installed"], VERSION, "{done}");
     assert_eq!(
@@ -284,7 +284,7 @@ async fn cancel_keeps_partial_resume_completes_and_remove_cleans_up() {
         Some(&*format!("bytes={}-", bytes.len() / 2))
     );
 
-    let removed = call(&app, "render_provision.remove").await;
+    let removed = call(&app, "chromium.remove").await;
     assert_eq!(removed["installed"], Value::Null);
     assert_eq!(removed["active"], "none");
     assert_eq!(removed["job"], "idle");
@@ -305,15 +305,11 @@ async fn unsupported_platform_reports_and_refuses_download() {
             ..Default::default()
         },
     );
-    let status = call(&app, "render_provision.status").await;
+    let status = call(&app, "chromium.status").await;
     assert_eq!(status["supported"], false);
     assert_eq!(status["version"], Manifest::bundled().unwrap().version);
     let error = app
-        .dispatch(
-            CallCtx::for_window("main"),
-            "render_provision.download",
-            json!({}),
-        )
+        .dispatch(CallCtx::for_window("main"), "chromium.download", json!({}))
         .await
         .unwrap_err();
     assert_eq!(error.message_key, "err-chromium-unsupported");
@@ -339,10 +335,10 @@ async fn real_archive_from_versions_file() {
             ..Default::default()
         },
     );
-    call(&app, "render_provision.download").await;
+    call(&app, "chromium.download").await;
     let status = tokio::time::timeout(Duration::from_secs(1800), async {
         loop {
-            let status = call(&app, "render_provision.status").await;
+            let status = call(&app, "chromium.status").await;
             let job = &status["job"];
             if !(job.get("downloading").is_some() || job == "verifying" || job == "installing") {
                 return status;

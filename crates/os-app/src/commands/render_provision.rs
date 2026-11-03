@@ -1,7 +1,8 @@
-//! Chromium-Bereitstellung nach K3-01 (M3-K01): Status, Download auf Anfrage, Abbruch, Entfernen.
+//! Chromium-Bereitstellung nach K3-01 (M3-K01): Status, Download auf Anfrage, Abbruch, Entfernen. Command-Domäne
+//! `chromium` (`chromium.status|download|cancel|remove`; ohne Unterstrich, da die Domäne zugleich Tauri-Plugin-Name ist).
 //!
 //! Der Download läuft als App-Aufgabe unabhängig vom aufrufenden Fenster und von Crawls; die Oberfläche fragt den
-//! Fortschritt mit `render_provision.status` ab. Transport: HTTP-Client mit dem app-weiten Proxy und den
+//! Fortschritt mit `chromium.status` ab. Transport: HTTP-Client mit dem app-weiten Proxy und den
 //! vertrauenswürdigen Zertifikaten (OUT-269, CRAWL-122), Prüfsumme vor dem Entpacken (OUT-265).
 use std::{
     path::PathBuf,
@@ -31,10 +32,10 @@ use crate::{
 
 pub fn register(r: &mut Registry) {
     for (name, handler) in [
-        ("render_provision.status", status as Handler),
-        ("render_provision.download", start as Handler),
-        ("render_provision.cancel", cancel as Handler),
-        ("render_provision.remove", remove as Handler),
+        ("chromium.status", status as Handler),
+        ("chromium.download", start as Handler),
+        ("chromium.cancel", cancel as Handler),
+        ("chromium.remove", remove as Handler),
     ] {
         r.register(
             CommandMeta {

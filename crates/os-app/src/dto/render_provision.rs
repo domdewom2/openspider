@@ -37,7 +37,7 @@ pub enum ChromiumJob {
     Failed(ChromiumFailure),
 }
 
-/// Antwort aller `render_provision.*`-Commands.
+/// Antwort aller `chromium.*`-Commands.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(optional_fields = nullable)]
