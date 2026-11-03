@@ -1,7 +1,7 @@
 // Zeichnen der Szene auf Canvas (UI-146: Canvas statt SVG-DOM) und SVG-Export des aktuellen Ausschnitts (UI-090:
 // valides SVG 1.1, Texte als <text>, Farben als Hex). Beide nutzen dieselben Regeln für Sichtbarkeit und Beschriftung.
 import { rgbToHex } from "./encoding";
-import type { Scene, SceneNode } from "./scene";
+import type { Scene, SceneNode, SceneOverlay } from "./scene";
 import { worldView, type Transform } from "./viewport";
 
 export interface RenderStyle {
@@ -14,6 +14,10 @@ export interface RenderStyle {
   /** Linienbreite der Kanten in Bildschirm-px. */
   lineWidth: number;
   fontFamily: string;
+  /** Eingeblendete Inlinks/Outlinks (UI-097) und ausgegraute, nicht verbundene Knoten. */
+  inlink: string;
+  outlink: string;
+  dim: string;
 }
 
 export const DEFAULT_STYLE: RenderStyle = {
@@ -25,6 +29,9 @@ export const DEFAULT_STYLE: RenderStyle = {
   badgeText: "#ffffff",
   lineWidth: 1,
   fontFamily: "sans-serif",
+  inlink: "#0b6bcb",
+  outlink: "#c25e00",
+  dim: "#d5d9de",
 };
 
 export interface RenderState {
@@ -36,6 +43,13 @@ export interface RenderState {
   highlights: ReadonlySet<number>;
   current: number | null;
   hovered: number | null;
+  /** Eingeblendete Links; verbundene Knoten behalten ihre Farbe, alle übrigen werden ausgegraut (UI-097). */
+  overlay?: SceneOverlay | null;
+}
+
+/** Füllfarbe unter Berücksichtigung der Ausgrauung. */
+function fillOf(n: SceneNode, s: RenderState, style: RenderStyle): string {
+  return s.overlay && !s.overlay.connected.has(n.id) ? style.dim : n.fill;
 }
 
 const LABEL_PX = 11;
@@ -70,17 +84,38 @@ export function drawScene(ctx: CanvasRenderingContext2D, scene: Scene, s: Render
     ctx.moveTo(na.x, na.y);
     ctx.lineTo(nb.x, nb.y);
   }
-  ctx.strokeStyle = style.edge;
+  ctx.strokeStyle = s.overlay ? style.dim : style.edge;
   ctx.lineWidth = style.lineWidth / t.k;
   ctx.stroke();
+
+  // Eingeblendete Links (UI-097): andere Farbe und Strichart als die Baumkanten.
+  if (s.overlay) {
+    for (const type of ["inlink", "outlink"] as const) {
+      ctx.beginPath();
+      for (const [a, b, kind] of s.overlay.edges) {
+        if (kind !== type) continue;
+        const na = scene.nodes[a] as SceneNode;
+        const nb = scene.nodes[b] as SceneNode;
+        if (!shown.has(na) && !shown.has(nb)) continue;
+        ctx.moveTo(na.x, na.y);
+        ctx.lineTo(nb.x, nb.y);
+      }
+      ctx.setLineDash(type === "outlink" ? [6 / t.k, 3 / t.k] : []);
+      ctx.strokeStyle = type === "inlink" ? style.inlink : style.outlink;
+      ctx.lineWidth = (style.lineWidth * 1.5) / t.k;
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+  }
 
   // Gefüllte Knoten nach Farbe gebündelt.
   const byFill = new Map<string, SceneNode[]>();
   for (const n of visible) {
     if (n.hollow) continue;
-    const list = byFill.get(n.fill);
+    const fill = fillOf(n, s, style);
+    const list = byFill.get(fill);
     if (list) list.push(n);
-    else byFill.set(n.fill, [n]);
+    else byFill.set(fill, [n]);
   }
   for (const [fill, list] of byFill) {
     ctx.beginPath();
@@ -98,7 +133,7 @@ export function drawScene(ctx: CanvasRenderingContext2D, scene: Scene, s: Render
     ctx.beginPath();
     ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
     ctx.setLineDash(n.dashed ? [3 / t.k, 2 / t.k] : []);
-    ctx.strokeStyle = n.stroke ?? n.fill;
+    ctx.strokeStyle = n.hollow && s.overlay && !s.overlay.connected.has(n.id) ? style.dim : (n.stroke ?? n.fill);
     ctx.stroke();
   }
   ctx.setLineDash([]);
@@ -175,14 +210,34 @@ export function toSvg(scene: Scene, s: RenderState, style: RenderStyle): string 
     if (!shown.has(na) && !shown.has(nb)) continue;
     d.push(`M${num(na.x)} ${num(na.y)}L${num(nb.x)} ${num(nb.y)}`);
   }
-  if (d.length) out.push(`<path class="edges" fill="none" stroke="${cssToHex(style.edge, DEFAULT_STYLE.edge)}" stroke-width="${num(style.lineWidth / t.k)}" d="${d.join("")}"/>`);
+  if (d.length) out.push(`<path class="edges" fill="none" stroke="${cssToHex(s.overlay ? style.dim : style.edge, DEFAULT_STYLE.edge)}" stroke-width="${num(style.lineWidth / t.k)}" d="${d.join("")}"/>`);
+  if (s.overlay) {
+    for (const type of ["inlink", "outlink"] as const) {
+      const ld: string[] = [];
+      for (const [a, b, kind] of s.overlay.edges) {
+        if (kind !== type) continue;
+        const na = scene.nodes[a] as SceneNode;
+        const nb = scene.nodes[b] as SceneNode;
+        if (!shown.has(na) && !shown.has(nb)) continue;
+        ld.push(`M${num(na.x)} ${num(na.y)}L${num(nb.x)} ${num(nb.y)}`);
+      }
+      if (!ld.length) continue;
+      const color = cssToHex(type === "inlink" ? style.inlink : style.outlink, type === "inlink" ? DEFAULT_STYLE.inlink : DEFAULT_STYLE.outlink);
+      const dash = type === "outlink" ? ` stroke-dasharray="${num(6 / t.k)} ${num(3 / t.k)}"` : "";
+      out.push(`<path class="edges-${type}" fill="none" stroke="${color}" stroke-width="${num((style.lineWidth * 1.5) / t.k)}"${dash} d="${ld.join("")}"/>`);
+    }
+  }
+  const dim = cssToHex(style.dim, DEFAULT_STYLE.dim);
   const strokeW = num(1.5 / t.k);
   for (const n of visible) {
     // Kennung als XML-Name: Pfadknoten haben negative Kennungen (n-5 → nm5).
-    const attrs = [`id="n${n.id < 0 ? `m${-n.id}` : n.id}"`, `class="${s.highlights.has(n.id) ? "node hit" : "node"}"`, `cx="${num(n.x)}"`, `cy="${num(n.y)}"`, `r="${num(n.r)}"`];
-    if (n.hollow) attrs.push(`fill="none"`, `stroke="${n.stroke ?? n.fill}"`, `stroke-width="${strokeW}"`);
-    else if (n.dashed) attrs.push(`fill="${n.fill}"`, `stroke="${n.stroke ?? fg}"`, `stroke-width="${strokeW}"`, `stroke-dasharray="${num(3 / t.k)} ${num(2 / t.k)}"`);
-    else attrs.push(`fill="${n.fill}"`);
+    const dimmed = !!s.overlay && !s.overlay.connected.has(n.id);
+    const fill = dimmed ? dim : n.fill;
+    const cls = ["node", ...(s.highlights.has(n.id) ? ["hit"] : []), ...(dimmed ? ["dim"] : [])].join(" ");
+    const attrs = [`id="n${n.id < 0 ? `m${-n.id}` : n.id}"`, `class="${cls}"`, `cx="${num(n.x)}"`, `cy="${num(n.y)}"`, `r="${num(n.r)}"`];
+    if (n.hollow) attrs.push(`fill="none"`, `stroke="${dimmed ? dim : (n.stroke ?? n.fill)}"`, `stroke-width="${strokeW}"`);
+    else if (n.dashed) attrs.push(`fill="${fill}"`, `stroke="${n.stroke ?? fg}"`, `stroke-width="${strokeW}"`, `stroke-dasharray="${num(3 / t.k)} ${num(2 / t.k)}"`);
+    else attrs.push(`fill="${fill}"`);
     out.push(`<circle ${attrs.join(" ")}/>`);
   }
   const accent = cssToHex(style.accent, DEFAULT_STYLE.accent);

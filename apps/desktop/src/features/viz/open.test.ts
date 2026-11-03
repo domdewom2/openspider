@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { KIND_KEY, onInlinksAnchorRequest, openVisualisation, readWindowParams, requestInlinksForAnchor, waitForKind, windowLabelFor, type KindStore } from "./open";
-import { urlMenuEntries, VIZ_MENU } from "./menu";
+import { isDirectoryKind, KIND_KEY, layoutOf, onInlinksAnchorRequest, openVisualisation, PENDING_MAX_AGE_MS, readWindowParams, rememberPendingKind, requestInlinksForAnchor, takePendingKind, waitForKind, windowLabelFor, WINDOW_KINDS, type KindStore } from "./open";
+import { actionFor, MENU_KINDS, urlMenuEntries, VIZ_MENU } from "./menu";
 
 function memory(): KindStore & { data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -44,17 +44,36 @@ describe("Visualisierungsfenster öffnen", () => {
   });
 
   // spec: UI-090
-  it("Menü „Visualisierungen“ bietet die drei Strukturansichten, nur mit geöffnetem Crawl; Kontextmenü einer URL zusätzlich die Wortwolke", () => {
-    const items = VIZ_MENU[0]!.items;
-    expect(VIZ_MENU[0]!.menu).toBe("visualisations");
-    expect(items.map((i) => i.action)).toEqual(["viz.open.crawlTree", "viz.open.crawlGraph", "viz.open.directoryTree"]);
-    expect(items[0]!.enabled!({ hasCrawl: false })).toBe(false);
-    expect(items[0]!.enabled!({ hasCrawl: true })).toBe(true);
+  // spec: UI-094
+  // spec: UI-098
+  // spec: UI-100
+  it("Menüaktionen heißen wie im Hauptmenü (viz.<art>) für alle acht Arten; Kontextmenü einer URL bietet alle Arten", () => {
+    expect(VIZ_MENU).toEqual([]);
+    expect(MENU_KINDS.map(actionFor)).toEqual([
+      "viz.crawlTree", "viz.crawlGraph", "viz.directoryTree", "viz.directoryGraph", "viz.crawlGraph3d", "viz.directoryGraph3d", "viz.anchorWords", "viz.bodyWords",
+    ]);
     const calls: [string, number][] = [];
     const entries = urlMenuEntries(42, (k) => k, (kind, root) => calls.push([kind, root]));
     entries.at(-1)!.onAction!();
-    expect(entries.map((e) => e.label)).toEqual(["viz-kind-crawlTree", "viz-kind-crawlGraph", "viz-kind-directoryTree", "viz-kind-anchorWords"]);
-    expect(calls).toEqual([["anchorWords", 42]]);
+    expect(entries.map((e) => e.label)).toEqual(WINDOW_KINDS.map((k) => `viz-kind-${k}`));
+    expect(calls).toEqual([["bodyWords", 42]]);
+    expect(layoutOf("directoryGraph")).toBe("force");
+    expect(layoutOf("directoryGraph3d")).toBe("force3d");
+    expect(layoutOf("bodyWords")).toBe("words");
+    expect(isDirectoryKind("directoryGraph3d") && !isDirectoryKind("crawlGraph3d")).toBe(true);
+  });
+
+  // spec: UI-090 [M3]
+  it("Kontextmenü der Tabelle: die Art reist als kurzlebiger Hinweis zum Fenster, das der Kern ohne Art öffnet", async () => {
+    const store = memory();
+    rememberPendingKind("directoryGraph3d", store, 1_000);
+    expect(takePendingKind(store, 1_000 + PENDING_MAX_AGE_MS + 1)).toBeNull();
+    rememberPendingKind("bodyWords", store);
+    await expect(waitForKind("s-pending", 10, store)).resolves.toBe("bodyWords");
+    // genau einmal: das nächste Fenster wählt selbst
+    await expect(waitForKind("s-other", 10, store)).resolves.toBeNull();
+    // die Art bleibt für dieses Fenster gespeichert (Neuladen)
+    await expect(waitForKind("s-pending", 10, store)).resolves.toBe("bodyWords");
   });
 });
 

@@ -1,15 +1,17 @@
 // Gemeinsame Seitenleiste der Visualisierungsfenster (UI-090): Suche, Konfiguration (Knoten, Beschriftung, Linien,
-// Farben, Skalierung), Knotenbudget (UI-096), Legende mit Skala (UI-095), Export (SVG, PNG 1×/2×, CSV).
+// Farben, Skalierung), Knotenbudget (UI-096) bzw. Knotengrenze (3D, UI-098), Links eines Knotens (UI-097), Legende mit
+// Skala (UI-095), Export (SVG, PNG 1×/2×, CSV; 3D nur PNG).
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useId, useState, type ReactNode } from "react";
 import { getFormatters, useT } from "../../i18n";
 import { Banner, Button, Checkbox, IconButton, RadioGroup, SearchField, Switch } from "../../ui/primitives";
 import { metricOptions } from "./model/details";
 import { PALETTES, type ColorMode, type EncodeStats, type Palette } from "./model/encoding";
+import type { LinkOverlay } from "./model/links";
 import type { Scene } from "./model/scene";
 import type { SearchState } from "./model/search";
-import { DEFAULT_BUDGET, MAX_BUDGET, clampBudget, type VizOptions } from "./options";
-import { layoutOf, type VizWindowKind } from "./open";
+import { DEFAULT_BUDGET, clampBudget, maxBudget, type VizOptions } from "./options";
+import { isDirectoryKind, layoutOf, type VizWindowKind } from "./open";
 import type { LayoutState } from "./GraphView";
 
 export type ExportState = { kind: "idle" } | { kind: "running" } | { kind: "done"; path: string } | { kind: "failed"; message: string };
@@ -37,6 +39,8 @@ export interface SidebarProps {
   csvDir: string | null;
   onCsvDir: (dir: string) => void;
   hasData: boolean;
+  /** Links eines Knotens (UI-097), nur in kraftgerichteten Graphen. */
+  links?: { overlay: LinkOverlay | null; shown: number; onReset: () => void } | null;
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -112,7 +116,18 @@ function Swatch({ color, hollow, dashed, label }: { color: string; hollow?: bool
   );
 }
 
-export function Legend({ kind, options, stats, scene }: { kind: VizWindowKind; options: VizOptions; stats: EncodeStats | null; scene: Scene | null }) {
+function LineSwatch({ color, dashed, label }: { color: string; dashed?: boolean; label: string }) {
+  return (
+    <li className="os-viz-legend-item">
+      <svg width="14" height="14" aria-hidden>
+        <line x1="1" y1="7" x2="13" y2="7" stroke={color} strokeWidth="2" strokeDasharray={dashed ? "3 2" : undefined} />
+      </svg>
+      <span>{label}</span>
+    </li>
+  );
+}
+
+export function Legend({ kind, options, stats, scene, overlay, lineColors }: { kind: VizWindowKind; options: VizOptions; stats: EncodeStats | null; scene: Scene | null; overlay?: LinkOverlay | null; lineColors?: { inlink: string; outlink: string } }) {
   const t = useT();
   const fmt = getFormatters();
   const pal = PALETTES[options.palette];
@@ -138,8 +153,10 @@ export function Legend({ kind, options, stats, scene }: { kind: VizWindowKind; o
           </>
         )}
         <Swatch color={pal.capped} label={t("viz-legend-capped")} />
-        {kind === "directoryTree" && <Swatch color={pal.path} hollow label={t("viz-legend-path")} />}
+        {isDirectoryKind(kind) && <Swatch color={pal.path} hollow label={t("viz-legend-path")} />}
         {options.sizeByMetric && <Swatch color={pal.noData} dashed label={t("viz-legend-missing")} />}
+        {overlay && overlay.edges.some((e) => e.type === "inlink") && <LineSwatch color={lineColors?.inlink ?? "#0b6bcb"} label={t("viz-legend-inlink")} />}
+        {overlay && overlay.edges.some((e) => e.type === "outlink") && <LineSwatch color={lineColors?.outlink ?? "#c25e00"} dashed label={t("viz-legend-outlink")} />}
       </ul>
       {options.colorMode === "metric" && stats && (
         <div className="os-viz-scale">
@@ -156,7 +173,7 @@ export function Legend({ kind, options, stats, scene }: { kind: VizWindowKind; o
           {t("viz-legend-size", { metric: metricName(options.metric), max: num(stats.maxMetric), rmin: options.minRadius, rmax: options.maxRadius })}
         </p>
       )}
-      {layoutOf(kind) === "force" && !options.sizeByMetric && <p className="os-viz-scale">{t("viz-legend-depth")}</p>}
+      {layoutOf(kind) !== "tree" && !options.sizeByMetric && <p className="os-viz-scale">{t("viz-legend-depth")}</p>}
     </div>
   );
 }
@@ -164,7 +181,10 @@ export function Legend({ kind, options, stats, scene }: { kind: VizWindowKind; o
 export function Sidebar(p: SidebarProps) {
   const t = useT();
   const o = p.options;
-  const force = layoutOf(p.kind) === "force";
+  const layout = layoutOf(p.kind);
+  const force = layout === "force" || layout === "force3d";
+  const three = layout === "force3d";
+  const max = maxBudget(p.kind);
   const metrics = metricOptions(p.availableMetrics);
   const metricSelect = metrics.map((m) => ({ value: m.key, label: m.name, disabled: m.disabled, title: m.disabled ? t("viz-metric-unavailable") : undefined }));
   const [expandTo, setExpandTo] = useState(o.expandDepth);
@@ -233,9 +253,11 @@ export function Sidebar(p: SidebarProps) {
           <>
             <NumberField label={t("viz-r0")} value={o.r0} min={3} max={100} step={0.5} onCommit={(v) => p.onOptions({ r0: v })} />
             <NumberField label={t("viz-falloff")} value={o.f} min={0.1} max={1} step={0.05} onCommit={(v) => p.onOptions({ f: v })} />
-            <Switch isSelected={o.allowOverlap} onChange={(v) => p.onOptions({ allowOverlap: v })}>
-              {t("viz-allow-overlap")}
-            </Switch>
+            {!three && (
+              <Switch isSelected={o.allowOverlap} onChange={(v) => p.onOptions({ allowOverlap: v })}>
+                {t("viz-allow-overlap")}
+              </Switch>
+            )}
             <NumberField label={t("viz-repulsion")} value={o.repulsion} min={1} max={1000} onCommit={(v) => p.onOptions({ repulsion: v })} />
             <NumberField label={t("viz-spring")} value={o.springLength} min={1} max={500} onCommit={(v) => p.onOptions({ springLength: v })} />
             <NumberField label={t("viz-label-zoom")} value={o.labelZoom} min={0.05} max={8} step={0.1} onCommit={(v) => p.onOptions({ labelZoom: v })} />
@@ -254,7 +276,7 @@ export function Sidebar(p: SidebarProps) {
             </div>
           </>
         )}
-        <NumberField label={t("viz-line-width")} value={o.lineWidth} min={0.25} max={10} step={0.25} onCommit={(v) => p.onOptions({ lineWidth: v })} />
+        {!three && <NumberField label={t("viz-line-width")} value={o.lineWidth} min={0.25} max={10} step={0.25} onCommit={(v) => p.onOptions({ lineWidth: v })} />}
         <Checkbox isSelected={o.includeNonHtml} onChange={(v) => p.onOptions({ includeNonHtml: v })}>
           {t("viz-include-non-html")}
         </Checkbox>
@@ -293,19 +315,40 @@ export function Sidebar(p: SidebarProps) {
       </Section>
 
       <Section title={t("viz-section-budget")}>
-        <NumberField label={t("viz-budget")} value={o.budget} min={1} max={MAX_BUDGET} onCommit={(v) => p.onOptions({ budget: clampBudget(v) })} />
-        {o.budget > DEFAULT_BUDGET && <Banner kind="warning">{t("viz-budget-warning")}</Banner>}
+        <NumberField label={t(three ? "viz-budget-3d" : "viz-budget")} value={o.budget} min={1} max={max} onCommit={(v) => p.onOptions({ budget: clampBudget(v, max) })} />
+        {!three && o.budget > DEFAULT_BUDGET && <Banner kind="warning">{t("viz-budget-warning")}</Banner>}
       </Section>
 
+      {p.links && (
+        <Section title={t("viz-section-links")}>
+          <Checkbox isSelected={o.linkNofollow} onChange={(v) => p.onOptions({ linkNofollow: v })}>
+            {t("viz-links-nofollow")}
+          </Checkbox>
+          <Checkbox isSelected={o.linkExcludeNavFooter} onChange={(v) => p.onOptions({ linkExcludeNavFooter: v })}>
+            {t("viz-links-nav-footer")}
+          </Checkbox>
+          <p className="os-viz-hint" role="status" data-testid="viz-links-state">
+            {p.links.overlay
+              ? t(p.links.shown < p.links.overlay.total ? "viz-links-partial" : "viz-links-shown", { mode: t(`viz-menu-links-${p.links.overlay.request.mode}`), shown: p.links.shown, total: p.links.overlay.total })
+              : t("viz-links-none")}
+          </p>
+          <Button onPress={p.links.onReset} isDisabled={!p.links.overlay}>
+            {t("viz-menu-links-reset")}
+          </Button>
+        </Section>
+      )}
+
       <Section title={t("viz-section-legend")}>
-        <Legend kind={p.kind} options={o} stats={p.stats} scene={p.scene} />
+        <Legend kind={p.kind} options={o} stats={p.stats} scene={p.scene} overlay={p.links?.overlay ?? null} />
       </Section>
 
       <Section title={t("viz-section-export")}>
         <div className="os-viz-row os-viz-wrap">
-          <Button onPress={p.onExportSvg} isDisabled={!p.hasData}>
-            {t("viz-export-svg")}
-          </Button>
+          {!three && (
+            <Button onPress={p.onExportSvg} isDisabled={!p.hasData}>
+              {t("viz-export-svg")}
+            </Button>
+          )}
           <Button onPress={() => p.onExportPng(1)} isDisabled={!p.hasData}>
             {t("viz-export-png", { factor: 1 })}
           </Button>
@@ -313,15 +356,17 @@ export function Sidebar(p: SidebarProps) {
             {t("viz-export-png", { factor: 2 })}
           </Button>
         </div>
-        {p.csvDir !== null && (
+        {!three && p.csvDir !== null && (
           <div className="os-viz-field">
             <label htmlFor="os-viz-csv-dir">{t("viz-export-csv-dir")}</label>
             <input id="os-viz-csv-dir" className="os-input" value={p.csvDir} onChange={(e) => p.onCsvDir(e.target.value)} />
           </div>
         )}
-        <Button onPress={p.onExportCsv} isDisabled={!p.hasData || p.csvBlocked || p.exportState.kind === "running" || (p.csvDir !== null && !p.csvDir.trim())}>
-          {t("viz-export-csv")}
-        </Button>
+        {!three && (
+          <Button onPress={p.onExportCsv} isDisabled={!p.hasData || p.csvBlocked || p.exportState.kind === "running" || (p.csvDir !== null && !p.csvDir.trim())}>
+            {t("viz-export-csv")}
+          </Button>
+        )}
         {p.csvBlocked && <p className="os-viz-hint">{t("viz-export-csv-collapsed")}</p>}
         {p.exportState.kind === "running" && <p role="status">{t("viz-export-running")}</p>}
         {p.exportState.kind === "done" && <p role="status" data-testid="viz-export-done">{t("viz-export-done", { path: p.exportState.path })}</p>}

@@ -39,6 +39,9 @@ export function readRenderStyle(root: Element = document.documentElement): Rende
     accent: cssToHex(v("--os-accent"), DEFAULT_STYLE.accent),
     badgeFill: cssToHex(v("--os-text-muted"), DEFAULT_STYLE.badgeFill),
     badgeText: cssToHex(v("--os-bg-surface"), DEFAULT_STYLE.badgeText),
+    inlink: cssToHex(v("--os-accent"), DEFAULT_STYLE.inlink),
+    outlink: cssToHex(v("--os-badge-warning"), DEFAULT_STYLE.outlink),
+    dim: cssToHex(v("--os-border"), DEFAULT_STYLE.dim),
   };
 }
 

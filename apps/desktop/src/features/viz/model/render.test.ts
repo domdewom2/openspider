@@ -97,3 +97,25 @@ describe("Canvas-Zeichnung und Treffertest", () => {
     expect(hit.hit(n.x + 50, n.y + 9)).toBeNull();
   });
 });
+
+describe("eingeblendete Links im Export (M3-V02)", () => {
+  // spec: UI-097
+  it("SVG: Zusatzkanten je Art mit eigener Farbe/Strichart, nicht verbundene Knoten ausgegraut (Klasse dim)", async () => {
+    const { buildScene, sceneOverlay } = await import("./scene");
+    const { VizTree } = await import("./tree");
+    const { selectGraph, fxUiBasic } = await import("../fixtures/synthetic");
+    const { toSvg, DEFAULT_STYLE } = await import("./render");
+    const tree = VizTree.from(selectGraph(fxUiBasic(), { budget: 10_000, expandDepth: 5, metric: "crawl_depth" }));
+    const positions = new Map(tree.visible().map((id, i) => [id, [i * 2, 0] as [number, number]]));
+    const scene = buildScene(tree, positions, { layout: "force", colorMode: "indexability", palette: "standard", sizeByMetric: false, minRadius: 3, maxRadius: 30, r0: 14, f: 0.8 }, "path");
+    const overlay = sceneOverlay(scene, { request: { node: 1, mode: "inlinks" }, total: 3, connected: new Set([1, 2, 3]), edges: [{ source: 2, target: 1, type: "inlink" }, { source: 3, target: 1, type: "inlink" }, { source: 1, target: 4, type: "outlink" }] })!;
+    expect(overlay.edges).toHaveLength(3);
+    const svg = toSvg(scene, { t: { k: 1, x: 10, y: 10 }, width: 2000, height: 400, showLabels: false, highlights: new Set(), current: null, hovered: null, overlay }, DEFAULT_STYLE);
+    expect(svg).toContain(`class="edges-inlink" fill="none" stroke="${DEFAULT_STYLE.inlink}"`);
+    expect(svg).toMatch(/class="edges-outlink"[^>]*stroke-dasharray/);
+    expect((svg.match(/class="node dim"/g) ?? []).length).toBe(scene.nodes.length - 3);
+    expect(svg).toContain(`fill="${DEFAULT_STYLE.dim}"`);
+    const plain = toSvg(scene, { t: { k: 1, x: 10, y: 10 }, width: 2000, height: 400, showLabels: false, highlights: new Set(), current: null, hovered: null }, DEFAULT_STYLE);
+    expect(plain).not.toMatch(/edges-inlink|node dim/);
+  });
+});

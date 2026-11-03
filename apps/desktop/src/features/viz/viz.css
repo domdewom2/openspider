@@ -322,3 +322,28 @@ body,
   z-index:20;
   max-width:var(--os-size-420);
 }
+
+/* 3D-Graphen (M3-V02, UI-098): WebGL-Fläche, darüber eine durchklickbare Fläche für Beschriftungen. */
+.os-viz-canvas-3d {
+  cursor:grab;
+}
+
+.os-viz-labels-3d {
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+
+.os-viz-no-webgl {
+  display:flex;
+  flex:1;
+  align-items:center;
+  justify-content:center;
+  padding:var(--os-size-24);
+  color:var(--os-text-muted);
+  text-align:center;
+}
+
+.os-viz-word-plain {
+  cursor:default;
+}

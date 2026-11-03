@@ -114,12 +114,15 @@ export class RootTrail {
   }
 }
 
-/** Genau die dargestellten Knoten und Kanten mit aktuellen Koordinaten (UI-090: Zeilenzahl = angezeigte Knoten). */
-export function csvPayload(tree: VizTree, scene: Scene): { nodes: GraphNode[]; edges: GraphEdge[] } {
+/**
+ * Genau die dargestellten Knoten und Kanten mit aktuellen Koordinaten (UI-090: Zeilenzahl = angezeigte Knoten);
+ * eingeblendete Links (UI-097) kommen als Kanten mit `edgeType` inlink/outlink dazu.
+ */
+export function csvPayload(tree: VizTree, scene: Scene, extraEdges: readonly GraphEdge[] = []): { nodes: GraphNode[]; edges: GraphEdge[] } {
   const nodes: GraphNode[] = scene.nodes.map((s: SceneNode) => {
     const { parent: _p, children: _c, level: _l, ...rest } = tree.get(s.id) as VNode;
     return { ...rest, x: s.x, y: s.y };
   });
   const edges: GraphEdge[] = scene.edges.map(([a, b]) => ({ source: (scene.nodes[a] as SceneNode).id, target: (scene.nodes[b] as SceneNode).id }));
-  return { nodes, edges };
+  return { nodes, edges: extraEdges.length ? [...edges, ...extraEdges] : edges };
 }

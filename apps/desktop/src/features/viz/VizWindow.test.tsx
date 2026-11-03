@@ -230,10 +230,11 @@ describe("Einbindung im Hauptfenster", () => {
     render(<VizHost />);
     const model = buildMenuModel(allMenuContributions(), { platform: "mac", lang: "en", ctx: { hasCrawl: true }, t: (k: string) => k, native: false });
     const viz = model.menus.find((m) => m.id === "visualisations");
-    expect(viz?.items.map((i) => i.id)).toEqual(["viz.open.crawlTree", "viz.open.crawlGraph", "viz.open.directoryTree"]);
-    for (const kind of ["crawlTree", "crawlGraph", "directoryTree", "crawlTree"]) runAction(`viz.open.${kind}`);
+    // Die Einträge stammen aus ui/menu/contributions/main.ts; dieses Paket registriert nur die Aktionen.
+    expect(viz).toBeUndefined();
+    for (const kind of ["crawlTree", "directoryGraph", "crawlGraph3d", "crawlTree"]) runAction(`viz.${kind}`);
     await waitFor(() => expect(opened).toHaveLength(4));
     expect(new Set(opened.map((o) => o.split(" ")[0])).size).toBe(4);
-    expect(opened[1]).toContain("kind=crawlGraph");
+    expect(opened[1]).toContain("kind=directoryGraph");
   });
 });

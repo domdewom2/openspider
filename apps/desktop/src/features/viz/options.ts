@@ -8,6 +8,8 @@ import { coreKind, layoutOf, type VizWindowKind } from "./open";
 
 export const DEFAULT_BUDGET = 10_000;
 export const MAX_BUDGET = 50_000;
+/** Knotengrenze der 3D-Varianten (UI-098: Standard 100 000, einstellbar). */
+export const MAX_BUDGET_3D = 100_000;
 /** Der Graph kennt kein Aufklappen: alle Ebenen bis zum Knotenbudget. */
 export const FORCE_EXPAND_DEPTH = 1_000_000;
 
@@ -36,6 +38,10 @@ export interface VizOptions {
   /** Beschriftung ab Zoomstufe (Graph, Standard 1,5×). */
   labelZoom: number;
   lineWidth: number;
+  /** Links eines Knotens (UI-097): nofollow einbeziehen (Standard an, wie die Spalte Unique Inlinks). */
+  linkNofollow: boolean;
+  /** Links eines Knotens (UI-097): Navigation/Footer (Linkposition) ausschließen (Standard aus). */
+  linkExcludeNavFooter: boolean;
 }
 
 export const DEFAULT_OPTIONS: VizOptions = {
@@ -62,19 +68,31 @@ export const DEFAULT_OPTIONS: VizOptions = {
   allowOverlap: FORCE_DEFAULTS.allowOverlap,
   labelZoom: 1.5,
   lineWidth: 1,
+  linkNofollow: true,
+  linkExcludeNavFooter: false,
 };
+
+/** Größtes Budget je Art: 3D 100 000 (UI-098), sonst 50 000 (UI-096). */
+export function maxBudget(kind: VizWindowKind): number {
+  return layoutOf(kind) === "force3d" ? MAX_BUDGET_3D : MAX_BUDGET;
+}
+
+/** Startwerte je Art: 3D beginnt mit der Knotengrenze 100 000 (UI-098). */
+export function defaultOptions(kind: VizWindowKind): VizOptions {
+  return layoutOf(kind) === "force3d" ? { ...DEFAULT_OPTIONS, budget: MAX_BUDGET_3D, labelZoom: 2 } : DEFAULT_OPTIONS;
+}
 
 /** Baum: Beschriftungen ab dieser Zoomstufe (bei kleinerer Darstellung wären sie unlesbar). */
 export const TREE_LABEL_ZOOM = 0.6;
 
-export function clampBudget(v: number): number {
-  if (!Number.isFinite(v)) return DEFAULT_BUDGET;
-  return Math.min(MAX_BUDGET, Math.max(1, Math.round(v)));
+export function clampBudget(v: number, max: number = MAX_BUDGET): number {
+  if (!Number.isFinite(v)) return Math.min(DEFAULT_BUDGET, max);
+  return Math.min(max, Math.max(1, Math.round(v)));
 }
 
 export function encodeOptions(kind: VizWindowKind, o: VizOptions): EncodeOptions {
   return {
-    layout: layoutOf(kind) === "force" ? "force" : "tree",
+    layout: layoutOf(kind) === "tree" ? "tree" : "force",
     colorMode: o.colorMode,
     palette: o.palette,
     sizeByMetric: o.sizeByMetric,
@@ -86,12 +104,12 @@ export function encodeOptions(kind: VizWindowKind, o: VizOptions): EncodeOptions
 }
 
 export function graphArgs(kind: VizWindowKind, snapshotId: string, root: number | null, o: VizOptions, exploreNode: number | null = null): VizGraphArgs {
-  const force = layoutOf(kind) === "force";
+  const force = layoutOf(kind) !== "tree";
   return {
     snapshotId,
     kind: coreKind(kind),
     root,
-    budget: clampBudget(o.budget),
+    budget: clampBudget(o.budget, maxBudget(kind)),
     metric: o.metric,
     includeNonHtml: o.includeNonHtml,
     includeNonIndexable: o.includeNonIndexable,

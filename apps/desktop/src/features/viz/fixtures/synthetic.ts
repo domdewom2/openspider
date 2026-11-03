@@ -21,10 +21,14 @@ export interface SynthNode {
   metrics: Record<string, number>;
 }
 
+/** Ein Hyperlink-Vorkommen für „Links eines Knotens“ (UI-097): Quelle, Ziel, follow, Linkposition. */
+export type SynthLink = [source: number, target: number, follow: boolean, position: "Content" | "Navigation" | "Footer" | "Header"];
+
 export interface SynthTree {
   nodes: Map<number, SynthNode>;
   children: Map<number, number[]>;
   roots: number[];
+  links?: SynthLink[];
 }
 
 const HOST = "http://127.0.0.1:8000";
@@ -140,6 +144,54 @@ export function genUiLarge(levels: readonly number[] = [1, 40, 2000, 47959], see
     previous = current;
   });
   return t;
+}
+
+/**
+ * `fx-ui-words` auf Graph-Ebene (wie `tests/fixtures/ui/fx-ui-words`): Zielseite (Kennung 2) mit 30 Inlinks von 23
+ * Quellseiten; ohne nofollow 18, ohne Navigation/Footer 22, beides 17; 7 eindeutige Outlinks; Kinder `deep-1`/`deep-2`.
+ */
+export function fxUiWordsGraph(): SynthTree {
+  const t = empty();
+  const pages = 22;
+  add(t, page(1, "/", 0, { uniqueInlinks: 2 }), null);
+  add(t, page(2, "/target.html", 1, { uniqueInlinks: 23 }), 1);
+  for (let i = 1; i <= pages; i++) add(t, page(2 + i, `/p${i}.html`, 1, { uniqueInlinks: i <= 3 ? 2 : 1 }), 1);
+  const deep1 = 3 + pages;
+  const deep2 = deep1 + 1;
+  add(t, page(deep1, "/deep-1.html", 2, { uniqueInlinks: 2 }), 2);
+  add(t, page(deep2, "/deep-2.html", 2, { uniqueInlinks: 1 }), 2);
+  const p = (i: number) => 2 + i;
+  const links: SynthLink[] = [[1, 2, true, "Navigation"], [1, 2, true, "Content"]];
+  for (let i = 1; i <= pages; i++) links.push([1, p(i), true, "Content"]);
+  for (let i = 1; i <= 20; i++) links.push([p(i), 2, i < 16, "Content"]);
+  for (let i = 1; i <= 6; i++) links.push([p(i), 2, true, "Footer"]);
+  links.push([p(21), 2, true, "Footer"], [2, 2, true, "Content"]);
+  links.push([2, 1, true, "Header"], [2, p(1), true, "Navigation"], [2, deep1, true, "Content"], [2, deep2, true, "Content"], [2, p(2), true, "Content"], [2, p(3), true, "Footer"]);
+  links.push([p(1), deep1, true, "Content"], [deep1, 1, true, "Content"], [deep2, 1, true, "Content"]);
+  t.links = links;
+  return t;
+}
+
+/** Eindeutige Links eines Knotens bzw. seiner Kinder wie `Snapshot::link_overlay` im Kern. */
+export function selectLinks(tree: SynthTree, node: number, mode: string, includeNofollow: boolean, excludeNavFooter: boolean): [number, number][] {
+  const focus = mode === "childInlinks" || mode === "childOutlinks" ? (tree.children.get(node) ?? []) : [node];
+  const inbound = mode === "inlinks" || mode === "childInlinks";
+  const pairs = new Map<string, [number, number]>();
+  for (const [s, tg, follow, position] of tree.links ?? []) {
+    if (!includeNofollow && !follow) continue;
+    if (excludeNavFooter && (position === "Navigation" || position === "Footer")) continue;
+    if (inbound ? !focus.includes(tg) : !focus.includes(s)) continue;
+    pairs.set(`${s}:${tg}`, [s, tg]);
+  }
+  return [...pairs.values()].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+}
+
+/** Body-Text der Zielseite von `fx-ui-words` mit Standardoptionen (UI-100, wie `expected.json`). */
+export function fxUiBodyWords(): WordFreq[] {
+  return [
+    ["pricing", 6], ["plan", 3], ["plans", 3], ["every", 2], ["includes", 2], ["budget", 1], ["choose", 1], ["compare", 1], ["comparison", 1],
+    ["details", 1], ["fair", 1], ["fits", 1], ["more", 1], ["simple", 1], ["support", 1], ["team", 1], ["updates", 1],
+  ].map(([word, count]) => ({ word: word as string, count: count as number }));
 }
 
 export interface SelectOptions {
