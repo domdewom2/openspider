@@ -1,4 +1,5 @@
 import { UpdateHost } from "./features/update/UpdateHost";
+import { CrashHost } from "./features/crash/CrashHost";
 import { CrawlsHost } from "./features/crawls";
 import { ConfigHost } from "./features/config/frame";
 import { ExportHost } from "./features/export";
@@ -58,6 +59,7 @@ export function App() {
       <TasksHost />
       <HelpDialogs />
       <UpdateHost />
+      <CrashHost />
       <CrawlsHost />
       <VizHost />
       <SegmentsDialogHost />

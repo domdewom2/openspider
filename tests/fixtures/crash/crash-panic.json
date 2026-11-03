@@ -1,0 +1,30 @@
+{
+  "format": 1,
+  "id": "6f1c2d3e-4b5a-4c7d-8e9f-0a1b2c3d4e5f",
+  "kind": "panic",
+  "time": "2026-11-02T10:15:00.123+01:00",
+  "app_version": "1.0.0-beta.2",
+  "build": "64d8697d",
+  "os": "macOS 15.1 Sequoia",
+  "arch": "aarch64",
+  "process": "app",
+  "uptime_s": 742,
+  "thread": "tokio-runtime-worker",
+  "message": "called `Option::unwrap()` on a `None` value",
+  "location": "os-engine/src/frontier.rs:218",
+  "backtrace": [
+    "os_engine::frontier::Frontier::next",
+    "os_engine::crawl::Worker::run::{{closure}}",
+    "tokio::runtime::task::core::Core<T,S>::poll",
+    "std::thread::local::LocalKey<T>::with"
+  ],
+  "crawl_running": true,
+  "rendering_active": false,
+  "log_tail": [
+    "2026-11-02T10:14:58.001+01:00 INFO os_engine::crawl: Crawl gestartet [mode=\"spider\" start_url=\"<url>\"]",
+    "2026-11-02T10:14:59.870+01:00 WARN os_fetch::client: Zeitüberschreitung [url=\"<url>\" ip=\"<ip>\"]",
+    "2026-11-02T10:15:00.120+01:00 ERROR panic: panicked at os-engine/src/frontier.rs:218:41 [home=\"~/Library/Logs/OpenSpider\"]"
+  ],
+  "sent": null,
+  "server_ref": null
+}

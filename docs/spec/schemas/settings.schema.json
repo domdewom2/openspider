@@ -28,6 +28,13 @@
         "zoom_pct": 100
       }
     },
+    "crash_reports": {
+      "description": "Absturzberichte (OUT-247, M3-C01 additiv nach K2-61/K2-92).",
+      "$ref": "#/$defs/CrashReportSettings",
+      "default": {
+        "prompt": true
+      }
+    },
     "export": {
       "description": "Export-Standards (OUT-222).",
       "$ref": "#/$defs/ExportSettings",
@@ -195,6 +202,17 @@
           "default": 100,
           "maximum": 65535,
           "minimum": 0
+        }
+      }
+    },
+    "CrashReportSettings": {
+      "description": "Absturzberichte (OUT-247): nach einem Absturz beim Start fragen, ob ein Bericht gesendet werden soll.",
+      "type": "object",
+      "properties": {
+        "prompt": {
+          "description": "Hinweis beim Start zeigen (Standard: an). Aus: Berichte bleiben lokal und sind über das Hilfe-Menü sendbar.",
+          "type": "boolean",
+          "default": true
         }
       }
     },

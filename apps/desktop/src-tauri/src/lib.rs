@@ -41,6 +41,8 @@ fn app_version() -> String {
 /// Startet die Tauri-Anwendung.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // OUT-246 (M3-C01): Sitzungsmarke für `unclean_exit`, nur in der Desktop-App.
+    os_app::crash::enable_session_tracking();
     let app = match App::new(AppConfig::from_env()) {
         Ok(app) => app,
         Err(e) => {
@@ -142,6 +144,10 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("Fehler beim Starten von OpenSpider")
         .run(move |handle, event| {
+            // OUT-246 (M3-C01): geordnetes Beenden (auch durch das Betriebssystem) entfernt die Sitzungsmarke.
+            if let RunEvent::Exit = event {
+                os_app::crash::on_orderly_exit();
+            }
             if let RunEvent::ExitRequested { api, code, .. } = event {
                 // vom Nutzer ausgelöst (Cmd/Strg+Q): erst den Kern fragen
                 if code.is_none() && !run_quitting.is_set() {

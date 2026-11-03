@@ -20,6 +20,8 @@ pub fn init_for_app(app: &crate::App) {
     ) {
         eprintln!("Log-Bereinigung fehlgeschlagen: {}", e.kind());
     }
+    // OUT-246 (M3-C01): Absturzberichte – Kontext, Sitzungsmarke und Aufbewahrung, bevor der Lauf ins Log schreibt.
+    let session = crate::crash::on_app_start(app);
     let filter =
         EnvFilter::try_new(&settings.logging.level).unwrap_or_else(|_| EnvFilter::new("info"));
     let (filter, handle) = reload::Layer::new(filter);
@@ -38,16 +40,25 @@ pub fn init_for_app(app: &crate::App) {
         HOOK.get_or_init(|| {
             let old = std::panic::take_hook();
             std::panic::set_hook(Box::new(move |info| {
+                let backtrace = std::backtrace::Backtrace::force_capture().to_string();
                 let line = crate::diag::redact_text(&format!(
                     "{} ERROR panic: {}\n{}",
                     crate::diag::timestamp(),
                     info,
-                    std::backtrace::Backtrace::force_capture()
+                    backtrace
                 ));
                 let _ = file.write_line(&line.replace('\n', "\\n"));
+                // OUT-246: Absturzbericht, bevor der Prozess endet; Fehler beim Schreiben bleiben folgenlos.
+                let _ = crate::crash::shared::on_panic(info, &backtrace);
                 old(info);
             }));
         });
+    }
+    #[cfg(debug_assertions)]
+    crate::crash::service::test_trigger();
+    if let Some(session) = session {
+        // Startzeile des Laufs: daran findet der nächste Start das Log eines abgestürzten Laufs (OUT-246).
+        tracing::info!(session = %session, "App-Sitzung gestartet");
     }
 }
 pub fn apply_settings(app: &crate::App) {

@@ -300,12 +300,14 @@ fn read_workbook(path: &Path) -> Result<Vec<String>, EngineError> {
 /// Hochgeladene Tabellen sind Fremddaten. calamine meldet defekte Dateien in aller Regel als Fehler; für
 /// manipulierte OLE2-/CFB-Strukturen (`.xls`) sind aber Panics bekannt (RUSTSEC-2026-0436, behoben in 0.38;
 /// ein fehlender FAT-Sektor löst auch in 0.38.0 noch einen Indexfehler aus). Der Import liefert dann
-/// [`EngineError::Invalid`] statt den Aufrufer abzubrechen.
+/// [`EngineError::Invalid`] statt den Aufrufer abzubrechen. Der Panic gilt als eingedämmt
+/// ([`os_model::panic_guard`]): kein Absturzbericht (OUT-246).
 pub(crate) fn read_spreadsheet<T>(
     path: &Path,
     read: impl FnOnce() -> Result<T, EngineError>,
 ) -> Result<T, EngineError> {
-    std::panic::catch_unwind(std::panic::AssertUnwindSafe(read)).unwrap_or_else(|_| {
+    // Eingedämmt (OUT-246, Klärung cc57ea03): der Panic-Hook schreibt die Logzeile, aber keinen Absturzbericht.
+    os_model::panic_guard::contained(read).unwrap_or_else(|_| {
         Err(EngineError::Invalid(format!(
             "{}: Tabellendatei ist beschädigt und kann nicht gelesen werden",
             path.display()

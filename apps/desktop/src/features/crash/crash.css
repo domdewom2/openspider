@@ -1,0 +1,10 @@
+/* OUT-247: nicht-modaler Hinweis unten im Hauptfenster; Dialoge nutzen die gemeinsamen Dialogklassen. */
+.os-crash-hint { position:fixed; inset-inline-end:var(--os-size-20); bottom:var(--os-size-40); max-width:min(var(--os-size-540), 90vw); display:grid; gap:var(--os-size-8); padding:var(--os-size-12) var(--os-size-16); background:var(--os-bg-surface); border:var(--os-line) solid var(--os-border-strong); border-radius:var(--os-radius-card); box-shadow:var(--os-shadow-strong); z-index:30; }
+.os-crash-hint-title { margin:0; font-weight:600; }
+.os-crash-hint p { margin:0; }
+.os-crash-actions { display:flex; flex-wrap:wrap; gap:var(--os-size-8); }
+.os-crash-note { margin:0; font-size:var(--os-font-small); }
+.os-crash-stack { display:grid; gap:var(--os-size-8); }
+.os-crash-json { width:100%; font-family:var(--os-font-mono); font-size:var(--os-font-small); white-space:pre; overflow:auto; resize:vertical; }
+.os-crash-table { width:100%; border-collapse:collapse; text-align:start; }
+.os-crash-table th, .os-crash-table td { padding:var(--os-size-8); border-bottom:var(--os-line) solid var(--os-border); text-align:start; vertical-align:top; }

@@ -18,6 +18,8 @@ pub mod catalog;
 pub mod common;
 pub mod compare;
 pub mod config;
+/// Absturzberichte (M3-C01, K2-61 additiv).
+pub mod crash;
 pub mod crawl;
 pub mod crawls;
 pub mod detail;
@@ -42,6 +44,7 @@ pub use catalog::*;
 pub use common::*;
 pub use compare::*;
 pub use config::*;
+pub use crash::*;
 pub use crawl::*;
 pub use crawls::*;
 pub use detail::*;
@@ -407,6 +410,17 @@ fn export_all_with(cfg: &ts_rs::Config) -> Result<(), ts_rs::ExportError> {
         ChromiumJob,
         ChromiumStatus,
         ChromiumStatusArgs,
+        // M3-C01 (K2-61 additiv): Absturzberichte.
+        CrashReportSettingsDto,
+        CrashReportSummary,
+        CrashOverview,
+        CrashIdArgs,
+        CrashIdsArgs,
+        CrashSendArgs,
+        CrashSendFailure,
+        CrashSendOutcome,
+        CrashSendResult,
+        CrashFrontendArgs,
     )
 }
 
@@ -790,4 +804,15 @@ pub const TYPE_NAMES: &[&str] = &[
     "ChromiumJob",
     "ChromiumStatus",
     "ChromiumStatusArgs",
+    // M3-C01 (K2-61 additiv): Absturzberichte.
+    "CrashReportSettingsDto",
+    "CrashReportSummary",
+    "CrashOverview",
+    "CrashIdArgs",
+    "CrashIdsArgs",
+    "CrashSendArgs",
+    "CrashSendFailure",
+    "CrashSendOutcome",
+    "CrashSendResult",
+    "CrashFrontendArgs",
 ];

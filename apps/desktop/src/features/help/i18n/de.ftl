@@ -44,6 +44,7 @@ u04-help-debug = Debug-Informationen
 u04-help-logs = Protokollordner öffnen
 u04-help-updates = Nach Updates suchen
 u04-help-feedback = Feedback geben…
+u04-help-crashReports = Absturzberichte…
 u04-viz-crawlTree = Crawl-Baum
 u04-viz-crawlGraph = Crawl-Graph
 u04-viz-directoryTree = Verzeichnisbaum

@@ -416,6 +416,33 @@ pub fn bundle_entries(
             clean.into_bytes(),
         ));
     }
+    // OUT-246/OUT-244 (M3-C01, additiv): gespeicherte Absturzberichte, an der Grenze erneut redigiert.
+    if let Ok(dir) = fs::read_dir(logs.join("crashes")) {
+        let mut reports: Vec<PathBuf> = dir
+            .flatten()
+            .filter(|e| e.file_type().is_ok_and(|t| t.is_file()))
+            .map(|e| e.path())
+            .filter(|p| {
+                p.file_name().is_some_and(|n| {
+                    let n = n.to_string_lossy();
+                    n.starts_with("crash-") && n.ends_with(".json")
+                })
+            })
+            .collect();
+        reports.sort();
+        for path in reports {
+            let Ok(raw) = fs::read_to_string(&path) else {
+                continue;
+            };
+            entries.push((
+                format!(
+                    "crashes/{}",
+                    path.file_name().unwrap_or_default().to_string_lossy()
+                ),
+                redact_text(&raw).into_bytes(),
+            ));
+        }
+    }
     Ok(entries)
 }
 pub fn write_bundle(

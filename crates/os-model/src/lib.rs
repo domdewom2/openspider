@@ -14,6 +14,8 @@ pub mod ext;
 pub mod ids;
 pub mod indexability;
 pub mod issue;
+/// Eingedämmte Panics in Parsern für Fremddaten (OUT-246, M3-C01; additiv nach K2-61).
+pub mod panic_guard;
 pub mod parse;
 pub mod parse_m2;
 pub mod progress;

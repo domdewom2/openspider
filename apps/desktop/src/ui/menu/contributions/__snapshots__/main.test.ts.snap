@@ -127,6 +127,7 @@ Hilfe
   + Protokollordner öffnen
   + Nach Updates suchen
   + Feedback geben…
+  + Absturzberichte…
   + Über OpenSpider"
 `;
 
@@ -257,6 +258,7 @@ Help
   + Open logs folder
   + Check for updates
   + Send feedback…
+  + Crash reports…
   + About OpenSpider"
 `;
 
@@ -364,6 +366,7 @@ Hilfe
   + Protokollordner öffnen
   + Nach Updates suchen
   + Feedback geben…
+  + Absturzberichte…
   + Über OpenSpider"
 `;
 
@@ -471,5 +474,6 @@ Help
   + Open logs folder
   + Check for updates
   + Send feedback…
+  + Crash reports…
   + About OpenSpider"
 `;
