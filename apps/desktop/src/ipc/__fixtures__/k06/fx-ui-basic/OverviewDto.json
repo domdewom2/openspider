@@ -194,6 +194,22 @@
           }
         }
       ],
+      "partition": {
+        "base": "All",
+        "filters": [
+          "HTML",
+          "JavaScript",
+          "CSS",
+          "Images",
+          "PDF",
+          "Unknown",
+          "Plugins",
+          "Other",
+          "Media",
+          "Fonts",
+          "XML"
+        ]
+      },
       "tab": "Internal"
     }
   ]

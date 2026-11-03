@@ -12,6 +12,7 @@ use crate::{
 use futures_util::future::BoxFuture;
 
 pub(crate) mod counts;
+pub(crate) mod partition;
 
 /// UI-061 summary shares one denominator and rounding rule with its export.
 pub(crate) fn summary_rows(summary: Vec<(String, u64)>) -> Vec<SummaryRow> {
@@ -67,6 +68,8 @@ fn overview<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFutur
                             .collect::<Vec<_>>();
                         (!filters.is_empty()).then(|| OverviewTab {
                             tab: t.id.into(),
+                            // UI-102: which filters of this tab form a partition (no new count).
+                            partition: partition::partition(t, &filters),
                             filters,
                         })
                     })
