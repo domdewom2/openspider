@@ -2451,7 +2451,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 - **Beschreibung:** Native x86_64-Builds; Auslieferung als getrennte DMGs je Architektur und **[P1]** zusätzlich als Universal-Binary.
 - **Akzeptanzkriterien:**
   - [ ] Unterstützt macOS 13 und neuer (wie OUT-260).
-  - [ ] Vollständige Testsuite in CI auf `macos-13` (x64).
+  - [ ] Vollständige Testsuite in CI auf `macos-13` (x64). **OS-Festlegung (Nutzer 03.11.2026):** Intel-Macs sind kaum noch verbreitet; im Release-Lauf läuft die Intel-Testsuite weiter, ein Fehlschlag ist aber nur eine Warnung und hält den Entwurf nicht auf. Bau, Signatur, Notarisierung und Start-Smoke des x86_64- und des Universal-DMG bleiben blockierend.
   - [ ] Das Update-Manifest liefert je Architektur das passende Paket.
   - [ ] [P1] Das Universal-DMG enthält App und CLI mit beiden Architekturen (`lipo -archs` meldet `x86_64 arm64`) und startet auf beiden nativ.
 - **Testfixture:** CI-Matrix.

@@ -109,12 +109,28 @@ jobs:
           triple="$(rustc -vV | sed -n 's/^host: //p')"
           cargo build -p os-cli --bin openspider -j 4 --locked
           cp target/debug/openspider "apps/desktop/src-tauri/binaries/openspider-$triple"
-      - run: cargo fmt --all --check
-      - run: cargo clippy --workspace --all-targets -j 4 --locked -- -D warnings
-      - run: cargo test --workspace -j 4 --locked
-      - run: npm run -w apps/desktop typecheck && npm run -w apps/desktop test && npm run -w apps/desktop check:static
-      - run: python3 -m unittest discover -s tests/release -p 'test_macos_*.py' -v
-      - run: bash scripts/check-neutral.sh
+      - id: fmt
+        # OUT-261 (Nutzer 03.11.2026): auf Intel nur Warnung.
+        continue-on-error: ${{ matrix.os == 'macos-15-intel' }}
+        run: cargo fmt --all --check
+      - id: clippy
+        continue-on-error: ${{ matrix.os == 'macos-15-intel' }}
+        run: cargo clippy --workspace --all-targets -j 4 --locked -- -D warnings
+      - id: test
+        continue-on-error: ${{ matrix.os == 'macos-15-intel' }}
+        run: cargo test --workspace -j 4 --locked
+      - id: app
+        continue-on-error: ${{ matrix.os == 'macos-15-intel' }}
+        run: npm run -w apps/desktop typecheck && npm run -w apps/desktop test && npm run -w apps/desktop check:static
+      - id: release_py
+        continue-on-error: ${{ matrix.os == 'macos-15-intel' }}
+        run: python3 -m unittest discover -s tests/release -p 'test_macos_*.py' -v
+      - id: neutral
+        continue-on-error: ${{ matrix.os == 'macos-15-intel' }}
+        run: bash scripts/check-neutral.sh
+      - name: Hinweis Intel-Tests (nur Warnung, OUT-261)
+        if: matrix.os == 'macos-15-intel' && (steps.fmt.outcome == 'failure' || steps.clippy.outcome == 'failure' || steps.test.outcome == 'failure' || steps.app.outcome == 'failure' || steps.release_py.outcome == 'failure' || steps.neutral.outcome == 'failure')
+        run: echo "::warning title=Intel-Tests::Tests auf macos-15-intel fehlgeschlagen (fmt=${{ steps.fmt.outcome }}, clippy=${{ steps.clippy.outcome }}, test=${{ steps.test.outcome }}, app=${{ steps.app.outcome }}, release_py=${{ steps.release_py.outcome }}, neutral=${{ steps.neutral.outcome }}); nach OUT-261 nur Warnung, Bau, Signatur und Smoke bleiben blockierend."
 
   macos:
     # Explicit status check allows a deliberately skipped test job, but blocks failed tests.
