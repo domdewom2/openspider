@@ -1,11 +1,11 @@
-use super::{Node, Record, Snapshot, Tree};
+use super::{CaptureScope, Node, Record, Snapshot, Tree};
 use os_store::{CrawlFile, StoreError};
 use std::cmp::Reverse;
 use std::collections::{BTreeMap, BinaryHeap, HashMap};
 
-pub(super) fn capture(file: &CrawlFile) -> Result<Snapshot, StoreError> {
+pub(super) fn capture(file: &CrawlFile, scope: CaptureScope) -> Result<Snapshot, StoreError> {
     let tx = file.conn().unchecked_transaction()?;
-    check_capture_limits(file)?;
+    check_capture_limits(file, scope)?;
     let mut tree = Tree::default();
     let mut stmt = tx.prepare(
         "SELECT u.id, u.address, u.content_class, u.is_internal, u.crawl_depth,
@@ -59,8 +59,13 @@ pub(super) fn capture(file: &CrawlFile) -> Result<Snapshot, StoreError> {
     }
     drop(rows);
     drop(stmt);
+    let ext_sql = if scope.ext_metrics {
+        "SELECT url_id, key, COALESCE(v_real, v_int) FROM url_ext WHERE v_real IS NOT NULL OR v_int IS NOT NULL ORDER BY url_id, key"
+    } else {
+        "SELECT url_id, key, COALESCE(v_real, v_int) FROM url_ext WHERE key IN ('linkscore.score', 'linkscore.link_score', 'link_score') AND (v_real IS NOT NULL OR v_int IS NOT NULL) ORDER BY url_id, key"
+    };
     for (sql, custom) in [
-        ("SELECT url_id, key, COALESCE(v_real, v_int) FROM url_ext WHERE v_real IS NOT NULL OR v_int IS NOT NULL ORDER BY url_id, key", false),
+        (ext_sql, false),
         ("SELECT url_id, source || '.' || metric, v_real FROM api_values WHERE level = 'url' AND v_real IS NOT NULL ORDER BY url_id, source, metric", false),
         ("SELECT url_id, 'custom_extraction.' || def_index || '.' || number, value FROM custom_extraction_values WHERE error IS NULL ORDER BY url_id, def_index, number", true),
     ] {
@@ -106,6 +111,10 @@ pub(super) fn capture(file: &CrawlFile) -> Result<Snapshot, StoreError> {
         0
     };
     let provenance_missing = count == 0 && !tree.nodes.is_empty();
+    if provenance_missing && !scope.anchors {
+        // Der Rückfall über Links liest `links` vollständig: dieselbe Grenze wie mit Ankertexten.
+        check_table_limit(file, "links", links_limit(scope))?;
+    }
     let sql = if provenance_missing {
         "SELECT source_id, target_id, id FROM links WHERE target_id IS NOT NULL AND link_type IN ('Hyperlink', 'HTTP Redirect', 'Meta Refresh', 'Image', 'CSS', 'JavaScript', 'Iframe') ORDER BY id"
     } else if has_discovery {
@@ -181,7 +190,11 @@ pub(super) fn capture(file: &CrawlFile) -> Result<Snapshot, StoreError> {
     let snapshot = Snapshot {
         crawl: tree,
         directories,
-        anchors: snapshot_groups(file)?,
+        anchors: if scope.anchors {
+            snapshot_groups(file)?
+        } else {
+            Vec::new()
+        },
         change_seq: file
             .get_meta("change_seq")?
             .and_then(|s| s.parse().ok())
@@ -320,38 +333,60 @@ fn snapshot_groups(file: &CrawlFile) -> Result<Vec<SnapshotGroup>, StoreError> {
     rows.collect::<Result<_, _>>().map_err(Into::into)
 }
 
+/// Grenze für `links`, wenn die Tabelle gelesen wird (Ankertexte oder Rückfall ohne Entdeckungsherkunft).
+fn links_limit(scope: CaptureScope) -> u64 {
+    scaled(250_000, scope)
+}
+
+/// Grenzen wachsen mit der URL-Grenze (Basis: 50 000 URLs).
+fn scaled(base: u64, scope: CaptureScope) -> u64 {
+    base.saturating_mul(scope.max_urls.max(1))
+        .div_ceil(u64::from(super::MAX_BUDGET_2D))
+}
+
 /// Schutz vor vollständigen Millionen-Crawls und unbeschränkten Metrik-/Kantenmengen je Fenster.
-fn check_capture_limits(file: &CrawlFile) -> Result<(), StoreError> {
-    for (table, limit) in [
-        ("urls", 50_000_u64),
-        ("url_ext", 250_000),
-        ("api_values", 250_000),
-        ("custom_extraction_values", 250_000),
-        ("url_segments", 250_000),
-        ("links", 250_000),
-        ("discovery_edges", 250_000),
-    ] {
-        let exists: bool = file.conn().query_row(
-            "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name = ?1)",
-            [table],
-            |r| r.get(0),
-        )?;
-        if !exists {
-            continue;
-        }
-        let count: u64 = file.conn().query_row(
-            &format!(
-                "SELECT COUNT(*) FROM (SELECT 1 FROM {table} LIMIT {})",
-                limit + 1
-            ),
-            [],
-            |r| r.get(0),
-        )?;
-        if count > limit {
-            return Err(super::invalid(&format!(
-                "Visualisierungs-Schnappschuss zu groß: {table} überschreitet {limit} Zeilen. Bitte einen kleineren Crawl öffnen."
-            )));
-        }
+/// `links` zählt nur, wenn die Aufnahme sie liest (Ankertexte; der Rückfall ohne Herkunft prüft nach).
+fn check_capture_limits(file: &CrawlFile, scope: CaptureScope) -> Result<(), StoreError> {
+    let mut tables = vec![
+        ("urls", scope.max_urls),
+        ("api_values", scaled(250_000, scope)),
+        ("custom_extraction_values", scaled(250_000, scope)),
+        ("url_segments", scaled(250_000, scope)),
+        ("discovery_edges", scaled(250_000, scope)),
+    ];
+    if scope.ext_metrics {
+        tables.push(("url_ext", scaled(250_000, scope)));
+    }
+    if scope.anchors {
+        tables.push(("links", links_limit(scope)));
+    }
+    for (table, limit) in tables {
+        check_table_limit(file, table, limit)?;
+    }
+    Ok(())
+}
+
+fn check_table_limit(file: &CrawlFile, table: &str, limit: u64) -> Result<(), StoreError> {
+    let exists: bool = file.conn().query_row(
+        "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type IN ('table', 'view') AND name = ?1)",
+        [table],
+        |r| r.get(0),
+    )?;
+    if !exists {
+        return Ok(());
+    }
+    let count: u64 = file.conn().query_row(
+        &format!(
+            "SELECT COUNT(*) FROM (SELECT 1 FROM {table} LIMIT {})",
+            limit + 1
+        ),
+        [],
+        |r| r.get(0),
+    )?;
+    if count > limit {
+        return Err(super::invalid(&format!(
+            "Visualisierungs-Schnappschuss zu groß: {table} überschreitet {limit} Zeilen. Bitte einen kleineren Crawl öffnen."
+        )));
     }
     Ok(())
 }

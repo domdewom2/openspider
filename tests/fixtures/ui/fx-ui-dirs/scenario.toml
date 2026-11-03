@@ -1,0 +1,29 @@
+[[route]]
+path = "/"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Directories fixture</title></head><body><main><h1>Start</h1><a href="/docs/a.html">A</a> <a href="/docs/b.html">B</a> <a href="/blog/post">Post</a> <a href="/blog/post?page=2">Post page 2</a> <a href="/about/">About</a> <a href="/about/team.html">Team</a></main></body></html>'''
+
+[[route]]
+path = "/docs/a.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Docs A</title></head><body><main><h1>Docs A</h1><a href="/docs/b.html">B</a></main></body></html>'''
+
+[[route]]
+path = "/docs/b.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Docs B</title></head><body><main><h1>Docs B</h1><a href="/">Start</a></main></body></html>'''
+
+[[route]]
+path = "/blog/post"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Post</title></head><body><main><h1>Post</h1><a href="/blog/post?page=2">Next page</a></main></body></html>'''
+
+[[route]]
+path = "/about/"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>About</title></head><body><main><h1>About</h1><a href="/about/team.html">Team</a></main></body></html>'''
+
+[[route]]
+path = "/about/team.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Team</title></head><body><main><h1>Team</h1><a href="/about/">About</a></main></body></html>'''
