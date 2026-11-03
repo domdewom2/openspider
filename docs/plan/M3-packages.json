@@ -788,6 +788,50 @@
   "extra_spec_ids": []
  },
  {
+  "id": "M3-C01",
+  "kind": "package",
+  "model": "opus",
+  "wave": 2,
+  "size": "M",
+  "runner": "server+ci",
+  "title": "Absturzberichte: lokal erfassen (Panic, Fehlergrenze, Sitzungsmarke) und nur nach Klick an openspider.de senden (OS-Festlegung Nutzer 03.11.2026)",
+  "spec_ids": [
+   "OUT-246",
+   "OUT-247"
+  ],
+  "extra_spec_ids": [
+   "OUT-240",
+   "OUT-243",
+   "OUT-244",
+   "OUT-253"
+  ],
+  "depends_on": [
+   "M3-K01"
+  ],
+  "owns": [
+   "crates/os-app/src/crash/**",
+   "crates/os-app/tests/crash_*.rs",
+   "crates/os-app/src/logging.rs (Panic-Hook additiv)",
+   "crates/os-app/src/update/policy.rs (DisableCrashReports additiv, gemeinsamer Resolver)",
+   "crates/os-app/src/settings_store.rs (Schlüssel crash_reports.prompt additiv)",
+   "Diagnosepaket OUT-244 (Berichte additiv aufnehmen)",
+   "crates/os-cli/src/logging.rs (Panic-Hook additiv)",
+   "crates/os-cli/tests/crash_*.rs",
+   "apps/desktop/src-tauri/src/** (Befehlsregistrierung additiv nach K2-61)",
+   "apps/desktop/src/features/crash/**",
+   "apps/desktop/src/app/ErrorBoundary.tsx",
+   "apps/desktop/src/features/help/** (Menüeintrag Absturzberichte… additiv)",
+   "Einstellungsseite Allgemein (Schalter crash_reports.prompt additiv)",
+   "apps/desktop/e2e/crash/**",
+   "website/api/crash.php",
+   "website/api/crash.example.ini (falls getrennte Konfiguration nötig)",
+   "website/api/tests/crash_test.php",
+   "website/api/README.md (Abschnitt crash)",
+   "website/site/datenschutz/index.html und website/site/en/privacy/index.html (nur Abschnitt Absturzberichte)"
+  ],
+  "prompt_notes": "Regeln: docs/plan/M3.md Abschnitt 2 (D1–D14) und M2.md 2/2a; nur owns ändern, sonst abbrechen und melden (K2-92-Tabelle). Keine Minidumps, keine Fremddienste (kein Sentry o. Ä.), keine neue Abhängigkeit ohne Not (Prozess-Startzeit plattformneutral ermitteln; falls Crate nötig: Lizenz prüfen und im Bericht begründen). Bereinigung (URLs, E-Mails, IPs, Heimatpfad, OUT-243-Geheimnisse) als eigene, gut getestete Funktion. Senden nur nach Klick; Netzwerkmitschnitt-Tests nach OUT-247. Server-Endpunkt nur im Repo (Deployment macht der Orchestrator nach Freigabe). Testbefehl für Panic/Frontend-Fehler nur in Test-Builds."
+ },
+ {
   "id": "M3-REL",
   "kind": "release",
   "model": "human",
