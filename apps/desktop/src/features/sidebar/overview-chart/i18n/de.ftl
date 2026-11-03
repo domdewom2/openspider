@@ -1,0 +1,47 @@
+ovc-region = Diagramm zum gewählten Eintrag
+ovc-empty = Eintrag in der Übersicht auswählen, um seine Verteilung zu sehen.
+ovc-zero = Noch keine URLs in diesem Eintrag.
+ovc-compare = Im Vergleichsmodus nicht verfügbar
+ovc-no-counts = Die Zähler dieses Eintrags liegen noch nicht vor.
+ovc-start-analysis = Crawl-Analyse starten
+ovc-resize = Diagrammbereich anpassen
+ovc-view = Diagrammansicht
+ovc-view-chart = Diagramm
+ovc-view-table = Tabelle
+ovc-export = Exportieren
+ovc-export-menu = Diagramm exportieren
+ovc-png-1 = Als PNG speichern (1×)
+ovc-png-2 = Als PNG speichern (2×)
+ovc-svg = Als SVG speichern
+ovc-csv = Daten als CSV speichern
+ovc-copy = Daten kopieren
+ovc-urls = { $count } URLs
+ovc-name = { $entry }: Verteilung von { $count } URLs
+ovc-legend = Kategorien von { $entry }
+ovc-col-category = Kategorie
+ovc-col-0 = Eintrag
+ovc-col-1 = Kategorie
+ovc-col-2 = Filter
+ovc-col-3 = URLs
+ovc-col-4 = % gesamt
+ovc-col-5 = Grundmenge
+ovc-cat-indexable = Intern indexierbar
+ovc-cat-nonIndexable = Intern nicht indexierbar
+ovc-cat-noStatus = Intern ohne Indexierbarkeitsstatus
+ovc-cat-external = Extern
+ovc-cat-hidden = Nicht angezeigt
+ovc-cat-unassigned = Nicht zugeordnet
+ovc-cat-others = Sonstige
+ovc-overlap-note = Eine URL kann in mehreren Kategorien stehen – die Anteile ergeben zusammen nicht 100 %.
+ovc-zero-filters = { $count ->
+    [one] 1 Filter ohne Treffer
+   *[other] { $count } Filter ohne Treffer
+}
+ovc-overflow = Die Kategorien ergeben zusammen mehr als die Grundmenge und stehen deshalb als einzelne Balken.
+ovc-tip-of = von { $base } URLs
+ovc-tip-contains = Enthält:
+ovc-tip-unassigned = URLs dieses Eintrags, die in keiner Kategorie stehen.
+ovc-tip-hidden = Gefundene URLs, die nicht als Zeilen in Internal oder External erscheinen, z. B. durch robots.txt gesperrt oder ausgeschlossen.
+ovc-tip-no-nav = Für diese Kategorie gibt es keinen Tabellenfilter.
+ovc-segment = Segment { $name }
+ovc-segment-none = Ohne Segment
