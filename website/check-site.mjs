@@ -32,18 +32,25 @@ function checkExternal(ref,file,isLink=false){
     if(isLink&&url.protocol==='https:'&&url.hostname==='github.com')return;
     fail(file,`external resource or disallowed link ${ref}`);
 }
+// Dynamic endpoints served by the web server (website/api), not by static files; forms must POST to them.
+const formEndpoints=new Set(['/api/feedback']);
+// Same-origin progressive enhancement only; every page must work without these scripts.
+const allowedScripts=new Set(['/assets/beta-feedback.js']);
 const titles=new Set(),descriptions=new Set(),pages=new Map();
 for(const [file,text] of texts){
     const ts=tags(text);
     for(const t of ts){
         for(const attr of ['href','src','poster','action','data'])if(t.a[attr]){
             // SVG namespace declarations are not resource requests.
-            const ref=t.a[attr];checkExternal(ref,file,t.name==='a'&&attr==='href');await resolve(ref,file);
+            const ref=t.a[attr];
+            if(t.name==='form'&&attr==='action'){if(!formEndpoints.has(ref)||t.a.method?.toLowerCase()!=='post')fail(file,`unexpected form action ${ref}`);continue;}
+            checkExternal(ref,file,t.name==='a'&&attr==='href');await resolve(ref,file);
         }
         if(t.a.srcset)for(const candidate of t.a.srcset.split(',')){const ref=candidate.trim().split(/\s+/)[0];checkExternal(ref,file);await resolve(ref,file);}
         if(t.a.style&&/url\s*\(|@import/i.test(t.a.style))fail(file,'put resource styles in checked CSS');
         if(t.name==='img'&&!Object.hasOwn(t.a,'alt'))fail(file,'img missing alt');
-        if(t.name==='script'&&t.a.type!=='application/ld+json')fail(file,'unexpected executable script');
+        if(t.name==='script'&&t.a.type!=='application/ld+json'&&!allowedScripts.has(t.a.src))fail(file,'unexpected executable script');
+        if(t.name==='form'&&!t.a.action)fail(file,'form without action');
     }
     if(file.endsWith('.css')){
         if(/@import/i.test(text))fail(file,'CSS @import is not allowed');
@@ -83,12 +90,14 @@ for(const [file,text] of texts){
     for(const m of metas.filter(m=>['og:image','twitter:image'].includes(m.property??m.name))){checkExternal(m.content,file);await resolve(m.content,file);}
     for(const m of text.matchAll(/<script\b[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g))try{const s=JSON.parse(m[1]);if(s['@type']!=='SoftwareApplication'||s.name!=='OpenSpider'||s['@context']!=='https://schema.org')fail(file,'unexpected structured data');}catch{fail(file,'invalid JSON-LD');}
     if(['/','/en/','/download/','/en/download/','/funktionen/','/en/features/'].includes(new URL(pageURL(file)).pathname)&&!text.includes('application/ld+json'))fail(file,'missing SoftwareApplication');
-    pages.set(pageURL(file),{file,alternates,lang});
+    const noindex=metas.some(a=>a.name==='robots'&&/\bnoindex\b/i.test(a.content??''));
+    pages.set(pageURL(file),{file,alternates,lang,noindex});
 }
 for(const [url,p] of pages)for(const a of p.alternates.filter(t=>['de','en'].includes(t.a.hreflang))){const q=pages.get(a.a.href);if(!q||q.lang!==a.a.hreflang||!q.alternates.some(t=>t.a.hreflang===p.lang&&t.a.href===url))fail(p.file,'hreflang pair not reciprocal');}
 const sm=texts.get(path.join(root,'sitemap.xml'))??'';
-for(const m of sm.matchAll(/<loc>([^<]+)<\/loc>/g)){if(!pages.has(m[1])||m[1].endsWith('404.html'))fail('sitemap.xml',`invalid page ${m[1]}`);}
-for(const url of pages.keys())if(!url.endsWith('404.html')&&!sm.includes(`<loc>${url}</loc>`))fail('sitemap.xml',`missing ${url}`);
+// noindex pages (404, form confirmations) stay out of the sitemap; every other page must be listed.
+for(const m of sm.matchAll(/<loc>([^<]+)<\/loc>/g)){if(!pages.has(m[1])||m[1].endsWith('404.html')||pages.get(m[1]).noindex)fail('sitemap.xml',`invalid page ${m[1]}`);}
+for(const [url,p] of pages)if(!url.endsWith('404.html')&&!p.noindex&&!sm.includes(`<loc>${url}</loc>`))fail('sitemap.xml',`missing ${url}`);
 if(!(texts.get(path.join(root,'robots.txt'))??'').includes('Sitemap: '+origin+'/sitemap.xml'))fail('robots.txt','missing sitemap');
 const og=await readFile(path.join(root,'assets/og.png'));
 if(og.toString('hex',0,8)!=='89504e470d0a1a0a'||og.readUInt32BE(16)!==1200||og.readUInt32BE(20)!==630)fail('og.png','expected 1200×630 PNG');

@@ -1,0 +1,30 @@
+name: Idea or feature request
+description: Suggest an improvement or a new feature for OpenSpider.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your idea. Please describe the problem first, then your suggestion.
+        Deutsch ist auch ok.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what gets in the way today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: How could OpenSpider solve this?
+    validations:
+      required: true
+  - type: textarea
+    id: benefit
+    attributes:
+      label: Benefit
+      description: Who benefits, and how often would you use it?
+    validations:
+      required: true

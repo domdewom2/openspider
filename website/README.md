@@ -3,7 +3,10 @@
 `site/` enthält die direkt auslieferbare Website: Deutsch unter `/`, Englisch unter
 `/en/`, jeweils Funktionen, Download/Installation, FAQ, Impressum und Datenschutz und
 404-Seite. Gemeinsames CSS, Bilder und Icons liegen unter `site/assets/`.
-Kein Build-Schritt, keine Laufzeitabhängigkeiten, kein ausführbares Browser-JavaScript.
+Kein Build-Schritt, keine Laufzeitabhängigkeiten. Einziges Browser-JavaScript ist das optionale
+`assets/beta-feedback.js` (Versionsvorbelegung im Beta-Formular); alle Seiten funktionieren ohne.
+Das Formular sendet an `POST /api/feedback`, siehe `api/README.md` (PHP, nicht Teil von `site/`).
+Die Danke-Seiten `/beta/danke/` und `/en/beta/thanks/` sind `noindex` und stehen nicht in der Sitemap.
 Das bestehende Verzeichnis `placeholder/` bleibt unverändert.
 
 ## Auslieferung (erst nach Nutzer-Go, D12)
@@ -49,13 +52,14 @@ node website/check-site.mjs
 bash scripts/check-neutral.sh
 ```
 
-Der Node-Check benötigt keine Abhängigkeiten. Er prüft alle 14 HTML-Seiten,
+Der Node-Check benötigt keine Abhängigkeiten. Er prüft alle 20 HTML-Seiten,
 interne Links einschließlich Sprungmarken, Assets, erlaubte externe Links,
 eindeutige Titel/Beschreibungen, Canonicals, gegenseitige hreflang-Paare,
 Sprachwechsel, Überschriften, alt-Attribute, Social-Metadaten, JSON-LD,
-Sitemap, robots.txt, OG-Bildmaße und das Gewicht beider Startseiten.
+Sitemap (ohne noindex-Seiten), robots.txt, OG-Bildmaße, das Formularziel `/api/feedback`,
+das einzige erlaubte Skript und das Gewicht beider Startseiten.
 Unkomprimiert einschließlich CSS, Logo und aller referenzierten Icons:
-DE **76.325 Byte**, EN **76.080 Byte**; jeweils unter 200.000 Byte.
+DE **77.865 Byte**, EN **77.643 Byte**; jeweils unter 200.000 Byte.
 Das nur in Metadaten referenzierte OG-Bild wird beim Seitenaufruf nicht geladen.
 Im ursprünglichen Website-Lauf wurde der Check zusätzlich mit absichtlich beschädigten Links, Bildern,
 alt-Attributen, hreflang und h1 geprüft; alle Fehler wurden erkannt.

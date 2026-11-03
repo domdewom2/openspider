@@ -1,4 +1,4 @@
-import { getT } from "../../i18n";
+import { currentLanguage, getT } from "../../i18n";
 import { hasAction, onActionRegistryChanged, registerAction } from "../../ui/actions";
 import { registerMenuContributions } from "../../ui/menu/registry";
 import { mainMenuContributions, type MainMenuState } from "../../ui/menu/contributions/main";
@@ -18,6 +18,7 @@ import { client } from "../../ipc/client";
 import { chooseFile } from "./files";
 import { installMenuContexts } from "./menuContexts";
 import { loadRecent, normalizeRecent, updateRecent } from "./recent";
+import { openFeedback } from "./feedback";
 
 /** Registrierung und Abmeldung sind fenstergebunden; verspätete Antworten ändern kein geschlossenes Fenster. */
 export function installMainMenus(): () => void {
@@ -86,6 +87,8 @@ export function installMainMenus(): () => void {
   // URLs aus dem eigenen öffentlichen Repository, keine Referenzressourcen.
   on("help.manual", () => { if (client.transportName === "tauri") return client.invoke<void>("open_manual");
     window.open("https://github.com/wojcikdominik/openspider/tree/main/docs", "_blank", "noopener,noreferrer"); });
+  // UI-130: Beta-Rückmeldung auf der eigenen Website, Version und Oberflächensprache in der URL.
+  on("help.feedback", () => openFeedback(currentLanguage()));
   for (const mode of ["spider", "list", "serp", "apis", "compare"] as const) on(`mode.${mode}`, () => {
     useMainMode.setState({ mode });
     state.mode = mode;

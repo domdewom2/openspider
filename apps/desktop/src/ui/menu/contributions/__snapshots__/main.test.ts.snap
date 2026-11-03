@@ -126,6 +126,7 @@ Hilfe
   + Debug-Informationen
   + Protokollordner öffnen
   + Nach Updates suchen
+  + Feedback geben…
   + Über OpenSpider"
 `;
 
@@ -255,6 +256,7 @@ Help
   + Debug information
   + Open logs folder
   + Check for updates
+  + Send feedback…
   + About OpenSpider"
 `;
 
@@ -361,6 +363,7 @@ Hilfe
   + Debug-Informationen
   + Protokollordner öffnen
   + Nach Updates suchen
+  + Feedback geben…
   + Über OpenSpider"
 `;
 
@@ -467,5 +470,6 @@ Help
   + Debug information
   + Open logs folder
   + Check for updates
+  + Send feedback…
   + About OpenSpider"
 `;

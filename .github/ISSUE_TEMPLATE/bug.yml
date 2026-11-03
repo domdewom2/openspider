@@ -1,0 +1,57 @@
+name: Bug report
+description: Something in OpenSpider does not work as expected.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please do not include client data, private URLs or personal data; issues are public.
+        Deutsch ist auch ok.
+  - type: dropdown
+    id: system
+    attributes:
+      label: System
+      options:
+        - macOS (Apple silicon)
+        - macOS (Intel)
+        - Windows x64
+        - Windows ARM
+        - Linux (command line)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: OpenSpider version
+      description: Shown in the app under Help → “About OpenSpider”, or with `openspider --version`.
+      placeholder: 1.0.0-beta.1
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What did you do? A public test site or a minimal example helps most.
+      placeholder: |
+        1. Start a crawl of …
+        2. Pause …
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots (optional)
+      description: Help → “Open logs folder” shows the log files. Remove client domains and personal data before attaching anything.
