@@ -204,6 +204,76 @@ async fn download_through_app_proxy_installs_and_becomes_active() {
     server.stop().await;
 }
 
+fn set_crawl_state(app: &App, dir: &Path, state: os_model::CrawlState) {
+    use os_app::{pool::CrawlKey, runtime::sessions::SessionInfo, WindowId};
+    app.sessions().set_current(
+        WindowId("main".into()),
+        SessionInfo {
+            key: CrawlKey("fixture".into()),
+            path: dir.join("fixture.ospider"),
+            config: Arc::new(os_model::CrawlConfig::default()),
+            state,
+            writable: true,
+            engine: None,
+        },
+    );
+}
+
+async fn refused(app: &App, name: &str) -> os_app::CmdError {
+    app.dispatch(CallCtx::for_window("main"), name, json!({}))
+        .await
+        .expect_err(name)
+}
+
+// spec: CRAWL-078 [M3]
+// spec: OUT-260 [M3]
+#[tokio::test]
+async fn running_crawl_blocks_replacing_or_removing_an_installed_chromium() {
+    use os_app::ErrorCode;
+    use os_model::CrawlState;
+    let bytes = archive();
+    let mock = ChromiumMock::new(bytes.clone());
+    let server = MockServer::start(vec![mock.clone().into_api()])
+        .await
+        .unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let app = app(
+        dir.path(),
+        manifest(
+            format!("{}/archive.zip", server.base_url("chromium")),
+            &bytes,
+            None,
+        ),
+    );
+    app.apply_settings_patch(&json!({"network":{"proxy":{"mode":"none"}}}))
+        .unwrap();
+
+    // Ohne Installation nutzt kein Crawl ein bereitgestelltes Chromium: Download ist frei.
+    set_crawl_state(&app, dir.path(), CrawlState::Running);
+    call(&app, "chromium.download").await;
+    assert_eq!(settled(&app).await["installed"], VERSION);
+
+    // Mit Installation sperrt ein laufender oder pausierter Crawl Ersetzen und Entfernen.
+    for state in [CrawlState::Running, CrawlState::Paused] {
+        set_crawl_state(&app, dir.path(), state);
+        for name in ["chromium.download", "chromium.remove"] {
+            let err = refused(&app, name).await;
+            assert_eq!(err.code, ErrorCode::CrawlRunning, "{name} {state:?}");
+            assert_eq!(err.message_key, "err-chromium-crawl-running");
+        }
+        let status = call(&app, "chromium.status").await;
+        assert_eq!(status["job"], "idle", "{status}");
+        assert_eq!(status["installed"], VERSION);
+    }
+    assert_eq!(mock.requests().len(), 1);
+
+    // Nach dem Crawl ist Entfernen wieder möglich.
+    set_crawl_state(&app, dir.path(), CrawlState::Completed);
+    let removed = call(&app, "chromium.remove").await;
+    assert_eq!(removed["installed"], Value::Null);
+    server.stop().await;
+}
+
 // spec: OUT-265 [M3]
 #[tokio::test]
 async fn wrong_checksum_fails_visibly_and_installs_nothing() {

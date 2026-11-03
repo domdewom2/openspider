@@ -219,10 +219,28 @@ fn start<'a>(app: &'a App, _: CallCtx, a: Value) -> BoxFuture<'a, CmdResult> {
     })
 }
 
+/// Läuft oder pausiert ein Crawl? Er startet seine Browser-Prozesse ggf. neu (CRAWL-078) und lädt
+/// Dateien des bereitgestellten Chromium nach; Ersetzen oder Entfernen ist dann gesperrt.
+fn crawl_active(app: &App) -> Result<(), CmdError> {
+    if app
+        .sessions()
+        .all()
+        .iter()
+        .any(|s| matches!(s.state, CrawlState::Running | CrawlState::Paused))
+    {
+        return Err(CmdError::new(
+            ErrorCode::CrawlRunning,
+            "err-chromium-crawl-running",
+        ));
+    }
+    Ok(())
+}
+
 /// Startet den Download im Hintergrund (läuft bereits einer, bleibt es bei diesem).
 pub fn begin(app: &App) -> Result<(), CmdError> {
     let o = overrides(app);
-    let plan = platform(&o)
+    let platform = platform(&o);
+    let plan = platform
         .ok_or(ProvisionError::Unsupported)
         .and_then(|p| manifest(&o)?.plan(p))
         .map_err(|e| error(ErrorCode::Unsupported, &e))?;
@@ -232,6 +250,11 @@ pub fn begin(app: &App) -> Result<(), CmdError> {
             &ProvisionError::Io("kein App-Datenordner".into()),
         )
     })?;
+    // Die Installation verschiebt vorhandene Versionen und löscht sie; ein laufender Crawl könnte
+    // gerade eine davon nutzen. Ohne vorhandene Installation ist der Download auch während eines Crawls frei.
+    if platform.is_some_and(|p| provision::installed(&root, p).is_some()) {
+        crawl_active(app)?;
+    }
     let service = app.ext::<ProvisionService>();
     let cancel = Cancel::new();
     {
@@ -311,18 +334,7 @@ fn remove<'a>(app: &'a App, _: CallCtx, a: Value) -> BoxFuture<'a, CmdResult> {
         if service.lock().running {
             return Err(CmdError::new(ErrorCode::Busy, "err-chromium-busy"));
         }
-        // Ein laufender oder pausierter Crawl startet seine Browser-Prozesse ggf. neu (CRAWL-078).
-        if app
-            .sessions()
-            .all()
-            .iter()
-            .any(|s| matches!(s.state, CrawlState::Running | CrawlState::Paused))
-        {
-            return Err(CmdError::new(
-                ErrorCode::CrawlRunning,
-                "err-chromium-crawl-running",
-            ));
-        }
+        crawl_active(app)?;
         if let Some(root) = root(app, &overrides(app)) {
             let result = app
                 .handle()
