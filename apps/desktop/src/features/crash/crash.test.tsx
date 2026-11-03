@@ -197,6 +197,7 @@ describe("helpers", () => {
     expect(failureText(t, "disabled")).toBe("Durch Administrator deaktiviert.");
     expect(failureText(t, { http: 413 })).toBe("Der Server antwortete mit HTTP 413.");
     expect(failureText(t, "notFound")).toBe("Der Bericht wurde nicht gefunden.");
+    expect(failureText(t, "alreadySent")).toBe("Der Bericht wurde bereits gesendet.");
   });
 });
 

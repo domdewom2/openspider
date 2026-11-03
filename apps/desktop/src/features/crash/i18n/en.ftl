@@ -17,6 +17,7 @@ crash-failure-rate = Too many reports in a short time (HTTP 429). Please try aga
 crash-failure-response = Unexpected answer from the server.
 crash-failure-disabled = Disabled by your administrator.
 crash-failure-not-found = The report was not found.
+crash-failure-already-sent = The report has already been sent.
 crash-disabled-admin = Sending is disabled by your administrator. Reports are still stored locally.
 crash-view-title = Crash report
 crash-view-select = Report

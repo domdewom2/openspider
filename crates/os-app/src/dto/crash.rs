@@ -89,6 +89,8 @@ pub enum CrashSendFailure {
     Disabled,
     /// Bericht nicht gefunden oder nicht lesbar.
     NotFound,
+    /// Bericht wurde bereits gesendet; es geht keine zweite Anfrage hinaus.
+    AlreadySent,
 }
 
 /// Ergebnis je Bericht.

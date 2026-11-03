@@ -17,6 +17,7 @@ crash-failure-rate = Zu viele Berichte in kurzer Zeit (HTTP 429). Bitte später 
 crash-failure-response = Unerwartete Antwort des Servers.
 crash-failure-disabled = Durch Administrator deaktiviert.
 crash-failure-not-found = Der Bericht wurde nicht gefunden.
+crash-failure-already-sent = Der Bericht wurde bereits gesendet.
 crash-disabled-admin = Senden ist durch Administrator deaktiviert. Berichte werden weiter lokal gespeichert.
 crash-view-title = Absturzbericht
 crash-view-select = Bericht

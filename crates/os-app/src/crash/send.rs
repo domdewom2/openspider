@@ -177,14 +177,25 @@ pub async fn send(app: &App, args: CrashSendArgs) -> Result<CrashSendResult, Cmd
     let service = app.ext::<CrashService>();
     let _gate = service.send_gate.lock().await;
     let stored = shared::list(&service::dir(app));
+    // Bereits gesendete Berichte gehen nie ein zweites Mal hinaus (eigener Grund `alreadySent`).
     let mut chosen: Vec<&shared::Stored> = stored
         .iter()
-        .filter(|s| args.ids.contains(&s.report.id))
+        .filter(|s| args.ids.contains(&s.report.id) && s.report.sent.is_none())
         .collect();
     if args.ids.len() > 1 {
         chosen.truncate(MAX_BATCH);
     }
     let mut results = Vec::new();
+    for sent in stored
+        .iter()
+        .filter(|s| args.ids.contains(&s.report.id) && s.report.sent.is_some())
+    {
+        results.push(CrashSendOutcome {
+            id: sent.report.id.clone(),
+            server_ref: sent.report.server_ref.clone(),
+            failure: Some(CrashSendFailure::AlreadySent),
+        });
+    }
     for id in args
         .ids
         .iter()

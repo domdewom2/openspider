@@ -21,7 +21,7 @@ export function failureText(t: T, failure: CrashSendFailure | null, messageKey?:
   if (messageKey) return t(messageKey);
   if (failure === null) return t("crash-failure-response");
   if (typeof failure === "object") return t(failure.http === 429 ? "crash-failure-rate" : "crash-failure-http", { status: failure.http });
-  return t(`crash-failure-${failure === "notFound" ? "not-found" : failure}`);
+  return t(`crash-failure-${failure === "notFound" ? "not-found" : failure === "alreadySent" ? "already-sent" : failure}`);
 }
 
 export function validEmail(email: string): boolean {

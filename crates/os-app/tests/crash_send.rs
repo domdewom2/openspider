@@ -808,3 +808,29 @@ async fn app_log_tail_has_no_page_content_from_foreign_crates() {
         "{tail:?}"
     );
 }
+
+// spec: OUT-247
+#[tokio::test]
+async fn already_sent_reports_are_never_sent_again() {
+    let mock = Mock::start().await;
+    let home = tempfile::tempdir().unwrap();
+    place(home.path(), FIXTURE_ID, "20261102-091500");
+    let app = start(home.path(), &mock);
+    let first = send_ids(&app, &[FIXTURE_ID], "", "").await;
+    assert_eq!(first.results[0].server_ref.as_deref(), Some("ABCD2345"));
+    assert_eq!(mock.requests().len(), 1);
+    for ids in [
+        vec![FIXTURE_ID],
+        vec![FIXTURE_ID, "00000000-0000-4000-8000-000000000009"],
+    ] {
+        let again = send_ids(&app, &ids, "", "").await;
+        let sent = again.results.iter().find(|r| r.id == FIXTURE_ID).unwrap();
+        assert_eq!(sent.failure, Some(CrashSendFailure::AlreadySent));
+        assert_eq!(sent.server_ref.as_deref(), Some("ABCD2345"));
+    }
+    assert_eq!(
+        mock.requests().len(),
+        1,
+        "keine zweite Anfrage für einen gesendeten Bericht"
+    );
+}

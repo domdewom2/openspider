@@ -3,4 +3,4 @@
 /**
  * Ursache eines fehlgeschlagenen Sendens.
  */
-export type CrashSendFailure = "timeout" | "network" | { "http": number } | "response" | "disabled" | "notFound";
+export type CrashSendFailure = "timeout" | "network" | { "http": number } | "response" | "disabled" | "notFound" | "alreadySent";
