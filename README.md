@@ -21,6 +21,10 @@ Open-source website crawler and technical SEO auditor – built for AI agents an
   <a href="#roadmap">Roadmap</a>
 </p>
 
+<p align="center">
+  <img src="assets/screenshots/hero-light-dark.jpg" width="900" alt="OpenSpider desktop app after crawling a website: overview with crawl totals, status distribution and top issues, shown in light and dark mode">
+</p>
+
 ---
 
 OpenSpider crawls websites the way a search engine does and finds the technical SEO problems that cost rankings: broken links, redirect chains, canonical and hreflang errors, indexability conflicts, duplicates, thin content and much more.
@@ -37,6 +41,29 @@ What makes it different: **AI agents are first-class users.** A built-in MCP ser
 | 🔍 **Complete technical SEO** | Status codes, redirects, canonicals, hreflang, directives, robots.txt, sitemaps, duplicates, content, images, links, pagination, security headers, structured data – with filters, issue explanations, reports and exports (CSV/XLSX). |
 | 🆓 **Free, no limits** | Apache-2.0. No URL cap, no license key, headless CLI and scheduled crawls included – perfect for CI/CD pipelines. |
 | ⚡ **Native and fast** | Rust core, Tauri desktop app, small installers for macOS (Apple Silicon & Intel) and Windows. |
+
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/dashboard-dark.jpg">
+        <img src="assets/screenshots/dashboard-light.jpg" alt="Overview after a crawl: totals, status distribution and top issues">
+      </picture>
+      <p align="center"><b>Overview</b> – totals, status codes and the most important issues at a glance</p>
+    </td>
+    <td width="50%">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/urls-dark.jpg">
+        <img src="assets/screenshots/urls-light.jpg" alt="URL table filtered to HTML pages with the SERP snippet preview of the selected page">
+      </picture>
+      <p align="center"><b>URL table and details</b> – filters, columns and a SERP snippet preview per page</p>
+    </td>
+  </tr>
+</table>
+
+<sub>Screenshots: OpenSpider 1.0.0-beta.1 on macOS, crawling <a href="https://caloone.de">caloone.de</a> (4,674 URLs in 46 seconds). The images follow your GitHub light/dark theme.</sub>
 
 ## Performance
 
@@ -81,8 +108,8 @@ Linux x86_64 with glibc supports the core and CLI only; Linux desktop,
 .deb/.rpm and arm64 releases remain unsupported.
 Homebrew and winget distribution are planned and not available yet.
 
-The [German user guide](website/site/handbuch/index.html) and
-[English user guide](website/site/en/manual/index.html) cover DMG, NSIS and silent MSI
+The [German user guide](https://openspider.de/handbuch/) and
+[English user guide](https://openspider.de/en/manual/) cover DMG, NSIS and silent MSI
 installation, Gatekeeper/SmartScreen, CLI/MCP, scheduling, updates and uninstalling.
 Automatic update checks send only version, OS and architecture to GitHub Releases
 (which sees the connection IP), without telemetry or crawl data. Disable them in
@@ -90,9 +117,9 @@ Settings → Updates or with `OPENSPIDER_DISABLE_UPDATE_CHECK=1`.
 
 ## Documentation
 
-- [Benutzerhandbuch (Deutsch)](website/site/handbuch/index.html)
-- [User guide (English)](website/site/en/manual/index.html)
-- [Agency beta instructions](website/site/en/beta/index.html) — you will receive the feedback channel with your invitation.
+- [Benutzerhandbuch (Deutsch)](https://openspider.de/handbuch/)
+- [User guide (English)](https://openspider.de/en/manual/)
+- [Open beta](https://openspider.de/en/beta/) ([Deutsch](https://openspider.de/beta/)) — everyone can join; send feedback through the form on that page or open a [GitHub issue](https://github.com/wojcikdominik/openspider/issues/new/choose).
 
 ### Build the CLI from source
 

@@ -1,6 +1,7 @@
-// Baum- und Graphansicht eines Visualisierungsfensters (UI-090 … UI-096, UI-146): lädt den Schnappschuss über
+// Baum- und Graphansicht eines Visualisierungsfensters (UI-090 … UI-097, UI-146): lädt den Schnappschuss über
 // `viz.graph`, legt Baum (d3-hierarchy) bzw. Graph (Worker) an, zeichnet auf Canvas und bietet Suche, Kontextmenü,
-// Knotenbudget, Teilbaum öffnen, Wurzel setzen mit Pfadleiste sowie SVG/PNG/CSV-Export.
+// Knotenbudget, Teilbaum öffnen, Wurzel setzen mit Pfadleiste, Links eines Knotens einblenden sowie SVG/PNG/CSV-Export.
+// Der Verzeichnisgraph (UI-094) nutzt dieselbe Ansicht mit den Daten des Verzeichnisbaums.
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { getFormatters, useT } from "../../i18n";
 import { describeError, toCmdError } from "../../ipc/errors";
@@ -10,18 +11,21 @@ import type { OpStatus } from "../../ipc/gen/OpStatus";
 import { isTauri } from "../../ipc/transport/tauri";
 import { viz } from "../../ipc/viz";
 import { Banner, Button, ContextMenu, Dialog, DialogFooter, type MenuEntry } from "../../ui/primitives";
+import { CompactLegend } from "./CompactLegend";
 import { GraphCanvas, type GraphCanvasHandle } from "./GraphCanvas";
+import { PALETTES } from "./model/encoding";
 import { chooseFolder, saveBlob, svgBlob, useRenderStyle } from "./exporters";
 import { csvPayload, directoryPath, exploreDecision, RootTrail, tooltipRows } from "./model/details";
 import type { ForceInput, ForceReply } from "./model/force";
 import { createForceRunner, type ForceRunner } from "./model/forceRunner";
-import { applyPositions, buildScene, type Scene } from "./model/scene";
+import { linkMenuEntries, overlayCsvEdges, overlayFrom, sameStructure, treeEdges, withLinks, type LinkOverlay, type LinkRequest } from "./model/links";
+import { applyPositions, buildScene, sceneOverlay, type Scene } from "./model/scene";
 import { current as currentMatch, EMPTY_SEARCH, search as runSearch, step as stepSearch, type SearchState } from "./model/search";
 import { VizTree } from "./model/tree";
 import { layoutTree } from "./model/treeLayout";
 import { centerOn, type Transform } from "./model/viewport";
-import { DEFAULT_OPTIONS, encodeOptions, graphArgs, TREE_LABEL_ZOOM, type VizOptions } from "./options";
-import { layoutOf, type VizWindowKind } from "./open";
+import { defaultOptions, encodeOptions, graphArgs, TREE_LABEL_ZOOM, type VizOptions } from "./options";
+import { isDirectoryKind, layoutOf, type VizWindowKind } from "./open";
 import { Sidebar, type ExportState } from "./Sidebar";
 
 export interface GraphViewProps {
@@ -61,6 +65,8 @@ export interface VizDebug {
   panBy(dx: number, dy: number): void;
   /** Klick auf einen Knoten (Baum: ein-/ausklappen). */
   click(id: number): void;
+  /** Eingeblendete Links (UI-097): Kantenzahl, Gesamtzahl laut Kern, hervorgehobene Knoten. */
+  links: { edges: number; total: number; connected: number[]; mode: string } | null;
 }
 
 declare global {
@@ -72,7 +78,9 @@ declare global {
 export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir }: GraphViewProps) {
   const t = useT();
   const layout = layoutOf(kind) === "force" ? "force" : "tree";
-  const [opts, setOpts] = useState<VizOptions>(DEFAULT_OPTIONS);
+  const [opts, setOpts] = useState<VizOptions>(() => defaultOptions(kind));
+  const [links, setLinks] = useState<LinkRequest | null>(null);
+  const [overlay, setOverlay] = useState<LinkOverlay | null>(null);
   const [trail, setTrail] = useState(() => RootTrail.start(t("viz-trail-start")));
   const [data, setData] = useState<Loaded | null>(null);
   const [treeVersion, bumpTree] = useReducer((x: number) => x + 1, 0);
@@ -106,31 +114,39 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
   }, []);
   const timing = useRef({ start: performance.now(), firstFrame: null as number | null, loaded: null as number | null });
   const style = useRenderStyle(opts.lineWidth);
-  const enc = useMemo(() => encodeOptions(kind, opts), [kind, opts]);
+  const enc = useMemo(() => encodeOptions(kind, opts, style.palette), [kind, opts, style.palette]);
   const rootId = trail.current.id ?? initialRoot;
 
   // ---- Laden ----------------------------------------------------------------------------------------------------
-  const applyLoaded = useCallback((dto: GraphDto, root: number | null, keepCollapsed: Set<number> | null) => {
-    const tree = VizTree.from(dto);
+  const dataRef = useRef<Loaded | null>(null);
+  dataRef.current = data;
+  const applyLoaded = useCallback((dto: GraphDto, root: number | null, keepCollapsed: Set<number> | null, req: LinkRequest | null = null) => {
+    // Eingeblendete Links ändern die Struktur nicht: gleicher Baum, kein Neustart des Layouts (UI-097).
+    const prev = dataRef.current;
+    const keep = keepCollapsed === null && prev !== null && prev.root === root && sameStructure(prev.dto, dto);
+    const tree = keep ? prev.tree : VizTree.from({ ...dto, edges: treeEdges(dto) });
     if (keepCollapsed) for (const id of keepCollapsed) if (tree.get(id)) tree.collapsed.add(id);
     timing.current.loaded = performance.now() - timing.current.start;
+    setOverlay(req ? overlayFrom(dto, req, tree) : null);
     setData({ tree, dto, root });
     setTrail((tr) => (tr.entries.length === 1 && tr.current.view === null && tree.roots[0] !== undefined && root === (tr.current.id ?? initialRoot)
       ? new RootTrail([{ ...tr.current, label: tree.get(tree.roots[0])?.address ?? tree.get(tree.roots[0])?.label ?? tr.current.label }])
       : tr));
   }, [initialRoot]);
 
-  const optsKey = JSON.stringify(graphArgs(kind, snapshotId, rootId, opts));
+  const linkKey = JSON.stringify(links);
+  const optsKey = JSON.stringify(withLinks(graphArgs(kind, snapshotId, rootId, opts), links, opts));
   useEffect(() => {
     const seq = ++loadSeq.current;
     const ctrl = new AbortController();
+    const req = JSON.parse(linkKey) as LinkRequest | null;
     setLoading(true);
     setError(null);
     viz
       .graph(JSON.parse(optsKey), ctrl.signal)
       .then((dto) => {
         if (seq !== loadSeq.current) return;
-        applyLoaded(dto, rootId, null);
+        applyLoaded(dto, rootId, null, req);
       })
       .catch((e: unknown) => {
         if (seq === loadSeq.current && !ctrl.signal.aborted) setError(describeError(t, toCmdError(e)).text);
@@ -138,7 +154,7 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
       .finally(() => seq === loadSeq.current && setLoading(false));
     return () => ctrl.abort();
     // `generation` lädt nach „Aktualisieren“ neu; Wurzel und Ansicht bleiben erhalten.
-  }, [optsKey, generation, applyLoaded, rootId, t]);
+  }, [optsKey, linkKey, generation, applyLoaded, rootId, t]);
 
   const explore = useCallback(
     async (id: number) => {
@@ -146,18 +162,19 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
       const seq = ++loadSeq.current;
       setLoading(true);
       try {
-        const dto = await viz.graph(graphArgs(kind, snapshotId, rootId, opts, id));
+        // Eingeblendete Links bleiben erhalten und werden für die erweiterte Knotenmenge neu bestimmt.
+        const dto = await viz.graph(withLinks(graphArgs(kind, snapshotId, rootId, opts, id), links, opts));
         if (seq !== loadSeq.current) return;
         const keep = new Set(data.tree.collapsed);
         keep.delete(id);
-        applyLoaded(dto, rootId, keep);
+        applyLoaded(dto, rootId, keep, links);
       } catch (e) {
         if (seq === loadSeq.current) setError(describeError(t, toCmdError(e)).text);
       } finally {
         if (seq === loadSeq.current) setLoading(false);
       }
     },
-    [applyLoaded, data, kind, opts, rootId, snapshotId, t],
+    [applyLoaded, data, kind, links, opts, rootId, snapshotId, t],
   );
 
   const focusRoot = useCallback(
@@ -165,6 +182,7 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
       const n = data?.tree.get(id);
       if (!n || !canvas.current) return;
       setTrail((tr) => tr.focus(id, n.address ?? n.label, canvas.current?.getTransform() ?? { k: 1, x: 0, y: 0 }));
+      setLinks(null);
       pendingView.current = "reset";
       positions.current.clear();
       fixed.current.clear();
@@ -173,6 +191,7 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
   );
 
   const backTo = useCallback((index: number) => {
+    setLinks(null);
     setTrail((tr) => {
       const { trail: next, view } = tr.back(index);
       pendingView.current = view ?? "reset";
@@ -194,6 +213,7 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
     if (!tree) return null;
     return buildScene(tree, treePositions ?? positions.current, enc, opts.labelMode);
   }, [tree, treeVersion, treePositions, enc, opts.labelMode]);
+  const overlayScene = useMemo(() => (scene ? sceneOverlay(scene, overlay) : null), [scene, overlay]);
 
   // Kraftgerichtetes Layout im Worker; Neustart bei neuer Knotenmenge, anderen Radien oder anderen Kräften. Zwischenstände
   // gehen an die jeweils aktuelle Szene (Farbwechsel baut die Szene neu, ohne das Layout neu zu starten).
@@ -398,9 +418,10 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
         onAction: () => focusRoot(n.id),
       },
       ...(layout === "force" && fixed.current.has(n.id) ? [{ id: "viz-release", label: t("viz-menu-release"), onAction: () => release(n.id) }] : []),
+      ...(layout === "force" ? linkMenuEntries(t, n, overlay, setLinks, () => setLinks(null)) : []),
       { ...fit, separatorBefore: true },
     ];
-  }, [focusRoot, layout, menuTarget, release, requestExplore, t, tree]);
+  }, [focusRoot, layout, menuTarget, overlay, release, requestExplore, t, tree]);
 
   // ---- Exporte --------------------------------------------------------------------------------------------------
   const exportSvg = useCallback(() => {
@@ -422,7 +443,7 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
     try {
       const dir = isTauri() ? await chooseFolder(t("viz-export-csv-choose")) : csvDir.trim();
       if (!dir) return;
-      const payload = csvPayload(tree, scene);
+      const payload = csvPayload(tree, scene, overlayCsvEdges(overlay));
       setExportState({ kind: "running" });
       const handle = await viz.exportCsv({ snapshotId, dir, nodes: payload.nodes, edges: payload.edges, layout: kind });
       if (!mounted.current) return;
@@ -439,7 +460,7 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
     } catch (e) {
       setExportState({ kind: "failed", message: describeError(t, toCmdError(e)).text });
     }
-  }, [csvBlocked, csvDir, kind, scene, snapshotId, t, tree]);
+  }, [csvBlocked, csvDir, kind, overlay, scene, snapshotId, t, tree]);
 
   // ---- Testzugang (nur Entwicklungs-/E2E-Build) -------------------------------------------------------------------
   useEffect(() => {
@@ -461,7 +482,7 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
         return timing.current.loaded;
       },
       svg: () => canvas.current?.svg() ?? "",
-      csv: () => (tree && scene ? csvPayload(tree, scene) : null),
+      csv: () => (tree && scene ? csvPayload(tree, scene, overlayCsvEdges(overlay)) : null),
       positions: () => scene?.nodes.map((n) => ({ id: n.id, x: n.x, y: n.y })) ?? [],
       screenOf: (id) => {
         const k = scene?.index.get(id);
@@ -477,6 +498,7 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
         if (tr) canvas.current?.setTransform({ k: tr.k, x: tr.x + dx, y: tr.y + dy });
       },
       click: (id) => onNodeClick(id),
+      links: overlay ? { edges: overlayScene?.edges.length ?? 0, total: overlay.total, connected: [...overlay.connected], mode: overlay.request.mode } : null,
     };
   });
 
@@ -515,6 +537,7 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
         csvDir={isTauri() ? null : csvDir}
         onCsvDir={setCsvDir}
         hasData={!!scene && scene.nodes.length > 0}
+        links={layout === "force" ? { overlay, shown: overlayScene?.edges.length ?? 0, onReset: () => setLinks(null) } : null}
       />
       <section className="os-viz-main" aria-label={t(`viz-kind-${kind}`)}>
         <nav className="os-viz-trail" aria-label={t("viz-trail-label")}>
@@ -550,6 +573,7 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
               labelsAt={labelsAt}
               highlights={highlights}
               current={currentHit}
+              overlay={overlayScene}
               draggable={layout === "force"}
               label={t("viz-canvas-label", { kind: t(`viz-kind-${kind}`), count: scene.nodes.length })}
               initialTransform={initialTransform}
@@ -563,6 +587,13 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
                 performance.mark?.("viz-first-frame");
               }}
               tooltip={tooltip}
+            />
+            <CompactLegend
+              colorMode={opts.colorMode}
+              colors={enc.colors && opts.palette === "standard" ? enc.colors : PALETTES[opts.palette]}
+              segments={opts.colorMode === "segment" ? [...new Set(scene.nodes.filter((n) => !n.capped && !n.hollow).map((n) => n.fill))] : []}
+              directory={isDirectoryKind(kind)}
+              links={overlay ? { inlink: overlay.edges.some((e) => e.type === "inlink"), outlink: overlay.edges.some((e) => e.type === "outlink"), inColor: style.inlink, outColor: style.outlink } : null}
             />
           </ContextMenu>
         )}

@@ -42,7 +42,25 @@ export interface ForceInput {
   /** Endzustand einer beendeten Simulation (Neustart nach Beenden des Workers, UI-146): Alpha, Schrittzahl und
    * Geschwindigkeiten werden übernommen, damit ein späteres Ziehen wie bisher nur mit `reheat` (0,3) anwärmt. */
   resume?: ForceResume;
+  /** Dimension: 2 (Standard, Quadtree) oder 3 (Octree, UI-098); Felder `init`/`fixed` haben `dims` Werte je Knoten. */
+  dims?: 2 | 3;
 }
+
+/** Gemeinsame Schnittstelle der 2D- und 3D-Simulation für den Treiber. */
+export interface Simulation {
+  readonly pos: Float64Array;
+  readonly vel: Float64Array;
+  alpha: number;
+  steps: number;
+  lastMove: number;
+  step(): number;
+  converged(): boolean;
+  fix(i: number, x: number, y: number, z?: number): void;
+  release(i: number): void;
+  reheat(alpha?: number): void;
+}
+
+export type SimulationFactory = (input: ForceInput) => Simulation;
 
 export interface ForceResume {
   alpha: number;
@@ -62,7 +80,7 @@ export function mulberry32(seed: number): () => number {
   };
 }
 
-export class ForceSim {
+export class ForceSim implements Simulation {
   readonly n: number;
   readonly pos: Float64Array;
   readonly vel: Float64Array;
@@ -508,7 +526,7 @@ export class ForceSim {
 /** Nachrichten zwischen Fenster und Worker. */
 export type ForceRequest =
   | { type: "start"; input: ForceInput; maxMs?: number }
-  | { type: "fix"; index: number; x: number; y: number }
+  | { type: "fix"; index: number; x: number; y: number; z?: number }
   | { type: "release"; index: number }
   | { type: "pause" }
   | { type: "resume" }
@@ -523,7 +541,7 @@ export type ForceReply =
  * bei Konvergenz oder nach `maxMs` (Zeitgrenze aus UI-092). Pause hält nach der laufenden Scheibe an.
  */
 export class ForceDriver {
-  private sim: ForceSim | null = null;
+  private sim: Simulation | null = null;
   private started = 0;
   private paused = false;
   private running = false;
@@ -535,12 +553,13 @@ export class ForceDriver {
     private readonly schedule: (fn: () => void) => void = (fn) => setTimeout(fn, 0),
     private readonly now: () => number = () => performance.now(),
     private readonly sliceMs = 12,
+    private readonly create: SimulationFactory = (input) => new ForceSim(input),
   ) {}
 
   handle(msg: ForceRequest): void {
     switch (msg.type) {
       case "start":
-        this.sim = new ForceSim(msg.input);
+        this.sim = this.create(msg.input);
         this.maxMs = msg.maxMs ?? MAX_LAYOUT_MS;
         this.started = this.now();
         this.paused = false;
@@ -550,7 +569,7 @@ export class ForceDriver {
         if (!this.finished) this.kick();
         break;
       case "fix":
-        this.sim?.fix(msg.index, msg.x, msg.y);
+        this.sim?.fix(msg.index, msg.x, msg.y, msg.z);
         this.restart();
         break;
       case "release":

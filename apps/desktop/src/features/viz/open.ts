@@ -8,17 +8,41 @@ import { isTauri } from "../../ipc/transport/tauri";
 import { viz } from "../../ipc/viz";
 import { windowLabelFor } from "./labels";
 
-/** Arten, die dieses Paket darstellt (UI-091, UI-092, UI-093, UI-099). */
-export type VizWindowKind = "crawlTree" | "crawlGraph" | "directoryTree" | "anchorWords";
-export const WINDOW_KINDS: readonly VizWindowKind[] = ["crawlTree", "crawlGraph", "directoryTree", "anchorWords"];
-export const GRAPH_KINDS: readonly VizWindowKind[] = ["crawlTree", "crawlGraph", "directoryTree"];
+/** Alle Arten der Visualisierungsfenster (UI-091 … UI-100). */
+export type VizWindowKind = VizKind;
+export const GRAPH_KINDS: readonly VizWindowKind[] = ["crawlTree", "crawlGraph", "directoryTree", "directoryGraph", "crawlGraph3d", "directoryGraph3d"];
+export const WORD_KINDS: readonly VizWindowKind[] = ["anchorWords", "bodyWords"];
+export const WINDOW_KINDS: readonly VizWindowKind[] = [...GRAPH_KINDS, ...WORD_KINDS];
 
 export function isWindowKind(k: string | null | undefined): k is VizWindowKind {
   return !!k && (WINDOW_KINDS as readonly string[]).includes(k);
 }
 
-export function layoutOf(kind: VizWindowKind): "tree" | "force" | "words" {
-  return kind === "crawlGraph" ? "force" : kind === "anchorWords" ? "words" : "tree";
+export type VizLayout = "tree" | "force" | "force3d" | "words";
+
+export function layoutOf(kind: VizWindowKind): VizLayout {
+  switch (kind) {
+    case "crawlGraph":
+    case "directoryGraph":
+      return "force";
+    case "crawlGraph3d":
+    case "directoryGraph3d":
+      return "force3d";
+    case "anchorWords":
+    case "bodyWords":
+      return "words";
+    default:
+      return "tree";
+  }
+}
+
+export function isWordKind(kind: VizWindowKind): boolean {
+  return layoutOf(kind) === "words";
+}
+
+/** Verzeichnisstruktur (UI-093/094/098) statt Entdeckungsstruktur. */
+export function isDirectoryKind(kind: VizWindowKind): boolean {
+  return kind === "directoryTree" || kind === "directoryGraph" || kind === "directoryGraph3d";
 }
 
 /** Kernart für `viz.graph` (der kraftgerichtete Graph nutzt die Entdeckungsstruktur des Crawl-Baums). */
@@ -67,10 +91,46 @@ export function readWindowParams(search: string, store: KindStore | null = safeS
   };
 }
 
+/**
+ * Art für das nächste Fenster, das der Kern ohne Art öffnet (Kontextmenü der oberen Tabelle ruft `viz.open` direkt;
+ * die Hülle übergibt dem Fenster nur `snapshotId`). Gilt kurz und genau einmal.
+ */
+export const PENDING_KEY = "os.viz.pending";
+export const PENDING_MAX_AGE_MS = 15_000;
+
+export function rememberPendingKind(kind: VizWindowKind, store: KindStore | null = safeStorage(), now = Date.now()): void {
+  try {
+    store?.setItem(PENDING_KEY, JSON.stringify({ kind, at: now }));
+  } catch {
+    // Speicher gesperrt: das Fenster bietet dann die Artauswahl an.
+  }
+}
+
+export function takePendingKind(store: KindStore | null = safeStorage(), now = Date.now()): VizWindowKind | null {
+  try {
+    const raw = store?.getItem(PENDING_KEY);
+    if (!raw) return null;
+    store?.setItem(PENDING_KEY, "");
+    const v = JSON.parse(raw) as { kind?: string; at?: number };
+    return isWindowKind(v.kind) && typeof v.at === "number" && now - v.at >= 0 && now - v.at <= PENDING_MAX_AGE_MS ? v.kind : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Wartet bis `timeoutMs` auf die Art aus einem anderen Fenster (die Hülle öffnet das Fenster vor der Antwort). */
 export function waitForKind(snapshotId: string, timeoutMs = 2_000, store: KindStore | null = safeStorage()): Promise<VizWindowKind | null> {
   const now = store?.getItem(KIND_KEY + snapshotId);
   if (isWindowKind(now)) return Promise.resolve(now);
+  const pending = takePendingKind(store);
+  if (pending) {
+    try {
+      store?.setItem(KIND_KEY + snapshotId, pending);
+    } catch {
+      // nur Komfort
+    }
+    return Promise.resolve(pending);
+  }
   if (typeof window === "undefined") return Promise.resolve(null);
   return new Promise((resolve) => {
     const done = (k: VizWindowKind | null) => {
@@ -111,7 +171,7 @@ function defaultDeps(): OpenDeps {
   };
 }
 
-/** Öffnet eine Visualisierung; `rootUrlId` = Wurzel (Kontextmenü) bzw. Ziel-URL der Wortwolke. */
+/** Öffnet eine Visualisierung; `rootUrlId` = Wurzel (Kontextmenü) bzw. Ziel-URL der Wortwolken. */
 export async function openVisualisation(kind: VizWindowKind, rootUrlId: number | null = null, deps: Partial<OpenDeps> = {}): Promise<VizOpenResult> {
   const d = { ...defaultDeps(), ...deps };
   const res = await d.open({ kind: coreKind(kind), rootUrlId });

@@ -273,24 +273,44 @@ fn delimited_items(bytes: &[u8], delimiter: Option<u8>) -> Vec<String> {
 
 /// Excel/ODS: alle Zellen aller Blätter.
 fn read_workbook(path: &Path) -> Result<Vec<String>, EngineError> {
-    use calamine::{Data, Reader};
-    let mut workbook = calamine::open_workbook_auto(path)
-        .map_err(|e| EngineError::Invalid(format!("{}: {e}", path.display())))?;
-    let mut items = Vec::new();
-    for (_, range) in workbook.worksheets() {
-        for row in range.rows() {
-            let cells: Vec<String> = row
-                .iter()
-                .filter(|c| !matches!(c, Data::Empty))
-                .map(|c| c.to_string().trim().to_string())
-                .filter(|c| !c.is_empty())
-                .collect();
-            if !cells.is_empty() {
-                items.push(cells.join("\t"));
+    read_spreadsheet(path, || {
+        use calamine::{Data, Reader};
+        let mut workbook = calamine::open_workbook_auto(path)
+            .map_err(|e| EngineError::Invalid(format!("{}: {e}", path.display())))?;
+        let mut items = Vec::new();
+        for (_, range) in workbook.worksheets() {
+            for row in range.rows() {
+                let cells: Vec<String> = row
+                    .iter()
+                    .filter(|c| !matches!(c, Data::Empty))
+                    .map(|c| c.to_string().trim().to_string())
+                    .filter(|c| !c.is_empty())
+                    .collect();
+                if !cells.is_empty() {
+                    items.push(cells.join("\t"));
+                }
             }
         }
-    }
-    Ok(items)
+        Ok(items)
+    })
+}
+
+/// Führt einen `calamine`-Lesevorgang aus und macht aus einem Abbruch im Parser einen Fehler der Datei.
+///
+/// Hochgeladene Tabellen sind Fremddaten. calamine meldet defekte Dateien in aller Regel als Fehler; für
+/// manipulierte OLE2-/CFB-Strukturen (`.xls`) sind aber Panics bekannt (RUSTSEC-2026-0436, behoben in 0.38;
+/// ein fehlender FAT-Sektor löst auch in 0.38.0 noch einen Indexfehler aus). Der Import liefert dann
+/// [`EngineError::Invalid`] statt den Aufrufer abzubrechen.
+pub(crate) fn read_spreadsheet<T>(
+    path: &Path,
+    read: impl FnOnce() -> Result<T, EngineError>,
+) -> Result<T, EngineError> {
+    std::panic::catch_unwind(std::panic::AssertUnwindSafe(read)).unwrap_or_else(|_| {
+        Err(EngineError::Invalid(format!(
+            "{}: Tabellendatei ist beschädigt und kann nicht gelesen werden",
+            path.display()
+        )))
+    })
 }
 
 /// Sitemap oder Sitemap-Index (auch gzip): die gültigen `<loc>`-Adressen.

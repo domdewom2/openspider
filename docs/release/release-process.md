@@ -1,6 +1,6 @@
 # Release-Prozess (M3-R04)
 
-Stand 30.10.2026: frühe Beta für SEO-Agenturen. Bundle-ID `org.openspider.desktop`, GitHub Releases als Update-Host, kein Chromium im Bundle. R03, D01 und offene M2-Parität sind ausstehende Abnahmen. Diese Orchestrierung ersetzt sie nicht.
+Stand 03.11.2026: offene Beta (Nutzerentscheid 02.11.2026, Feedback über openspider.de/beta und GitHub-Issues). Bundle-ID `org.openspider.desktop`, GitHub Releases als Update-Host, kein Chromium im Bundle. R03, D01 und offene M2-Parität sind ausstehende Abnahmen. Diese Orchestrierung ersetzt sie nicht.
 
 ## Version und Start
 

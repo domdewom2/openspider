@@ -1,6 +1,7 @@
 // Darstellbare Szene: sichtbare Knoten mit Position und Stil, Kanten als Indexpaare. Grundlage für Canvas, Treffertest,
 // SVG- und CSV-Export – alle Ausgaben zeigen dadurch genau dieselben Knoten (UI-090).
 import { encodeStats, nodeStyle, type EncodeOptions, type EncodeStats } from "./encoding";
+import type { LinkEdgeType, LinkOverlay } from "./links";
 import type { VizTree } from "./tree";
 
 export type LabelMode = "path" | "url";
@@ -60,6 +61,23 @@ export function buildScene(tree: VizTree, positions: Map<number, [number, number
     if (a !== undefined && b !== undefined) edges.push([a, b]);
   }
   return { nodes, index, edges, stats };
+}
+
+/** Eingeblendete Links (UI-097) als Indexpaare der Szene und die hervorgehobenen Knoten (übrige ausgegraut). */
+export interface SceneOverlay {
+  edges: [number, number, LinkEdgeType][];
+  connected: ReadonlySet<number>;
+}
+
+export function sceneOverlay(scene: Scene, overlay: LinkOverlay | null): SceneOverlay | null {
+  if (!overlay) return null;
+  const edges: [number, number, LinkEdgeType][] = [];
+  for (const e of overlay.edges) {
+    const a = scene.index.get(e.source);
+    const b = scene.index.get(e.target);
+    if (a !== undefined && b !== undefined) edges.push([a, b, e.type]);
+  }
+  return { edges, connected: overlay.connected };
 }
 
 /** Positionen aus einem Layout-Feld (x0,y0,x1,y1 … in Reihenfolge `ids`) übernehmen. */

@@ -99,6 +99,9 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Build-Kennung (Hilfe → Über, Debug-Info, Absturzberichte)
+        shell: bash
+        run: echo "OPENSPIDER_BUILD=${GITHUB_SHA::8}" >> "$GITHUB_ENV"
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22

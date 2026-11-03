@@ -1,0 +1,87 @@
+{
+ "target": "/target.html",
+ "inlinks": 30,
+ "uniqueInlinks": 23,
+ "uniqueInlinksWithoutNofollow": 18,
+ "uniqueInlinksWithoutNavFooter": 22,
+ "uniqueInlinksWithoutNofollowAndNavFooter": 17,
+ "uniqueOutlinks": 7,
+ "uniqueOutlinksWithoutNavFooter": 5,
+ "children": [
+  "/deep-1.html",
+  "/deep-2.html"
+ ],
+ "childInlinks": 3,
+ "childOutlinks": 2,
+ "wordCount": 41,
+ "bodyTerms": [
+  [
+   "pricing",
+   6
+  ],
+  [
+   "plan",
+   3
+  ],
+  [
+   "plans",
+   3
+  ],
+  [
+   "every",
+   2
+  ],
+  [
+   "includes",
+   2
+  ],
+  [
+   "budget",
+   1
+  ],
+  [
+   "choose",
+   1
+  ],
+  [
+   "compare",
+   1
+  ],
+  [
+   "comparison",
+   1
+  ],
+  [
+   "details",
+   1
+  ],
+  [
+   "fair",
+   1
+  ],
+  [
+   "fits",
+   1
+  ],
+  [
+   "more",
+   1
+  ],
+  [
+   "simple",
+   1
+  ],
+  [
+   "support",
+   1
+  ],
+  [
+   "team",
+   1
+  ],
+  [
+   "updates",
+   1
+  ]
+ ]
+}

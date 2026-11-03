@@ -8,8 +8,9 @@ import { eventBus } from "../../ipc/events";
 import type { Notice } from "../../ipc/gen/Notice";
 import { viz } from "../../ipc/viz";
 import { Banner, Button, EmptyState, Select } from "../../ui/primitives";
+import { Graph3DView } from "./Graph3DView";
 import { GraphView } from "./GraphView";
-import { coreKind, GRAPH_KINDS, isWindowKind, waitForKind, type VizWindowKind, type VizWindowParams } from "./open";
+import { coreKind, isWindowKind, isWordKind, layoutOf, waitForKind, WINDOW_KINDS, type VizWindowKind, type VizWindowParams } from "./open";
 import { WordCloudView } from "./WordCloudView";
 import "./viz.css";
 
@@ -57,7 +58,7 @@ export function VizWindow({ params, exportDir }: { params: VizWindowParams; expo
     if (!snapshotId || !kind) return;
     setRefreshing(true);
     try {
-      await viz.open({ kind: coreKind(kind), rootUrlId: kind === "anchorWords" ? params.rootUrlId : null, refreshSnapshotId: snapshotId });
+      await viz.open({ kind: coreKind(kind), rootUrlId: isWordKind(kind) ? params.rootUrlId : null, refreshSnapshotId: snapshotId });
       setChanged(false);
       setGeneration((g) => g + 1);
     } catch (e) {
@@ -98,12 +99,13 @@ export function VizWindow({ params, exportDir }: { params: VizWindowParams; expo
             label={t("viz-pick-kind")}
             value=""
             onChange={(v) => isWindowKind(v) && setKind(v)}
-            options={GRAPH_KINDS.map((k) => ({ value: k, label: t(`viz-kind-${k}`) }))}
+            options={WINDOW_KINDS.map((k) => ({ value: k, label: t(`viz-kind-${k}`) }))}
           />
         </div>
       )}
-      {kind === "anchorWords" && <WordCloudView snapshotId={snapshotId} urlId={params.rootUrlId} generation={generation} />}
-      {kind && kind !== "anchorWords" && <GraphView kind={kind} snapshotId={snapshotId} generation={generation} initialRoot={params.rootUrlId} exportDir={exportDir} />}
+      {kind && isWordKind(kind) && <WordCloudView snapshotId={snapshotId} urlId={params.rootUrlId} generation={generation} source={kind === "bodyWords" ? "body" : "anchors"} />}
+      {kind && layoutOf(kind) === "force3d" && <Graph3DView kind={kind} snapshotId={snapshotId} generation={generation} initialRoot={params.rootUrlId} />}
+      {kind && (layoutOf(kind) === "tree" || layoutOf(kind) === "force") && <GraphView kind={kind} snapshotId={snapshotId} generation={generation} initialRoot={params.rootUrlId} exportDir={exportDir} />}
     </div>
   );
 }

@@ -3,7 +3,7 @@
 // Tooltip nach 300 ms Verweilen. Zoom/Verschiebung laufen ohne React-Neuzeichnen direkt auf dem Canvas.
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, type ReactNode } from "react";
 import { drawScene, toSvg, type RenderStyle } from "./model/render";
-import { HitIndex, type Scene } from "./model/scene";
+import { HitIndex, type Scene, type SceneOverlay } from "./model/scene";
 import { toWorld, wheelFactor, zoomAt, type Transform } from "./model/viewport";
 
 export const TOOLTIP_DELAY_MS = 300;
@@ -30,6 +30,8 @@ export interface GraphCanvasProps {
   labelsAt: (k: number) => boolean;
   highlights: ReadonlySet<number>;
   current: number | null;
+  /** Eingeblendete Links und Ausgrauung (UI-097). */
+  overlay?: SceneOverlay | null;
   draggable: boolean;
   label: string;
   initialTransform: (width: number, height: number) => Transform;
@@ -78,7 +80,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
   const state = useCallback(() => {
     const p = live.current;
     const tr = transform();
-    return { t: tr, width: size.current.width, height: size.current.height, showLabels: p.labelsAt(tr.k), highlights: p.highlights, current: p.current, hovered: hoverRef.current };
+    return { t: tr, width: size.current.width, height: size.current.height, showLabels: p.labelsAt(tr.k), highlights: p.highlights, current: p.current, hovered: hoverRef.current, overlay: p.overlay ?? null };
   }, [transform]);
 
   const draw = useCallback(() => {
@@ -190,7 +192,7 @@ export const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(funct
 
   useEffect(() => {
     schedule();
-  }, [props.scene, props.version, props.style, props.highlights, props.current, hover, schedule]);
+  }, [props.scene, props.version, props.style, props.highlights, props.current, props.overlay, hover, schedule]);
 
   useEffect(
     () => () => {

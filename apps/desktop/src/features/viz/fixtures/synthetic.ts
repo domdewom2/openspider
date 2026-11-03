@@ -21,10 +21,14 @@ export interface SynthNode {
   metrics: Record<string, number>;
 }
 
+/** Ein Hyperlink-Vorkommen für „Links eines Knotens“ (UI-097): Quelle, Ziel, follow, Linkposition. */
+export type SynthLink = [source: number, target: number, follow: boolean, position: "Content" | "Navigation" | "Footer" | "Header"];
+
 export interface SynthTree {
   nodes: Map<number, SynthNode>;
   children: Map<number, number[]>;
   roots: number[];
+  links?: SynthLink[];
 }
 
 const HOST = "http://127.0.0.1:8000";
@@ -142,6 +146,54 @@ export function genUiLarge(levels: readonly number[] = [1, 40, 2000, 47959], see
   return t;
 }
 
+/**
+ * `fx-ui-words` auf Graph-Ebene (wie `tests/fixtures/ui/fx-ui-words`): Zielseite (Kennung 2) mit 30 Inlinks von 23
+ * Quellseiten; ohne nofollow 18, ohne Navigation/Footer 22, beides 17; 7 eindeutige Outlinks; Kinder `deep-1`/`deep-2`.
+ */
+export function fxUiWordsGraph(): SynthTree {
+  const t = empty();
+  const pages = 22;
+  add(t, page(1, "/", 0, { uniqueInlinks: 2 }), null);
+  add(t, page(2, "/target.html", 1, { uniqueInlinks: 23 }), 1);
+  for (let i = 1; i <= pages; i++) add(t, page(2 + i, `/p${i}.html`, 1, { uniqueInlinks: i <= 3 ? 2 : 1 }), 1);
+  const deep1 = 3 + pages;
+  const deep2 = deep1 + 1;
+  add(t, page(deep1, "/deep-1.html", 2, { uniqueInlinks: 2 }), 2);
+  add(t, page(deep2, "/deep-2.html", 2, { uniqueInlinks: 1 }), 2);
+  const p = (i: number) => 2 + i;
+  const links: SynthLink[] = [[1, 2, true, "Navigation"], [1, 2, true, "Content"]];
+  for (let i = 1; i <= pages; i++) links.push([1, p(i), true, "Content"]);
+  for (let i = 1; i <= 20; i++) links.push([p(i), 2, i < 16, "Content"]);
+  for (let i = 1; i <= 6; i++) links.push([p(i), 2, true, "Footer"]);
+  links.push([p(21), 2, true, "Footer"], [2, 2, true, "Content"]);
+  links.push([2, 1, true, "Header"], [2, p(1), true, "Navigation"], [2, deep1, true, "Content"], [2, deep2, true, "Content"], [2, p(2), true, "Content"], [2, p(3), true, "Footer"]);
+  links.push([p(1), deep1, true, "Content"], [deep1, 1, true, "Content"], [deep2, 1, true, "Content"]);
+  t.links = links;
+  return t;
+}
+
+/** Eindeutige Links eines Knotens bzw. seiner Kinder wie `Snapshot::link_overlay` im Kern. */
+export function selectLinks(tree: SynthTree, node: number, mode: string, includeNofollow: boolean, excludeNavFooter: boolean): [number, number][] {
+  const focus = mode === "childInlinks" || mode === "childOutlinks" ? (tree.children.get(node) ?? []) : [node];
+  const inbound = mode === "inlinks" || mode === "childInlinks";
+  const pairs = new Map<string, [number, number]>();
+  for (const [s, tg, follow, position] of tree.links ?? []) {
+    if (!includeNofollow && !follow) continue;
+    if (excludeNavFooter && (position === "Navigation" || position === "Footer")) continue;
+    if (inbound ? !focus.includes(tg) : !focus.includes(s)) continue;
+    pairs.set(`${s}:${tg}`, [s, tg]);
+  }
+  return [...pairs.values()].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+}
+
+/** Body-Text der Zielseite von `fx-ui-words` mit Standardoptionen (UI-100, wie `expected.json`). */
+export function fxUiBodyWords(): WordFreq[] {
+  return [
+    ["pricing", 6], ["plan", 3], ["plans", 3], ["every", 2], ["includes", 2], ["budget", 1], ["choose", 1], ["compare", 1], ["comparison", 1],
+    ["details", 1], ["fair", 1], ["fits", 1], ["more", 1], ["simple", 1], ["support", 1], ["team", 1], ["updates", 1],
+  ].map(([word, count]) => ({ word: word as string, count: count as number }));
+}
+
 export interface SelectOptions {
   root?: number | null;
   budget: number;
@@ -233,4 +285,132 @@ export function fxUiWords(): WordFreq[] {
     { word: "costs", count: 1 },
     { word: "image: price table", count: 1 },
   ];
+}
+
+/**
+ * Realistischere Vorführ-Fixture (M3-V02, Optik): eine Website mit rund 950 URLs in bis zu fünf Ebenen (Blog nach
+ * Jahren, Shop nach Kategorien mit Varianten, Doku-Kapitel, News, Support), gemischter Indexierbarkeit, Statuscodes
+ * 2xx/3xx/4xx/5xx, Segmenten und Querverlinkung (für „Links eines Knotens“). Deterministisch aus dem Startwert.
+ */
+export const SHOWCASE_SHOP = 3;
+export function fxUiShowcase(seed = 11): SynthTree {
+  const t = empty();
+  const rnd = mulberry32(seed);
+  const links: SynthLink[] = [];
+  let next = 1;
+  const segColors = ["#7b61ff", "#1f9d8b", "#d9822b"];
+  const mk = (path: string, depth: number, parent: number | null, segment: number | null = null): number => {
+    const id = next++;
+    const r = rnd();
+    const status = r < 0.035 ? 404 : r < 0.06 ? 301 : r < 0.07 ? 500 : 200;
+    const indexable = status === 200 && rnd() > 0.1;
+    const words = 80 + Math.floor(rnd() * 1800);
+    add(
+      t,
+      page(id, path, depth, {
+        statusCode: status,
+        indexability: indexable ? "Indexable" : "Non-Indexable",
+        uniqueInlinks: 1 + Math.floor(rnd() * 40),
+        linkScore: 1 + Math.floor(rnd() * 99),
+        segmentId: segment === null ? null : String(segment),
+        segmentColor: segment === null ? null : (segColors[segment] as string),
+        metrics: { crawl_depth: depth, word_count: words, unique_inlinks: 1 + Math.floor(rnd() * 40), link_score: 1 + Math.floor(rnd() * 99), response_time: Math.round(rnd() * 900) / 1000 },
+      }),
+      parent,
+    );
+    if (parent !== null) links.push([parent, id, true, "Content"]);
+    return id;
+  };
+  const root = mk("/", 0, null);
+  const sections = ["blog", "shop", "docs", "news", "support", "about"].map((s) => mk(`/${s}/`, 1, root, s === "blog" ? 0 : s === "shop" ? 1 : null));
+  for (const s of sections) {
+    links.push([root, s, true, "Navigation"]);
+    links.push([s, root, true, "Header"]);
+  }
+  const [blog, shop, docs, news, support, about] = sections as [number, number, number, number, number, number];
+  for (const year of [2023, 2024, 2025]) {
+    const y = mk(`/blog/${year}/`, 2, blog, 0);
+    for (let i = 1; i <= 42; i++) {
+      const post = mk(`/blog/${year}/post-${i}.html`, 3, y, 0);
+      if (i % 5 === 0) mk(`/blog/${year}/post-${i}/comments/`, 4, post, 0);
+      if (i % 3 === 0) links.push([post, shop, i % 6 !== 0, "Content"]);
+    }
+  }
+  const products: number[] = [];
+  for (let c = 1; c <= 12; c++) {
+    const cat = mk(`/shop/category-${c}/`, 2, shop, 1);
+    for (let p = 1; p <= 28; p++) {
+      const prod = mk(`/shop/category-${c}/product-${p}.html`, 3, cat, 1);
+      products.push(prod);
+      links.push([prod, shop, true, "Content"], [prod, cat, true, "Navigation"]);
+      if (p % 9 === 0) for (const v of ["red", "blue"]) mk(`/shop/category-${c}/product-${p}.html?color=${v}`, 4, prod, 1);
+    }
+  }
+  for (let i = 0; i < products.length; i += 7) links.push([products[i] as number, products[(i + 13) % products.length] as number, true, "Content"]);
+  for (let ch = 1; ch <= 6; ch++) {
+    const chapter = mk(`/docs/chapter-${ch}/`, 2, docs, 2);
+    for (let p = 1; p <= 20; p++) {
+      const pg = mk(`/docs/chapter-${ch}/page-${p}.html`, 3, chapter, 2);
+      if (p % 4 === 0) mk(`/docs/chapter-${ch}/page-${p}/example.html`, 4, pg, 2);
+    }
+  }
+  for (let i = 1; i <= 140; i++) {
+    const article = mk(`/news/article-${i}.html`, 2, news);
+    if (i % 10 === 0) links.push([article, shop, true, "Footer"]);
+  }
+  for (let i = 1; i <= 70; i++) mk(`/support/faq-${i}.html`, 2, support);
+  for (const p of ["team", "jobs", "contact", "imprint", "privacy"]) mk(`/about/${p}.html`, 2, about);
+  t.links = links;
+  return t;
+}
+
+/** Verzeichnisstruktur einer Crawl-Struktur wie im Kern: Schema (ohne URL) → Host (= Start-URL) → Pfadsegmente. */
+export function directoryTreeOf(crawl: SynthTree): SynthTree {
+  const t = empty();
+  const byKey = new Map<string, number>();
+  const real = new Map<string, SynthNode>();
+  for (const n of crawl.nodes.values()) if (n.address && !n.address.includes("?")) real.set(n.address.replace(/\/$/, ""), n);
+  let nextPath = -1;
+  const pathNode = (id: number, label: string, depth: number): SynthNode => ({ ...page(id, label, depth), address: null, label, statusCode: null, indexability: null, uniqueInlinks: null, metrics: {} });
+  const ensure = (key: string, label: string, depth: number, parent: number | null): number => {
+    const known = byKey.get(key);
+    if (known !== undefined) return known;
+    const r = real.get(key);
+    const node = r ? { ...r, label, depth } : pathNode(nextPath--, label, depth);
+    add(t, node, parent);
+    byKey.set(key, node.id);
+    return node.id;
+  };
+  const order = [...crawl.nodes.values()].sort((a, b) => a.id - b.id);
+  for (const n of order) {
+    if (!n.address) continue;
+    const [base, query] = n.address.split("?") as [string, string | undefined];
+    const m = /^(\w+):\/\/([^/]+)(.*)$/.exec(base);
+    if (!m) continue;
+    let parent = ensure(`${m[1]}://`, m[1] as string, 0, null);
+    let key = `${m[1]}://${m[2]}`;
+    parent = ensure(key, m[2] as string, 1, parent);
+    const parts = (m[3] ?? "").split("/").filter(Boolean);
+    parts.forEach((part, i) => {
+      key += `/${part}`;
+      parent = ensure(key, part, i + 2, parent);
+    });
+    if (query !== undefined) add(t, { ...n, label: `${parts.at(-1) ?? ""}?${query}`, depth: parts.length + 2 }, parent);
+  }
+  t.links = crawl.links;
+  return t;
+}
+
+/** Begriffe einer längeren Seite für die Wortwolke (Häufigkeiten nach Zipf, deterministisch). */
+export function fxUiShowcaseWords(): WordFreq[] {
+  const vocabulary = (
+    "crawler seo pages links audit sitemap index content title description canonical redirect status speed mobile " +
+    "images structured data schema headings keywords internal external anchor report export filter segment depth " +
+    "visualisation graph search console analytics performance accessibility javascript rendering robots hreflang " +
+    "duplicate pagination security headers cookies spelling readability words score crawl budget agency client " +
+    "website domain subdomain category product blog article news support documentation chapter guide example team " +
+    "privacy imprint contact pricing plans compare features release update beta windows macos install settings api " +
+    "token project schedule task email notification chart table column issue warning opportunity priority"
+  ).split(" ");
+  return vocabulary.map((word, i) => ({ word, count: Math.max(1, Math.round(240 / Math.pow(i + 1, 0.85))) }));
 }
