@@ -1,4 +1,5 @@
 import { RemovalConfirmationSettings } from "../../../table/RemovalConfirmationSettings";
+import { CrashPromptSetting } from "../../../crash/CrashPromptSetting";
 import { useMemo } from "react";
 import { i18n, useT } from "../../../../i18n";
 import { languageOptions } from "../../../../i18n/languages";
@@ -42,6 +43,7 @@ function General() {
         {t("settings-general-notifications")}
       </Switch>
       <RemovalConfirmationSettings />
+      <CrashPromptSetting />
     </div>
   );
 }

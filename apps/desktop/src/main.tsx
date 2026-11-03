@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { App } from "./App";
 import { DetailFrame } from "./features/detail/frame/DetailFrame";
 import { bootWindow } from "./app/runtime";
+import { RootBoundary } from "./app/ErrorBoundary";
 import "./ui/ui.css";
 import "./app/app.css";
 import { registerMainRegions } from "./App";
@@ -21,7 +22,9 @@ if (import.meta.env.DEV && params.has("harness")) {
   void runtime.ready.then(() => {
     root.render(
       <React.StrictMode>
-        <App />
+        <RootBoundary>
+          <App />
+        </RootBoundary>
       </React.StrictMode>,
     );
   });

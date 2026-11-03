@@ -44,6 +44,7 @@ u04-help-debug = Debug information
 u04-help-logs = Open logs folder
 u04-help-updates = Check for updates
 u04-help-feedback = Send feedback…
+u04-help-crashReports = Crash reports…
 u04-viz-crawlTree = Crawl tree
 u04-viz-crawlGraph = Crawl graph
 u04-viz-directoryTree = Directory tree
