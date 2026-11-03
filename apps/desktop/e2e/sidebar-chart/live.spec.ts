@@ -2,7 +2,7 @@
 // must agree with the Overview rows at every Overview update and after the crawl, and selecting calls no command.
 import { test, expect, type Page } from "@playwright/test";
 import { startAlphaBridge, startSite } from "../alpha/support";
-import { area, BACKGROUND, treeTab } from "./support";
+import { area, BACKGROUND, settleUiState, treeTab } from "./support";
 
 interface Snapshot { all: number | null; rows: [string, string, string][]; overview: Record<string, [string, string]>; crawled: number }
 
@@ -60,14 +60,18 @@ test("live crawl of fx-ui-basic: chart table equals the Overview rows at every u
     await expect(page.locator(".os-sidebar-overview")).toBeVisible({ timeout: 15_000 });
     await expect(treeTab(page, "Response Codes")).toBeVisible({ timeout: 15_000 });
     const calls = () => page.evaluate(() => (window as unknown as { __v01Calls: string[] }).__v01Calls.slice());
+    await settleUiState(page);
     const before = await calls();
     await treeTab(page, "Response Codes").click();
-    await area(page).getByRole("button", { name: "Table" }).click();
-    await expect(area(page).locator(".os-ovc-table")).toBeVisible();
+    await expect(area(page)).toHaveAttribute("data-ovc-entry-shown", "tab:Response Codes");
+    await settleUiState(page);
     const after = await calls();
     // Background refreshes of the running crawl may interleave; none of them is caused by the selection.
-    const added = after.slice(before.length).filter(c => !BACKGROUND.test(c) && !["sidebar.overview", "sidebar.countStatus", "analysis.status", "uistate.load", "uistate.save", "catalog.filterCounts", "view.rows", "view.open", "view.update", "sidebar.issues"].includes(c));
+    const added = after.slice(before.length).filter(c => !BACKGROUND.test(c) && !["sidebar.overview", "sidebar.countStatus", "analysis.status", "catalog.filterCounts", "view.rows", "view.open", "view.update", "sidebar.issues"].includes(c));
     expect(added).toEqual([]);
+    // The view switch is a stored setting (UI-125), measured separately from the selection.
+    await area(page).getByRole("button", { name: "Table" }).click();
+    await expect(area(page).locator(".os-ovc-table")).toBeVisible();
     const states = new Map<string, Snapshot>();
     const problems: string[] = [];
     const deadline = Date.now() + 150_000;

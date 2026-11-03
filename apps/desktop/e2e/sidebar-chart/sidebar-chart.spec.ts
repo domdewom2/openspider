@@ -9,7 +9,7 @@ import fxUnassigned from "../../../../tests/fixtures/ui/fx-ui-chart/overview-una
 import fxOverflow from "../../../../tests/fixtures/ui/fx-ui-chart/overview-overflow.json" with { type: "json" };
 import tickFixture from "../../src/ipc/__fixtures__/Tick.json" with { type: "json" };
 import type { Tick } from "../../src/ipc/gen/Tick";
-import { area, BACKGROUND, chartItem, overlaps, pngSize, readDownload, segment, treeTab, validateSvg } from "./support";
+import { area, BACKGROUND, chartItem, overlaps, pngSize, readDownload, segment, settleUiState, treeTab, validateSvg } from "./support";
 
 const tick = { ...tickFixture, notices: [] };
 let bridge: FakeBridge;
@@ -44,6 +44,9 @@ const ipc = () => bridge.core.calls.map(c => c.cmd);
 test("ring, bars, summary and overlap from fx-ui-chart; selecting entries calls no command", async ({ page }) => {
   await open(page);
   await expect(area(page)).toContainText("Select an entry in the overview to see its breakdown.");
+  // The shell persists its startup layout (UI-001/UI-125) one second after loading; that save is not caused by a
+  // selection, so it is written before the window opens. A save caused by a selection is flushed before it closes.
+  await settleUiState(page);
   const before = ipc();
   await treeTab(page, "Response Codes").click();
   const ring = area(page).getByRole("img", { name: "Response Codes: breakdown of 1,000 URLs" });
@@ -64,6 +67,7 @@ test("ring, bars, summary and overlap from fx-ui-chart; selecting entries calls 
   await expect(area(page).locator(".os-ovc-bars > li")).toHaveCount(5);
   await expect(area(page)).toContainText("A URL can be in several categories – the shares do not add up to 100 %.");
   await expect(area(page).getByRole("button", { name: /1 filter without matches/ })).toBeVisible();
+  await settleUiState(page);
   expect(ipc().slice(before.length).filter(c => !BACKGROUND.test(c)), "selecting entries must not call the core").toEqual([]);
 });
 
@@ -166,7 +170,11 @@ test("exports: SVG 1.1 with texts and a hatch pattern for 5XX, PNG 2× doubles 1
     await exportMenu.click();
     await page.getByRole("menuitem", { name: "Copy data" }).click();
     const copied = await page.evaluate(() => navigator.clipboard.readText());
-    expect(copied.split("\n")).toEqual(lines.map(l => l.split(",").join("\t")));
+    // UI-102: „Daten kopieren“ gives the same rows as the CSV (header + 11 rows), tab separated. The app writes LF;
+    // the Windows clipboard stores text with CRLF, so lines are split platform-neutrally.
+    const rows = copied.replace(/\r?\n$/, "").split(/\r?\n/);
+    expect(rows[0]).toBe("Entry\tCategory\tFilter\tURLs\t% of Total\tBase");
+    expect(rows).toEqual(lines.map(l => l.split(",").join("\t")));
   }
 });
 

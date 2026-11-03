@@ -57,3 +57,17 @@ export function overlaps(a: { x: number; y: number; width: number; height: numbe
 
 /** Periodic background polls of other regions (API status, sign-in status, export catalogue, events): not caused by a selection. */
 export const BACKGROUND = /^(api\.status|auth\.loginStatus|export\.catalog|events\.|diag\.|crawl\.status|op\.)/;
+
+/**
+ * Writes every pending ui-state change now (shell layout of UI-001/UI-125 with its 1-s debounce, batched ui-state
+ * writes): a startup save then cannot fall into a measuring window, and a save caused by the measured action would be
+ * written (and counted) before the window closes.
+ */
+export async function settleUiState(page: import("@playwright/test").Page): Promise<void> {
+  await page.evaluate(async () => {
+    const { useLayout } = await import(/* @vite-ignore */ String("/src/state/layout.ts"));
+    const { flushUiState } = await import(/* @vite-ignore */ String("/src/state/uistate.ts"));
+    await useLayout.getState().flush().catch(() => undefined);
+    await flushUiState().catch(() => undefined);
+  });
+}
