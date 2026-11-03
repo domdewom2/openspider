@@ -1,8 +1,8 @@
 //! Bereinigung der Texte eines Absturzberichts (OUT-246, Abschnitt Datenschutz).
 //!
 //! Reihenfolge: Geheimnisse wie OUT-243 → URLs (`http`, `https`, `ftp`, `file`) → E-Mail-Adressen → Hostnamen
-//! dieser URLs auch ohne Schema → Heimatordner und `OPENSPIDER_HOME` → Dateinamen von Crawls und Exporten →
-//! IPv4/IPv6-Adressen.
+//! dieser URLs auch ohne Schema → Heimatordner und `OPENSPIDER_HOME` → übrige absolute Pfade (`<path>` bzw.
+//! `<path>/<file>`) → Dateinamen von Crawls und Exporten → IPv4/IPv6-Adressen.
 //! Die Funktion ist rein (keine Ein-/Ausgabe) und darf im Panic-Hook laufen: sie panikt nicht.
 //! Wird von der CLI über `#[path]` mitkompiliert; deshalb keine Typen aus `os-app`.
 
@@ -14,6 +14,7 @@ pub const EMAIL: &str = "<email>";
 pub const IP: &str = "<ip>";
 pub const HOME: &str = "~";
 pub const FILE: &str = "<file>";
+pub const PATH: &str = "<path>";
 
 /// Dateiendungen von Crawls, Konfigurationen und Exporten; deren Dateinamen kommen nicht in einen Bericht.
 const DATA_EXTENSIONS: &[&str] = &[
@@ -94,6 +95,7 @@ impl Sanitizer {
         let text = mask_emails(&text);
         let text = self.mask_hosts(&text);
         let text = self.mask_homes(&text);
+        let text = mask_abs_paths(&text);
         let text = mask_data_files(&text);
         mask_ips(&text)
     }
@@ -455,6 +457,90 @@ pub fn mask_ips(text: &str) -> String {
     out
 }
 
+/// Zeichen, nach denen ein absoluter Pfad beginnen darf.
+fn path_boundary(prev: Option<char>) -> bool {
+    prev.is_none_or(|c| {
+        c.is_whitespace() || matches!(c, '"' | '\'' | '`' | '=' | '(' | '[' | '{' | ',')
+    })
+}
+
+/// Endet ein Pfad an diesem Zeichen?
+fn path_end(c: char) -> bool {
+    c.is_whitespace()
+        || matches!(
+            c,
+            '"' | '\'' | '`' | ')' | ']' | '}' | ',' | ';' | '<' | '>' | '|' | '*' | '?'
+        )
+}
+
+/// Länge eines absoluten Pfads am Anfang von `rest` (Unix `/a`, Windows `X:\a`/`X:/a`, `\\?\…`, UNC
+/// `\\server\share`; auch JSON-verdoppelte Backslashes), sonst `None`.
+fn abs_path_len(rest: &str) -> Option<usize> {
+    let b = rest.as_bytes();
+    let body_start = if b.first() == Some(&b'/') {
+        // Unix: danach ein Namenszeichen (nicht `//`, nicht `/ `)
+        (b.get(1)
+            .is_some_and(|c| c.is_ascii_alphanumeric() || matches!(*c, b'.' | b'_' | b'-')))
+        .then_some(1)?
+    } else if b.len() >= 3
+        && b[0].is_ascii_alphabetic()
+        && b[1] == b':'
+        && matches!(b[2], b'\\' | b'/')
+    {
+        3
+    } else if b.starts_with(b"\\\\") {
+        // `\\?\` und UNC, einfach oder JSON-verdoppelt
+        let n = b.iter().take_while(|c| **c == b'\\' || **c == b'?').count();
+        b.get(n)
+            .is_some_and(|c| c.is_ascii_alphanumeric())
+            .then_some(n)?
+    } else {
+        return None;
+    };
+    let mut end = body_start;
+    for c in rest[body_start..].chars() {
+        if path_end(c) {
+            break;
+        }
+        end += c.len_utf8();
+    }
+    // Satzzeichen und Zeilen-/Spaltennummern am Ende gehören nicht zum Namen.
+    let path = rest[..end].trim_end_matches(['.', ':']);
+    Some(path.len())
+}
+
+/// Absolute Pfade außerhalb von `~` → `<path>` (Ordner) bzw. `<path>/<file>` (letzter Teil mit Endung). Pfade unter
+/// `~` (bereits ersetzt), relative Pfade wie `crate/src/x.rs:12` und Funktionsnamen bleiben.
+pub fn mask_abs_paths(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut i = 0;
+    while i < text.len() {
+        let rest = &text[i..];
+        let prev = text[..i].chars().next_back();
+        if path_boundary(prev) {
+            if let Some(len) = abs_path_len(rest).filter(|l| *l > 0) {
+                let path = &rest[..len];
+                let last = path
+                    .rsplit(['/', '\\'])
+                    .find(|p| !p.is_empty())
+                    .unwrap_or("");
+                let last = last.split(':').next().unwrap_or(last);
+                out.push_str(PATH);
+                if last.contains('.') && !last.starts_with('.') {
+                    out.push('/');
+                    out.push_str(FILE);
+                }
+                i += len;
+                continue;
+            }
+        }
+        let c = rest.chars().next().unwrap_or(' ');
+        out.push(c);
+        i += c.len_utf8();
+    }
+    out
+}
+
 /// Dateinamen mit Endungen von Crawls, Konfigurationen und Exporten → `<file>` (Ordner bleiben erhalten).
 pub fn mask_data_files(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
@@ -581,7 +667,8 @@ mod tests {
     fn home_and_openspider_home_become_tilde_in_all_spellings() {
         let s = s();
         assert_eq!(s.clean("at /home/alice/src/x.rs:3"), "at ~/src/x.rs:3");
-        assert_eq!(s.clean("/home/alicex/keep"), "/home/alicex/keep");
+        // kein Präfix-Treffer auf den Heimatordner; als Pfad außerhalb von `~` gekürzt (Klärung C01/Fable)
+        assert_eq!(s.clean("/home/alicex/keep"), "<path>");
         assert_eq!(s.clean("logs in /srv/os-home/logs"), "logs in ~/logs");
         let win = Sanitizer::new([PathBuf::from(r"C:\Users\Bob")]);
         assert_eq!(win.clean(r"C:\Users\Bob\AppData x"), r"~\AppData x");
@@ -607,7 +694,8 @@ mod tests {
         let s = s();
         assert_eq!(
             s.clean("saved /home/alice/Crawls/kunde-x.ospider and C:\\exp\\Bericht Q3.xlsx"),
-            "saved ~/Crawls/<file> and C:\\exp\\Bericht <file>"
+            // Pfad außerhalb von `~` → `<path>` (Klärung C01/Fable), Dateiname mit Endung → `<file>`
+            "saved ~/Crawls/<file> and <path> <file>"
         );
         assert_eq!(
             s.clean("file=\"export.csv\" openspider.log"),
@@ -637,6 +725,46 @@ mod tests {
         assert_eq!(clean[3], "keep crash-secret.testing and xcrash-secret.test");
         assert_eq!(clean[4], "www.<url>/ok");
         assert!(url_hosts("http://127.0.0.1:9/ and https://[::1]/").is_empty());
+    }
+
+    // spec: OUT-246
+    #[test]
+    fn absolute_paths_outside_home_are_shortened_but_code_locations_stay() {
+        assert_eq!(
+            mask_abs_paths("open /srv/data/kunde.csv failed"),
+            "open <path>/<file> failed"
+        );
+        assert_eq!(
+            mask_abs_paths("dir=\"/var/lib/openspider\""),
+            "dir=\"<path>\""
+        );
+        assert_eq!(
+            mask_abs_paths("at /rustc/abc/library/std/src/rt.rs:12:5"),
+            "at <path>/<file>"
+        );
+        assert_eq!(
+            mask_abs_paths(r"D:\Kunden\Bericht.xlsx und C:/tmp"),
+            "<path>/<file> und <path>"
+        );
+        assert_eq!(mask_abs_paths(r"\\?\C:\Users\Bob\a.txt"), "<path>/<file>");
+        assert_eq!(mask_abs_paths(r"share \\server\share\dir"), "share <path>");
+        assert_eq!(
+            mask_abs_paths(r#"{"p":"C:\\Data\\x.db"}"#),
+            r#"{"p":"<path>/<file>"}"#
+        );
+        // bleibt
+        for keep in [
+            "os-app/src/crash/shared.rs:12",
+            "~/Library/Logs/OpenSpider",
+            "<std::panicking::begin_panic<&str>::{{closure}}>",
+            "core::ops::function::FnOnce::call_once{{vtable.shim}}",
+            "a/b and 1/2 and HTTP/1.1 and <url>/x",
+            "ratio 3 / 4",
+        ] {
+            assert_eq!(mask_abs_paths(keep), keep);
+        }
+        let s = Sanitizer::new([PathBuf::from("/home/alice")]);
+        assert_eq!(s.clean("/home/alice/x and /etc/passwd"), "~/x and <path>");
     }
 
     // spec: OUT-246

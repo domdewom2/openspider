@@ -92,6 +92,9 @@ async fn privacy_no_host_secret_email_or_home_path_in_the_report() {
             "limits.max_urls=6",
             "--set",
             "speed.max_urls_per_sec=2",
+            // Projektname (Klärung C01/Fable): darf nirgends im Bericht stehen.
+            "--project-name",
+            "Kunde-SEKRET-246",
         ]);
     let output = tokio::task::spawn_blocking(move || cmd.output().unwrap())
         .await
@@ -103,6 +106,7 @@ async fn privacy_no_host_secret_email_or_home_path_in_the_report() {
     assert_eq!(reports.len(), 1, "{stderr}");
     let raw = std::fs::read_to_string(&reports[0].0).unwrap();
     for needle in [
+        "Kunde-SEKRET-246",
         "crash-secret.test",
         "SEKRET-246",
         "pw-SEKRET-246",

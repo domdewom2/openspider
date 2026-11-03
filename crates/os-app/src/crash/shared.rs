@@ -439,7 +439,7 @@ fn filter_log_line(line: &str) -> Option<String> {
         let level = value.get("level")?.as_str()?.to_ascii_uppercase();
         let module = value.get("module")?.as_str()?;
         if own_target(module) {
-            return Some(line.to_string());
+            return Some(own_json_line(line, value.clone()));
         }
         if !matches!(level.as_str(), "WARN" | "ERROR") {
             return None;
@@ -474,7 +474,14 @@ fn filter_log_line(line: &str) -> Option<String> {
         return None;
     }
     if own_target(target) {
-        return Some(line.to_string());
+        // Von der Panic-Logzeile nur die erste Zeile (der Hook schreibt Zeilenumbrüche als `\n`); die
+        // Rückverfolgung steht im Feld `backtrace`.
+        let line = if target == "panic" {
+            line.split("\\n").next().unwrap_or(line)
+        } else {
+            line
+        };
+        return Some(mask_user_fields(line));
     }
     if !matches!(level, "WARN" | "ERROR") {
         return None;
@@ -495,6 +502,88 @@ fn filter_log_line(line: &str) -> Option<String> {
         "{time} {level} {}: {OMITTED}",
         bridged.as_deref().unwrap_or(target)
     ))
+}
+
+/// Felder eigener Logzeilen, deren Werte Namen oder Orte des Nutzers tragen (Projekt- und Crawl-Namen, Pfade,
+/// Dateien, Ordner, Titel): Wert → `<omitted>` (OUT-246, Klärung C01/Fable).
+pub const USER_FIELDS: &[&str] = &["name", "project", "path", "file", "dir", "title"];
+
+/// Ersetzt in einer Textzeile die Werte der Felder [`USER_FIELDS`] (`key=wert` bzw. `key="wert"` mit Escapes).
+pub fn mask_user_fields(line: &str) -> String {
+    let bytes = line.as_bytes();
+    let mut out = String::with_capacity(line.len());
+    let mut copied = 0;
+    let mut i = 0;
+    while i < bytes.len() {
+        let boundary = i == 0 || matches!(bytes[i - 1], b' ' | b'[' | b',' | b'{' | b'(' | b'\t');
+        let key = boundary
+            .then(|| {
+                USER_FIELDS
+                    .iter()
+                    .find(|k| line[i..].starts_with(*k) && bytes.get(i + k.len()) == Some(&b'='))
+            })
+            .flatten();
+        let Some(key) = key else {
+            i += 1;
+            continue;
+        };
+        let start = i + key.len() + 1;
+        let mut end = start;
+        if bytes.get(start) == Some(&b'"') {
+            end += 1;
+            while end < bytes.len() && bytes[end] != b'"' {
+                end += if bytes[end] == b'\\' { 2 } else { 1 };
+            }
+            end = (end + 1).min(bytes.len());
+        } else {
+            while end < bytes.len() && !matches!(bytes[end], b' ' | b']' | b',' | b'\t') {
+                end += 1;
+            }
+        }
+        // Grenzen liegen auf ASCII-Zeichen (Anführungszeichen, Leerraum, Klammer) oder am Zeilenende.
+        while end < bytes.len() && !line.is_char_boundary(end) {
+            end += 1;
+        }
+        out.push_str(&line[copied..start]);
+        out.push_str(OMITTED);
+        copied = end;
+        i = end.max(i + 1);
+    }
+    out.push_str(&line[copied..]);
+    out
+}
+
+/// Eigene JSON-Zeile: Felder [`USER_FIELDS`] → `<omitted>`, Panic-Zeile nur mit der ersten Zeile der Meldung.
+fn own_json_line(line: &str, mut value: serde_json::Value) -> String {
+    let mut changed = false;
+    if value.get("module").and_then(|m| m.as_str()) == Some("panic") {
+        if let Some(message) = value.get("message").and_then(|m| m.as_str()) {
+            let first = message.lines().next().unwrap_or("").to_string();
+            if first != message {
+                value["message"] = serde_json::Value::String(first);
+                changed = true;
+            }
+        }
+    }
+    let mut mask = |map: &mut serde_json::Map<String, serde_json::Value>| {
+        for key in USER_FIELDS {
+            if let Some(v) = map.get_mut(*key) {
+                *v = serde_json::Value::String(OMITTED.to_string());
+                changed = true;
+            }
+        }
+    };
+    if let Some(fields) = value.get_mut("fields").and_then(|f| f.as_object_mut()) {
+        mask(fields);
+    }
+    if let Some(top) = value.as_object_mut() {
+        mask(top);
+    }
+    if changed {
+        value.to_string()
+    } else {
+        line.to_string()
+    }
 }
 
 /// Text der Panic-Nutzlast.
@@ -945,6 +1034,47 @@ mod tests {
         let r = build(&ctx(dir.path()), KIND_PANIC, "", "m", "", vec![], flood);
         assert_eq!(r.log_tail.len(), 1);
         assert!(r.log_tail[0].contains("Abruf abgeschlossen"));
+    }
+
+    // spec: OUT-246
+    #[test]
+    fn own_lines_lose_user_names_and_paths_and_the_panic_line_keeps_only_its_first_line() {
+        let lines: Vec<String> = [
+            "2026-11-03T10:00:00.000+00:00 INFO os_app::commands::crawls: Crawl durch Aufbewahrung gelöscht [age_days=40 crawl_id=\"c1\" name=\"Kunde-SEKRET-246 \\\"Relaunch\\\"\"]",
+            "2026-11-03T10:00:00.001+00:00 INFO os_analyze::compare::change::auto: kein vorheriger Crawl [project=\"Kunde-SEKRET-246\"]",
+            "2026-11-03T10:00:00.002+00:00 WARN os_fetch::net: Zertifikatsdatei nicht lesbar [path=\"/srv/kunde/SEKRET-246.pem\"]",
+            "2026-11-03T10:00:00.003+00:00 ERROR panic: panicked at os-app/src/x.rs:1:1:\\nboom\\n   0: std::backtrace::Backtrace::force_capture\\n             at /rustc/abc/library/std/src/backtrace.rs:1:1",
+            "{\"timestamp\":\"t\",\"level\":\"INFO\",\"module\":\"os_app::x\",\"fields\":{\"message\":\"m\",\"file\":\"a.ospider\",\"dir\":\"/x\",\"title\":\"Kunde\",\"kept\":1}}",
+            "{\"timestamp\":\"t\",\"level\":\"ERROR\",\"module\":\"panic\",\"message\":\"panicked at a.rs:1:1:\\nboom\\n   0: frame\"}",
+        ]
+        .map(String::from)
+        .to_vec();
+        let kept = filter_log_lines(&lines);
+        assert_eq!(kept[0], "2026-11-03T10:00:00.000+00:00 INFO os_app::commands::crawls: Crawl durch Aufbewahrung gelöscht [age_days=40 crawl_id=\"c1\" name=<omitted>]");
+        assert_eq!(kept[1], "2026-11-03T10:00:00.001+00:00 INFO os_analyze::compare::change::auto: kein vorheriger Crawl [project=<omitted>]");
+        assert_eq!(kept[2], "2026-11-03T10:00:00.002+00:00 WARN os_fetch::net: Zertifikatsdatei nicht lesbar [path=<omitted>]");
+        assert_eq!(
+            kept[3],
+            "2026-11-03T10:00:00.003+00:00 ERROR panic: panicked at os-app/src/x.rs:1:1:"
+        );
+        let json: serde_json::Value = serde_json::from_str(&kept[4]).unwrap();
+        for key in ["file", "dir", "title"] {
+            assert_eq!(json["fields"][key], OMITTED, "{key}");
+        }
+        assert_eq!(json["fields"]["kept"], 1);
+        assert_eq!(json["fields"]["message"], "m");
+        let panic: serde_json::Value = serde_json::from_str(&kept[5]).unwrap();
+        assert_eq!(panic["message"], "panicked at a.rs:1:1:");
+        let all = kept.join("\n");
+        assert!(
+            !all.contains("SEKRET-246") && !all.contains("Kunde") && !all.contains("/rustc"),
+            "{all}"
+        );
+        // Keine falschen Treffer: Schlüssel nur an Feldgrenzen, Präfixe wie `filename=` bleiben.
+        assert_eq!(
+            mask_user_fields("x filename=a rename=b name=c"),
+            "x filename=a rename=b name=<omitted>"
+        );
     }
 
     // spec: OUT-246
