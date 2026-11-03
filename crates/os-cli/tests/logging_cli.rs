@@ -102,6 +102,8 @@ fn panic_writes_a_redacted_backtrace_before_exit() {
     assert!(String::from_utf8_lossy(&output.stderr).contains("PREVIOUS-CLI-HOOK"));
     let raw: String = fs::read_dir(home.path().join("logs"))
         .unwrap()
+        // OUT-246 (M3-C01): der Absturzbericht liegt im Unterordner `crashes/`.
+        .filter(|e| e.as_ref().unwrap().path().is_file())
         .map(|e| fs::read_to_string(e.unwrap().path()).unwrap())
         .collect();
     assert!(raw.contains("ERROR panic:"));
