@@ -1,0 +1,19 @@
+{
+ "urls": [
+  "/",
+  "/docs/a.html",
+  "/docs/b.html",
+  "/blog/post",
+  "/blog/post?page=2",
+  "/about/",
+  "/about/team.html"
+ ],
+ "directoryNodes": 10,
+ "directoryEdges": 9,
+ "hollowDirectories": [
+  "docs",
+  "blog"
+ ],
+ "hollowNodes": 3,
+ "querySiblingsUnder": "/blog/post"
+}

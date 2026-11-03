@@ -1,0 +1,129 @@
+[[route]]
+path = "/"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Words fixture</title></head><body><nav><a href="/target.html">Pricing</a></nav><main><h1>Start</h1><a href="/target.html">See our prices</a> <a href="/p1.html">P1</a> <a href="/p2.html">P2</a> <a href="/p3.html">P3</a> <a href="/p4.html">P4</a> <a href="/p5.html">P5</a> <a href="/p6.html">P6</a> <a href="/p7.html">P7</a> <a href="/p8.html">P8</a> <a href="/p9.html">P9</a> <a href="/p10.html">P10</a> <a href="/p11.html">P11</a> <a href="/p12.html">P12</a> <a href="/p13.html">P13</a> <a href="/p14.html">P14</a> <a href="/p15.html">P15</a> <a href="/p16.html">P16</a> <a href="/p17.html">P17</a> <a href="/p18.html">P18</a> <a href="/p19.html">P19</a> <a href="/p20.html">P20</a> <a href="/p21.html">P21</a> <a href="/p22.html">P22</a></main></body></html>'''
+
+[[route]]
+path = "/target.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Pricing</title></head><body><header><a href="/">Home</a> header words alpha</header><nav><a href="/p1.html">Plans</a> navigation menu entries</nav><main><h1>Pricing plans</h1><p>Our pricing plans are simple and the pricing is fair</p><p>Compare the plans and choose the pricing that fits your team and your budget</p><p>Every plan includes support and every plan includes updates</p><a href="/deep-1.html">Pricing details</a> <a href="/deep-2.html">Plan comparison</a> <a href="/target.html">Pricing</a> <a href="/p2.html">More</a></main><footer>footer legal text imprint <a href="/p3.html">Legal</a></footer></body></html>'''
+
+[[route]]
+path = "/p1.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 1</title></head><body><main><h1>Page 1</h1><a href="/target.html">pricing</a> <a href="/deep-1.html">Details</a></main><footer><a href="/target.html">Prices</a></footer></body></html>'''
+
+[[route]]
+path = "/p2.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 2</title></head><body><main><h1>Page 2</h1><a href="/target.html">plans</a></main><footer><a href="/target.html">Prices</a></footer></body></html>'''
+
+[[route]]
+path = "/p3.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 3</title></head><body><main><h1>Page 3</h1><a href="/target.html">pricing</a></main><footer><a href="/target.html">Prices</a></footer></body></html>'''
+
+[[route]]
+path = "/p4.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 4</title></head><body><main><h1>Page 4</h1><a href="/target.html">compare plans</a></main><footer><a href="/target.html">Prices</a></footer></body></html>'''
+
+[[route]]
+path = "/p5.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 5</title></head><body><main><h1>Page 5</h1><a href="/target.html">costs</a></main><footer><a href="/target.html">Prices</a></footer></body></html>'''
+
+[[route]]
+path = "/p6.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 6</title></head><body><main><h1>Page 6</h1><a href="/target.html">pricing</a></main><footer><a href="/target.html">Prices</a></footer></body></html>'''
+
+[[route]]
+path = "/p7.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 7</title></head><body><main><h1>Page 7</h1><a href="/target.html">plans</a></main></body></html>'''
+
+[[route]]
+path = "/p8.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 8</title></head><body><main><h1>Page 8</h1><a href="/target.html">pricing</a></main></body></html>'''
+
+[[route]]
+path = "/p9.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 9</title></head><body><main><h1>Page 9</h1><a href="/target.html">see our prices</a></main></body></html>'''
+
+[[route]]
+path = "/p10.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 10</title></head><body><main><h1>Page 10</h1><a href="/target.html">pricing</a></main></body></html>'''
+
+[[route]]
+path = "/p11.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 11</title></head><body><main><h1>Page 11</h1><a href="/target.html">pricing</a></main></body></html>'''
+
+[[route]]
+path = "/p12.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 12</title></head><body><main><h1>Page 12</h1><a href="/target.html">plans</a></main></body></html>'''
+
+[[route]]
+path = "/p13.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 13</title></head><body><main><h1>Page 13</h1><a href="/target.html">pricing</a></main></body></html>'''
+
+[[route]]
+path = "/p14.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 14</title></head><body><main><h1>Page 14</h1><a href="/target.html">compare plans</a></main></body></html>'''
+
+[[route]]
+path = "/p15.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 15</title></head><body><main><h1>Page 15</h1><a href="/target.html">costs</a></main></body></html>'''
+
+[[route]]
+path = "/p16.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 16</title></head><body><main><h1>Page 16</h1><a href="/target.html" rel="nofollow">pricing</a></main></body></html>'''
+
+[[route]]
+path = "/p17.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 17</title></head><body><main><h1>Page 17</h1><a href="/target.html" rel="nofollow">plans</a></main></body></html>'''
+
+[[route]]
+path = "/p18.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 18</title></head><body><main><h1>Page 18</h1><a href="/target.html" rel="nofollow">pricing</a></main></body></html>'''
+
+[[route]]
+path = "/p19.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 19</title></head><body><main><h1>Page 19</h1><a href="/target.html" rel="nofollow">see our prices</a></main></body></html>'''
+
+[[route]]
+path = "/p20.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 20</title></head><body><main><h1>Page 20</h1><a href="/target.html" rel="nofollow">pricing</a></main></body></html>'''
+
+[[route]]
+path = "/p21.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 21</title></head><body><main><h1>Page 21</h1></main><footer><a href="/target.html">Prices</a></footer></body></html>'''
+
+[[route]]
+path = "/p22.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Page 22</title></head><body><main><h1>Page 22</h1></main></body></html>'''
+
+[[route]]
+path = "/deep-1.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Deep 1</title></head><body><main><h1>Deep 1</h1><a href="/">Start</a></main></body></html>'''
+
+[[route]]
+path = "/deep-2.html"
+content_type = "text/html; charset=utf-8"
+body = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Deep 2</title></head><body><main><h1>Deep 2</h1><a href="/">Start</a></main></body></html>'''
