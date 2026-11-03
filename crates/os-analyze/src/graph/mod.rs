@@ -13,13 +13,15 @@ pub const MAX_BUDGET_2D: u32 = 50_000;
 /// Standard- und Höchstgrenze der 3D-Varianten (UI-098: Knotengrenze Standard 100 000).
 pub const MAX_BUDGET_3D: u32 = 100_000;
 
-/// Umfang einer Aufnahme: Zeilengrenze der URLs (die übrigen Grenzen wachsen anteilig mit) und ob die
-/// Ankertexte der Wortwolke (UI-099) mitgelesen werden. Ohne Ankertexte liest die Aufnahme `links` nur, wenn die
-/// Entdeckungsherkunft fehlt (Rückfall über Links).
+/// Umfang einer Aufnahme: Zeilengrenze der URLs (die übrigen Grenzen wachsen anteilig mit), ob die Ankertexte der
+/// Wortwolke (UI-099) mitgelesen werden und ob alle numerischen Erweiterungswerte (`url_ext`) als Metriken dienen.
+/// Ohne Ankertexte liest die Aufnahme `links` nur, wenn die Entdeckungsherkunft fehlt (Rückfall über Links).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CaptureScope {
     pub max_urls: u64,
     pub anchors: bool,
+    /// `false`: aus `url_ext` nur der Link Score (UI-095); API-Werte und Custom Extraction bleiben.
+    pub ext_metrics: bool,
 }
 
 impl Default for CaptureScope {
@@ -27,6 +29,7 @@ impl Default for CaptureScope {
         Self {
             max_urls: u64::from(MAX_BUDGET_2D),
             anchors: true,
+            ext_metrics: true,
         }
     }
 }
@@ -37,6 +40,17 @@ impl CaptureScope {
         Self {
             max_urls: u64::from(max_urls),
             anchors: false,
+            ext_metrics: true,
+        }
+    }
+
+    /// 3D-Varianten (UI-098): bis 100 000 URLs; aus `url_ext` nur der Link Score, damit die Zahl der
+    /// Erweiterungswerte je Seite die Aufnahme großer Crawls nicht verhindert.
+    pub fn three_d() -> Self {
+        Self {
+            max_urls: u64::from(MAX_BUDGET_3D),
+            anchors: false,
+            ext_metrics: false,
         }
     }
 }

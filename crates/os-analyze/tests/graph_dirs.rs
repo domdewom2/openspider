@@ -81,8 +81,7 @@ async fn graph_and_three_d_captures_produce_the_same_directory_and_crawl_structu
     let full = Snapshot::capture(&crawl.file).unwrap();
     let graph_2d =
         Snapshot::capture_scoped(&crawl.file, CaptureScope::graph(MAX_BUDGET_2D)).unwrap();
-    let graph_3d =
-        Snapshot::capture_scoped(&crawl.file, CaptureScope::graph(MAX_BUDGET_3D)).unwrap();
+    let graph_3d = Snapshot::capture_scoped(&crawl.file, CaptureScope::three_d()).unwrap();
     for directory in [false, true] {
         let reference = full.graph(&all(directory)).unwrap();
         assert_eq!(graph_2d.graph(&all(directory)).unwrap(), reference);
@@ -119,7 +118,7 @@ fn three_d_scope_takes_one_hundred_thousand_urls_and_the_budget_is_capped_per_di
     let error = Snapshot::capture(&file).unwrap_err().to_string();
     assert!(error.contains("urls") && error.contains("50000"), "{error}");
     let start = std::time::Instant::now();
-    let snapshot = Snapshot::capture_scoped(&file, CaptureScope::graph(MAX_BUDGET_3D)).unwrap();
+    let snapshot = Snapshot::capture_scoped(&file, CaptureScope::three_d()).unwrap();
     let graph = snapshot
         .graph(&GraphOptions {
             budget: MAX_BUDGET_3D,
@@ -161,4 +160,31 @@ fn graphs_without_anchor_words_do_not_read_or_limit_the_links_table() {
         .execute("DELETE FROM discovery_edges", [])
         .unwrap();
     assert!(Snapshot::capture_scoped(&file, CaptureScope::graph(MAX_BUDGET_2D)).is_err());
+}
+
+// spec: UI-098
+#[test]
+fn three_d_capture_keeps_the_link_score_but_not_the_other_extension_rows() {
+    let (_dir, file) = large(1_000, 0);
+    file.conn()
+        .execute_batch(
+            "WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i+1 FROM n WHERE i < 500001)
+             INSERT INTO url_ext(url_id,key,v_int) SELECT 1, 'metric.' || i, i FROM n;
+             INSERT INTO url_ext(url_id,key,v_real) VALUES (2, 'linkscore.score', 42.5);",
+        )
+        .unwrap();
+    // 2D: alle Erweiterungswerte sind Metriken, die Grenze greift.
+    assert!(Snapshot::capture_scoped(&file, CaptureScope::graph(MAX_BUDGET_3D)).is_err());
+    let snapshot = Snapshot::capture_scoped(&file, CaptureScope::three_d()).unwrap();
+    let graph = snapshot
+        .graph(&GraphOptions {
+            max_budget: MAX_BUDGET_3D,
+            ..Default::default()
+        })
+        .unwrap();
+    let node = graph.nodes.iter().find(|n| n.id == 2).unwrap();
+    assert_eq!(node.link_score, Some(42.5));
+    let metrics = snapshot.available_metrics();
+    assert!(metrics.contains("link_score"));
+    assert!(!metrics.iter().any(|m| m.starts_with("metric.")));
 }

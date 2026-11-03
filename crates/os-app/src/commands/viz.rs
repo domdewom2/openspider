@@ -107,12 +107,12 @@ fn is_words(kind: VizKind) -> bool {
 fn is_3d(kind: VizKind) -> bool {
     matches!(kind, VizKind::CrawlGraph3d | VizKind::DirectoryGraph3d)
 }
-/// Umfang der Aufnahme: 3D bis 100 000 Knoten ohne Ankertexte (UI-098; `links` wird dann nur ohne Entdeckungsherkunft
-/// gelesen), Body-Wortwolke ohne Ankertexte; die 2D-Arten und die Ankertext-Wortwolke wie bisher (M2-K16: `viz.words`
+/// Umfang der Aufnahme: 3D bis 100 000 Knoten ohne Ankertexte und aus `url_ext` nur mit dem Link Score (UI-098;
+/// `links` wird dann nur ohne Entdeckungsherkunft gelesen), Body-Wortwolke ohne Ankertexte; die 2D-Arten und die Ankertext-Wortwolke wie bisher (M2-K16: `viz.words`
 /// mit Quelle Ankertexte arbeitet auf jedem dieser Schnappschüsse mit eingefrorenen Zählern).
 fn capture_scope(kind: VizKind) -> CaptureScope {
     match kind {
-        k if is_3d(k) => CaptureScope::graph(MAX_BUDGET_3D),
+        k if is_3d(k) => CaptureScope::three_d(),
         VizKind::BodyWords => CaptureScope::graph(MAX_BUDGET_2D),
         _ => CaptureScope::default(),
     }

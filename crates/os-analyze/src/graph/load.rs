@@ -59,8 +59,13 @@ pub(super) fn capture(file: &CrawlFile, scope: CaptureScope) -> Result<Snapshot,
     }
     drop(rows);
     drop(stmt);
+    let ext_sql = if scope.ext_metrics {
+        "SELECT url_id, key, COALESCE(v_real, v_int) FROM url_ext WHERE v_real IS NOT NULL OR v_int IS NOT NULL ORDER BY url_id, key"
+    } else {
+        "SELECT url_id, key, COALESCE(v_real, v_int) FROM url_ext WHERE key IN ('linkscore.score', 'linkscore.link_score', 'link_score') AND (v_real IS NOT NULL OR v_int IS NOT NULL) ORDER BY url_id, key"
+    };
     for (sql, custom) in [
-        ("SELECT url_id, key, COALESCE(v_real, v_int) FROM url_ext WHERE v_real IS NOT NULL OR v_int IS NOT NULL ORDER BY url_id, key", false),
+        (ext_sql, false),
         ("SELECT url_id, source || '.' || metric, v_real FROM api_values WHERE level = 'url' AND v_real IS NOT NULL ORDER BY url_id, source, metric", false),
         ("SELECT url_id, 'custom_extraction.' || def_index || '.' || number, value FROM custom_extraction_values WHERE error IS NULL ORDER BY url_id, def_index, number", true),
     ] {
@@ -344,12 +349,14 @@ fn scaled(base: u64, scope: CaptureScope) -> u64 {
 fn check_capture_limits(file: &CrawlFile, scope: CaptureScope) -> Result<(), StoreError> {
     let mut tables = vec![
         ("urls", scope.max_urls),
-        ("url_ext", scaled(250_000, scope)),
         ("api_values", scaled(250_000, scope)),
         ("custom_extraction_values", scaled(250_000, scope)),
         ("url_segments", scaled(250_000, scope)),
         ("discovery_edges", scaled(250_000, scope)),
     ];
+    if scope.ext_metrics {
+        tables.push(("url_ext", scaled(250_000, scope)));
+    }
     if scope.anchors {
         tables.push(("links", links_limit(scope)));
     }

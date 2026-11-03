@@ -1,9 +1,7 @@
 //! M3-V02: Links eines Knotens einblenden (UI-097) gegen den echten Crawl von `fx-ui-words`.
 use std::collections::HashSet;
 
-use os_analyze::graph::{
-    CaptureScope, GraphOptions, LinkDirection, LinkOverlayOptions, Snapshot, MAX_BUDGET_3D,
-};
+use os_analyze::graph::{CaptureScope, GraphOptions, LinkDirection, LinkOverlayOptions, Snapshot};
 use os_engine::testing::{crawl_fixture, FixtureCrawl};
 use os_model::CrawlConfig;
 use serde_json::Value;
@@ -80,7 +78,7 @@ async fn inlink_and_outlink_edges_equal_the_unique_counters_for_every_option() {
     let unique = counter(&fx, "unique_inlinks", target);
     assert_eq!(unique, exp["uniqueInlinks"].as_u64().unwrap());
 
-    let snapshot = Snapshot::capture_scoped(&fx.file, CaptureScope::graph(MAX_BUDGET_3D)).unwrap();
+    let snapshot = Snapshot::capture_scoped(&fx.file, CaptureScope::three_d()).unwrap();
     let shown = shown(&snapshot, false);
     for (nofollow, nav_footer, key) in [
         (true, false, "uniqueInlinks"),
