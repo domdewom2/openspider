@@ -320,7 +320,7 @@ describe("UI-102 chart area in the Overview tab", () => {
   });
 
   // spec: UI-102
-  it("an Overview answer that changes nothing renders no chart part again (profiler)", async () => {
+  it("an Overview answer that changes nothing renders no chart part again (mutation observer)", async () => {
     mount();
     await screen.findByRole("table", { name: "Summary" });
     selectTab("Response Codes");
