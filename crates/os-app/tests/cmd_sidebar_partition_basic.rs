@@ -118,3 +118,42 @@ async fn partitions_stay_disjoint_on_unusual_urls() {
         assert!(sum <= base, "{tab}");
     }
 }
+
+// spec: UI-102
+#[tokio::test]
+async fn ignore_but_report_keeps_response_codes_disjoint() {
+    // `ignore_but_report` fetches URLs that robots.txt blocks and marks them (`robots_blocked = 1` with a real
+    // status): such a URL is in `Blocked by Robots.txt` and in `Success (2XX)`. The partition then leaves the
+    // blocked filter out; blocked URLs without a status fall into the residual category.
+    let mut cfg = os_model::CrawlConfig::default();
+    cfg.robots.mode = os_model::RobotsMode::IgnoreButReport;
+    let fx = Fx::config(cfg);
+    fx.write(
+        "INSERT INTO urls(id,url,address,origin,is_internal,in_tables,state,discovered_via,folder_depth,url_length,content_class,status_code,status,indexability) VALUES
+        (30,'https://site.test/robots-ok','https://site.test/robots-ok','https://site.test',1,1,'done','link',0,20,'HTML',200,'OK','Indexable'),
+        (31,'https://site.test/robots-pending','https://site.test/robots-pending','https://site.test',1,1,'discovered','link',0,20,'Unknown',NULL,NULL,NULL);
+        UPDATE urls SET robots_blocked=1 WHERE id IN (30,31);",
+    );
+    let overview = fx.call("sidebar.overview", json!({})).await;
+    let codes = overview["tabs"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|t| t["tab"] == "Response Codes")
+        .unwrap();
+    let filters: Vec<&str> = codes["partition"]["filters"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|f| f.as_str().unwrap())
+        .collect();
+    assert!(!filters.contains(&"Blocked by Robots.txt"));
+    assert!(filters.contains(&"Success (2XX)"));
+    assert_eq!(filters.len(), 6);
+    // The blocked URL with status 200 is counted once, in its status class.
+    assert!(ids(&fx, "Response Codes", "Blocked by Robots.txt").await.contains(&30));
+    assert!(ids(&fx, "Response Codes", "Success (2XX)").await.contains(&30));
+    let checked = check_partitions(&fx).await;
+    let (_, sum, base) = checked.iter().find(|(t, ..)| t == "Response Codes").unwrap();
+    assert!(sum <= base, "{sum} > {base}");
+}

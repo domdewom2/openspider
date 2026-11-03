@@ -69,7 +69,7 @@ fn overview<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFutur
                         (!filters.is_empty()).then(|| OverviewTab {
                             tab: t.id.into(),
                             // UI-102: which filters of this tab form a partition (no new count).
-                            partition: partition::partition(t, &filters),
+                            partition: partition::partition(t, &filters, &s.config),
                             filters,
                         })
                     })
