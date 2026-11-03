@@ -91,7 +91,9 @@ html5ever = "0.39"
 ego-tree = "0.11"
 encoding_rs = "0.8"
 quick-xml = "0.42"
-lopdf = "0.45"
+# M3-C01/OUT-246 (Orchestrator-Entscheid M1): ohne `rayon` – der eingedämmte PDF-Parser darf keine Arbeit auf
+# fremde Worker-Threads verteilen (Markierung ist thread-lokal); übrige Standard-Features von 0.45 ausdrücklich.
+lopdf = { version = "0.45", default-features = false, features = ["chrono-clock"] }
 unicode-segmentation = "1"
 # os-store (P00c): Kollation OS_TEXT = ICU4X-Collator, Root-Locale, Stärke Secondary (Lizenz Unicode-3.0)
 icu_collator = { version = "2", features = ["compiled_data"] }
