@@ -1174,5 +1174,41 @@
     "args": "ChromiumStatusArgs",
     "ret": "ChromiumStatus",
     "longRunning": false
+  },
+  {
+    "name": "crash.overview",
+    "args": "void",
+    "ret": "CrashOverview",
+    "longRunning": false
+  },
+  {
+    "name": "crash.read",
+    "args": "CrashIdArgs",
+    "ret": "string",
+    "longRunning": false
+  },
+  {
+    "name": "crash.send",
+    "args": "CrashSendArgs",
+    "ret": "CrashSendResult",
+    "longRunning": false
+  },
+  {
+    "name": "crash.dismiss",
+    "args": "CrashIdsArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "crash.delete",
+    "args": "CrashIdArgs",
+    "ret": "void",
+    "longRunning": false
+  },
+  {
+    "name": "crash.reportFrontend",
+    "args": "CrashFrontendArgs",
+    "ret": "boolean",
+    "longRunning": false
   }
 ]

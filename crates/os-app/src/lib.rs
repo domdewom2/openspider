@@ -23,6 +23,8 @@
 pub mod assets;
 pub mod clipboard;
 pub mod commands;
+/// Absturzberichte (M3-C01, OUT-246/OUT-247; additiv nach K2-61).
+pub mod crash;
 pub mod diag;
 pub mod dto;
 pub mod events;

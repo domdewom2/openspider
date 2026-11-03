@@ -81,6 +81,8 @@ pub fn register_all(r: &mut Registry) {
     mail::register(r);
     update::register(r);
     render_provision::register(r);
+    // M3-C01 (K2-61 additiv): Absturzberichte.
+    crate::crash::commands::register(r);
 }
 
 pub mod app_quit;

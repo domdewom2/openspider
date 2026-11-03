@@ -148,6 +148,13 @@ const CATALOG_3_6A: &[&str] = &[
     "chromium.download",
     "chromium.cancel",
     "chromium.remove",
+    // M3-C01 (OUT-246/OUT-247): Absturzberichte.
+    "crash.overview",
+    "crash.read",
+    "crash.send",
+    "crash.dismiss",
+    "crash.delete",
+    "crash.reportFrontend",
     "app.requestQuit",
     "app.confirmQuit",
     "config.testRobots",
@@ -293,7 +300,8 @@ fn domains_are_the_documented_ones() {
         "search", "op", "detail", "sidebar", "config", "crawls", "projects", "export", "compare",
         "viz", "mcp", "api", "tasks", "segment", "auth", "profile", "mail", "update",
         // M3-K01 (K3-01)
-        "chromium",
+        "chromium", // M3-C01 (OUT-246/OUT-247)
+        "crash",
     ]
     .into_iter()
     .collect();
