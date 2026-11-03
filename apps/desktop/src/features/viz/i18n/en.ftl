@@ -154,3 +154,12 @@ viz-canvas-3d-label = { $kind } with { $count } nodes. Drag to rotate, scroll to
 viz-words-min-length = Minimum word length
 viz-body-word-label = { $term }: { $count } times
 err-viz-html-not-stored = HTML is not stored for this URL.
+
+## Visualisations – appearance (M3-V02)
+viz-auto-rotate = Rotate slowly when idle
+viz-legend-compact = Colour legend
+viz-legend-segment-n = Segment { $n }
+viz-legend-low = Low
+viz-legend-high = High
+viz-legend-path-short = Directory
+viz-word-tip = { $term }: { $count }

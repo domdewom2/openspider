@@ -28,9 +28,12 @@ async function expectAccessible(page: Page) {
   expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
 }
 
+/** Ob die Umgebung WebGL 2 bietet; wenn ja, muss die 3D-Ansicht es auch nutzen (kein stilles Überspringen). */
 async function webgl(page: Page): Promise<boolean> {
   await page.waitForFunction(() => window.__osViz3d !== undefined);
-  return page.evaluate(() => window.__osViz3d!.webgl);
+  const available = await page.evaluate(() => !!document.createElement("canvas").getContext("webgl2"));
+  if (available) await expect.poll(() => page.evaluate(() => window.__osViz3d!.webgl)).toBe(true);
+  return available;
 }
 
 async function layout3dDone(page: Page) {

@@ -258,6 +258,11 @@ export function Sidebar(p: SidebarProps) {
                 {t("viz-allow-overlap")}
               </Switch>
             )}
+            {three && (
+              <Switch isSelected={o.autoRotate} onChange={(v) => p.onOptions({ autoRotate: v })}>
+                {t("viz-auto-rotate")}
+              </Switch>
+            )}
             <NumberField label={t("viz-repulsion")} value={o.repulsion} min={1} max={1000} onCommit={(v) => p.onOptions({ repulsion: v })} />
             <NumberField label={t("viz-spring")} value={o.springLength} min={1} max={500} onCommit={(v) => p.onOptions({ springLength: v })} />
             <NumberField label={t("viz-label-zoom")} value={o.labelZoom} min={0.05} max={8} step={0.1} onCommit={(v) => p.onOptions({ labelZoom: v })} />

@@ -9,7 +9,7 @@ import { viz } from "../../ipc/viz";
 import type { EmptyState as EmptyStateDto } from "../../ui/emptyState/codes";
 import { Banner, Button, Checkbox, EmptyState, RadioGroup } from "../../ui/primitives";
 import { readRenderStyle, saveBlob, svgBlob } from "./exporters";
-import { layoutWords, sortTerms, type PlacedWord } from "./model/words";
+import { fitWords, layoutWords, sortTerms, type PlacedWord, type WordTier } from "./model/words";
 import { requestInlinksForAnchor } from "./open";
 import { NumberField } from "./Sidebar";
 
@@ -88,7 +88,16 @@ export function WordCloudView({ snapshotId, urlId: givenUrl, generation, source 
   const stage = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
   const font = useMemo(fontStack, []);
-  const ink = useMemo(() => readRenderStyle().text, []);
+  // Farben nach Häufigkeitsstufe aus den Design-Tokens: Akzent, Text, Erfolgsfarbe, gedämpfter Text.
+  const tierColors = useMemo((): Record<WordTier, string> => {
+    const st = readRenderStyle();
+    return { 0: st.accent, 1: st.text, 2: st.palette?.indexable ?? st.text, 3: st.badgeFill };
+  }, []);
+  const [hoverWord, setHoverWord] = useState<{ text: string; count: number; x: number; y: number } | null>(null);
+  const hoverAt = (p: PlacedWord, e: { clientX: number; clientY: number }) => {
+    const r = stage.current?.getBoundingClientRect();
+    setHoverWord({ text: p.text, count: p.count, x: e.clientX - (r?.left ?? 0) + 12, y: e.clientY - (r?.top ?? 0) + 12 });
+  };
 
   useEffect(() => {
     if (urlId === null) return;
@@ -149,6 +158,8 @@ export function WordCloudView({ snapshotId, urlId: givenUrl, generation, source 
   if (urlId === null) return resolving ? null : <EmptyState state={{ code: "NO_SELECTION" }} />;
   const w = Math.max(64, Math.floor(size.width || 800));
   const h = Math.max(64, Math.floor(size.height || 500));
+  // Wolke zentriert und flächenfüllend (Darstellung; die Schriftgrößen 12–64 px der Platzierung bleiben).
+  const fit = fitWords(placed, w, h);
 
   return (
     <div className="os-viz-body">
@@ -218,12 +229,24 @@ export function WordCloudView({ snapshotId, urlId: givenUrl, generation, source 
         {error && <Banner kind="error">{error}</Banner>}
         {empty && <EmptyState state={empty} />}
         {!empty && terms !== null && terms.length === 0 && <EmptyState state={{ code: "NO_DATA_YET" }} />}
-        <div ref={stage} className="os-viz-stage">
+        <div ref={stage} className="os-viz-stage os-viz-stage-soft">
           {placed.length > 0 && (
             <svg ref={svg} xmlns="http://www.w3.org/2000/svg" version="1.1" width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="group" aria-label={t(`viz-kind-${kind}`)}>
-              <g transform={`translate(${w / 2} ${h / 2})`}>
+              <g transform={`translate(${w / 2} ${h / 2}) scale(${fit.k.toFixed(4)}) translate(${(-fit.cx).toFixed(2)} ${(-fit.cy).toFixed(2)})`}>
                 {body && placed.map((p) => (
-                  <text key={p.text} className="os-viz-word-plain" x={p.x} y={p.y} fontSize={p.size} fontFamily={font} fill={ink} textAnchor="middle">
+                  <text
+                    key={p.text}
+                    className="os-viz-word-plain"
+                    x={p.x}
+                    y={p.y}
+                    fontSize={p.size}
+                    fontWeight={p.weight}
+                    fontFamily={font}
+                    fill={hoverWord?.text === p.text ? tierColors[0] : tierColors[p.tier]}
+                    textAnchor="middle"
+                    onMouseMove={(e) => hoverAt(p, e)}
+                    onMouseLeave={() => setHoverWord(null)}
+                  >
                     <title>{t("viz-body-word-label", { term: p.text, count: p.count })}</title>
                     {p.text}
                   </text>
@@ -237,6 +260,8 @@ export function WordCloudView({ snapshotId, urlId: givenUrl, generation, source 
                     tabIndex={0}
                     aria-label={t("viz-word-label", { term: p.text, count: p.count })}
                     onClick={() => open(p.text)}
+                    onMouseMove={(e) => hoverAt(p, e)}
+                    onMouseLeave={() => setHoverWord(null)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
@@ -245,13 +270,18 @@ export function WordCloudView({ snapshotId, urlId: givenUrl, generation, source 
                     }}
                   >
                     <rect x={p.x + p.box.x0} y={p.y + p.box.y0} width={p.box.x1 - p.box.x0} height={p.box.y1 - p.box.y0} fill="none" pointerEvents="all" />
-                    <text x={p.x} y={p.y} fontSize={p.size} fontFamily={font} fill={ink} textAnchor="middle">
+                    <text x={p.x} y={p.y} fontSize={p.size} fontWeight={p.weight} fontFamily={font} fill={hoverWord?.text === p.text ? tierColors[0] : tierColors[p.tier]} textAnchor="middle">
                       {p.text}
                     </text>
                   </g>
                 ))}
               </g>
             </svg>
+          )}
+          {hoverWord && (
+            <div className="os-viz-word-tip" role="tooltip" style={{ left: hoverWord.x, top: hoverWord.y }}>
+              {t("viz-word-tip", { term: hoverWord.text, count: fmt.integer(hoverWord.count) })}
+            </div>
           )}
         </div>
       </section>

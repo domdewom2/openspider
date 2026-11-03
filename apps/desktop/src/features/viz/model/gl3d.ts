@@ -3,12 +3,27 @@
 // Keine Bibliothek (M3-V02, Lizenzprüfung): nur WebGL2 der WebView (WKWebView ab Safari 15, WebView2).
 
 export interface GlColors {
-  background: [number, number, number];
+  backgroundCenter: [number, number, number];
+  backgroundEdge: [number, number, number];
   edge: [number, number, number, number];
   inlink: [number, number, number, number];
   outlink: [number, number, number, number];
+  halo: [number, number, number, number];
 }
 
+export interface RenderOptions3D {
+  dimEdges: boolean;
+  /** Tiefen-Abblendung von `fogNear` (voll) bis `fogFar` (stark abgeblendet), Kameraabstand in Welteinheiten. */
+  fogNear: number;
+  fogFar: number;
+  /** Grenzen der Punktgröße in Bildpunkten des Zeichenpuffers (Ober-/Untergrenze trotz Perspektive). */
+  minPx: number;
+  maxPx: number;
+}
+
+// Kugeln als Impostor: Normale aus der Punktkoordinate, Licht von oben links, weiches Glanzlicht und dezenter Rand;
+// Größe mit Perspektive, aber auf [u_minPx, u_maxPx] begrenzt; Tiefen-Abblendung als Alpha (Nebel zum Hintergrund).
+// Ausgabe vormultipliziert (Zeichenfläche mit Alpha über dem CSS-Hintergrundverlauf).
 const POINT_VS = `#version 300 es
 in vec3 a_pos;
 in float a_size;
@@ -16,32 +31,86 @@ in vec4 a_color;
 uniform mat4 u_view;
 uniform mat4 u_proj;
 uniform float u_scale;
-uniform float u_max;
+uniform float u_minPx;
+uniform float u_maxPx;
+uniform float u_fogNear;
+uniform float u_fogFar;
+uniform float u_halo;
 out vec4 v_color;
 out float v_px;
 void main() {
   vec4 mv = u_view * vec4(a_pos, 1.0);
   gl_Position = u_proj * mv;
-  float px = 2.0 * a_size * u_scale / max(-mv.z, 0.0001);
-  gl_PointSize = clamp(px, 2.0, u_max);
-  v_color = a_color;
+  float depth = max(-mv.z, 0.0001);
+  float px = clamp(2.0 * a_size * u_scale / depth, u_minPx, u_maxPx);
+  gl_PointSize = u_halo > 0.5 ? px * 2.2 + 6.0 : px;
+  // Tiefen-Abblendung im Alpha (ein Varying weniger je Bildpunkt).
+  v_color = vec4(a_color.rgb, a_color.a * (1.0 - 0.72 * smoothstep(u_fogNear, u_fogFar, depth)));
   v_px = gl_PointSize;
 }`;
 
 const POINT_FS = `#version 300 es
-precision mediump float;
+precision highp float;
 in vec4 v_color;
 in float v_px;
+uniform float u_halo;
+uniform vec4 u_haloColor;
 out vec4 o_color;
 void main() {
   vec2 c = gl_PointCoord * 2.0 - 1.0;
   float r2 = dot(c, c);
   if (r2 > 1.0) discard;
-  float rim = smoothstep(1.0 - 3.0 / max(v_px, 3.0), 1.0, r2);
-  o_color = vec4(v_color.rgb * (1.0 - 0.35 * rim), v_color.a);
+  float r = sqrt(r2);
+  if (u_halo > 0.5) {
+    float a = u_haloColor.a * (1.0 - smoothstep(0.38, 1.0, r));
+    o_color = vec4(u_haloColor.rgb * a, a);
+    return;
+  }
+  // Kleine Punkte (bis 6 px): flache Farbe – die Schattierung wäre kaum sichtbar und kostet nur Rechenzeit.
+  if (v_px < 6.0) {
+    float fa = v_color.a;
+    o_color = vec4(v_color.rgb * 0.92 * fa, fa);
+    return;
+  }
+  vec3 n = vec3(c.x, -c.y, sqrt(1.0 - r2));
+  vec3 l = normalize(vec3(-0.5, 0.62, 0.6));
+  float diffuse = max(dot(n, l), 0.0);
+  float s1 = max(dot(reflect(-l, n), vec3(0.0, 0.0, 1.0)), 0.0);
+  float s4 = s1 * s1 * s1 * s1;
+  float spec = s4 * s4 * s4 * s4 * s4 * s4 * s4;
+  vec3 col = v_color.rgb * (0.48 + 0.62 * diffuse) + vec3(0.22 * spec);
+  col = mix(col, v_color.rgb * 0.62, 0.55 * smoothstep(0.8, 1.0, r));
+  float edge = 1.0 - smoothstep(1.0 - 2.5 / max(v_px, 2.5), 1.0, r);
+  float a = v_color.a * edge;
+  o_color = vec4(col * a, a);
 }`;
 
 const LINE_VS = `#version 300 es
+in vec3 a_pos;
+uniform mat4 u_view;
+uniform mat4 u_proj;
+uniform float u_fogNear;
+uniform float u_fogFar;
+out float v_fog;
+void main() {
+  vec4 mv = u_view * vec4(a_pos, 1.0);
+  gl_Position = u_proj * mv;
+  v_fog = 1.0 - 0.85 * smoothstep(u_fogNear, u_fogFar, -mv.z);
+}`;
+
+const LINE_FS = `#version 300 es
+precision mediump float;
+uniform vec4 u_color;
+in float v_fog;
+out vec4 o_color;
+void main() {
+  float a = u_color.a * v_fog;
+  o_color = vec4(u_color.rgb * a, a);
+}`;
+
+// Linien ohne Tiefen-Abblendung für sehr viele Kanten (ab FLAT_LINES_FROM): die interpolierte Abblendung kostet je
+// Bildpunkt Rechenzeit; bei so dichten Graphen trägt die Kantenfarbe ohnehin nur noch eine Fläche.
+const LINE_FLAT_VS = `#version 300 es
 in vec3 a_pos;
 uniform mat4 u_view;
 uniform mat4 u_proj;
@@ -49,12 +118,35 @@ void main() {
   gl_Position = u_proj * u_view * vec4(a_pos, 1.0);
 }`;
 
-const LINE_FS = `#version 300 es
+const LINE_FLAT_FS = `#version 300 es
 precision mediump float;
 uniform vec4 u_color;
 out vec4 o_color;
 void main() {
-  o_color = u_color;
+  o_color = vec4(u_color.rgb * u_color.a, u_color.a);
+}`;
+
+/** Ab so vielen Kanten ohne Tiefen-Abblendung (Leistung, UI-098). */
+export const FLAT_LINES_FROM = 20_000;
+
+// Hintergrund als Vollbild-Dreieck mit weichem radialem Verlauf (Mitte → Rand), damit die Zeichenfläche deckend bleibt
+// (eine transparente WebGL-Fläche müsste der Browser in jedem Bild über den CSS-Hintergrund mischen).
+const BG_VS = `#version 300 es
+void main() {
+  vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
+  gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
+}`;
+
+const BG_FS = `#version 300 es
+precision mediump float;
+uniform vec2 u_size;
+uniform vec3 u_center;
+uniform vec3 u_edge;
+out vec4 o_color;
+void main() {
+  vec2 p = gl_FragCoord.xy / u_size;
+  float d = length((p - vec2(0.5, 0.58)) / vec2(0.75, 0.8));
+  o_color = vec4(mix(u_center, u_edge, smoothstep(0.0, 1.0, d)), 1.0);
 }`;
 
 function compile(gl: WebGL2RenderingContext, vs: string, fs: string): WebGLProgram {
@@ -93,6 +185,10 @@ export function hasWebGL2(doc: Document = document): boolean {
 export class GraphGl {
   private readonly gl: WebGL2RenderingContext;
   private readonly points: WebGLProgram;
+  private readonly flatLines: WebGLProgram;
+  private readonly flatVao: WebGLVertexArrayObject;
+  private readonly background: WebGLProgram;
+  private readonly bgVao: WebGLVertexArrayObject;
   private readonly lines: WebGLProgram;
   private readonly pointVao: WebGLVertexArrayObject;
   private readonly lineVao: WebGLVertexArrayObject;
@@ -102,6 +198,8 @@ export class GraphGl {
   private readonly edgeBuf: WebGLBuffer;
   private readonly inBuf: WebGLBuffer;
   private readonly outBuf: WebGLBuffer;
+  private readonly haloBuf: WebGLBuffer;
+  private haloCount = 0;
   private n = 0;
   private edgeCount = 0;
   private inCount = 0;
@@ -113,6 +211,8 @@ export class GraphGl {
     this.gl = gl;
     this.points = compile(gl, POINT_VS, POINT_FS);
     this.lines = compile(gl, LINE_VS, LINE_FS);
+    this.background = compile(gl, BG_VS, BG_FS);
+    this.flatLines = compile(gl, LINE_FLAT_VS, LINE_FLAT_FS);
     const buf = () => {
       const b = gl.createBuffer();
       if (!b) throw new Error("buffer");
@@ -124,11 +224,13 @@ export class GraphGl {
     this.edgeBuf = buf();
     this.inBuf = buf();
     this.outBuf = buf();
+    this.haloBuf = buf();
     const vao = () => {
       const v = gl.createVertexArray();
       if (!v) throw new Error("vao");
       return v;
     };
+    this.bgVao = vao();
     this.pointVao = vao();
     gl.bindVertexArray(this.pointVao);
     const attr = (program: WebGLProgram, name: string, buffer: WebGLBuffer, size: number, type: number, normalized: boolean) => {
@@ -144,9 +246,14 @@ export class GraphGl {
     this.lineVao = vao();
     gl.bindVertexArray(this.lineVao);
     attr(this.lines, "a_pos", this.posBuf, 3, gl.FLOAT, false);
+    this.flatVao = vao();
+    gl.bindVertexArray(this.flatVao);
+    attr(this.flatLines, "a_pos", this.posBuf, 3, gl.FLOAT, false);
     gl.bindVertexArray(null);
-    for (const name of ["u_view", "u_proj", "u_scale", "u_max"]) this.uniforms[`p${name}`] = gl.getUniformLocation(this.points, name);
-    for (const name of ["u_view", "u_proj", "u_color"]) this.uniforms[`l${name}`] = gl.getUniformLocation(this.lines, name);
+    for (const name of ["u_view", "u_proj", "u_scale", "u_minPx", "u_maxPx", "u_fogNear", "u_fogFar", "u_halo", "u_haloColor"]) this.uniforms[`p${name}`] = gl.getUniformLocation(this.points, name);
+    for (const name of ["u_view", "u_proj", "u_color", "u_fogNear", "u_fogFar"]) this.uniforms[`l${name}`] = gl.getUniformLocation(this.lines, name);
+    for (const name of ["u_size", "u_center", "u_edge"]) this.uniforms[`b${name}`] = gl.getUniformLocation(this.background, name);
+    for (const name of ["u_view", "u_proj", "u_color"]) this.uniforms[`f${name}`] = gl.getUniformLocation(this.flatLines, name);
     const range = gl.getParameter(gl.ALIASED_POINT_SIZE_RANGE) as Float32Array | null;
     this.maxPoint = Math.min(256, range?.[1] ?? 64);
   }
@@ -205,6 +312,11 @@ export class GraphGl {
     this.edgeCount = this.indices(this.edgeBuf, idx);
   }
 
+  /** Hervorgehobene Knoten mit Lichtschein (Zeiger, Suchtreffer, Auswahl). */
+  setHalo(idx: Uint32Array): void {
+    this.haloCount = this.indices(this.haloBuf, idx);
+  }
+
   /** Eingeblendete Inlinks und Outlinks (UI-097). */
   setOverlay(inlinks: Uint32Array, outlinks: Uint32Array): void {
     this.inCount = this.indices(this.inBuf, inlinks);
@@ -212,50 +324,82 @@ export class GraphGl {
   }
 
   /**
-   * Ein Bild: Hintergrund, Kanten (gedimmt, wenn Links eingeblendet sind), Zusatzkanten, Knoten. `scale` = Bildpunkte je
-   * Welteinheit im Abstand 1 (Höhe / (2·tan(fov/2)) · Pixelverhältnis).
+   * Ein Bild auf transparentem Grund (der Hintergrundverlauf liegt im CSS bzw. wird beim PNG-Export darunter gelegt):
+   * Kanten dünn und nach Tiefe abgeblendet (gedämpft, wenn Links eingeblendet sind), Zusatzkanten kräftiger, Knoten als
+   * schattierte Kugeln, zuletzt der Lichtschein hervorgehobener Knoten. `scale` = Bildpunkte je Welteinheit im Abstand 1.
    */
-  render(view: Float32Array, proj: Float32Array, width: number, height: number, scale: number, colors: GlColors, dimEdges: boolean): void {
+  render(view: Float32Array, proj: Float32Array, width: number, height: number, scale: number, colors: GlColors, o: RenderOptions3D): void {
     const gl = this.gl;
     gl.viewport(0, 0, width, height);
-    gl.clearColor(colors.background[0], colors.background[1], colors.background[2], 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clear(gl.DEPTH_BUFFER_BIT);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.BLEND);
+    gl.useProgram(this.background);
+    gl.uniform2f(this.uniforms["bu_size"] ?? null, width, height);
+    gl.uniform3fv(this.uniforms["bu_center"] ?? null, colors.backgroundCenter);
+    gl.uniform3fv(this.uniforms["bu_edge"] ?? null, colors.backgroundEdge);
+    gl.bindVertexArray(this.bgVao);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     if (this.n === 0) return;
-    gl.useProgram(this.lines);
-    gl.uniformMatrix4fv(this.uniforms["lu_view"] ?? null, false, view);
-    gl.uniformMatrix4fv(this.uniforms["lu_proj"] ?? null, false, proj);
-    gl.bindVertexArray(this.lineVao);
+    const flat = this.edgeCount / 2 >= FLAT_LINES_FROM;
+    const prefix = flat ? "f" : "l";
+    gl.useProgram(flat ? this.flatLines : this.lines);
+    gl.uniformMatrix4fv(this.uniforms[`${prefix}u_view`] ?? null, false, view);
+    gl.uniformMatrix4fv(this.uniforms[`${prefix}u_proj`] ?? null, false, proj);
+    if (!flat) {
+      gl.uniform1f(this.uniforms["lu_fogNear"] ?? null, o.fogNear);
+      gl.uniform1f(this.uniforms["lu_fogFar"] ?? null, o.fogFar);
+    }
+    gl.bindVertexArray(flat ? this.flatVao : this.lineVao);
     gl.depthMask(false);
     const lines = (buffer: WebGLBuffer, count: number, color: [number, number, number, number]) => {
       if (!count) return;
-      gl.uniform4fv(this.uniforms["lu_color"] ?? null, color);
+      gl.uniform4fv(this.uniforms[`${prefix}u_color`] ?? null, color);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
       gl.drawElements(gl.LINES, count, gl.UNSIGNED_INT, 0);
     };
     const e = colors.edge;
-    lines(this.edgeBuf, this.edgeCount, dimEdges ? [e[0], e[1], e[2], e[3] * 0.35] : e);
+    lines(this.edgeBuf, this.edgeCount, o.dimEdges ? [e[0], e[1], e[2], e[3] * 0.4] : e);
+    gl.disable(gl.DEPTH_TEST);
     lines(this.inBuf, this.inCount, colors.inlink);
     lines(this.outBuf, this.outCount, colors.outlink);
+    gl.enable(gl.DEPTH_TEST);
     gl.depthMask(true);
     gl.useProgram(this.points);
     gl.uniformMatrix4fv(this.uniforms["pu_view"] ?? null, false, view);
     gl.uniformMatrix4fv(this.uniforms["pu_proj"] ?? null, false, proj);
     gl.uniform1f(this.uniforms["pu_scale"] ?? null, scale);
-    gl.uniform1f(this.uniforms["pu_max"] ?? null, this.maxPoint);
+    gl.uniform1f(this.uniforms["pu_minPx"] ?? null, o.minPx);
+    gl.uniform1f(this.uniforms["pu_maxPx"] ?? null, Math.min(o.maxPx, this.maxPoint));
+    gl.uniform1f(this.uniforms["pu_fogNear"] ?? null, o.fogNear);
+    gl.uniform1f(this.uniforms["pu_fogFar"] ?? null, o.fogFar);
+    gl.uniform1f(this.uniforms["pu_halo"] ?? null, 0);
     gl.bindVertexArray(this.pointVao);
     gl.drawArrays(gl.POINTS, 0, this.n);
+    if (this.haloCount) {
+      gl.depthMask(false);
+      gl.uniform1f(this.uniforms["pu_halo"] ?? null, 1);
+      gl.uniform4fv(this.uniforms["pu_haloColor"] ?? null, colors.halo);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.haloBuf);
+      gl.drawElements(gl.POINTS, this.haloCount, gl.UNSIGNED_INT, 0);
+      gl.depthMask(true);
+    }
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
   }
 
   dispose(): void {
     const gl = this.gl;
-    for (const b of [this.posBuf, this.sizeBuf, this.colorBuf, this.edgeBuf, this.inBuf, this.outBuf]) gl.deleteBuffer(b);
+    for (const b of [this.posBuf, this.sizeBuf, this.colorBuf, this.edgeBuf, this.inBuf, this.outBuf, this.haloBuf]) gl.deleteBuffer(b);
     gl.deleteVertexArray(this.pointVao);
+    gl.deleteVertexArray(this.bgVao);
+    gl.deleteVertexArray(this.flatVao);
+    gl.deleteProgram(this.flatLines);
+    gl.deleteProgram(this.background);
     gl.deleteVertexArray(this.lineVao);
     gl.deleteProgram(this.points);
     gl.deleteProgram(this.lines);

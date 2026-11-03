@@ -11,7 +11,9 @@ import type { OpStatus } from "../../ipc/gen/OpStatus";
 import { isTauri } from "../../ipc/transport/tauri";
 import { viz } from "../../ipc/viz";
 import { Banner, Button, ContextMenu, Dialog, DialogFooter, type MenuEntry } from "../../ui/primitives";
+import { CompactLegend } from "./CompactLegend";
 import { GraphCanvas, type GraphCanvasHandle } from "./GraphCanvas";
+import { PALETTES } from "./model/encoding";
 import { chooseFolder, saveBlob, svgBlob, useRenderStyle } from "./exporters";
 import { csvPayload, directoryPath, exploreDecision, RootTrail, tooltipRows } from "./model/details";
 import type { ForceInput, ForceReply } from "./model/force";
@@ -23,7 +25,7 @@ import { VizTree } from "./model/tree";
 import { layoutTree } from "./model/treeLayout";
 import { centerOn, type Transform } from "./model/viewport";
 import { defaultOptions, encodeOptions, graphArgs, TREE_LABEL_ZOOM, type VizOptions } from "./options";
-import { layoutOf, type VizWindowKind } from "./open";
+import { isDirectoryKind, layoutOf, type VizWindowKind } from "./open";
 import { Sidebar, type ExportState } from "./Sidebar";
 
 export interface GraphViewProps {
@@ -112,7 +114,7 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
   }, []);
   const timing = useRef({ start: performance.now(), firstFrame: null as number | null, loaded: null as number | null });
   const style = useRenderStyle(opts.lineWidth);
-  const enc = useMemo(() => encodeOptions(kind, opts), [kind, opts]);
+  const enc = useMemo(() => encodeOptions(kind, opts, style.palette), [kind, opts, style.palette]);
   const rootId = trail.current.id ?? initialRoot;
 
   // ---- Laden ----------------------------------------------------------------------------------------------------
@@ -585,6 +587,13 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
                 performance.mark?.("viz-first-frame");
               }}
               tooltip={tooltip}
+            />
+            <CompactLegend
+              colorMode={opts.colorMode}
+              colors={enc.colors && opts.palette === "standard" ? enc.colors : PALETTES[opts.palette]}
+              segments={opts.colorMode === "segment" ? [...new Set(scene.nodes.filter((n) => !n.capped && !n.hollow).map((n) => n.fill))] : []}
+              directory={isDirectoryKind(kind)}
+              links={overlay ? { inlink: overlay.edges.some((e) => e.type === "inlink"), outlink: overlay.edges.some((e) => e.type === "outlink"), inColor: style.inlink, outColor: style.outlink } : null}
             />
           </ContextMenu>
         )}

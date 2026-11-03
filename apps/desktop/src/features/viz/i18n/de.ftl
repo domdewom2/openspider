@@ -154,3 +154,12 @@ viz-canvas-3d-label = { $kind } mit { $count } Knoten. Ziehen dreht, Mausrad zoo
 viz-words-min-length = Mindestlänge eines Worts
 viz-body-word-label = { $term }: { $count }-mal
 err-viz-html-not-stored = Für diese URL ist kein HTML gespeichert.
+
+## Visualisierungen – Optik (M3-V02)
+viz-auto-rotate = Im Leerlauf langsam drehen
+viz-legend-compact = Farblegende
+viz-legend-segment-n = Segment { $n }
+viz-legend-low = Niedrig
+viz-legend-high = Hoch
+viz-legend-path-short = Verzeichnis
+viz-word-tip = { $term }: { $count }

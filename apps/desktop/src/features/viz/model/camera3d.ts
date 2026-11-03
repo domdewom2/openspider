@@ -128,7 +128,8 @@ export function focusOn(c: Camera3D, p: Vec3, minK = 3): Camera3D {
 
 /** Zwischenstand einer Kamerafahrt (t in [0, 1], weich). */
 export function lerpCamera(a: Camera3D, b: Camera3D, t: number): Camera3D {
-  const u = t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+  // Ease-in-out (kubisch): ruhiger Start und weiches Ankommen.
+  const u = t <= 0 ? 0 : t >= 1 ? 1 : t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   const mix = (x: number, y: number) => x + (y - x) * u;
   return { ...b, target: [mix(a.target[0], b.target[0]), mix(a.target[1], b.target[1]), mix(a.target[2], b.target[2])], theta: mix(a.theta, b.theta), phi: mix(a.phi, b.phi), k: Math.exp(mix(Math.log(a.k), Math.log(b.k))) };
 }

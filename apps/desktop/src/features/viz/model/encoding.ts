@@ -143,6 +143,8 @@ export interface EncodeOptions {
   maxRadius: number;
   r0: number;
   f: number;
+  /** Standardschema aus den Design-Tokens des aktuellen Themes (hell/dunkel); ohne Angabe die festen Werte. */
+  colors?: PaletteColors | null;
 }
 
 export interface EncodeStats {
@@ -183,7 +185,7 @@ export function encodeStats(nodes: Iterable<EncodeNode>): EncodeStats {
  * Metrik-Skalierung ersetzt die Tiefenkodierung vollständig (UI-092: keine Mischung).
  */
 export function nodeStyle(n: EncodeNode, level: number, capped: boolean, o: EncodeOptions, s: EncodeStats): NodeStyle {
-  const pal = PALETTES[o.palette];
+  const pal = o.palette === "standard" && o.colors ? o.colors : PALETTES[o.palette];
   const path = n.address == null;
   const depthEncoded = o.layout === "force" && !o.sizeByMetric;
   let r: number;
@@ -207,4 +209,30 @@ export function nodeStyle(n: EncodeNode, level: number, capped: boolean, o: Enco
   else if (n.colorValue == null || !Number.isFinite(n.colorValue)) fill = pal.noData;
   else fill = mix(pal.gradient[0], pal.gradient[1], s.maxColor > s.minColor ? (n.colorValue - s.minColor) / (s.maxColor - s.minColor) : 1);
   return { r, fill, stroke: dashed ? "#5f6670" : null, dashed, hollow: false };
+}
+
+/** Relative Leuchtdichte (WCAG) einer Hex-Farbe. */
+export function luminance(hex: string): number {
+  const [r, g, b] = hexToRgb(hex).map((v) => {
+    const c = v / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  }) as [number, number, number];
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/**
+ * Standardschema aus Design-Tokens (M3-V02, Optik): Indexierbarkeit/Statusklassen aus den Badge-Farben, Verlauf aus der
+ * Akzentfarbe. Abgeleitete Töne (blasses Rot, gedämpftes Bernstein) entstehen durch Mischen mit der Fläche, damit beide
+ * Themes passen. Das farbfehlsichtigkeitstaugliche Schema bleibt fest (Okabe-Ito, `PALETTES.colorblind`).
+ */
+export function paletteFromTokens(t: { surface: string; success: string; danger: string; warning: string; warningBg: string; accent: string; muted: string; none: string }, dark: boolean): PaletteColors {
+  return {
+    indexable: t.success,
+    nonIndexable: mix(t.danger, t.surface, dark ? 0.12 : 0.4),
+    capped: t.none,
+    path: t.muted,
+    noData: mix(t.muted, t.surface, 0.5),
+    status: { "2xx": t.success, "3xx": t.accent, "4xx": dark ? t.warning : mix(t.warning, t.warningBg, 0.35), "5xx": t.danger, none: t.none },
+    gradient: [mix(t.accent, t.surface, 0.8), t.accent],
+  };
 }

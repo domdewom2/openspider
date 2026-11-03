@@ -1,6 +1,6 @@
 // Einstellungen der Seitenleiste (UI-090 … UI-096) mit den Standardwerten der Spec und Abbildung auf `viz.graph`.
 import type { VizGraphArgs } from "../../ipc/gen/VizGraphArgs";
-import { DEPTH_DEFAULTS, SIZE_DEFAULTS, type ColorMode, type EncodeOptions, type Palette } from "./model/encoding";
+import { DEPTH_DEFAULTS, SIZE_DEFAULTS, type ColorMode, type EncodeOptions, type Palette, type PaletteColors } from "./model/encoding";
 import { FORCE_DEFAULTS } from "./model/force";
 import type { LabelMode } from "./model/scene";
 import { TREE_LAYOUT_DEFAULTS, type Orientation } from "./model/treeLayout";
@@ -42,6 +42,8 @@ export interface VizOptions {
   linkNofollow: boolean;
   /** Links eines Knotens (UI-097): Navigation/Footer (Linkposition) ausschließen (Standard aus). */
   linkExcludeNavFooter: boolean;
+  /** 3D: langsames Drehen im Leerlauf (Standard aus). */
+  autoRotate: boolean;
 }
 
 export const DEFAULT_OPTIONS: VizOptions = {
@@ -70,6 +72,7 @@ export const DEFAULT_OPTIONS: VizOptions = {
   lineWidth: 1,
   linkNofollow: true,
   linkExcludeNavFooter: false,
+  autoRotate: false,
 };
 
 /** Größtes Budget je Art: 3D 100 000 (UI-098), sonst 50 000 (UI-096). */
@@ -90,8 +93,9 @@ export function clampBudget(v: number, max: number = MAX_BUDGET): number {
   return Math.min(max, Math.max(1, Math.round(v)));
 }
 
-export function encodeOptions(kind: VizWindowKind, o: VizOptions): EncodeOptions {
+export function encodeOptions(kind: VizWindowKind, o: VizOptions, colors: PaletteColors | null = null): EncodeOptions {
   return {
+    colors,
     layout: layoutOf(kind) === "tree" ? "tree" : "force",
     colorMode: o.colorMode,
     palette: o.palette,
