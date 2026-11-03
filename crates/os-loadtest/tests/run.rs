@@ -14,6 +14,11 @@ fn scenarios_resolve_by_name_and_spec_id() {
     assert_eq!(scenario::find("perf-001").unwrap().perf_id, "PERF-001");
     assert_eq!(scenario::find("PERF-003").unwrap().name, "perf-003");
     assert!(scenario::find("perf-004").is_none());
+    // PERF-003 explicitly requires the same plain fixture as PERF-001.
+    let backpressure = scenario::find("perf-003").unwrap().config(Size::Large);
+    assert_eq!(backpressure.status_301_share, 0.0);
+    assert_eq!(backpressure.status_404_share, 0.0);
+    assert_eq!(backpressure.status_5xx_share, 0.0);
     assert_eq!(
         scenario::find("perf-001")
             .unwrap()
@@ -56,6 +61,8 @@ async fn report_schema_without_crawler() {
     assert_eq!(m["server_errors"], 0);
     assert_eq!(m["server_deterministic"], true);
     assert_eq!(m["crawler_available"], false);
+    assert_eq!(m["acceptance_complete"], false);
+    assert_eq!(m["measurement_status"], "server_only");
     assert!(m["server_requests_per_s"].as_f64().unwrap() > 0.0);
 }
 
