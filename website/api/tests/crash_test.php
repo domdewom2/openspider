@@ -194,6 +194,8 @@ file_put_contents($ini, "data_dir = /srv/data\nsalt_dir = /srv/salt\nmail_to = a
 check(cr_load_config($ini) === null, 'missing key → no configuration');
 check(cr_load_config('') === null && cr_load_config($root . '/missing.ini') === null, 'missing file → no configuration');
 check(cr_load_config(__DIR__ . '/../crash.example.ini') !== null, 'example configuration is complete');
+$r = cr_unconfigured();
+check($r['status'] === 500 && $json($r) === ['ok' => false, 'error' => 'server'], 'missing configuration → 500 server (OUT-247)');
 
 // --- Datenschutzerklärung de/en beschreibt Absturzberichte (OUT-247) ---
 foreach (['datenschutz/index.html' => ['absturzberichte', '90 Tagen', '„Senden“'], 'en/privacy/index.html' => ['crash-reports', '90 days', '“Send”']] as $page => [$anchor, $retention, $click]) {

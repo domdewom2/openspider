@@ -396,6 +396,13 @@ function cr_handle(array $server, string $body, array $config, callable $mailer,
     return cr_json(200, ['ok' => true, 'ref' => $record['ref']]);
 }
 
+/** Answer without usable configuration: 500 server, as listed in OUT-247 (no 503). */
+function cr_unconfigured(): array
+{
+    error_log('openspider-crash: configuration missing or invalid');
+    return cr_error(500, 'server');
+}
+
 function cr_main(): void
 {
     $path = getenv('OPENSPIDER_CRASH_CONFIG');
@@ -404,8 +411,7 @@ function cr_main(): void
     }
     $config = cr_load_config($path);
     if ($config === null) {
-        error_log('openspider-crash: configuration missing or invalid');
-        $response = cr_error(503, 'server');
+        $response = cr_unconfigured();
     } else {
         $body = (string) file_get_contents('php://input', false, null, 0, CR_MAX_BODY + 1);
         $response = cr_handle($_SERVER, $body, $config, 'cr_send_mail', time());

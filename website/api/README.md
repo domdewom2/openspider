@@ -91,7 +91,7 @@ PHP 8.3 (FPM), keine Abhängigkeiten, kein Drittanbieter. Es gelten dieselben Be
 
 Wie beim Feedback, aber eigene Datei: Die FPM-Umgebungsvariable `OPENSPIDER_CRASH_CONFIG` nennt eine INI-Datei mit
 `data_dir`, `salt_dir`, `mail_to`, `mail_from` (Vorlage `crash.example.ini`). Fehlt die Datei oder ein Schlüssel,
-antwortet der Endpunkt mit 503.
+antwortet der Endpunkt mit `500 {"ok":false,"error":"server"}` (Antwortliste in OUT-247).
 
 ## Betrieb
 
