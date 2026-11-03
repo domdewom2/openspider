@@ -3,7 +3,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 export PATH="$HOME/.cargo/bin:$PATH"
-export CARGO_BUILD_JOBS=12
+jobs=$(sysctl -n hw.ncpu 2>/dev/null || echo 8)
+export CARGO_BUILD_JOBS=$jobs
 export OPENSPIDER_SECRET_STORE=memory
 if [[ $(uname -s) != Darwin ]]; then
   echo 'Stage 2 requires the reference Mac; this script must not run on the server.' >&2
@@ -14,15 +15,17 @@ if [[ ${Q03_CAFFEINATED:-0} != 1 ]]; then
 fi
 mkdir -p target/loadtest/tmp
 export TMPDIR="$PWD/target/loadtest/tmp"
-cargo build --release --locked -j 12 -p os-loadtest -p os-cli -p os-testsite
-cargo build --release --locked -j 12 -p os-engine --example crawl_child
-cargo test --release --locked -j 12 -p os-analyze --test near_dup_scale --test link_score_benchmarks --test link_score_m2 --test near_dup_d02 \
+cargo build --release --locked -j "$jobs" -p os-loadtest -p os-cli -p os-testsite
+cargo build --release --locked -j "$jobs" -p os-engine --example crawl_child
+cargo test --release --locked -j "$jobs" -p os-analyze --test near_dup_scale --test link_score_benchmarks --test link_score_m2 --test near_dup_d02 \
   -p os-export --test pipeline_perf -p os-render --test render_chromium \
   -p os-engine --test render_integration --no-run
 # Each block checks the 1-minute load immediately before starting. No cgroups on macOS.
+# Gate wie bei den N15F/N20-Referenzläufen (Last < 4); überschreibbar mit Q03_MAX_LOAD.
+threshold=${Q03_MAX_LOAD:-4}
 quiet() {
-  while ! python3 -c 'import os,sys; sys.exit(0 if os.getloadavg()[0] < 1.5 else 1)'; do
-    echo 'Waiting for load < 1.5 ...'
+  while ! python3 -c 'import os,sys; sys.exit(0 if os.getloadavg()[0] < float(sys.argv[1]) else 1)' "$threshold"; do
+    echo "Waiting for load < $threshold (now $(python3 -c 'import os; print(round(os.getloadavg()[0], 2))')) ..."
     sleep 15
   done
 }
