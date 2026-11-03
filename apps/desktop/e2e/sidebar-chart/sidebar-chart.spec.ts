@@ -94,7 +94,7 @@ test("a filter row highlights its category and navigates the table; segments, le
   await page.keyboard.press("Escape");
   await expect(area(page).locator(".os-ovc-bars > li")).toHaveCount(10);
   // UI-061: the arrow still collapses the block, the name only selects it.
-  await page.getByRole("button", { name: "▾ Internal", exact: true }).click();
+  await page.getByRole("button", { name: "Collapse Internal", exact: true }).click();
   await expect(page.getByRole("table", { name: "Internal", exact: true })).toHaveCount(0);
   await expect(area(page).locator(".os-ovc-bars > li")).toHaveCount(10);
 });
@@ -159,7 +159,8 @@ test("exports: SVG 1.1 with texts and a hatch pattern for 5XX, PNG 2× doubles 1
   const table = area(page).getByRole("table");
   await expect(table.locator("tbody tr")).toHaveCount(11);
   await expect(table.locator("tbody tr").first()).toHaveText(/^HTML1,20060\.0 %$/);
-  expect(lines[1]).toBe("Internal,HTML,HTML,1200,60,2000");
+  expect(lines[1]).toBe("Internal,HTML,HTML,1200,60.0,2000");
+  expect(lines.slice(1).every(l => /,\d+\.\d,2000$/.test(l))).toBe(true);
   if (browserName === "chromium") {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await exportMenu.click();

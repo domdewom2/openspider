@@ -50,12 +50,16 @@ function hexOf(token: TokenName): string {
   return cssToHex(getComputedStyle(root).getPropertyValue(cssVarName(token)), THEME_TOKENS[theme][token].toLowerCase());
 }
 
-const warned = new Set<string>();
-/** UI-102: a category sum larger than the base is an error case; one log warning per entry and values. */
-function logOverflow(entry: string, sum: number, base: number): void {
-  const key = `${entry}|${sum}|${base}`;
-  if (warned.has(key)) return;
-  warned.add(key);
+const warned = { crawl: null as string | null, entries: new Set<string>() };
+/**
+ * UI-102: a category sum larger than the base is an error case. One log warning per entry and crawl (a running crawl
+ * would otherwise log at every changed value); another crawl starts over.
+ */
+export function logOverflow(entry: string, sum: number, base: number): void {
+  const crawl = useSession.getState().crawl?.crawlId ?? null;
+  if (warned.crawl !== crawl) { warned.crawl = crawl; warned.entries.clear(); }
+  if (warned.entries.has(entry)) return;
+  warned.entries.add(entry);
   const message = `Overview chart: categories of ${entry} add up to ${sum}, more than the base ${base}`;
   console.warn(message);
   void diag.logFrontend({ level: "warn", message, context: { entry, sum: String(sum), base: String(base) } }).catch(() => undefined);

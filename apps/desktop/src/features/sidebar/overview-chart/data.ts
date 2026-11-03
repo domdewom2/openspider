@@ -19,7 +19,8 @@ export function dataRows(model: ChartModel, opts: { uiHeaders?: boolean; t?: TFn
     c.canonical,
     c.role === "filter" || c.role === "summary" ? c.filter : null,
     c.count,
-    c.pct == null ? null : round1(c.pct),
+    // `% of Total` always with one decimal and a decimal point (like the Overview copy rows); written unquoted.
+    c.pct == null ? null : round1(c.pct).toFixed(1),
     base,
   ])];
 }

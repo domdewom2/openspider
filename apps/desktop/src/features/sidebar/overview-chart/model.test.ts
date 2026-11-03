@@ -197,19 +197,20 @@ describe("UI-102 exports", () => {
     expect(table).toHaveLength(12);
     expect(table.slice(1).every(r => r[5] === 2000 && r[0] === "Internal")).toBe(true);
     expect(table.slice(1).map(r => [r[1], r[3]])).toEqual(m.table.map(c => [c.canonical, c.count]));
-    expect(table[1]).toEqual(["Internal", "HTML", "HTML", 1200, 60, 2000]);
+    expect(table[1]).toEqual(["Internal", "HTML", "HTML", 1200, "60.0", 2000]);
     const csv = toCsv(table);
     expect(csv.startsWith("﻿Entry,Category,Filter,URLs,% of Total,Base\r\n")).toBe(true);
     expect(csv.split("\r\n").filter(Boolean)).toHaveLength(12);
-    expect(csv).toContain("\r\nInternal,HTML,HTML,1200,60,2000\r\n");
+    expect(csv).toContain("\r\nInternal,HTML,HTML,1200,60.0,2000\r\n");
     expect(csv).toContain("\r\nInternal,Media,Media,14,0.7,2000\r\n");
+    expect(table.slice(1).every(r => typeof r[4] === "string" && /^\d+\.\d$/.test(r[4]))).toBe(true);
     const tsvText = toTsv(table);
     expect(tsvText.split("\n")).toHaveLength(12);
-    expect(tsvText.split("\n")[2]).toBe(["Internal", "Images", "Images", "400", "20", "2000"].join("\t"));
+    expect(tsvText.split("\n")[2]).toBe(["Internal", "Images", "Images", "400", "20.0", "2000"].join("\t"));
     // Residual categories: empty Filter; without counter: empty URLs.
     const rest = dataRows(chart(fxUnassigned as unknown as OverviewDto, { kind: "tab", tab: "Response Codes" }));
-    expect(rest.find(r => r[1] === "Unassigned")).toEqual(["Response Codes", "Unassigned", null, 10, 1, 1010]);
-    expect(toCsv(rest)).toContain("\r\nResponse Codes,Unassigned,,10,1,1010\r\n");
+    expect(rest.find(r => r[1] === "Unassigned")).toEqual(["Response Codes", "Unassigned", null, 10, "1.0", 1010]);
+    expect(toCsv(rest)).toContain("\r\nResponse Codes,Unassigned,,10,1.0,1010\r\n");
     // Option „column names in UI language“.
     expect(dataRows(m, { uiHeaders: true, t: de.t })[0]).toEqual(["Eintrag", "Kategorie", "Filter", "URLs", "% gesamt", "Grundmenge"]);
     expect(fileName("Response Codes", "Shop A", "csv", new Date(2026, 10, 3))).toBe("overview-response-codes-shop-a-2026-11-03.csv");

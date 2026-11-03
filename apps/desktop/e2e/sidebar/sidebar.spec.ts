@@ -43,7 +43,7 @@ test("shows prerequisites without zero counts, remembers collapse and refreshes 
   await expect(summary.getByRole("row", { name: /Total URLs Displayed/ })).toContainText("27");
   await expect(page.getByRole("row", { name: /Outside <head>/ })).toContainText("–");
   await expect(page.getByRole("row", { name: /Lorem Ipsum Placeholder/ })).toContainText("7 pages unchecked");
-  await page.getByRole("button", { name: "▾ Page Titles", exact: true }).click();
+  await page.getByRole("button", { name: "Collapse Page Titles", exact: true }).click();
   await page.getByRole("tab", { name: "Issues", exact: true }).click();
   await page.getByRole("tab", { name: "Overview", exact: true }).click();
   await expect(page.getByRole("table", { name: "Page Titles", exact: true })).toHaveCount(0);

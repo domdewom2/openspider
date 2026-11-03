@@ -67,10 +67,11 @@ const TabSection = memo(function TabSection({ tab, collapsed, staleSteps, toggle
   const entry: EntryRef = { kind: "tab", tab: tab.tab };
   const selected = useSelected(entry);
   const label = tabLabel(t, tab.tab);
-  // UI-102: the name selects the block; the arrow (and arrow right/left) expands and collapses it (UI-061).
+  // UI-102: the name selects the block; the arrow (and arrow right/left) expands and collapses it (UI-061). The arrow's
+  // accessible name is a translated action, never the glyph.
   return <section>
     <div className="os-ovc-group-row">
-      <button type="button" className="os-sidebar-toggle" aria-expanded={!collapsed} aria-label={`${collapsed ? "▸" : "▾"} ${label}`} data-ovc-toggle={tab.tab} onClick={() => toggle(tab.tab)}>{collapsed ? "▸" : "▾"}</button>
+      <button type="button" className="os-sidebar-toggle" aria-expanded={!collapsed} aria-label={t(collapsed ? "sidebar-tab-expand" : "sidebar-tab-collapse", { tab: label })} data-ovc-toggle={tab.tab} onClick={() => toggle(tab.tab)}><span aria-hidden>{collapsed ? "▸" : "▾"}</span></button>
       <button type="button" className="os-sidebar-group" data-ovc-entry={entryKey(entry)} aria-current={selected || undefined} onClick={() => select(entry)}>{label}</button>
     </div>
     {!collapsed && <table className="os-sidebar-table" aria-label={label}><thead><tr><th>{t("sidebar-name")}</th><th>{t("sidebar-urls")}</th><th>{t("sidebar-percent-total")}</th></tr></thead><tbody>{tab.filters.map(filter =>

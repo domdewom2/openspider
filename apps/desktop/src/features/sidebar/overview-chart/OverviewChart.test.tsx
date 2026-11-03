@@ -18,7 +18,8 @@ import { CHART_LAYOUT_KEY, useChartLayout } from "../frame/layout";
 import { useSidebarNavigation } from "../frame/state";
 import { useOverviewSelection } from "../overview/selection";
 import { flushUiState } from "../../../state/uistate";
-import { OverviewChartArea } from "./OverviewChart";
+import { logOverflow, OverviewChartArea } from "./OverviewChart";
+import { makeT } from "../../../i18n";
 
 let core: MockCore;
 let answer: OverviewDto;
@@ -87,14 +88,14 @@ describe("UI-102 chart area in the Overview tab", () => {
     fireEvent.click(within(screen.getByRole("table", { name: "Response Codes" })).getByRole("button", { name: "All" }));
     await waitFor(() => expect(area().querySelector("[data-highlight]")).toBeNull());
     // UI-061: the arrow collapses and expands; the selection of the block stays.
-    fireEvent.click(screen.getByRole("button", { name: "▾ Response Codes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Collapse Response Codes" }));
     expect(screen.queryByRole("table", { name: "Response Codes" })).not.toBeInTheDocument();
     expect(useOverviewSelection.getState().entry).toEqual({ kind: "filter", tab: "Response Codes", filter: "All" });
     expect(within(area()).getByRole("img", { name: /Response Codes/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "Issues" }));
     fireEvent.click(screen.getByRole("tab", { name: "Overview" }));
     expect(await within(area()).findByRole("img", { name: /Response Codes/ })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "▸ Response Codes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Expand Response Codes" }));
     expect(screen.getByRole("table", { name: "Response Codes" })).toBeInTheDocument();
   });
 
@@ -309,6 +310,36 @@ describe("UI-102 chart area in the Overview tab", () => {
     useChartLayout.getState().reset();
     await ready();
     expect(useChartLayout.getState().layout.view).toBe("table");
+  });
+
+  // spec: UI-102
+  it("the overflow warning is logged once per entry and crawl, not at every changed value", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const logs = () => core.calls.filter(c => c.cmd === "diag.logFrontend").length;
+    useSession.setState({ crawl: { ...crawl, crawlId: "overflow-a" } });
+    logOverflow("Response Codes", 1000, 990);
+    logOverflow("Response Codes", 1001, 990);
+    logOverflow("Response Codes", 1002, 995);
+    expect(warn).toHaveBeenCalledTimes(1);
+    logOverflow("Internal", 30, 20);
+    expect(warn).toHaveBeenCalledTimes(2);
+    useSession.setState({ crawl: { ...crawl, crawlId: "overflow-b" } });
+    logOverflow("Response Codes", 1000, 990);
+    expect(warn).toHaveBeenCalledTimes(3);
+    expect(logs()).toBe(3);
+    warn.mockRestore();
+  });
+
+  // spec: UI-061 [M3]
+  it("the arrow of a tab block has a translated action as its name, without the glyph", async () => {
+    await ready();
+    const toggle = screen.getByRole("button", { name: "Collapse Page Titles" });
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(toggle).not.toHaveAccessibleName(/[▾▸]/);
+    fireEvent.click(toggle);
+    expect(screen.getByRole("button", { name: "Expand Page Titles" })).toHaveAttribute("aria-expanded", "false");
+    expect(makeT("de")("sidebar-tab-collapse", { tab: "Seitentitel" })).toBe("Seitentitel einklappen");
+    expect(makeT("de")("sidebar-tab-expand", { tab: "Seitentitel" })).toBe("Seitentitel ausklappen");
   });
 
   // spec: UI-102
