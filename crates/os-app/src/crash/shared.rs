@@ -508,8 +508,13 @@ pub fn panic_message(info: &std::panic::PanicHookInfo<'_>) -> String {
     }
 }
 
-/// Teil des Panic-Hooks: schreibt den Bericht und liefert seinen Pfad. Panikt nie.
+/// Teil des Panic-Hooks: schreibt den Bericht und liefert seinen Pfad. Panikt nie. Eingedämmte Panics
+/// ([`os_model::panic_guard::contained`]) erzeugen keinen Bericht.
 pub fn on_panic(info: &std::panic::PanicHookInfo<'_>, backtrace: &str) -> Option<PathBuf> {
+    // Abgefangene Panics in Parsern für Fremddaten sind kein Absturz (OUT-246, Klärung cc57ea03).
+    if os_model::panic_guard::is_contained() {
+        return None;
+    }
     let ctx = context()?;
     let thread = std::thread::current();
     let location = info

@@ -7,8 +7,6 @@
 //! (kaputte Datei, keine PDF, Passwortschutz ohne leeres Benutzerkennwort) ergibt leere Eigenschaften, nie
 //! einen Abbruch des Crawls.
 
-use std::panic::{catch_unwind, AssertUnwindSafe};
-
 use os_model::PdfMeta;
 
 use crate::text;
@@ -22,10 +20,9 @@ fn clean(value: Option<String>) -> Option<String> {
 
 /// Liest Titel und Schlüsselwörter aus dem Info-Dictionary.
 pub fn meta(body: &[u8]) -> PdfMeta {
-    // Der Parser verarbeitet fremde Eingaben: ein interner Fehler darf nie den Crawl abbrechen.
-    let loaded = catch_unwind(AssertUnwindSafe(|| {
-        lopdf::Document::load_metadata_mem(body)
-    }));
+    // Der Parser verarbeitet fremde Eingaben: ein interner Fehler darf nie den Crawl abbrechen. Eingedämmt: kein
+    // Absturzbericht (OUT-246), nur die Logzeile.
+    let loaded = os_model::panic_guard::contained(|| lopdf::Document::load_metadata_mem(body));
     match loaded {
         Ok(Ok(info)) => PdfMeta {
             title: clean(info.title),
@@ -38,7 +35,7 @@ pub fn meta(body: &[u8]) -> PdfMeta {
 /// Extrahiert URI-Annotationen unabhängig vom Textspeicher-Schalter.
 pub fn parse(body: &[u8], cfg: &crate::ParseConfig) -> os_model::PdfResult {
     let mut result =
-        catch_unwind(AssertUnwindSafe(|| parse_inner(body, cfg))).unwrap_or_else(|_| {
+        os_model::panic_guard::contained(|| parse_inner(body, cfg)).unwrap_or_else(|_| {
             os_model::PdfResult {
                 error: Some("PDF konnte nicht gelesen werden".into()),
                 ..Default::default()

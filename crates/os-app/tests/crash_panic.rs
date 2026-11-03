@@ -311,3 +311,71 @@ fn network_capture_over_panic_restart_and_hint_only_send_makes_a_request() {
         "genau eine Anfrage je Bericht"
     );
 }
+
+/// Defekte `.xls` aus M2-N33: calamine panikt (Index), der Import fängt das gezielt ab.
+fn corrupt_xls() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../tests/fixtures/crawl-list-corrupt/no-fat.xls")
+}
+
+// spec: OUT-246
+#[test]
+fn contained_parser_panic_logs_but_writes_no_report_while_an_internal_panic_still_does() {
+    if let Some(home) = in_child() {
+        let app = App::new(AppConfig::new(&home)).unwrap();
+        // Fremddaten-Parser: abgefangen und als saubere Fehlermeldung (Klärung cc57ea03).
+        let result = os_engine::list_input::read_items(&corrupt_xls());
+        assert!(
+            matches!(result, Err(os_engine::EngineError::Invalid(_))),
+            "{result:?}"
+        );
+        println!("CONTAINED-DONE");
+        // Interner Panic (kein Fremddaten-Parser): weiterhin ein Bericht.
+        let _ = std::thread::Builder::new()
+            .name("internal".into())
+            .spawn(|| panic!("internal invariant broken"))
+            .unwrap()
+            .join();
+        drop(app);
+        std::process::exit(7);
+    }
+    let home = tempfile::tempdir().unwrap();
+    let output = child(
+        "contained_parser_panic_logs_but_writes_no_report_while_an_internal_panic_still_does",
+        home.path(),
+        &[],
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert_eq!(
+        output.status.code(),
+        Some(7),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(stdout.contains("CONTAINED-DONE"), "{stdout}");
+    let reports = reports(home.path());
+    assert_eq!(reports.len(), 1, "nur der interne Panic: {reports:?}");
+    assert_eq!(reports[0].1["thread"], "internal");
+    assert!(reports[0].1["message"]
+        .as_str()
+        .unwrap()
+        .contains("internal invariant broken"));
+    // Die Logzeile mit Backtrace des eingedämmten Panics bleibt (OUT-240).
+    let log = std::fs::read_to_string(home.path().join("logs/openspider.log")).unwrap();
+    assert_eq!(log.matches("ERROR panic:").count(), 2, "{log}");
+    assert!(
+        log.contains("calamine"),
+        "Backtrace des abgefangenen Panics fehlt: {log}"
+    );
+    // Kein Hinweis beim nächsten Start für den eingedämmten Panic.
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let app = App::new(AppConfig::new(home.path())).unwrap();
+    let overview = rt
+        .block_on(app.dispatch(
+            os_app::CallCtx::for_window("main"),
+            "crash.overview",
+            Value::Null,
+        ))
+        .unwrap();
+    assert_eq!(overview["pending"].as_array().unwrap().len(), 1);
+}

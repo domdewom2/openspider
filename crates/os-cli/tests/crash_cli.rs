@@ -158,3 +158,33 @@ async fn privacy_no_host_secret_email_or_home_path_in_the_report() {
         .collect();
     assert!(logs.contains("ops-246@crash-secret.test"));
 }
+
+// spec: OUT-246
+#[test]
+fn contained_spreadsheet_panic_in_list_import_writes_no_report() {
+    // Defekte `.xls` aus M2-N33: calamine panikt, der Import fängt das ab und meldet einen Fehler der Datei.
+    let fixture = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../tests/fixtures/crawl-list-corrupt/no-fat.xls");
+    let env = Env::new();
+    let run = env.run(&["--crawl-list", fixture.to_str().unwrap()]);
+    assert_ne!(run.code, 0, "{}", run.dump());
+    assert!(
+        !run.stderr.contains("Absturzbericht gespeichert"),
+        "{}",
+        run.dump()
+    );
+    assert!(
+        reports(&env).is_empty(),
+        "kein Absturzbericht für einen eingedämmten Panic"
+    );
+    let logs: String = std::fs::read_dir(env.home.path().join("logs"))
+        .unwrap()
+        .flatten()
+        .filter(|e| e.file_type().unwrap().is_file())
+        .map(|e| std::fs::read_to_string(e.path()).unwrap())
+        .collect();
+    assert!(
+        logs.contains("ERROR panic:"),
+        "Logzeile mit Backtrace bleibt: {logs}"
+    );
+}
