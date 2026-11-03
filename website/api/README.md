@@ -61,3 +61,53 @@ php website/api/tests/feedback_test.php
 
 Die Tests ersetzen `mail()` durch eine Stub-Funktion (Argument `$mailer` von `fb_handle()`) und
 arbeiten in einem temporären Verzeichnis.
+
+# Absturzberichte (`crash.php`)
+
+`crash.php` nimmt Absturzberichte der Desktop-App als `POST /api/crash` entgegen (OUT-247). Die App sendet
+nur, nachdem jemand im Hinweis bzw. unter Hilfe → „Absturzberichte…“ auf „Senden“ geklickt hat; nie automatisch.
+PHP 8.3 (FPM), keine Abhängigkeiten, kein Drittanbieter. Es gelten dieselben Betriebsregeln wie für `feedback.php`.
+
+## Verhalten
+
+- Nur `POST` (sonst 405) mit `Content-Type: application/json`; Body höchstens 80 KB (sonst `413 too_large`).
+- Körper genau `{"report": <Bericht>, "note": "<Text>", "email": "<Adresse>"}`. Der Bericht muss genau die
+  19 Felder aus OUT-246 mit den richtigen Typen haben (`format` = 1, `id` UUID v4, `kind` ∈ `panic`/`frontend`/
+  `unclean_exit`, `process` ∈ `app`/`cli`, Listen `backtrace` ≤ 64 und `log_tail` ≤ 200 Einträge, `message`
+  ≤ 500 Zeichen). `note` höchstens 2.000 Zeichen, `email` leer oder gültig (≤ 254). Sonst `400 invalid`.
+- Rate-Limit: 10 Berichte pro Stunde je HMAC-SHA-256 der IP-Adresse mit täglich neuem Salz
+  (`salt_dir/salt-YYYY-MM-DD`, `salt_dir/rate-<hash>`), sonst `429 rate`. Die IP-Adresse selbst wird nirgends
+  gespeichert, auch nicht im Fehlerlog.
+- Speicherung: eine Datei je Bericht `data_dir/crash-YYYYMMDD-HHMMSS-<ref>.json` (UTC, Rechte 0600) mit
+  `ref`, `received`, `note`, `email`, `report`.
+- Danach Mail per `mail()` an `mail_to`, Betreff `[OpenSpider Absturz] <app_version> <os>/<arch> <kind>: <message>`
+  (Meldung auf 80 Zeichen gekürzt, RFC 2047), Text-Body (quoted-printable) mit Referenz, Notiz und Bericht;
+  `Reply-To` nur bei gültiger E-Mail. Scheitern Speicherung **und** Mail, antwortet der Endpunkt `500 server`.
+- Antwort `200 {"ok":true,"ref":"<8 Zeichen Base32>"}`; die Referenz zeigt die App an („Danke! Referenz: …“),
+  Nutzer können sie in einem GitHub-Issue angeben. Fehler: `{"ok":false,"error":"invalid"|"too_large"|"rate"|"server"}`.
+- Der Fehlerlog erhält nur feste Meldungen (`openspider-crash: …`).
+
+## Konfiguration
+
+Wie beim Feedback, aber eigene Datei: Die FPM-Umgebungsvariable `OPENSPIDER_CRASH_CONFIG` nennt eine INI-Datei mit
+`data_dir`, `salt_dir`, `mail_to`, `mail_from` (Vorlage `crash.example.ini`). Fehlt die Datei oder ein Schlüssel,
+antwortet der Endpunkt mit 503.
+
+## Betrieb
+
+- Beispiel FPM-Pool: `env[OPENSPIDER_CRASH_CONFIG] = /etc/openspider/crash.ini`; `data_dir` und `salt_dir` gehören
+  dem FPM-Benutzer und liegen außerhalb des Web-Roots (eigene Ordner, getrennt vom Feedback).
+- Der Webserver leitet nur `/api/crash` an diese Datei weiter (fester `SCRIPT_FILENAME` auf `crash.php`).
+- Salz und Rate-Dateien wie beim Feedback stündlich bereinigen (älter als 1440 Minuten).
+- Löschfrist: Berichte in `data_dir` nach 90 Tagen löschen (Datenschutzerklärung), z. B. täglich per Timer/Cron
+  alle `crash-*.json` älter als 90 Tage; die Benachrichtigungsmails im Postfach ebenso.
+
+## Tests
+
+```sh
+php -l website/api/crash.php
+php website/api/tests/crash_test.php
+```
+
+Die Tests verwenden die Bericht-Fixture `tests/fixtures/crash/crash-panic.json`, ersetzen `mail()` durch eine
+Stub-Funktion (Argument `$mailer` von `cr_handle()`) und leiten den Fehlerlog in eine temporäre Datei um.
