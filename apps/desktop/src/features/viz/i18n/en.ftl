@@ -163,3 +163,4 @@ viz-legend-low = Low
 viz-legend-high = High
 viz-legend-path-short = Directory
 viz-word-tip = { $term }: { $count }
+viz-3d-context-lost = The graphics context was lost and is being restored…

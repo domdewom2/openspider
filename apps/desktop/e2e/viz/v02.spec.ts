@@ -234,6 +234,47 @@ test.describe("3D-Varianten (WebGL)", () => {
   });
 
   // spec: UI-098
+  test("Kontextverlust: Hinweis statt Leerfläche, nach Wiederherstellung wieder vollständig gezeichnet (WEBGL_lose_context)", async ({ page }) => {
+    await openViz(page, bridge, "crawlGraph3d");
+    test.skip(!(await webgl(page)), "WebGL 2 in dieser Umgebung nicht verfügbar");
+    await layout3dDone(page);
+    const ok = await page.evaluate(() => {
+      const c = document.querySelector("canvas.os-viz-canvas-3d") as HTMLCanvasElement;
+      const ext = c.getContext("webgl2")?.getExtension("WEBGL_lose_context");
+      (window as unknown as { __lose?: WEBGL_lose_context | null }).__lose = ext ?? null;
+      ext?.loseContext();
+      return !!ext;
+    });
+    expect(ok).toBe(true);
+    await expect(page.getByTestId("viz-context-lost")).toBeVisible();
+    await expect.poll(() => page.evaluate(() => window.__osViz3d!.webgl)).toBe(false);
+    await page.evaluate(() => (window as unknown as { __lose: WEBGL_lose_context }).__lose.restoreContext());
+    await expect(page.getByTestId("viz-context-lost")).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => window.__osViz3d!.webgl)).toBe(true);
+    // Szene vollständig zurück: Knoten an ihren Positionen sichtbar, Export zeigt mehr als den Hintergrund.
+    const p = await point3d(page, 1);
+    expect(p.x).toBeGreaterThan(0);
+    const [png] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "PNG 1×" }).click()]);
+    const bytes = await readDownload(png);
+    const colours = await page.evaluate(async (b64) => {
+      const img = new Image();
+      img.src = `data:image/png;base64,${b64}`;
+      await img.decode();
+      const c = document.createElement("canvas");
+      c.width = img.width;
+      c.height = img.height;
+      const ctx = c.getContext("2d")!;
+      ctx.drawImage(img, 0, 0);
+      const d = ctx.getImageData(0, 0, c.width, c.height).data;
+      // Farbige Bildpunkte (Knoten); der Hintergrund ist grau.
+      let saturated = 0;
+      for (let i = 0; i < d.length; i += 4) if (Math.max(d[i]!, d[i + 1]!, d[i + 2]!) - Math.min(d[i]!, d[i + 1]!, d[i + 2]!) > 60) saturated++;
+      return saturated;
+    }, bytes.toString("base64"));
+    expect(colours).toBeGreaterThan(50);
+  });
+
+  // spec: UI-098
   test("ohne WebGL-Unterstützung erscheint ein Hinweis statt eines leeren Fensters", async ({ page }) => {
     await page.addInitScript(() => {
       const original = HTMLCanvasElement.prototype.getContext;

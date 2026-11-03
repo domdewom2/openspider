@@ -391,3 +391,17 @@ body,
   pointer-events:none;
   white-space:nowrap;
 }
+
+.os-viz-context-lost {
+  position:absolute;
+  top:var(--os-size-12);
+  left:50%;
+  z-index:2;
+  margin:0;
+  padding:var(--os-size-4) var(--os-size-12);
+  transform:translateX(-50%);
+  border:var(--os-line) solid var(--os-border-strong);
+  border-radius:var(--os-radius);
+  background:var(--os-bg-surface);
+  color:var(--os-text);
+}

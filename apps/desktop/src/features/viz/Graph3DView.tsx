@@ -15,8 +15,9 @@ import { directoryPath, tooltipRows } from "./model/details";
 import { encodeStats, nodeStyle, PALETTES } from "./model/encoding";
 import type { ForceInput, ForceReply } from "./model/force";
 import { createForceRunner, type ForceRunner } from "./model/forceRunner";
-import { GraphGl, hasWebGL2, rgbOf, type GlColors, type RenderOptions3D } from "./model/gl3d";
+import { GraphGl, hasWebGL2, rgbOf, uploadScene, type GlColors, type RenderOptions3D } from "./model/gl3d";
 import { placeLabels, plaque, type LabelBox } from "./model/render";
+import { nearestK, viewDepth } from "./model/labels3d";
 import { linkMenuEntries, overlayFrom, sameStructure, treeEdges, withLinks, type LinkOverlay, type LinkRequest } from "./model/links";
 import { current as currentMatch, EMPTY_SEARCH, search as runSearch, step as stepSearch, type SearchState } from "./model/search";
 import { VizTree } from "./model/tree";
@@ -142,6 +143,8 @@ export function Graph3DView({ kind, snapshotId, generation, initialRoot }: Graph
   const [layoutState, setLayoutState] = useState<LayoutState>({ phase: "idle", steps: 0 });
   const [searchState, setSearchState] = useState<SearchState>(EMPTY_SEARCH);
   const [menuTarget, setMenuTarget] = useState<number | null>(null);
+  const menuTargetRef = useRef(menuTarget);
+  menuTargetRef.current = menuTarget;
   const [tip, setTip] = useState<{ id: number; x: number; y: number } | null>(null);
   const [glFailed, setGlFailed] = useState(false);
   const style = useRenderStyle(opts.lineWidth);
@@ -159,6 +162,12 @@ export function Graph3DView({ kind, snapshotId, generation, initialRoot }: Graph
   const lastInteraction = useRef(performance.now());
   const lastFrame = useRef(0);
   const haloIds = useRef<number[]>([]);
+  /** Zählt Positionsänderungen (Layout, Einschwingen) für den Beschriftungs-Cache. */
+  const posVersion = useRef(0);
+  /** Letzte Zeigerposition; der Treffertest läuft höchstens einmal je Animationsbild. */
+  const pointer = useRef<{ x: number; y: number } | null>(null);
+  const pickFrame = useRef(0);
+  const [contextLost, setContextLost] = useState(false);
   /** Kamera folgt dem wachsenden Layout (Einpassen), bis der Nutzer selbst dreht, zoomt, verschiebt oder sucht. */
   const autoFit = useRef(true);
   const runner = useRef<ForceRunner | null>(null);
@@ -261,6 +270,10 @@ export function Graph3DView({ kind, snapshotId, generation, initialRoot }: Graph
       }
     return { inlinks: new Uint32Array(inl), outlinks: new Uint32Array(outl), shown: (inl.length + outl.length) / 2 };
   }, [scene, overlay]);
+  const colorArrayRef = useRef(colorArray);
+  colorArrayRef.current = colorArray;
+  const overlayIdxRef = useRef(overlayIdx);
+  overlayIdxRef.current = overlayIdx;
 
   // ---- Zeichnen ---------------------------------------------------------------------------------------------------
   const glColors = useCallback((): GlColors => {
@@ -291,7 +304,10 @@ export function Graph3DView({ kind, snapshotId, generation, initialRoot }: Graph
   }, [radiusOfScene]);
 
   // Beschriftungen: Wurzel, Suchtreffer, Auswahl und Zeiger immer; ab Zoomstufe zusätzlich die nächsten Knoten. Ohne
-  // Überlappung (Prioritätsreihenfolge), mit Plakette für die Lesbarkeit.
+  // Überlappung (Prioritätsreihenfolge), mit Plakette für die Lesbarkeit. Neu bestimmt nur, wenn sich Kamera,
+  // Positionen, Größe, Hervorhebungen oder Einstellungen ändern (sonst bleibt die Beschriftungsfläche stehen); die
+  // nächsten Knoten per Teilselektion über die Tiefe (`nearestK`), projiziert wird nur der Kandidatenkreis.
+  const labelKey = useRef("");
   const drawLabels = (view: Float32Array, proj: Float32Array) => {
     const lc = labels.current;
     const ctx = lc?.getContext("2d");
@@ -299,55 +315,58 @@ export function Graph3DView({ kind, snapshotId, generation, initialRoot }: Graph
     const tr = dataRef.current?.tree;
     if (!lc || !ctx || !sc || !tr) return;
     const { width, height, dpr } = size.current;
+    const c = camera.current;
+    const key = [c.target.join(","), c.theta, c.phi, c.k, c.base, posVersion.current, width, height, dpr, labelZoom.current, opts.labelMode, haloIds.current.join(","), overlayRef.current ? overlayRef.current.edges.length : -1, style.text, style.plaque, sc.ids.length].join("|");
+    if (key === labelKey.current) return;
+    labelKey.current = key;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
     const p = pos.current;
-    const scaleCss = pointScale(camera.current, 1, sceneRef.current?.ids.length ?? 0);
+    const scaleCss = pointScale(c, 1, sc.ids.length);
     const at = (i: number) => cam.project(view, proj, [p[i * 3] as number, p[i * 3 + 1] as number, p[i * 3 + 2] as number], width, height);
+    const inView = (q: { x: number; y: number } | null): q is { x: number; y: number; depth: number } => !!q && q.x >= 0 && q.y >= 0 && q.x <= width && q.y <= height;
     const strong = new Set<number>();
-    const candidates: { i: number; x: number; y: number; r: number; d: number }[] = [];
+    const candidates: { i: number; x: number; y: number; r: number }[] = [];
     const push = (i: number | undefined, force: boolean) => {
       if (i === undefined) return;
       const s2 = at(i);
-      if (!s2 || s2.x < 0 || s2.y < 0 || s2.x > width || s2.y > height) return;
+      if (!inView(s2)) return;
       const r = Math.min(MAX_PX, Math.max(MIN_PX, (2 * (sc.radius[i] as number) * scaleCss) / s2.depth)) / 2;
       if (force) strong.add(i);
-      candidates.push({ i, x: s2.x, y: s2.y, r, d: s2.depth });
+      candidates.push({ i, x: s2.x, y: s2.y, r });
     };
-    const prio = [haloIds.current[0], ...haloIds.current.slice(1), tr.roots[0]].filter((x): x is number => x !== undefined && x !== null);
+    const prio = [...haloIds.current, tr.roots[0]].filter((x): x is number => x !== undefined && x !== null);
     for (const id of prio) push(sc.index.get(id), true);
-    if (camera.current.k >= labelZoom.current) {
-      const near: { i: number; d: number }[] = [];
+    if (c.k >= labelZoom.current) {
       const ov = overlayRef.current;
-      for (let i = 0; i < sc.ids.length; i++) {
-        if (ov && !ov.connected.has(sc.ids[i] as number)) continue;
-        const s2 = at(i);
-        if (!s2 || s2.x < 0 || s2.y < 0 || s2.x > width || s2.y > height) continue;
-        near.push({ i, d: s2.depth });
-      }
-      near.sort((a, b) => a.d - b.d);
-      for (const n of near.slice(0, MAX_LABELS)) if (!strong.has(n.i)) push(n.i, false);
+      const near = nearestK(
+        sc.ids.length,
+        MAX_LABELS,
+        (i) => (ov && !ov.connected.has(sc.ids[i] as number) ? -1 : viewDepth(view, p[i * 3] as number, p[i * 3 + 1] as number, p[i * 3 + 2] as number)),
+        (i) => inView(at(i)),
+      );
+      for (const i of near) if (!strong.has(i)) push(i, false);
     }
     const text = (i: number) => {
       const n = tr.get(sc.ids[i] as number);
       return n ? (opts.labelMode === "url" ? (n.address ?? n.label) : n.label) : "";
     };
     const font = (b: boolean) => `${b ? 600 : 400} ${b ? 12 : 11}px ${style.fontFamily}`;
-    const boxes: LabelBox[] = candidates.map((c) => {
-      ctx.font = font(strong.has(c.i));
-      const w = (ctx.measureText?.(text(c.i)).width ?? 60) + 10;
-      return { x: c.x + c.r + 4, y: c.y - 9, w, h: 18 };
+    const boxes: LabelBox[] = candidates.map((cd) => {
+      ctx.font = font(strong.has(cd.i));
+      const w = (ctx.measureText?.(text(cd.i)).width ?? 60) + 10;
+      return { x: cd.x + cd.r + 4, y: cd.y - 9, w, h: 18 };
     });
     ctx.textBaseline = "middle";
     for (const k of placeLabels(boxes)) {
       const b = boxes[k] as LabelBox;
-      const c = candidates[k] as (typeof candidates)[number];
+      const cd = candidates[k] as (typeof candidates)[number];
       ctx.globalAlpha = 0.9;
       plaque(ctx, b, 5, style.plaque, style.plaqueBorder, 1);
       ctx.globalAlpha = 1;
-      ctx.font = font(strong.has(c.i));
+      ctx.font = font(strong.has(cd.i));
       ctx.fillStyle = style.text;
-      ctx.fillText(text(c.i), b.x + 5, b.y + b.h / 2);
+      ctx.fillText(text(cd.i), b.x + 5, b.y + b.h / 2);
     }
   };
 
@@ -383,6 +402,7 @@ export function Graph3DView({ kind, snapshotId, generation, initialRoot }: Graph
         easing.current = false;
       }
       g.setPositions(p);
+      posVersion.current++;
     }
     // Langsames Drehen im Leerlauf (Einstellung, Standard aus; nicht bei reduzierter Bewegung).
     const rotating = opt3d.current.autoRotate && !prefersReducedMotion() && !press.current && now - lastInteraction.current > AUTO_ROTATE_IDLE_MS;
@@ -423,6 +443,45 @@ export function Graph3DView({ kind, snapshotId, generation, initialRoot }: Graph
       return;
     }
     gl.current = g;
+    let current: GraphGl | null = g;
+    // Kontextverlust (GPU-Reset, Treiberwechsel, zu viele Kontexte): Wiederherstellung erlauben, Animation anhalten;
+    // nach `webglcontextrestored` alles neu hochladen und zeichnen, sonst Hinweis statt leerer Fläche.
+    const onLost = (e: Event) => {
+      e.preventDefault();
+      if (frame.current) cancelAnimationFrame(frame.current);
+      frame.current = 0;
+      cancelAnimationFrame(flight.current);
+      gl.current = null;
+      current = null;
+      setContextLost(true);
+    };
+    const onRestored = () => {
+      const next = GraphGl.create(c);
+      if (!next) {
+        setGlFailed(true);
+        return;
+      }
+      current = next;
+      gl.current = next;
+      const sc = sceneRef.current;
+      if (sc) {
+        const o = overlayIdxRef.current;
+        uploadScene(next, {
+          radius: sc.radius,
+          colors: colorArrayRef.current,
+          edges: sc.edges,
+          inlinks: o.inlinks,
+          outlinks: o.outlinks,
+          halo: new Uint32Array(haloIds.current.map((id) => sc.index.get(id)).filter((i): i is number => i !== undefined)),
+          positions: pos.current,
+        });
+      }
+      labelKey.current = "";
+      setContextLost(false);
+      draw();
+    };
+    c.addEventListener("webglcontextlost", onLost);
+    c.addEventListener("webglcontextrestored", onRestored);
     const resize = () => {
       const rect = el.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
@@ -439,11 +498,28 @@ export function Graph3DView({ kind, snapshotId, generation, initialRoot }: Graph
     resize();
     const ro = typeof ResizeObserver === "function" ? new ResizeObserver(resize) : null;
     ro?.observe(el);
+    // Wechsel des Pixelverhältnisses (anderer Bildschirm, Zoom): neu skalieren und die Abfrage für den neuen Wert erneuern.
+    let media: MediaQueryList | null = null;
+    const watchDpr = () => {
+      media?.removeEventListener?.("change", onDpr);
+      media = typeof matchMedia === "function" ? matchMedia(`(resolution: ${window.devicePixelRatio || 1}dppx)`) : null;
+      media?.addEventListener?.("change", onDpr);
+    };
+    const onDpr = () => {
+      resize();
+      watchDpr();
+    };
+    watchDpr();
     return () => {
       ro?.disconnect();
+      media?.removeEventListener?.("change", onDpr);
+      c.removeEventListener("webglcontextlost", onLost);
+      c.removeEventListener("webglcontextrestored", onRestored);
       if (frame.current) cancelAnimationFrame(frame.current);
       frame.current = 0;
-      g.dispose();
+      cancelAnimationFrame(pickFrame.current);
+      pickFrame.current = 0;
+      current?.dispose();
       gl.current = null;
     };
   }, [supported, draw]);
@@ -492,6 +568,7 @@ export function Graph3DView({ kind, snapshotId, generation, initialRoot }: Graph
       if (!fitted.current || prefersReducedMotion()) {
         pos.current.set(q);
         gl.current?.setPositions(pos.current);
+        posVersion.current++;
       } else easing.current = true;
       if (!fitted.current || autoFit.current) {
         fitted.current = true;
@@ -578,6 +655,8 @@ export function Graph3DView({ kind, snapshotId, generation, initialRoot }: Graph
     setSearchState((s) => (s.query ? runSearch(tree, s.query) : s));
   }, [tree]);
   const currentHit = currentMatch(searchState);
+  const currentHitRef = useRef(currentHit);
+  currentHitRef.current = currentHit;
   const flight = useRef(0);
   const flyTo = useCallback((id: number) => {
     const i = sceneRef.current?.index.get(id);
@@ -660,14 +739,22 @@ export function Graph3DView({ kind, snapshotId, generation, initialRoot }: Graph
       setCamera(p.right ? cam.pan(p.start, x - p.x, y - p.y, size.current.height) : cam.rotate(p.start, x - p.x, y - p.y));
       return;
     }
-    const id = pick(x, y);
-    if (id !== hovered.current) {
-      hovered.current = id;
-      haloIds.current = [id, currentHit, menuTarget].filter((x): x is number => x !== null);
-      applyHalo();
-      clearTip();
-      if (id !== null) hoverTimer.current = setTimeout(() => setTip({ id, x, y }), TOOLTIP_DELAY_3D_MS);
-    }
+    // Treffertest höchstens einmal je Animationsbild mit der letzten Zeigerposition.
+    pointer.current = { x, y };
+    if (pickFrame.current) return;
+    pickFrame.current = requestAnimationFrame(() => {
+      pickFrame.current = 0;
+      const at = pointer.current;
+      if (!at || press.current) return;
+      const id = pick(at.x, at.y);
+      if (id !== hovered.current) {
+        hovered.current = id;
+        haloIds.current = [id, currentHitRef.current, menuTargetRef.current].filter((v): v is number => v !== null);
+        applyHalo();
+        clearTip();
+        if (id !== null) hoverTimer.current = setTimeout(() => setTip({ id, x: at.x, y: at.y }), TOOLTIP_DELAY_3D_MS);
+      }
+    });
   };
   const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const p = press.current;
@@ -779,7 +866,7 @@ export function Graph3DView({ kind, snapshotId, generation, initialRoot }: Graph
     if (!import.meta.env.DEV && import.meta.env.VITE_E2E !== "1") return;
     const debug: Viz3DDebug = {
       kind,
-      webgl: supported && !glFailed,
+      webgl: supported && !glFailed && !contextLost,
       nodes: scene?.ids.length ?? 0,
       edges: (scene?.edges.length ?? 0) / 2,
       truncated: data?.dto.truncated ?? false,
@@ -898,6 +985,11 @@ export function Graph3DView({ kind, snapshotId, generation, initialRoot }: Graph
                 onKeyDown={onKeyDown}
               />
               <canvas ref={labels} className="os-viz-labels-3d" aria-hidden />
+              {contextLost && (
+                <p className="os-viz-context-lost" role="status" data-testid="viz-context-lost">
+                  {t("viz-3d-context-lost")}
+                </p>
+              )}
               <CompactLegend
                 colorMode={opts.colorMode}
                 colors={enc.colors && opts.palette === "standard" ? enc.colors : PALETTES[opts.palette]}

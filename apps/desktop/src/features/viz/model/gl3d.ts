@@ -126,6 +126,9 @@ void main() {
   o_color = vec4(u_color.rgb * u_color.a, u_color.a);
 }`;
 
+/** Multisampling des Zeichenpuffers (A/B-Schalter für die Messung auf dem Mac mini). */
+export const GL_ANTIALIAS = false;
+
 /** Ab so vielen Kanten ohne Tiefen-Abblendung (Leistung, UI-098). */
 export const FLAT_LINES_FROM = 20_000;
 
@@ -262,7 +265,9 @@ export class GraphGl {
   static create(canvas: HTMLCanvasElement): GraphGl | null {
     let gl: WebGL2RenderingContext | null = null;
     try {
-      gl = canvas.getContext("webgl2", { antialias: true, preserveDrawingBuffer: true, alpha: false });
+      // Ohne `preserveDrawingBuffer` (der PNG-Export zeichnet und liest im selben Durchlauf) und ohne Multisampling
+      // (Kugeln und Plaketten glätten ihre Ränder selbst) – weniger Speicher und Bandbreite (Fable-Fixrunde, A/B im Bericht).
+      gl = canvas.getContext("webgl2", { antialias: GL_ANTIALIAS, preserveDrawingBuffer: false, alpha: false });
     } catch {
       gl = null;
     }
@@ -411,4 +416,28 @@ export class GraphGl {
 export function rgbOf(hex: string): [number, number, number] {
   const n = parseInt(hex.replace("#", "").padEnd(6, "0").slice(0, 6), 16);
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
+}
+
+/** Alles, was nach einem wiederhergestellten Kontext (`webglcontextrestored`) neu hochgeladen werden muss. */
+export interface SceneUpload {
+  radius: Float32Array;
+  colors: Uint8Array | null;
+  edges: Uint32Array;
+  inlinks: Uint32Array;
+  outlinks: Uint32Array;
+  halo: Uint32Array;
+  positions: Float32Array;
+}
+
+export type SceneSink = Pick<GraphGl, "setNodes" | "setEdges" | "setColors" | "setOverlay" | "setHalo" | "setPositions">;
+
+/** Lädt eine Szene vollständig in einen (neuen) Kontext: Knoten, Kanten, Farben, Zusatzkanten, Lichtschein, Positionen. */
+export function uploadScene(g: SceneSink, s: SceneUpload): void {
+  const n = s.radius.length;
+  g.setNodes(s.radius, s.colors ?? new Uint8Array(n * 4));
+  g.setEdges(s.edges);
+  if (s.colors) g.setColors(s.colors);
+  g.setOverlay(s.inlinks, s.outlinks);
+  g.setHalo(s.halo);
+  g.setPositions(s.positions);
 }

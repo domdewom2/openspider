@@ -41,7 +41,21 @@ test("3D-Crawl-Graph 100 000 Knoten: erstes Bild, Layout im Worker (≤ 10 s), B
   for (let i = 0; i < 60; i++) await page.mouse.move(box.x + box.width / 2 + i * 4, box.y + box.height / 2 + (i % 10));
   const dragFps = await measuring;
   await page.mouse.up();
-  const result = { nodes: 100_000, openToFirstFrameMs: firstFrameMs, wallMs: Date.now() - opened, layout, idleFps: Math.round(idleFps * 10) / 10, dragFps: Math.round(dragFps * 10) / 10 };
+  // Nach der Suche (Kameraflug, Zoom ≥ 3, Beschriftungen der nächsten Knoten aktiv) – teuerster Fall der Beschriftung.
+  await page.getByRole("searchbox", { name: "Search URL" }).fill("p50000.html");
+  await expect(page.getByTestId("viz-search-count")).toHaveText("1 of 1");
+  await expect.poll(() => page.evaluate(() => window.__osViz3d!.camera.k)).toBeGreaterThanOrEqual(3);
+  await page.waitForTimeout(800);
+  const searchFps = await page.evaluate(() => window.__osViz3d!.fps(3_000));
+  // Drehen in der Nahansicht (Beschriftungen werden je Kamerabewegung neu bestimmt).
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  const nearMeasuring = page.evaluate(() => window.__osViz3d!.fps(3_000));
+  for (let i = 0; i < 60; i++) await page.mouse.move(box.x + box.width / 2 + i * 4, box.y + box.height / 2 + (i % 10));
+  const searchDragFps = await nearMeasuring;
+  await page.mouse.up();
+  const r1 = (v: number) => Math.round(v * 10) / 10;
+  const result = { nodes: 100_000, openToFirstFrameMs: firstFrameMs, wallMs: Date.now() - opened, layout, idleFps: r1(idleFps), dragFps: r1(dragFps), searchFps: r1(searchFps), searchDragFps: r1(searchDragFps) };
   console.info(`UI-098 3D 100k: ${JSON.stringify(result)}`);
   await info.attach("ui-098", { body: JSON.stringify(result, null, 2), contentType: "application/json" });
   expect(layout.phase).toBe("done");
