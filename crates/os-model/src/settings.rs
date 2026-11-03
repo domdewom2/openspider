@@ -62,6 +62,8 @@ pub struct AppSettings {
     pub updates: UpdateSettings,
     /// Logging und Aufbewahrung.
     pub logging: LoggingSettings,
+    /// Absturzberichte (OUT-247, M3-C01 additiv nach K2-61/K2-92).
+    pub crash_reports: CrashReportSettings,
 }
 
 impl Default for AppSettings {
@@ -78,6 +80,7 @@ impl Default for AppSettings {
             mcp: McpSettings::default(),
             logging: LoggingSettings::default(),
             updates: UpdateSettings::default(),
+            crash_reports: CrashReportSettings::default(),
         }
     }
 }
@@ -444,6 +447,19 @@ impl AppSettings {
         leaves("", &serde_json::to_value(other).unwrap_or_default(), &mut b);
         let keys: std::collections::BTreeSet<_> = a.keys().chain(b.keys()).cloned().collect();
         keys.into_iter().filter(|k| a.get(k) != b.get(k)).collect()
+    }
+}
+
+/// Absturzberichte (OUT-247): nach einem Absturz beim Start fragen, ob ein Bericht gesendet werden soll.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(default)]
+pub struct CrashReportSettings {
+    /// Hinweis beim Start zeigen (Standard: an). Aus: Berichte bleiben lokal und sind über das Hilfe-Menü sendbar.
+    pub prompt: bool,
+}
+impl Default for CrashReportSettings {
+    fn default() -> Self {
+        Self { prompt: true }
     }
 }
 
