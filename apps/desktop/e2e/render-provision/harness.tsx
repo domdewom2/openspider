@@ -44,19 +44,19 @@ function advance() {
   }
 }
 const h = core.handlers;
-h.set("render_provision.status", () => { advance(); return structuredClone(status); });
-h.set("render_provision.download", () => {
+h.set("chromium.status", () => { advance(); return structuredClone(status); });
+h.set("chromium.download", () => {
   status = { ...status, job: { downloading: { done: status.partialBytes, total: TOTAL } } };
   return structuredClone(status);
 });
-h.set("render_provision.cancel", () => {
+h.set("chromium.cancel", () => {
   const job = status.job;
   if (typeof job === "object" && "downloading" in job) {
     status = { ...status, partialBytes: job.downloading.done, job: { failed: { messageKey: "err-chromium-cancelled", detail: "" } } };
   }
   return structuredClone(status);
 });
-h.set("render_provision.remove", () => { status = base(); return structuredClone(status); });
+h.set("chromium.remove", () => { status = base(); return structuredClone(status); });
 
 const api = {
   open: (anchor = "rendering.mode") => openConfig({ anchor }),
@@ -66,7 +66,7 @@ const api = {
   },
   /** Download bei der Hälfte anhalten bzw. freigeben (für den Abbruch). */
   hold(value: boolean) { hold = value; },
-  calls: () => core.calls.filter((c) => c.cmd.startsWith("render_provision.")).map((c) => c.cmd),
+  calls: () => core.calls.filter((c) => c.cmd.startsWith("chromium.")).map((c) => c.cmd),
 };
 declare global {
   interface Window {

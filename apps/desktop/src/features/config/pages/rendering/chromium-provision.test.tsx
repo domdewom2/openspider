@@ -41,7 +41,7 @@ beforeEach(async () => {
   core.handlers.set("api.list", () => []);
   core.handlers.set("catalog.columns", () => []);
   status = base();
-  core.handlers.set("render_provision.status", () => structuredClone(status));
+  core.handlers.set("chromium.status", () => structuredClone(status));
   setClient(createClient(core.transport("main")));
   await setLanguage("en");
   useSession.setState({ crawl: null, ops: {}, analysis: null });
@@ -51,11 +51,11 @@ afterEach(async () => { act(() => closeConfig()); cleanup(); await setLanguage("
 describe("Chromium provisioning section (K3-01)", () => {
   // spec: OUT-260 [M3]
   it("downloads on request with progress, then shows the provisioned Chromium and offers removal", async () => {
-    core.handlers.set("render_provision.download", () => {
+    core.handlers.set("chromium.download", () => {
       status = { ...status, job: { downloading: { done: 93 * MB, total: 186 * MB } } };
       return structuredClone(status);
     });
-    core.handlers.set("render_provision.remove", () => { status = base(); return structuredClone(status); });
+    core.handlers.set("chromium.remove", () => { status = base(); return structuredClone(status); });
     render(<ConfigHost />);
     const section = await open();
     expect(section.getByRole("heading", { name: "Chromium for JavaScript rendering" })).toBeInTheDocument();
@@ -65,7 +65,7 @@ describe("Chromium provisioning section (K3-01)", () => {
     const bar = await section.findByRole("progressbar", { name: "Chromium download progress" });
     expect(bar).toHaveAttribute("aria-valuenow", String(93 * MB));
     expect(section.getByRole("status")).toHaveTextContent("Downloading: 93.0 MB of 186 MB");
-    expect(calls("render_provision.download")[0].args).toEqual({ configuredPath: null });
+    expect(calls("chromium.download")[0].args).toEqual({ configuredPath: null });
     expect(section.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
     // Fertig: der Abschnitt fragt während des Downloads selbst nach und zeigt danach die Installation.
     status = {
@@ -78,14 +78,14 @@ describe("Chromium provisioning section (K3-01)", () => {
     expect(section.queryByRole("progressbar")).toBeNull();
     fireEvent.click(section.getByRole("button", { name: "Remove downloaded Chromium" }));
     expect(await section.findByRole("button", { name: /^Download Chromium/ })).toBeInTheDocument();
-    expect(calls("render_provision.remove")).toHaveLength(1);
+    expect(calls("chromium.remove")).toHaveLength(1);
   });
 
   // spec: CRAWL-077 [P1]
   it("de: JavaScript mode without Chromium shows the notice with the download button", async () => {
     await setLanguage("de");
     rendering("javascript");
-    core.handlers.set("render_provision.download", () => {
+    core.handlers.set("chromium.download", () => {
       status = { ...status, job: "verifying" };
       return structuredClone(status);
     });
@@ -95,13 +95,13 @@ describe("Chromium provisioning section (K3-01)", () => {
     expect(notice).toHaveTextContent("JavaScript-Rendering braucht Chromium, auf diesem Rechner wurde aber keins gefunden.");
     fireEvent.click(within(notice).getByRole("button", { name: /^Chromium herunterladen \(186/ }));
     expect(await section.findByText("Prüfsumme wird geprüft …")).toBeInTheDocument();
-    expect(calls("render_provision.download")).toHaveLength(1);
+    expect(calls("chromium.download")).toHaveLength(1);
   });
 
   // spec: CRAWL-077 [P1]
   it("a configured path that does not exist is named instead of offering a silent fallback", async () => {
     rendering("javascript", "/opt/none/chrome");
-    core.handlers.set("render_provision.status", (args) => {
+    core.handlers.set("chromium.status", (args) => {
       expect(args).toEqual({ configuredPath: "/opt/none/chrome" });
       return { ...base(), activePath: "/opt/none/chrome" };
     });
@@ -116,7 +116,7 @@ describe("Chromium provisioning section (K3-01)", () => {
   // spec: OUT-260 [M3]
   it("a cancelled download can be resumed or discarded", async () => {
     status = { ...base(), partialBytes: 93 * MB, job: { failed: { messageKey: "err-chromium-cancelled", detail: "x" } } };
-    core.handlers.set("render_provision.remove", () => { status = base(); return structuredClone(status); });
+    core.handlers.set("chromium.remove", () => { status = base(); return structuredClone(status); });
     render(<ConfigHost />);
     const section = await open();
     expect(section.getByTestId("chromium-prov-failure")).toHaveTextContent("The download was cancelled. It can be resumed.");
@@ -138,7 +138,7 @@ describe("Chromium provisioning section (K3-01)", () => {
 
   it("removal refused during a crawl shows the reason", async () => {
     status = { ...base(), installed: "156.0.8078.80", active: "provisioned", activePath: "/x/chrome" };
-    core.handlers.set("render_provision.remove", () => {
+    core.handlers.set("chromium.remove", () => {
       throw new IpcError({ code: "CrawlRunning", messageKey: "err-chromium-crawl-running", args: {}, field: null, detail: null, retryable: false } as never);
     });
     render(<ConfigHost />);

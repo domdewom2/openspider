@@ -7,7 +7,7 @@ import { useFormat, useT, type TFn } from "../../../../i18n";
 import { IpcError } from "../../../../ipc/errors";
 import type { ChromiumStatus } from "../../../../ipc/gen/ChromiumStatus";
 import type { ChromiumStatusArgs } from "../../../../ipc/gen/ChromiumStatusArgs";
-import { render_provision } from "../../../../ipc/render_provision";
+import { chromium } from "../../../../ipc/chromium";
 import { Banner, Button, ProgressBar } from "../../../../ui/primitives";
 import { useConfig } from "../../frame/context";
 import "./ChromiumProvision.css";
@@ -45,7 +45,7 @@ export function ChromiumProvision() {
 
   const refresh = useCallback(async () => {
     try {
-      const next = await render_provision.status({ configuredPath: configured });
+      const next = await chromium.status({ configuredPath: configured });
       if (live.current) setStatus(next);
     } catch {
       // Ohne Kern-Command (ältere Bridge, Test ohne Handler) bleibt der Abschnitt verborgen.
@@ -89,7 +89,7 @@ export function ChromiumProvision() {
   const downloadLabel = status.partialBytes > 0 && size !== null
     ? t("chromium-prov-resume", { done: fmt.bytes(status.partialBytes), total: fmt.bytes(size) })
     : t("chromium-prov-download", { size: size === null ? "?" : fmt.bytes(size) });
-  const download = <Button variant="primary" onPress={() => void run(render_provision.download)}>{downloadLabel}</Button>;
+  const download = <Button variant="primary" onPress={() => void run(chromium.download)}>{downloadLabel}</Button>;
 
   return (
     <section className="os-chromium-provision" aria-labelledby="chromium-prov-title" data-testid="chromium-provision">
@@ -143,16 +143,16 @@ export function ChromiumProvision() {
         {canDownload && download}
         {/* Abbrechen nur während der Übertragung; Prüfung und Einrichtung laufen kurz und werden nicht unterbrochen. */}
         {downloading && (
-          <Button onPress={() => void run(render_provision.cancel)}>{t("chromium-prov-cancel")}</Button>
+          <Button onPress={() => void run(chromium.cancel)}>{t("chromium-prov-cancel")}</Button>
         )}
         {!busy && installed !== null && status.supported && installed !== status.version && (
-          <Button variant="primary" onPress={() => void run(render_provision.download)}>{t("chromium-prov-update", { version: status.version })}</Button>
+          <Button variant="primary" onPress={() => void run(chromium.download)}>{t("chromium-prov-update", { version: status.version })}</Button>
         )}
         {!busy && installed === null && status.partialBytes > 0 && (
-          <Button onPress={() => void run(render_provision.remove)}>{t("chromium-prov-discard")}</Button>
+          <Button onPress={() => void run(chromium.remove)}>{t("chromium-prov-discard")}</Button>
         )}
         {!busy && installed !== null && (
-          <Button onPress={() => void run(render_provision.remove)}>{t("chromium-prov-remove")}</Button>
+          <Button onPress={() => void run(chromium.remove)}>{t("chromium-prov-remove")}</Button>
         )}
       </div>
     </section>

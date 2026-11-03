@@ -28,7 +28,7 @@ test("en: JavaScript mode without Chromium offers the download; progress, then t
   await expect(section.getByTestId("chromium-prov-installed")).toHaveText("Downloaded: version 156.0.8078.80");
   await section.getByRole("button", { name: "Remove downloaded Chromium" }).click();
   await expect(section.getByTestId("chromium-prov-active")).toHaveText("No Chromium found.");
-  expect(await page.evaluate(() => window.provFixture.calls())).toEqual(expect.arrayContaining(["render_provision.download", "render_provision.remove"]));
+  expect(await page.evaluate(() => window.provFixture.calls())).toEqual(expect.arrayContaining(["chromium.download", "chromium.remove"]));
 });
 
 // spec: OUT-260 [M3]
