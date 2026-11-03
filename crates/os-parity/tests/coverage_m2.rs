@@ -226,7 +226,14 @@ fn malformed_junit_is_an_error() {
 #[test]
 fn all_new_ignore_prefixes_are_milestone_specific() {
     use os_parity::coverage::{m2, valid_defer_reason};
-    for reason in ["M3: x", "M4: x", "M5: x", "P2: x", "Klärung K2-12: x"] {
+    for reason in [
+        "M3: x",
+        "M4: x",
+        "M5: x",
+        "P2: x",
+        "Klärung K2-12: x",
+        "Klärung K3-01: x",
+    ] {
         assert!(m2::valid_defer_reason(reason), "{reason}");
     }
     for reason in [
@@ -234,6 +241,8 @@ fn all_new_ignore_prefixes_are_milestone_specific() {
         "Klärung K-12",
         "Klärung K2-x",
         "Klärung K2-12foo",
+        "Klärung K3-x",
+        "Klärung K4-01: x",
         "wartet auf M2-E03",
         "Benchmark: x",
         "",
@@ -247,6 +256,11 @@ fn all_new_ignore_prefixes_are_milestone_specific() {
         "Klärung K2-68: N01-C01, Besitzer M2-N01b"
     ));
     assert!(!valid_defer_reason("Klärung K2-x"));
+    // K3-01: M3-Klärungen gelten im M1-Strict-Lauf ebenso.
+    assert!(valid_defer_reason(
+        "Klärung K3-01: Lighthouse wird nicht gebündelt"
+    ));
+    assert!(!valid_defer_reason("Klärung K3-x"));
 }
 
 #[test]
