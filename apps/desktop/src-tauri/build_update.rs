@@ -2,7 +2,7 @@
 
 use serde_json::{json, Value};
 
-const DEFAULT_REPO: &str = "domdewom2/openspider";
+const DEFAULT_REPO: &str = "wojcikdominik/openspider";
 
 /// Apply only explicitly requested overrides. Return whether the effective key is empty.
 pub fn configure(

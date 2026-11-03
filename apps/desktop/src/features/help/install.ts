@@ -85,7 +85,7 @@ export function installMainMenus(): () => void {
   on("help.logs", () => diag.openLogs());
   // URLs aus dem eigenen öffentlichen Repository, keine Referenzressourcen.
   on("help.manual", () => { if (client.transportName === "tauri") return client.invoke<void>("open_manual");
-    window.open("https://github.com/domdewom2/openspider/tree/main/docs", "_blank", "noopener,noreferrer"); });
+    window.open("https://github.com/wojcikdominik/openspider/tree/main/docs", "_blank", "noopener,noreferrer"); });
   for (const mode of ["spider", "list", "serp", "apis", "compare"] as const) on(`mode.${mode}`, () => {
     useMainMode.setState({ mode });
     state.mode = mode;

@@ -84,7 +84,7 @@ Der Nutzer richtet eine Azure-App mit GitHub-OIDC-Verbund ein.
 Issuer: `https://token.actions.githubusercontent.com`, Audience: `api://AzureADTokenExchange`.
 Empfohlen und im Windows-Job mit `environment: release` eingestellt ist das
 GitHub-Environment **release** mit genau diesem Azure-Subject:
-`repo:domdewom2/openspider:environment:release`.
+`repo:wojcikdominik@2600469/openspider@1416630178:environment:release`.
 Das Environment vor dem ersten Dispatch im Repository anlegen und seine zulässigen
 Deployment-Branches/Tags konfigurieren: für die Korrekturprüfung `m3/r02`, danach
 `main`, `release/*` und `v*`. Diese GitHub-Muster sind keine Azure-Subjects.
@@ -97,15 +97,15 @@ exaktem Ref nötig:
 
 | Auslöser | Subject |
 | --- | --- |
-| Hauptbranch | `repo:domdewom2/openspider:ref:refs/heads/main` |
-| Paketbranch | `repo:domdewom2/openspider:ref:refs/heads/m3/r02` |
-| Versionstags `v*` | Je konkretem Tag, z. B. `repo:domdewom2/openspider:ref:refs/tags/v1.0.0-beta.1` |
-| Release-Branches `release/*` | Je konkretem Branch, z. B. `repo:domdewom2/openspider:ref:refs/heads/release/1.0` |
-| Anderes Environment `<name>` | `repo:domdewom2/openspider:environment:<name>`; Job und Credential müssen denselben Namen verwenden. |
+| Hauptbranch | `repo:wojcikdominik@2600469/openspider@1416630178:ref:refs/heads/main` |
+| Paketbranch | `repo:wojcikdominik@2600469/openspider@1416630178:ref:refs/heads/m3/r02` |
+| Versionstags `v*` | Je konkretem Tag, z. B. `repo:wojcikdominik@2600469/openspider@1416630178:ref:refs/tags/v1.0.0-beta.1` |
+| Release-Branches `release/*` | Je konkretem Branch, z. B. `repo:wojcikdominik@2600469/openspider@1416630178:ref:refs/heads/release/1.0` |
+| Anderes Environment `<name>` | `repo:wojcikdominik@2600469/openspider@1416630178:environment:<name>`; Job und Credential müssen denselben Namen verwenden. |
 
 Azure unterstützt in normalen Federated-Credential-Subjects **keine Wildcards**:
-`repo:domdewom2/openspider:ref:refs/tags/v*` und
-`repo:domdewom2/openspider:ref:refs/heads/release/*` sind keine gültige
+`repo:wojcikdominik@2600469/openspider@1416630178:ref:refs/tags/v*` und
+`repo:wojcikdominik@2600469/openspider@1416630178:ref:refs/heads/release/*` sind keine gültige
 Musterfreigabe. Deshalb das Environment `release` verwenden, statt für jeden Tag
 neue Credentials anzulegen. Die separate Azure-Vorschau „Flexible federated identity
 credentials“ mit Claim-Ausdrücken wird hier nicht vorausgesetzt.
@@ -159,7 +159,7 @@ Mit Schlüsseln muss für beide Installer eine zugehörige `.sig` entstehen.
 Die Updater-Signatur wird über das endgültige Authenticode-signierte Paket erstellt.
 
 `channel=stable` setzt den Endpunkt auf
-`https://github.com/domdewom2/openspider/releases/latest/download/latest.json`,
+`https://github.com/wojcikdominik/openspider/releases/latest/download/latest.json`,
 `channel=beta` auf `latest-beta.json` am selben Ort. R04 muss den passenden Wert
 explizit übergeben; der Workflow setzt dazu auch die vom F01-Build-Skript gelesene
 Variable `OPENSPIDER_UPDATE_BETA=1` beziehungsweise `0`. Die App hat keine Kanalwahl.
