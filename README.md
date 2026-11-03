@@ -81,8 +81,8 @@ Linux x86_64 with glibc supports the core and CLI only; Linux desktop,
 .deb/.rpm and arm64 releases remain unsupported.
 Homebrew and winget distribution are planned and not available yet.
 
-The [German user guide](website/site/handbuch/index.html) and
-[English user guide](website/site/en/manual/index.html) cover DMG, NSIS and silent MSI
+The [German user guide](https://openspider.de/handbuch/) and
+[English user guide](https://openspider.de/en/manual/) cover DMG, NSIS and silent MSI
 installation, Gatekeeper/SmartScreen, CLI/MCP, scheduling, updates and uninstalling.
 Automatic update checks send only version, OS and architecture to GitHub Releases
 (which sees the connection IP), without telemetry or crawl data. Disable them in
@@ -90,9 +90,9 @@ Settings → Updates or with `OPENSPIDER_DISABLE_UPDATE_CHECK=1`.
 
 ## Documentation
 
-- [Benutzerhandbuch (Deutsch)](website/site/handbuch/index.html)
-- [User guide (English)](website/site/en/manual/index.html)
-- [Agency beta instructions](website/site/en/beta/index.html) — you will receive the feedback channel with your invitation.
+- [Benutzerhandbuch (Deutsch)](https://openspider.de/handbuch/)
+- [User guide (English)](https://openspider.de/en/manual/)
+- [Open beta](https://openspider.de/en/beta/) ([Deutsch](https://openspider.de/beta/)) — everyone can join; send feedback through the form on that page or open a [GitHub issue](https://github.com/wojcikdominik/openspider/issues/new/choose).
 
 ### Build the CLI from source
 
