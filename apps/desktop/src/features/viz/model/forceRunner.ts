@@ -1,9 +1,10 @@
 // Fensterseite des Layouts: startet den Worker (oder ohne Worker-Unterstützung denselben Treiber im Hauptthread).
 import { ForceDriver, type ForceInput, type ForceReply, type ForceRequest, type ForceResume } from "./force";
+import { createSimulation } from "./simulation";
 
 export interface ForceRunner {
   start(input: ForceInput, maxMs?: number): void;
-  fix(index: number, x: number, y: number): void;
+  fix(index: number, x: number, y: number, z?: number): void;
   release(index: number): void;
   pause(): void;
   resume(): void;
@@ -58,7 +59,7 @@ function workerRunner(listener: ForceListener): ForceRunner | null {
     start: (next, limit) => {
       if (disposed) return;
       // Keep compact restart data; never mutate caller-owned arrays.
-      input = { ...next, fixed: next.fixed?.slice() ?? new Float64Array(next.parent.length * 2).fill(Number.NaN) };
+      input = { ...next, fixed: next.fixed?.slice() ?? new Float64Array(next.parent.length * (next.dims ?? 2)).fill(Number.NaN) };
       resume = undefined;
       maxMs = limit;
       if (!current) {
@@ -67,12 +68,14 @@ function workerRunner(listener: ForceListener): ForceRunner | null {
       }
       send({ type: "start", input, maxMs });
     },
-    fix: (index, x, y) => {
-      if (input?.fixed) { input.fixed[index * 2] = x; input.fixed[index * 2 + 1] = y; }
-      send({ type: "fix", index, x, y });
+    fix: (index, x, y, z) => {
+      const d = input?.dims ?? 2;
+      if (input?.fixed) [x, y, z ?? 0].slice(0, d).forEach((v, k) => { (input as ForceInput & { fixed: Float64Array }).fixed[index * d + k] = v; });
+      send({ type: "fix", index, x, y, z });
     },
     release: (index) => {
-      if (input?.fixed) { input.fixed[index * 2] = Number.NaN; input.fixed[index * 2 + 1] = Number.NaN; }
+      const d = input?.dims ?? 2;
+      if (input?.fixed) input.fixed.fill(Number.NaN, index * d, index * d + d);
       send({ type: "release", index });
     },
     pause: () => send({ type: "pause" }),
@@ -89,11 +92,11 @@ function workerRunner(listener: ForceListener): ForceRunner | null {
 /** Rückfall ohne Worker (vitest/jsdom): gleicher Treiber in Zeitscheiben im Hauptthread. */
 export function inlineRunner(listener: ForceListener, schedule?: (fn: () => void) => void): ForceRunner {
   let alive = true;
-  const driver = new ForceDriver((r) => alive && listener(r), schedule);
+  const driver = new ForceDriver((r) => alive && listener(r), schedule, undefined, undefined, createSimulation);
   const send = (msg: ForceRequest) => { if (alive) driver.handle(msg); };
   return {
     start: (input, maxMs) => send({ type: "start", input, maxMs }),
-    fix: (index, x, y) => send({ type: "fix", index, x, y }),
+    fix: (index, x, y, z) => send({ type: "fix", index, x, y, z }),
     release: (index) => send({ type: "release", index }),
     pause: () => send({ type: "pause" }),
     resume: () => send({ type: "resume" }),

@@ -89,6 +89,26 @@ pub struct VizGraphArgs {
     #[serde(default)]
     #[ts(optional = nullable)]
     pub color_metric: Option<String>,
+
+    /// Links dieses Knotens einblenden (UI-097); ohne Angabe nur die Baumkanten.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub links_node: Option<i64>,
+
+    /// Richtung der eingeblendeten Links: `inlinks`, `childInlinks`, `outlinks` oder `childOutlinks`.
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub links_mode: Option<String>,
+
+    /// Links mit nofollow einbeziehen (Standard an).
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub links_include_nofollow: Option<bool>,
+
+    /// Links in Navigation und Footer (Linkposition) ausschließen (Standard aus).
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub links_exclude_nav_footer: Option<bool>,
 }
 
 /// Ein Knoten.
@@ -164,6 +184,11 @@ pub struct GraphEdge {
     pub source: i64,
     /// Ziel.
     pub target: i64,
+    /// Art der Kante wie in `edges.csv` (UI-090): `inlink` bzw. `outlink` für eingeblendete Links (UI-097);
+    /// ohne Angabe eine Baumkante (`tree`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional = nullable)]
+    pub edge_type: Option<String>,
 }
 
 /// Antwort von `viz.graph`.
@@ -182,6 +207,10 @@ pub struct GraphDto {
     pub edges: Vec<GraphEdge>,
     /// Das Knotenbudget hat gekürzt.
     pub truncated: bool,
+    /// Eingeblendete Links (UI-097): Anzahl eindeutiger Links gemäß Optionen, auch zu nicht dargestellten Knoten.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional = nullable)]
+    pub link_total: Option<u64>,
 }
 
 /// Quelle der Wortwolke.
@@ -233,6 +262,11 @@ pub struct VizWordsArgs {
     #[serde(default)]
     #[ts(optional = nullable)]
     pub exclude_self_links: Option<bool>,
+
+    /// Mindestlänge eines Worts in Zeichen (Body-Text, UI-100; Standard 3).
+    #[serde(default)]
+    #[ts(optional = nullable)]
+    pub min_length: Option<u32>,
 }
 
 /// Wort und Häufigkeit.

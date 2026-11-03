@@ -273,6 +273,7 @@ async fn other_scenarios_have_no_engine_adapter_yet() {
         .unwrap();
     assert!(rep.passed);
     assert_eq!(metric(&rep, "crawler_available"), false);
+    assert_eq!(metric(&rep, "acceptance_complete"), false);
     assert_eq!(crawler().name(), "os-engine");
 }
 

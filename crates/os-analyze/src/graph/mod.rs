@@ -1,10 +1,59 @@
 //! Unveränderliche Graph-Schnappschüsse (K-16) ohne DOM oder Seiteninhalte.
+mod links;
 mod load;
 mod words;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, VecDeque};
 
-pub use words::{WordOptions, WordUnit};
+pub use links::{LinkDirection, LinkOverlay, LinkOverlayOptions};
+pub use words::{body_terms, BodyWordOptions, WordOptions, WordUnit};
+
+/// Größtes Knotenbudget der 2D-Darstellungen (UI-096).
+pub const MAX_BUDGET_2D: u32 = 50_000;
+/// Standard- und Höchstgrenze der 3D-Varianten (UI-098: Knotengrenze Standard 100 000).
+pub const MAX_BUDGET_3D: u32 = 100_000;
+
+/// Umfang einer Aufnahme: Zeilengrenze der URLs (die übrigen Grenzen wachsen anteilig mit), ob die Ankertexte der
+/// Wortwolke (UI-099) mitgelesen werden und ob alle numerischen Erweiterungswerte (`url_ext`) als Metriken dienen.
+/// Ohne Ankertexte liest die Aufnahme `links` nur, wenn die Entdeckungsherkunft fehlt (Rückfall über Links).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CaptureScope {
+    pub max_urls: u64,
+    pub anchors: bool,
+    /// `false`: aus `url_ext` nur der Link Score (UI-095); API-Werte und Custom Extraction bleiben.
+    pub ext_metrics: bool,
+}
+
+impl Default for CaptureScope {
+    fn default() -> Self {
+        Self {
+            max_urls: u64::from(MAX_BUDGET_2D),
+            anchors: true,
+            ext_metrics: true,
+        }
+    }
+}
+
+impl CaptureScope {
+    /// Graphen ohne Wortwolke (2D bzw. 3D nach `max_urls`).
+    pub fn graph(max_urls: u32) -> Self {
+        Self {
+            max_urls: u64::from(max_urls),
+            anchors: false,
+            ext_metrics: true,
+        }
+    }
+
+    /// 3D-Varianten (UI-098): bis 100 000 URLs; aus `url_ext` nur der Link Score, damit die Zahl der
+    /// Erweiterungswerte je Seite die Aufnahme großer Crawls nicht verhindert.
+    pub fn three_d() -> Self {
+        Self {
+            max_urls: u64::from(MAX_BUDGET_3D),
+            anchors: false,
+            ext_metrics: false,
+        }
+    }
+}
 
 /// Gemeinsame Daten für Baum und Kraftgraph; das Layout bestimmt die Darstellung.
 #[derive(Debug, Clone, PartialEq)]
@@ -64,6 +113,8 @@ pub struct GraphOptions {
     pub include_non_indexable: bool,
     pub metric: String,
     pub color_metric: Option<String>,
+    /// Höchstes zulässiges Budget: 2D 50 000 (UI-096), 3D 100 000 (UI-098).
+    pub max_budget: u32,
 }
 
 impl Default for GraphOptions {
@@ -79,6 +130,7 @@ impl Default for GraphOptions {
             include_non_indexable: true,
             metric: "crawl_depth".into(),
             color_metric: None,
+            max_budget: MAX_BUDGET_2D,
         }
     }
 }
@@ -111,7 +163,35 @@ pub(crate) fn metric_key(name: &str) -> String {
 impl Snapshot {
     /// Aufnahme über den Lese-Pool der App oder direkt im Betrieb ohne Oberfläche.
     pub fn capture(file: &os_store::CrawlFile) -> Result<Self, os_store::StoreError> {
-        load::capture(file)
+        load::capture(file, CaptureScope::default())
+    }
+
+    /// Aufnahme mit eigenem Umfang (3D bis 100 000 URLs, Graphen ohne Ankertexte).
+    pub fn capture_scoped(
+        file: &os_store::CrawlFile,
+        scope: CaptureScope,
+    ) -> Result<Self, os_store::StoreError> {
+        load::capture(file, scope)
+    }
+
+    /// Direkte Kinder eines Knotens im Entdeckungs- bzw. Verzeichnisbaum (Reihenfolge der Entdeckung).
+    pub fn children_of(&self, id: i64, directory: bool) -> Vec<i64> {
+        let tree = if directory {
+            &self.directories
+        } else {
+            &self.crawl
+        };
+        tree.children.get(&id).cloned().unwrap_or_default()
+    }
+
+    /// Adresse eines Knotens; Pfadknoten des Verzeichnisbaums haben keine.
+    pub fn address_of(&self, id: i64, directory: bool) -> Option<&str> {
+        let tree = if directory {
+            &self.directories
+        } else {
+            &self.crawl
+        };
+        tree.nodes.get(&id).and_then(|r| r.node.address.as_deref())
     }
 
     pub fn contains_url(&self, id: i64) -> bool {
@@ -141,8 +221,11 @@ impl Snapshot {
 
     /// Breitensuche mit exakten Zählern für eingeklappte oder gekappte Nachkommen.
     pub fn graph(&self, options: &GraphOptions) -> Result<Graph, os_store::StoreError> {
-        if !(1..=50_000).contains(&options.budget) {
-            return Err(invalid("budget must be between 1 and 50000"));
+        if !(1..=options.max_budget).contains(&options.budget) {
+            return Err(invalid(&format!(
+                "budget must be between 1 and {}",
+                options.max_budget
+            )));
         }
         let tree = if options.directory {
             &self.directories

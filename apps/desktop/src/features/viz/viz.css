@@ -322,3 +322,86 @@ body,
   z-index:20;
   max-width:var(--os-size-420);
 }
+
+/* 3D-Graphen (M3-V02, UI-098): WebGL-Fläche, darüber eine durchklickbare Fläche für Beschriftungen. */
+.os-viz-canvas-3d {
+  cursor:grab;
+}
+
+.os-viz-labels-3d {
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+
+.os-viz-no-webgl {
+  display:flex;
+  flex:1;
+  align-items:center;
+  justify-content:center;
+  padding:var(--os-size-24);
+  color:var(--os-text-muted);
+  text-align:center;
+}
+
+.os-viz-word-plain {
+  cursor:default;
+}
+
+/* Optik (M3-V02): Hintergrundverlauf der Zeichenflächen, kompakte Legende, Beschriftungsfläche. */
+.os-viz-stage-soft {
+  background:radial-gradient(ellipse at 50% 42%, var(--os-bg-surface), var(--os-bg-app));
+}
+
+.os-viz-legend-compact {
+  position:absolute;
+  left:var(--os-size-12);
+  bottom:var(--os-size-12);
+  z-index:1;
+  display:flex;
+  flex-wrap:wrap;
+  gap:var(--os-size-4) var(--os-size-12);
+  max-width:var(--os-size-420);
+  margin:0;
+  padding:var(--os-size-4) var(--os-size-8);
+  list-style:none;
+  border:var(--os-line) solid var(--os-border);
+  border-radius:var(--os-radius);
+  background:var(--os-bg-surface);
+  color:var(--os-text);
+  font-size:var(--os-font-small);
+  pointer-events:none;
+  opacity:0.92;
+}
+
+.os-viz-legend-compact li {
+  display:flex;
+  align-items:center;
+  gap:var(--os-size-4);
+}
+
+.os-viz-word-tip {
+  position:absolute;
+  z-index:2;
+  padding:var(--os-size-4) var(--os-size-8);
+  border:var(--os-line) solid var(--os-border-strong);
+  border-radius:var(--os-radius);
+  background:var(--os-bg-surface);
+  color:var(--os-text);
+  pointer-events:none;
+  white-space:nowrap;
+}
+
+.os-viz-context-lost {
+  position:absolute;
+  top:var(--os-size-12);
+  left:50%;
+  z-index:2;
+  margin:0;
+  padding:var(--os-size-4) var(--os-size-12);
+  transform:translateX(-50%);
+  border:var(--os-line) solid var(--os-border-strong);
+  border-radius:var(--os-radius);
+  background:var(--os-bg-surface);
+  color:var(--os-text);
+}

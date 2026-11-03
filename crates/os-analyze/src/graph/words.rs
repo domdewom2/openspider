@@ -82,6 +82,67 @@ impl Snapshot {
     }
 }
 
+/// Optionen der Body-Text-Wortwolke (UI-100).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct BodyWordOptions {
+    pub remove_stopwords: bool,
+    pub language: String,
+    /// Mindestlänge in Zeichen (Standard 3).
+    pub min_length: u32,
+    pub max_terms: u32,
+}
+impl Default for BodyWordOptions {
+    fn default() -> Self {
+        Self {
+            remove_stopwords: true,
+            language: "en".into(),
+            min_length: 3,
+            max_terms: 100,
+        }
+    }
+}
+impl BodyWordOptions {
+    /// Wie [`WordOptions::stopwords_unavailable`]: unbekannte Sprachen behalten alle Wörter.
+    pub fn stopwords_unavailable(&self) -> bool {
+        self.remove_stopwords
+            && !matches!(self.language.split(['-', '_']).next(), Some("de" | "en"))
+    }
+}
+
+/// Wörter des sichtbaren Body-Texts (UI-100). Der Text kommt vom Aufrufer aus derselben Extraktion wie die
+/// Wortzahl (`os_parse::content::area_text_flat`); hier wird nur gezählt: Trennung an allen Zeichen außer
+/// Buchstaben und Ziffern, Kleinschreibung, Mindestlänge in Zeichen, Stoppwörter der Sprache. Sortierung wie
+/// [`Snapshot::words`]: häufigste zuerst, bei Gleichstand alphabetisch.
+pub fn body_terms(
+    text: &str,
+    opts: &BodyWordOptions,
+) -> Result<Vec<(String, u64)>, os_store::StoreError> {
+    if !(1..=10_000).contains(&opts.max_terms) {
+        return Err(invalid("maxTerms must be between 1 and 10000"));
+    }
+    if !(1..=100).contains(&opts.min_length) {
+        return Err(invalid("minLength must be between 1 and 100"));
+    }
+    let language = opts.language.split(['-', '_']).next().unwrap_or("en");
+    let mut counts = BTreeMap::<String, u64>::new();
+    for word in text.split(|c: char| !c.is_alphanumeric()) {
+        if word.is_empty() {
+            continue;
+        }
+        let word = word.to_lowercase();
+        if (word.chars().count() as u32) < opts.min_length
+            || (opts.remove_stopwords && is_stopword(&word, language))
+        {
+            continue;
+        }
+        *counts.entry(word).or_default() += 1;
+    }
+    let mut terms: Vec<_> = counts.into_iter().collect();
+    terms.sort_by(|(a, ac), (b, bc)| bc.cmp(ac).then(a.cmp(b)));
+    terms.truncate(opts.max_terms as usize);
+    Ok(terms)
+}
+
 // Kleine explizite Sprachlisten wirken nur im Wortmodus, nie auf Phrasen.
 fn is_stopword(word: &str, language: &str) -> bool {
     let words = if language == "de" {

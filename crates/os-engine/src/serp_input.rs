@@ -19,20 +19,21 @@ pub fn read(path: &Path) -> Result<Vec<SerpRow>, EngineError> {
         .unwrap_or("")
         .to_ascii_lowercase();
     if matches!(ext.as_str(), "xls" | "xlsx") {
-        use calamine::Reader;
-        let mut book = calamine::open_workbook_auto(path)
-            .map_err(|e| EngineError::Invalid(format!("SERP: {e}")))?;
-        let (_, sheet) = book
-            .worksheets()
-            .into_iter()
-            .next()
-            .ok_or_else(|| EngineError::Invalid("SERP: Kein Tabellenblatt".into()))?;
-        return from_rows(
-            sheet
+        let rows: Vec<Vec<String>> = crate::list_input::read_spreadsheet(path, || {
+            use calamine::Reader;
+            let mut book = calamine::open_workbook_auto(path)
+                .map_err(|e| EngineError::Invalid(format!("SERP: {e}")))?;
+            let (_, sheet) = book
+                .worksheets()
+                .into_iter()
+                .next()
+                .ok_or_else(|| EngineError::Invalid("SERP: Kein Tabellenblatt".into()))?;
+            Ok(sheet
                 .rows()
                 .map(|row| row.iter().map(ToString::to_string).collect())
-                .collect(),
-        );
+                .collect())
+        })?;
+        return from_rows(rows);
     }
     let bytes = std::fs::read(path)?;
     parse(&crate::list_input::decode_text(&bytes))

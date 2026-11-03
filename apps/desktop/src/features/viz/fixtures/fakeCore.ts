@@ -10,7 +10,7 @@ import type { VizWordsArgs } from "../../../ipc/gen/VizWordsArgs";
 import type { WordFreq } from "../../../ipc/gen/WordFreq";
 import type { Transport } from "../../../ipc/transport/types";
 import { windowLabelFor } from "../labels";
-import { fxUiBasic, fxUiDirs, fxUiWords, selectGraph, type SynthTree } from "./synthetic";
+import { fxUiBasic, fxUiBodyWords, fxUiDirs, fxUiWords, selectGraph, selectLinks, type SynthTree } from "./synthetic";
 
 export interface FakeCall {
   cmd: string;
@@ -30,12 +30,16 @@ interface Snap {
 
 export class FakeVizCore {
   readonly calls: FakeCall[] = [];
+  /** Letzter angenommener CSV-Export (Kanten mit `edgeType`, UI-090/097). */
+  lastExport: VizExportArgs | null = null;
   readonly snapshots = new Map<string, Snap>();
   private readonly subs = new Map<string, Set<(e: UiEvent) => void>>();
   private next = 0;
   private op = 0;
   /** Verzögerung je `viz.graph`-Antwort (ms), z. B. für Ladeanzeigen. */
   delayMs = 0;
+  /** Body-Wortwolke (UI-100): Begriffe der Zielseite; `false` = kein HTML gespeichert. */
+  bodyWords: (() => WordFreq[]) | false = fxUiBodyWords;
 
   constructor(
     public crawl: () => SynthTree = fxUiBasic,
@@ -45,7 +49,7 @@ export class FakeVizCore {
 
   private trees = new Map<string, SynthTree>();
   private tree(kind: string): SynthTree {
-    const key = kind === "directoryTree" ? "dir" : "crawl";
+    const key = kind.startsWith("directory") ? "dir" : "crawl";
     let t = this.trees.get(key);
     if (!t) this.trees.set(key, (t = key === "dir" ? this.directories() : this.crawl()));
     return t;
@@ -103,9 +107,10 @@ export class FakeVizCore {
   private graph(a: VizGraphArgs): GraphDto {
     const s = this.snapshots.get(a.snapshotId);
     if (!s) throw err("Stale", "err-viz-snapshot-closed");
-    if (a.kind !== "crawlTree" && a.kind !== "crawlGraph" && a.kind !== "directoryTree") throw err("Unsupported", "err-viz-kind");
-    if (!(a.budget >= 1 && a.budget <= 50_000)) throw err("InvalidInput", "err-invalid-input", "budget");
-    const base = JSON.stringify({ ...a, exploreNode: null });
+    if (a.kind === "anchorWords" || a.kind === "bodyWords") throw err("Unsupported", "err-viz-kind");
+    const max = a.kind.endsWith("3d") ? 100_000 : 50_000;
+    if (!(a.budget >= 1 && a.budget <= max)) throw err("InvalidInput", "err-invalid-input", "budget");
+    const base = JSON.stringify({ ...a, exploreNode: null, linksNode: null, linksMode: null, linksIncludeNofollow: null, linksExcludeNavFooter: null });
     const explored = a.exploreNode != null && s.lastKey === base ? [...s.explored, a.exploreNode] : a.exploreNode != null ? [a.exploreNode] : [];
     try {
       const dto = selectGraph(this.tree(a.kind), {
@@ -116,6 +121,16 @@ export class FakeVizCore {
         metric: a.metric,
         colorMetric: a.colorMetric ?? null,
       });
+      if (a.linksNode != null) {
+        // Links eines Knotens (UI-097) wie im Kern: eindeutige Paare gemäß Optionen, Kanten nur zwischen gezeigten Knoten.
+        const mode = a.linksMode ?? "inlinks";
+        if (!["inlinks", "childInlinks", "outlinks", "childOutlinks"].includes(mode)) throw new Error("linksMode");
+        const pairs = selectLinks(this.tree(a.kind), a.linksNode, mode, a.linksIncludeNofollow ?? true, a.linksExcludeNavFooter ?? false);
+        const shown = new Set(dto.nodes.map((n) => n.id));
+        const type = mode === "inlinks" || mode === "childInlinks" ? "inlink" : "outlink";
+        dto.edges.push(...pairs.filter(([x, y]) => shown.has(x) && shown.has(y)).map(([source, target]) => ({ source, target, edgeType: type })));
+        dto.linkTotal = pairs.length;
+      }
       s.last = dto;
       s.lastKey = base;
       s.explored = explored;
@@ -127,12 +142,19 @@ export class FakeVizCore {
 
   private wordList(a: VizWordsArgs): WordFreq[] {
     if (!this.snapshots.has(a.snapshotId)) throw err("Stale", "err-viz-snapshot-closed");
+    if (a.kind === "body") {
+      if (!this.bodyWords) throw { cmdError: { code: "Unsupported", messageKey: "err-viz-html-not-stored", args: { state: { code: "HTML_NOT_STORED" } }, field: null, retryable: false } satisfies CmdError };
+      return this.bodyWords()
+        .filter((w) => [...w.word].length >= (a.minLength ?? 3))
+        .slice(0, a.maxTerms ?? 100);
+    }
     return this.words().slice(0, a.maxTerms ?? 100);
   }
 
   private exportCsv(a: VizExportArgs): { opId: string; labelKey: string; cancellable: boolean } {
     const s = this.snapshots.get(a.snapshotId);
     if (!s?.last || a.nodes.length !== s.last.nodes.length || a.edges.length !== s.last.edges.length) throw err("InvalidInput", "err-invalid-input", "nodes");
+    this.lastExport = a;
     const opId = `op-${++this.op}`;
     // Operationen stehen wie im Kern im Tick jedes Fensters.
     setTimeout(() => {
@@ -148,7 +170,11 @@ export class FakeVizCore {
   transport(window = "main"): Transport {
     return {
       name: "mock",
-      invoke: <T,>(cmd: string, args: unknown) => this.invoke(cmd, args, window) as Promise<T>,
+      // Fehler wie über die Bridge: `{ cmdError }` wird zum CmdError (sonst sähe die Oberfläche nur „unerwartet“).
+      invoke: <T,>(cmd: string, args: unknown) =>
+        (this.invoke(cmd, args, window) as Promise<T>).catch((e: unknown) => {
+          throw (e as { cmdError?: unknown } | null)?.cmdError ?? e;
+        }),
       subscribe: (w, cb) => {
         let set = this.subs.get(w);
         if (!set) this.subs.set(w, (set = new Set()));

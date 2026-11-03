@@ -3,7 +3,7 @@ import { expect, type Download, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import type { VizBridge } from "./viz-bridge";
 
-export type Kind = "crawlTree" | "crawlGraph" | "directoryTree" | "anchorWords";
+export type Kind = "crawlTree" | "crawlGraph" | "directoryTree" | "directoryGraph" | "crawlGraph3d" | "directoryGraph3d" | "anchorWords" | "bodyWords";
 
 /** Fensterlabel wie im Kern: `viz-` + Hex der UTF-8-Bytes der Kennung. */
 export function labelFor(snapshotId: string): string {
@@ -17,7 +17,7 @@ export async function openViz(page: Page, bridge: VizBridge, kind: Kind, opts: {
   if (opts.root !== undefined) q.set("root", String(opts.root));
   if (opts.exportDir) q.set("exportDir", opts.exportDir);
   await page.goto(`/viz.html?${q.toString()}`);
-  if (kind === "anchorWords") await page.waitForFunction(() => (window.__osVizWords?.placed.length ?? 0) > 0);
+  if (kind === "anchorWords" || kind === "bodyWords") await page.waitForFunction(() => (window.__osVizWords?.placed.length ?? 0) > 0 || !!window.__osVizWords?.empty);
   else await page.waitForFunction(() => (window.__osViz?.nodes ?? 0) > 0);
   return snapshotId;
 }
