@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.0.0-beta.2] - 2026-11-03
+
+Wartungsversion ohne neue Funktionen: Sie prüft die automatische Aktualisierung von beta.1 auf eine neuere Version.
+
+- App-Funktionen unverändert gegenüber beta.1.
+- Bekannt: Der Chrome-Download auf Klick für JavaScript-Rendering folgt mit beta.3 (statt wie angekündigt mit beta.2).
+
 ## [1.0.0-beta.1] - 2026-11-03
 
 Erste offene Beta. Rückmeldungen bitte über Hilfe → „Feedback geben…“ oder https://openspider.de/beta/.
