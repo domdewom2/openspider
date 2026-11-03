@@ -52,6 +52,7 @@
     "mail:default",
     "update:default",
     "chromium:default",
+    "crash:default",
     "updater:default",
     "process:allow-restart"
   ]
