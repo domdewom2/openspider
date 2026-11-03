@@ -1,7 +1,7 @@
 // M3-V02: Verzeichnisgraph (UI-094), Links eines Knotens (UI-097), 3D-Fenster ohne WebGL (UI-098), Body-Wortwolke (UI-100)
 // gegen den Test-Kern (FakeVizCore) wie in VizWindow.test.tsx.
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
 import { createClient, getClient, setClient } from "../../ipc/client";
 import { connectWindowEvents } from "../../ipc/events";
 import { FakeVizCore } from "./fixtures/fakeCore";
@@ -99,8 +99,21 @@ describe("3D-Varianten", () => {
   // spec: UI-098
   it("ohne WebGL 2 erscheint ein Hinweis statt einer leeren Fläche; Knotengrenze 100 000, Export nur PNG", async () => {
     core = new FakeVizCore(fxUiWordsGraph, fxUiDirs);
-    // Die 3D-Ansicht fragt nur WebGL-Kontexte an; ohne WebGL liefert die Umgebung `null`.
-    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+    // WebGL nicht verfügbar: nur die WebGL-Kontexte fehlen, 2D (Wortwolke, Canvas-Mock) bleibt unberührt. Ersetzt die
+    // Eigenschaft statt den Canvas-Mock selbst zu verändern (der bliebe sonst für folgende Tests verändert).
+    const proto = HTMLCanvasElement.prototype;
+    const descriptor = Object.getOwnPropertyDescriptor(proto, "getContext")!;
+    const original = proto.getContext;
+    Object.defineProperty(proto, "getContext", {
+      configurable: true,
+      writable: true,
+      value: function (this: HTMLCanvasElement, id: string, ...rest: unknown[]) {
+        return id.startsWith("webgl") ? null : (original as (...a: unknown[]) => unknown).call(this, id, ...rest);
+      },
+    });
+    onTestFinished(() => {
+      Object.defineProperty(proto, "getContext", descriptor);
+    });
     await openWindow("crawlGraph3d");
     expect(await screen.findByTestId("viz-no-webgl")).toHaveTextContent("needs WebGL 2");
     expect(calls("viz.graph")[0]).toMatchObject({ kind: "crawlGraph3d", budget: 100_000 });

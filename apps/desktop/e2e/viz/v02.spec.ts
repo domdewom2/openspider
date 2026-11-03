@@ -99,6 +99,7 @@ test.describe("Links eines Knotens einblenden (2D)", () => {
       await page.getByRole("menuitem", { name: "Show inlinks", exact: true }).click();
       await expect.poll(() => page.evaluate(() => window.__osViz!.links?.edges)).toBe(23);
       await expect(page.getByTestId("viz-links-state")).toHaveText("Show inlinks: 23 links");
+      await shot(page, "links-einblenden-2d", browserName);
       const [svgDownload] = await Promise.all([page.waitForEvent("download"), page.getByRole("button", { name: "SVG", exact: true }).click()]);
       const text = (await readDownload(svgDownload)).toString("utf8");
       await validateSvg(page, text);
@@ -111,7 +112,6 @@ test.describe("Links eines Knotens einblenden (2D)", () => {
       await page.getByText("Include nofollow links").click();
       await expect.poll(() => page.evaluate(() => window.__osViz!.links?.edges)).toBe(18);
       await expectAccessible(page);
-      await shot(page, "links-einblenden-2d", browserName);
       const q = await nodePoint(page, 2);
       await page.mouse.click(q.x, q.y, { button: "right" });
       await page.getByRole("menuitem", { name: "Reset links" }).click();
@@ -126,6 +126,7 @@ test.describe("Links eines Knotens einblenden (2D)", () => {
 test.describe("3D-Varianten (WebGL)", () => {
   // spec: UI-098
   // spec: UI-097
+  // spec: UI-090 [M3]
   test("3D-Crawl-Graph: Drehen, Zoomen (0,05× … 8×), Rechtsziehen verschiebt, Rechtsklick öffnet das Knotenmenü, Links ein/aus, Suche fliegt zum Knoten, PNG", async ({ page, browserName }) => {
     await openViz(page, bridge, "crawlGraph3d");
     test.skip(!(await webgl(page)), "WebGL 2 in dieser Umgebung nicht verfügbar (Hinweis-Test unten)");
@@ -169,6 +170,13 @@ test.describe("3D-Varianten (WebGL)", () => {
         return at ? Math.hypot(at[0] - box.width / 2, at[1] - box.height / 2) : Infinity;
       })
       .toBeLessThan(2);
+    // Tooltip nach 300 ms mit den Zeilen aus UI-090
+    const h = await point3d(page, 2);
+    await page.mouse.move(h.x, h.y);
+    const tip = page.getByRole("tooltip");
+    await expect(tip).toBeVisible();
+    expect(await tip.locator("dt").allTextContents()).toEqual(["Address", "Status Code", "Indexability", "Crawl Depth", "Unique Inlinks", "Link Score", "Crawl Depth"]);
+    await expect(tip.locator("dd").first()).toHaveText("http://127.0.0.1:8000/target.html");
     // Rechtsklick ohne Ziehen auf den Knoten öffnet dessen Kontextmenü
     const p = await point3d(page, 2);
     await page.mouse.click(p.x, p.y, { button: "right" });
