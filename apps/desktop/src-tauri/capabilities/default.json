@@ -51,6 +51,7 @@
     "auth:default",
     "mail:default",
     "update:default",
+    "chromium:default",
     "updater:default",
     "process:allow-restart"
   ]

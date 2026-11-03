@@ -32,7 +32,7 @@ describe("Spider › Rendering explains why JavaScript rendering cannot be chose
     expect(await within(dialog).findByTestId("rendering-locked-note")).toHaveTextContent("only be changed in a new crawl");
     expect(within(dialog).getByTestId("rendering-locked-how")).toHaveTextContent("“Clear” in the header and start a new crawl");
     expect(within(dialog).getByTestId("rendering-chromium-note")).toHaveTextContent("JavaScript rendering needs Chromium");
-    expect(within(dialog).getByTestId("rendering-chromium-note")).toHaveTextContent("does not ship its own Chromium yet");
+    expect(within(dialog).getByTestId("rendering-chromium-note")).toHaveTextContent("a downloaded Chromium");
   });
 
   // spec: UI-016

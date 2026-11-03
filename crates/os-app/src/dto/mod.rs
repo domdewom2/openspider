@@ -26,6 +26,8 @@ pub mod events;
 pub mod export;
 pub mod mail;
 pub mod mcp;
+/// Chromium-Bereitstellung (M3-K01, K2-61 additiv).
+pub mod render_provision;
 pub mod sidebar;
 pub mod tasks;
 pub mod update;
@@ -48,6 +50,7 @@ pub use events::*;
 pub use export::*;
 pub use mail::*;
 pub use mcp::*;
+pub use render_provision::*;
 pub use sidebar::*;
 pub use tasks::*;
 pub use view::*;
@@ -398,6 +401,12 @@ fn export_all_with(cfg: &ts_rs::Config) -> Result<(), ts_rs::ExportError> {
         VizWordsArgs,
         WordFreq,
         VizExportArgs,
+        // M3-K01 (K2-61 additiv): Chromium-Bereitstellung.
+        ChromiumSource,
+        ChromiumFailure,
+        ChromiumJob,
+        ChromiumStatus,
+        ChromiumStatusArgs,
     )
 }
 
@@ -775,4 +784,10 @@ pub const TYPE_NAMES: &[&str] = &[
     "VizWordsArgs",
     "WordFreq",
     "VizExportArgs",
+    // M3-K01 (K2-61 additiv): Chromium-Bereitstellung.
+    "ChromiumSource",
+    "ChromiumFailure",
+    "ChromiumJob",
+    "ChromiumStatus",
+    "ChromiumStatusArgs",
 ];

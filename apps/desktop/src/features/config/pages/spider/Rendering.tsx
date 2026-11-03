@@ -9,6 +9,7 @@ import { f } from "../../frame/definePage";
 import { focusAnchor } from "../../frame/focus";
 import { pageTitleKey, type FieldDef } from "../../frame/types";
 import type { ValidationIssue } from "../../../../ipc/gen/ValidationIssue";
+import { ChromiumProvision } from "../rendering/ChromiumProvision";
 
 export const CHROMIUM_DOWNLOAD_URL = "https://www.chromium.org/getting-involved/download-chromium/";
 
@@ -58,6 +59,8 @@ export function Rendering() {
       {runMode !== "free" && runMode !== "foreign" && <p className="os-hint" role="note" data-testid="rendering-locked-how">{t("config-rendering-locked-how")}</p>}
       {mode === "javascript" && problems.length === 0 && <p className="os-hint">{t("config-rendering-js-note")}</p>}
       {mode !== "javascript" && <p className="os-hint" role="note" data-testid="rendering-chromium-note">{t("config-rendering-chromium-note")}</p>}
+      {/* M3-K01 (K3-01): Status, Download, Fortschritt und Entfernen des bereitgestellten Chromium. */}
+      <ChromiumProvision />
       {problems.map((p, n) => (
         <div key={n} data-testid="rendering-problem">
           <Banner

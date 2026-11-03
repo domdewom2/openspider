@@ -91,73 +91,10 @@ impl Profile {
     }
 }
 
-/// Expliziter Pfad hat Vorrang vor der Umgebung; ungültige Vorgaben führen
-/// niemals still zu einer anderen Installation.
+/// Auswahl nach K3-01 (M3-K01): konfigurierter Pfad → `OPENSPIDER_CHROMIUM` → bereitgestelltes Chromium →
+/// System-Chrome. Ungültige Vorgaben führen niemals still zu einer anderen Installation.
 pub(super) fn executable(opts: &LaunchOpts) -> Result<PathBuf, RenderError> {
-    if let Some(path) = opts
-        .chromium_path
-        .clone()
-        .or_else(|| std::env::var_os("OPENSPIDER_CHROMIUM").map(PathBuf::from))
-    {
-        return if path.is_file() {
-            Ok(path)
-        } else {
-            Err(RenderError::ChromiumMissing {
-                path: path.display().to_string(),
-            })
-        };
-    }
-    let mut candidates = Vec::new();
-    #[cfg(target_os = "macos")]
-    {
-        for root in [
-            Some(PathBuf::from("/Applications")),
-            dirs::home_dir().map(|h| h.join("Applications")),
-        ]
-        .into_iter()
-        .flatten()
-        {
-            candidates.push(root.join("Google Chrome.app/Contents/MacOS/Google Chrome"));
-            candidates.push(root.join("Chromium.app/Contents/MacOS/Chromium"));
-        }
-    }
-    #[cfg(target_os = "windows")]
-    for key in ["PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"] {
-        if let Some(root) = std::env::var_os(key) {
-            candidates.push(
-                PathBuf::from(&root)
-                    .join("Google")
-                    .join("Chrome")
-                    .join("Application")
-                    .join("chrome.exe"),
-            );
-            candidates.push(
-                PathBuf::from(root)
-                    .join("Chromium")
-                    .join("Application")
-                    .join("chrome.exe"),
-            );
-        }
-    }
-    if let Some(path) = std::env::var_os("PATH") {
-        for dir in std::env::split_paths(&path) {
-            for name in [
-                "chromium",
-                "chromium-browser",
-                "google-chrome",
-                "google-chrome-stable",
-                "chrome.exe",
-            ] {
-                candidates.push(dir.join(name));
-            }
-        }
-    }
-    candidates
-        .into_iter()
-        .find(|p| p.is_file())
-        .ok_or_else(|| RenderError::ChromiumMissing {
-            path: "OPENSPIDER_CHROMIUM / Systeminstallation".into(),
-        })
+    crate::provision::resolve(opts.chromium_path.as_deref()).map(|found| found.path)
 }
 
 async fn start(opts: &LaunchOpts) -> Result<Session, RenderError> {

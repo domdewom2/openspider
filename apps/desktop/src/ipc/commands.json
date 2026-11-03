@@ -1150,5 +1150,29 @@
     "args": "UpdateSetAutoArgs",
     "ret": "void",
     "longRunning": false
+  },
+  {
+    "name": "chromium.status",
+    "args": "ChromiumStatusArgs",
+    "ret": "ChromiumStatus",
+    "longRunning": false
+  },
+  {
+    "name": "chromium.download",
+    "args": "ChromiumStatusArgs",
+    "ret": "ChromiumStatus",
+    "longRunning": false
+  },
+  {
+    "name": "chromium.cancel",
+    "args": "ChromiumStatusArgs",
+    "ret": "ChromiumStatus",
+    "longRunning": false
+  },
+  {
+    "name": "chromium.remove",
+    "args": "ChromiumStatusArgs",
+    "ret": "ChromiumStatus",
+    "longRunning": false
   }
 ]

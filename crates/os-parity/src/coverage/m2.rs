@@ -69,13 +69,16 @@ pub fn valid_defer_reason(reason: &str) -> bool {
     {
         return true;
     }
-    r.strip_prefix("Klärung K2-").is_some_and(|tail| {
-        let n = tail.chars().take_while(char::is_ascii_digit).count();
-        n > 0
-            && tail[n..]
-                .chars()
-                .next()
-                .is_none_or(|c| !c.is_alphanumeric())
+    // K3-01: M3-Klärungen (`Klärung K3-<Zahl>`) sind wie M2-Klärungen gültig.
+    ["Klärung K2-", "Klärung K3-"].iter().any(|prefix| {
+        r.strip_prefix(prefix).is_some_and(|tail| {
+            let n = tail.chars().take_while(char::is_ascii_digit).count();
+            n > 0
+                && tail[n..]
+                    .chars()
+                    .next()
+                    .is_none_or(|c| !c.is_alphanumeric())
+        })
     })
 }
 

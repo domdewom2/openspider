@@ -8,6 +8,8 @@
 pub mod api;
 pub mod axe;
 pub mod login;
+/// Chromium-Bereitstellung nach K3-01 (M3-K01).
+pub mod provision;
 pub mod snippets;
 
 pub use api::{LaunchOpts, RenderError, RenderOpts, RenderedPage, Renderer};

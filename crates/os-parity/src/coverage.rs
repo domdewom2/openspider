@@ -201,11 +201,12 @@ pub fn valid_defer_reason(reason: &str) -> bool {
             return rest.chars().next().is_some_and(|c| c.is_ascii_digit());
         }
     }
-    // M2-Klärungen (`Klärung K2-<Zahl>`, z. B. K2-68) sind auch für den M1-Strict-Lauf gültig.
-    if let Some(rest) = r.strip_prefix("Klärung K2-") {
-        return rest.chars().next().is_some_and(|c| c.is_ascii_digit());
-    }
-    false
+    // M2-/M3-Klärungen (`Klärung K2-<Zahl>`, `Klärung K3-<Zahl>`, z. B. K2-68, K3-01) sind auch
+    // für den M1-Strict-Lauf gültig.
+    ["Klärung K2-", "Klärung K3-"].iter().any(|prefix| {
+        r.strip_prefix(prefix)
+            .is_some_and(|rest| rest.chars().next().is_some_and(|c| c.is_ascii_digit()))
+    })
 }
 
 /// Ist der Ignore-Grund ein Benchmark-Grund (`Benchmark (P28): …`)? Gültig, aber für den Status neutral.
