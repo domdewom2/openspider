@@ -68,6 +68,9 @@ jobs:
       BUNDLE_DIR: target/x86_64-pc-windows-msvc/release/bundle
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Build-Kennung (Hilfe → Über, Debug-Info, Absturzberichte)
+        shell: bash
+        run: echo "OPENSPIDER_BUILD=${GITHUB_SHA::8}" >> "$GITHUB_ENV"
       - name: Signierbereitschaft prüfen
         id: signing
         env:
