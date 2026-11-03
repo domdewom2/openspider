@@ -151,9 +151,16 @@ async fn ignore_but_report_keeps_response_codes_disjoint() {
     assert!(filters.contains(&"Success (2XX)"));
     assert_eq!(filters.len(), 6);
     // The blocked URL with status 200 is counted once, in its status class.
-    assert!(ids(&fx, "Response Codes", "Blocked by Robots.txt").await.contains(&30));
-    assert!(ids(&fx, "Response Codes", "Success (2XX)").await.contains(&30));
+    assert!(ids(&fx, "Response Codes", "Blocked by Robots.txt")
+        .await
+        .contains(&30));
+    assert!(ids(&fx, "Response Codes", "Success (2XX)")
+        .await
+        .contains(&30));
     let checked = check_partitions(&fx).await;
-    let (_, sum, base) = checked.iter().find(|(t, ..)| t == "Response Codes").unwrap();
+    let (_, sum, base) = checked
+        .iter()
+        .find(|(t, ..)| t == "Response Codes")
+        .unwrap();
     assert!(sum <= base, "{sum} > {base}");
 }
