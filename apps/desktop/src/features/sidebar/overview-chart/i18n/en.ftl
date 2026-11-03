@@ -31,7 +31,7 @@ ovc-cat-noStatus = Internal without indexability status
 ovc-cat-external = External
 ovc-cat-hidden = Not displayed
 ovc-cat-unassigned = Unassigned
-ovc-cat-others = Others
+ovc-cat-others = Remaining
 ovc-overlap-note = A URL can be in several categories – the shares do not add up to 100 %.
 ovc-zero-filters = { $count ->
     [one] 1 filter without matches

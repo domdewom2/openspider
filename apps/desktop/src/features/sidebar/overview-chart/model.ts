@@ -15,7 +15,7 @@ import { SUMMARY_KEYS, type EntryRef } from "../overview/selection";
 
 /** Ring up to this many categories with a count > 0 (including residual categories). */
 export const RING_MAX = 8;
-/** Bars of a partition: at most this many, the last one bundling the rest as „Sonstige“. */
+/** Bars of a partition: at most this many, the last one bundling the rest as „Weitere“. */
 export const BAR_MAX = 10;
 
 export type CategoryRole = "filter" | "summary" | "unassigned" | "hidden" | "others";
@@ -43,7 +43,7 @@ export interface ChartCategory {
   /** 0 = solid; 1, 2 … = hatch patterns for the 2nd, 3rd … category sharing a colour. */
   hatch: number;
   nav: NavTarget | null;
-  /** „Sonstige“: the bundled categories. */
+  /** „Weitere“: the bundled categories. */
   members?: ChartCategory[];
 }
 
@@ -63,7 +63,7 @@ export type ChartModel =
     kind: "chart";
     header: ChartHeader;
     chart: ChartKind;
-    /** Drawn segments/bars in drawing order (descending; „Sonstige“ last). */
+    /** Drawn segments/bars in drawing order (descending; „Weitere“ last). */
     drawn: ChartCategory[];
     /** Legend after the drawn categories: count 0 (muted), then without counter („–“). Overlap: only without counter. */
     tail: ChartCategory[];
@@ -71,7 +71,7 @@ export type ChartModel =
     zero: ChartCategory[];
     /** Table and CSV: every category individually, in legend order without bundling. */
     table: ChartCategory[];
-    /** Category sum larger than the base (error case): bars without „Sonstige“, warning in the log. */
+    /** Category sum larger than the base (error case): bars without „Weitere“, warning in the log. */
     overflow: boolean;
   };
 
@@ -82,10 +82,15 @@ export function pctOf(count: number, base: number): number {
 
 const STATUS_CLASS = /\(([1-5])XX\)$/;
 
-/** Response Codes: status class colours of UI-007/UI-066; classes without status (blocked, no response, other) neutral. */
+/**
+ * Response Codes: semantic status colours (orchestrator decision 03.11.2026): 2XX a calm green (`diff.add`, not the
+ * near-black text colour of `status.2xx`), 3XX amber, 4XX/5XX the status reds (same base colour, 5XX hatched as UI-102
+ * requires), classes without status (blocked, no response, other) neutral grey.
+ */
 function statusColor(filter: string): TokenName {
   const cls = STATUS_CLASS.exec(filter)?.[1];
-  return cls === "2" || cls === "3" || cls === "4" || cls === "5" ? `status.${cls}xx` as TokenName : "status.none";
+  if (cls === "2") return "diff.add";
+  return cls === "3" || cls === "4" || cls === "5" ? `status.${cls}xx` as TokenName : "status.none";
 }
 
 const PALETTE: TokenName[] = ["chart.1", "chart.2", "chart.3", "chart.4", "chart.5", "chart.6", "chart.7", "chart.8"];
@@ -155,7 +160,7 @@ function byCount(a: ChartCategory, b: ChartCategory, order: Map<string, number>)
 function others(members: ChartCategory[], base: number, t: TFn, summary: boolean): ChartCategory {
   const count = members.reduce((s, c) => s + (c.count ?? 0), 0);
   return {
-    key: "others", role: "others", label: t("ovc-cat-others"), canonical: "Other Categories", filter: null, count,
+    key: "others", role: "others", label: t("ovc-cat-others"), canonical: "Remaining", filter: null, count,
     pct: summary ? (base ? count / base * 100 : 0) : pctOf(count, base), state: null, issue: null, color: "chart.other", hatch: 0, nav: null, members,
   };
 }
@@ -234,7 +239,7 @@ export function highlightKey(model: ChartModel, entry: EntryRef | null): string 
   return model.drawn.find(c => c.members?.some(m => m.key === key))?.key ?? null;
 }
 
-/** Legend order of the focus group: drawn categories (expanded „Sonstige“ members after it), then the tail. */
+/** Legend order of the focus group: drawn categories (expanded „Weitere“ members after it), then the tail. */
 export function legendOrder(model: ChartModel, expanded: boolean): ChartCategory[] {
   if (model.kind !== "chart") return [];
   const drawn = model.drawn.flatMap(c => c.members && expanded ? [c, ...c.members] : [c]);

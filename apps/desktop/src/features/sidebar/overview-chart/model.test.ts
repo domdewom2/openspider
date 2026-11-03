@@ -42,6 +42,11 @@ describe("UI-102 chart model on fx-ui-chart", () => {
     expect(en.t("ovc-urls", { count: en.f.integer(m.header.base) })).toBe("1,000 URLs");
     // Status class colours; the second category of a colour is hatched (4XX/5XX, blocked/no response/other).
     const byName = new Map([...m.drawn, ...m.tail].map(c => [c.canonical, c]));
+    // Orchestrator decision 03.11.2026: 2XX calm green instead of the near-black status.2xx; never the text colour.
+    expect(byName.get("Success (2XX)")).toMatchObject({ color: "diff.add", hatch: 0 });
+    expect(byName.get("Redirection (3XX)")).toMatchObject({ color: "status.3xx", hatch: 0 });
+    for (const theme of ["light", "dark"] as const) expect(THEME_TOKENS[theme]["diff.add"]).not.toBe(THEME_TOKENS[theme].text);
+    expect(en.t("ovc-cat-others")).toBe("Remaining");
     expect(byName.get("Client Error (4XX)")).toMatchObject({ color: "status.4xx", hatch: 0 });
     expect(byName.get("Server Error (5XX)")).toMatchObject({ color: "status.5xx", hatch: 1 });
     expect(THEME_TOKENS.light["status.4xx"]).toBe(THEME_TOKENS.light["status.5xx"]);
@@ -50,22 +55,22 @@ describe("UI-102 chart model on fx-ui-chart", () => {
   });
 
   // spec: UI-102
-  it("Internal: ten bars with „Sonstige“ bundling XML and Flash, table with all eleven categories", () => {
+  it("Internal: ten bars with „Weitere“ bundling XML and Flash, table with all eleven categories", () => {
     const m = chart(data, { kind: "tab", tab: "Internal" });
     expect(m.chart).toBe("bars");
     expect(m.drawn).toHaveLength(10);
     expect(m.drawn.map(c => [c.canonical, de.f.integer(c.count!), pct(de, c)])).toEqual([
       ["HTML", "1.200", "60,0 %"], ["Images", "400", "20,0 %"], ["JavaScript", "180", "9,0 %"], ["CSS", "90", "4,5 %"], ["PDF", "30", "1,5 %"],
-      ["Other", "26", "1,3 %"], ["Unknown", "24", "1,2 %"], ["Fonts", "20", "1,0 %"], ["Media", "14", "0,7 %"], ["Other Categories", "16", "0,8 %"],
+      ["Other", "26", "1,3 %"], ["Unknown", "24", "1,2 %"], ["Fonts", "20", "1,0 %"], ["Media", "14", "0,7 %"], ["Remaining", "16", "0,8 %"],
     ]);
-    expect(m.drawn.map(c => c.canonical)).toEqual(["HTML", "Images", "JavaScript", "CSS", "PDF", "Other", "Unknown", "Fonts", "Media", "Other Categories"]);
+    expect(m.drawn.map(c => c.canonical)).toEqual(["HTML", "Images", "JavaScript", "CSS", "PDF", "Other", "Unknown", "Fonts", "Media", "Remaining"]);
     const others = m.drawn.at(-1)!;
-    expect(others).toMatchObject({ role: "others", label: "Sonstige", count: 16, color: "chart.other", nav: null });
+    expect(others).toMatchObject({ role: "others", label: "Weitere", count: 16, color: "chart.other", nav: null });
     expect(others.members!.map(c => [c.canonical, c.count])).toEqual([["XML", 10], ["Flash", 6]]);
     expect(m.table).toHaveLength(11);
     expect(m.table.some(c => c.role === "others")).toBe(false);
-    // Legend order with „Sonstige“ expanded: the members follow it.
-    expect(legendOrder(m, true).slice(-3).map(c => c.canonical)).toEqual(["Other Categories", "XML", "Flash"]);
+    // Legend order with „Weitere“ expanded: the members follow it.
+    expect(legendOrder(m, true).slice(-3).map(c => c.canonical)).toEqual(["Remaining", "XML", "Flash"]);
     // Nine palette colours for eleven categories: the repeated colours are hatched.
     const color = (name: string) => m.table.find(c => c.canonical === name)!.color;
     expect(color("Media")).toBe(color("HTML"));
@@ -91,7 +96,7 @@ describe("UI-102 chart model on fx-ui-chart", () => {
   });
 
   // spec: UI-102
-  it("Page Titles: bars without partition, descending, no „Sonstige“, one filter without matches, issue colours", () => {
+  it("Page Titles: bars without partition, descending, no „Weitere“, one filter without matches, issue colours", () => {
     const m = chart(data, { kind: "tab", tab: "Page Titles" }, en);
     expect(m.chart).toBe("overlap");
     expect(rows(m.drawn, en)).toEqual([

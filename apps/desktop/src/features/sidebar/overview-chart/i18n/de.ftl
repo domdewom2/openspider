@@ -31,7 +31,7 @@ ovc-cat-noStatus = Intern ohne Indexierbarkeitsstatus
 ovc-cat-external = Extern
 ovc-cat-hidden = Nicht angezeigt
 ovc-cat-unassigned = Nicht zugeordnet
-ovc-cat-others = Sonstige
+ovc-cat-others = Weitere
 ovc-overlap-note = Eine URL kann in mehreren Kategorien stehen – die Anteile ergeben zusammen nicht 100 %.
 ovc-zero-filters = { $count ->
     [one] 1 Filter ohne Treffer

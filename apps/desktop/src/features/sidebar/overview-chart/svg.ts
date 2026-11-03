@@ -2,7 +2,8 @@
 // <pattern>). The live chart uses the same geometry with token variables.
 import { escapeXml } from "../../viz/model/render";
 
-export const RING = { size: 160, outer: 76, inner: 48 } as const;
+/** Slim ring: thickness 20 % of the outer radius; segments separated by a 2-px gap at mid radius. */
+export const RING = { size: 160, outer: 72, inner: 57.6, gap: 2 } as const;
 const C = RING.size / 2;
 const FULL = Math.PI * 2;
 
@@ -21,15 +22,27 @@ export function sectorPath(a0: number, a1: number, outer: number = RING.outer, i
   return `M ${point(a0, outer)} A ${outer} ${outer} 0 ${large} 1 ${point(a1, outer)} L ${point(a1, inner)} A ${inner} ${inner} 0 ${large} 0 ${point(a0, inner)} Z`;
 }
 
-/** Segments clockwise from 12 o'clock in the given order; each covers count / sum of the drawn counts. */
-export function ringSegments(counts: readonly number[]): { d: string; a0: number; a1: number }[] {
+/**
+ * Segments clockwise from 12 o'clock in the given order; each covers count / sum of the drawn counts (`a0`, `a1`).
+ * The drawn path leaves a small gap to its neighbours (none for a single full ring); `mid` is the direction in which a
+ * selected segment is lifted out.
+ */
+export function ringSegments(counts: readonly number[]): { d: string; a0: number; a1: number; mid: number }[] {
   const total = counts.reduce((s, c) => s + c, 0);
+  const many = counts.filter(c => c > 0).length > 1;
+  const pad = many ? RING.gap / ((RING.outer + RING.inner) / 2) : 0;
   let at = 0;
   return counts.map(count => {
     const a0 = at;
     at += total > 0 ? count / total * FULL : 0;
-    return { d: sectorPath(a0, at), a0, a1: at };
+    const p = at - a0 > pad * 2 ? pad / 2 : 0;
+    return { d: sectorPath(a0 + p, at - p), a0, a1: at, mid: (a0 + at) / 2 };
   });
+}
+
+/** Offset of a lifted segment along its middle direction. */
+export function liftOffset(mid: number, distance = 3): { dx: number; dy: number } {
+  return { dx: Math.round(Math.sin(mid) * distance * 100) / 100, dy: Math.round(-Math.cos(mid) * distance * 100) / 100 };
 }
 
 /** Hatch pattern of the n-th further category of one colour: diagonal, then the other diagonal, then vertical. */
@@ -88,7 +101,7 @@ export function chartSvg(input: SvgInput): string {
   const legend = (x: number, top: number, maxWidth: number) => {
     let ly = top;
     for (const item of items) {
-      body.push(`<rect x="${num(x)}" y="${num(ly + 3)}" width="10" height="10" fill="${fill(item)}" stroke="${item.highlight ? colors.focus : colors.surface}" stroke-width="${item.highlight ? 2 : 1}"/>`);
+      body.push(`<rect x="${num(x)}" y="${num(ly + 3)}" width="10" height="10" rx="5" fill="${fill(item)}"${item.highlight ? ` stroke="${colors.focus}" stroke-width="2"` : ""}/>`);
       body.push(text(x + 16, ly + 12, `${item.label}`, { weight: item.highlight ? 700 : undefined, cls: "category" }));
       body.push(text(x + maxWidth, ly + 12, `${item.count} (${item.pct})`, { anchor: "end", cls: "value" }));
       ly += ROW;
@@ -106,14 +119,17 @@ export function chartSvg(input: SvgInput): string {
     body.push(`<g transform="translate(${PAD} ${y})">`);
     segments.forEach((s, i) => {
       const item = items[i]!;
-      body.push(`<path class="segment" d="${s.d}" fill="${fill(item)}" fill-rule="evenodd" stroke="${colors.surface}" stroke-width="1"/>`);
+      const lift = item.highlight ? liftOffset(s.mid) : null;
+      body.push(`<path class="segment" d="${s.d}" fill="${fill(item)}" fill-rule="evenodd"${lift ? ` transform="translate(${lift.dx} ${lift.dy})"` : ""}/>`);
     });
     segments.forEach((s, i) => {
-      if (items[i]!.highlight) body.push(`<path class="highlight" d="${s.d}" fill="none" fill-rule="evenodd" stroke="${colors.focus}" stroke-width="2"/>`);
+      if (!items[i]!.highlight) return;
+      const lift = liftOffset(s.mid);
+      body.push(`<path class="highlight" d="${s.d}" fill="none" fill-rule="evenodd" stroke="${colors.focus}" stroke-width="2" transform="translate(${lift.dx} ${lift.dy})"/>`);
     });
     if (input.center) {
-      body.push(text(C, C - 2, input.center[0], { anchor: "middle", weight: 700, size: 15, cls: "center" }));
-      body.push(text(C, C + 15, input.center[1], { anchor: "middle", fill: colors.muted, cls: "center" }));
+      body.push(text(C, C + 6, input.center[0], { anchor: "middle", weight: 700, size: 24, cls: "center" }));
+      body.push(text(C, C + 22, input.center[1], { anchor: "middle", fill: colors.muted, size: 11, cls: "center" }));
     }
     body.push("</g>");
     const legendEnd = side ? legend(2 * PAD + RING.size, y, width - 3 * PAD - RING.size) : legend(PAD, y + RING.size + PAD, width - 2 * PAD);
@@ -126,8 +142,8 @@ export function chartSvg(input: SvgInput): string {
     for (const item of items) {
       body.push(text(PAD, y + 12, item.label, { weight: item.highlight ? 700 : undefined, cls: "category" }));
       const w = Math.max(1, item.value / max * barWidth);
-      body.push(`<rect x="${num(PAD + labelWidth + 8)}" y="${num(y + 3)}" width="${num(barWidth)}" height="12" fill="${colors.track}"/>`);
-      body.push(`<rect class="bar" x="${num(PAD + labelWidth + 8)}" y="${num(y + 3)}" width="${num(w)}" height="12" fill="${fill(item)}"${item.highlight ? ` stroke="${colors.focus}" stroke-width="2"` : ""}/>`);
+      body.push(`<rect x="${num(PAD + labelWidth + 8)}" y="${num(y + 4)}" width="${num(barWidth)}" height="10" rx="5" fill="${colors.track}"/>`);
+      body.push(`<rect class="bar" x="${num(PAD + labelWidth + 8)}" y="${num(y + 4)}" width="${num(w)}" height="10" rx="5" fill="${fill(item)}"${item.highlight ? ` stroke="${colors.focus}" stroke-width="2"` : ""}/>`);
       body.push(text(width - PAD, y + 12, `${item.count} (${item.pct})`, { anchor: "end", cls: "value" }));
       y += ROW;
     }

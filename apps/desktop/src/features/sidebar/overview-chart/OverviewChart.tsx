@@ -7,6 +7,7 @@ import { ContextMenu } from "../../../ui/primitives/ContextMenu";
 import { IssueTypeIcon } from "../../../ui/icons";
 import { cssVarName, segmentLabelColor, THEME_TOKENS, type TokenName } from "../../../ui/tokens/tokens";
 import { useComparison } from "../../compare/model";
+import { useSession } from "../../../state/session";
 import { useSegments } from "../../table-advanced/stores";
 import { saveBlob } from "../../viz/exporters";
 import { cssToHex } from "../../viz/model/render";
@@ -18,7 +19,7 @@ import { chartEntry, entryKey, focusSelectedEntry, useOverviewSelection } from "
 import { navigateToTable } from "../site-structure/navigate";
 import { dataRows, fileName, toCsv, toTsv } from "./data";
 import { buildChart, describeTop, highlightKey, legendOrder, type ChartCategory, type ChartModel, type NavTarget } from "./model";
-import { chartSvg, hatchAngle, ringSegments, RING, svgToPng, type SvgItem } from "./svg";
+import { chartSvg, hatchAngle, liftOffset, ringSegments, RING, svgToPng, type SvgItem } from "./svg";
 import "./overview-chart.css";
 
 const TOOLTIP_DELAY = 300;
@@ -35,7 +36,7 @@ function fillStyle(c: Pick<ChartCategory, "color" | "hatch">): string {
   return `repeating-linear-gradient(${hatchAngle(c.hatch)}deg, ${color} 0 4px, var(--os-bg-surface) 4px 6px)`;
 }
 
-/** Applies a category's table target (UI-060); residual categories and „Sonstige“ do not navigate. */
+/** Applies a category's table target (UI-060); residual categories and „Weitere“ do not navigate. */
 function applyTarget(nav: NavTarget | null): void {
   if (!nav) return;
   if (nav.search) navigateToTable(nav.tab, nav.filter, nav.search);
@@ -63,7 +64,7 @@ function logOverflow(entry: string, sum: number, base: number): void {
 interface Tip { key: string; x: number; y: number }
 
 /**
- * Esc inside the chart (UI-102: hide „Sonstige“, back to the tree). The global shortcut dispatcher consumes Esc in the
+ * Esc inside the chart (UI-102: hide „Weitere“, back to the tree). The global shortcut dispatcher consumes Esc in the
  * capture phase of the document (search.clear); the chart answers it first on the window and keeps it for itself.
  */
 function useEscape(ref: RefObject<HTMLElement | null>, handler: () => void): void {
@@ -108,6 +109,8 @@ const ChartView = memo(function ChartView({ model, highlight, startAnalysis }: {
   const update = useChartLayout(s => s.update);
   const scope = useSidebarNavigation(s => s.scope);
   const segments = useSegments(s => s.segments);
+  // UI-102: no transition while a crawl runs (and none with prefers-reduced-motion, see CSS).
+  const running = useSession(s => s.crawl?.phase === "running");
   const area = useRef<HTMLElement>(null);
   const body = useRef<HTMLDivElement>(null);
   const [narrow, setNarrow] = useState(false);
@@ -168,10 +171,10 @@ const ChartView = memo(function ChartView({ model, highlight, startAnalysis }: {
   else if (model.kind === "zero") content = <p className="os-ovc-message">{t("ovc-zero")}</p>;
   else if (model.kind === "noCounts") content = <NoCounts categories={model.categories} startAnalysis={startAnalysis} />;
   else content = view === "table"
-    ? <ChartTable model={model} highlight={highlight} />
+    ? <ChartTable key={entryKey(model.header.entry)} model={model} highlight={highlight} />
     : <ChartBody key={entryKey(model.header.entry)} model={model} highlight={highlight} narrow={narrow} startAnalysis={startAnalysis} />;
 
-  return <section ref={area} className="os-ovc-area" aria-label={t("ovc-region")} data-narrow={narrow || undefined} data-ovc-entry-shown={header ? entryKey(header.entry) : undefined}>
+  return <section ref={area} className="os-ovc-area" aria-label={t("ovc-region")} data-narrow={narrow || undefined} data-animate={!running || undefined} data-ovc-entry-shown={header ? entryKey(header.entry) : undefined}>
     {header && <div className="os-ovc-head">
       <div className="os-ovc-title">
         <span className="os-ovc-name">{header.label}</span>
@@ -276,8 +279,7 @@ function ChartBody({ model, highlight, narrow, startAnalysis }: { model: Extract
   const legendRow = (c: ChartCategory, muted: boolean) => <li key={c.key}>
     <button type="button" className="os-ovc-item" data-highlight={c.key === highlight || undefined} data-focus={c.key === active || undefined} data-muted={muted || undefined} {...itemProps(c)}>
       <i className="os-ovc-swatch" style={{ background: fillStyle(c) }} aria-hidden />
-      {c.issue && <IssueTypeIcon type={c.issue.issueType} aria-hidden />}
-      <span className="os-ovc-label">{c.label}</span>
+      <span className="os-ovc-label" title={c.label}>{c.label}</span>
       <span className="os-ovc-count">{countText(f, c.count)}</span>
       <span className="os-ovc-pct">{c.count == null ? "" : percentText(f, c.pct)}</span>
     </button>
@@ -289,8 +291,8 @@ function ChartBody({ model, highlight, narrow, startAnalysis }: { model: Extract
     <button type="button" className="os-ovc-bar" data-highlight={c.key === highlight || undefined} data-focus={c.key === active || undefined} {...itemProps(c)}>
       <span className="os-ovc-bar-name">
         <i className="os-ovc-swatch" style={{ background: fillStyle(c) }} aria-hidden />
-        {c.issue && <IssueTypeIcon type={c.issue.issueType} aria-hidden />}
-        <span className="os-ovc-label">{c.label}</span>
+        {c.issue && <IssueTypeIcon type={c.issue.issueType} size={12} aria-hidden />}
+        <span className="os-ovc-label" title={c.label}>{c.label}</span>
       </span>
       <span className="os-ovc-track" aria-hidden><span className="os-ovc-fill" style={{ width: `${((c.count ?? 0) / max) * 100}%`, background: fillStyle(c) }} /></span>
       <span className="os-ovc-count">{countText(f, c.count)}</span>
@@ -311,11 +313,13 @@ function ChartBody({ model, highlight, narrow, startAnalysis }: { model: Extract
   const desc = <p id={descId} className="os-visually-hidden">{describe}</p>;
   if (model.chart === "ring") {
     const segments = ringSegments(model.drawn.map(c => c.count ?? 0));
-    return <div ref={host} className="os-ovc-ring-layout" data-narrow={narrow || undefined} onKeyDown={onKeyDown} data-ovc-chart="ring">
+    return <div ref={host} className="os-ovc-ring-layout os-ovc-enter" data-narrow={narrow || undefined} onKeyDown={onKeyDown} data-ovc-chart="ring">
       <svg className="os-ovc-ring" viewBox={`0 0 ${RING.size} ${RING.size}`} role="img" aria-label={name} aria-describedby={descId}>
         {segments.map((s, i) => {
           const c = model.drawn[i]!;
-          return <path key={c.key} className="os-ovc-segment" data-ovc-segment={c.key} d={s.d} fillRule="evenodd" style={{ fill: c.hatch ? `url(#${patternId}-${c.key.replace(/\W/g, "")})` : tokenVar(c.color) }}
+          const lift = liftOffset(s.mid);
+          return <path key={c.key} className="os-ovc-segment" data-ovc-segment={c.key} data-lift={c.key === highlight || undefined} d={s.d} fillRule="evenodd"
+            style={{ fill: c.hatch ? `url(#${patternId}-${c.key.replace(/\W/g, "")})` : tokenVar(c.color), ["--ovc-dx" as string]: `${lift.dx}px`, ["--ovc-dy" as string]: `${lift.dy}px` }}
             onClick={() => activate(c)} onPointerEnter={e => place(c.key, e.currentTarget, false)} onPointerLeave={hide} />;
         })}
         <defs>{model.drawn.filter(c => c.hatch > 0).map(c => <pattern key={c.key} id={`${patternId}-${c.key.replace(/\W/g, "")}`} patternUnits="userSpaceOnUse" width={6} height={6} patternTransform={`rotate(${hatchAngle(c.hatch)})`}>
@@ -324,10 +328,12 @@ function ChartBody({ model, highlight, narrow, startAnalysis }: { model: Extract
         {segments.map((s, i) => {
           const c = model.drawn[i]!;
           const marked = c.key === highlight || c.key === active && focusKey !== null;
-          return marked ? <path key={`m-${c.key}`} className="os-ovc-mark" data-kind={c.key === highlight ? "highlight" : "focus"} d={s.d} fillRule="evenodd" /> : null;
+          const lift = liftOffset(s.mid);
+          return marked ? <path key={`m-${c.key}`} className="os-ovc-mark" data-kind={c.key === highlight ? "highlight" : "focus"} data-lift={c.key === highlight || undefined} d={s.d} fillRule="evenodd"
+            style={{ ["--ovc-dx" as string]: `${lift.dx}px`, ["--ovc-dy" as string]: `${lift.dy}px` }} /> : null;
         })}
-        <text x={RING.size / 2} y={RING.size / 2 - 2} textAnchor="middle" className="os-ovc-center">{f.integer(model.header.base)}</text>
-        <text x={RING.size / 2} y={RING.size / 2 + 15} textAnchor="middle" className="os-ovc-center-unit">URLs</text>
+        <text x={RING.size / 2} y={RING.size / 2 + 6} textAnchor="middle" className="os-ovc-center">{f.integer(model.header.base)}</text>
+        <text x={RING.size / 2} y={RING.size / 2 + 24} textAnchor="middle" className="os-ovc-center-unit">URLs</text>
       </svg>
       {desc}
       <ul className="os-ovc-legend" aria-label={t("ovc-legend", { entry: model.header.label })}>
@@ -336,7 +342,7 @@ function ChartBody({ model, highlight, narrow, startAnalysis }: { model: Extract
       {tooltip}
     </div>;
   }
-  return <div ref={host} className="os-ovc-bars-layout" onKeyDown={onKeyDown} data-ovc-chart={model.chart}>
+  return <div ref={host} className="os-ovc-bars-layout os-ovc-enter" onKeyDown={onKeyDown} data-ovc-chart={model.chart}>
     {desc}
     <div role="group" aria-label={name} aria-describedby={descId}>
       <ul className="os-ovc-bars">
@@ -356,19 +362,19 @@ function ChartBody({ model, highlight, narrow, startAnalysis }: { model: Extract
   </div>;
 }
 
-/** Table view: every category individually (no „Sonstige“), the same click targets as the chart. */
+/** Table view: every category individually (no bundling), the same click targets as the chart. */
 function ChartTable({ model, highlight }: { model: Extract<ChartModel, { kind: "chart" }>; highlight: string | null }) {
   const t = useT();
   const f = useFormat();
   const host = useRef<HTMLDivElement>(null);
   useEscape(host, () => { focusSelectedEntry(); });
-  return <div ref={host} className="os-ovc-table-host">
+  return <div ref={host} className="os-ovc-table-host os-ovc-enter">
     <table className="os-sidebar-table os-ovc-table" aria-label={t("ovc-name", { entry: model.header.label, count: f.integer(model.header.base) })}>
-      <thead><tr><th scope="col">{t("ovc-col-category")}</th><th scope="col">{t("sidebar-urls")}</th><th scope="col">{t("sidebar-percent-total")}</th></tr></thead>
+      <thead><tr><th scope="col">{t("ovc-col-category")}</th><th scope="col" className="os-ovc-num">{t("sidebar-urls")}</th><th scope="col" className="os-ovc-num">{t("sidebar-percent-total")}</th></tr></thead>
       <tbody>{model.table.map(c => <tr key={c.key} data-highlight={c.key === highlight || undefined} data-ovc-row={c.key}>
-        <th scope="row">{c.nav ? <button type="button" onClick={() => applyTarget(c.nav)}>{c.label}</button> : <span>{c.label}</span>}{c.issue && <IssueTypeIcon type={c.issue.issueType} aria-hidden />}</th>
-        <td>{countText(f, c.count)}</td>
-        <td>{c.count == null ? "–" : percentText(f, c.pct)}</td>
+        <th scope="row"><span className="os-ovc-cell"><i className="os-ovc-swatch" style={{ background: fillStyle(c) }} aria-hidden />{c.nav ? <button type="button" onClick={() => applyTarget(c.nav)}>{c.label}</button> : <span>{c.label}</span>}{c.issue && <IssueTypeIcon type={c.issue.issueType} size={12} aria-hidden />}</span></th>
+        <td className="os-ovc-num">{countText(f, c.count)}</td>
+        <td className="os-ovc-num">{c.count == null ? "–" : percentText(f, c.pct)}</td>
       </tr>)}</tbody>
     </table>
   </div>;

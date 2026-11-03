@@ -145,14 +145,14 @@ describe("UI-102 chart area in the Overview tab", () => {
   });
 
   // spec: UI-102
-  it("„Sonstige“ shows XML and Flash as extra bars and in its tooltip; Esc hides them; the table lists eleven rows", async () => {
+  it("„Remaining“ (de „Weitere“) shows XML and Flash as extra bars and in its tooltip; Esc hides them; the table lists eleven rows", async () => {
     await ready();
     selectTab("Internal");
     await waitFor(() => expect(area().querySelectorAll(".os-ovc-bars > li")).toHaveLength(10));
     const others = item("others");
     fireEvent.focus(others);
     const tip = await within(area()).findByRole("tooltip");
-    expect(tip).toHaveTextContent("Others");
+    expect(tip).toHaveTextContent("Remaining");
     expect(tip).toHaveTextContent("XML: 10");
     expect(tip).toHaveTextContent("Flash: 6");
     fireEvent.click(others);

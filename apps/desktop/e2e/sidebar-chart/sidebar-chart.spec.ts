@@ -69,7 +69,7 @@ test("ring, bars, summary and overlap from fx-ui-chart; selecting entries calls 
 
 // spec: UI-102
 // spec: UI-061 [M3]
-test("a filter row highlights its category and navigates the table; segments, legend and „Others“ are click targets", async ({ page }) => {
+test("a filter row highlights its category and navigates the table; segments, legend and „Remaining“ are click targets", async ({ page }) => {
   await open(page);
   await page.getByRole("button", { name: "Client Error (4XX)", exact: true }).click();
   await expect(chartItem(page, "f:Client Error (4XX)")).toHaveAttribute("data-highlight", "true");
@@ -297,19 +297,22 @@ test("selection to drawn chart: median of 20 selections (indication, server)", a
 });
 
 // spec: UI-102
-test("screenshots light and dark (report)", async ({ page }) => {
+test("screenshots light and dark: ring, bars and table (report)", async ({ page }) => {
   const dir = process.env.OS_V01_SHOTS ? resolve(process.env.OS_V01_SHOTS) : test.info().outputPath("shots");
+  const tag = process.env.OS_V01_SHOT_TAG ? `${process.env.OS_V01_SHOT_TAG}-` : "";
   mkdirSync(dir, { recursive: true });
   for (const theme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme: theme });
     await open(page);
     await page.getByRole("button", { name: "Client Error (4XX)", exact: true }).click();
     await expect(chartItem(page, "f:Client Error (4XX)")).toHaveAttribute("data-highlight", "true");
-    await page.locator(".os-app-sidebar").screenshot({ path: join(dir, `ring-response-codes-${theme}.png`) });
-    if (theme === "light") {
-      await treeTab(page, "Internal").click();
-      await expect(area(page).locator(".os-ovc-bars > li")).toHaveCount(10);
-      await area(page).screenshot({ path: join(dir, `bars-internal-${theme}.png`) });
-    }
+    await area(page).screenshot({ path: join(dir, `${tag}ring-response-codes-${theme}.png`), animations: "disabled" });
+    await treeTab(page, "Internal").click();
+    await expect(area(page).locator(".os-ovc-bars > li")).toHaveCount(10);
+    await area(page).screenshot({ path: join(dir, `${tag}bars-internal-${theme}.png`), animations: "disabled" });
+    await area(page).getByRole("button", { name: "Table" }).click();
+    await expect(area(page).getByRole("table")).toBeVisible();
+    await area(page).screenshot({ path: join(dir, `${tag}table-internal-${theme}.png`), animations: "disabled" });
+    await area(page).getByRole("button", { name: "Chart" }).click();
   }
 });
