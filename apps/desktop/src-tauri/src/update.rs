@@ -118,6 +118,9 @@ impl<R: Runtime> UpdateBackend for Native<R> {
             .await
             .map_err(|_| "Update-Installation fehlgeschlagen")??;
             if restart {
+                // M3-C01/Fable N5: Die Sitzungsmarke (OUT-246) entfernt nur `RunEvent::Exit` (lib.rs). Ob
+                // `restart()` dieses Ereignis vor dem Neustart auslöst, ist nicht geprüft; sonst meldet der erste
+                // Start nach einem Update fälschlich `unclean_exit`. Manuelle Prüfung im Protokoll M3-Q03.
                 handle.restart();
             }
             Ok(())
