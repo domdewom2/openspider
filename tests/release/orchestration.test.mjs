@@ -1,15 +1,21 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, readFileSync, readdirSync, mkdirSync, rmSync, copyFileSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, readdirSync, mkdirSync, rmSync, copyFileSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { manifests } from '../../scripts/release/manifest.mjs';
 import { checksums } from '../../scripts/release/checksums.mjs';
-import { releaseNotes } from '../../scripts/release/notes.mjs';
+import { releaseNotes, releaseBody } from '../../scripts/release/notes.mjs';
+import { downloads, isPublished } from '../../scripts/release/assets.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
+const releaseWorkflow = () => readFileSync(join(root, '.github/workflows/release.yml'), 'utf8');
+// Shell body of a named workflow step, dedented like GitHub Actions runs it.
+const step = name => releaseWorkflow().split(`      - name: ${name}\n`)[1]
+  .split('        run: |\n')[1].split('      - ')[0]
+  .split('\n').map(line => line.startsWith('          ') ? line.slice(10) : line).join('\n');
 const fixtures = ['OpenSpider_aarch64.app.tar.gz', 'OpenSpider_x86_64.app.tar.gz',
   'OpenSpider_1.0.0-beta.0_x64-setup.exe', 'OpenSpider_1.0.0-beta.0_x64_en-US.msi'];
 // Public test-only, format-valid signature envelope; no claim of cryptographic verification.
@@ -117,7 +123,7 @@ test('Asset-Kollisionen werden abgelehnt statt Signaturen oder Installer zu übe
 
 // spec: OUT-255 [M3]
 test('D01 archiviert mit dem Release-Binary vor den Prüfsummen und ohne Fallback', () => {
-  const workflow = readFileSync(join(root, '.github/workflows/release.yml'), 'utf8');
+  const workflow = releaseWorkflow();
   const hook = workflow.indexOf('      - name: Archiv-Kompatibilitäts-Fixture (D01)');
   assert.ok(hook > 0);
   assert.ok(hook < workflow.indexOf('      - name: SHA256SUMS über alle Release-Assets'));
@@ -163,12 +169,9 @@ test('Trockenlauf v1.0.0-beta.0: Skript-CLIs erzeugen beide Manifeste, Notes und
 });
 
 // spec: OUT-273 [M3]
-test('Workflow packt L01-Hinweise in Linux-, Windows- und alle macOS-CLI-Archive', t => {
+// spec: OUT-261 [M3]
+test('Workflow packt L01-Hinweise in Linux-, Windows- und das veröffentlichte Universal-macOS-CLI-Archiv', t => {
   const { directory, version } = fixture(t);
-  const workflow = readFileSync(join(root, '.github/workflows/release.yml'), 'utf8');
-  const step = name => workflow.split(`      - name: ${name}\n`)[1]
-    .split('        run: |\n')[1].split('      - ')[0]
-    .split('\n').map(line => line.startsWith('          ') ? line.slice(10) : line).join('\n');
   const notices = 'fixture: vollständige Drittlizenztexte';
   for (const path of ['incoming', 'third-party-notices', 'target/linux-core', 'scripts/release', 'temp']) {
     mkdirSync(join(directory, path), { recursive: true });
@@ -192,7 +195,11 @@ test('Workflow packt L01-Hinweise in Linux-, Windows- und alle macOS-CLI-Archive
   result = run('Distributable Assets sammeln und CLI-Archive vervollständigen');
   assert.equal(result.status, 0, result.stderr);
   const out = join(directory, 'release-assets');
-  for (const platform of ['linux-x86_64', 'darwin-aarch64', 'darwin-x86_64', 'darwin-universal']) {
+  // OUT-261: CLI archives per macOS architecture are built but no longer published.
+  for (const platform of ['darwin-aarch64', 'darwin-x86_64']) {
+    assert.ok(!readdirSync(out).includes(`openspider_${version}_${platform}.tar.gz`), platform);
+  }
+  for (const platform of ['linux-x86_64', 'darwin-universal']) {
     const archive = join(out, `openspider_${version}_${platform}.tar.gz`);
     const contents = spawnSync('tar', ['-tzf', archive], { encoding: 'utf8' });
     assert.equal(contents.status, 0, contents.stderr);
@@ -237,4 +244,163 @@ test('Alle externen Actions in Release- und Lizenzworkflows sind SHA-gepinnt', (
       assert.match(line, /@[0-9a-f]{40}(?:\s|$)/, `${name}: ${line}`);
     }
   }
+});
+
+// Every distributable file the R01/R02/linux-core artifacts deliver to assemble (Actions artifact layout).
+function incomingArtifacts(directory, version) {
+  const files = {
+    'openspider-macos-aarch64': [`OpenSpider_${version}_aarch64.dmg`, `openspider_${version}_darwin-aarch64.tar.gz`,
+      'OpenSpider_aarch64.app.tar.gz', 'OpenSpider_aarch64.app.tar.gz.sig', 'verify-app.log', 'verify-dmg.log'],
+    'openspider-macos-x86_64': [`OpenSpider_${version}_x64.dmg`, `openspider_${version}_darwin-x86_64.tar.gz`,
+      'OpenSpider_x86_64.app.tar.gz', 'OpenSpider_x86_64.app.tar.gz.sig', 'verify-app.log'],
+    'openspider-macos-universal': [`OpenSpider_${version}_universal.dmg`, `openspider_${version}_darwin-universal.tar.gz`,
+      'OpenSpider_universal.app.tar.gz', 'OpenSpider_universal.app.tar.gz.sig', 'verify-app.log'],
+    'openspider-windows-x86_64': [`OpenSpider_${version}_x64-setup.exe`, `OpenSpider_${version}_x64-setup.exe.sig`,
+      `OpenSpider_${version}_x64_en-US.msi`, `OpenSpider_${version}_x64_en-US.msi.sig`, 'openspider.exe'],
+    'openspider-linux-x86_64': [`openspider_${version}_linux-x86_64.tar.gz`],
+  };
+  for (const [artifact, names] of Object.entries(files)) {
+    mkdirSync(join(directory, artifact), { recursive: true });
+    for (const name of names) writeFileSync(join(directory, artifact, name), name.endsWith('.sig') ? signature : `fixture:${artifact}/${name}`);
+  }
+}
+
+// spec: OUT-261 [M3]
+// spec: OUT-266 [M3]
+test('Veröffentlicht nur Universal-DMG und -CLI für macOS, dazu bytegleiche versionslose Kopien in SHA256SUMS', async t => {
+  const { directory, version, repository, date } = fixture(t);
+  const incoming = join(directory, 'incoming');
+  const out = join(directory, 'release-assets');
+  incomingArtifacts(incoming, version);
+  const result = spawnSync(process.execPath, ['scripts/release/assets.mjs', incoming, out, version], { cwd: root, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(readdirSync(out).sort(), [
+    'OpenSpider-Windows-Setup.exe',
+    'OpenSpider-macOS.dmg',
+    'OpenSpider_1.0.0-beta.0_universal.dmg',
+    'OpenSpider_1.0.0-beta.0_x64-setup.exe',
+    'OpenSpider_1.0.0-beta.0_x64-setup.exe.sig',
+    'OpenSpider_1.0.0-beta.0_x64_en-US.msi',
+    'OpenSpider_1.0.0-beta.0_x64_en-US.msi.sig',
+    'OpenSpider_aarch64.app.tar.gz',
+    'OpenSpider_aarch64.app.tar.gz.sig',
+    'OpenSpider_x86_64.app.tar.gz',
+    'OpenSpider_x86_64.app.tar.gz.sig',
+    'openspider.exe',
+    'openspider_1.0.0-beta.0_darwin-universal.tar.gz',
+    'openspider_1.0.0-beta.0_linux-x86_64.tar.gz',
+  ].sort());
+  for (const name of [`OpenSpider_${version}_aarch64.dmg`, `OpenSpider_${version}_x64.dmg`, 'OpenSpider_universal.app.tar.gz']) {
+    assert.match(result.stdout, new RegExp(`nicht veröffentlicht \\(OUT-261\\): ${name.replaceAll('.', '\\.')}`));
+  }
+  const { macos, windows } = downloads(version);
+  assert.deepEqual(macos, { file: 'OpenSpider_1.0.0-beta.0_universal.dmg', alias: 'OpenSpider-macOS.dmg' });
+  assert.deepEqual(windows, { file: 'OpenSpider_1.0.0-beta.0_x64-setup.exe', alias: 'OpenSpider-Windows-Setup.exe' });
+  for (const { file, alias } of [macos, windows]) {
+    assert.deepEqual(readFileSync(join(out, alias)), readFileSync(join(incoming, file.endsWith('.dmg') ? 'openspider-macos-universal' : 'openspider-windows-x86_64', file)));
+  }
+  // The copies must never be picked as updater packages; the manifest still has exactly four targets.
+  rmSync(join(out, 'openspider.exe'));
+  assert.deepEqual(manifests({ directory: out, version, repository, notes: 'Fixture notes', date }).platforms,
+    ['darwin-aarch64', 'darwin-x86_64', 'windows-x86_64-nsis', 'windows-x86_64-msi']);
+  const sums = Object.fromEntries((await checksums(out)).trim().split('\n').map(line => line.split('  ').reverse()));
+  for (const { file, alias } of [macos, windows]) {
+    assert.match(sums[alias], /^[0-9a-f]{64}$/);
+    assert.equal(sums[alias], sums[file]);
+  }
+  assert.equal(Object.keys(sums).length, readdirSync(out).length - 1);
+  const verification = spawnSync('sha256sum', ['-c', 'SHA256SUMS'], { cwd: out, encoding: 'utf8' });
+  assert.equal(verification.status, 0, verification.stderr);
+
+  // Draft guard of the workflow accepts exactly this set ...
+  const guard = () => spawnSync('bash', ['-c', step('Veröffentlichte Dateien und versionslose Downloads prüfen (OUT-261)')],
+    { cwd: directory, encoding: 'utf8', env: { ...process.env, VERSION: version } });
+  let check = guard();
+  assert.equal(check.status, 0, check.stdout + check.stderr);
+  // ... and rejects a differing copy, a copy missing from SHA256SUMS and every unpublished macOS file.
+  writeFileSync(join(out, macos.alias), 'tampered');
+  assert.match(guard().stdout, /OpenSpider-macOS\.dmg fehlt oder ist nicht bytegleich/);
+  copyFileSync(join(out, macos.file), join(out, macos.alias));
+  writeFileSync(join(out, 'SHA256SUMS'), readFileSync(join(out, 'SHA256SUMS'), 'utf8').split('\n').filter(l => !l.endsWith(`  ${windows.alias}`)).join('\n'));
+  assert.match(guard().stdout, /OpenSpider-Windows-Setup\.exe fehlt in SHA256SUMS/);
+  await checksums(out);
+  assert.equal(guard().status, 0);
+  for (const name of [`OpenSpider_${version}_aarch64.dmg`, `openspider_${version}_darwin-x86_64.tar.gz`, 'OpenSpider_universal.app.tar.gz.sig']) {
+    writeFileSync(join(out, name), 'unpublished');
+    check = guard();
+    assert.notEqual(check.status, 0);
+    assert.match(check.stdout, /darf nicht veröffentlicht werden/);
+    rmSync(join(out, name));
+  }
+  rmSync(join(out, windows.alias));
+  assert.notEqual(guard().status, 0);
+  // The guard runs before the draft is created.
+  const workflow = releaseWorkflow();
+  assert.ok(workflow.indexOf('versionslose Downloads prüfen (OUT-261)') < workflow.indexOf('gh release create'));
+});
+
+// spec: OUT-261 [M3]
+test('Unbekannte macOS-Dateien, vorhandene Kopie-Namen und Kopien ohne Quelle werden nicht still veröffentlicht', t => {
+  const { directory, version } = fixture(t);
+  for (const name of ['OpenSpider_9.9.9_universal.dmg', 'OpenSpider_1.0.0-beta.0_arm64.dmg', 'openspider_1.0.0-beta.0_darwin-arm64.tar.gz', 'OpenSpider_arm64.app.tar.gz']) {
+    assert.throws(() => isPublished(name, version), /Unerwartet/, name);
+  }
+  assert.equal(isPublished('OpenSpider_1.0.0-beta.0_universal.dmg', version), true);
+  assert.equal(isPublished('OpenSpider_aarch64.app.tar.gz.sig', version), true);
+  assert.equal(isPublished('OpenSpider_universal.app.tar.gz.sig', version), false);
+  const incoming = join(directory, 'incoming');
+  mkdirSync(incoming);
+  writeFileSync(join(incoming, 'OpenSpider-macOS.dmg'), 'foreign bytes');
+  let result = spawnSync(process.execPath, ['scripts/release/assets.mjs', incoming, join(directory, 'out-a'), version], { cwd: root, encoding: 'utf8' });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Kollision: OpenSpider-macOS\.dmg/);
+  rmSync(join(incoming, 'OpenSpider-macOS.dmg'));
+  writeFileSync(join(incoming, `OpenSpider_${version}_x64-setup.exe`), 'nsis');
+  result = spawnSync(process.execPath, ['scripts/release/assets.mjs', incoming, join(directory, 'out-b'), version], { cwd: root, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  // Without an Apple build (no secrets) there is no Universal DMG and therefore no macOS copy.
+  assert.deepEqual(readdirSync(join(directory, 'out-b')).sort(), ['OpenSpider-Windows-Setup.exe', `OpenSpider_${version}_x64-setup.exe`]);
+});
+
+// spec: OUT-261 [M3]
+// spec: OUT-251 [M3]
+test('Release-Text beginnt mit dem Download-Kasten; Update-Manifeste enthalten nur die CHANGELOG-Notes', t => {
+  const expected = readFileSync(join(root, 'tests/release/fixtures/release-body-1.0.0-beta.2.md'), 'utf8');
+  const notes = `${expected.split('## Neu in dieser Version\n\n')[1].trim()}\n`;
+  // Fixture: the hand-written download box of the published v1.0.0-beta.2 release (template, user 04.11.2026).
+  assert.equal(releaseBody({ version: '1.0.0-beta.2', repository: 'wojcikdominik/openspider', notes }), expected);
+  const body = releaseBody({ version: '1.0.0-beta.3', repository: 'example/openspider', notes: 'Neu\n' });
+  assert.ok(body.startsWith('## Download\n\n| System | Datei / File |\n'));
+  assert.match(body, /\| \*\*macOS 13\+\*\* \(Apple Silicon und Intel\) \| \[OpenSpider_1\.0\.0-beta\.3_universal\.dmg\]\(https:\/\/github\.com\/example\/openspider\/releases\/download\/v1\.0\.0-beta\.3\/OpenSpider_1\.0\.0-beta\.3_universal\.dmg\) \|/);
+  assert.match(body, /\| \*\*Windows 10\/11\*\* \(x64, auch Windows on ARM\) \| \[OpenSpider_1\.0\.0-beta\.3_x64-setup\.exe\]\(https:\/\/github\.com\/example\/openspider\/releases\/download\/v1\.0\.0-beta\.3\/OpenSpider_1\.0\.0-beta\.3_x64-setup\.exe\) \|/);
+  assert.ok(body.endsWith('\n## Neu in dieser Version\n\nNeu\n'));
+  assert.throws(() => releaseBody({ version: '1.0.0-beta.3', repository: 'bad repo', notes: 'x' }), /Repository/);
+  assert.throws(() => releaseBody({ version: '1.0.0-beta.3', repository: 'example/openspider', notes: ' \n' }), /fehlen/);
+
+  // Workflow step end to end: separate files for manifest and release body.
+  const { directory, version, date } = fixture(t);
+  cpSync(join(root, 'scripts/release'), join(directory, 'scripts/release'), { recursive: true });
+  copyFileSync(join(root, 'CHANGELOG.md'), join(directory, 'CHANGELOG.md'));
+  mkdirSync(join(directory, 'release-assets'));
+  for (const name of fixtures) {
+    copyFileSync(join(directory, name), join(directory, 'release-assets', name));
+    copyFileSync(join(directory, `${name}.sig`), join(directory, 'release-assets', `${name}.sig`));
+  }
+  const result = spawnSync('bash', ['-c', step('Release-Notes und Update-Manifeste')], { cwd: directory, encoding: 'utf8',
+    env: { ...process.env, VERSION: version, RELEASE_DATE: date, GITHUB_REPOSITORY: 'example/openspider', GITHUB_STEP_SUMMARY: join(directory, 'summary') } });
+  assert.equal(result.status, 0, result.stderr);
+  const changelog = releaseNotes(readFileSync(join(root, 'CHANGELOG.md'), 'utf8'), version);
+  assert.equal(readFileSync(join(directory, 'release-reports/update-notes.md'), 'utf8'), changelog);
+  for (const file of ['latest.json', 'latest-beta.json']) {
+    const manifestNotes = JSON.parse(readFileSync(join(directory, 'release-assets', file))).notes;
+    assert.equal(manifestNotes, changelog);
+    assert.doesNotMatch(manifestNotes, /## Download|Datei \/ File|Neu in dieser Version|Entwurfshinweise|Installations-Smoke/);
+  }
+  const released = readFileSync(join(directory, 'release-reports/release-notes.md'), 'utf8');
+  const [box, rest] = released.split('\n---\n\n**Entwurfshinweise (vor dem Veröffentlichen entfernen):**\n\n');
+  assert.equal(box, releaseBody({ version, repository: 'example/openspider', notes: changelog }));
+  assert.match(rest, /^- Installations-Smoke:/m);
+  const workflow = releaseWorkflow();
+  assert.match(workflow, /manifest\.mjs release-assets "\$VERSION" "\$GITHUB_REPOSITORY" release-reports\/update-notes\.md /);
+  assert.match(workflow, /--notes-file release-reports\/release-notes\.md/);
 });

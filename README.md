@@ -26,9 +26,10 @@ Open-source website crawler and technical SEO auditor – built for AI agents an
 </p>
 
 <p align="center">
-  <a href="https://github.com/wojcikdominik/openspider/releases/latest"><b>⬇ Download the public beta</b></a><br>
-  On the release page, pick <b>one</b> file:<br>
-  macOS 13+ (Apple Silicon &amp; Intel): <code>OpenSpider_…_universal.dmg</code> · Windows 10/11: <code>OpenSpider_…_x64-setup.exe</code>
+  <b>Public beta:</b>
+  <a href="https://github.com/wojcikdominik/openspider/releases/latest/download/OpenSpider-macOS.dmg"><b>⬇ Download for macOS</b></a> (13+, Apple Silicon &amp; Intel) ·
+  <a href="https://github.com/wojcikdominik/openspider/releases/latest/download/OpenSpider-Windows-Setup.exe"><b>⬇ Download for Windows</b></a> (10/11, x64)<br>
+  <a href="https://github.com/wojcikdominik/openspider/releases/latest">All files and release notes</a>
 </p>
 
 ---
@@ -106,15 +107,17 @@ Memory for an open view over 5 million rows stays around 60 MB. The table never 
 
 ## Installation
 
-The public beta is live. Open the [latest release](https://github.com/wojcikdominik/openspider/releases/latest) and download one file:
+The public beta is live. Download one file; the links always point to the latest release:
 
-| System | File |
+| System | Download |
 |---|---|
-| macOS 13+ (Apple Silicon and Intel) | `OpenSpider_<version>_universal.dmg` |
-| Windows 10 1809+ / 11 (x64, also Windows on ARM via emulation) | `OpenSpider_<version>_x64-setup.exe` |
+| macOS 13+ (Apple Silicon and Intel) | [OpenSpider-macOS.dmg](https://github.com/wojcikdominik/openspider/releases/latest/download/OpenSpider-macOS.dmg) (universal DMG) |
+| Windows 10 1809+ / 11 (x64, also Windows on ARM via emulation) | [OpenSpider-Windows-Setup.exe](https://github.com/wojcikdominik/openspider/releases/latest/download/OpenSpider-Windows-Setup.exe) (per-user setup) |
 
-The other files on the release page are for automatic updates, the CLI, managed installs (MSI)
-and checksums (`SHA256SUMS`). See also the [beta page](https://openspider.de/en/beta/).
+The [latest release](https://github.com/wojcikdominik/openspider/releases/latest) lists the same installers
+under their versioned names (`OpenSpider_<version>_universal.dmg`, `OpenSpider_<version>_x64-setup.exe`)
+plus the files for automatic updates, the CLI, managed installs (MSI) and checksums (`SHA256SUMS`,
+which also covers the two versionless copies). See also the [beta page](https://openspider.de/en/beta/).
 Linux x86_64 with glibc supports the core and CLI only; Linux desktop,
 .deb/.rpm and arm64 releases remain unsupported.
 Homebrew and winget distribution are planned and not available yet.

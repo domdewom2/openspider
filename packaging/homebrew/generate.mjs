@@ -30,21 +30,15 @@ export function generate({ directory, output, version, repository, packageId, mo
   };
   const result = {};
   if (mode !== 'winget') {
-    // R01 copies the actual Tauri DMG name unchanged; universal is not an updater archive.
-    const arm = pick(/^OpenSpider_[A-Za-z0-9.+-]+_aarch64\.dmg$/);
-    const intel = pick(/^OpenSpider_[A-Za-z0-9.+-]+_(?:x64|x86_64)\.dmg$/);
+    // OUT-261 (Nutzerentscheidung 04.11.2026): only the Universal DMG is published, for Apple Silicon
+    // and Intel alike. R01 copies the Tauri DMG name unchanged; per-architecture DMGs (Actions artifacts
+    // only) and the versionless copy OpenSpider-macOS.dmg are never selected.
+    const dmg = pick(/^OpenSpider_[A-Za-z0-9.+-]+_universal\.dmg$/);
     result['openspider.rb'] = `cask "openspider" do
   version "${version}"
+  sha256 "${dmg.hash}"
 
-  on_arm do
-    sha256 "${arm.hash}"
-    url "${arm.url}"
-  end
-  on_intel do
-    sha256 "${intel.hash}"
-    url "${intel.url}"
-  end
-
+  url "${dmg.url}"
   name "OpenSpider"
   desc "Website crawler and analysis desktop application"
   homepage "https://openspider.de/"

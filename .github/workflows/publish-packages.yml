@@ -76,7 +76,7 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
-          gh release download "$RELEASE_TAG" --dir release-assets --pattern '*.dmg' --pattern '*.msi' --pattern '*-setup.exe'
+          gh release download "$RELEASE_TAG" --dir release-assets --pattern 'OpenSpider_*_universal.dmg' --pattern 'OpenSpider_*.msi' --pattern 'OpenSpider_*_x64-setup.exe'
           node packaging/homebrew/generate.mjs --directory release-assets --output generated \
             --version "${RELEASE_TAG#v}" --repository "$GH_REPO"
       - name: Commit existing tap and open winget PR in existing fork

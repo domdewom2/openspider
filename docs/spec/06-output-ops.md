@@ -2393,6 +2393,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Abgebrochener Download wird beim nächsten Start fortgesetzt oder verworfen, nie halb installiert.
   - [ ] Nach dem Update startet die App neu und öffnet den zuletzt geöffneten Crawl.
   - [ ] Update aktualisiert auch das CLI-Binary und registrierte Aufgaben (OUT-166).
+  - [ ] **OS-Festlegung (Nutzerentscheidung 04.11.2026):** Die angezeigten Release-Notes (Feld `notes` in `latest.json`/`latest-beta.json`) sind ausschließlich die CHANGELOG-Notes der Version, ohne den Download-Kasten des GitHub-Release-Texts (OUT-261) und ohne Entwurfshinweise.
 - **Testfixture:** Mock-Update-Server, manueller Release-Test je OS.
 
 ### OUT-252 Integrität und Signatur von Updates
@@ -2448,12 +2449,14 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
 
 ### OUT-261 macOS Intel (x86_64)
 - **Priorität:** P0
-- **Beschreibung:** Native x86_64-Builds; Auslieferung als getrennte DMGs je Architektur und **[P1]** zusätzlich als Universal-Binary.
+- **Beschreibung:** Native x86_64-Builds; Auslieferung **[P1]** als Universal-Binary. **OS-Festlegung (Nutzerentscheidung 04.11.2026):** Für macOS wird nur das Universal-DMG veröffentlicht (eine Datei für Apple Silicon und Intel, weniger Dateien auf der Release-Seite). DMGs und CLI-Archive je Architektur werden weiter gebaut und geprüft, soweit Installations-Smoke und Updater sie brauchen, aber nicht als Release-Dateien hochgeladen; das Universal-Updater-Archiv ebenfalls nicht. Automatische Updates nutzen weiterhin die Updater-Pakete je Architektur.
 - **Akzeptanzkriterien:**
   - [ ] Unterstützt macOS 13 und neuer (wie OUT-260).
   - [ ] Vollständige Testsuite in CI auf `macos-13` (x64). **OS-Festlegung (Nutzer 03.11.2026):** Intel-Macs sind kaum noch verbreitet; im Release-Lauf läuft die Intel-Testsuite weiter, ein Fehlschlag ist aber nur eine Warnung und hält den Entwurf nicht auf. Bau, Signatur, Notarisierung und Start-Smoke des x86_64- und des Universal-DMG bleiben blockierend.
   - [ ] Das Update-Manifest liefert je Architektur das passende Paket.
   - [ ] [P1] Das Universal-DMG enthält App und CLI mit beiden Architekturen (`lipo -archs` meldet `x86_64 arm64`) und startet auf beiden nativ.
+  - [ ] **OS-Festlegung (Nutzerentscheidung 04.11.2026):** Ein Release enthält für macOS genau `OpenSpider_<v>_universal.dmg`, `openspider_<v>_darwin-universal.tar.gz` und die Updater-Pakete `OpenSpider_aarch64.app.tar.gz`/`OpenSpider_x86_64.app.tar.gz` samt `.sig`; `OpenSpider_<v>_aarch64.dmg`, `OpenSpider_<v>_x64.dmg`, `openspider_<v>_darwin-{aarch64,x86_64}.tar.gz` und `OpenSpider_universal.app.tar.gz(.sig)` fehlen. Zusätzlich liegt eine versionslose, bytegleiche Kopie `OpenSpider-macOS.dmg` des Universal-DMG bei, sodass `https://github.com/<repo>/releases/latest/download/OpenSpider-macOS.dmg` immer das neueste Release lädt; beide stehen in `SHA256SUMS`. Fehlt die Kopie oder weicht sie ab, entsteht kein Release-Entwurf.
+  - [ ] **OS-Festlegung (Nutzerentscheidung 04.11.2026):** Der Text des GitHub-Releases beginnt mit einem Download-Kasten: Tabelle „System | Datei“ mit macOS 13+ (Apple Silicon und Intel) → Universal-DMG und Windows 10/11 (x64, auch Windows on ARM) → NSIS-Setup, jeweils als Link auf die versionierte Datei dieses Releases; danach ein Satz (de, darunter kursiv en), wofür die übrigen Dateien sind (automatische Updates, CLI, Firmen-Installationen per MSI, Prüfsummen), Links auf Benutzerhandbuch (de/en) und Beta-Feedback, dann „## Neu in dieser Version“ mit den CHANGELOG-Notes.
 - **Testfixture:** CI-Matrix.
 
 ### OUT-262 Windows x64
@@ -2505,6 +2508,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] SmartScreen zeigt den verifizierten Herausgeber.
   - [ ] Stille Installation und Deinstallation ohne Dialoge (Exit-Code 0).
   - [ ] Deinstallation entfernt Programmdateien, Startmenü-Einträge, PATH-Eintrag und geplante Aufgaben; Benutzerdaten (Crawls, Einstellungen) bleiben, außer der Nutzer wählt „Benutzerdaten entfernen“ (interaktiv) bzw. `REMOVEUSERDATA=1`.
+  - [ ] **OS-Festlegung (Nutzerentscheidung 04.11.2026):** Neben `OpenSpider_<v>_x64-setup.exe` (samt `.sig`) und dem MSI (samt `.sig`) enthält jedes Release eine versionslose, bytegleiche Kopie `OpenSpider-Windows-Setup.exe` des NSIS-Setups für den festen Link `https://github.com/<repo>/releases/latest/download/OpenSpider-Windows-Setup.exe`; sie steht in `SHA256SUMS` und wird weder vom Update-Manifest noch von winget verwendet (beide verweisen auf die versionierten Dateien).
 - **Testfixture:** Release-Pipeline-Test in Windows-VM.
 
 ### OUT-267 Hardware-Anforderungen und Ressourcenlimits
