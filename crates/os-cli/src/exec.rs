@@ -627,7 +627,7 @@ fn describe(item: &Resolved) -> String {
 }
 
 /// Unterfilter-Export ohne vorhandenen Vergleich (erster Projektcrawl, OUT-151/152): Warnung, keine Datei.
-fn skip_compare_tab(item: &Resolved, rep: &Reporter) {
+pub(crate) fn skip_compare_tab(item: &Resolved, rep: &Reporter) {
     rep.warn(format!(
         "Export '{}' übersprungen: kein Vergleich vorhanden (OUT-151)",
         describe(item)

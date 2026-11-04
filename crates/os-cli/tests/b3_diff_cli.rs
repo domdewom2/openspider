@@ -223,3 +223,43 @@ fn the_report_without_a_comparison_warns_and_strict_turns_it_into_exit_code_4() 
         assert_eq!(read_csv(&out.join("crawl_changes.csv")).len(), 1);
     }
 }
+
+// spec: OUT-151
+// spec: OUT-152
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_consolidated_segment_workbook_warns_about_subfilters_without_a_comparison() {
+    let site = site("out-basic-site").await;
+    let env = Env::new();
+    let config = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../tests/fixtures/out-m2-cli/segments.osconfig");
+    let run = env
+        .run_async(vec![
+            "--crawl".to_string(),
+            "http://site.test/".into(),
+            "--resolve".into(),
+            resolve(&site),
+            "--set".into(),
+            FAST.into(),
+            "--config".into(),
+            config.to_string_lossy().into_owned(),
+            "--project-name".into(),
+            "segments".into(),
+            "--compare-with-previous".into(),
+            "--segment".into(),
+            "all".into(),
+            "--single-workbook".into(),
+            "--export-format".into(),
+            "xlsx".into(),
+            "--export-tabs".into(),
+            "Internal:All,Internal:HTML:Missing".into(),
+            "--output-folder".into(),
+            env.out().to_string_lossy().into_owned(),
+        ])
+        .await;
+    assert_eq!(run.code, 0, "{}", run.dump());
+    // Erster Projektcrawl: kein Vergleich – der Unterfilter wird mit genau einer Warnung übersprungen, nicht stumm.
+    let warning =
+        "Warnung: Export 'Internal:HTML:Missing' übersprungen: kein Vergleich vorhanden (OUT-151)";
+    assert_eq!(run.stderr.matches(warning).count(), 1, "{}", run.dump());
+    assert!(!file_names(&env.out()).is_empty());
+}
