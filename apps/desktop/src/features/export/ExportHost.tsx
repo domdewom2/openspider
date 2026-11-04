@@ -11,6 +11,7 @@ import type { OpHandle } from "../../ipc/gen/OpHandle";
 import type { OpStatus } from "../../ipc/gen/OpStatus";
 import type { JsonValue } from "../../ipc/gen/serde_json/JsonValue";
 import { useSession } from "../../state/session";
+import { useComparison } from "../compare/model";
 import { registerAction, useAction } from "../../ui/actions";
 import { registerMenuContributions } from "../../ui/menu/registry";
 import type { MenuContribution } from "../../ui/menu/types";
@@ -68,6 +69,9 @@ export function menuLabel(key: string, groupPrefix = ""): { labelKey: string } |
   return { label: groupPrefix && key.startsWith(groupPrefix) ? key.slice(groupPrefix.length) : key };
 }
 
+/** Report name of OUT-154; the core enables it only while the window has a comparison. */
+export const CRAWL_CHANGES = "Crawl Changes";
+
 /** One window-wide host; operation state survives closing the options dialog. */
 export function ExportHost({ desktop = nativeExportDesktop }: { desktop?: ExportDesktop }) {
   const t = useT();
@@ -76,6 +80,8 @@ export function ExportHost({ desktop = nativeExportDesktop }: { desktop?: Export
   const ops = useSession(s => s.ops);
   const status = active ? combine(active.handles.map(h => ops[h.opId]), active.info?.files) : undefined;
   const crawlId = useSession(s => s.crawl?.crawlId);
+  // OUT-154: „Crawl Changes“ hängt an der Vergleichssitzung; ihr Wechsel erneuert den Katalog.
+  const comparison = useComparison(s => s.session);
   const countsVersion = useSession(s => s.countsVersion);
   const latestCounts = useRef(countsVersion);
   latestCounts.current = countsVersion;
@@ -117,7 +123,7 @@ export function ExportHost({ desktop = nativeExportDesktop }: { desktop?: Export
     void refresh();
     const timer = setInterval(() => void refresh(), 500);
     return () => { live = false; clearInterval(timer); };
-  }, [crawlId]);
+  }, [crawlId, comparison]);
   useEffect(() => {
     const offs: (() => void)[] = [];
     const menu: MenuContribution[] = [{ menu: "bulkExport", group: "multi", order: 0, items: [{ id: "export.multi", action: "export.multi", labelKey: "export-multi", enabled: c => c.hasCrawl === true && !running }] }];
@@ -134,6 +140,12 @@ export function ExportHost({ desktop = nativeExportDesktop }: { desktop?: Export
         menu.push({ menu: key === "bulk" ? "bulkExport" : "reports", group: `export-${group.key}`, order: 10, items: [{ id: `export-group-${key}-${group.key}`, ...menuLabel(group.labelKey), items }] });
       }
     }
+    // Ohne geöffneten Crawl gibt es keinen Katalog; im Vergleichsmodus bleibt „Crawl Changes“ trotzdem erreichbar.
+    if (comparison && !exports?.reports.some(g => g.items.some(i => i.name === CRAWL_CHANGES))) {
+      const action = `export.report.${CRAWL_CHANGES}`;
+      offs.push(registerAction(action, () => { if (!running) openExport({ kind: "report", name: CRAWL_CHANGES }); }));
+      menu.push({ menu: "reports", group: `export-${CRAWL_CHANGES}`, order: 10, items: [{ id: action, action, ...menuLabel(CRAWL_CHANGES), enabled: () => !running }] });
+    }
     for (const sitemapKind of ["pages", "images"] as const) {
       const action = `export.sitemap.${sitemapKind}`;
       offs.push(registerAction(action, async () => {
@@ -148,7 +160,7 @@ export function ExportHost({ desktop = nativeExportDesktop }: { desktop?: Export
     }
     offs.push(registerMenuContributions("features/export", menu));
     return () => { for (const off of offs.reverse()) off(); };
-  }, [exports, running, t]);
+  }, [exports, running, t, comparison]);
   const close = () => useExportDialog.setState({ request: null });
   return <>
     {request && !running && <ExportDialog key={JSON.stringify(request)} request={request} desktop={desktop} onClose={close} onStarted={(handles, path, info) => { setActive({ handles, path, info }); setCancelling(false); setError(info?.errors.length ? info.errors.join(" ") : null); close(); }} />}

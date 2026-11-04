@@ -462,3 +462,34 @@ it("keeps one export-catalog refresh in flight and catches up after tick bursts"
     expect(call("export.catalog")).toHaveLength(2);
   } finally { vi.useRealTimers(); }
 });
+
+// spec: OUT-154
+it("offers Crawl Changes in the Reports menu while a comparison is open, also without an open crawl", async () => {
+  const { useComparison } = await import("../compare/model");
+  const { allMenuContributions } = await import("../../ui/menu/registry");
+  const { hasAction } = await import("../../ui/actions");
+  const action = "export.report.Crawl Changes";
+  const items = () => allMenuContributions().filter(c => c.menu === "reports").flatMap(c => c.items);
+  useComparison.setState({ session: null });
+  render(<ExportHost desktop={desktop} />);
+  await act(async () => { await Promise.resolve(); });
+  expect(hasAction(action)).toBe(false);
+  act(() => { useComparison.setState({ session: { current: { crawlId: "b" }, previous: { crawlId: "a" }, version: 1 } as never }); });
+  await waitFor(() => expect(hasAction(action)).toBe(true));
+  expect(items().some(i => i.id === action)).toBe(true);
+  act(() => { expect(runAction(action)).toBe(true); });
+  expect(useExportDialog.getState().request).toEqual({ kind: "report", name: "Crawl Changes" });
+  act(() => { useComparison.setState({ session: null }); });
+  await waitFor(() => expect(hasAction(action)).toBe(false));
+});
+
+// spec: OUT-154
+// spec: OUT-112
+it("names the report and its comparison prerequisite in both languages", async () => {
+  const { i18n } = await import("../../i18n");
+  const reason = "report 'Crawl Changes' requires a crawl comparison (--crawl-comparison or --compare-with-previous)";
+  expect(i18n.translate("de", "Crawl Changes")).toBe("Änderungen seit dem letzten Crawl");
+  expect(i18n.translate("en", "Crawl Changes")).toBe("Crawl Changes");
+  expect(i18n.translate("de", reason)).toBe("Änderungen seit dem letzten Crawl: Nur im Vergleichsmodus verfügbar (Modus → Vergleich).");
+  expect(i18n.translate("en", reason)).toBe("Crawl Changes: Available in compare mode only (Mode → Compare).");
+});

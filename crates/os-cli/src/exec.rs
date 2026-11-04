@@ -618,9 +618,20 @@ enum ExportEnd {
 fn describe(item: &Resolved) -> String {
     match item {
         Resolved::Tab { tab, filter } => format!("{tab}:{filter}"),
+        Resolved::CompareTab { tab, filter, class } => {
+            format!("{tab}:{filter}:{}", class.as_str())
+        }
         Resolved::Bulk(n) | Resolved::Report(n) => n.clone(),
         Resolved::Issues => "Issues:All Issues".to_string(),
     }
+}
+
+/// Unterfilter-Export ohne vorhandenen Vergleich (erster Projektcrawl, OUT-151/152): Warnung, keine Datei.
+pub(crate) fn skip_compare_tab(item: &Resolved, rep: &Reporter) {
+    rep.warn(format!(
+        "Export '{}' übersprungen: kein Vergleich vorhanden (OUT-151)",
+        describe(item)
+    ));
 }
 
 fn report_file(rep: &Reporter, info: &ExportFileInfo) {
@@ -1027,6 +1038,10 @@ fn run_export(
 ) -> Result<usize, String> {
     let opts = labeled_writer_options(cfg, labels);
     match item {
+        Resolved::CompareTab { .. } => {
+            skip_compare_tab(item, rep);
+            Ok(0)
+        }
         Resolved::Tab { tab, filter } => {
             let query = ViewQuery::new(tab.clone(), filter.clone());
             let cancel = os_model::CancelToken::new();
@@ -1098,17 +1113,21 @@ fn run_batch(
     let selections: Vec<os_export::types::ExportSelection> = plan
         .exports
         .iter()
-        .map(|item| {
+        .filter_map(|item| {
             let (kind, name) = match item {
                 Resolved::Tab { tab, filter } => ("tab", format!("{tab}:{filter}")),
+                Resolved::CompareTab { .. } => {
+                    skip_compare_tab(item, rep);
+                    return None;
+                }
                 Resolved::Bulk(name) => ("bulk", name.clone()),
                 Resolved::Issues => ("bulk", os_export::catalog::bulk_issues::BULK_NAME.into()),
                 Resolved::Report(name) => ("report", name.clone()),
             };
-            os_export::types::ExportSelection {
+            Some(os_export::types::ExportSelection {
                 kind: kind.into(),
                 name,
-            }
+            })
         })
         .collect();
     let token = signals.cancel_token();
@@ -1185,6 +1204,10 @@ fn run_segment_export(
     let opts = labeled_writer_options(cfg, &plan.header_labels);
     let (kind, name) = match item {
         Resolved::Tab { tab, filter } => ("tab", format!("{tab}:{filter}")),
+        Resolved::CompareTab { .. } => {
+            skip_compare_tab(item, rep);
+            return Ok(0);
+        }
         Resolved::Bulk(name) => ("bulk", name.clone()),
         Resolved::Issues => ("bulk", os_export::catalog::bulk_issues::BULK_NAME.into()),
         Resolved::Report(name) => ("report", name.clone()),
@@ -1250,7 +1273,10 @@ fn comparison_export(
     let format = plan.format;
     let segment = plan.segment.as_deref();
     let explicit_previous = plan.explicit_previous.as_deref();
-    if !matches!(item, Resolved::Tab { .. } | Resolved::Report(_)) {
+    if !matches!(
+        item,
+        Resolved::Tab { .. } | Resolved::CompareTab { .. } | Resolved::Report(_)
+    ) {
         return None;
     }
     if explicit_previous.is_none() && file.get_meta("compare.latest").ok().flatten().is_none() {
@@ -1298,13 +1324,14 @@ fn comparison_export(
             plan.explicit_compare_config.as_ref(),
             cancel,
         )?;
-        let Resolved::Tab { tab, filter } = item else {
+        let Some((tab, filter, class)) = item.tab_parts() else {
             unreachable!()
         };
+        let (tab, filter) = (tab.to_string(), filter.to_string());
         let mut files = Vec::new();
         for scope in scopes {
-            let mut q = ViewQuery::new(tab, filter);
-            let name = format!("{tab}:{filter}");
+            let mut q = ViewQuery::new(&tab, &filter);
+            let name = describe(item);
             let target = out.join(os_export::naming::file_name(
                 &name,
                 scope.as_ref().and_then(|s| s.name.as_deref()),
@@ -1345,7 +1372,7 @@ fn comparison_export(
                 let spec = os_export::compare::TabSelection {
                     tab: tab.clone(),
                     filter: filter.clone(),
-                    class: None,
+                    class,
                     columns: q.columns,
                 };
                 if let Some(scope) = &scope {
@@ -1439,8 +1466,9 @@ fn comparison_batch(
                     .map(|w| w as &mut dyn os_export::types::WorkbookTarget),
                 skipped: vec![],
             };
-            if let Resolved::Tab { tab, filter } = item {
-                let label = format!("{tab}:{filter}");
+            if let Some((tab, filter, class)) = item.tab_parts() {
+                let (tab, filter) = (tab.to_string(), filter.to_string());
+                let label = describe(item);
                 let target = out.join(os_export::naming::file_name(
                     &label,
                     None,
@@ -1476,7 +1504,7 @@ fn comparison_batch(
                             let selection = os_export::compare::TabSelection {
                                 tab: tab.clone(),
                                 filter: filter.clone(),
-                                class: None,
+                                class,
                                 columns: os_analyze::views::ColumnSelection::Default,
                             };
                             let mut inner = os_export::types::ExportCtx {

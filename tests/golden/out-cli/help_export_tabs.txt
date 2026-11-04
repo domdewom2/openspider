@@ -112,6 +112,7 @@ Canonicals:Outside <head>
 Canonicals:Self Referencing
 Canonicals:Unlinked
 Change Detection:All
+Change Detection:Canonical
 Change Detection:Content
 Change Detection:Crawl Depth
 Change Detection:External Outlinks
@@ -121,6 +122,7 @@ Change Detection:Inlinks
 Change Detection:Internal Outlinks
 Change Detection:Meta Description
 Change Detection:Page Titles
+Change Detection:Redirect Target
 Change Detection:Structured Data Unique Types
 Change Detection:Unique External Outlinks
 Change Detection:Unique Inlinks

@@ -236,6 +236,8 @@ ID-Blöcke (Lücken sind Absicht, damit später eingefügt werden kann):
 - TECH-306 URL-Mapping zwischen den Crawls (P1, Verweis → OUT-146)
 - TECH-307 Umschalter „Changed“/„Not Changed“ und Sortierung nach Änderung (P1)
 - TECH-308 Automatischer Crawl-Vergleich („Auto Compare Crawls“) für geplante und CLI-Crawls (P1, Verweis → OUT-152)
+- TECH-309 Elementfilter „Canonical“ (P1, Nutzerentscheidung 04.11.2026)
+- TECH-310 Elementfilter „Redirect Target“ (P1, Nutzerentscheidung 04.11.2026)
 
 **Anhang A:** Offene Punkte, Festlegungen und Paritätsabweichungen, die gegen Golden-Exporte zu prüfen sind.
 **Anhang B:** Rubrik und Begründung der Issue-Einstufungen.
@@ -2248,12 +2250,13 @@ Change Detection ist Teil des Vergleichsmodus. Auswahl der Crawls, Rollentausch,
 - **Eingaben/Konfiguration:** Elemente (Mehrfachauswahl) in dieser Reihenfolge, die zugleich die Filterreihenfolge ist (gegen die öffentliche Tab-Doku der Referenz geprüft, Referenzstand Oktober 2026: genau diese 14 Filter):
   1. `Indexability` (TECH-304), 2. `Page Titles`, 3. `Meta Description`, 4. `H1` (TECH-302),
   5. `Word Count`, 6. `Crawl Depth`, 7. `Inlinks`, 8. `Unique Inlinks`, 9. `Internal Outlinks`, 10. `Unique Internal Outlinks`, 11. `External Outlinks`, 12. `Unique External Outlinks`, 13. `Structured Data Unique Types` (TECH-303),
-  14. `Content` (TECH-305).
+  14. `Content` (TECH-305),
+  15. `Canonical` (TECH-309), 16. `Redirect Target` (TECH-310) – OS-Erweiterung (Nutzerentscheidung 04.11.2026, **PA**): Die Elemente 1–14 und ihre Reihenfolge bleiben wie in der Referenz; die beiden Erweiterungen stehen dahinter, damit Filterreihenfolge und Golden-Exporte der Elemente 1–14 unverändert bleiben.
   
-  **Standardauswahl:** Elemente 1–13 an, `Content` aus (Festlegung; die öffentliche Referenz-Doku nennt keine Standardauswahl. Begründung: Elemente 1–13 werden aus ohnehin gespeicherten Crawl-Daten verglichen und kosten kaum Rechenzeit; `Content` setzt gespeicherte Inhalte voraus, die standardmäßig nicht vorliegen, und ist rechenintensiv). **Schwelle Inhaltsänderung** in %, ganzzahlig 0–100, Standard **10** (in der Referenz-Doku als Standard des Content-Filters genannt, verifiziert).
+  **Standardauswahl:** Elemente 1–13, 15 und 16 an, `Content` aus (Festlegung; die öffentliche Referenz-Doku nennt keine Standardauswahl. Begründung: Elemente 1–13, 15 und 16 werden aus ohnehin gespeicherten Crawl-Daten verglichen und kosten kaum Rechenzeit; `Content` setzt gespeicherte Inhalte voraus, die standardmäßig nicht vorliegen, und ist rechenintensiv). Gespeicherte Konfigurationen mit ausdrücklicher Elementliste (Profile, Crawl-Dateien älterer Versionen) behalten ihre Liste; der Report „Crawl Changes“ (OUT-154) hängt nicht von der Auswahl ab. **Schwelle Inhaltsänderung** in %, ganzzahlig 0–100, Standard **10** (in der Referenz-Doku als Standard des Content-Filters genannt, verifiziert).
 - **Ausgabe (Spalten/Filter/Export):** – (Spalten und Filter: TECH-301 ff.)
 - **Akzeptanzkriterien:**
-  - [ ] Registry-Test: genau 14 Elemente in obiger Reihenfolge; jedes ist einzeln abschaltbar; Standardauswahl wie oben.
+  - [ ] Registry-Test: genau 16 Elemente in obiger Reihenfolge; jedes ist einzeln abschaltbar; Standardauswahl wie oben (15 von 16, ohne `Content`).
   - [ ] Abgewählte Elemente erscheinen weder als Filter noch als Spalten. Ist kein Element aktiv, fehlt der Tab „Change Detection“ (auch im rechten Übersichtsbereich).
   - [ ] „Content“ ist nur wählbar, wenn beide Crawls den Text des Inhaltsbereichs bzw. dessen MinHash-Signatur gespeichert haben (die Referenz verlangt dafür gespeichertes HTML); sonst ist es ausgegraut mit Hinweis. Fehlen die Daten nur in einem Crawl eines bereits geöffneten Vergleichs, bleibt das Element mit Hinweis leer.
   - [ ] Konfigurationsänderung (Elemente, Schwelle) erfordert nur Neuberechnung bzw. Neuklassifikation des Vergleichs, keinen neuen Crawl; ein bereits gespeicherter Vergleich bleibt dabei unverändert (OUT-150).
@@ -2264,9 +2267,9 @@ Change Detection ist Teil des Vergleichsmodus. Auswahl der Crawls, Rollentausch,
 - **Priorität:** P1
 - **Beschreibung:** Letzter Tab im Vergleichsmodus.
 - **Eingaben/Konfiguration:** Vergleichsmodus mit zwei Crawls (aktuell/vorher, vertauschbar).
-- **Ausgabe (Spalten/Filter/Export):** `Address`, dann je gewähltem Element `<Element> (Current)`, `<Element> (Previous)`, bei Zahlen zusätzlich `<Element> Change` (absolut) und `<Element> Change %`. Elementspalten: `Indexability` (dazu `Indexability Status`, TECH-304), `Title 1`, `Meta Description 1`, `H1-1`, `Word Count`, `Crawl Depth`, `Inlinks`, `Unique Inlinks`, `Outlinks`, `Unique Outlinks`, `External Outlinks`, `Unique External Outlinks`, `Unique Types` (dazu `Unique Type Names`, TECH-303), `Content Change %`. Filter: „All“ + je Element ein Filter (TECH-302–305). Übersicht je Filter: `Current`, `Previous`, `Change` (alle drei = Anzahl geänderter URLs).
+- **Ausgabe (Spalten/Filter/Export):** `Address`, dann je gewähltem Element `<Element> (Current)`, `<Element> (Previous)`, bei Zahlen zusätzlich `<Element> Change` (absolut) und `<Element> Change %`. Elementspalten: `Indexability` (dazu `Indexability Status`, TECH-304), `Title 1`, `Meta Description 1`, `H1-1`, `Word Count`, `Crawl Depth`, `Inlinks`, `Unique Inlinks`, `Outlinks`, `Unique Outlinks`, `External Outlinks`, `Unique External Outlinks`, `Unique Types` (dazu `Unique Type Names`, TECH-303), `Content Change %`, `Canonical` (TECH-309), `Redirect Target` (TECH-310). Filter: „All“ + je Element ein Filter (TECH-302–305, TECH-309, TECH-310). Übersicht je Filter: `Current`, `Previous`, `Change` (alle drei = Anzahl geänderter URLs). Export der Ansicht nach OUT-151 mit denselben Spalten.
 - **Akzeptanzkriterien:**
-  - [ ] Population „All“: URLs, die in **beiden** Crawls vorkommen (nach URL-Mapping OUT-146) und analysiert wurden (interne HTML-Seiten mit Antwort in beiden Crawls).
+  - [ ] Population „All“: URLs, die in **beiden** Crawls vorkommen (nach URL-Mapping OUT-146) und analysiert wurden (interne URLs mit Antwort in beiden Crawls, die in jedem der beiden Crawls eine HTML-Seite **oder eine Weiterleitung** sind). Die Weiterleitung ist eine Erweiterung (Nutzerentscheidung 04.11.2026, TECH-310): Weiterleitungen tragen oft keinen HTML-Content-Type, und eine Seite, die zur Weiterleitung wird, soll im Vergleich bleiben. Ist die URL in einem Crawl keine HTML-Seite, gelten dort alle Elemente außer `Indexability` und `Redirect Target` als nicht erhoben und werden für diese URL nicht verglichen (wie TECH-303).
   - [ ] URLs nur in einem Crawl erscheinen hier nicht (sie sind New/Missing in den anderen Tabs).
   - [ ] `Change %` = `(Current − Previous) / Previous × 100`; bei Previous = 0 und Current > 0 → leer (Division vermeiden), Sortierung behandelt leer als +∞ (Festlegung).
 - **Testfixture:** `compare/`.
@@ -2340,6 +2343,31 @@ Change Detection ist Teil des Vergleichsmodus. Auswahl der Crawls, Rollentausch,
 - **Priorität:** P1
 - **Verweis:** siehe OUT-152 (führend). Eine Abhängigkeit von einem Speichermodus gibt es nicht (CRAWL-124).
 
+### TECH-309 Elementfilter „Canonical“
+- **Priorität:** P1
+- **Beschreibung (Nutzerentscheidung 04.11.2026):** Seiten, deren maßgebliche Canonical-URL (Auswahlregel TECH-017) sich geändert hat – auch wenn die Indexierbarkeit gleich bleibt (A → B bei unverändert `Canonicalised` ist für TECH-304 unsichtbar). OS-Erweiterung (**PA**, Anhang A Punkt 37).
+- **Eingaben/Konfiguration:** Element `Canonical` (TECH-300). Erhoben nur, wenn der Crawl Canonicals speichert (TECH-024); sonst für diesen Crawl nicht erhoben (wie TECH-303).
+- **Ausgabe (Spalten/Filter/Export):** Filter „Canonical“ (Information); Spalten `Canonical (Current)`, `Canonical (Previous)` mit der aufgelösten absoluten URL (TECH-002), leer ohne maßgebliches Canonical.
+- **Akzeptanzkriterien:**
+  - [ ] Bedingung: Canonical (Current) ≠ abgebildetes Canonical (Previous); die Previous-URL wird mit dem URL-Mapping (OUT-146) abgebildet und nach TECH-002 verglichen.
+  - [ ] Vorhanden → fehlend und fehlend → vorhanden sind Änderungen; Selbstreferenz → fremdes Ziel ebenso.
+  - [ ] Nur Body-Canonical geändert (zählt nicht für die Auswahl, K2-86) → keine Änderung.
+  - [ ] Mit Mapping-Regel Staging→Live ist das Staging-Canonical `https://staging.site.test/a` gleich dem Live-Canonical `https://www.site.test/a` → keine Änderung.
+  - [ ] Ist die URL in einem der Crawls keine HTML-Seite (TECH-301), wird das Element für sie nicht verglichen.
+- **Testfixture:** `tests/fixtures/out-b3-diff`: `/canon.html` zeigt in v1 auf `/canon-a.html`, in v2 auf `/canon-b.html` (gelistet, `Indexability Status` in beiden `Canonicalised`, also nicht in TECH-304); `/keep.html` ohne Canonical (nicht gelistet).
+
+### TECH-310 Elementfilter „Redirect Target“
+- **Priorität:** P1
+- **Beschreibung (Nutzerentscheidung 04.11.2026):** URLs, deren Weiterleitungsziel sich geändert hat, einschließlich neuer und weggefallener Weiterleitungen. Weiterleitungsziel = aufgelöste Ziel-URL des ersten Sprungs (Spalte `Redirect URL`; HTTP 3xx, Meta-Refresh- oder HTTP-Refresh-Weiterleitung, TECH-001 `Redirected`). OS-Erweiterung (**PA**).
+- **Eingaben/Konfiguration:** Element `Redirect Target` (TECH-300).
+- **Ausgabe (Spalten/Filter/Export):** Filter „Redirect Target“ (Information); Spalten `Redirect Target (Current)`, `Redirect Target (Previous)`, leer ohne Weiterleitung.
+- **Akzeptanzkriterien:**
+  - [ ] Bedingung: Redirect Target (Current) ≠ abgebildetes Redirect Target (Previous) (URL-Mapping OUT-146, Vergleich nach TECH-002).
+  - [ ] Seite → Weiterleitung und Weiterleitung → Seite sind Änderungen (leer ↔ Ziel).
+  - [ ] Nur der Status ändert sich (301 → 308, gleiches Ziel) → keine Änderung (sichtbar über Response Codes und OUT-142).
+  - [ ] Längere Kette mit gleichem ersten Ziel → keine Änderung dieses Elements für die Start-URL (Ketten: Report OUT-154).
+- **Testfixture:** `tests/fixtures/out-b3-diff`: `/rt` leitet in v1 auf `/end1.html`, in v2 auf `/end2.html` (gelistet); `/moved.html` wird in v2 zur Weiterleitung (gelistet); `/c1` behält das Ziel `/c2` bei längerer Kette (nicht gelistet).
+
 ---
 
 ## Anhang A: Offene Punkte, Festlegungen und Paritätsabweichungen (gegen Golden-Exporte prüfen)
@@ -2382,7 +2410,7 @@ Legende: **F** = OpenSpider-Festlegung (Referenzverhalten unbekannt, gegen Golde
 34. **K – Bulk-Export-Name JavaScript (TECH-114):** „Pages With JavaScript Issues“.
 35. **F – Ausnahmen beim Ausblenden durch Respect-Schalter (TECH-011/031/051):** Ausgeblendete URLs bleiben im jeweils eigenen Fachfilter sichtbar (Canonicalised, Pagination-Tab, Directives-Filter). CRAWL-091/092 beschreiben ein Ausblenden in allen Tabs; die Referenz-Doku nennt keine Ausnahme. Vor dem Golden-Test abgleichen und ggf. in CRAWL-091 ff. oder hier vereinheitlichen.
 36. **F – Link-Score-Normierung (TECH-145):** logarithmisch (Standard) vs. linear; Behandlung gemischt follow/nofollow verlinkter Ziele (zählt als folgbar). Entscheidung per Benchmark.
-37. **F/K – Change Detection (TECH-300–305):** **K:** Elementliste (14, Reihenfolge), Schwelle 10 % mit „mehr als“, Schwelle und Elementliste gegen die öffentliche Tab-Doku geprüft. **PA (Entscheidung des Architekten):** Indexability zählt zusätzlich den Wechsel des Grundes (TECH-304), Structured Data vergleicht Typ-Menge und Anzahl (TECH-303); die Referenz-Doku nennt nur Indexable ↔ Non-Indexable bzw. die Anzahl. **F:** Standardauswahl (1–13 an, Content aus) – die Referenz-Doku nennt keine Standardauswahl; H1-Vergleich nur des ersten Elements; Rundung `Content Change %` auf 2 Nachkommastellen.
+37. **F/K – Change Detection (TECH-300–305):** **K:** Elementliste (14, Reihenfolge), Schwelle 10 % mit „mehr als“, Schwelle und Elementliste gegen die öffentliche Tab-Doku geprüft. **PA (Entscheidung des Architekten):** Indexability zählt zusätzlich den Wechsel des Grundes (TECH-304), Structured Data vergleicht Typ-Menge und Anzahl (TECH-303); die Referenz-Doku nennt nur Indexable ↔ Non-Indexable bzw. die Anzahl. **F:** Standardauswahl (1–13 an, Content aus) – die Referenz-Doku nennt keine Standardauswahl; H1-Vergleich nur des ersten Elements; Rundung `Content Change %` auf 2 Nachkommastellen. **PA (Nutzerentscheidung 04.11.2026):** Elemente 15 `Canonical` (TECH-309) und 16 `Redirect Target` (TECH-310) hinter den 14 Referenzelementen, Standard an; die Population „All“ umfasst zusätzlich Weiterleitungen (TECH-301).
 38. **F/K – Mobile (TECH-230–237):** **K:** `PSI Status` nur `Success`/`Error`; nur „Content Not Sized Correctly“ ist laut Referenz-Doku lokal-exklusiv (vorher auch „Illegible Font Size“); `Mobile Alternate Link` wird unabhängig von PSI befüllt. **F:** Erkennungsregel für Mobil-Alternativen (`media` mit Breitenbedingung oder `handheld`, HTTP-Link-Header, erster Treffer); Filter = Score < 100 auch bei nicht-binären Scores. **F:** „Viewport Not Set“ (TECH-232) folgt der Lighthouse-Semantik (`initial-scale` ohne `width` gilt als gesetzt), die Referenzbeschreibung nennt nur `width`; gegen die gebündelte Lighthouse-Version und Golden-Exporte prüfen. Die früheren Sonderregeln „ohne Viewport-Meta übersprungen“ (TECH-234/235) entfallen zugunsten des Audit-Ergebnisses.
 39. **K – Report- und Exportangaben (TECH-025, 036, 037, 088, 190, 219, 231, 259):** Namen und Spalten stehen nur noch in 06; hier bleibt die Zeilenauswahl. Die früheren TECH-025-Werte von `Chain Type` (`Canonical`/`Redirect`/`Mixed`) und die Spalte `Loop` entfallen zugunsten OUT-081/OUT-083. **F:** Sprunglimit der Canonical-Ketten (TECH-026) = Weiterleitungslimit statt fester 10 Glieder.
 

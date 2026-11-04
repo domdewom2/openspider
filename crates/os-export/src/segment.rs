@@ -397,7 +397,10 @@ fn export_report_snapshot_with_options(
     format: Format,
     opts: &crate::types::WriterOptions,
 ) -> Result<ReportResult, ExportError> {
-    let Some(scope) = scope else {
+    // OUT-154: ohne Vergleich gibt es nur Kopfzeile und Warnung, ein Segment ändert daran nichts.
+    let crawl_changes = crate::catalog::reports::resolve(name)
+        .is_ok_and(|d| d.kind == crate::catalog::reports::ReportKind::CrawlChanges);
+    let Some(scope) = scope.filter(|_| !crawl_changes) else {
         return crate::pipeline::export_report_with_options(
             file, cfg, name, directory, format, opts,
         );

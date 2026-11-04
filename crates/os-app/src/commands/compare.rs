@@ -100,6 +100,93 @@ pub async fn with_active<T: Send + 'static>(
     .map_err(|e| internal("compare", e.to_string()))?
 }
 
+/// Ist `name` der Report „Crawl Changes“ (OUT-154)? Er läuft immer über die Vergleichssitzung des Fensters.
+pub fn is_crawl_changes(name: &str) -> bool {
+    os_export::catalog::reports::resolve(name)
+        .is_ok_and(|d| d.kind == os_export::catalog::reports::ReportKind::CrawlChanges)
+}
+
+/// Grund, wenn „Crawl Changes“ nicht verfügbar ist (kein Vergleich im Fenster); dieselbe Meldung wie die CLI.
+pub fn crawl_changes_unavailable(app: &App, window: &WindowId) -> Option<String> {
+    session(app, window).is_none().then(|| {
+        "report 'Crawl Changes' requires a crawl comparison (--crawl-comparison or --compare-with-previous)"
+            .to_string()
+    })
+}
+
+/// Dateiname-Vorschlag für „Crawl Changes“ aus der Startzeit des Current-Crawls (wie OUT-008 für andere Reports).
+pub async fn crawl_changes_name(
+    app: &App,
+    window: &WindowId,
+    format: os_export::Format,
+) -> Result<String, CmdError> {
+    with_active(app, window, move |active| {
+        let started = active.comparison.current().meta.started_at;
+        Ok(os_export::tab_export::suggest_file_name(
+            "Crawl Changes",
+            None,
+            started,
+            None,
+            format,
+        ))
+    })
+    .await
+}
+
+/// `export.report` für „Crawl Changes“ (OUT-154): schreibt den Report der Vergleichssitzung in `dir`. Ohne Vergleich
+/// `Unsupported` mit Grund (OUT-112).
+pub async fn crawl_changes_export(
+    app: &App,
+    ctx: &CallCtx,
+    dir: PathBuf,
+    format: os_export::Format,
+) -> CmdResult {
+    if let Some(reason) = crawl_changes_unavailable(app, &ctx.window) {
+        return Err(
+            CmdError::new(ErrorCode::Unsupported, "err-export-unavailable")
+                .with_arg("reason", reason),
+        );
+    }
+    let app_worker = app.clone();
+    let window = ctx.window.clone();
+    let op = app
+        .ops()
+        .spawn("export-crawl-changes", true, move |token, _| {
+            Box::pin(async move {
+                with_active(&app_worker, &window, move |active| {
+                    let opts =
+                        os_export::pipeline::writer_options(&active.comparison.current().config);
+                    let result = os_export::compare::save_report_with_options(
+                        &mut active.comparison,
+                        "Crawl Changes",
+                        &dir,
+                        format,
+                        &token,
+                        &opts,
+                    )
+                    .map_err(|e| {
+                        if token.is_cancelled() {
+                            CmdError::new(ErrorCode::Cancelled, "err-cancelled")
+                        } else {
+                            internal("export.crawlChanges", e.to_string())
+                        }
+                    })?;
+                    let info = result
+                        .files
+                        .into_iter()
+                        .next()
+                        .ok_or_else(|| internal("export.crawlChanges", "no output"))?;
+                    to_json(&FileResult {
+                        path: info.path.to_string_lossy().into_owned(),
+                        bytes: info.bytes,
+                    })
+                })
+                .await
+            })
+        });
+    to_json(&op)
+}
+
 /// Version der Klassifikation der Sitzung des Fensters (`None` ohne Vergleich).
 pub fn active_version(app: &App, window: &WindowId) -> Option<u64> {
     session(app, window).map(|s| {

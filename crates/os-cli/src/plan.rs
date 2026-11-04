@@ -340,7 +340,29 @@ fn resolve_exports(
 
 /// Prüft alle Argumente und bereitet den Lauf vor. Kein Netzzugriff.
 pub fn build(args: &RunArgs, paths: AppPaths, rep: &Reporter) -> Result<Plan, CliError> {
-    build_impl(args, paths, rep, None, None, &SystemClock)
+    checked(build_impl(args, paths, rep, None, None, &SystemClock))
+}
+
+/// Vergleichs-Unterfilter (OUT-151) nur mit Vergleich und nicht am Tab „Change Detection“ (OUT-203).
+fn checked(plan: Result<Plan, CliError>) -> Result<Plan, CliError> {
+    let plan = plan?;
+    let comparison = plan.compare_with_previous || plan.explicit_previous.is_some();
+    for item in &plan.exports {
+        if let Resolved::CompareTab { tab, filter, class } = item {
+            let name = format!("{tab}:{filter}:{}", class.as_str());
+            if tab == os_analyze::compare::CHANGE_DETECTION_TAB {
+                return Err(CliError::usage(format!(
+                    "'{name}': Change Detection hat keine Unterfilter Added/New/Removed/Missing (TECH-307)"
+                )));
+            }
+            if !comparison {
+                return Err(CliError::usage(format!(
+                    "'{name}': Unterfilter nur im Vergleich – --crawl-comparison <id1> <id2> oder --project-name <Name> --compare-with-previous (OUT-151)"
+                )));
+            }
+        }
+    }
+    Ok(plan)
 }
 
 /// Wie [`build`] für geplante Aufgaben: Exporte als Stapel mit den Optionen aus `batch`, unbekannte
@@ -351,7 +373,14 @@ pub fn build_for_task(
     rep: &Reporter,
     batch: BatchSettings,
 ) -> Result<Plan, CliError> {
-    build_impl(args, paths, rep, Some(batch), None, &SystemClock)
+    checked(build_impl(
+        args,
+        paths,
+        rep,
+        Some(batch),
+        None,
+        &SystemClock,
+    ))
 }
 
 /// Task execution keeps its injected secret backend, including machine-bound auth profiles.
@@ -374,7 +403,14 @@ pub fn build_for_task_with_clock(
     secrets: &dyn os_fetch::SecretStore,
     clock: &dyn os_model::Clock,
 ) -> Result<Plan, CliError> {
-    build_impl(args, paths, rep, Some(batch), Some(secrets), clock)
+    checked(build_impl(
+        args,
+        paths,
+        rep,
+        Some(batch),
+        Some(secrets),
+        clock,
+    ))
 }
 
 fn build_impl(

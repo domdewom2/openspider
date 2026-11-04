@@ -549,6 +549,111 @@ pub fn write_links(
 }
 
 // ---------------------------------------------------------------------------------------------
+// OUT-154 Crawl Changes
+
+/// Kopfzeile des Reports „Crawl Changes“ (OUT-154).
+pub fn crawl_changes_header() -> Vec<String> {
+    os_analyze::compare::changes::HEADER
+        .iter()
+        .map(|h| (*h).to_string())
+        .collect()
+}
+
+fn crawl_changes_kinds() -> Vec<ColumnKind> {
+    use ColumnKind::{Int, Text, Url};
+    vec![
+        Text, Url, Url, Int, Int, Text, Text, Text, Text, Url, Url, Url, Url, Int, Int,
+    ]
+}
+
+/// Kennungen eines Segments in einer Crawl-Datei (OUT-011).
+fn segment_ids(file: &CrawlFile, scope: &dyn SegmentScope) -> Result<RoaringBitmap, ExportError> {
+    let sql = format!("SELECT u.id FROM urls u WHERE {}", scope.population_sql());
+    let mut stmt = crate::links_export::sql(file.conn().prepare(&sql))?;
+    let rows = crate::links_export::sql(stmt.query_map([], |r| r.get::<_, u32>(0)))?;
+    let mut out = RoaringBitmap::new();
+    for id in rows {
+        out.insert(crate::links_export::sql(id)?);
+    }
+    Ok(out)
+}
+
+/// Schreibt den Report „Crawl Changes“ (OUT-154). Mit `scope` zählen Zeilen mit Current-Partner, wenn die Current-URL
+/// im Segment liegt, Zeilen ohne Current-Partner, wenn die Previous-URL im Segment des Previous-Crawls liegt.
+pub fn write_crawl_changes(
+    comparison: &Comparison,
+    scope: Option<&dyn SegmentScope>,
+    writer: &mut dyn TableWriter,
+    ctx: &mut ExportCtx<'_>,
+) -> Result<u64, ExportError> {
+    ctx.checkpoint()?;
+    let allowed = scope
+        .map(|scope| {
+            Ok::<_, ExportError>((
+                segment_ids(&comparison.current().file, scope)?,
+                segment_ids(&comparison.previous().file, scope)?,
+            ))
+        })
+        .transpose()?;
+    let rows = cmp(os_analyze::compare::changes::crawl_changes(
+        comparison, ctx.cancel,
+    ))?;
+    writer.header(&crawl_changes_header())?;
+    let kinds = crawl_changes_kinds();
+    let mut n = 0;
+    for row in &rows {
+        ctx.checkpoint()?;
+        if let Some((current, previous)) = &allowed {
+            let keep = match (&row.current, &row.previous) {
+                (Some(c), _) => u32::try_from(c.id).is_ok_and(|id| current.contains(id)),
+                (None, Some(p)) => u32::try_from(p.id).is_ok_and(|id| previous.contains(id)),
+                (None, None) => false,
+            };
+            if !keep {
+                continue;
+            }
+        }
+        writer.row(&kinds, &row.values())?;
+        n += 1;
+        (ctx.progress)(n);
+    }
+    Ok(n)
+}
+
+fn save_crawl_changes(
+    comparison: &Comparison,
+    def: &report_catalog::ReportDef,
+    scope: Option<&os_analyze::segments::SegmentFilter>,
+    out_dir: &Path,
+    format: Format,
+    cancel: &CancelToken,
+    opts: &crate::types::WriterOptions,
+) -> Result<ReportResult, ExportError> {
+    let path = match scope {
+        Some(scope) => out_dir.join(crate::segment::file_name(
+            &comparison.current().file,
+            def.file_stem,
+            Some(scope),
+            format.extension(),
+        )?),
+        None => out_dir.join(def.file_name(format.extension())),
+    };
+    let mut writer = open_writer(&path, format, def.file_stem, opts)?;
+    let mut ctx = plain_ctx(cancel);
+    write_crawl_changes(
+        comparison,
+        scope.map(|s| s as &dyn SegmentScope),
+        writer.as_mut(),
+        &mut ctx,
+    )?;
+    let info = writer.finish()?;
+    Ok(ReportResult {
+        warnings: info.warnings.clone(),
+        files: vec![info],
+    })
+}
+
+// ---------------------------------------------------------------------------------------------
 // OUT-113 Reports
 
 /// Writer, der nur Zeilen durchlässt, deren Spalte `Address` im Segment liegt (Start-URL der Kettenreports).
@@ -666,6 +771,9 @@ pub fn save_report_with_options(
                 files: vec![info],
             });
         }
+        if def.kind == ReportKind::CrawlChanges {
+            return save_crawl_changes(comparison, def, None, out_dir, format, cancel, opts);
+        }
     }
     let current = comparison.current();
     crate::reports::save_report_with_options(
@@ -710,6 +818,11 @@ pub fn save_report_in_segment_with_options(
     cancel: &CancelToken,
     opts: &crate::types::WriterOptions,
 ) -> Result<ReportResult, ExportError> {
+    if let Ok(def) = report_catalog::resolve(name) {
+        if def.kind == ReportKind::CrawlChanges {
+            return save_crawl_changes(comparison, def, Some(scope), out_dir, format, cancel, opts);
+        }
+    }
     let current = comparison.current();
     if !report_catalog::resolve(name).is_ok_and(|d| d.kind == ReportKind::CrawlOverview) {
         return crate::segment::export_report_with_options(

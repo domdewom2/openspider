@@ -1,0 +1,22 @@
+# Szenario "out-b3-diff/v1" (Previous, OUT-154, OUT-151, TECH-309, TECH-310). Start: http://www.site.test/
+# Weiterleitungen ohne Body und ohne Content-Type (Inhaltsklasse Unknown, TECH-301).
+
+[[route]]
+path = "/r1"
+status = 301
+location = "/end1.html"
+
+[[route]]
+path = "/c1"
+status = 301
+location = "/c2"
+
+[[route]]
+path = "/c2"
+status = 301
+location = "/end2.html"
+
+[[route]]
+path = "/rt"
+status = 301
+location = "/end1.html"

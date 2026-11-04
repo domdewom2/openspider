@@ -254,8 +254,8 @@ fn the_stub_table_is_the_m2_registry_file() {
     );
     assert_eq!(
         M2_FILTERS.len(),
-        197,
-        "197 statische Filter von M2 (203 Einträge abzüglich 6 dynamischer Platzhalter)"
+        199,
+        "199 statische Filter von M2 (205 Einträge abzüglich 6 dynamischer Platzhalter; +2 Change Detection, TECH-309/310)"
     );
 }
 

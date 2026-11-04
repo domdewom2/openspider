@@ -2,15 +2,16 @@
 //! Ergebnisse liegen in SQLite-Temptabellen; es lebt immer nur ein Seitenpaar im Arbeitsspeicher.
 pub mod auto;
 pub mod notification;
-mod page;
+pub(crate) mod page;
 
 use super::{checkpoint, CompareError, Comparison, RoaringBitmap, Side};
 use crate::defs::{intern, ColumnDef, ColumnKind, FilterDef, FilterKind, TabDef};
 use os_model::{CancelToken, ChangeDetectionConfig, ChangeElement};
 use rusqlite::params;
 
-/// Kanonische Filterreihenfolge, unabhängig von der Reihenfolge einer Eingabekonfiguration.
-pub const ELEMENTS: [(ChangeElement, &str, &str); 14] = [
+/// Kanonische Filterreihenfolge, unabhängig von der Reihenfolge einer Eingabekonfiguration: die 14 Referenzelemente,
+/// dahinter `Canonical` (TECH-309) und `Redirect Target` (TECH-310).
+pub const ELEMENTS: [(ChangeElement, &str, &str); 16] = [
     (ChangeElement::Indexability, "Indexability", "Indexability"),
     (ChangeElement::PageTitles, "Page Titles", "Title 1"),
     (
@@ -53,7 +54,18 @@ pub const ELEMENTS: [(ChangeElement, &str, &str); 14] = [
         "Unique Types",
     ),
     (ChangeElement::Content, "Content", "Content Change %"),
+    (ChangeElement::Canonical, "Canonical", "Canonical"),
+    (
+        ChangeElement::RedirectTarget,
+        "Redirect Target",
+        "Redirect Target",
+    ),
 ];
+
+/// Elemente mit URL-Werten: der Previous-Wert wird vor dem Vergleich mit dem URL-Mapping abgebildet (TECH-309/310).
+pub fn is_url_element(e: ChangeElement) -> bool {
+    matches!(e, ChangeElement::Canonical | ChangeElement::RedirectTarget)
+}
 
 /// Angezeigter Prozentwert; Klassifikation erfolgt erst nach dieser Rundung.
 pub fn content_change_pct(similarity: f64) -> f64 {
@@ -166,6 +178,19 @@ fn calculate_with_similarity(
                         || (e == ChangeElement::StructuredDataUniqueTypes
                             && current.types != previous.types),
                 )
+            } else if is_url_element(e) {
+                // Angezeigt werden die Rohwerte, verglichen die abgebildeten (OUT-146, TECH-309/310).
+                let common = |side, v: &rusqlite::types::Value| match v {
+                    rusqlite::types::Value::Text(t) if !t.is_empty() => {
+                        rusqlite::types::Value::Text(c.common_url(side, t))
+                    }
+                    other => other.clone(),
+                };
+                (
+                    None,
+                    None,
+                    common(Side::Current, a) != common(Side::Previous, b),
+                )
             } else {
                 (
                     None,
@@ -273,6 +298,8 @@ pub fn tab(cfg: &ChangeDetectionConfig, changed: bool) -> TabDef {
         );
         let kind = if numeric {
             ColumnKind::Int
+        } else if is_url_element(e) {
+            ColumnKind::Url
         } else {
             ColumnKind::Text
         };

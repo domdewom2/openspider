@@ -113,6 +113,10 @@ pub fn requirement_warnings(
                 }
             }
             ReportRequirement::SitemapProcessed | ReportRequirement::OrphanSourceAvailable => {}
+            // Im Vergleich schreibt `crate::compare` den Report, ohne diese Prüfung (OUT-154).
+            ReportRequirement::Comparison => out.push(format!(
+                "report '{name}' requires a crawl comparison (--crawl-comparison or --compare-with-previous)"
+            )),
             ReportRequirement::Rendering => {
                 if cfg.rendering.mode != os_model::RenderingMode::JavaScript {
                     out.push(format!("report '{name}' requires JavaScript rendering"));

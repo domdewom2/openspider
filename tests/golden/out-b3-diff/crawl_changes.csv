@@ -1,0 +1,19 @@
+Change,Address,Previous Address,Status Code (Previous),Status Code (Current),Indexability (Previous),Indexability (Current),Indexability Status (Previous),Indexability Status (Current),Canonical (Previous),Canonical (Current),Redirect Target (Previous),Redirect Target (Current),Redirect Chain Length (Previous),Redirect Chain Length (Current)
+Page Gone,http://www.site.test/broken-now.html,http://www.site.test/broken-now.html,200,404,Indexable,Non-Indexable,,Client Error,,,,,0,0
+Page Gone,http://www.site.test/gone.html,http://www.site.test/gone.html,200,,Indexable,,,,,,,,0,
+New Error,http://www.site.test/broken-now.html,http://www.site.test/broken-now.html,200,404,Indexable,Non-Indexable,,Client Error,,,,,0,0
+New Error,http://www.site.test/broken.html,,,404,,Non-Indexable,,Client Error,,,,,,0
+New Redirect,http://www.site.test/c3,,,301,,Non-Indexable,,Redirected,,,,http://www.site.test/end2.html,,1
+New Redirect,http://www.site.test/moved.html,http://www.site.test/moved.html,200,301,Indexable,Non-Indexable,,Redirected,,,,http://www.site.test/keep.html,0,1
+New Redirect,http://www.site.test/r1b,,,301,,Non-Indexable,,Redirected,,,,http://www.site.test/end1.html,,1
+Redirect Target Changed,http://www.site.test/c2,http://www.site.test/c2,301,301,Non-Indexable,Non-Indexable,Redirected,Redirected,,,http://www.site.test/end2.html,http://www.site.test/c3,1,2
+Redirect Target Changed,http://www.site.test/r1,http://www.site.test/r1,301,301,Non-Indexable,Non-Indexable,Redirected,Redirected,,,http://www.site.test/end1.html,http://www.site.test/r1b,1,2
+Redirect Target Changed,http://www.site.test/rt,http://www.site.test/rt,301,301,Non-Indexable,Non-Indexable,Redirected,Redirected,,,http://www.site.test/end1.html,http://www.site.test/end2.html,1,1
+New Redirect Chain,http://www.site.test/c2,http://www.site.test/c2,301,301,Non-Indexable,Non-Indexable,Redirected,Redirected,,,http://www.site.test/end2.html,http://www.site.test/c3,1,2
+New Redirect Chain,http://www.site.test/r1,http://www.site.test/r1,301,301,Non-Indexable,Non-Indexable,Redirected,Redirected,,,http://www.site.test/end1.html,http://www.site.test/r1b,1,2
+Longer Redirect Chain,http://www.site.test/c1,http://www.site.test/c1,301,301,Non-Indexable,Non-Indexable,Redirected,Redirected,,,http://www.site.test/c2,http://www.site.test/c2,2,3
+Canonical Changed,http://www.site.test/canon.html,http://www.site.test/canon.html,200,200,Non-Indexable,Non-Indexable,Canonicalised,Canonicalised,http://www.site.test/canon-a.html,http://www.site.test/canon-b.html,,,0,0
+Indexability Changed,http://www.site.test/broken-now.html,http://www.site.test/broken-now.html,200,404,Indexable,Non-Indexable,,Client Error,,,,,0,0
+Indexability Changed,http://www.site.test/fixed.html,http://www.site.test/fixed.html,404,200,Non-Indexable,Indexable,Client Error,,,,,,0,0
+Indexability Changed,http://www.site.test/idx.html,http://www.site.test/idx.html,200,200,Indexable,Non-Indexable,,noindex,,,,,0,0
+Indexability Changed,http://www.site.test/moved.html,http://www.site.test/moved.html,200,301,Indexable,Non-Indexable,,Redirected,,,,http://www.site.test/keep.html,0,1

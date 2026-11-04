@@ -142,14 +142,25 @@ fn sitemap_generator_defaults_follow_the_spec() {
     assert!(!s.hreflang.enabled && s.hreflang.only_valid_targets);
 }
 
-// spec: TECH-300, OUT-146
+// spec: TECH-300, OUT-146, TECH-309, TECH-310
 #[test]
-fn change_detection_default_selects_the_first_13_of_14_elements() {
-    assert_eq!(ChangeElement::ALL.len(), 14);
+fn change_detection_default_selects_all_16_elements_except_content() {
+    assert_eq!(ChangeElement::ALL.len(), 16);
     let cd = ChangeDetectionConfig::default();
-    assert_eq!(cd.elements.len(), 13);
+    assert_eq!(cd.elements.len(), 15);
     assert_eq!(cd.elements.first(), Some(&ChangeElement::Indexability));
     assert!(!cd.elements.contains(&ChangeElement::Content));
+    // Die OS-Erweiterungen stehen hinter den 14 Referenzelementen und sind an (Nutzerentscheidung 04.11.2026).
+    assert_eq!(ChangeElement::ALL[13], ChangeElement::Content);
+    assert_eq!(
+        &ChangeElement::ALL[14..],
+        &[ChangeElement::Canonical, ChangeElement::RedirectTarget]
+    );
+    assert_eq!(
+        &cd.elements[13..],
+        &[ChangeElement::Canonical, ChangeElement::RedirectTarget]
+    );
+    assert_eq!(ChangeElement::RedirectTarget.as_str(), "redirect_target");
     assert_eq!(cd.content_threshold_pct, 10);
     assert!(CompareConfig::default().mapping.is_empty());
 }

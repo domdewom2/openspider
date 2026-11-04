@@ -105,19 +105,22 @@ async fn warnings_never_stop_the_export() {
 }
 
 // spec: OUT-080, OUT-081, OUT-082
+// spec: OUT-154
 #[test]
 fn the_register_lists_the_reports_with_canonical_names() {
     assert_eq!(
         reports::names(),
         [
             "Crawl Overview",
+            "Crawl Changes",
             "Redirects:All Redirects",
             "Redirects:Redirect Chains"
         ]
     );
-    assert_eq!(REPORTS.len(), 3);
-    // Dateinamen nach OUT-008 / OUT-194.
+    assert_eq!(REPORTS.len(), 4);
+    // Dateinamen nach OUT-008 / OUT-194; „Crawl Changes“ nach OUT-154.
     let file_of = |n: &str| reports::resolve(n).unwrap().file_name("csv");
+    assert_eq!(file_of("Crawl Changes"), "crawl_changes.csv");
     assert_eq!(file_of("Crawl Overview"), "crawl_overview.csv");
     assert_eq!(file_of("Redirects:Redirect Chains"), "redirect_chains.csv");
     assert_eq!(file_of("Redirects:All Redirects"), "all_redirects.csv");

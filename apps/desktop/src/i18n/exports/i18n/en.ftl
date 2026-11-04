@@ -24,6 +24,7 @@ export-name-blocked-resources = Blocked Resources
 export-name-canonical-chains = Canonical Chains
 export-name-cookie-summary = Cookie Summary
 export-name-crawl-overview = Crawl Overview
+export-name-crawl-changes = Crawl Changes
 export-name-exact-duplicates-pairs = Exact Duplicates Pairs
 export-name-external-links = External Links
 export-name-form-on-http-url = Form On HTTP URL
@@ -103,5 +104,6 @@ export-reason-a11y = { $name }: Captured accessibility data is required.
 export-reason-validation = { $name }: HTML validation is required.
 export-reason-javascript-errors = { $name }: Captured JavaScript errors are required.
 export-reason-missing = { $name }: A prerequisite for this export is missing.
+export-reason-comparison = { $name }: Available in compare mode only (Mode → Compare).
 
 export-name-filter = Filter { $n }

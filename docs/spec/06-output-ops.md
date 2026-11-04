@@ -14,7 +14,7 @@ Zuständige Crates (siehe `docs/ARCHITECTURE.md`): `os-export` (Formate, Bulk-Ex
 | [3 Bulk-Exporte](#3-bulk-exporte) | OUT-030 – OUT-075 | Queued URLs, Links, Web, Path Type, filterbasierte Exporte je Tab, All Error Inlinks, Issues, URL Inspection, KI, Multi-Export, Non-Indexable Page Inlinks Only (OUT-068), Embedding-Vektoren (OUT-069) |
 | [4 Reports](#4-reports) | OUT-080 – OUT-114 | Crawl Overview, Redirects, Canonicals, Pagination, Hreflang, Insecure Content, SERP Summary, Orphan Pages, Structured Data, PageSpeed (inkl. Ressourcen je Audit, OUT-114), JavaScript, Mobile, Accessibility, HTTP-Header, Cookies |
 | [5 XML- und Bild-Sitemaps](#5-xml--und-bild-sitemaps) | OUT-120 – OUT-133 | Seitenauswahl, lastmod, priority, changefreq, Bilder, hreflang, Aufteilung, Segmente |
-| [6 Crawl-Vergleich](#6-crawl-vergleich) | OUT-140 – OUT-153 | Compare-Modus, Added/New/Removed/Missing, Change Detection, URL-Mapping, Site Structure, Auto-Compare |
+| [6 Crawl-Vergleich](#6-crawl-vergleich) | OUT-140 – OUT-154 | Compare-Modus, Added/New/Removed/Missing, Change Detection, URL-Mapping, Site Structure, Auto-Compare, Report „Crawl Changes“ |
 | [7 Geplante Crawls](#7-geplante-crawls-scheduling) | OUT-160 – OUT-171 | Aufgaben, Intervalle, OS-Integration, Exporte, Historie, Benachrichtigungen, Import/Export |
 | [8 Kommandozeile / Headless](#8-kommandozeile--headless) | OUT-180 – OUT-209 | alle Optionen, Exit-Codes, Fehlerverhalten |
 | [9 Looker-Studio-Export](#9-looker-studio-export-custom-crawl-overview) | OUT-210 – OUT-214 | Zeitreihen-Zeile je Crawl, Metrikkatalog, Segmente |
@@ -1193,7 +1193,7 @@ Menü „Reports“. Reports sind aufbereitete Auswertungen, die nicht 1:1 einem
 
 ### OUT-113 Reports im Vergleichs- und Segmentkontext
 - **Priorität:** P1
-- **Beschreibung:** Reports berücksichtigen das aktive Segment (OUT-011). Im Vergleichsmodus beziehen sich Reports auf den aktuellen Crawl; der Crawl Overview zeigt zusätzlich die Vergleichsspalten (OUT-147).
+- **Beschreibung:** Reports berücksichtigen das aktive Segment (OUT-011). Im Vergleichsmodus beziehen sich Reports auf den aktuellen Crawl; der Crawl Overview zeigt zusätzlich die Vergleichsspalten (OUT-147). Der Report „Crawl Changes“ (OUT-154) gibt es nur im Vergleichsmodus; er liest beide Crawls.
 - **Akzeptanzkriterien:**
   - [ ] Redirect Chains mit Segment „Shop“ → nur Ketten, deren Start-URL im Segment liegt.
   - [ ] Im Vergleichsmodus ist das Reports-Menü bedienbar.
@@ -1513,7 +1513,17 @@ Führung: Dieser Abschnitt ist führend für den Vergleichsablauf (Auswahl, Klas
   - [ ] Bulk-Exporte und Reports beziehen sich auf den Current-Crawl.
   - [ ] Change-Detection-Exporte berücksichtigen den aktiven Umschalter „Changed“/„Not Changed“ (übernommen aus TECH-307).
   - [ ] Mit Mapping-Regel Staging→Live enthält ein Export für die Live-URL `/a` die Spalte `Previous Address` = Staging-URL `/a`.
-- **Testfixture:** `out-compare`.
+- **Unterfilter im CLI-Export (Nutzerentscheidung 04.11.2026):** `--export-tabs` nimmt den Unterfilter als **dritten Namensteil** `"<Tab>:<Filter>:<Unterfilter>"` mit `<Unterfilter>` ∈ {`Added`, `New`, `Removed`, `Missing`} (ohne Beachtung der Groß-/Kleinschreibung, Leerräume um `:` wie OUT-192). Begründung der Form: Sie folgt der Hierarchie Tab › Filter › Unterfilter der Vergleichsansicht (OUT-142) und der verschachtelten Schreibweise mit weiterem `:` aus OUT-193; ein eigenes Flag gälte dagegen für alle Einträge einer Liste und könnte verschiedene Unterfilter in einem Aufruf nicht ausdrücken. Kein Tab-Exportname enthält heute einen dritten Namensteil (Golden `tests/golden/out-cli/list_exports.txt`), die Form ist also eindeutig: Ein Name wird zuerst vollständig als `Tab:Filter` aufgelöst; nur wenn das scheitert und der letzte Teil einer der vier Unterfilter ist, gilt er als Unterfilter des davor stehenden `Tab:Filter`. Ohne dritten Teil bleibt der Export wie oben (Zeilen des Filters im Current-Crawl mit `Added`/`New`/`Unchanged`). Dateiname nach OUT-008 aus dem vollständigen Namen (`internal_html_missing.csv`).
+  - **Herkunft der Werte (Festlegung):** `Missing`-Zeilen tragen die Werte des Previous-Crawls (die URL existiert nur dort), `Address` ist die Previous-Adresse. `Removed`-Zeilen tragen die Werte der Current-Zeile des Partners, wie der Unterfilter „Removed“ der Haupttabelle (OUT-142: ein Klick listet genau diese Zeilen) – sie zeigen also, warum die URL den Filter verlassen hat (z. B. die behobene 404 jetzt mit 200). **Abweichung vom Auftrag:** Der Auftrag nannte für `Removed` die Previous-Werte; das widerspräche der Vergleichsansicht, deren Export OUT-151 beschreibt. Den Vorher-Zustand je URL liefert der Report „Crawl Changes“ (OUT-154). Orchestrator-Entscheid 04.11.2026 (Fable-Empfehlung): Current-Werte bleiben.
+  - **Validierung (OUT-203):** Ein Unterfilter ohne `--crawl-comparison`, `--project-crawl-comparison`/`--compare-with-previous` → Exit-Code 2 vor dem Crawl mit Hinweis auf diese Flags. Ein Unterfilter am Tab „Change Detection“ → Exit-Code 2 (dort gibt es nur „Changed“/„Not Changed“, TECH-307). Unbekannter dritter Teil (z. B. `Internal:HTML:Gone`) → unbekannter Name nach OUT-203.
+  - **Auto Compare ohne Vorlauf:** Ist beim ersten Crawl eines Projekts (OUT-152) kein Vergleich vorhanden, wird ein Export mit Unterfilter mit Warnung übersprungen (keine Datei, Exit-Code 0).
+- **Akzeptanzkriterien (Nutzerentscheidung 04.11.2026):**
+  - [ ] `--crawl-comparison <v1> <v2> --export-tabs "Internal:HTML:Missing"` erzeugt `internal_html_missing.csv` mit genau den gelöschten Seiten, `Comparison Status`=`Missing` und Werten des Previous-Crawls (z. B. `Title 1` aus v1).
+  - [ ] `--export-tabs "Response Codes:Client Error (4xx):Removed"` enthält die behobene 404 mit `Comparison Status`=`Removed` (CLI-Pendant zum ersten Kriterium oben).
+  - [ ] Invariante über die Exportdateien eines Filters: Zeilen ohne Unterfilter = `Current`; `Added` + `New` + `Unchanged` (Spalte `Comparison Status` ohne Unterfilter) = `Current`; und `Current − Previous = Added + New − Removed − Missing` mit den Zeilenzahlen der vier Unterfilter-Exporte (wie OUT-142).
+  - [ ] `--export-tabs "Internal:HTML:Missing"` ohne Vergleich → Exit-Code 2, der Fixture-Server zählt 0 Requests; `"Change Detection:Page Titles:Added"` → Exit-Code 2.
+  - [ ] `"internal : html : MISSING"` und `"Internal:HTML:Missing"` sind gleichwertig.
+- **Testfixture:** `out-compare`; für die CLI-Kriterien `tests/fixtures/out-b3-diff` (`v1` → `v2`, README dort).
 
 ### OUT-152 Automatischer Vergleich (Auto Compare) für Scheduling und CLI
 - **Priorität:** P1
@@ -1540,6 +1550,38 @@ Führung: Dieser Abschnitt ist führend für den Vergleichsablauf (Auswahl, Klas
   - [ ] Nebeneinander-Ansicht nur verfügbar, wenn beide Crawls Screenshots enthalten; fehlt in einem Crawl der Screenshot, zeigt die betreffende Hälfte „Kein Screenshot in diesem Crawl“ (übernommen aus CRAWL-144).
   - [ ] Beide Screenshots werden in gleicher Skalierung gezeigt; unter jedem Bild stehen Crawl-Name, Datum, User-Agent und Viewport (Anwendungsfall Desktop- vs. Mobil-Crawl) (übernommen aus CRAWL-144).
 - **Testfixture:** `out-compare-ua`: Fixture-Server variiert Title nach User-Agent.
+
+### OUT-154 Report „Crawl Changes“ (Änderungen seit dem letzten Crawl)
+- **Priorität:** P1
+- **Beschreibung (Nutzerentscheidung 04.11.2026):** Ein fertiger Report beantwortet die Frage „Was hat dieses Deployment geändert?“ in einer Tabelle: verschwundene Seiten, neue Fehlerseiten, neue Weiterleitungen und -ketten, geänderte Canonicals und Wechsel der Indexierbarkeit, je mit dem Wert vorher und nachher. Er vergleicht Current gegen Previous nach URL-Mapping (OUT-146) und braucht keine Change-Detection-Auswahl (TECH-300): Er rechnet seine Abschnitte immer vollständig. Name für `--save-report`, Export und MCP: `Crawl Changes` (Datei `crawl_changes.csv`, OUT-008); Name in der deutschen Oberfläche „Änderungen seit dem letzten Crawl“.
+- **Eingaben/Konfiguration:** ein geöffneter Vergleich (App: Vergleichsmodus, Menü „Reports“; CLI: `--save-report "Crawl Changes"` zusammen mit `--crawl-comparison <id1> <id2>` oder `--project-crawl-comparison`/`--compare-with-previous`, OUT-202; MCP: `compare_crawls` mit `changes`, AGENT-015). Ohne Vergleich ist die Voraussetzung unerfüllt (OUT-112): CLI → Warnung `report 'Crawl Changes' requires a crawl comparison (--crawl-comparison or --compare-with-previous)`, Datei nur mit Kopfzeile, Exit-Code 0 (mit `--strict` 4, OUT-194); App → Menüeintrag ausgegraut mit Hinweis „Nur im Vergleichsmodus“.
+- **Begriffe (OS-Festlegung):** *Seite* = interne URL mit Inhaltsklasse HTML; *existiert* wie OUT-142 (gecrawlt); *Fehler* = Status 4xx oder 5xx; *Weiterleitung* = URL mit Weiterleitungsziel (HTTP 3xx, Meta-Refresh- oder HTTP-Refresh-Weiterleitung auf eine andere URL, TECH-001 `Redirected`); *Weiterleitungsziel* = die aufgelöste Ziel-URL des ersten Sprungs; *Kettenlänge* = Zahl der Sprünge ab der URL bis zum ersten Ziel ohne Weiterleitung, bei einer Schleife die Zahl der Glieder im Umlauf (wie `Number of Redirects` in OUT-081/082), 0 ohne Weiterleitung; *Kette* = Kettenlänge ≥ 2 (wie OUT-082); *Canonical* = die maßgebliche Canonical-URL nach TECH-017, nur für Seiten erhoben, die in **beiden** Crawls HTML sind und deren Crawl Canonicals speichert (TECH-024); *Indexierbarkeit* = `Indexability` und die Menge der Gründe in `Indexability Status` wie TECH-304. Ziel-URLs des Previous-Crawls (Canonical, Weiterleitungsziel) werden vor dem Vergleich mit dem URL-Mapping abgebildet und nach TECH-002 verglichen.
+- **Ausgabe:** Eine Zeile je URL und Änderungsart; eine URL kann in mehreren Abschnitten stehen (z. B. eine indexierbare Seite, die jetzt 404 liefert: `Page Gone`, `New Error` und `Indexability Changed`). Spalten in dieser Reihenfolge: `Change`, `Address`, `Previous Address`, `Status Code (Previous)`, `Status Code (Current)`, `Indexability (Previous)`, `Indexability (Current)`, `Indexability Status (Previous)`, `Indexability Status (Current)`, `Canonical (Previous)`, `Canonical (Current)`, `Redirect Target (Previous)`, `Redirect Target (Current)`, `Redirect Chain Length (Previous)`, `Redirect Chain Length (Current)`. `Address` ist die Current-Adresse, bei URLs ohne Partner die Previous-Adresse; `Previous Address` ist die Adresse im Previous-Crawl (leer bei URLs nur in Current). Werte eines Crawls, in dem die URL nicht existiert, bleiben leer. Sortierung: Abschnitte in der Reihenfolge der Tabelle, darin `Address` aufsteigend (Bytefolge). Die Spalte `Change` trägt die kanonischen englischen Werte; die Oberfläche zeigt die deutschen Namen.
+
+  | `Change` (kanonisch) | Oberfläche (DE) | Bedingung |
+  |---|---|---|
+  | `Page Gone` | Seite verschwunden | Seite, im Previous-Crawl indexierbar (damit Status 2xx, TECH-001); im Current-Crawl existiert sie nicht (Missing, auch nur entdeckt oder gesperrt) oder antwortet mit Fehler oder ohne Antwort (`No Response`). |
+  | `New Error` | Neue Fehlerseite | Interne URL mit Fehler im Current-Crawl, die im Previous-Crawl nicht existierte oder ohne Fehler antwortete (neue URL mit 404 ebenso wie eine früher erreichbare Seite). Hatte sie im Previous-Crawl keine Antwort (`No Response`, Status 0 oder leer), hat sie dort nicht „ohne Fehler geantwortet“ und ist nicht neu (wie `All Errors`, OUT-080). Keine Antwort im Current-Crawl ist kein `New Error` (Fehler = 4xx/5xx). |
+  | `New Redirect` | Neue Weiterleitung | Interne URL mit Weiterleitung im Current-Crawl, die im Previous-Crawl nicht existierte oder nicht weiterleitete. |
+  | `Redirect Target Changed` | Weiterleitungsziel geändert | Interne URL, die in beiden Crawls weiterleitet, mit verschiedenem Weiterleitungsziel. |
+  | `New Redirect Chain` | Neue Weiterleitungskette | Interne URL mit Kette im Current-Crawl, deren Kettenlänge im Previous-Crawl kleiner als 2 war oder die dort nicht existierte. |
+  | `Longer Redirect Chain` | Weiterleitungskette verlängert | Interne URL mit Kette in beiden Crawls, deren Kettenlänge gewachsen ist. |
+  | `Canonical Changed` | Canonical geändert | Seite in beiden Crawls, deren Canonical sich unterscheidet; vorhanden → fehlend und fehlend → vorhanden sind Änderungen. |
+  | `Indexability Changed` | Indexierbarkeit geändert | Interne URL in beiden Crawls, deren Indexierbarkeit sich nach TECH-304 geändert hat (Wechsel indexierbar ↔ nicht indexierbar oder der Menge der Gründe). Eine URL ohne Antwort im Current-Crawl existiert dort (gecrawlt, OUT-142) und wird mit ihrem Grund `No Response` (TECH-001) verglichen: vorher indexierbar → jetzt keine Antwort steht hier und unter `Page Gone`. |
+
+- **Akzeptanzkriterien:**
+  - [ ] Fixture `out-b3-diff` v1 → v2 ergibt genau diese Zeilen (Golden `tests/golden/out-b3-diff/crawl_changes.csv`): `Page Gone` = {`/broken-now.html`, `/gone.html`}; `New Error` = {`/broken-now.html`, `/broken.html`}; `New Redirect` = {`/c3`, `/moved.html`, `/r1b`}; `Redirect Target Changed` = {`/c2`, `/r1`, `/rt`}; `New Redirect Chain` = {`/c2`, `/r1`}; `Longer Redirect Chain` = {`/c1`} mit Kettenlänge 2 → 3; `Canonical Changed` = {`/canon.html`} mit `/canon-a.html` → `/canon-b.html` bei unverändert `Canonicalised`; `Indexability Changed` = {`/broken-now.html`, `/fixed.html`, `/idx.html`, `/moved.html`}.
+  - [ ] Unveränderte Seiten (`/keep.html`) und neue Seiten ohne Fehler und ohne Weiterleitung (`/new.html`) erscheinen nicht.
+  - [ ] Für jede URL der Change-Detection-Population (TECH-301) stimmen `Canonical Changed` und `Indexability Changed` mit den Change-Detection-Filtern `Canonical` (TECH-309) und `Indexability` (TECH-304) überein; `Redirect Target Changed` ist genau der Teil des Filters `Redirect Target` (TECH-310), der in beiden Crawls weiterleitet.
+  - [ ] Abschnitt `Page Gone` ohne Mapping: jede Zeile ohne `Status Code (Current)` gehört zu „Internal:HTML“ › Missing (OUT-142).
+  - [ ] Mit Mapping-Regel Staging→Live erscheinen gleich gebliebene Canonical- und Weiterleitungsziele nicht als Änderung (Ziele des Previous-Crawls werden abgebildet).
+  - [ ] Nach Tausch von Current und Previous (OUT-141) beziehen sich alle Abschnitte auf die neue Richtung: v2 → v1 liefert `/new.html` als `Page Gone`, `/gone.html` erscheint dort nicht.
+  - [ ] CLI: `--crawl-comparison <v1> <v2> --save-report "Crawl Changes"` erzeugt `crawl_changes.csv` gleich der Golden-Datei; mit `--compare-with-previous` liefert der zweite Projektcrawl dieselben Zeilen. Ohne Vergleich: Warnung wie oben, Datei mit Kopfzeile, Exit-Code 0.
+  - [ ] App: Im Vergleichsmodus ist „Reports › Änderungen seit dem letzten Crawl“ bedienbar und schreibt dieselbe Datei wie die CLI; ohne Vergleich ist der Eintrag ausgegraut.
+  - [ ] MCP: `compare_crawls(a, b, changes=true)` liefert dieselben Zeilen paginiert (AGENT-005) und die Anzahl je Abschnitt.
+  - [ ] Segment (OUT-011): Zeilen mit Current-Partner zählen, wenn die Current-URL im Segment liegt; Zeilen ohne Current-Partner, wenn die Previous-URL im Segment des Previous-Crawls liegt (OS-Festlegung).
+  - [ ] Pause des Ressourcenwächters hält die Berechnung an, Abbruch liefert keinen Teil-Report (CRAWL-129).
+- **Testfixture:** `tests/fixtures/out-b3-diff` (`v1` Previous, `v2` Current; Inhalt im README dort).
 
 ---
 
@@ -1813,6 +1855,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Namensvergleich ist case-insensitiv und toleriert zusätzliche Leerzeichen um `:` und `,`.
   - [ ] Kommas innerhalb eines Namens sind per `\,` maskierbar.
   - [ ] Unbekannter Name → Abbruch vor dem Crawl (OUT-203).
+  - [ ] Im Vergleich (OUT-202) darf ein dritter Namensteil den Unterfilter wählen: `"Internal:HTML:Missing"` (Syntax, Werte und Validierung in OUT-151, Nutzerentscheidung 04.11.2026).
 - **Testfixture:** `out-basic-site`.
 
 ### OUT-193 `--bulk-export "<Menü>:<Eintrag>,…"`
@@ -1833,6 +1876,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Report mit unerfüllter Voraussetzung → Warnung, kein Abbruch, Exit-Code 0 (bzw. 4 mit `--strict`).
   - [ ] [M4] `--save-report "AI:Action Plan"` nach einem Lauf mit `--ai-tasks audit-summary` erzeugt `ai_action_plan.md`, inhaltsgleich mit `tests/golden/ai/action-plan.md` (AI-107); ohne KI-Lauf im Crawl gilt die Voraussetzungsregel oben (Warnung, kein Abbruch).
   - [ ] [M5] `--save-report "DataForSEO:Keyword Cannibalization"` gegen den DataForSEO-Mock erzeugt die Datei aus D4S-072.
+  - [ ] `--save-report "Crawl Changes"` ist nur mit Vergleich (OUT-202) befüllt; ohne Vergleich gilt die Voraussetzungsregel oben (OUT-154).
 - **Testfixture:** `out-redirects`; [M4] `tests/fixtures/ai/site/` + `ai-mock` (08); [M5] `tests/fixtures/dfs-site/` + DataForSEO-Mock (09).
 
 ### OUT-195 `--export-format csv|xls|xlsx|gsheet`
@@ -1917,7 +1961,8 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] `--project-crawl-comparison` bzw. `--compare-with-previous` ohne `--project-name` → Exit-Code 2 mit Meldung „Projektname fehlt“.
   - [ ] `--project-crawl-comparison MeinProjekt` (Projektname als Wert) → Exit-Code 2 mit Hinweis auf die richtige Syntax `--project-name "MeinProjekt" --project-crawl-comparison "true"` (übernommen aus CRAWL-036/CRAWL-135).
   - [ ] `--compare-with-previous` zusammen mit `--project-crawl-comparison false` → Exit-Code 2 (widersprüchliche Angaben).
-- **Testfixture:** `out-compare`.
+  - [ ] `--crawl-comparison A B --export-tabs "Internal:HTML:Missing" --save-report "Crawl Changes"` exportiert die Missing-Zeilen (OUT-151) und den Report OUT-154.
+- **Testfixture:** `out-compare`; `out-b3-diff` (OUT-151, OUT-154).
 
 ### OUT-203 Validierung aller Namen vor dem Crawl
 - **Priorität:** P0
@@ -1926,6 +1971,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] `--export-tabs "Internal:Al"` → Exit-Code 2 in < 1 s, Meldung `unknown export 'Internal:Al' – did you mean 'Internal:All'?`.
   - [ ] Kein Netzwerkzugriff erfolgt vor erfolgreicher Validierung (Fixture-Server zählt 0 Requests).
   - [ ] Unbekannte Option → Exit-Code 2 mit Vorschlag der nächstliegenden Option (z. B. `--crawl-lst` → „meinten Sie `--crawl-list`?“) (übernommen aus CRAWL-135).
+  - [ ] Ein Vergleichs-Unterfilter (`"<Tab>:<Filter>:Missing"`, OUT-151) ohne Vergleichsflag → Exit-Code 2 vor dem Crawl; `--list-exports` und `--help export-tabs` führen die Unterfilter nicht einzeln auf (sie gelten für jeden Tab-Export außer Change Detection; die Listen bleiben identisch mit der Registry), die Kurzhilfe der Option `--export-tabs` nennt die Syntax.
   - [ ] [P1] `--save-report "Gibtsnicht"` (kein Treffer mit Levenshtein ≤ 3) → Exit-Code 2; stderr enthält nach der Fehlermeldung die vollständige Liste aller gültigen Report-Namen (eine Zeile je Name), identisch mit `--list-reports`. Analog für `--export-tabs`, `--bulk-export` (Liste wie `--list-exports`, nur der betroffene Katalog) und `--export-custom-summary` (Liste wie `--help export-custom-summary`).
   - [ ] [P1] `--list-exports` und `--list-reports` geben ihre Listen auf stdout aus, Exit-Code 0, ohne Crawl und ohne Netzwerkzugriff; Inhalt identisch mit `--help export-tabs` + `--help bulk-export` bzw. `--help save-report` (gemeinsame Registry, Golden `tests/golden/out-cli/list_exports.txt`, `list_reports.txt`).
 - **Testfixture:** CLI-Test mit Request-Zähler im `os-testsite`.

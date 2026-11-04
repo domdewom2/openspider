@@ -33,6 +33,7 @@ pub async fn export(
     let crawl = if crawl.is_empty() { "crawl" } else { &crawl };
     let mut count = 0;
     let mut names = os_export::fs_paths::NameRegistry::new();
+    let mut warned_compare: Vec<String> = Vec::new();
     for scope in
         os_export::segment::selections(file, plan.segment.as_deref()).map_err(|e| e.to_string())?
     {
@@ -43,6 +44,15 @@ pub async fn export(
         for item in &plan.exports {
             let (kind, name) = match item {
                 Resolved::Tab { tab, filter } => ("tab", format!("{tab}:{filter}")),
+                // Vergleichs-Unterfilter gibt es nur im Vergleich (OUT-151); ohne Vergleich Warnung, keine Tabelle.
+                Resolved::CompareTab { .. } => {
+                    // Je Lauf eine Warnung, nicht je Segment.
+                    if !warned_compare.contains(&item.key()) {
+                        crate::exec::skip_compare_tab(item, rep);
+                        warned_compare.push(item.key());
+                    }
+                    continue;
+                }
                 Resolved::Bulk(name) => ("bulk", name.clone()),
                 Resolved::Issues => ("bulk", os_export::catalog::bulk_issues::BULK_NAME.into()),
                 Resolved::Report(name) => ("report", name.clone()),

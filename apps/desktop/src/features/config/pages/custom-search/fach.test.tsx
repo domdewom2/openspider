@@ -218,11 +218,15 @@ describe("Fachseiten against the configuration fixture", () => {
     expect(within(d).queryByText(/Earlier data/)).toBeNull();
   });
   // spec: TECH-300
-  it("renders 14 ordered elements, defaults to the first 13 and disables Content without both stored crawls", async () => {
+  // spec: TECH-309
+  // spec: TECH-310
+  it("renders 16 ordered elements, defaults to all but Content and disables Content without both stored crawls", async () => {
     const d = await open("compare.change_detection"); const checkboxes = within(d).getAllByRole("checkbox");
-    expect(ELEMENTS).toEqual(changeElements.map(e => e.id)); expect(checkboxes).toHaveLength(14);
+    expect(ELEMENTS).toEqual(changeElements.map(e => e.id)); expect(checkboxes).toHaveLength(16);
     expect(checkboxes.map(c => c.parentElement?.textContent)).toEqual(changeElements.map(e => e.label));
     checkboxes.slice(0, 13).forEach(c => expect(c).toBeChecked()); expect(checkboxes[13]).not.toBeChecked(); expect(checkboxes[13]).toBeDisabled();
+    // Canonical and Redirect Target follow the 14 reference elements and are on by default (Nutzerentscheidung 04.11.2026).
+    checkboxes.slice(14).forEach(c => { expect(c).toBeChecked(); expect(c).toBeEnabled(); });
     expect(within(d).getByRole("textbox", { name: "Content change threshold (%)" })).toHaveValue("10");
   });
   // spec: TECH-300

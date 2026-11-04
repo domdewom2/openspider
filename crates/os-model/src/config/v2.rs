@@ -550,7 +550,7 @@ pub struct MappingRule {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(default)]
 pub struct ChangeDetectionConfig {
-    /// Aktive Elemente; Standard: die Elemente 1 – 13, `content` aus.
+    /// Aktive Elemente; Standard: alle außer `content` (Elemente 1 – 13, 15, 16; TECH-300).
     pub elements: Vec<ChangeElement>,
     /// Schwelle für Inhaltsänderungen in Prozent (0 – 100, Standard 10).
     pub content_threshold_pct: u8,

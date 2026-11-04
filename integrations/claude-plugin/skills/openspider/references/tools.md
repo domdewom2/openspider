@@ -6,7 +6,7 @@ and per-installation availability; disabled classes/tools are omitted.
 
 | Tool | Class | Use |
 | --- | --- | --- |
-| `compare_crawls` | `read` | Compare saved crawls by tab/filter; change detection requires its available analysis. |
+| `compare_crawls` | `read` | Compare saved crawls by tab/filter; change detection requires its available analysis. `changes=true` returns the Crawl Changes report (pages gone, new errors, new redirects and chains, changed canonicals, indexability changes), paginated; `change` selects one section. |
 | `fetch_link_metrics` | `cost` | Estimate provider usage for saved-crawl URLs; execute only after explicit confirmation. |
 | `list_crawls` | `read` | Discover saved crawl IDs, dates and states. |
 | `crawl_overview` | `read` | Crawl counts, filter counts, top issues and analysis gaps. |

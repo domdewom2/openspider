@@ -26,6 +26,8 @@ pub enum ReportRequirement {
     Rendering,
     SitemapProcessed,
     OrphanSourceAvailable,
+    /// Ein geöffneter Vergleich zweier Crawls (OUT-154); ohne ihn bleibt der Report leer (Kopfzeile, Warnung).
+    Comparison,
 }
 
 /// Art des Reports (Zuordnung zur Umsetzung).
@@ -37,6 +39,8 @@ pub enum ReportKind {
     AllRedirects,
     /// Weiterleitungsketten ab 2 Sprüngen oder Schleife (OUT-082).
     RedirectChains,
+    /// Änderungen seit dem letzten Crawl, nur im Vergleich (OUT-154).
+    CrawlChanges,
 }
 
 /// Ein Report des Katalogs.
@@ -66,6 +70,12 @@ pub const REPORTS: &[ReportDef] = &[
         file_stem: "Crawl Overview",
         requires: &[ReportRequirement::CrawlAnalysis],
         kind: ReportKind::CrawlOverview,
+    },
+    ReportDef {
+        name: "Crawl Changes",
+        file_stem: "Crawl Changes",
+        requires: &[ReportRequirement::Comparison],
+        kind: ReportKind::CrawlChanges,
     },
     ReportDef {
         name: "Redirects:All Redirects",

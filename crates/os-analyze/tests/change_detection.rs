@@ -9,11 +9,15 @@ use fixture::{all, comparison, fixture};
 
 // spec: TECH-300
 // spec: OUT-144
+// spec: TECH-309
+// spec: TECH-310
 #[test]
 fn registry_configuration_and_disabled_elements() {
     let defaults = ChangeDetectionConfig::default();
-    assert_eq!(change::ELEMENTS.len(), 14);
-    assert_eq!(defaults.elements.len(), 13);
+    // 14 Referenzelemente + Canonical + Redirect Target (Nutzerentscheidung 04.11.2026); Standard ohne Content.
+    assert_eq!(change::ELEMENTS.len(), 16);
+    assert_eq!(defaults.elements.len(), 15);
+    assert!(!defaults.elements.contains(&ChangeElement::Content));
     assert_eq!(defaults.content_threshold_pct, 10);
     assert_eq!(
         change::ELEMENTS
@@ -26,7 +30,8 @@ fn registry_configuration_and_disabled_elements() {
         let mut cfg = all();
         cfg.elements.retain(|x| *x != e);
         let tab = change::tab(&cfg, true);
-        assert_eq!(tab.filters.len(), 14);
+        // „All“ + 15 verbleibende Elemente.
+        assert_eq!(tab.filters.len(), 16);
         assert!(!tab.filters.iter().any(|f| change::ELEMENTS
             .iter()
             .any(|(known, label, _)| *known == e && *label == f.id)));
