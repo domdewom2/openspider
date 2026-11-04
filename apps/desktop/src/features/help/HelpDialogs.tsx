@@ -17,8 +17,11 @@ import { Dialog } from "../../ui/primitives/Dialog";
 import { Button } from "../../ui/primitives/Button";
 import { client } from "../../ipc/client";
 import { chooseFile } from "./files";
+import { ABOUT_LINKS, openInBrowser } from "./feedback";
 import { useHelp } from "./state";
 import license from "../../../../../LICENSE?raw";
+import brandLight from "../../assets/brand/mark-light.svg";
+import brandDark from "../../assets/brand/mark-dark.svg";
 import "./help.css";
 
 export function ShortcutHelp({ platform = currentPlatform() }: { platform?: Platform }) {
@@ -41,7 +44,22 @@ function About() {
     void import("./licenses").then((data) => { if (!abort.signal.aborted) setLicenseData(data); }).catch((e) => { if (!abort.signal.aborted) setError(toCmdError(e).messageKey); });
     return () => abort.abort();
   }, []);
-  return <><p>OpenSpider {info?.version} {info?.build}</p>{error && <p role="alert">{t(error)}</p>}
+  const link = (url: string, label: string) => <a href={url} onClick={(event) => { event.preventDefault(); void openInBrowser(url).catch((e) => setError(toCmdError(e).messageKey)); }}>{label}</a>;
+  return <><header className="os-about-head">
+      <img className="os-brand-light" src={brandLight} alt="" /><img className="os-brand-dark" src={brandDark} alt="" />
+      <div>
+        <p className="os-about-name">Open<span>Spider</span></p>
+        <p className="os-about-tagline">{t("u04-about-tagline")}</p>
+        {info && <p className="os-about-version" data-about="version">{t("u04-about-version", { version: info.version })}{info.build && <> · {t("u04-about-build", { build: info.build })}</>}</p>}
+      </div>
+    </header>{error && <p role="alert">{t(error)}</p>}
+    <dl className="os-help-properties os-about-facts">
+      <div><dt>{t("u04-about-developer")}</dt><dd data-about="developer">Dominik Wojcik</dd></div>
+      <div><dt>{t("u04-about-website")}</dt><dd>{link(ABOUT_LINKS.website, "openspider.de")}</dd></div>
+      <div><dt>{t("u04-about-source")}</dt><dd>{link(ABOUT_LINKS.source, "github.com/wojcikdominik/openspider")}</dd></div>
+      <div><dt>{t("u04-about-license-label")}</dt><dd>Apache-2.0</dd></div>
+    </dl>
+    <p className="os-about-copyright">{t("u04-about-copyright")}</p>
     <details><summary>{t("u04-license")}</summary><pre>{license}</pre></details>
     <details><summary>{t("u04-third-party")}</summary>
       <label>{t("u04-license-search")} <input type="search" value={licenseQuery} onChange={(event) => setLicenseQuery(event.target.value)} /></label>

@@ -112,3 +112,11 @@ u04-context-table = Focus a table to use this action.
 
 u04-license-search = Search licenses
 u04-license-no-match = No matches.
+u04-about-tagline = Open-source crawler and technical SEO auditor – for people and AI agents.
+u04-about-version = Version { $version }
+u04-about-build = Build { $build }
+u04-about-developer = Developed by
+u04-about-website = Website
+u04-about-source = Source code
+u04-about-license-label = License
+u04-about-copyright = © 2026 Dominik Wojcik and the OpenSpider contributors
