@@ -266,6 +266,7 @@ function incomingArtifacts(directory, version) {
 }
 
 // spec: OUT-261 [M3]
+// spec: OUT-266 [M3]
 test('Veröffentlicht nur Universal-DMG und -CLI für macOS, dazu bytegleiche versionslose Kopien in SHA256SUMS', async t => {
   const { directory, version, repository, date } = fixture(t);
   const incoming = join(directory, 'incoming');
