@@ -265,11 +265,11 @@ async fn invalid_and_outdated_files_are_reported_without_content() {
     )
     .await;
     assert_eq!(preview["state"], "outdated");
+    assert_eq!(preview["extraKeys"], json!([]));
     let diff = preview["connectDiff"].as_str().unwrap();
-    assert!(
-        diff.contains("-command = \"/Volumes/alt/openspider\""),
-        "{diff}"
-    );
+    // Der alte Wert gehört zum vorhandenen Eintrag des Nutzers: nur „…“, die neue Zeile vollständig.
+    assert!(diff.contains("-\u{2026}\n+command = \""), "{diff}");
+    assert!(!diff.contains("/Volumes/alt/openspider"), "{diff}");
     assert!(!diff.contains("-args"), "only changed lines: {diff}");
     let disconnect = preview["disconnectDiff"].as_str().unwrap();
     assert!(disconnect.contains("-[mcp_servers.openspider]"));
@@ -286,6 +286,21 @@ async fn invalid_and_outdated_files_are_reported_without_content() {
     )
     .await;
     assert_eq!(preview["state"], "connected");
+
+    // Zusätze des Nutzers im eigenen Eintrag: nur die Namen, nie die Werte (Nachtrag Review).
+    write(
+        &codex,
+        "[mcp_servers.openspider]\ncommand = \"/old\"\nargs = [\"mcp\"]\nstartup_timeout_sec = 30\nenv = { API_KEY = \"TESTSECRET-91\" }\n",
+    );
+    let preview = call(
+        &app,
+        "mcp.clientConfigPreview",
+        json!({ "client": "codex" }),
+    )
+    .await;
+    assert_eq!(preview["state"], "outdated");
+    assert_eq!(preview["extraKeys"], json!(["env", "startup_timeout_sec"]));
+    assert!(!preview.to_string().contains("TESTSECRET"));
 }
 
 // spec: AGENT-043 [P1]

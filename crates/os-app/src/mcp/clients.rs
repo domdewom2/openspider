@@ -1,41 +1,64 @@
 //! Programme mit einem Klick verbinden (AGENT-043, Nutzerentscheidung 04.11.2026): eigenen Eintrag
 //! formatbewahrend schreiben bzw. entfernen, Sicherung, Klassen-Freigabe `crawl` (AGENT-003).
 //!
-//! Die Oberfläche erhält nie den Inhalt der fremden Datei, nur maskierte geänderte Zeilen.
+//! Die Oberfläche erhält nie den Inhalt der fremden Datei: geänderte Zeilen des eigenen Eintrags
+//! vollständig, alle anderen geänderten Zeilen nur als `…` (AGENT-043, Nachtrag Review).
 use super::{error, State};
 use crate::{dto::*, App, CmdError};
 use os_mcp::client_config::{self, ConfigError, EntryState};
 use os_mcp::print_config::Client;
 use os_mcp::ToolClass;
 use std::{
+    ffi::OsString,
     io::Write,
     path::{Path, PathBuf},
 };
 
+/// Absoluter Pfad aus einer Umgebungsvariable; leer oder relativ zählt nicht.
+fn env_dir(env: &dyn Fn(&str) -> Option<OsString>, name: &str) -> Option<PathBuf> {
+    env(name).map(PathBuf::from).filter(|p| p.is_absolute())
+}
+
+/// Konfigurationsdatei je Programm (AGENT-043): `CODEX_HOME` bzw. `CLAUDE_CONFIG_DIR`, wenn absolut
+/// gesetzt, sonst unter `home`; Claude Desktop im Konfigurationsverzeichnis `config_dir`.
+pub fn client_path(
+    kind: McpClientKind,
+    home: &Path,
+    config_dir: &Path,
+    env: &dyn Fn(&str) -> Option<OsString>,
+) -> (Client, PathBuf) {
+    match kind {
+        McpClientKind::Codex => (
+            Client::Codex,
+            env_dir(env, "CODEX_HOME")
+                .unwrap_or_else(|| home.join(".codex"))
+                .join("config.toml"),
+        ),
+        McpClientKind::ClaudeCode => (
+            Client::ClaudeCode,
+            env_dir(env, "CLAUDE_CONFIG_DIR")
+                .unwrap_or_else(|| home.to_path_buf())
+                .join(".claude.json"),
+        ),
+        McpClientKind::ClaudeDesktop => (
+            Client::ClaudeDesktop,
+            config_dir.join("Claude").join("claude_desktop_config.json"),
+        ),
+    }
+}
+
 fn target(app: &App, kind: McpClientKind) -> Result<(Client, PathBuf), CmdError> {
-    // Explicit app-home overrides isolate tests and portable installations from the real user directory.
-    let home = if app.config().documents_dir.is_some() {
-        app.config().home.clone()
-    } else {
-        dirs::home_dir().ok_or_else(|| error("Home directory unavailable"))?
-    };
-    Ok(match kind {
-        McpClientKind::Codex => (Client::Codex, home.join(".codex").join("config.toml")),
-        McpClientKind::ClaudeCode => (Client::ClaudeCode, home.join(".claude.json")),
-        McpClientKind::ClaudeDesktop => {
-            let dir = if app.config().documents_dir.is_some() {
-                home.join("Claude")
-            } else {
-                dirs::config_dir()
-                    .ok_or_else(|| error("Config directory unavailable"))?
-                    .join("Claude")
-            };
-            (
-                Client::ClaudeDesktop,
-                dir.join("claude_desktop_config.json"),
-            )
-        }
-    })
+    // Explicit app-home overrides isolate tests and portable installations from the real user directory;
+    // environment variables then do not apply either.
+    if app.config().documents_dir.is_some() {
+        let home = &app.config().home;
+        return Ok(client_path(kind, home, home, &|_| None));
+    }
+    let home = dirs::home_dir().ok_or_else(|| error("Home directory unavailable"))?;
+    let config = dirs::config_dir().ok_or_else(|| error("Config directory unavailable"))?;
+    Ok(client_path(kind, &home, &config, &|name| {
+        std::env::var_os(name)
+    }))
 }
 
 /// Programm, das der Client starten soll: `openspider` neben der laufenden Binärdatei, Argument `mcp`.
@@ -82,18 +105,63 @@ fn symlink_error() -> CmdError {
         .with_detail("Client configuration must not be a symlink")
 }
 
-/// Diff der maskierten Fassungen, ohne Kontextzeilen (nur tatsächlich geänderte Zeilen).
-pub fn masked_diff(client: Client, before: &str, after: &str) -> Result<String, ConfigError> {
+/// Vorschau ohne Geheimnisse (AGENT-043): nur geänderte Zeilen (ohne Kontext, mit Zeilennummern). Eine
+/// Zeile erscheint vollständig, wenn sie ganz zum eigenen Eintrag gehört und wörtlich im neu erzeugten
+/// Eintrag (`connected`, Ergebnis von „Verbinden“) vorkommt; Leerzeilen als Leerzeilen. Jede andere
+/// geänderte Zeile – fremder Inhalt, aber auch Zusätze des Nutzers im vorhandenen eigenen Eintrag (z. B.
+/// `env`) – erscheint nur als `…` bzw. `…,`, weil Wortregeln allein nicht jedes Geheimnis erkennen.
+pub fn preview_diff(
+    client: Client,
+    before: &str,
+    after: &str,
+    connected: &str,
+) -> Result<String, ConfigError> {
+    use similar::ChangeTag;
     if before == after {
         return Ok(String::new());
     }
-    let before = client_config::mask(client, before)?;
-    let after = client_config::mask(client, after)?;
-    Ok(similar::TextDiff::from_lines(&before, &after)
-        .unified_diff()
-        .context_radius(0)
-        .missing_newline_hint(false)
-        .to_string())
+    let old_own = client_config::own_lines(client, before)?;
+    let new_own = client_config::own_lines(client, after)?;
+    let generated: std::collections::HashSet<&str> = client_config::own_lines(client, connected)?
+        .map(|range| {
+            connected
+                .split_inclusive('\n')
+                .skip(range.start)
+                .take(range.len())
+                .map(|l| l.trim_end_matches(['\n', '\r']))
+                .collect()
+        })
+        .unwrap_or_default();
+    let diff = similar::TextDiff::from_lines(before, after);
+    let mut out = String::new();
+    for group in diff.grouped_ops(0) {
+        out.push_str(&format!(
+            "{}\n",
+            similar::udiff::UnifiedHunkHeader::new(&group)
+        ));
+        for op in &group {
+            for change in diff.iter_changes(op) {
+                let (sign, index, own) = match change.tag() {
+                    ChangeTag::Delete => ('-', change.old_index(), &old_own),
+                    ChangeTag::Insert => ('+', change.new_index(), &new_own),
+                    ChangeTag::Equal => continue,
+                };
+                let line = change.value().trim_end_matches(['\n', '\r']);
+                let is_own = index.is_some_and(|i| own.as_ref().is_some_and(|r| r.contains(&i)))
+                    && generated.contains(line);
+                out.push(sign);
+                if is_own || line.trim().is_empty() {
+                    out.push_str(line);
+                } else if line.trim_end().ends_with(',') {
+                    out.push_str("\u{2026},");
+                } else {
+                    out.push('\u{2026}');
+                }
+                out.push('\n');
+            }
+        }
+    }
+    Ok(out)
 }
 
 fn crawl_allowed(app: &App) -> Result<bool, CmdError> {
@@ -112,6 +180,7 @@ pub fn preview(app: &App, kind: McpClientKind) -> Result<McpClientPreview, CmdEr
         disconnect_diff: String::new(),
         entry: os_mcp::print_config::render(client, &exe, &args).map_err(error)?,
         crawl_allowed: crawl_allowed(app)?,
+        extra_keys: Vec::new(),
     };
     if is_symlink(&path) {
         result.problem = Some(McpClientProblem::Symlink);
@@ -124,12 +193,13 @@ pub fn preview(app: &App, kind: McpClientKind) -> Result<McpClientPreview, CmdEr
         let disconnected = client_config::disconnect(client, &before)?;
         Ok::<_, ConfigError>((
             state,
-            masked_diff(client, &before, &connected)?,
-            masked_diff(client, &before, &disconnected)?,
+            preview_diff(client, &before, &connected, &connected)?,
+            preview_diff(client, &before, &disconnected, &connected)?,
+            client_config::own_extra_keys(client, &before, &exe, &args)?,
         ))
     })();
     match analysed {
-        Ok((state, connect_diff, disconnect_diff)) => {
+        Ok((state, connect_diff, disconnect_diff, extra_keys)) => {
             result.state = match state {
                 EntryState::Absent => McpClientState::NotConnected,
                 EntryState::Current => McpClientState::Connected,
@@ -137,6 +207,7 @@ pub fn preview(app: &App, kind: McpClientKind) -> Result<McpClientPreview, CmdEr
             };
             result.connect_diff = connect_diff;
             result.disconnect_diff = disconnect_diff;
+            result.extra_keys = extra_keys;
         }
         Err(ConfigError::Syntax { line }) => {
             result.problem = Some(McpClientProblem::Syntax);
@@ -162,15 +233,24 @@ pub fn write_guarded(path: &Path, before: &str, after: &str) -> Result<Option<St
         .ok_or_else(|| error("Invalid configuration path"))?;
     std::fs::create_dir_all(parent).map_err(error)?;
     let existing = std::fs::metadata(path).ok();
-    let backup_path = if existing.is_some() {
+    let backup_path = if let Some(meta) = &existing {
+        // Die Originale enthalten fremde Geheimnisse (oft 0600): Die Sicherung erhält ihre Rechte, bevor
+        // der Inhalt geschrieben wird – unabhängig von der umask.
         let backup = path.with_extension(format!("{}.bak", uuid::Uuid::new_v4()));
-        let mut file = std::fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&backup)
-            .map_err(error)?;
+        let mut options = std::fs::OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+            options.mode(meta.permissions().mode() & 0o777);
+        }
+        let mut file = options.open(&backup).map_err(error)?;
+        #[cfg(unix)]
+        file.set_permissions(meta.permissions()).map_err(error)?;
         file.write_all(before.as_bytes()).map_err(error)?;
         file.sync_all().map_err(error)?;
+        #[cfg(not(unix))]
+        file.set_permissions(meta.permissions()).map_err(error)?;
         Some(backup.to_string_lossy().into_owned())
     } else {
         None
@@ -286,13 +366,128 @@ mod tests {
     #[test]
     fn permissions_of_the_previous_file_are_kept() {
         use std::os::unix::fs::PermissionsExt;
-        let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("config.toml");
-        std::fs::write(&path, "a = 1\n").unwrap();
-        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).unwrap();
-        write_guarded(&path, "a = 1\n", "a = 2\n").unwrap();
-        let mode = std::fs::metadata(&path).unwrap().permissions().mode() & 0o777;
-        assert_eq!(mode, 0o644);
+        let mode_of = |p: &Path| std::fs::metadata(p).unwrap().permissions().mode() & 0o777;
+        // 0600: Originale mit fremden Geheimnisse (~/.claude.json, config.toml) – auch die Sicherung.
+        for mode in [0o600, 0o644, 0o640] {
+            let dir = tempfile::tempdir().unwrap();
+            let path = dir.path().join("config.toml");
+            std::fs::write(&path, "a = 1\n").unwrap();
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(mode)).unwrap();
+            let backup = write_guarded(&path, "a = 1\n", "a = 2\n").unwrap().unwrap();
+            assert_eq!(mode_of(&path), mode, "new file");
+            assert_eq!(mode_of(Path::new(&backup)), mode, "backup");
+            assert_eq!(std::fs::read_to_string(&backup).unwrap(), "a = 1\n");
+        }
+    }
+
+    // spec: AGENT-043
+    #[test]
+    fn foreign_lines_next_to_the_own_entry_appear_only_as_ellipsis() {
+        let exe = "/x/openspider";
+        let args = ["mcp".to_string()];
+        // Werte ohne Geheimwort: Wortregeln maskieren sie nicht, die Vorschau zeigt sie trotzdem nicht.
+        for (client, before) in [
+            (
+                Client::ClaudeCode,
+                "{\n  \"theme\": \"dark\",\n  \"lastHandle\": \"ZZOPAQUE-41\"\n}\n",
+            ),
+            (
+                Client::ClaudeDesktop,
+                "{\n  \"mcpServers\": {\n    \"foreign\": {\"command\": \"helper\", \"args\": [\"ZZOPAQUE-42\"]}\n  }\n}\n",
+            ),
+            (Client::ClaudeDesktop, "{\"mcpServers\":{\"f\":{\"args\":[\"ZZOPAQUE-43\"]}}}"),
+            (Client::Codex, "handle = \"ZZOPAQUE-44\""),
+        ] {
+            let after = client_config::connect(client, before, exe, &args).unwrap();
+            let diff = preview_diff(client, before, &after, &after).unwrap();
+            assert!(!diff.contains("ZZOPAQUE"), "{client:?}: {diff}");
+            let disconnect = client_config::disconnect(client, &after).unwrap();
+            let back = preview_diff(client, &after, &disconnect, &after).unwrap();
+            assert!(!back.contains("ZZOPAQUE"), "{client:?}: {back}");
+            if before.contains('\n') && client != Client::Codex {
+                assert!(back.contains(exe), "removed own lines stay visible: {back}");
+                assert!(diff.contains("\n-\u{2026}\n+\u{2026},\n"), "{client:?}: {diff}");
+                assert!(diff.contains(exe), "own lines stay visible: {diff}");
+            }
+        }
+    }
+
+    // spec: AGENT-043
+    #[test]
+    fn user_additions_in_the_existing_own_entry_are_not_shown() {
+        let exe = "/x/openspider";
+        let args = ["mcp".to_string()];
+        let before = "[mcp_servers.openspider]\ncommand = \"/old\"\nargs = [\"mcp\"]\nenv = { TOKENLESS = \"ZZOPAQUE-51\" }\n";
+        let connected = client_config::connect(Client::Codex, before, exe, &args).unwrap();
+        let disconnected = client_config::disconnect(Client::Codex, before).unwrap();
+        for after in [&connected, &disconnected] {
+            let diff = preview_diff(Client::Codex, before, after, &connected).unwrap();
+            assert!(
+                !diff.contains("ZZOPAQUE") && !diff.contains("/old"),
+                "{diff}"
+            );
+        }
+        let diff = preview_diff(Client::Codex, before, &connected, &connected).unwrap();
+        assert!(diff.contains("+command = \"/x/openspider\""), "{diff}");
+        assert!(diff.contains("-\u{2026}\n"), "{diff}");
+        // Unveränderte erzeugte Zeilen des alten Eintrags (args) bleiben sichtbar beim Trennen.
+        let diff = preview_diff(Client::Codex, before, &disconnected, &connected).unwrap();
+        assert!(
+            diff.contains("-args = [\"mcp\"]") && diff.contains("-[mcp_servers.openspider]"),
+            "{diff}"
+        );
+    }
+
+    // spec: AGENT-043
+    #[test]
+    fn codex_home_and_claude_config_dir_are_honoured_when_absolute() {
+        let home = Path::new("/home/anna");
+        let config = Path::new("/home/anna/.config");
+        let abs = if cfg!(windows) { "C:\\cfg" } else { "/cfg" };
+        let env = |set: &'static [(&'static str, &'static str)]| {
+            move |name: &str| {
+                set.iter()
+                    .find(|(k, _)| *k == name)
+                    .map(|(_, v)| OsString::from(*v))
+            }
+        };
+        let none = env(&[]);
+        assert_eq!(
+            client_path(McpClientKind::Codex, home, config, &none).1,
+            home.join(".codex").join("config.toml")
+        );
+        assert_eq!(
+            client_path(McpClientKind::ClaudeCode, home, config, &none).1,
+            home.join(".claude.json")
+        );
+        let set: &'static [(&str, &str)] = if cfg!(windows) {
+            &[("CODEX_HOME", "C:\\cfg"), ("CLAUDE_CONFIG_DIR", "C:\\cfg")]
+        } else {
+            &[("CODEX_HOME", "/cfg"), ("CLAUDE_CONFIG_DIR", "/cfg")]
+        };
+        let with = env(set);
+        assert_eq!(
+            client_path(McpClientKind::Codex, home, config, &with).1,
+            Path::new(abs).join("config.toml")
+        );
+        assert_eq!(
+            client_path(McpClientKind::ClaudeCode, home, config, &with).1,
+            Path::new(abs).join(".claude.json")
+        );
+        // Leer oder relativ: Standardpfad.
+        let bad = env(&[("CODEX_HOME", ""), ("CLAUDE_CONFIG_DIR", "relative/dir")]);
+        assert_eq!(
+            client_path(McpClientKind::Codex, home, config, &bad).1,
+            home.join(".codex").join("config.toml")
+        );
+        assert_eq!(
+            client_path(McpClientKind::ClaudeCode, home, config, &bad).1,
+            home.join(".claude.json")
+        );
+        assert_eq!(
+            client_path(McpClientKind::ClaudeDesktop, home, config, &with).1,
+            config.join("Claude").join("claude_desktop_config.json")
+        );
     }
 
     // spec: AGENT-043
@@ -301,7 +496,7 @@ mod tests {
         let before = "[mcp_servers.a]\ncommand = \"a\"\nenv = { TOKEN = \"TESTSECRET-1\" }\n";
         let after = client_config::connect(Client::Codex, before, "/x/openspider", &["mcp".into()])
             .unwrap();
-        let diff = masked_diff(Client::Codex, before, &after).unwrap();
+        let diff = preview_diff(Client::Codex, before, &after, &after).unwrap();
         assert!(!diff.contains("TESTSECRET"));
         let changed: Vec<_> = diff
             .lines()
@@ -320,6 +515,9 @@ mod tests {
             !diff.contains("command = \"a\""),
             "no context lines: {diff}"
         );
-        assert_eq!(masked_diff(Client::Codex, before, before).unwrap(), "");
+        assert_eq!(
+            preview_diff(Client::Codex, before, before, before).unwrap(),
+            ""
+        );
     }
 }

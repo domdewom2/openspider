@@ -140,6 +140,9 @@ pub struct McpClientPreview {
     pub entry: String,
     /// Klasse `crawl` ist derzeit freigegeben.
     pub crawl_allowed: bool,
+    /// Zusätze des Nutzers im vorhandenen eigenen Eintrag (nur Schlüsselnamen, alphabetisch), die
+    /// „Aktualisieren“ ersetzt (AGENT-043, Nachtrag Review).
+    pub extra_keys: Vec<String>,
 }
 
 /// Ergebnis von `mcp.clientConnect` und `mcp.clientDisconnect`.

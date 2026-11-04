@@ -37,4 +37,9 @@ entry: string,
 /**
  * Klasse `crawl` ist derzeit freigegeben.
  */
-crawlAllowed: boolean, };
+crawlAllowed: boolean, 
+/**
+ * Zusätze des Nutzers im vorhandenen eigenen Eintrag (nur Schlüsselnamen, alphabetisch), die
+ * „Aktualisieren“ ersetzt (AGENT-043, Nachtrag Review).
+ */
+extraKeys: Array<string>, };
