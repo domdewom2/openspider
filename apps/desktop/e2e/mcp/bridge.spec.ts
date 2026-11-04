@@ -79,35 +79,49 @@ test("real bridge reports service availability without a mock fallback", async (
 });
 
 // spec: AGENT-043
-test("real writer backs up all client configs after reviewed diffs and preserves foreign entries", async ({ page }) => {
+// spec: AGENT-003 [M2]
+test("real writer connects all clients in one click, keeps every foreign byte and backs up", async ({ page }) => {
   const bridge = await startRealBridge();
+  const secret = "u25-real-TESTSECRET-0123456789";
   try {
     await connect(page, bridge);
     await page.getByRole("tab", { name: "Clients", exact: true }).click();
     for (const kind of ["claudeDesktop", "claudeCode", "codex"] as const) {
       const initial = await page.evaluate(kind => window.mcpBridge.invoke<McpClientPreview>("mcp.clientConfigPreview", { client: kind }), kind);
       await sandboxFile(initial.path, bridge.home);
-      const original = kind === "codex" ? '[mcp_servers.foreign]\ncommand = "foreign-helper"\n' : '{"mcpServers":{"foreign":{"command":"foreign-helper"}}}';
+      const original = kind === "codex"
+        ? `# eigene Notiz\n[mcp_servers.foreign]\ncommand = 'foreign-helper'\nenv = { API_TOKEN = "${secret}" }\n`
+        : `{\n    "mcpServers": {\n        "foreign": {"command": "foreign-helper", "env": {"API_TOKEN": "${secret}"}}\n    },\n    "theme": "dark"\n}\n`;
       await writeFile(initial.path, original);
+      const program = { claudeDesktop: "Claude Desktop", claudeCode: "Claude Code", codex: "Codex" }[kind];
       await page.getByRole("button", { name: /Client/ }).click();
-      await page.getByRole("option", { name: { claudeDesktop: "Claude Desktop", claudeCode: "Claude Code", codex: "Codex" }[kind], exact: true }).click();
-      await page.getByRole("button", { name: "Preview changes", exact: true }).click();
-      await expect(page.getByLabel("Configuration diff")).toContainText("foreign-helper");
-      const write = page.getByRole("button", { name: "Write configuration with backup", exact: true });
-      await expect(write).toBeDisabled();
+      await page.getByRole("option", { name: program, exact: true }).click();
+      const panel = page.getByRole("region", { name: `Connect ${program}` });
+      await expect(panel.getByText("Not connected yet.", { exact: true })).toBeVisible();
+      await panel.getByText("Show changes", { exact: true }).click();
+      await expect(panel.getByLabel("Configuration diff")).toContainText("openspider");
+      expect(await page.locator("body").innerHTML()).not.toContain(secret);
       expect(await readFile(initial.path, "utf8")).toBe(original);
-      const preview = await page.evaluate(kind => window.mcpBridge.invoke<McpClientPreview>("mcp.clientConfigPreview", { client: kind }), kind);
-      await setCheckbox(page, /I have reviewed/, true);
-      await write.click();
-      await expect(page.getByText("Client configuration saved.", { exact: true })).toBeVisible();
-      expect(await readFile(initial.path, "utf8")).toBe(preview.after);
-      const backupText = await page.locator(".os-mcp-path").filter({ hasText: "Backup:" }).textContent();
-      expect(backupText).toBeTruthy();
+      await panel.getByRole("button", { name: "Connect", exact: true }).click();
+      await expect(panel.getByText(`Connected. Start a new session in ${program} so that OpenSpider appears there.`, { exact: true })).toBeVisible();
+      const after = await readFile(initial.path, "utf8");
+      // Only an insertion: the original bytes before and after the own entry are unchanged.
+      const insertAt = kind === "codex" ? original.length : original.indexOf("}\n    },") + 1;
+      expect(after.slice(0, insertAt)).toBe(original.slice(0, insertAt));
+      expect(after.slice(after.length - (original.length - insertAt))).toBe(original.slice(insertAt));
+      expect(after).toContain("openspider");
+      const backupText = await panel.locator(".os-mcp-path").filter({ hasText: "Backup:" }).textContent();
       const backupPath = backupText!.replace(/^Backup:\s*/, "");
       await sandboxFile(backupPath, bridge.home);
       expect(await readFile(backupPath, "utf8")).toBe(original);
-      expect(preview.after).toContain("foreign-helper");
+      await expect(panel.getByText("Already connected.", { exact: true })).toBeVisible();
+      await panel.getByRole("button", { name: "Disconnect", exact: true }).click();
+      await expect(panel.getByText(`Disconnected. Start a new session in ${program}.`, { exact: true })).toBeVisible();
+      expect(await readFile(initial.path, "utf8")).toBe(original);
+      expect(await page.locator("body").innerHTML()).not.toContain(secret);
     }
+    const settings = await page.evaluate(() => window.mcpBridge.invoke<{ mcp: { classes: string[] } }>("settings.get"));
+    expect(settings.mcp.classes).toEqual(["read", "crawl"]);
   } finally { await bridge.stop(); }
 });
 
