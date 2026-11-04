@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { TFn } from "../../i18n";
+import type { McpClientKind } from "../../ipc/gen/McpClientKind";
 import type { McpStatus } from "../../ipc/gen/McpStatus";
 import { toCmdError } from "../../ipc/errors";
 
@@ -8,9 +9,12 @@ export type McpTab = typeof MCP_TABS[number];
 export const MCP_CLASSES = ["read", "crawl", "write", "cost"] as const;
 export const useMcpUi = create<{
   tab: McpTab | null;
+  /** Open connection dialog „Mit <Programm> verbinden“ (AGENT-043). */
+  connect: McpClientKind | null;
   status: McpStatus;
-}>(() => ({ tab: null, status: { kind: "off" } }));
-export const openMcp = (tab: McpTab = "server") => useMcpUi.setState({ tab });
+}>(() => ({ tab: null, connect: null, status: { kind: "off" } }));
+export const openMcp = (tab: McpTab = "server") => useMcpUi.setState({ tab, connect: null });
+export const openConnect = (client: McpClientKind) => useMcpUi.setState({ tab: null, connect: client });
 
 export function statusText(status: McpStatus, t: TFn): string {
   if (status.kind === "off") return t("mcp-status-off");

@@ -11,9 +11,9 @@ import { allMenuContributions } from "../../ui/menu/registry";
 import { buildMenuModel } from "../../ui/menu/build";
 import { McpHost, McpStatusField } from "./McpHost";
 import { AccessPanel } from "./AccessPanel";
-import { ClientsPanel } from "./ClientsPanel";
+import { ClientsPanel, ConnectPanel } from "./ClientsPanel";
 import { nativeMcpDesktop, type McpDesktop } from "./desktop";
-import { openMcp, parsePort, redactText, statusText, useMcpUi } from "./model";
+import { openConnect, openMcp, parsePort, redactText, statusText, useMcpUi } from "./model";
 import { clientPreview, createMcpFixture, TEST_TOKEN } from "./fixtures/agent-m2-ui";
 
 let fixture: ReturnType<typeof createMcpFixture>;
@@ -31,7 +31,7 @@ beforeEach(async () => {
   fixture = createMcpFixture();
   setClient(createClient(fixture.core.transport("main")));
   await setLanguage("en");
-  useMcpUi.setState({ tab: null, status: { kind: "off" } });
+  useMcpUi.setState({ tab: null, connect: null, status: { kind: "off" } });
   useSession.setState({ seq: -1, mcp: null, crawl: null, notices: [] });
   offs = [attachSession(eventBus), fixture.core.addSub("main", event => eventBus.emit(event))];
   desktop = { copy: vi.fn(async () => undefined), chooseMarkdown: vi.fn(async () => "fixture-home/openspider-mcp-tools.md") };
@@ -247,41 +247,6 @@ it("clears a revealed token when changing tabs, closing and hiding the window", 
 });
 
 // spec: AGENT-043
-it("requires preview and explicit confirmation for each client; shows backup and preserves the preview on failure", async () => {
-  for (const kind of ["claudeDesktop", "claudeCode", "codex"] as const) {
-    cleanup();
-    render(<ClientsPanel initialClient={kind} desktop={desktop} />);
-    expect(screen.queryByRole("button", { name: "Write configuration with backup" })).not.toBeInTheDocument();
-    await click("Preview changes");
-    const write = await screen.findByRole("button", { name: "Write configuration with backup" });
-    expect(write).toBeDisabled();
-    expect(screen.getByLabelText("Configuration diff")).toHaveTextContent("foreign-helper");
-    fireEvent.click(screen.getByRole("checkbox", { name: /I have reviewed/ }));
-    expect(write).toBeEnabled();
-    await click("Write configuration with backup");
-    expect(await screen.findByText(`Backup: ${kind}.backup`)).toBeVisible();
-    expect(fixture.written.at(-1)).toBe(kind);
-    expect(calls("mcp.clientConfigPreview").filter(call => (call.args as { client: string }).client === kind)).toHaveLength(2);
-  }
-});
-
-// spec: AGENT-043
-it("replaces a stale diff instead of writing and redacts client config secrets", async () => {
-  let changed = false;
-  fixture.core.handlers.set("mcp.clientConfigPreview", () => clientPreview("claudeDesktop", JSON.stringify({ token: TEST_TOKEN, mcpServers: { foreign: { command: changed ? "changed-helper" : "foreign-helper" } } })));
-  render(<ClientsPanel initialClient="claudeDesktop" desktop={desktop} />);
-  await click("Preview changes");
-  fireEvent.click(await screen.findByRole("checkbox", { name: /I have reviewed/ }));
-  expect(document.body.innerHTML).not.toContain(TEST_TOKEN);
-  changed = true;
-  await click("Write configuration with backup");
-  expect(await screen.findByText(/configuration changed/)).toBeVisible();
-  expect(calls("mcp.clientConfigWrite")).toHaveLength(0);
-  expect(screen.getByRole("checkbox", { name: /I have reviewed/ })).not.toBeChecked();
-  expect(screen.getByLabelText("Configuration diff")).toHaveTextContent("changed-helper");
-});
-
-// spec: AGENT-043
 it("renders bounded log pages including duration and result size, with credential redaction", async () => {
   for (let i = 0; i < 26; i++) fixture.record(`query_${i}`, `{"crawl_id":"out-basic-site","token":"${TEST_TOKEN}","authorization":"Bearer ${TEST_TOKEN}"}`);
   await host(); await selectTab("Call log");
@@ -321,68 +286,128 @@ it("uses the canonical Markdown filename in the native save dialog", async () =>
 });
 
 // spec: AGENT-043
-it("redacts multiline JSON and TOML arguments before generating the displayed diff", async () => {
-  for (const kind of ["claudeDesktop", "claudeCode", "codex"] as const) {
-    cleanup();
-    const before = kind === "codex"
-      ? `[mcp_servers.foreign]\ncommand = "foreign-helper"\nargs = [\n  "--token",\n  "${TEST_TOKEN}", # secret value on its own line\n  '--api-key',\n  '${TEST_TOKEN}-key',\n]\nenv = { API_KEY = "${TEST_TOKEN}-env", KEEP = "visible" }\n`
-      : JSON.stringify({ mcpServers: { foreign: { command: "foreign-helper", args: ["--token", TEST_TOKEN, "--password", `${TEST_TOKEN}-password`], env: { API_KEY: `${TEST_TOKEN}-env`, KEEP: "visible" } } } }, null, 2);
-    const value = clientPreview(kind, before);
-    // The raw server diff is deliberately unsafe. It must never be rendered.
-    value.diff = `+ "--token",\n+ "${TEST_TOKEN}"\n+ DIFF_ONLY_SECRET`;
-    fixture.core.handlers.set("mcp.clientConfigPreview", () => value);
-    render(<ClientsPanel initialClient={kind} desktop={desktop} />);
-    await click("Preview changes");
-    expect(await screen.findByLabelText("Configuration diff")).toHaveTextContent("foreign-helper");
-    expect(screen.getByLabelText("Configuration diff")).toHaveTextContent("visible");
-    expect(document.body.innerHTML).not.toContain(TEST_TOKEN);
-    expect(document.body.innerHTML).not.toContain("DIFF_ONLY_SECRET");
-    await click("Copy configuration");
-    await waitFor(() => expect(desktop.copy).toHaveBeenLastCalledWith(value.after));
+// spec: AGENT-003 [M2]
+it("connects each program in one click from its own menu dialog, with crawl preset and a new-session instruction", async () => {
+  render(<McpHost desktop={desktop} />);
+  for (const [kind, program] of [["claudeDesktop", "Claude Desktop"], ["claudeCode", "Claude Code"], ["codex", "Codex"]] as const) {
+    act(() => { runAction(`mcp.${kind}`); });
+    const dialog = await screen.findByRole("dialog", { name: `Connect ${program}` });
+    expect(within(dialog).getByText("Not connected yet.")).toBeVisible();
+    const crawl = within(dialog).getByRole("checkbox", { name: "Agent may start crawls" });
+    expect(crawl).toBeChecked();
+    // No review checkbox and no mandatory preview: one button does backup, entry and permission.
+    expect(within(dialog).queryByRole("checkbox", { name: /reviewed/i })).not.toBeInTheDocument();
+    expect(within(dialog).getByText("Show changes").closest("details")).not.toHaveAttribute("open");
+    fireEvent.click(within(dialog).getByRole("button", { name: "Connect" }));
+    expect(await within(dialog).findByText(`Connected. Start a new session in ${program} so that OpenSpider appears there.`)).toBeVisible();
+    expect(within(dialog).getByText(`Backup: ${kind}.backup`)).toBeVisible();
+    expect(calls("mcp.clientConnect").at(-1)?.args).toEqual({ client: kind, allowCrawl: true });
+    expect(await within(dialog).findByText("Already connected.")).toBeVisible();
+    expect(within(dialog).getByRole("button", { name: "Update" })).toBeEnabled();
+    expect(within(dialog).getByRole("button", { name: "Disconnect" })).toBeEnabled();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   }
-});
-
-// spec: AGENT-043
-it("fails closed for malformed or unsupported configurations instead of displaying raw secrets", async () => {
-  const { redactConfig } = await import("./configPreview");
-  for (const source of [`args = ["--token", "${TEST_TOKEN}"`, `token = '''${TEST_TOKEN}'''`, `not JSON ${TEST_TOKEN}`]) {
-    for (const kind of ["codex", "claudeDesktop"] as const) expect(redactConfig(source, kind)).toBe("[redacted]");
-  }
-  expect(redactConfig(`args = ['--token', '${TEST_TOKEN}', '--api-key=${TEST_TOKEN}']`, "codex")).not.toContain(TEST_TOKEN);
-});
-
-// spec: AGENT-043
-it("blocks confirmation and writing if either preview document cannot be safely displayed", async () => {
-  for (const kind of ["claudeDesktop", "claudeCode", "codex"] as const) {
-    for (const side of ["before", "after"] as const) {
-      cleanup();
-      const value = clientPreview(kind);
-      value[side] = kind === "codex" ? `token = '''${TEST_TOKEN}'''` : `invalid JSON ${TEST_TOKEN}`;
-      fixture.core.handlers.set("mcp.clientConfigPreview", () => value);
-      render(<ClientsPanel initialClient={kind} desktop={desktop} />);
-      await click("Preview changes");
-      expect(await screen.findByRole("alert")).toHaveTextContent("Writing is disabled");
-      const confirm = screen.getByRole("checkbox", { name: /I have reviewed/ });
-      expect(confirm).toBeDisabled();
-      expect(screen.getByRole("button", { name: "Write configuration with backup" })).toBeDisabled();
-      expect(calls("mcp.clientConfigWrite")).toHaveLength(0);
-      expect(document.body.innerHTML).not.toContain(TEST_TOKEN);
-    }
-  }
-});
-
-// spec: AGENT-043
-it("revokes confirmation when the fresh preview becomes unsupported before writing", async () => {
-  render(<ClientsPanel initialClient="codex" desktop={desktop} />);
-  await click("Preview changes");
-  fireEvent.click(await screen.findByRole("checkbox", { name: /I have reviewed/ }));
-  const value = clientPreview("codex");
-  value.before = `token = '''${TEST_TOKEN}'''`;
-  fixture.core.handlers.set("mcp.clientConfigPreview", () => value);
-  await click("Write configuration with backup");
-  expect(await screen.findByRole("alert")).toHaveTextContent("Writing is disabled");
-  expect(screen.getByRole("checkbox", { name: /I have reviewed/ })).not.toBeChecked();
-  expect(screen.getByRole("checkbox", { name: /I have reviewed/ })).toBeDisabled();
+  expect(fixture.core.settings.mcp.classes).toEqual(["read", "crawl"]);
   expect(calls("mcp.clientConfigWrite")).toHaveLength(0);
+});
+
+// spec: AGENT-003 [M2]
+// spec: AGENT-043
+it("connects read-only when the crawl checkbox is cleared", async () => {
+  fixture.core.settings.mcp.classes = ["read", "crawl", "write"];
+  render(<ConnectPanel client="codex" desktop={desktop} />);
+  const crawl = await screen.findByRole("checkbox", { name: "Agent may start crawls" });
+  expect(crawl).toBeChecked();
+  fireEvent.click(crawl);
+  expect(crawl).not.toBeChecked();
+  await click("Connect");
+  await waitFor(() => expect(calls("mcp.clientConnect").at(-1)?.args).toEqual({ client: "codex", allowCrawl: false }));
+  await waitFor(() => expect(fixture.core.settings.mcp.classes).toEqual(["read", "write"]));
+});
+
+// spec: AGENT-043
+it("recognises an existing entry, updates without changes and disconnects only the own entry", async () => {
+  fixture.connected.add("codex");
+  fixture.core.settings.mcp.classes = ["read"];
+  render(<ConnectPanel client="codex" desktop={desktop} />);
+  expect(await screen.findByText("Already connected.")).toBeVisible();
+  // An existing connection shows the current grant instead of the default.
+  expect(screen.getByRole("checkbox", { name: "Agent may start crawls" })).not.toBeChecked();
+  await click("Update");
+  expect(await screen.findByText("Already connected; the file is unchanged. Start a new session in Codex if OpenSpider is still missing there.")).toBeVisible();
+  expect(screen.queryByText(/^Backup:/)).not.toBeInTheDocument();
+  await click("Disconnect");
+  expect(await screen.findByText("Disconnected. Start a new session in Codex.")).toBeVisible();
+  expect(screen.getByText("Backup: codex.disconnect-backup")).toBeVisible();
+  expect(await screen.findByText("Not connected yet.")).toBeVisible();
+  expect(screen.queryByRole("button", { name: "Disconnect" })).not.toBeInTheDocument();
+});
+
+// spec: AGENT-043
+it("shows only masked changed lines on request and copies only the own entry", async () => {
+  const value = clientPreview("claudeCode", "notConnected", {
+    // Defence in depth: even an unmasked service value is redacted before rendering.
+    connectDiff: `@@ -3 +3,2 @@\n-  "x": 1\n+  "x": 1,\n+  "authorization": "Bearer ${TEST_TOKEN}"\n`,
+    path: `fixture-home/.claude.json?token=${TEST_TOKEN}`,
+  });
+  fixture.core.handlers.set("mcp.clientConfigPreview", () => value);
+  render(<ConnectPanel client="claudeCode" desktop={desktop} />);
+  fireEvent.click(await screen.findByText("Show changes"));
+  const diff = screen.getByLabelText("Configuration diff");
+  // Line structure is preserved exactly (pre-formatted); only the masked value differs.
+  expect(diff.textContent).toContain('\n+  "x": 1,\n+  "authorization": "[redacted]"');
+  expect(screen.getByText(/Changed lines only/)).toBeVisible();
   expect(document.body.innerHTML).not.toContain(TEST_TOKEN);
+  await click("Copy entry");
+  await waitFor(() => expect(desktop.copy).toHaveBeenLastCalledWith(value.entry));
+  expect(value.entry).not.toContain('"x"');
+  expect(await screen.findByText(/Entry copied to the clipboard/)).toBeVisible();
+});
+
+// spec: AGENT-043
+it("blocks files that cannot be changed and reports only fixed messages", async () => {
+  fixture.core.handlers.set("mcp.clientConfigPreview", () => clientPreview("claudeDesktop", "notConnected", { problem: "syntax", line: 7, connectDiff: "", disconnectDiff: "" }));
+  render(<ConnectPanel client="claudeDesktop" desktop={desktop} />);
+  expect(await screen.findByRole("alert")).toHaveTextContent("The file is not valid JSON or TOML (line 7). OpenSpider does not change it.");
+  expect(screen.getByText("The file cannot be changed.")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Connect" })).toBeDisabled();
+  expect(screen.getByRole("checkbox", { name: "Agent may start crawls" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Copy entry" })).toBeEnabled();
+  expect(screen.queryByText("Show changes")).not.toBeInTheDocument();
+  cleanup();
+  fixture.core.handlers.set("mcp.clientConfigPreview", () => clientPreview("codex"));
+  for (const [error, text] of [
+    [{ code: "Stale", messageKey: "mcp-client-changed", args: {}, retryable: false, detail: TEST_TOKEN }, "Another program changed the file while connecting. Nothing was written; try again."],
+    [{ code: "InvalidInput", messageKey: "mcp-client-problem-syntax", args: { line: 3 }, retryable: false, detail: TEST_TOKEN }, "The file is not valid JSON or TOML (line 3)."],
+    [{ code: "Io", messageKey: `err-${TEST_TOKEN}`, args: {}, retryable: false, detail: TEST_TOKEN }, "The MCP operation failed."],
+  ] as const) {
+    cleanup();
+    fixture.core.handlers.set("mcp.clientConnect", () => { throw new IpcError(error as never); });
+    render(<ConnectPanel client="codex" desktop={desktop} />);
+    await click("Connect");
+    expect(await screen.findByRole("alert")).toHaveTextContent(text);
+    expect(document.body.innerHTML).not.toContain(TEST_TOKEN);
+  }
+});
+
+// spec: AGENT-043
+it("offers the same panel with a program selection in the Clients tab", async () => {
+  await host();
+  await selectTab("Clients");
+  expect(await screen.findByRole("region", { name: "Connect Claude Desktop" })).toBeVisible();
+  cleanup();
+  render(<ClientsPanel initialClient="codex" desktop={desktop} />);
+  expect(await screen.findByRole("region", { name: "Connect Codex" })).toBeVisible();
+  act(() => { openConnect("claudeCode"); });
+  expect(useMcpUi.getState()).toMatchObject({ tab: null, connect: "claudeCode" });
+});
+
+// spec: AGENT-003 [M2]
+it("does not promise a cost estimate or user confirmation before AGENT-030", () => {
+  const de = makeT("de")("mcp-classes-help");
+  const en = makeT("en")("mcp-classes-help");
+  expect(de).not.toMatch(/Kostenschätzung|Bestätigung/);
+  expect(en).not.toMatch(/cost estimate|confirmation/i);
+  expect(de).toContain("Linkmetriken");
 });

@@ -5,6 +5,8 @@ import type { ToolInfo } from "../../../ipc/gen/ToolInfo";
 import type { CallLogRow } from "../../../ipc/gen/CallLogRow";
 import type { McpClientKind } from "../../../ipc/gen/McpClientKind";
 import type { McpClientPreview } from "../../../ipc/gen/McpClientPreview";
+import type { McpClientState } from "../../../ipc/gen/McpClientState";
+import type { McpConnectArgs } from "../../../ipc/gen/McpConnectArgs";
 
 export const TEST_TOKEN = "u25-fixture-token-0123456789abcdef";
 export const fixtureTools: ToolInfo[] = [
@@ -14,17 +16,27 @@ export const fixtureTools: ToolInfo[] = [
   { name: "export_tab", class: "write", enabled: false, description: "Export a tab.", schema: { type: "object", properties: { path: { type: "string" } } } },
   { name: "psi", class: "cost", enabled: false, description: "Request a performance report.", schema: { type: "object", properties: { confirm: { type: "boolean" } } } },
 ];
-const documents: Record<McpClientKind, string> = {
-  claudeDesktop: '{"mcpServers":{"foreign":{"command":"foreign-helper"}}}',
-  claudeCode: '{"mcpServers":{"foreign":{"command":"foreign-helper"}}}',
-  codex: '[mcp_servers.foreign]\ncommand = "foreign-helper"\n',
-};
-export function clientPreview(kind: McpClientKind, before = documents[kind]): McpClientPreview {
-  const server = { command: "openspider", args: ["mcp"] };
-  const after = kind === "codex"
-    ? `${before}\n[mcp_servers.openspider]\ncommand = "openspider"\nargs = ["mcp"]\n`
-    : JSON.stringify({ ...JSON.parse(before), mcpServers: { ...JSON.parse(before).mcpServers, openspider: server } }, null, 2);
-  return { path: `fixture-home/${kind}.${kind === "codex" ? "toml" : "json"}`, before, after, diff: `--- before\n+++ after\n-${before}\n+${after}` };
+/** Masked, context-free diffs as the K17 service returns them (AGENT-043); never the foreign file. */
+export function clientPreview(kind: McpClientKind, state: McpClientState = "notConnected", overrides: Partial<McpClientPreview> = {}): McpClientPreview {
+  const codex = kind === "codex";
+  const entry = codex
+    ? '[mcp_servers.openspider]\ncommand = "/Applications/OpenSpider.app/Contents/MacOS/openspider"\nargs = ["mcp"]\n'
+    : `{\n  "mcpServers": {\n    "openspider": {\n      "args": ["mcp"],\n      "command": "/Applications/OpenSpider.app/Contents/MacOS/openspider"${kind === "claudeCode" ? ',\n      "type": "stdio"' : ""}\n    }\n  }\n}\n`;
+  const added = codex
+    ? '@@ -71,0 +72,4 @@\n+\n+[mcp_servers.openspider]\n+command = "/Applications/OpenSpider.app/Contents/MacOS/openspider"\n+args = ["mcp"]\n'
+    : '@@ -9 +9,7 @@\n-    }\n+    },\n+    "openspider": {\n+      "args": [\n+        "mcp"\n+      ],\n+      "command": "/Applications/OpenSpider.app/Contents/MacOS/openspider"\n+    }\n';
+  const removed = added.replace(/^\+/gm, "-").replace(/^@@ -(\S+) \+(\S+) @@/m, "@@ -$2 +$1 @@");
+  return {
+    path: `fixture-home/${kind}.${codex ? "toml" : "json"}`,
+    state,
+    problem: null,
+    line: null,
+    connectDiff: state === "connected" ? "" : added,
+    disconnectDiff: state === "notConnected" ? "" : removed,
+    entry,
+    crawlAllowed: false,
+    ...overrides,
+  };
 }
 export function createMcpFixture() {
   const core = new MockCore();
@@ -59,11 +71,29 @@ export function createMcpFixture() {
   });
   core.handlers.set("mcp.token", args => ({ masked: "••••••••", value: (args as { reveal: boolean }).reveal ? token : null }));
   core.handlers.set("mcp.regenerateToken", args => { token = `${TEST_TOKEN}-rotated`; return { masked: "••••••••", value: (args as { reveal: boolean }).reveal ? token : null }; });
-  core.handlers.set("mcp.clientConfigPreview", args => clientPreview((args as { client: McpClientKind }).client));
-  core.handlers.set("mcp.clientConfigWrite", args => { const { client } = args as { client: McpClientKind }; written.push(client); return { backupPath: `${client}.backup` }; });
+  const connected = new Set<McpClientKind>();
+  const crawlAllowed = () => (core.settings.mcp.classes ?? ["read"]).includes("crawl");
+  core.handlers.set("mcp.clientConfigPreview", args => {
+    const { client } = args as { client: McpClientKind };
+    return clientPreview(client, connected.has(client) ? "connected" : "notConnected", { crawlAllowed: crawlAllowed() });
+  });
+  core.handlers.set("mcp.clientConnect", args => {
+    const { client, allowCrawl } = args as McpConnectArgs;
+    const changed = !connected.has(client);
+    connected.add(client); written.push(client);
+    const classes = new Set(core.settings.mcp.classes ?? ["read"]);
+    if (allowCrawl) classes.add("crawl"); else classes.delete("crawl");
+    core.settings.mcp.classes = ["read", "crawl", "write", "cost"].filter(c => classes.has(c) || c === "read");
+    return { backupPath: changed ? `${client}.backup` : null, changed };
+  });
+  core.handlers.set("mcp.clientDisconnect", args => {
+    const { client } = args as { client: McpClientKind };
+    const changed = connected.delete(client);
+    return { backupPath: changed ? `${client}.disconnect-backup` : null, changed };
+  });
   core.handlers.set("mcp.callLog", args => { const { offset, limit } = args as { offset: number; limit: number }; return logs.slice(offset, offset + limit); });
   function record(tool: string, params: string, client = "fixture-client") {
     logs.push({ at: "2026-10-19T12:00:00Z", tool, class: "read", client, durationMs: 12, ok: true, argsSummary: params, resultBytes: 2048 });
   }
-  return { core, setStatus, tools, logs, written, markdown, record, token: () => token };
+  return { core, setStatus, tools, logs, written, connected, markdown, record, token: () => token };
 }
