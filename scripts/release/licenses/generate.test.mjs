@@ -57,3 +57,66 @@ test('canonical terms require exact reviewed version, expression and author attr
   assert.throws(() => rustEntries(data, allowed, {}, { 'fixture@2': { license: 'MIT' } }));
   assert.throws(() => rustEntries(data, allowed, {}, { 'fixture@1': { license: 'Apache-2.0' } }));
 });
+
+// spec: OUT-273 [M3] (L01: vollständige Drittlizenzen für die CLI-Archive; B3-REL Netzrobustheit)
+// A fetch that never answers on its own: only the per-attempt timeout (AbortSignal) ends it. AbortSignal.timeout
+// does not keep the event loop alive (a real socket would), so a referenced timer stands in for the open connection.
+const hanging = (calls) => (url, { signal }) => {
+  calls.push(url);
+  const socket = setTimeout(() => {}, 60_000);
+  return new Promise((_, reject) => signal.addEventListener('abort', () => { clearTimeout(socket); reject(signal.reason); }));
+};
+test('license text fetch retries timeouts with exponential backoff (beta.2 Windows job)', async () => {
+  const { fetchWithRetry } = await import('./generate.mjs');
+  const calls = []; const waits = []; const logs = [];
+  const hang = hanging(calls);
+  let n = 0;
+  const flaky = (url, init) => (++n < 3 ? hang(url, init) : Promise.resolve(new Response('Copyright fixture')));
+  const options = { timeout: 20, backoff: 100, wait: async (ms) => { waits.push(ms); }, log: (line) => logs.push(line) };
+  assert.equal((await fetchWithRetry('https://example.invalid/LICENSE', { ...options, fetchImpl: flaky })).toString(), 'Copyright fixture');
+  assert.deepEqual(waits, [100, 200]);
+  assert.equal(calls.length, 2);
+  assert.match(logs[0], /timeout after 20 ms https:\/\/example\.invalid\/LICENSE; retry 2\/3 in 100 ms/);
+  // Three timeouts in a row: clear error, no endless retries.
+  calls.length = 0;
+  await assert.rejects(fetchWithRetry('https://example.invalid/LICENSE', { ...options, fetchImpl: hang }), /timeout after 20 ms https:\/\/example\.invalid\/LICENSE \(3 attempts\)/);
+  assert.equal(calls.length, 3);
+});
+test('license text fetch retries 5xx/429 but fails at once on other HTTP errors', async () => {
+  const { fetchWithRetry } = await import('./generate.mjs');
+  const options = { backoff: 1, wait: async () => {}, log: () => {} };
+  const statuses = (list) => { const seen = []; return { seen, fetchImpl: async () => { const status = list[seen.length]; seen.push(status); return new Response(status === 200 ? 'ok' : 'error', { status }); } }; };
+  let run = statuses([503, 429, 200]);
+  assert.equal((await fetchWithRetry('https://example.invalid/a', { ...options, fetchImpl: run.fetchImpl })).toString(), 'ok');
+  assert.deepEqual(run.seen, [503, 429, 200]);
+  run = statuses([404, 200]);
+  await assert.rejects(fetchWithRetry('https://example.invalid/a', { ...options, fetchImpl: run.fetchImpl }), /HTTP 404/);
+  assert.deepEqual(run.seen, [404]);
+  run = statuses([502, 502, 502, 200]);
+  await assert.rejects(fetchWithRetry('https://example.invalid/a', { ...options, fetchImpl: run.fetchImpl }), /HTTP 502 https:\/\/example\.invalid\/a \(3 attempts\)/);
+  assert.deepEqual(run.seen, [502, 502, 502]);
+});
+test('optional license text cache is content-addressed and refetches a corrupted entry', async () => {
+  const { sourceBytes } = await import('./generate.mjs');
+  const { createHash } = await import('node:crypto');
+  const { readFileSync, existsSync } = await import('node:fs');
+  const directory = mkdtempSync(join(tmpdir(), 'l01-cache-'));
+  try {
+    const bytes = Buffer.from('Copyright fixture\nMIT conditions');
+    const source = { url: 'https://example.invalid/pinned/LICENSE', sha256: createHash('sha256').update(bytes).digest('hex') };
+    let fetches = 0;
+    const options = { cacheDir: join(directory, 'cache'), wait: async () => {}, log: () => {}, fetchImpl: async () => { fetches++; return new Response(bytes); } };
+    assert.deepEqual(await sourceBytes(source, options), bytes);
+    assert.deepEqual(readFileSync(join(directory, 'cache', source.sha256)), bytes);
+    // Cache hit: no network at all, even if the network were down.
+    assert.deepEqual(await sourceBytes(source, { ...options, fetchImpl: async () => { throw Error('offline'); } }), bytes);
+    assert.equal(fetches, 1);
+    writeFileSync(join(directory, 'cache', source.sha256), 'tampered');
+    assert.deepEqual(await sourceBytes(source, options), bytes);
+    assert.equal(fetches, 2);
+    // Changed upstream bytes are never cached (and fail later in verifiedSourceText).
+    const other = { ...source, url: 'https://example.invalid/other', sha256: 'f'.repeat(64) };
+    assert.deepEqual(await sourceBytes(other, options), bytes);
+    assert.equal(existsSync(join(directory, 'cache', other.sha256)), false);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});

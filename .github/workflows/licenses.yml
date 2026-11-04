@@ -41,7 +41,15 @@ jobs:
         run: timeout 3600s nice -n 10 cargo install cargo-about --version 0.9.3 --features cli --locked -j 4 --root "$RUNNER_TEMP/cargo-about"
       - name: Add license tool to PATH
         run: echo "$RUNNER_TEMP/cargo-about/bin" >> "$GITHUB_PATH"
+      - name: Zwischenspeicher für nachgeladene Lizenztexte (SHA-256-gepinnt)
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ runner.temp }}/license-texts
+          key: license-texts-v1-${{ hashFiles('scripts/release/licenses/*-sources.json') }}
+          restore-keys: license-texts-v1-
       - name: Generate complete release notices (all release targets)
+        env:
+          OPENSPIDER_LICENSE_CACHE: ${{ runner.temp }}/license-texts
         run: timeout 3600s nice -n 10 node scripts/release/licenses/generate.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
