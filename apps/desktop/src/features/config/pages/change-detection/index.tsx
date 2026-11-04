@@ -4,7 +4,7 @@ import { compare } from "../../../../ipc/compare";
 import { useConfigValue } from "../../frame/context";
 import { definePage, f } from "../../frame/definePage";
 import { FieldFrame } from "../../frame/fields";
-export const ELEMENTS = ["indexability", "page_titles", "meta_description", "h1", "word_count", "crawl_depth", "inlinks", "unique_inlinks", "internal_outlinks", "unique_internal_outlinks", "external_outlinks", "unique_external_outlinks", "structured_data_unique_types", "content"] as const;
+export const ELEMENTS = ["indexability", "page_titles", "meta_description", "h1", "word_count", "crawl_depth", "inlinks", "unique_inlinks", "internal_outlinks", "unique_internal_outlinks", "external_outlinks", "unique_external_outlinks", "structured_data_unique_types", "content", "canonical", "redirect_target"] as const;
 function Elements() {
   const t = useT(); const { value = [], set, lock } = useConfigValue<string[]>("compare.change_detection.elements");
   const [available, setAvailable] = useState(false);

@@ -12,5 +12,7 @@
   {"id":"external_outlinks","label":"External Outlinks"},
   {"id":"unique_external_outlinks","label":"Unique External Outlinks"},
   {"id":"structured_data_unique_types","label":"Structured Data Unique Types"},
-  {"id":"content","label":"Content"}
+  {"id":"content","label":"Content"},
+  {"id":"canonical","label":"Canonical"},
+  {"id":"redirect_target","label":"Redirect Target"}
 ]

@@ -45,6 +45,7 @@ export function exportDisplayName(name: string, lookup: Lookup, separator = ": "
           "saved screenshots": "screenshots", "spell checking": "spelling",
           "grammar checking": "grammar", "accessibility extraction": "a11y",
           "HTML validation": "validation", "JavaScript error reporting": "javascript-errors",
+          "a crawl comparison (--crawl-comparison or --compare-with-previous)": "comparison",
         } as Record<string, string>)[requirement!] ?? "missing";
         return lookup(`export-reason-${kind}`, { name: label });
       });

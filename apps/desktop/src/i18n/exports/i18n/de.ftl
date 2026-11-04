@@ -24,6 +24,7 @@ export-name-blocked-resources = Blockierte Ressourcen
 export-name-canonical-chains = Canonical-Ketten
 export-name-cookie-summary = Cookie-Zusammenfassung
 export-name-crawl-overview = Crawl-Übersicht
+export-name-crawl-changes = Änderungen seit dem letzten Crawl
 export-name-exact-duplicates-pairs = Paare exakter Duplikate
 export-name-external-links = Externe Links
 export-name-form-on-http-url = Formular auf HTTP-URL
@@ -103,5 +104,6 @@ export-reason-a11y = { $name }: Erfasste Barrierefreiheitsdaten sind erforderlic
 export-reason-validation = { $name }: Eine HTML-Validierung ist erforderlich.
 export-reason-javascript-errors = { $name }: Erfasste JavaScript-Fehler sind erforderlich.
 export-reason-missing = { $name }: Eine Voraussetzung für diesen Export fehlt.
+export-reason-comparison = { $name }: Nur im Vergleichsmodus verfügbar (Modus → Vergleich).
 
 export-name-filter = Filter { $n }

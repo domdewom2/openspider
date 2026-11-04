@@ -136,5 +136,7 @@ fach-element-external-outlinks = Externe ausgehende Links
 fach-element-unique-external-outlinks = Eindeutige externe ausgehende Links
 fach-element-structured-data-unique-types = Eindeutige Typen strukturierter Daten
 fach-element-content = Inhalt
+fach-element-canonical = Canonical-Ziel
+fach-element-redirect-target = Weiterleitungsziel
 fach-preview-revision = Vorschau zum Datenstand { $revision }
 fach-preview-stale = Frühere Daten; aktuelle Vorschau wird angefordert
