@@ -253,6 +253,16 @@ impl Graph {
     }
 }
 
+/// `row.get::<String>(idx)? == expected` ohne Zuordnung je Zeile (gleiche Fehlerfälle).
+fn text_is(row: &rusqlite::Row<'_>, idx: usize, expected: &str) -> rusqlite::Result<bool> {
+    match row.get_ref(idx)? {
+        rusqlite::types::ValueRef::Text(bytes) if std::str::from_utf8(bytes).is_ok() => {
+            Ok(bytes == expected.as_bytes())
+        }
+        _ => Ok(row.get::<_, String>(idx)? == expected),
+    }
+}
+
 pub fn run(
     file: &CrawlFile,
     cfg: &CrawlConfig,
@@ -309,8 +319,8 @@ fn calculate(
                 canonical.filter(|c| *c != id)
             };
             let participates = internal
-                && r.get::<_, String>(2)? == "done"
-                && r.get::<_, String>(3)? == "HTML"
+                && text_is(r, 2, "done")?
+                && text_is(r, 3, "HTML")?
                 && status.is_some_and(|s| s > 0)
                 && redirect.is_none()
                 && !status.is_some_and(|s| (300..400).contains(&s))
@@ -345,11 +355,12 @@ fn calculate(
         let mut buf: Vec<u32> = Vec::new();
         let mut current = NONE;
         let mut stmt = conn.prepare(
-            "SELECT source_id, target_id,
+            // Ohne `rel` (der Normalfall) entfallen die drei `LIKE`; Ergebnis wie bisher.
+            "SELECT source_id, target_id, CASE WHEN rel IS NULL THEN follow <> 0 ELSE
                 follow <> 0
-                AND (' ' || COALESCE(rel, '') || ' ') NOT LIKE '% nofollow %'
-                AND (' ' || COALESCE(rel, '') || ' ') NOT LIKE '% ugc %'
-                AND (' ' || COALESCE(rel, '') || ' ') NOT LIKE '% sponsored %'
+                AND (' ' || rel || ' ') NOT LIKE '% nofollow %'
+                AND (' ' || rel || ' ') NOT LIKE '% ugc %'
+                AND (' ' || rel || ' ') NOT LIKE '% sponsored %' END
             FROM links WHERE link_type = 'Hyperlink' AND crawlable = 1",
         )?;
         let mut rows = stmt.query([])?;
