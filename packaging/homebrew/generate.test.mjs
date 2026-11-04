@@ -35,11 +35,35 @@ test('Cask links the CLI at the stable app path and removes registrations withou
   assert.match(cask, /\{\{temp\}\}\/launchagents.json/);
   assert.doesNotMatch(cask, /\b(?:uninstall_preflight|postflight) do/);
   assert.match(cask, /zap trash:[\s\S]*org.openspider.desktop/);
-  assert.match(cask, new RegExp(createHash('sha256').update(fixture['OpenSpider_1.0.0_x64.dmg']).digest('hex')));
-  assert.match(cask, /\/v1.0.0\/OpenSpider_1.0.0_aarch64.dmg/);
+  assert.match(cask, new RegExp(createHash('sha256').update(fixture['OpenSpider_1.0.0_universal.dmg']).digest('hex')));
+  assert.match(cask, /\/v1.0.0\/OpenSpider_1.0.0_universal.dmg/);
   const ruby = spawnSync('ruby', ['-c'], { input: cask, encoding: 'utf8' });
   if (ruby.error?.code === 'ENOENT') t.diagnostic('ruby unavailable; syntax check remains mandatory in macOS CI');
   else assert.equal(ruby.status, 0, ruby.stderr);
+});
+
+// spec: OUT-261 [M3]
+test('Cask uses exactly the published Universal DMG for Apple Silicon and Intel', t => {
+  const opts = setup(t);
+  const cask = generate({ ...opts, mode: 'homebrew' })['openspider.rb'];
+  const universal = createHash('sha256').update(fixture['OpenSpider_1.0.0_universal.dmg']).digest('hex');
+  assert.equal(cask.match(/^  sha256 "([0-9a-f]{64})"$/gm)?.length, 1);
+  assert.match(cask, new RegExp(`^  sha256 "${universal}"$`, 'm'));
+  assert.equal(cask.match(/^  url "[^"]+"$/gm)?.join('\n'), '  url "https://github.com/example/openspider/releases/download/v1.0.0/OpenSpider_1.0.0_universal.dmg"');
+  assert.doesNotMatch(cask, /on_arm|on_intel|_aarch64\.dmg|_x64\.dmg|OpenSpider-macOS\.dmg/);
+  for (const name of ['OpenSpider_1.0.0_aarch64.dmg', 'OpenSpider_1.0.0_x64.dmg', 'OpenSpider-macOS.dmg']) {
+    assert.doesNotMatch(cask, new RegExp(createHash('sha256').update(fixture[name]).digest('hex')));
+  }
+  // Release assets without per-architecture DMGs (as published from beta.3 on) still generate the cask.
+  for (const name of ['OpenSpider_1.0.0_aarch64.dmg', 'OpenSpider_1.0.0_x64.dmg']) rmSync(join(opts.directory, name));
+  rmSync(opts.output, { recursive: true });
+  assert.equal(generate({ ...opts, mode: 'homebrew' })['openspider.rb'], cask);
+  rmSync(opts.output, { recursive: true });
+  writeFileSync(join(opts.directory, 'OpenSpider_0.9.0_universal.dmg'), 'other release');
+  assert.throws(() => generate({ ...opts, mode: 'homebrew' }), /genau ein Asset/);
+  rmSync(join(opts.directory, 'OpenSpider_0.9.0_universal.dmg'));
+  rmSync(join(opts.directory, 'OpenSpider_1.0.0_universal.dmg'));
+  assert.throws(() => generate({ ...opts, mode: 'homebrew' }), /genau ein Asset/);
 });
 
 // spec: OUT-266 [M3]
@@ -53,6 +77,8 @@ test('fixture generates MSI machine and NSIS user with quiet switches and exact 
   assert.equal(installer.Installers[0].InstallerSwitches.Custom, 'ALLUSERS=1 ADDTOPATH=1');
   for (const item of installer.Installers) {
     const name = decodeURIComponent(new URL(item.InstallerUrl).pathname.split('/').at(-1));
+    // The versionless NSIS copy only serves latest/download links; winget pins the versioned file.
+    assert.notEqual(name, 'OpenSpider-Windows-Setup.exe');
     assert.equal(item.InstallerSha256, createHash('sha256').update(fixture[name]).digest('hex').toUpperCase());
     assert.doesNotMatch(JSON.stringify(item), /REMOVEUSERDATA/);
   }
