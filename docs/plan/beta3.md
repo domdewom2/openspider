@@ -42,6 +42,14 @@ Anlass: Ein Nutzer bat Codex, über OpenSpider einen Crawl zu starten. Codex kan
 
 - Chrome-Download auf Klick für JavaScript-Rendering (in beta.1/beta.2 als „folgt mit einer der nächsten Betas“ angekündigt).
 
+## 4a Crawl-Vergleich für Deployments (Nutzerfrage 04.11.2026)
+
+Geprüft mit beta.2 an `tests/fixtures/out-m2-compare` (v1 → v2): Vergleich per CLI (`--crawl-comparison`) markiert New/Added/Unchanged und Change Detection korrekt; ein SQL-Diff über zwei `.ospider`-Dateien (`ATTACH`) findet verschwundene Seiten, geänderte Canonicals und neue Weiterleitungen.
+
+- **CLI-Export mit Unterfiltern:** Vergleichsexporte enthalten nur Zeilen des Current-Crawls; `Missing`/`Removed` (z. B. gelöschte Seiten in `Internal:HTML`, behobene 404 in `Response Codes:Client Error (4xx)`) lassen sich nicht exportieren. OUT-151 sieht das vor – Syntax für den Unterfilter in `--export-tabs` festlegen (Spec-Klärung) und umsetzen.
+- **Canonical-Ziel in Change Detection:** Heute wird nur Indexability verglichen; ein Wechsel des Canonical-Ziels A → B bei gleichbleibendem „Canonicalised“ bleibt unsichtbar. Neues Element (Spec: TECH-300/OUT-144 erweitern), ebenso Weiterleitungsziel.
+- **Report „Änderungen seit dem letzten Crawl“:** fertiger Report (App, CLI `--save-report`, MCP) mit verschwundenen Seiten, neuen Weiterleitungen und -ketten, geänderten Canonicals, Indexierbarkeitswechseln. Handbuch: Abschnitt „Deployment prüfen“ mit SQL-Beispiel.
+
 ## 5 Release-Ablauf
 
 - Entwurfshinweise („unsigniert“, „Installations-Smoke“, „TODO M2-Parität“) nur in die Zusammenfassung des Actions-Laufs, nicht in den Release-Text (Fable-Empfehlung zu m3/rel-assets).
