@@ -56,6 +56,7 @@ mcp-client-state-notConnected = Noch nicht verbunden.
 mcp-client-state-connected = Bereits verbunden.
 mcp-client-state-outdated = Verbunden, aber der Eintrag ist veraltet (z. B. anderer Programmpfad).
 mcp-client-state-blocked = Die Datei kann nicht geändert werden.
+mcp-client-extra-keys = Der vorhandene Eintrag enthält eigene Zusätze ({ $keys }). „Aktualisieren“ ersetzt den ganzen Eintrag; die Zusätze stehen danach nur noch in der Sicherung.
 mcp-client-file = Konfigurationsdatei: { $path }
 mcp-allow-crawl = Agent darf Crawls starten
 mcp-allow-crawl-help = Lesen ist immer erlaubt. Die Freigabe gilt für alle verbundenen Programme und lässt sich im Reiter „Werkzeuge“ ändern.

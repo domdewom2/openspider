@@ -411,3 +411,17 @@ it("does not promise a cost estimate or user confirmation before AGENT-030", () 
   expect(en).not.toMatch(/cost estimate|confirmation/i);
   expect(de).toContain("Linkmetriken");
 });
+
+// spec: AGENT-043
+it("warns before an update replaces the user's additions in the own entry, naming keys only", async () => {
+  fixture.core.handlers.set("mcp.clientConfigPreview", () => clientPreview("codex", "outdated", { extraKeys: ["env", "startup_timeout_sec"] }));
+  render(<ConnectPanel client="codex" desktop={desktop} />);
+  expect(await screen.findByText("Connected, but the entry is outdated (for example a different program path).")).toBeVisible();
+  expect(screen.getByText("The existing entry contains your own additions (env, startup_timeout_sec). “Update” replaces the whole entry; afterwards the additions are only in the backup.")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Update" })).toBeEnabled();
+  cleanup();
+  fixture.core.handlers.set("mcp.clientConfigPreview", () => clientPreview("codex", "outdated"));
+  render(<ConnectPanel client="codex" desktop={desktop} />);
+  expect(await screen.findByText(/entry is outdated/)).toBeVisible();
+  expect(screen.queryByText(/own additions/)).not.toBeInTheDocument();
+});

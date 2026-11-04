@@ -35,6 +35,7 @@ export function clientPreview(kind: McpClientKind, state: McpClientState = "notC
     disconnectDiff: state === "notConnected" ? "" : removed,
     entry,
     crawlAllowed: false,
+    extraKeys: [],
     ...overrides,
   };
 }

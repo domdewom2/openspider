@@ -84,6 +84,7 @@ export function ConnectPanel({ client, desktop }: { client: McpClientKind; deskt
   return <section className="os-mcp-stack" aria-label={t("mcp-connect-title", { program })} aria-busy={busy}>
     <p className="os-mcp-connect-state"><strong>{t(state)}</strong></p>
     <p className="os-mcp-path">{t("mcp-client-file", { path: redactText(preview.path) })}</p>
+    {preview.extraKeys.length > 0 && <Banner kind="warning">{t("mcp-client-extra-keys", { keys: preview.extraKeys.map(redactText).join(", ") })}</Banner>}
     {preview.problem && <Banner kind="error">{t(`mcp-client-problem-${preview.problem}`, { line: preview.line ?? 0 })}</Banner>}
     <div className="os-mcp-connect-grant">
       <Checkbox isSelected={allowCrawl} isDisabled={busy || blocked} onChange={value => { touched.current = true; setAllowCrawl(value); }}>{t("mcp-allow-crawl")}</Checkbox>
