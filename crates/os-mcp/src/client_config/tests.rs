@@ -502,3 +502,84 @@ fn secret_detection_rules() {
         assert!(!is_secret_string(s), "{s}");
     }
 }
+
+// --- Nachtrag Review: eigene Zeilen und Zusätze ---------------------------------------------------
+
+/// Zeilen eines Textes mit Index (wie `similar::TextDiff::from_lines`).
+fn line(text: &str, index: usize) -> &str {
+    text.split_inclusive('\n')
+        .nth(index)
+        .unwrap()
+        .trim_end_matches(['\n', '\r'])
+}
+
+// spec: AGENT-043
+#[test]
+fn own_lines_cover_exactly_the_own_entry() {
+    for (client, text) in [
+        (Client::Codex, CODEX),
+        (Client::ClaudeCode, CLAUDE_CODE),
+        (Client::ClaudeDesktop, CLAUDE_DESKTOP),
+    ] {
+        assert_eq!(own_lines(client, text).unwrap(), None, "{client:?}");
+        let after = connect(client, text, MAC, &mcp()).unwrap();
+        let own = own_lines(client, &after).unwrap().unwrap();
+        let shown: Vec<&str> = own.clone().map(|i| line(&after, i)).collect();
+        assert!(
+            shown.iter().any(|l| l.contains(MAC)),
+            "{client:?}: {shown:?}"
+        );
+        assert!(shown.iter().all(|l| !l.contains("TESTSECRET")));
+        // Die Zeile davor ist fremd (bei JSON trägt sie das angehängte Komma).
+        let before_line = line(&after, own.start - 1);
+        assert!(
+            !before_line.contains("openspider"),
+            "{client:?}: {before_line}"
+        );
+        if client != Client::Codex {
+            assert!(before_line.ends_with(','), "{before_line}");
+        }
+    }
+    // Einzeiliges JSON: keine Zeile gehört allein dem eigenen Eintrag.
+    let single = connect(Client::ClaudeDesktop, r#"{"mcpServers":{}}"#, MAC, &mcp()).unwrap();
+    assert_eq!(own_lines(Client::ClaudeDesktop, &single).unwrap(), None);
+    // Inline-Eintrag mit Kommentar auf derselben Zeile: der Kommentar ist fremd.
+    let inline =
+        "[mcp_servers]\nopenspider = { command = \"x\" } # Notiz\nfoo = { command = \"y\" }\n";
+    assert_eq!(own_lines(Client::Codex, inline).unwrap(), None);
+    let inline = "[mcp_servers]\nopenspider = { command = \"x\" }\nfoo = { command = \"y\" }\n";
+    assert_eq!(own_lines(Client::Codex, inline).unwrap(), Some(1..2));
+    // Ungültige Dateien melden den Fehler.
+    assert!(own_lines(Client::ClaudeCode, "{").is_err());
+}
+
+// spec: AGENT-043
+#[test]
+fn user_additions_in_the_own_entry_are_named_without_values() {
+    let codex = "[mcp_servers.openspider]\ncommand = \"/old\"\nargs = [\"mcp\"]\nstartup_timeout_sec = 30\n\n[mcp_servers.openspider.env]\nRUST_LOG = \"TESTSECRET-77\"\n";
+    assert_eq!(
+        own_extra_keys(Client::Codex, codex, MAC, &mcp()).unwrap(),
+        ["env", "startup_timeout_sec"]
+    );
+    assert_eq!(
+        entry_state(Client::Codex, codex, MAC, &mcp()).unwrap(),
+        EntryState::Outdated
+    );
+    let json = r#"{"mcpServers": {"openspider": {"type": "stdio", "command": "/old", "args": [], "env": {"A": "TESTSECRET-78"}}}}"#;
+    assert_eq!(
+        own_extra_keys(Client::ClaudeCode, json, MAC, &mcp()).unwrap(),
+        ["env"]
+    );
+    // `type` gehört bei Claude Code zum erzeugten Eintrag, bei Claude Desktop nicht.
+    assert_eq!(
+        own_extra_keys(Client::ClaudeDesktop, json, MAC, &mcp()).unwrap(),
+        ["env", "type"]
+    );
+    let current = connect(Client::Codex, CODEX, MAC, &mcp()).unwrap();
+    assert!(own_extra_keys(Client::Codex, &current, MAC, &mcp())
+        .unwrap()
+        .is_empty());
+    assert!(own_extra_keys(Client::Codex, CODEX, MAC, &mcp())
+        .unwrap()
+        .is_empty());
+}

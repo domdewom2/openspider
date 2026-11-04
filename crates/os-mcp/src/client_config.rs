@@ -197,6 +197,92 @@ pub fn mask(client: Client, text: &str) -> Result<String, ConfigError> {
     }
 }
 
+/// Zeilen (0-basiert, halboffen), die vollständig zum eigenen Eintrag gehören. Eine Zeile, die auch
+/// fremden Inhalt trägt (vor dem Eintrag oder dahinter außer einem Komma), zählt nicht dazu. Grundlage der
+/// Vorschau: Jede andere geänderte Zeile erscheint dort nur als `…` (AGENT-043, Nachtrag Review).
+///
+/// # Errors
+/// [`ConfigError`], wenn die Datei nicht parsebar ist oder ihr Aufbau nicht unterstützt wird.
+pub fn own_lines(
+    client: Client,
+    text: &str,
+) -> Result<Option<std::ops::Range<usize>>, ConfigError> {
+    let span = if client == Client::Codex {
+        toml_file::own_span(text)?
+    } else {
+        json_file::own_span(text)?
+    };
+    Ok(span.and_then(|span| whole_lines(text, span)))
+}
+
+/// Schlüssel des vorhandenen eigenen Eintrags, die der erzeugte Eintrag nicht hat (Zusätze des Nutzers,
+/// z. B. `env`), alphabetisch; „Aktualisieren“ ersetzt sie (AGENT-043, Nachtrag Review). Nur Namen, nie Werte.
+///
+/// # Errors
+/// Wie [`own_lines`].
+pub fn own_extra_keys(
+    client: Client,
+    text: &str,
+    exe: &str,
+    args: &[String],
+) -> Result<Vec<String>, ConfigError> {
+    let fail = || unsupported(Unsupported::VerificationFailed);
+    let (current, expected): (Vec<String>, Vec<String>) = if client == Client::Codex {
+        if toml_file::own_span(text)?.is_none() {
+            return Ok(Vec::new());
+        }
+        let table: toml::Table = toml::from_str(text).map_err(|_| fail())?;
+        let keys = |v: Option<&toml::Value>| -> Vec<String> {
+            v.and_then(toml::Value::as_table)
+                .map(|t| t.keys().cloned().collect())
+                .unwrap_or_default()
+        };
+        (
+            keys(table.get("mcp_servers").and_then(|s| s.get(SERVER_NAME))),
+            keys(Some(&own_toml(exe, args)?)),
+        )
+    } else {
+        let Some(span) = json_file::own_value_span(text)? else {
+            return Ok(Vec::new());
+        };
+        let value: serde_json::Value = serde_json::from_str(&text[span]).map_err(|_| fail())?;
+        let keys = |v: &serde_json::Value| -> Vec<String> {
+            v.as_object()
+                .map(|o| o.keys().cloned().collect())
+                .unwrap_or_default()
+        };
+        (keys(&value), keys(&own_json(client, exe, args)?))
+    };
+    let mut extra: Vec<String> = current
+        .into_iter()
+        .filter(|k| !expected.contains(k))
+        .collect();
+    extra.sort();
+    Ok(extra)
+}
+
+/// Ganze Zeilen eines Byte-Bereichs: erste Zeile nur, wenn davor nur Leerraum steht; letzte Zeile nur,
+/// wenn dahinter höchstens ein Komma folgt.
+fn whole_lines(text: &str, span: std::ops::Range<usize>) -> Option<std::ops::Range<usize>> {
+    if span.is_empty() {
+        return None;
+    }
+    let line_start = text[..span.start].rfind('\n').map_or(0, |p| p + 1);
+    let mut first = line_of(text, span.start) - 1;
+    if !text[line_start..span.start].trim().is_empty() {
+        first += 1;
+    }
+    let line_end = text[span.end..]
+        .find('\n')
+        .map_or(text.len(), |p| span.end + p);
+    let mut last = line_of(text, span.end - 1);
+    let tail = text[span.end..line_end].trim();
+    if !(tail.is_empty() || tail == ",") {
+        last -= 1;
+    }
+    (first < last).then_some(first..last)
+}
+
 /// Wörter, die einen Schlüssel als geheim kennzeichnen (Teilwort, Groß-/Kleinschreibung egal).
 const SECRET_WORDS: [&str; 8] = [
     "key",

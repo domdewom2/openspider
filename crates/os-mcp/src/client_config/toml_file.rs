@@ -137,6 +137,22 @@ fn locate(text: &str, doc: &Document<&str>) -> Result<Own, ConfigError> {
     }
 }
 
+/// Bereich des eigenen Eintrags ohne abschließenden Zeilenumbruch (Tabelle) bzw. ganze Zeile ohne
+/// Umbruch (Inline-Tabelle allein auf ihrer Zeile); `None`, wenn er fehlt oder sich die Zeile teilt.
+pub(super) fn own_span(text: &str) -> Result<Option<Range<usize>>, ConfigError> {
+    let doc = parse(text)?;
+    let region = match locate(text, &doc)? {
+        Own::Absent | Own::Inline { line: None, .. } => return Ok(None),
+        Own::Table { region } => region,
+        Own::Inline {
+            line: Some(line),
+            value,
+        } => line.start..value.end,
+    };
+    let body = text[region.clone()].trim_end_matches(['\n', '\r']);
+    Ok(Some(region.start..region.start + body.len()))
+}
+
 fn parse_semantic(text: &str) -> Result<toml::Table, ConfigError> {
     if text.trim().is_empty() {
         return Ok(toml::Table::new());

@@ -343,6 +343,26 @@ pub(super) fn state(text: &str, own: &Value) -> Result<EntryState, ConfigError> 
     })
 }
 
+/// Bereich des eigenen Mitglieds (Schlüssel bis Ende des Werts).
+pub(super) fn own_span(text: &str) -> Result<Option<Range<usize>>, ConfigError> {
+    if text.trim().is_empty() {
+        return Ok(None);
+    }
+    let root = parse(text)?;
+    let located = locate(&root)?;
+    Ok(located.own.map(|(_, m)| m.key_span.start..m.value.span.end))
+}
+
+/// Bereich des Werts des eigenen Mitglieds.
+pub(super) fn own_value_span(text: &str) -> Result<Option<Range<usize>>, ConfigError> {
+    if text.trim().is_empty() {
+        return Ok(None);
+    }
+    let root = parse(text)?;
+    let located = locate(&root)?;
+    Ok(located.own.map(|(_, m)| m.value.span.clone()))
+}
+
 /// Schreibweise der Datei.
 struct Style {
     nl: &'static str,
