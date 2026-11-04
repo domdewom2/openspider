@@ -25,6 +25,12 @@ Open-source website crawler and technical SEO auditor – built for AI agents an
   <img src="assets/screenshots/hero-light-dark.jpg" width="900" alt="OpenSpider desktop app after crawling a website: overview with crawl totals, status distribution and top issues, shown in light and dark mode">
 </p>
 
+<p align="center">
+  <a href="https://github.com/wojcikdominik/openspider/releases/latest"><b>⬇ Download the public beta</b></a><br>
+  On the release page, pick <b>one</b> file:<br>
+  macOS 13+ (Apple Silicon &amp; Intel): <code>OpenSpider_…_universal.dmg</code> · Windows 10/11: <code>OpenSpider_…_x64-setup.exe</code>
+</p>
+
 ---
 
 OpenSpider crawls websites the way a search engine does and finds the technical SEO problems that cost rankings: broken links, redirect chains, canonical and hreflang errors, indexability conflicts, duplicates, thin content and much more.
@@ -100,9 +106,15 @@ Memory for an open view over 5 million rows stays around 60 MB. The table never 
 
 ## Installation
 
-The public beta is live: download the latest version from [GitHub Releases](https://github.com/wojcikdominik/openspider/releases/latest)
-(DMG for macOS, setup.exe or MSI for Windows, CLI archives; verify with `SHA256SUMS`) and see the [beta page](https://openspider.de/en/beta/). Desktop targets: macOS 13+ (Apple Silicon/Intel),
-Windows 10 1809+ / Windows 11 x64, and Windows on ARM via x64 emulation.
+The public beta is live. Open the [latest release](https://github.com/wojcikdominik/openspider/releases/latest) and download one file:
+
+| System | File |
+|---|---|
+| macOS 13+ (Apple Silicon and Intel) | `OpenSpider_<version>_universal.dmg` |
+| Windows 10 1809+ / 11 (x64, also Windows on ARM via emulation) | `OpenSpider_<version>_x64-setup.exe` |
+
+The other files on the release page are for automatic updates, the CLI, managed installs (MSI)
+and checksums (`SHA256SUMS`). See also the [beta page](https://openspider.de/en/beta/).
 Linux x86_64 with glibc supports the core and CLI only; Linux desktop,
 .deb/.rpm and arm64 releases remain unsupported.
 Homebrew and winget distribution are planned and not available yet.
