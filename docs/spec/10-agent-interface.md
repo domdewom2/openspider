@@ -122,13 +122,15 @@ Meilensteine (OS-Festlegung, einzige Quelle der Zuordnung): **M1** (headless, ST
 
 ### AGENT-015 Crawls vergleichen
 - **Priorität:** P1
-- **Beschreibung:** `compare_crawls(a, b, element?, url_mapping?)` – Zusammenfassung der Änderungen gemäß Vergleichslogik OUT-140 … OUT-149 (führend): je Tab/Filter die Klassen Added/New/Removed/Missing (OUT-142) und je Element die Change-Detection-Zähler (OUT-144, TECH-300); mit `element` die betroffenen URLs paginiert (AGENT-005). `a` ist Current, `b` Previous; URL-Mapping (OUT-146) nur über gespeicherte Regeln bzw. den Parameter.
+- **Beschreibung:** `compare_crawls(a, b, element?, url_mapping?, changes?, change?)` – Zusammenfassung der Änderungen gemäß Vergleichslogik OUT-140 … OUT-149 (führend): je Tab/Filter die Klassen Added/New/Removed/Missing (OUT-142) und je Element die Change-Detection-Zähler (OUT-144, TECH-300); mit `element` die betroffenen URLs paginiert (AGENT-005). `a` ist Current, `b` Previous; URL-Mapping (OUT-146) nur über gespeicherte Regeln bzw. den Parameter.
 - **Akzeptanzkriterien:**
   - [ ] Zähler je Tab/Filter und Klasse stimmen exakt mit dem Compare-Modus der Desktop-App bzw. dem Crawl-Overview-Export im Vergleichsmodus (OUT-147) für dieselben zwei Crawls überein.
   - [ ] Vertauschen von `a` und `b` vertauscht Added/Removed und New/Missing (wie OUT-141).
   - [ ] `element=page_title` liefert genau die URLs, die die App unter Change Detection „Page Titles“ als geändert zeigt, paginiert nach AGENT-005.
   - [ ] Crawl-ID unbekannt oder Crawl noch laufend → MCP-Fehler mit Grund.
-- **Testfixture:** zwei Crawls von `os-testsite` (Ausgangs- und geänderte Fassung, Fixture-Paar aus OUT-140 ff.).
+  - [ ] **Report „Crawl Changes“ (Nutzerentscheidung 04.11.2026, OUT-154):** zusätzlicher Parameter `changes` (Boolean, Standard `false`) und optional `change` (kanonischer Wert der Spalte `Change`, z. B. `Page Gone`; ohne Beachtung der Groß-/Kleinschreibung). Mit `changes=true` liefert dasselbe Werkzeug (Klasse `read`, keine neue Werkzeugklasse) statt der Filterzähler die Zeilen des Reports mit denselben Spalten wie der Export als Objekte (`untrusted`, weil Adressen und Ziele aus fremden Seiten stammen), paginiert nach AGENT-005, und in `summary.crawl_changes` die Anzahl je Abschnitt in Reportreihenfolge (auch Abschnitte mit 0). `changes` und `element` schließen sich aus (Fehler `InvalidArguments`); unbekannter `change`-Wert → Fehler mit der Liste der gültigen Werte.
+  - [ ] Die Zeilen mit `changes=true` sind identisch mit `--save-report "Crawl Changes"` derselben zwei Crawls (Fixture `out-b3-diff`).
+- **Testfixture:** zwei Crawls von `os-testsite` (Ausgangs- und geänderte Fassung, Fixture-Paar aus OUT-140 ff.); für `changes` `tests/fixtures/out-b3-diff`.
 
 ---
 

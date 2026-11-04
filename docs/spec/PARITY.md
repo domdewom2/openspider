@@ -656,6 +656,8 @@ Mischangaben: CRAWL-024 („P1 (Spalte `HTTP-Version`) / P2 (Auswahlschalter)“
 | TECH-306 | URL-Mapping zwischen den Crawls | P1 | 03 · Change Detection | offen |
 | TECH-307 | Umschalter „Changed“/„Not Changed“ und Sortierung nach Änderung | P1 | 03 · Change Detection | offen |
 | TECH-308 | Automatischer Crawl-Vergleich („Auto Compare Crawls“) für geplante und CLI-Crawls | P1 | 03 · Change Detection | offen |
+| TECH-309 | Elementfilter „Canonical“ | P1 | 03 · Change Detection | offen |
+| TECH-310 | Elementfilter „Redirect Target“ | P1 | 03 · Change Detection | offen |
 | INTEG-001 | API-Zugriffsdialog und Verbindungsstatus | P0 | 04 · A Gemeinsame API-Infrastruktur | offen |
 | INTEG-002 | Sichere Ablage von Zugangsdaten | P0 | 04 · A Gemeinsame API-Infrastruktur | offen |
 | INTEG-003 | Google-OAuth-2.0 (Desktop-Loopback mit PKCE) | P0 | 04 · A Gemeinsame API-Infrastruktur | offen |
@@ -1031,6 +1033,7 @@ Mischangaben: CRAWL-024 („P1 (Spalte `HTTP-Version`) / P2 (Auswahlschalter)“
 | OUT-151 | Tab-Exporte im Vergleichsmodus | P1 | 06 · 6 Crawl-Vergleich | offen |
 | OUT-152 | Automatischer Vergleich (Auto Compare) für Scheduling und CLI | P1 | 06 · 6 Crawl-Vergleich | offen |
 | OUT-153 | Paritätsprüfungen über Vergleich | P2 | 06 · 6 Crawl-Vergleich | offen |
+| OUT-154 | Report „Crawl Changes“ (Änderungen seit dem letzten Crawl) | P1 | 06 · 6 Crawl-Vergleich | offen |
 | OUT-160 | Aufgabenverwaltung | P1 | 06 · 7 Geplante Crawls | offen |
 | OUT-161 | Aufgabe: Allgemein (Name, Projekt, Zeitplan) | P1 | 06 · 7 Geplante Crawls | offen |
 | OUT-162 | Aufgabe: Crawl-Einstellungen | P1 | 06 · 7 Geplante Crawls | offen |
