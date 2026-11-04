@@ -9,10 +9,13 @@ Die endgültige winget-ID muss explizit über `OPENSPIDER_PACKAGE_ID` bzw.
 ## Metadaten aus tatsächlichen Assets
 
 R01 kopiert Tauri-DMGs unverändert, R02 die MSI-/NSIS-Dateien, R04 sammelt sie über
-`scripts/release/assets.mjs`. Der Generator sucht genau einen ARM-/Intel-DMG und
-je einen x64-MSI-/NSIS-Installer. Die Windows-Muster entsprechen
-`scripts/release/manifest.mjs`; MSI-Locale und Dateiversion werden nicht geraten.
-Universal-DMGs und separate CLI-/Updater-Archive werden nicht als Installer gewählt.
+`scripts/release/assets.mjs`. Der Generator sucht genau ein Universal-DMG (der Cask
+unterscheidet seit der Nutzerentscheidung 04.11.2026 nicht mehr zwischen ARM und Intel;
+nur das Universal-DMG wird veröffentlicht, OUT-261) und je einen x64-MSI-/NSIS-Installer.
+Die Windows-Muster entsprechen `scripts/release/manifest.mjs`; MSI-Locale und
+Dateiversion werden nicht geraten. DMGs je Architektur (nur Actions-Artefakte), die
+versionslosen Kopien `OpenSpider-macOS.dmg`/`OpenSpider-Windows-Setup.exe` und separate
+CLI-/Updater-Archive werden nicht als Installer gewählt.
 Fehlende oder mehrdeutige Assets, eine fehlende Paket-ID und ein nichtleerer
 Ausgabeordner führen zum Fehler. SHA-256 stammt immer aus den Asset-Bytes.
 
