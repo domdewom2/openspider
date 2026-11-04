@@ -153,6 +153,12 @@ pub fn save_report_in_with_options(
             format,
             opts,
         )?,
+        // Ohne Vergleich: nur die Kopfzeile, die Warnung kommt aus den Voraussetzungen (OUT-112, OUT-154).
+        ReportKind::CrawlChanges => {
+            let mut writer = open_writer(&path, format, def.file_stem, opts)?;
+            writer.header(&crate::compare::crawl_changes_header())?;
+            writer.finish()?
+        }
     };
     result.warnings = prereq::requirement_warnings(def.name, def.requires, cfg, &pending);
     for w in &result.warnings {
@@ -214,6 +220,10 @@ pub fn save_report_to(
             }
             ReportKind::RedirectChains => {
                 redirects::write_report_to(job.file, RedirectReport::Chains, writer, ctx)?
+            }
+            ReportKind::CrawlChanges => {
+                writer.header(&crate::compare::crawl_changes_header())?;
+                0
             }
         }
     } else {
