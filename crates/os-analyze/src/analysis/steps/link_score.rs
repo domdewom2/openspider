@@ -413,11 +413,12 @@ fn calculate(
         cancel.set_progress((iteration + 1) as f32 / 10.0);
     }
     let edges = graph.edges();
+    let packed = graph.packed.is_some();
     drop(graph);
     timer.lap("iterate");
     let state = publish(file, cancel, scaling, &nodes, &rank)?;
     timer.lap("publish");
-    timer.report(nodes.len(), edges);
+    timer.report(nodes.len(), edges, packed);
     Ok(state)
 }
 
@@ -444,7 +445,7 @@ impl PhaseTimer {
         }
     }
 
-    fn report(&self, nodes: usize, edges: usize) {
+    fn report(&self, nodes: usize, edges: usize, packed: bool) {
         if self.on {
             let laps: Vec<String> = self
                 .laps
@@ -452,7 +453,8 @@ impl PhaseTimer {
                 .map(|(name, ms)| format!("{name}_ms={ms}"))
                 .collect();
             eprintln!(
-                "OS_SCALE_DIAG linkscore nodes={nodes} edges={edges} {}",
+                "OS_SCALE_DIAG linkscore nodes={nodes} edges={edges} packed={} {}",
+                u8::from(packed),
                 laps.join(" ")
             );
         }
