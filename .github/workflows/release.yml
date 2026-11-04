@@ -266,8 +266,8 @@ jobs:
             done
           done
           # Release-Text = Download-Kasten + Notes; Entwurfshinweise stehen nur in der Actions-Zusammenfassung.
-          if grep -Eq 'Entwurfshinweis|\bTODO\b|\bSTUB\b' ../release-reports/release-notes.md; then
-            echo '::error::Release-Text enthält Entwurfshinweise; diese gehören nur in die Actions-Zusammenfassung.'
+          if [[ ! -s ../release-reports/release-notes.md ]] || grep -Eq 'Entwurfshinweis|\bTODO\b|\bSTUB\b' ../release-reports/release-notes.md; then
+            echo '::error::Release-Text fehlt oder enthält Entwurfshinweise; diese gehören nur in die Actions-Zusammenfassung.'
             exit 1
           fi
           # Gebaut und geprüft, aber nicht veröffentlicht (Nutzerentscheidung 04.11.2026).

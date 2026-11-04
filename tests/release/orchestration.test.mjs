@@ -340,7 +340,9 @@ test('Veröffentlicht nur Universal-DMG und -CLI für macOS, dazu bytegleiche ve
   // A release text with draft hints never becomes a draft (OUT-261, hints belong in the summary).
   const released = readFileSync(join(directory, 'release-reports/release-notes.md'), 'utf8');
   writeFileSync(join(directory, 'release-reports/release-notes.md'), `${released}\n---\n\n**Entwurfshinweise:**\n\n- TODO: Parität\n`);
-  assert.match(guard().stdout, /Release-Text enthält Entwurfshinweise/);
+  assert.match(guard().stdout, /Release-Text fehlt oder enthält Entwurfshinweise/);
+  rmSync(join(directory, 'release-reports/release-notes.md'));
+  assert.match(guard().stdout, /Release-Text fehlt/);
   writeFileSync(join(directory, 'release-reports/release-notes.md'), released);
   assert.equal(guard().status, 0);
   rmSync(join(out, windows.alias));
