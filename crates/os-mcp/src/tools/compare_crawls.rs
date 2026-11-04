@@ -1,6 +1,7 @@
 //! Read-only comparison through the same classifier as the app (AGENT-015).
-use super::common::{internal, open_crawl, opt_str, reject_unknown, req_str};
+use super::common::{internal, object, open_crawl, opt_str, reject_unknown, req_str, value_json};
 use crate::{paging, Tool, ToolClass, ToolContext, ToolError, ToolOutput};
+use os_analyze::compare::changes::{self, ChangeKind};
 use os_analyze::compare::{change, CompareClass, Comparison, CrawlSide};
 use os_model::{CancelToken, CrawlState, MappingRule};
 use serde_json::{json, Value};
@@ -13,16 +14,54 @@ impl Tool for CompareCrawls {
         ToolClass::Read
     }
     fn description(&self) -> &'static str {
-        "Compare a (Current) to b (Previous): Added/New/Removed/Missing per tab/filter and change detection counts. Optional element returns changed URLs with limit/cursor; url_mapping accepts saved-format mapping rules."
+        "Compare a (Current) to b (Previous): Added/New/Removed/Missing per tab/filter and change detection counts. Optional element returns changed URLs with limit/cursor; changes=true returns the Crawl Changes report (pages gone, new errors, new redirects and chains, changed canonicals, indexability changes) with limit/cursor, optionally one section via change; url_mapping accepts saved-format mapping rules."
     }
     fn input_schema(&self) -> Value {
-        json!({"type":"object","required":["a","b"],"properties":{"a":{"type":"string"},"b":{"type":"string"},"element":{"type":"string"},"url_mapping":{"type":"array","items":{"type":"object"}},"limit":{"type":"integer","minimum":1,"maximum":500},"cursor":{"type":"string"}},"additionalProperties":false})
+        json!({"type":"object","required":["a","b"],"properties":{"a":{"type":"string"},"b":{"type":"string"},"element":{"type":"string"},"changes":{"type":"boolean"},"change":{"type":"string","enum":ChangeKind::ALL.map(ChangeKind::as_str)},"url_mapping":{"type":"array","items":{"type":"object"}},"limit":{"type":"integer","minimum":1,"maximum":500},"cursor":{"type":"string"}},"additionalProperties":false})
     }
     fn call(&self, ctx: &ToolContext, args: Value) -> Result<ToolOutput, ToolError> {
         reject_unknown(
             &args,
-            &["a", "b", "element", "url_mapping", "limit", "cursor"],
+            &[
+                "a",
+                "b",
+                "element",
+                "changes",
+                "change",
+                "url_mapping",
+                "limit",
+                "cursor",
+            ],
         )?;
+        let want_changes = match args.get("changes") {
+            None | Some(Value::Null) => false,
+            Some(Value::Bool(b)) => *b,
+            Some(_) => {
+                return Err(ToolError::InvalidArguments(
+                    "changes must be a boolean".into(),
+                ))
+            }
+        };
+        let section = opt_str(&args, "change")?
+            .map(|name| {
+                ChangeKind::parse(name).ok_or_else(|| {
+                    ToolError::InvalidArguments(format!(
+                        "Unknown change {name}; valid: {}",
+                        ChangeKind::ALL.map(ChangeKind::as_str).join(", ")
+                    ))
+                })
+            })
+            .transpose()?;
+        if want_changes && args.get("element").is_some_and(|v| !v.is_null()) {
+            return Err(ToolError::InvalidArguments(
+                "changes and element are mutually exclusive".into(),
+            ));
+        }
+        if section.is_some() && !want_changes {
+            return Err(ToolError::InvalidArguments(
+                "change requires changes=true".into(),
+            ));
+        }
         let a = req_str(&args, "a")?;
         let b = req_str(&args, "b")?;
         let current = open_crawl(ctx, &json!({"crawl_id":a}))?;
@@ -60,6 +99,52 @@ impl Tool for CompareCrawls {
             Comparison::open(side(current)?, side(previous)?, &rules, &cancel).map_err(internal)?;
         if comparison.current().meta.crawl_id.to_string() != a {
             comparison.swap();
+        }
+        if want_changes {
+            // OUT-154: same rows as --save-report "Crawl Changes"; independent of the change detection selection.
+            let rows = changes::crawl_changes(&comparison, &cancel).map_err(internal)?;
+            let counts = changes::counts(&rows)
+                .into_iter()
+                .map(|(kind, n)| json!({"change":kind.as_str(),"count":n}))
+                .collect::<Vec<_>>();
+            let selected: Vec<_> = rows
+                .iter()
+                .filter(|r| section.is_none_or(|k| r.kind == k))
+                .collect();
+            let page = paging::PageArgs::from_args(&args)?;
+            let binding = format!(
+                "compare-changes:{a}:{b}:{}:{}",
+                section.map_or("", ChangeKind::as_str),
+                json!(rules)
+            );
+            let offset = page
+                .cursor
+                .as_deref()
+                .map(|c| paging::decode_cursor(c, &binding))
+                .transpose()?
+                .unwrap_or(0);
+            let items: Vec<Value> = selected
+                .iter()
+                .skip(offset as usize)
+                .take(page.limit as usize)
+                .map(|row| {
+                    object(
+                        changes::HEADER
+                            .iter()
+                            .zip(row.values())
+                            .map(|(h, v)| (*h, value_json(&v)))
+                            .collect(),
+                    )
+                })
+                .collect();
+            let total = selected.len() as u64;
+            let next = offset + items.len() as u64;
+            return Ok(ToolOutput {
+                summary: json!({"current":a,"previous":b,"report":"Crawl Changes","change":section.map(ChangeKind::as_str),"crawl_changes":counts}),
+                untrusted: Some(json!({"rows":items})),
+                total: Some(total),
+                next_cursor: (next < total).then(|| paging::encode_cursor(&binding, next)),
+            });
         }
         // AGENT-015: use the opened pair, including its mapping, for counts and IDs.
         let config = comparison.current().config.compare.change_detection.clone();
