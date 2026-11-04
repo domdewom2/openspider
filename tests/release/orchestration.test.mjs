@@ -397,7 +397,7 @@ test('Release-Text beginnt mit dem Download-Kasten; Update-Manifeste enthalten n
   }
   const released = readFileSync(join(directory, 'release-reports/release-notes.md'), 'utf8');
   const [box, rest] = released.split('\n---\n\n**Entwurfshinweise (vor dem Veröffentlichen entfernen):**\n\n');
-  assert.equal(`${box}\n`, releaseBody({ version, repository: 'example/openspider', notes: changelog }));
+  assert.equal(box, releaseBody({ version, repository: 'example/openspider', notes: changelog }));
   assert.match(rest, /^- Installations-Smoke:/m);
   const workflow = releaseWorkflow();
   assert.match(workflow, /manifest\.mjs release-assets "\$VERSION" "\$GITHUB_REPOSITORY" release-reports\/update-notes\.md /);
