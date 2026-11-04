@@ -13,6 +13,7 @@
 //! hält die Vergleichsberechnung an, statt sie abzubrechen; ein Abbruch liefert [`CompareError::Cancelled`].
 
 pub mod change;
+pub mod changes;
 pub mod classify;
 pub mod links;
 pub mod mapping;
@@ -542,6 +543,17 @@ impl Comparison {
                 })
         });
         Ok(rows)
+    }
+
+    /// URL eines Crawls im gemeinsamen Adressraum beider Crawls: URLs des abgebildeten Crawls (ursprünglich Previous,
+    /// nach einem Tausch Current) laufen durch das URL-Mapping, die des anderen bleiben unverändert (OUT-146). Für
+    /// Zielvergleiche (Canonical, Weiterleitungsziel; TECH-309/310, OUT-154).
+    pub fn common_url(&self, side: Side, url: &str) -> String {
+        if side == self.mapped_side && !self.mapping.is_empty() {
+            self.mapping.apply(url).url
+        } else {
+            url.to_string()
+        }
     }
 
     /// Kennung einer URL im anderen Crawl (nach URL-Mapping).

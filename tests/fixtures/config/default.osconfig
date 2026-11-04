@@ -534,6 +534,8 @@ elements = [
     "external_outlinks",
     "unique_external_outlinks",
     "structured_data_unique_types",
+    "canonical",
+    "redirect_target",
 ]
 content_threshold_pct = 10
 

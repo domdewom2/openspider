@@ -106,7 +106,8 @@ string_enum! {
 }
 
 string_enum! {
-    /// Die 14 Elemente der Change Detection in Filterreihenfolge (TECH-300).
+    /// Die 16 Elemente der Change Detection in Filterreihenfolge (TECH-300): die 14 Referenzelemente, dahinter die
+    /// OS-Erweiterungen `canonical` (TECH-309) und `redirect_target` (TECH-310).
     pub enum ChangeElement {
         Indexability => "indexability",
         PageTitles => "page_titles",
@@ -122,6 +123,8 @@ string_enum! {
         UniqueExternalOutlinks => "unique_external_outlinks",
         StructuredDataUniqueTypes => "structured_data_unique_types",
         Content => "content",
+        Canonical => "canonical",
+        RedirectTarget => "redirect_target",
     }
 }
 
