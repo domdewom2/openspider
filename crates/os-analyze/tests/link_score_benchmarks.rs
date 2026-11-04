@@ -17,7 +17,7 @@ fn workload(n: u64, fanout: u64, seconds: u64) {
     link_score::run(&file, &CrawlConfig::default(), &CancelToken::new()).unwrap();
     let elapsed = start.elapsed();
     eprintln!(
-        "nodes={n} edges={} elapsed={elapsed:?}; edges on disk; O(nodes) routing/rank vectors",
+        "nodes={n} edges={} elapsed={elapsed:?}; compact in-memory graph (B3-PERF)",
         n * fanout
     );
     assert!(
