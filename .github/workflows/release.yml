@@ -181,13 +181,16 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p release-reports
-          node scripts/release/notes.mjs "$VERSION" release-reports/release-notes.md
-          node scripts/release/manifest.mjs release-assets "$VERSION" "$GITHUB_REPOSITORY" release-reports/release-notes.md "$RELEASE_DATE" --allow-unsigned > release-reports/updater-status.txt
+          # OUT-251/OUT-261: update-notes.md (nur CHANGELOG) für die Manifeste und den Update-Dialog,
+          # release-notes.md (Download-Kasten + CHANGELOG) ausschließlich als Release-Text.
+          node scripts/release/notes.mjs "$VERSION" release-reports/update-notes.md --body release-reports/release-notes.md --repository "$GITHUB_REPOSITORY"
+          node scripts/release/manifest.mjs release-assets "$VERSION" "$GITHUB_REPOSITORY" release-reports/update-notes.md "$RELEASE_DATE" --allow-unsigned > release-reports/updater-status.txt
           cat release-reports/updater-status.txt >> "$GITHUB_STEP_SUMMARY"
+          printf '\n---\n\n**Entwurfshinweise (vor dem Veröffentlichen entfernen):**\n\n' >> release-reports/release-notes.md
           if [[ ! -f release-assets/latest.json ]]; then
-            echo 'unsigniert: keine vollständigen signierten Updater-Artefakte; keine Update-Manifeste.' >> release-reports/release-notes.md
+            echo '- unsigniert: keine vollständigen signierten Updater-Artefakte; keine Update-Manifeste.' >> release-reports/release-notes.md
           fi
-          echo 'Installations-Smoke: separater workflow_call; Entwurf wartet auf erfolgreiche Plattformmatrix und Bytevergleich.' >> release-reports/release-notes.md
+          echo '- Installations-Smoke: separater workflow_call; Entwurf wartet auf erfolgreiche Plattformmatrix und Bytevergleich.' >> release-reports/release-notes.md
       - name: Archiv-Kompatibilitäts-Fixture (D01)
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
@@ -198,7 +201,7 @@ jobs:
           tar -xzf "release-assets/openspider_${VERSION}_linux-x86_64.tar.gz" -C "$RUNNER_TEMP/compat-cli"
           node scripts/release/archive-compat-fixture.mjs --version "$VERSION" --out release-reports/compat --cli "$RUNNER_TEMP/compat-cli/openspider"
           tar -czf "release-assets/compat_${VERSION}.tar.gz" -C release-reports/compat "$VERSION"
-          echo 'TODO: Offene M2-Paritätspakete vor einer Freigabe prüfen.' >> release-reports/release-notes.md
+          echo '- TODO: Offene M2-Paritätspakete vor einer Freigabe prüfen.' >> release-reports/release-notes.md
       - name: SHA256SUMS über alle Release-Assets
         run: node scripts/release/checksums.mjs release-assets
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -235,6 +238,34 @@ jobs:
         with:
           name: release-reports
           path: release-reports
+      - name: Veröffentlichte Dateien und versionslose Downloads prüfen (OUT-261)
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          set -euo pipefail
+          cd release-assets
+          # Feste Links releases/latest/download/<Kopie> brauchen beide bytegleichen Kopien samt Prüfsumme.
+          for pair in "OpenSpider-macOS.dmg OpenSpider_${VERSION}_universal.dmg" "OpenSpider-Windows-Setup.exe OpenSpider_${VERSION}_x64-setup.exe"; do
+            read -r alias source <<< "$pair"
+            if [[ ! -s "$source" ]] || ! cmp -s "$alias" "$source"; then
+              echo "::error::$alias fehlt oder ist nicht bytegleich mit $source."
+              exit 1
+            fi
+            for name in "$alias" "$source"; do
+              line="$(awk -v name="$name" '$2 == name' SHA256SUMS)"
+              [[ -n "$line" ]] || { echo "::error::$name fehlt in SHA256SUMS."; exit 1; }
+              sha256sum -c --status <<< "$line"
+            done
+          done
+          # Gebaut und geprüft, aber nicht veröffentlicht (Nutzerentscheidung 04.11.2026).
+          for name in "OpenSpider_${VERSION}_aarch64.dmg" "OpenSpider_${VERSION}_x64.dmg" \
+            "openspider_${VERSION}_darwin-aarch64.tar.gz" "openspider_${VERSION}_darwin-x86_64.tar.gz" \
+            OpenSpider_universal.app.tar.gz OpenSpider_universal.app.tar.gz.sig; do
+            if [[ -e "$name" ]]; then
+              echo "::error::$name darf nicht veröffentlicht werden."
+              exit 1
+            fi
+          done
       - name: Ausschließlich neuen Entwurfs-Release anlegen (D12, K3-04)
         env:
           GH_TOKEN: ${{ github.token }}
