@@ -28,6 +28,16 @@ fn in_child() -> Option<PathBuf> {
 
 fn reports(home: &Path) -> Vec<(PathBuf, Value)> {
     let dir = home.join("logs").join("crashes");
+    // Ein liegengebliebenes `.tmp` hieße: der Bericht wurde nicht fertig geschrieben.
+    let leftovers: Vec<_> = std::fs::read_dir(&dir)
+        .map(|d| {
+            d.flatten()
+                .map(|e| e.file_name().to_string_lossy().into_owned())
+                .filter(|n| n.contains(".tmp"))
+                .collect()
+        })
+        .unwrap_or_default();
+    assert!(leftovers.is_empty(), "{leftovers:?}");
     let mut out: Vec<(PathBuf, Value)> = std::fs::read_dir(&dir)
         .map(|d| {
             d.flatten()
