@@ -109,17 +109,25 @@ nur das eigene `target/` von `m3-diff` gelöscht (121 GB) und ohne Debuginfo neu
 
 ## Spec-Fragen / Unklarheiten
 
-1. **Removed-Werte (Abweichung vom Auftrag):** Der Auftrag nannte für Removed-Zeilen die Previous-Werte. Umgesetzt (und in
-   OUT-151 als „Bestätigung offen“ vermerkt) sind die Current-Werte des Partners, weil der Unterfilter „Removed“ der
-   Haupttabelle in der App genau diese Zeilen zeigt (`os-app` `compare/ui.rs`) und OUT-151 den Export der Ansicht beschreibt;
-   die Current-Zeile erklärt, warum die URL den Filter verlassen hat (behobene 404 jetzt 200). Vorher-Werte liefert
-   „Crawl Changes“. Soll es doch Previous sein, ändert sich nur `os-export::compare::write_tab` plus App-Ansicht.
+1. **Removed-Werte – Orchestrator-Entscheid 04.11.2026 (Fable-Empfehlung):** Removed-Zeilen tragen die Current-Werte des
+   Partners, wie der Unterfilter „Removed“ der Haupttabelle der App (`os-app` `compare/ui.rs`); die Current-Zeile erklärt,
+   warum die URL den Filter verlassen hat (behobene 404 jetzt 200). Vorher-Werte liefert „Crawl Changes“. In OUT-151 so
+   vermerkt.
 2. **Bestehende Konfigurationen:** Crawl-Dateien/Profile mit ausdrücklicher Elementliste (beta.1/beta.2) bekommen
    `Canonical`/`Redirect Target` nicht automatisch; der Report hängt nicht davon ab. Eine Migration „alte Standardliste →
    neue“ wäre möglich, ist aber nicht spezifiziert.
 3. **„vorher 2xx/indexierbar“** ist als „vorher indexierbar“ (damit 2xx) umgesetzt; nicht indexierbare 2xx-Seiten, die
    verschwinden, erscheinen nur in „Internal:HTML“ › Missing.
 4. Die Mail nach Auto Compare listet jetzt auch `Canonical`/`Redirect Target` (bei 0 wie die übrigen Elemente).
+5. **Segmentregel im App-Export (offen):** OUT-154 legt die Segmentregel fest (Current-URL im Segment bzw. Previous-URL
+   ohne Partner im Segment des Previous-Crawls); umgesetzt und getestet ist sie in `os-export::compare::write_crawl_changes`
+   für CLI/Scheduling (`--segment`). Der App-Export „Berichte → Änderungen seit dem letzten Crawl“ schreibt den Report
+   ohne Segment, weil die Vergleichssitzung kein aktives Segment kennt; offen, ob die App dafür eine Segmentwahl bekommt.
+6. **Nachtrag Fable-Review (88/100):** `New Error` zählt eine URL, die im Previous-Crawl keine Antwort hatte (Status 0/leer),
+   nicht als neu (Wortlaut „ohne Fehler antwortete“, wie `All Errors`); Code angepasst. `Indexability Changed` vergleicht
+   eine Current-URL ohne Antwort mit ihrem Grund `No Response`. `compare_crawls.change`: Schema kanonisch (`enum`), Server
+   tolerant (AGENT-015). Der konsolidierte Segment-Export (`--segment … --single-workbook`) warnt bei Unterfiltern ohne
+   Vergleich wie die übrigen Wege, statt sie stumm zu überspringen.
 
 ## Fremde Dateien (K2-92)
 
