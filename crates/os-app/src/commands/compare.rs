@@ -143,43 +143,47 @@ pub async fn crawl_changes_export(
 ) -> CmdResult {
     if let Some(reason) = crawl_changes_unavailable(app, &ctx.window) {
         return Err(
-            CmdError::new(ErrorCode::Unsupported, "err-export-unavailable").with_arg("reason", reason),
+            CmdError::new(ErrorCode::Unsupported, "err-export-unavailable")
+                .with_arg("reason", reason),
         );
     }
     let app_worker = app.clone();
     let window = ctx.window.clone();
-    let op = app.ops().spawn("export-crawl-changes", true, move |token, _| {
-        Box::pin(async move {
-            with_active(&app_worker, &window, move |active| {
-                let opts = os_export::pipeline::writer_options(&active.comparison.current().config);
-                let result = os_export::compare::save_report_with_options(
-                    &mut active.comparison,
-                    "Crawl Changes",
-                    &dir,
-                    format,
-                    &token,
-                    &opts,
-                )
-                .map_err(|e| {
-                    if token.is_cancelled() {
-                        CmdError::new(ErrorCode::Cancelled, "err-cancelled")
-                    } else {
-                        internal("export.crawlChanges", e.to_string())
-                    }
-                })?;
-                let info = result
-                    .files
-                    .into_iter()
-                    .next()
-                    .ok_or_else(|| internal("export.crawlChanges", "no output"))?;
-                to_json(&FileResult {
-                    path: info.path.to_string_lossy().into_owned(),
-                    bytes: info.bytes,
+    let op = app
+        .ops()
+        .spawn("export-crawl-changes", true, move |token, _| {
+            Box::pin(async move {
+                with_active(&app_worker, &window, move |active| {
+                    let opts =
+                        os_export::pipeline::writer_options(&active.comparison.current().config);
+                    let result = os_export::compare::save_report_with_options(
+                        &mut active.comparison,
+                        "Crawl Changes",
+                        &dir,
+                        format,
+                        &token,
+                        &opts,
+                    )
+                    .map_err(|e| {
+                        if token.is_cancelled() {
+                            CmdError::new(ErrorCode::Cancelled, "err-cancelled")
+                        } else {
+                            internal("export.crawlChanges", e.to_string())
+                        }
+                    })?;
+                    let info = result
+                        .files
+                        .into_iter()
+                        .next()
+                        .ok_or_else(|| internal("export.crawlChanges", "no output"))?;
+                    to_json(&FileResult {
+                        path: info.path.to_string_lossy().into_owned(),
+                        bytes: info.bytes,
+                    })
                 })
+                .await
             })
-            .await
-        })
-    });
+        });
     to_json(&op)
 }
 

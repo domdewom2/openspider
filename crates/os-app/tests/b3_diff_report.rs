@@ -45,7 +45,8 @@ async fn crawl_changes_report_runs_from_the_comparison_session_of_the_window() {
     let app = App::new(AppConfig::new(home.path())).unwrap();
     let ctx = || CallCtx::for_window("main");
     let out = tempfile::tempdir().unwrap();
-    let report = json!({"name":"Crawl Changes","dir":out.path(),"format":"csv","singleWorkbook":false});
+    let report =
+        json!({"name":"Crawl Changes","dir":out.path(),"format":"csv","singleWorkbook":false});
 
     // Ohne Vergleich: nicht verfügbar, mit dem Grund der CLI.
     let err = app
@@ -53,7 +54,10 @@ async fn crawl_changes_report_runs_from_the_comparison_session_of_the_window() {
         .await
         .unwrap_err();
     assert_eq!(err.code, ErrorCode::Unsupported);
-    assert!(format!("{err:?}").contains("requires a crawl comparison"), "{err:?}");
+    assert!(
+        format!("{err:?}").contains("requires a crawl comparison"),
+        "{err:?}"
+    );
 
     app.dispatch(
         ctx(),
@@ -72,7 +76,10 @@ async fn crawl_changes_report_runs_from_the_comparison_session_of_the_window() {
         .unwrap(),
     )
     .unwrap();
-    assert!(name.contains("crawl_changes") && name.ends_with(".csv"), "{name}");
+    assert!(
+        name.contains("crawl_changes") && name.ends_with(".csv"),
+        "{name}"
+    );
 
     let op: OpHandle =
         serde_json::from_value(app.dispatch(ctx(), "export.report", report).await.unwrap())

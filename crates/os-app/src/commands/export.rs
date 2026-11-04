@@ -324,7 +324,8 @@ fn suggest<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture
         let args: SuggestNameArgs = parse_args(args)?;
         if let ExportTarget::Report { name, format: f } = &args.target {
             if super::compare::is_crawl_changes(name) {
-                let name = super::compare::crawl_changes_name(app, &ctx.window, format(*f)?).await?;
+                let name =
+                    super::compare::crawl_changes_name(app, &ctx.window, format(*f)?).await?;
                 return to_json(&name);
             }
         }
