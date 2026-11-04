@@ -159,6 +159,23 @@ it("Über OpenSpider nennt den Entwickler und öffnet Website und Quellcode im S
 });
 
 // spec: UI-002
+it("Über OpenSpider öffnet die Links in der App über browser_open", async () => {
+  setClient(createClient({ ...core.transport(), name: "tauri" }));
+  core.handlers.set("browser_open", () => undefined);
+  const open = vi.spyOn(window, "open").mockReturnValue(null);
+  dispose = installMainMenus();
+  render(<HelpDialogs />);
+  act(() => { runAction("app.about", { source: "menu" }); });
+  for (const [name, url] of [["openspider.de", "https://openspider.de/"], ["github.com/wojcikdominik/openspider", "https://github.com/wojcikdominik/openspider"]] as const) {
+    core.calls.length = 0;
+    fireEvent.click(await screen.findByRole("link", { name }));
+    await waitFor(() => expect(core.calls.find(call => call.cmd === "browser_open")?.args).toEqual({ urls: [url] }));
+  }
+  expect(open).not.toHaveBeenCalled();
+  open.mockRestore();
+});
+
+// spec: UI-002
 it("Katalogeinträge warten auf U16 und delegieren an dessen Aktions-IDs", async () => {
   dispose = installMainMenus();
   const id = "export.bulk.Pages With Uncrawlable Internal Outlinks";

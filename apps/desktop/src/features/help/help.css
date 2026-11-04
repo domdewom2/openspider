@@ -21,5 +21,5 @@
 .os-about-tagline { margin:var(--os-size-4) 0 0; color:var(--os-text); }
 .os-about-version { margin:var(--os-size-4) 0 0; color:var(--os-text-muted); font-size:var(--os-font-small); overflow-wrap:anywhere; }
 .os-about-facts dt { color:var(--os-text-muted); }
-.os-about-facts a { color:var(--os-accent); }
+.os-about-facts a { color:var(--os-link); }
 .os-about-copyright { margin-block:var(--os-size-12) var(--os-size-16); color:var(--os-text-muted); font-size:var(--os-font-small); }
