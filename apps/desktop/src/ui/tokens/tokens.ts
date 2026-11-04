@@ -51,6 +51,18 @@ export const TOKEN_NAMES = [
   "diff.del",
   "diff.addBg",
   "diff.delBg",
+  // UI-102: categorical palette of the Overview chart; `chart.other` = bundled „Sonstige“, `chart.rest` = residual
+  // categories („Nicht zugeordnet“, „Nicht angezeigt“). Each ≥ 3:1 against the surfaces in both themes (WCAG 1.4.11).
+  "chart.1",
+  "chart.2",
+  "chart.3",
+  "chart.4",
+  "chart.5",
+  "chart.6",
+  "chart.7",
+  "chart.8",
+  "chart.other",
+  "chart.rest",
 ] as const;
 export type TokenName = (typeof TOKEN_NAMES)[number];
 export type TokenMap = Record<TokenName, string>;
@@ -96,6 +108,16 @@ const LIGHT: TokenMap = {
   "diff.del": "#C42B2B",
   "diff.addBg": withAlpha("#1C7C3A", 0.12),
   "diff.delBg": withAlpha("#C42B2B", 0.12),
+  "chart.1": "#2E6FD8",
+  "chart.2": "#C2571A",
+  "chart.3": "#1F8A5B",
+  "chart.4": "#B03F86",
+  "chart.5": "#7A5AC8",
+  "chart.6": "#8A7400",
+  "chart.7": "#167F96",
+  "chart.8": "#B23A3A",
+  "chart.other": "#6B7480",
+  "chart.rest": "#7A828C",
 };
 
 const DARK: TokenMap = {
@@ -139,6 +161,16 @@ const DARK: TokenMap = {
   "diff.del": "#F2716B",
   "diff.addBg": withAlpha("#56C773", 0.12),
   "diff.delBg": withAlpha("#F2716B", 0.12),
+  "chart.1": "#6AA2F5",
+  "chart.2": "#F0965A",
+  "chart.3": "#4CC28A",
+  "chart.4": "#E77FBF",
+  "chart.5": "#A894F0",
+  "chart.6": "#D2BA3A",
+  "chart.7": "#45BFD6",
+  "chart.8": "#F07A7A",
+  "chart.other": "#9AA2AC",
+  "chart.rest": "#78818B",
 };
 
 export const THEME_TOKENS: Record<ThemeName, Readonly<TokenMap>> = { light: LIGHT, dark: DARK };

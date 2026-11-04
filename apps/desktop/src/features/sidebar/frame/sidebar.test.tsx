@@ -186,7 +186,7 @@ it("preserves collapsed blocks across tabs and saves its namespace without delet
   core.uiState = { version: 1, state: { table: { filter: "All" } } };
   mount();
   await act(async () => { await vi.advanceTimersByTimeAsync(0); });
-  fireEvent.click(screen.getByRole("button", { name: /▾ Page Titles/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Collapse Page Titles" }));
   expect(screen.queryByRole("table", { name: "Page Titles" })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("tab", { name: "Issues" }));
   fireEvent.click(screen.getByRole("tab", { name: "Overview" }));

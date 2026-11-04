@@ -185,3 +185,23 @@ it("K2-77 badge labels reach 4.5:1 in both themes", () => {
     expect(contrast(THEME_TOKENS[theme][`badge.${kind}`], THEME_TOKENS[theme][`badge.${kind}Bg`])).toBeGreaterThanOrEqual(4.5);
   }
 });
+
+// spec: UI-102
+it("chart palette chart.1 … chart.8, chart.other and chart.rest reach 3:1 against every surface in both themes", () => {
+  const chart = TOKEN_NAMES.filter(n => n.startsWith("chart."));
+  expect(chart).toEqual(["chart.1", "chart.2", "chart.3", "chart.4", "chart.5", "chart.6", "chart.7", "chart.8", "chart.other", "chart.rest"]);
+  const failures: string[] = [];
+  for (const theme of THEMES) {
+    const t = THEME_TOKENS[theme];
+    for (const name of chart) {
+      expect(isHexColor(t[name]), `${theme} ${name}`).toBe(true);
+      for (const bg of ["bg.surface", "bg.zebra", "bg.app"] as const) {
+        const c = contrast(t[name], t[bg]);
+        if (c < 3) failures.push(`${theme}: ${name} on ${bg} = ${c.toFixed(2)}`);
+      }
+    }
+    // The eight categorical colours are distinct within a theme (repetition only after eight categories, then hatched).
+    expect(new Set(chart.map(n => t[n].toLowerCase())).size).toBe(chart.length);
+  }
+  expect(failures).toEqual([]);
+});

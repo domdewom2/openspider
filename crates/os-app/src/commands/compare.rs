@@ -1058,6 +1058,7 @@ pub async fn change_overview(
                     (!filters.is_empty()).then(|| OverviewTab {
                         tab: t.id.into(),
                         filters,
+                        partition: None,
                     })
                 })
                 .collect();
@@ -1070,6 +1071,7 @@ pub async fn change_overview(
                 grouped.push(OverviewTab {
                     tab: "Change Detection".into(),
                     filters,
+                    partition: None,
                 });
             }
             to_json(&OverviewDto {

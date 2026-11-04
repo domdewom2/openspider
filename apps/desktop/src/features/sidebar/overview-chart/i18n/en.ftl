@@ -1,0 +1,47 @@
+ovc-region = Chart of the selected entry
+ovc-empty = Select an entry in the overview to see its breakdown.
+ovc-zero = No URLs in this entry yet.
+ovc-compare = Not available in comparison mode
+ovc-no-counts = The counts of this entry are not available yet.
+ovc-start-analysis = Start crawl analysis
+ovc-resize = Resize chart area
+ovc-view = Chart view
+ovc-view-chart = Chart
+ovc-view-table = Table
+ovc-export = Export
+ovc-export-menu = Export chart
+ovc-png-1 = Save as PNG (1×)
+ovc-png-2 = Save as PNG (2×)
+ovc-svg = Save as SVG
+ovc-csv = Save data as CSV
+ovc-copy = Copy data
+ovc-urls = { $count } URLs
+ovc-name = { $entry }: breakdown of { $count } URLs
+ovc-legend = Categories of { $entry }
+ovc-col-category = Category
+ovc-col-0 = Entry
+ovc-col-1 = Category
+ovc-col-2 = Filter
+ovc-col-3 = URLs
+ovc-col-4 = % of Total
+ovc-col-5 = Base
+ovc-cat-indexable = Internal indexable
+ovc-cat-nonIndexable = Internal non-indexable
+ovc-cat-noStatus = Internal without indexability status
+ovc-cat-external = External
+ovc-cat-hidden = Not displayed
+ovc-cat-unassigned = Unassigned
+ovc-cat-others = Remaining
+ovc-overlap-note = A URL can be in several categories – the shares do not add up to 100 %.
+ovc-zero-filters = { $count ->
+    [one] 1 filter without matches
+   *[other] { $count } filters without matches
+}
+ovc-overflow = The categories add up to more than the base, so they are shown as separate bars.
+ovc-tip-of = of { $base } URLs
+ovc-tip-contains = Contains:
+ovc-tip-unassigned = URLs of this entry that no category contains.
+ovc-tip-hidden = Found URLs that are not rows in Internal or External, for example blocked by robots.txt or excluded.
+ovc-tip-no-nav = This category has no table filter.
+ovc-segment = Segment { $name }
+ovc-segment-none = Without segment

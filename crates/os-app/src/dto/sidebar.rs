@@ -29,6 +29,22 @@ pub struct OverviewTab {
     pub tab: String,
     /// Filter mit Zählern.
     pub filters: Vec<FilterInfo>,
+    /// Zerlegung des Tabs (UI-102): Kategorien, die jede URL der Grundmenge höchstens einmal enthalten;
+    /// fehlt bei Tabs, deren Filter sich überschneiden können.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional = nullable)]
+    pub partition: Option<OverviewPartition>,
+}
+
+/// Zerlegung eines Overview-Tabs (UI-102): Filterkennungen der Kategorien in Katalogreihenfolge und der Filter
+/// der Grundmenge. Die Zähler stehen in [`OverviewTab::filters`]; die Zerlegung zählt nichts selbst.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub struct OverviewPartition {
+    /// Filter der Grundmenge (`All`).
+    pub base: String,
+    /// Filter der Kategorien in Katalogreihenfolge.
+    pub filters: Vec<String>,
 }
 
 /// Antwort von `sidebar.overview` (UI-061, OUT-142).
