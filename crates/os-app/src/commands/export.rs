@@ -238,6 +238,8 @@ fn catalog_command<'a>(
 ) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let s = catalog::session(app, &ctx)?;
+        // OUT-154: „Crawl Changes“ hängt an der Vergleichssitzung des Fensters, nicht am geöffneten Crawl.
+        let crawl_changes = super::compare::crawl_changes_unavailable(app, &ctx.window);
         app.read_pool()
             .run_snapshot(s.key, move |file, _| {
                 // All report prerequisites belong to this one SQLite snapshot. Which
@@ -265,13 +267,22 @@ fn catalog_command<'a>(
                     }
                     let mut out: BTreeMap<String, Vec<ExportItem>> = BTreeMap::new();
                     for name in core::list_with(kind, &s.config) {
-                        let availability = os_export::reports::prereq::availability_with_pending(
-                            &name,
-                            requirement(kind, &name, &entries),
-                            file,
-                            &s.config,
-                            &pending,
-                        );
+                        let availability = if kind == ExportKind::Report
+                            && super::compare::is_crawl_changes(&name)
+                        {
+                            os_export::reports::prereq::Availability {
+                                enabled: crawl_changes.is_none(),
+                                reason: crawl_changes.clone(),
+                            }
+                        } else {
+                            os_export::reports::prereq::availability_with_pending(
+                                &name,
+                                requirement(kind, &name, &entries),
+                                file,
+                                &s.config,
+                                &pending,
+                            )
+                        };
                         let group = name.split(':').next().unwrap_or("Exports").to_owned();
                         out.entry(group).or_default().push(ExportItem {
                             name: name.clone(),
@@ -311,6 +322,12 @@ fn catalog_command<'a>(
 fn suggest<'a>(app: &'a App, ctx: CallCtx, args: serde_json::Value) -> BoxFuture<'a, CmdResult> {
     Box::pin(async move {
         let args: SuggestNameArgs = parse_args(args)?;
+        if let ExportTarget::Report { name, format: f } = &args.target {
+            if super::compare::is_crawl_changes(name) {
+                let name = super::compare::crawl_changes_name(app, &ctx.window, format(*f)?).await?;
+                return to_json(&name);
+            }
+        }
         let s = catalog::session(app, &ctx)?;
         app.read_pool()
             .run_snapshot(s.key, move |file, _| {
@@ -715,6 +732,10 @@ fn named<'a>(
     Box::pin(async move {
         let args: ExportBulkArgs = parse_args(args)?;
         let fmt = format(args.format)?;
+        if kind == ExportKind::Report && super::compare::is_crawl_changes(&args.name) {
+            return super::compare::crawl_changes_export(app, &ctx, PathBuf::from(&args.dir), fmt)
+                .await;
+        }
         let s = catalog::session(app, &ctx)?;
         let resolved = core::resolve_with(kind, &args.name, &s.config)
             .map_err(|e| export_error(ExportError::Name(e)))?;
