@@ -45,7 +45,7 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
-      - name: Versionsgleichstand, Tag und Release-Notes prüfen
+      - name: Versionsgleichstand und Tag prüfen
         id: version
         env:
           RELEASE_TAG: ${{ inputs.release_tag || github.ref_name }}
@@ -54,18 +54,24 @@ jobs:
           set -euo pipefail
           node scripts/release/check-version.mjs
           node --input-type=module - <<'JS'
-          import { appendFileSync, readFileSync } from 'node:fs';
+          import { appendFileSync } from 'node:fs';
           import { checkVersion } from './scripts/release/check-version.mjs';
-          import { releaseNotes } from './scripts/release/notes.mjs';
           const version = checkVersion(process.cwd());
           if (process.env.RELEASE_TAG !== `v${version}`) throw new Error('Tag und Workspace-Version unterscheiden sich');
-          releaseNotes(readFileSync('CHANGELOG.md', 'utf8'), version);
           appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\nchannel=${version.includes('-') ? 'beta' : 'stable'}\ntag=v${version}\n`);
           JS
           if [[ "$DRY_RUN" != true ]]; then
             test "$(git rev-parse "refs/tags/$RELEASE_TAG^{commit}")" = "$(git rev-parse HEAD)"
           fi
           echo "date=$(git show -s --format=%cI HEAD)" >> "$GITHUB_OUTPUT"
+      # OUT-251: Die Notes landen beim Bauen in latest.json/latest-beta.json und sind danach nicht mehr
+      # änderbar. Ohne gültige docs/release/notes/<Version>.md (gleich dem CHANGELOG-Eintrag) wird nicht gebaut.
+      - name: Release-Notes vor dem Bauen prüfen (OUT-251)
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          node scripts/release/notes.mjs --check "$VERSION"
       - name: Release-Vertragstests
         run: node --test scripts/release/*.test.mjs tests/release/orchestration.test.mjs
 
@@ -186,11 +192,13 @@ jobs:
           node scripts/release/notes.mjs "$VERSION" release-reports/update-notes.md --body release-reports/release-notes.md --repository "$GITHUB_REPOSITORY"
           node scripts/release/manifest.mjs release-assets "$VERSION" "$GITHUB_REPOSITORY" release-reports/update-notes.md "$RELEASE_DATE" --allow-unsigned > release-reports/updater-status.txt
           cat release-reports/updater-status.txt >> "$GITHUB_STEP_SUMMARY"
-          printf '\n---\n\n**Entwurfshinweise (vor dem Veröffentlichen entfernen):**\n\n' >> release-reports/release-notes.md
+          # Entwurfshinweise nur in die Actions-Zusammenfassung (und den Bericht), nie in den Release-Text.
+          hint() { echo "- $1" | tee -a release-reports/entwurfshinweise.md >> "$GITHUB_STEP_SUMMARY"; }
+          printf '\n**Entwurfshinweise (nicht Teil des Release-Texts):**\n\n' >> "$GITHUB_STEP_SUMMARY"
           if [[ ! -f release-assets/latest.json ]]; then
-            echo '- unsigniert: keine vollständigen signierten Updater-Artefakte; keine Update-Manifeste.' >> release-reports/release-notes.md
+            hint 'unsigniert: keine vollständigen signierten Updater-Artefakte; keine Update-Manifeste.'
           fi
-          echo '- Installations-Smoke: separater workflow_call; Entwurf wartet auf erfolgreiche Plattformmatrix und Bytevergleich.' >> release-reports/release-notes.md
+          hint 'Installations-Smoke: separater workflow_call; Entwurf wartet auf erfolgreiche Plattformmatrix und Bytevergleich.'
       - name: Archiv-Kompatibilitäts-Fixture (D01)
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
@@ -201,7 +209,7 @@ jobs:
           tar -xzf "release-assets/openspider_${VERSION}_linux-x86_64.tar.gz" -C "$RUNNER_TEMP/compat-cli"
           node scripts/release/archive-compat-fixture.mjs --version "$VERSION" --out release-reports/compat --cli "$RUNNER_TEMP/compat-cli/openspider"
           tar -czf "release-assets/compat_${VERSION}.tar.gz" -C release-reports/compat "$VERSION"
-          echo '- TODO: Offene M2-Paritätspakete vor einer Freigabe prüfen.' >> release-reports/release-notes.md
+          echo '- TODO: Offene M2-Paritätspakete vor einer Freigabe prüfen.' | tee -a release-reports/entwurfshinweise.md >> "$GITHUB_STEP_SUMMARY"
       - name: SHA256SUMS über alle Release-Assets
         run: node scripts/release/checksums.mjs release-assets
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -257,6 +265,11 @@ jobs:
               sha256sum -c --status <<< "$line"
             done
           done
+          # Release-Text = Download-Kasten + Notes; Entwurfshinweise stehen nur in der Actions-Zusammenfassung.
+          if grep -Eq 'Entwurfshinweis|\bTODO\b|\bSTUB\b' ../release-reports/release-notes.md; then
+            echo '::error::Release-Text enthält Entwurfshinweise; diese gehören nur in die Actions-Zusammenfassung.'
+            exit 1
+          fi
           # Gebaut und geprüft, aber nicht veröffentlicht (Nutzerentscheidung 04.11.2026).
           for name in "OpenSpider_${VERSION}_aarch64.dmg" "OpenSpider_${VERSION}_x64.dmg" \
             "openspider_${VERSION}_darwin-aarch64.tar.gz" "openspider_${VERSION}_darwin-x86_64.tar.gz" \
