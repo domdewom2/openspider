@@ -23,7 +23,7 @@ Anlass: Ein Nutzer bat Codex, über OpenSpider einen Crawl zu starten. Codex kan
   2. `write_ext` (`os-store/src/writer_m2.rs`) mit zwischengespeicherten Schlüssel-IDs und ohne `clear_text` bei neuen Seiten: 1 statt 3 Statements je Zeile, erwartet −5…−8 s.
   3. `content.soft404_text` nicht speichern, in der Analyse aus Titel/H1/Text bilden: −110 MB je 100k, größere Writer-Batches (`BATCH_BYTES` 8 MiB begrenzt sonst auf ~477 Seiten).
   4. Parser: Text des Inhaltsbereichs einmal je Seite, Selektoren statisch, Security- mit Link-Durchlauf zusammenlegen (`os-parse` `content.rs`, `readability.rs`, `security.rs`, `validation.rs`), erwartet −4…−8 s.
-  Ziel: ~35 s für 100k auf dem Mac mini (heute 48 s). Messwerkzeuge und Logs: `~/perf` auf dem Build-Server. Zusätzlich prüfen: Durchsatzbudget nach PERF-002 für neue Analysen; warum 1 Mio. auf dem Mac relativ schlechter skaliert als 100k.
+  **Nutzerentscheidung 04.11.2026:** Nur Teil 1 (Link Score im Speicher) und die Ursache der 1-Mio.-Skalierung (Mac: 100k 48 s, 1 Mio. 771 s = Faktor 16 statt 10) werden jetzt bearbeitet; Teile 2–4 ruhen zugunsten von Funktionen. Ursprüngliches Ziel war ~35 s für 100k auf dem Mac mini (heute 48 s). Messwerkzeuge und Logs: `~/perf` auf dem Build-Server. Zusätzlich prüfen: Durchsatzbudget nach PERF-002 für neue Analysen; warum 1 Mio. auf dem Mac relativ schlechter skaliert als 100k.
 - Nach dem Fix 1-Mio.-Messung wiederholen; README-Abschnitt „Performance“ nachziehen.
 - Aussage „5 Mio. URLs bleiben in der App flüssig“ (Werte aus Entwicklungsständen im Oktober) mit beta.2/beta.3 nachmessen.
 
