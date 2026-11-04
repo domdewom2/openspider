@@ -1,8 +1,9 @@
 //! TECH-145: ten deterministic iterations over the resolved internal link graph.
 //!
 //! B3-PERF: Der Graph liegt kompakt im Arbeitsspeicher (je eindeutiger Kante 4 Byte: Zielknoten plus
-//! Folgebit, je Quelle ein Abschnitt), statt in zehn Durchläufen aus einer SQLite-Temp-Tabelle gelesen zu
-//! werden. Bei 5 Mio. Knoten / 100 Mio. Kanten sind das rund 0,5 GB (Grenze nach TECH-145: 2 GB). Die
+//! Folgebit, je Quelle ein Abschnitt; 8 Byte, falls die Links einer Seite nicht beisammen liegen), statt
+//! in zehn Durchläufen aus einer SQLite-Temp-Tabelle gelesen zu werden. Bei 5 Mio. Knoten / 100 Mio.
+//! Kanten sind das rund 0,5 bzw. 0,9 GB (Grenze nach TECH-145: 2 GB). Die
 //! Summation läuft wie zuvor in fester Reihenfolge (Quellknoten aufsteigend), die Rohwerte sind bitgleich.
 //! Das Ergebnis wird direkt in `url_ext_data` geschrieben (Schlüsselkennungen einmal aufgelöst).
 use crate::{analysis::CancelToken, error::AnalyzeError};
@@ -92,12 +93,22 @@ impl Routes {
     }
 }
 
-/// Kantenmenge je Quellknoten: Abschnitte in `targets`, nach Quelle aufsteigend, je Quelle genau einer.
+/// Kantenmenge je Quellknoten, doppelfrei.
+///
+/// Normalfall: Die Links einer Seite liegen in `links` beisammen (eine Seite wird in einem Batch
+/// geschrieben). Dann bekommt jede Quelle genau einen Abschnitt in `targets` (4 Byte je Kante). Taucht
+/// eine Quelle in einem späteren Lauf erneut auf, wechselt der Graph in die gepackte Form (8 Byte je
+/// Kante: Quelle, Ziel, Folgebit), die am Ende sortiert und entdoppelt wird. Beide Formen liefern die
+/// Kanten in derselben Reihenfolge (Quelle aufsteigend).
 struct Graph {
-    /// `(Quelle, Anfang, Länge)`.
-    segments: Vec<(u32, usize, usize)>,
-    /// Zielknoten | [`FOLLOW`], je Abschnitt doppelfrei.
+    /// `(Quelle, Länge, Anfang)`, je Quelle höchstens einer.
+    segments: Vec<(u32, u32, usize)>,
+    /// Zielknoten | [`FOLLOW`].
     targets: Vec<u32>,
+    /// Quellen, die schon einen Abschnitt haben.
+    seen: Vec<bool>,
+    /// Gepackte Form `Quelle << 32 | Ziel << 1 | folgbar`, sobald eine Quelle mehrfach vorkommt.
+    packed: Option<Vec<u64>>,
 }
 
 /// Sortiert und entdoppelt die Ziele eines Abschnitts; ein folgbarer Link gewinnt (MAX über `follow`).
@@ -116,11 +127,17 @@ fn dedup_targets(buf: &mut Vec<u32>) {
     buf.truncate(out);
 }
 
+fn pack(source: u32, target: u32) -> u64 {
+    (u64::from(source) << 32) | (u64::from(target & !FOLLOW) << 1) | u64::from(target & FOLLOW != 0)
+}
+
 impl Graph {
-    fn new() -> Self {
+    fn new(nodes: usize) -> Self {
         Graph {
             segments: Vec::new(),
             targets: Vec::new(),
+            seen: vec![false; nodes],
+            packed: None,
         }
     }
 
@@ -129,35 +146,105 @@ impl Graph {
             return;
         }
         dedup_targets(buf);
-        self.segments.push((source, self.targets.len(), buf.len()));
-        self.targets.extend_from_slice(buf);
+        if self.packed.is_none() && self.seen[source as usize] {
+            let mut packed = Vec::with_capacity(self.targets.len() + buf.len());
+            for &(s, len, start) in &self.segments {
+                packed.extend(self.targets[start..start + len as usize].iter().map(|&t| pack(s, t)));
+            }
+            self.segments = Vec::new();
+            self.targets = Vec::new();
+            self.packed = Some(packed);
+        }
+        match &mut self.packed {
+            Some(packed) => packed.extend(buf.iter().map(|&t| pack(source, t))),
+            None => {
+                self.seen[source as usize] = true;
+                self.segments
+                    .push((source, buf.len() as u32, self.targets.len()));
+                self.targets.extend_from_slice(buf);
+            }
+        }
         buf.clear();
     }
 
-    /// Ordnet die Abschnitte nach Quelle und vereinigt mehrfach vorkommende Quellen (nicht
-    /// zusammenhängend gespeicherte Links einer Seite).
-    fn finish(mut self) -> Self {
-        self.segments.sort_by_key(|s| s.0);
-        if self.segments.windows(2).all(|w| w[0].0 != w[1].0) {
-            return self;
-        }
-        let mut segments = Vec::with_capacity(self.segments.len());
-        let mut targets = Vec::with_capacity(self.targets.len());
-        let mut buf = Vec::new();
-        let mut i = 0;
-        while i < self.segments.len() {
-            let source = self.segments[i].0;
-            while i < self.segments.len() && self.segments[i].0 == source {
-                let (_, start, len) = self.segments[i];
-                buf.extend_from_slice(&self.targets[start..start + len]);
-                i += 1;
+    /// Ordnet nach Quelle; in der gepackten Form zusätzlich Entdoppeln über alle Läufe.
+    fn finish(&mut self) {
+        self.seen = Vec::new();
+        match &mut self.packed {
+            None => self.segments.sort_unstable_by_key(|s| s.0),
+            Some(packed) => {
+                packed.sort_unstable();
+                let mut out = 0usize;
+                for i in 0..packed.len() {
+                    let e = packed[i];
+                    if out > 0 && packed[out - 1] >> 1 == e >> 1 {
+                        packed[out - 1] |= e & 1;
+                    } else {
+                        packed[out] = e;
+                        out += 1;
+                    }
+                }
+                packed.truncate(out);
+                packed.shrink_to_fit();
             }
-            dedup_targets(&mut buf);
-            segments.push((source, targets.len(), buf.len()));
-            targets.extend_from_slice(&buf);
-            buf.clear();
         }
-        Graph { segments, targets }
+    }
+
+    /// Anzahl der eindeutigen Kanten.
+    fn edges(&self) -> usize {
+        self.packed.as_ref().map_or(self.targets.len(), Vec::len)
+    }
+
+    /// Ausgangsgrad `out(s) = |T(s)|` je Knoten.
+    fn degrees(&self, n: usize) -> Vec<u64> {
+        let mut degree = vec![0u64; n];
+        match &self.packed {
+            None => {
+                for &(source, len, _) in &self.segments {
+                    degree[source as usize] = u64::from(len);
+                }
+            }
+            Some(packed) => {
+                for e in packed {
+                    degree[(e >> 32) as usize] += 1;
+                }
+            }
+        }
+        degree
+    }
+
+    /// Ruft `f(Quelle, Ziel)` für jede folgbare Kante auf, Quellen aufsteigend. Liefert `stop` (alle
+    /// 8192 Quellen bzw. Kanten gefragt) `true`, bricht der Lauf ab; Ergebnis dann `false`.
+    fn for_each_follow(
+        &self,
+        mut stop: impl FnMut() -> bool,
+        mut f: impl FnMut(usize, usize),
+    ) -> bool {
+        match &self.packed {
+            None => {
+                for (i, &(source, len, start)) in self.segments.iter().enumerate() {
+                    if i.is_multiple_of(8192) && stop() {
+                        return false;
+                    }
+                    for &t in &self.targets[start..start + len as usize] {
+                        if t & FOLLOW != 0 {
+                            f(source as usize, (t & !FOLLOW) as usize);
+                        }
+                    }
+                }
+            }
+            Some(packed) => {
+                for (i, &e) in packed.iter().enumerate() {
+                    if i.is_multiple_of(8192) && stop() {
+                        return false;
+                    }
+                    if e & 1 != 0 {
+                        f((e >> 32) as usize, ((e >> 1) & u64::from(!FOLLOW)) as usize);
+                    }
+                }
+            }
+        }
+        true
     }
 }
 
@@ -188,6 +275,7 @@ fn calculate(
     scaling: Scaling,
 ) -> Result<StepState, AnalyzeError> {
     let conn = file.conn();
+    let mut timer = PhaseTimer::new();
     // Knoten V und Auflösungsdaten aller URLs.
     let mut nodes: Vec<i64> = Vec::new();
     let mut node_follow: Vec<bool> = Vec::new();
@@ -244,10 +332,11 @@ fn calculate(
         .iter()
         .map(|id| routes.resolve(*id).unwrap_or(NONE))
         .collect();
+    timer.lap("urls");
 
     // Kanten: ein Lauf über `links` in Speicherreihenfolge (die Links einer Seite liegen beisammen).
     let graph = {
-        let mut graph = Graph::new();
+        let mut graph = Graph::new(nodes.len());
         let mut buf: Vec<u32> = Vec::new();
         let mut current = NONE;
         let mut stmt = conn.prepare(
@@ -288,19 +377,18 @@ fn calculate(
             buf.push(target | if follow { FOLLOW } else { 0 });
         }
         graph.flush(current, &mut buf);
-        graph.finish()
+        graph.finish();
+        graph
     };
     drop(resolved);
     drop(routes);
+    timer.lap("links");
     if cancel.is_cancelled() {
         return Ok(StepState::Pending);
     }
 
     let n = nodes.len();
-    let mut degree = vec![0u64; n];
-    for &(source, _, len) in &graph.segments {
-        degree[source as usize] = len as u64;
-    }
+    let degree = graph.degrees(n);
     let mut rank = vec![1.0 / n.max(1) as f64; n];
     let base = 0.15 / n.max(1) as f64;
     let mut next = vec![base; n];
@@ -309,23 +397,61 @@ fn calculate(
             return Ok(StepState::Pending);
         }
         next.fill(base);
-        for (i, &(source, start, len)) in graph.segments.iter().enumerate() {
-            if i.is_multiple_of(8192) && cancel.is_cancelled() {
-                return Ok(StepState::Pending);
-            }
-            let source = source as usize;
-            for &t in &graph.targets[start..start + len] {
-                if t & FOLLOW != 0 {
-                    let target = (t & !FOLLOW) as usize;
-                    next[target] += 0.85 * rank[source] / degree[source] as f64;
-                }
-            }
+        let complete = graph.for_each_follow(
+            || cancel.is_cancelled(),
+            |source, target| next[target] += 0.85 * rank[source] / degree[source] as f64,
+        );
+        if !complete {
+            return Ok(StepState::Pending);
         }
         std::mem::swap(&mut rank, &mut next);
         cancel.set_progress((iteration + 1) as f32 / 10.0);
     }
+    let edges = graph.edges();
     drop(graph);
-    publish(file, cancel, scaling, &nodes, &rank)
+    timer.lap("iterate");
+    let state = publish(file, cancel, scaling, &nodes, &rank)?;
+    timer.lap("publish");
+    timer.report(nodes.len(), edges);
+    Ok(state)
+}
+
+/// Messzähler unter `OS_SCALE_DIAG` (wie die übrigen Analyseschritte, `runner.rs`).
+struct PhaseTimer {
+    on: bool,
+    last: std::time::Instant,
+    laps: Vec<(&'static str, u128)>,
+}
+
+impl PhaseTimer {
+    fn new() -> Self {
+        PhaseTimer {
+            on: std::env::var_os("OS_SCALE_DIAG").is_some(),
+            last: std::time::Instant::now(),
+            laps: Vec::new(),
+        }
+    }
+
+    fn lap(&mut self, name: &'static str) {
+        if self.on {
+            self.laps.push((name, self.last.elapsed().as_millis()));
+            self.last = std::time::Instant::now();
+        }
+    }
+
+    fn report(&self, nodes: usize, edges: usize) {
+        if self.on {
+            let laps: Vec<String> = self
+                .laps
+                .iter()
+                .map(|(name, ms)| format!("{name}_ms={ms}"))
+                .collect();
+            eprintln!(
+                "OS_SCALE_DIAG linkscore nodes={nodes} edges={edges} {}",
+                laps.join(" ")
+            );
+        }
+    }
 }
 
 /// Schreibt Rohwert und Score je Knoten (`linkscore.raw`, `linkscore.score`) atomar; ein unveränderter

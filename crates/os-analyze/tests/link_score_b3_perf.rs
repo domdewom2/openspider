@@ -176,7 +176,7 @@ impl Rng {
     }
 }
 
-fn random_site(file: &os_store::CrawlFile, seed: u64, pages: u64, gap: u64) {
+fn random_site(file: &os_store::CrawlFile, seed: u64, pages: u64, gap: u64, scattered: bool) {
     let mut rng = Rng(seed);
     let conn = file.conn();
     conn.execute_batch("BEGIN").unwrap();
@@ -271,7 +271,7 @@ fn random_site(file: &os_store::CrawlFile, seed: u64, pages: u64, gap: u64) {
         }
     }
     // Nachträglich gespeicherte Links einiger Seiten (nicht zusammenhängend in `links`).
-    for p in 0..pages / 3 {
+    for p in 0..if scattered { pages / 3 } else { 0 } {
         let source = id(rng.below(pages));
         emit(&mut rng, source, 100 + p);
     }
@@ -283,14 +283,17 @@ fn random_site(file: &os_store::CrawlFile, seed: u64, pages: u64, gap: u64) {
 // spec: ONPAGE-017
 #[test]
 fn in_memory_graph_matches_previous_sql_iteration_bit_for_bit() {
-    for (seed, pages, gap) in [
-        (1u64, 60u64, 1u64),
-        (7, 400, 1),
-        (42, 1500, 1),
-        (99, 700, 9),
+    for (seed, pages, gap, scattered) in [
+        (1u64, 60u64, 1u64, true),
+        (7, 400, 1, true),
+        (8, 400, 1, false),
+        (42, 1500, 1, true),
+        (43, 1500, 1, false),
+        (99, 700, 9, true),
+        (98, 700, 9, false),
     ] {
         let (_dir, file) = file();
-        random_site(&file, seed, pages, gap);
+        random_site(&file, seed, pages, gap, scattered);
         let expected = oracle(&file);
         assert!(expected.len() > 10, "seed {seed}: zu wenige Knoten");
         assert_eq!(
@@ -315,7 +318,7 @@ fn in_memory_graph_matches_previous_sql_iteration_bit_for_bit() {
 #[test]
 fn reanalysis_after_graph_change_replaces_rows_and_stamps_removed_nodes() {
     let (_dir, file) = file();
-    random_site(&file, 5, 300, 1);
+    random_site(&file, 5, 300, 1, true);
     let cfg = CrawlConfig::default();
     link_score::run(&file, &cfg, &CancelToken::new()).unwrap();
     let (before, _) = stored(&file);
@@ -337,14 +340,14 @@ fn reanalysis_after_graph_change_replaces_rows_and_stamps_removed_nodes() {
     assert_eq!(score, log_scores(&expected));
     let new_seq = os_store::queries::change_seq(file.conn()).unwrap();
     assert_eq!(new_seq, seq + 1);
-    let stamped: i64 = file
+    let stamped: u64 = file
         .conn()
         .query_row("SELECT change_seq FROM urls WHERE id=?1", [gone], |r| {
             r.get(0)
         })
         .unwrap();
     assert_eq!(stamped, new_seq);
-    let ext_seq: Vec<i64> = file
+    let ext_seq: Vec<u64> = file
         .conn()
         .prepare("SELECT DISTINCT change_seq FROM url_ext WHERE key LIKE 'linkscore.%'")
         .unwrap()
