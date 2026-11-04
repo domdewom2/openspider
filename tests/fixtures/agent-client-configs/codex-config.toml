@@ -1,0 +1,85 @@
+# Codex-Konfiguration (Testfixture AGENT-043) – fremde Inhalte, die OpenSpider nie umformatieren darf.
+# Werte mit TESTSECRET dürfen in keiner Vorschau erscheinen.
+model = "gpt-5-codex"
+model_reasoning_effort = "high"   # Kommentar am Zeilenende
+approval_policy = "on-request"
+sandbox_mode    = "workspace-write"
+notify = ["/usr/local/bin/notify-send", "--app-name", "Codex"]
+
+[sandbox_workspace_write]
+network_access = false
+writable_roots = [
+  "/Users/anna/Code",
+  'C:\Users\Anna\Projekte',
+]
+
+[shell_environment_policy]
+inherit = "core"
+set = { PATH_EXTRA = "/opt/homebrew/bin", OPENAI_API_KEY = "sk-TESTSECRET-01" }
+
+[tui]
+notifications = true
+
+[profiles.fast]
+model = "gpt-5-codex-mini"
+model_reasoning_effort = "low"
+
+[profiles."ohne Netz"]
+sandbox_mode = "read-only"
+
+# --- MCP-Server ---------------------------------------------------------------
+
+[mcp_servers.github]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-github"]
+env = { GITHUB_PERSONAL_ACCESS_TOKEN = "ghp_TESTSECRET-02", GITHUB_HOST = "github.com" }
+startup_timeout_sec = 20
+
+[mcp_servers.postgres]
+command = "docker"
+args = [
+    "run", "-i", "--rm",
+    "--env", "PGPASSWORD",
+    "mcp/postgres",
+    "postgresql://reader:TESTSECRET-03@db.internal.test:5432/shop",
+]
+tool_timeout_sec = 60
+
+[mcp_servers.postgres.env]
+PGPASSWORD = "TESTSECRET-04"
+PGUSER = "reader"
+
+[mcp_servers.search]
+command = "uvx"
+args = ["web-search-mcp", "--api-key", "TESTSECRET-05", "--region=de"]
+
+[mcp_servers.remote]
+url = "https://mcp.example.test/mcp"
+bearer_token_env_var = "REMOTE_MCP_TOKEN"
+http_headers = { "Authorization" = "Bearer TESTSECRET-06", "X-Client" = "codex" }
+
+[mcp_servers."local files"]
+command = 'C:\Tools\mcp\files.exe'
+args = ['--root', 'D:\Daten mit Leerzeichen', '--token=TESTSECRET-07']
+enabled = true
+
+[mcp_servers.disabled]
+command = "node"
+args = ["/Users/anna/mcp/old/index.js"]
+enabled = false
+# auth_token = "TESTSECRET-08" (alter Wert, auskommentiert)
+
+# --- Projekte -----------------------------------------------------------------
+
+[projects."/Users/anna/Code/shop"]
+trust_level = "trusted"
+
+[projects."/Users/anna/Code/Mein Blog (alt)"]
+trust_level = "untrusted"
+
+[projects.'C:\Users\Anna\Projekte\Größe & Co']
+trust_level = "trusted"
+
+[history]
+persistence = "save-all"
+max_bytes = 10485760

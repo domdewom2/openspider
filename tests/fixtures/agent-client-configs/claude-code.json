@@ -1,0 +1,85 @@
+{
+  "numStartups": 184,
+  "installMethod": "native",
+  "autoUpdates": true,
+  "theme": "dark",
+  "tipsHistory": {
+    "new-user-warmup": 7,
+    "memory-command": 12
+  },
+  "oauthAccount": {
+    "accountUuid": "00000000-0000-4000-8000-000000000001",
+    "emailAddress": "anna@example.test",
+    "organizationName": "Anna \u00c4hnlich GmbH"
+  },
+  "primaryApiKey": "sk-ant-TESTSECRET-11",
+  "customApiKeyResponses": {
+    "approved": [
+      "TESTSECRET-12"
+    ],
+    "rejected": []
+  },
+  "projects": {
+    "/Users/anna/Code/shop": {
+      "allowedTools": [
+        "Bash(npm test:*)"
+      ],
+      "history": [
+        {
+          "display": "Fix der Preisberechnung \u2013 \"Brutto\" vs. Netto",
+          "pastedContents": {}
+        }
+      ],
+      "mcpServers": {
+        "local-db": {
+          "type": "stdio",
+          "command": "/usr/local/bin/db-mcp",
+          "args": ["--password", "TESTSECRET-13"],
+          "env": {}
+        }
+      },
+      "enabledMcpjsonServers": [],
+      "hasTrustDialogAccepted": true,
+      "lastCost": 0.4182,
+      "lastDuration": 1.5e6
+    },
+    "C:\\Users\\Anna\\Projekte\\Gr\u00f6\u00dfe & Co": {
+      "allowedTools": [],
+      "history": [],
+      "mcpServers": {},
+      "hasTrustDialogAccepted": false
+    }
+  },
+  "mcpServers": {
+    "github": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_TESTSECRET-14"
+      }
+    },
+    "sentry": {
+      "type": "http",
+      "url": "https://mcp.example.test/mcp",
+      "headers": {
+        "Authorization": "Bearer TESTSECRET-15"
+      }
+    },
+    "files": {
+      "type": "stdio",
+      "command": "C:\\Tools\\mcp\\files.exe",
+      "args": ["--root", "D:\\Daten mit Leerzeichen", "--api-key=TESTSECRET-16"]
+    },
+    "proxy": {
+      "type": "sse",
+      "url": "https://user:TESTSECRET-17@proxy.example.test/sse?api_key=TESTSECRET-18&region=eu"
+    }
+  },
+  "userID": "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f9",
+  "firstStartTime": "2026-03-01T09:30:00.000Z",
+  "cachedChangelog": "## 2.0.0\n\n- Neu: \/mcp-Dialog\n- Behoben: \ud83d\udc1b Absturz"
+}
