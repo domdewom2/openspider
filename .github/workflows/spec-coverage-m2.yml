@@ -51,13 +51,21 @@ jobs:
     if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'm2/') }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    # 04.11.2026 (Läufe 41807021445, 41826776086): Workspace-Testbau lief trotz line-tables-only voll
+    # (ld „Bus error“, „No space left on device“). Wie ci.yml ohne Debuginfo bauen.
+    env:
+      CARGO_PROFILE_DEV_DEBUG: "0"
+      CARGO_PROFILE_TEST_DEBUG: "0"
     steps:
       - uses: actions/checkout@v4
       # Runde 11: ubuntu-latest lief beim Cache-Speichern voll (No space left on device).
       - name: Speicherplatz schaffen (ungenutzte SDKs des Runners)
         run: |
           df -h / | tail -n 1
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL \
+            /usr/share/swift /usr/local/share/boost /usr/local/share/powershell /usr/local/julia* /opt/hostedtoolcache/go \
+            /opt/hostedtoolcache/Ruby /opt/hostedtoolcache/PyPy
+          sudo docker image prune --all --force > /dev/null 2>&1 || true
           df -h / | tail -n 1
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
