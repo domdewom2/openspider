@@ -2,7 +2,17 @@ name: Third-party licenses
 on:
   push:
     branches: [main]
+    # Wie ci.yml (B3-REL): reine Doku-, Website- und Learnings-Commits starten keinen Lauf. workflow_call aus
+    # release.yml kennt keine Pfadfilter und läuft immer.
+    paths: &license-paths
+      - "**"
+      - "!**/*.md"
+      - "!docs/**"
+      - "!website/**"
+      - "!learnings/**"
+      - "!assets/**"
   pull_request:
+    paths: *license-paths
   workflow_dispatch:
   workflow_call:
 permissions:

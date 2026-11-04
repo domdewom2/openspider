@@ -518,3 +518,78 @@ test('Feedback-Link im Download-Kasten: Vorabversion zur Beta-Seite, stabile Ver
   assert.doesNotMatch(stable, /openspider\.de\/beta/);
 });
 
+// GitHub Actions path filters: patterns in order, the last matching one wins ("!" excludes); `*` stays within one
+// path segment, `**` crosses segments, `**/` may also match nothing (root files).
+function pathFilter(workflow, event = 'push') {
+  const text = readFileSync(join(root, '.github/workflows', workflow), 'utf8');
+  const block = text.split(`\n  ${event}:\n`)[1].split(/\n  [a-z_]+:/)[0];
+  const alias = /\n    paths: \*([\w-]+)/.exec(`\n${block}`)?.[1];
+  const source = alias ? text.split(`paths: &${alias}\n`)[1] : block.split('    paths:')[1].replace(/^[^\n]*\n/, '');
+  const patterns = source.split('\n').filter(line => /^      - /.test(line)).map(line => line.slice(8).replace(/^["']|["']$/g, ''));
+  const tail = source.split('\n').findIndex(line => !/^      - /.test(line));
+  const list = patterns.slice(0, tail < 0 ? undefined : tail);
+  const regex = glob => new RegExp(`^${glob.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*\*\/|\*\*|\*|\?/g,
+    token => ({ '**/': '(?:.*/)?', '**': '.*', '*': '[^/]*', '?': '[^/]' })[token])}$`);
+  const rules = list.map(pattern => ({ exclude: pattern.startsWith('!'), regex: regex(pattern.replace(/^!/, '')) }));
+  // A push triggers the workflow if at least one changed file is included after all rules.
+  return files => files.some(file => rules.reduce((included, rule) => (rule.regex.test(file) ? !rule.exclude : included), false));
+}
+
+// B3-REL (K2-67, docs/plan/beta3.md §6): docs/website/learnings-only commits on main start no heavy CI and thus never
+// queue behind or replace a running main run; files that tests or jobs read keep triggering.
+test('Pfadfilter: reine Doku-, Website- und Learnings-Commits starten keine schwere CI, gelesene Dateien schon', () => {
+  const quiet = ['README.md', 'CHANGELOG.md', 'website/site/beta/index.html', 'website/site/assets/site.css', 'website/check-site.mjs',
+    'website/api/feedback.php', 'docs/plan/M3-reports/b3-rel.md', 'docs/release/notes/1.0.0-beta.3.md', 'docs/release/release-rhythmus.md',
+    'docs/plan/M1-acceptance/loadtest/probe-p33/s0-baseline/summary.json', 'docs/plan/M3-reports/v02/polish/a.png', 'docs/handbook/book.toml',
+    'learnings/learnings.md', 'learnings/raw/notes.txt', 'assets/logo.png'];
+  const read = ['docs/spec/06-output-ops.md', 'docs/spec/schemas/osconfig.schema.json', 'docs/issues/README.md', 'docs/plan/M2-packages.json',
+    'docs/plan/M1-status.json', 'docs/plan/M1-filters.toml', 'tests/fixtures/migrations/releases/1.0.0-beta.1/README.md',
+    'crates/os-app/src/lib.rs', 'Cargo.lock', '.github/workflows/ci.yml'];
+  for (const workflow of ['ci.yml', 'linux-core.yml', 'parity.yml']) {
+    for (const event of ['push', 'pull_request']) {
+      const runs = pathFilter(workflow, event);
+      for (const file of quiet) assert.equal(runs([file]), false, `${workflow} ${event}: ${file}`);
+      for (const file of [...read, 'docs/plan/M2.md']) assert.equal(runs([file]), true, `${workflow} ${event}: ${file}`);
+      assert.equal(runs(['website/site/index.html', 'crates/os-cli/src/main.rs']), true, `${workflow}: mixed push`);
+    }
+  }
+  const licenses = pathFilter('licenses.yml');
+  for (const file of quiet) assert.equal(licenses([file]), false, `licenses.yml: ${file}`);
+  for (const file of ['Cargo.lock', 'package-lock.json', 'deny.toml', 'NOTICE', 'scripts/release/licenses/npm-sources.json']) assert.equal(licenses([file]), true, file);
+  // Spec coverage keeps docs/spec and never runs for website or notes.
+  const coverage = pathFilter('spec-coverage-m2.yml');
+  assert.equal(coverage(['docs/spec/06-output-ops.md']), true);
+  for (const file of ['website/site/beta/index.html', 'docs/release/notes/1.0.0-beta.3.md', 'README.md']) assert.equal(coverage([file]), false, file);
+  assert.equal(pathFilter('ui-e2e.yml')(['website/site/beta/index.html']), false);
+  // Light replacements: website check for website/**, release contract tests for notes and CHANGELOG.
+  const site = pathFilter('website.yml');
+  assert.equal(site(['website/site/beta/index.html']), true);
+  assert.equal(site(['website/api/tests/crash_test.php']), true);
+  assert.equal(site(['crates/os-app/src/lib.rs']), false);
+  const scripts = pathFilter('release-scripts.yml');
+  for (const file of ['docs/release/notes/1.0.0-beta.3.md', 'CHANGELOG.md', 'scripts/release/notes.mjs', 'tests/release/orchestration.test.mjs', '.github/workflows/release.yml']) {
+    assert.equal(scripts([file]), true, file);
+  }
+  assert.equal(scripts(['website/site/index.html']), false);
+  // Tag pushes ignore path filters on GitHub; the release workflow itself has none.
+  assert.doesNotMatch(releaseWorkflow(), /paths/);
+});
+
+test('Leichte Ersatzläufe sind billig, SHA-gepinnt und rufen die vorhandenen Prüfungen auf', () => {
+  const site = readFileSync(join(root, '.github/workflows/website.yml'), 'utf8');
+  assert.match(site, /runs-on: ubuntu-latest\n    timeout-minutes: 10/);
+  assert.match(site, /run: node website\/check-site\.mjs/);
+  const scripts = readFileSync(join(root, '.github/workflows/release-scripts.yml'), 'utf8');
+  assert.match(scripts, /node --test scripts\/release\/\*\.test\.mjs scripts\/release\/licenses\/generate\.test\.mjs tests\/release\/orchestration\.test\.mjs/);
+  for (const workflow of [site, scripts]) {
+    assert.match(workflow, /permissions:\n  contents: read/);
+    for (const line of workflow.split('\n').filter(line => line.includes('uses:'))) assert.match(line, /@[0-9a-f]{40} # v\d/);
+  }
+  // The license text cache is wired wherever the generator runs.
+  for (const workflow of ['licenses.yml', 'release-macos.yml', 'release-windows.yml']) {
+    const text = readFileSync(join(root, '.github/workflows', workflow), 'utf8');
+    const generate = text.split(/      - name: (?:Generate complete release notices|Vollständige Drittlizenzen erzeugen)[^\n]*\n/)[1].split('      - ')[0];
+    assert.match(generate, /OPENSPIDER_LICENSE_CACHE: \$\{\{ runner\.temp \}\}\/license-texts/, workflow);
+    assert.match(text, /path: \$\{\{ runner\.temp \}\}\/license-texts\n          key: license-texts-v1-\$\{\{ hashFiles\('scripts\/release\/licenses\/\*-sources\.json'\) \}\}/, workflow);
+  }
+});

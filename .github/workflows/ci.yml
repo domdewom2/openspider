@@ -11,17 +11,23 @@ on:
     branches: [main]
     tags: ["v*"]
     # Reine Doku-Commits lösen keinen Lauf aus (Muster werden der Reihe nach angewendet, später gewinnt):
-    # Markdown, docs/plan/M2-reports und assets bleiben draußen. Ausnahmen, weil Tests oder Jobs diese Dateien lesen:
-    # docs/spec (Spec-Schemas, Spec-Abdeckung), docs/issues (Issue-Katalog-Tests lesen die Doku-Seiten und die README),
-    # docs/plan/M2.md (os-parity coverage liest Anhang B), tests/** (u. a. tests/golden/parity/README.md).
+    # Markdown, docs/**, website/** (eigener leichter Lauf website.yml), learnings/** und assets bleiben draußen
+    # (B3-REL: Website-/Notes-Commits am Mittwoch reihen keinen main-Lauf ein). Ausnahmen, weil Tests oder Jobs diese
+    # Dateien lesen: docs/spec (Spec-Schemas, Spec-Abdeckung), docs/issues (Issue-Katalog-Tests lesen die Doku-Seiten und
+    # die README), docs/plan/M2.md (os-parity coverage liest Anhang B), docs/plan/*.json und *.toml (Pakete, Status,
+    # Filterkataloge für Tests und Coverage), tests/** (u. a. tests/golden/parity/README.md).
     paths: &ci-paths
       - "**"
       - "!**/*.md"
+      - "!docs/**"
+      - "!website/**"
+      - "!learnings/**"
       - "docs/spec/**"
       - "docs/issues/**"
       - "docs/plan/M2.md"
+      - "docs/plan/*.json"
+      - "docs/plan/*.toml"
       - "tests/**"
-      - "!docs/plan/M2-reports/**"
       - "!assets/**"
   pull_request:
     paths: *ci-paths
