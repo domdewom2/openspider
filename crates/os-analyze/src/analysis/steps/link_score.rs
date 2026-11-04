@@ -43,7 +43,8 @@ impl Routes {
     fn new(ids: Vec<i64>, next: Vec<Option<i64>>, node: Vec<u32>) -> Self {
         let lookup = match (ids.first(), ids.last()) {
             (Some(&min), Some(&max))
-                if u64::try_from(max - min).is_ok_and(|span| span < 4 * ids.len() as u64 + 1024) =>
+                if u64::try_from(max - min)
+                    .is_ok_and(|span| span < 4 * ids.len() as u64 + 1024) =>
             {
                 let mut slots = vec![NONE; (max - min + 1) as usize];
                 for (pos, id) in ids.iter().enumerate() {
@@ -149,7 +150,11 @@ impl Graph {
         if self.packed.is_none() && self.seen[source as usize] {
             let mut packed = Vec::with_capacity(self.targets.len() + buf.len());
             for &(s, len, start) in &self.segments {
-                packed.extend(self.targets[start..start + len as usize].iter().map(|&t| pack(s, t)));
+                packed.extend(
+                    self.targets[start..start + len as usize]
+                        .iter()
+                        .map(|&t| pack(s, t)),
+                );
             }
             self.segments = Vec::new();
             self.targets = Vec::new();
@@ -481,8 +486,10 @@ fn publish(
     };
     let tx = rusqlite::Transaction::new_unchecked(conn, rusqlite::TransactionBehavior::Immediate)?;
     let key_id = |key: &str| -> rusqlite::Result<Option<i64>> {
-        tx.query_row("SELECT id FROM ext_keys WHERE key = ?1", [key], |r| r.get(0))
-            .optional()
+        tx.query_row("SELECT id FROM ext_keys WHERE key = ?1", [key], |r| {
+            r.get(0)
+        })
+        .optional()
     };
     let (raw_key, score_key) = (key_id("linkscore.raw")?, key_id("linkscore.score")?);
     // Vorhandene Zeilen (nur wenn einer der Schlüssel je geschrieben wurde; sonst gibt es keine):
@@ -517,7 +524,8 @@ fn publish(
     // Nur entfernte Knoten brauchen einen zusätzlichen Stempel auf urls.
     {
         let mut stamp = tx.prepare("UPDATE urls SET change_seq = ?1 WHERE id = ?2")?;
-        let mut delete = tx.prepare("DELETE FROM url_ext_data WHERE url_id = ?1 AND key_id = ?2")?;
+        let mut delete =
+            tx.prepare("DELETE FROM url_ext_data WHERE url_id = ?1 AND key_id = ?2")?;
         let mut last = None;
         for &(url_id, is_raw, _, _) in &existing {
             if cancel.is_cancelled() {
@@ -545,7 +553,13 @@ fn publish(
                 return Ok(StepState::Pending);
             }
             insert.execute(params![id, raw_key, Option::<i64>::None, raw, seq])?;
-            insert.execute(params![id, score_key, score_of(raw), Option::<f64>::None, seq])?;
+            insert.execute(params![
+                id,
+                score_key,
+                score_of(raw),
+                Option::<f64>::None,
+                seq
+            ])?;
         }
     }
     tx.execute(

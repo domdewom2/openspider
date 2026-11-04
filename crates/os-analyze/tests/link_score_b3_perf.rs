@@ -139,7 +139,10 @@ fn log_scores(raw: &[(i64, f64)]) -> Vec<(i64, i64)> {
         .collect()
 }
 
-fn stored(file: &os_store::CrawlFile) -> (Vec<(i64, f64)>, Vec<(i64, i64)>) {
+/// `(url_id, Rohwert)` und `(url_id, Score)` aus `url_ext`.
+type Stored = (Vec<(i64, f64)>, Vec<(i64, i64)>);
+
+fn stored(file: &os_store::CrawlFile) -> Stored {
     let read = |key: &str| -> Vec<(i64, Option<i64>, Option<f64>)> {
         let mut stmt = file
             .conn()
@@ -215,8 +218,11 @@ fn random_site(file: &os_store::CrawlFile, seed: u64, pages: u64, gap: u64, scat
                 .unwrap();
             }
             15 => {
-                conn.execute("UPDATE urls SET canonical_target_id=id WHERE id=?1", [id(i)])
-                    .unwrap();
+                conn.execute(
+                    "UPDATE urls SET canonical_target_id=id WHERE id=?1",
+                    [id(i)],
+                )
+                .unwrap();
             }
             16..=18 => {
                 conn.execute("UPDATE urls SET effective_follow=0 WHERE id=?1", [id(i)])
