@@ -35,7 +35,7 @@ Open-source website crawler and technical SEO auditor – built for AI agents an
 
 OpenSpider crawls websites the way a search engine does and finds the technical SEO problems that cost rankings: broken links, redirect chains, canonical and hreflang errors, indexability conflicts, duplicates, thin content and much more.
 
-What makes it different: **AI agents are first-class users.** A built-in MCP server lets Claude, Codex, Cursor and other agents start crawls, ask precise questions about the results and run full audits – safely, with read-only defaults and cost guards. And every crawl is an open SQLite file, so your data never gets locked into a proprietary format.
+What makes it different: **AI agents are first-class users.** A built-in MCP server lets Claude, Codex, Cursor and other agents start crawls, ask precise questions about the results and run full audits – safely: by default an agent can only read; starting crawls, writing files or using paid services has to be enabled explicitly. And every crawl is an open SQLite file, so your data never gets locked into a proprietary format.
 
 ## Why OpenSpider?
 
