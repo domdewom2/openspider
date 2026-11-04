@@ -477,5 +477,7 @@ filters = [
   { id = "Unique External Outlinks", spec = "TECH-303", kind = "live" },
   { id = "Structured Data Unique Types", spec = "TECH-303", kind = "live" },
   { id = "Indexability", spec = "TECH-304", kind = "live" },
+  { id = "Canonical", spec = "TECH-309", kind = "live" },
+  { id = "Redirect Target", spec = "TECH-310", kind = "live" },
   { id = "Content", spec = "TECH-305", kind = "live" },
 ]

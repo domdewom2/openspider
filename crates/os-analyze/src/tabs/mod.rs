@@ -1076,6 +1076,8 @@ pub const M2_FILTERS: &[M2FilterRow] = &[
         false,
     ),
     ("Change Detection", "Indexability", None, &[], false),
+    ("Change Detection", "Canonical", None, &[], false),
+    ("Change Detection", "Redirect Target", None, &[], false),
     ("Change Detection", "Content", None, &[], false),
 ];
 
