@@ -107,6 +107,19 @@ Ergebnisse auf dem Build-Server (`m3-diff`, Stand nach `app: rustfmt`):
 Hinweis Server: Ein früherer Lauf brach beim Linken mit `No space left on device` / `ld … Bus error` ab; ich habe daraufhin
 nur das eigene `target/` von `m3-diff` gelöscht (121 GB) und ohne Debuginfo neu gebaut. Fremde Worktrees nicht angefasst.
 
+### Abschlusslauf nach Fable-Review und `git merge origin/main` (Merge `212af321`)
+
+Server-Worktree neu gespiegelt, vorher 124 GB frei, `~/ws-slot.sh`; ein Lauf in einem Stück (`CARGO_PROFILE_*_DEBUG=0`):
+
+| Befehl | Ergebnis |
+|---|---|
+| `cargo fmt --all --check` | Exit 0 |
+| `cargo clippy --workspace --all-targets -- -D warnings` | Exit 0 |
+| `cargo test --workspace --no-fail-fast` | Exit 0: 604 Testziele, 4325 bestanden, 0 fehlgeschlagen, 51 ignoriert |
+| `npm run -w apps/desktop typecheck` | Exit 0 |
+| `npm run -w apps/desktop test` | Exit 0: 115 Testdateien, 991 Tests bestanden |
+| `node website/check-site.mjs` | OK: 20 Seiten |
+
 ## Spec-Fragen / Unklarheiten
 
 1. **Removed-Werte – Orchestrator-Entscheid 04.11.2026 (Fable-Empfehlung):** Removed-Zeilen tragen die Current-Werte des
