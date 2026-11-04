@@ -18,7 +18,12 @@ Anlass: Ein Nutzer bat Codex, über OpenSpider einen Crawl zu starten. Codex kan
 
 ## 2 Leistung
 
-- **Rückschritt beim Crawl:** Messung 04.11.2026 mit dem veröffentlichten beta.2-CLI (Mac mini M2, lokale Testseite, Standardwerte, inkl. Speichern und Export): 100.000 URLs 48 s / 0,85 GB, 1 Mio. URLs 12:51 min / ~1,05 GB. Frühere Werte (Vor-Alpha, 18./19.10.): 27 s / 0,76 GB bzw. ~4,5 min / < 0,5 GB. Diagnose (Methode vs. echter Rückschritt, Bisect) läuft auf dem Build-Server; danach Fix-Paket.
+- **Rückschritt beim Crawl (Diagnose 04.11.2026, Build-Server, gleiche Methode, 100k URLs):** Stand 18.10. (31e2ddd3) 48,0 s, beta.2 85,9 s (+78 %). Crawl-Phase +25,6 s, neue Analyse +10,9 s (fast nur Link Score), Export/Speichern +1,2 s. Ursachen per Bisect: Merges M2-D10 (+5,6 s), D11 (+4,3 s), D02 (+15,8 s, Crawl-Datei verdoppelt), D08 (Link Score +17 s Analyse; E07 hat später ~5,5 s zurückgeholt). Bei 1 Mio.: Link Score 113 s. Funktionen sind gewollt (Spec-IDs), die Kosten liegen in der Umsetzung. Fix-Paket mit vier Teilen:
+  1. Link Score im Speicher statt 10 SQL-Durchläufe über alle Kanten (`os-analyze` `link_score.rs:157-178`), erwartet −9 s/100k, −100 s/1 Mio.
+  2. `write_ext` (`os-store/src/writer_m2.rs`) mit zwischengespeicherten Schlüssel-IDs und ohne `clear_text` bei neuen Seiten: 1 statt 3 Statements je Zeile, erwartet −5…−8 s.
+  3. `content.soft404_text` nicht speichern, in der Analyse aus Titel/H1/Text bilden: −110 MB je 100k, größere Writer-Batches (`BATCH_BYTES` 8 MiB begrenzt sonst auf ~477 Seiten).
+  4. Parser: Text des Inhaltsbereichs einmal je Seite, Selektoren statisch, Security- mit Link-Durchlauf zusammenlegen (`os-parse` `content.rs`, `readability.rs`, `security.rs`, `validation.rs`), erwartet −4…−8 s.
+  Ziel: ~35 s für 100k auf dem Mac mini (heute 48 s). Messwerkzeuge und Logs: `~/perf` auf dem Build-Server. Zusätzlich prüfen: Durchsatzbudget nach PERF-002 für neue Analysen; warum 1 Mio. auf dem Mac relativ schlechter skaliert als 100k.
 - Nach dem Fix 1-Mio.-Messung wiederholen; README-Abschnitt „Performance“ nachziehen.
 - Aussage „5 Mio. URLs bleiben in der App flüssig“ (Werte aus Entwicklungsständen im Oktober) mit beta.2/beta.3 nachmessen.
 
