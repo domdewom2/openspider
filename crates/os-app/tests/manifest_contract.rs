@@ -131,7 +131,8 @@ const CATALOG_4_4: &[&str] = &[
     "mcp.setAutostart",
     "mcp.saveToolsMarkdown",
     "mcp.clientConfigPreview",
-    "mcp.clientConfigWrite",
+    "mcp.clientConnect",    // AGENT-043 (B3-MCP): Verbinden in einem Schritt
+    "mcp.clientDisconnect", // AGENT-043 (B3-MCP): nur den eigenen Eintrag entfernen
     "mcp.callLog",
 ];
 

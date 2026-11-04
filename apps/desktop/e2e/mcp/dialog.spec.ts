@@ -1,41 +1,13 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { test, expect } from "@playwright/test";
 import { clientPreview, TEST_TOKEN } from "../../src/features/mcp/fixtures/agent-m2-ui";
-import type { McpClientKind } from "../../src/ipc/gen/McpClientKind";
 import type {} from "./harness";
 
-let home: string;
-let writes: number;
-const originals: Record<McpClientKind, string> = {
-  claudeDesktop: '{"mcpServers":{"foreign":{"command":"foreign-helper"}}}',
-  claudeCode: '{"mcpServers":{"foreign":{"command":"foreign-helper"}}}',
-  codex: '[mcp_servers.foreign]\ncommand = "foreign-helper"\n',
-};
-const configPath = (kind: McpClientKind) => join(home, `${kind}.${kind === "codex" ? "toml" : "json"}`);
-
 test.beforeEach(async ({ page }) => {
-  home = await mkdtemp(join(tmpdir(), "openspider-u25-"));
-  writes = 0;
-  for (const kind of Object.keys(originals) as McpClientKind[]) await writeFile(configPath(kind), originals[kind]);
-  await page.exposeFunction("mcpFilePreview", async (kind: McpClientKind) => ({ ...clientPreview(kind, await readFile(configPath(kind), "utf8")), path: configPath(kind) }));
-  await page.exposeFunction("mcpFileWrite", async (kind: McpClientKind) => {
-    // Fixture implementation of the K17 write contract: backup before write, preserve unrelated entries.
-    const before = await readFile(configPath(kind), "utf8");
-    const preview = clientPreview(kind, before);
-    const backupPath = `${configPath(kind)}.backup`;
-    await writeFile(backupPath, before);
-    await writeFile(configPath(kind), preview.after);
-    writes++;
-    return { backupPath };
-  });
   await page.clock.install({ time: new Date("2026-10-19T12:00:00Z") });
   await page.goto("/e2e/mcp/index.html");
   await page.getByRole("button", { name: "Open MCP", exact: true }).click();
   await expect(page.getByRole("button", { name: "Start server", exact: true })).toBeEnabled();
 });
-test.afterEach(async () => { await rm(home, { recursive: true, force: true }); });
 
 // spec: UI-129
 // spec: OUT-285 [P1]
@@ -74,26 +46,26 @@ test("copy keeps the token out of the DOM; reveal, hide, regenerate and Escape c
 });
 
 // spec: AGENT-043
-test("all three clients require a reviewed diff and create a backup while retaining foreign entries", async ({ page }) => {
+// spec: AGENT-003 [M2]
+test("each menu entry opens its own dialog and connects in one click with the crawl permission", async ({ page }) => {
   await page.getByRole("button", { name: "Close", exact: true }).click();
-  for (const kind of ["claudeDesktop", "claudeCode", "codex"] as const) {
+  for (const [kind, program] of [["claudeDesktop", "Claude Desktop"], ["claudeCode", "Claude Code"], ["codex", "Codex"]] as const) {
     await page.evaluate(name => window.mcpFixture.action(`mcp.${name}`), kind);
-    await page.getByRole("button", { name: "Preview changes", exact: true }).click();
-    await expect(page.getByLabel("Configuration diff")).toContainText("foreign-helper");
-    const write = page.getByRole("button", { name: "Write configuration with backup", exact: true });
-    await expect(write).toBeDisabled();
-    expect(await readFile(configPath(kind), "utf8")).toBe(originals[kind]);
-    await page.getByText("I have reviewed the changes and want to update this client configuration.", { exact: true }).click();
-    await write.click();
-    await expect(page.getByText("Client configuration saved.", { exact: true })).toBeVisible();
-    expect(await readFile(`${configPath(kind)}.backup`, "utf8")).toBe(originals[kind]);
-    const result = await readFile(configPath(kind), "utf8");
-    expect(result).toContain("foreign-helper");
-    expect(result).toContain("openspider");
-    if (kind !== "codex") expect(JSON.parse(result).mcpServers.foreign.command).toBe("foreign-helper");
-    await page.getByRole("button", { name: "Close", exact: true }).click();
+    const dialog = page.getByRole("dialog", { name: `Connect ${program}` });
+    await expect(dialog.getByText("Not connected yet.", { exact: true })).toBeVisible();
+    await expect(dialog.getByRole("checkbox", { name: "Agent may start crawls" })).toBeChecked();
+    await dialog.getByRole("button", { name: "Connect", exact: true }).click();
+    await expect(dialog.getByText(`Connected. Start a new session in ${program} so that OpenSpider appears there.`, { exact: true })).toBeVisible();
+    await expect(dialog.getByText(`Backup: ${kind}.backup`, { exact: true })).toBeVisible();
+    await expect(dialog.getByText("Already connected.", { exact: true })).toBeVisible();
+    await dialog.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(dialog).toHaveCount(0);
   }
-  expect(writes).toBe(3);
+  expect(await page.evaluate(() => window.mcpFixture.connected())).toEqual(["claudeDesktop", "claudeCode", "codex"]);
+  const connects = await page.evaluate(() => window.mcpFixture.calls().filter(call => call.cmd === "mcp.clientConnect").map(call => call.args));
+  expect(connects).toEqual([
+    { client: "claudeDesktop", allowCrawl: true }, { client: "claudeCode", allowCrawl: true }, { client: "codex", allowCrawl: true },
+  ]);
 });
 
 // spec: AGENT-043
@@ -127,19 +99,18 @@ test("classes and individual tools use the service contract and canceling a Mark
 });
 
 // spec: AGENT-043
-test("multiline JSON and TOML client arguments never expose credentials in the rendered preview", async ({ page }) => {
+test("the optional preview shows only changed lines and never credentials", async ({ page }) => {
+  const value = clientPreview("codex", "notConnected", {
+    connectDiff: `@@ -2 +2,2 @@\n-token = "${TEST_TOKEN}"\n+token = "${TEST_TOKEN}"\n+[mcp_servers.openspider]\n`,
+  });
+  await page.evaluate(preview => window.mcpFixture.setClientPreview(preview), value);
   await page.getByRole("button", { name: "Close", exact: true }).click();
-  for (const kind of ["claudeDesktop", "claudeCode", "codex"] as const) {
-    const original = kind === "codex"
-      ? `[mcp_servers.foreign]\ncommand = "foreign-helper"\nargs = [\n  "--token",\n  "${TEST_TOKEN}",\n]\n`
-      : JSON.stringify({ mcpServers: { foreign: { command: "foreign-helper", args: ["--token", TEST_TOKEN] } } }, null, 2);
-    await writeFile(configPath(kind), original);
-    await page.evaluate(name => window.mcpFixture.action(`mcp.${name}`), kind);
-    await page.getByRole("button", { name: "Preview changes", exact: true }).click();
-    await expect(page.getByLabel("Configuration diff")).toContainText("foreign-helper");
-    await expect(page.getByLabel("Configuration diff")).toContainText("[redacted]");
-    await page.getByText("Resulting configuration", { exact: true }).click();
-    expect(await page.locator("body").innerHTML()).not.toContain(TEST_TOKEN);
-    await page.getByRole("button", { name: "Close", exact: true }).click();
-  }
+  await page.evaluate(() => window.mcpFixture.action("mcp.codex"));
+  const dialog = page.getByRole("dialog", { name: "Connect Codex" });
+  await expect(dialog.getByLabel("Configuration diff")).toBeHidden();
+  await dialog.getByText("Show changes", { exact: true }).click();
+  await expect(dialog.getByLabel("Configuration diff")).toContainText("+[mcp_servers.openspider]");
+  expect(await page.locator("body").innerHTML()).not.toContain(TEST_TOKEN);
+  await dialog.getByRole("button", { name: "Copy entry", exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.mcpFixture.clipboard.at(-1))).toBe(value.entry);
 });

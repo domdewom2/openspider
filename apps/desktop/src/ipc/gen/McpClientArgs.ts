@@ -2,7 +2,7 @@
 import type { McpClientKind } from "./McpClientKind";
 
 /**
- * Argument von `mcp.clientConfigPreview` und `mcp.clientConfigWrite`.
+ * Argument von `mcp.clientConfigPreview` und `mcp.clientDisconnect`.
  */
 export type McpClientArgs = { 
 /**

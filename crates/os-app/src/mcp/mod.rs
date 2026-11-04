@@ -25,7 +25,6 @@ pub struct State {
     pub http: Option<HttpServer>,
     pub server: Option<McpServer>,
     pub token: Option<TokenStore>,
-    pub previews: std::collections::HashMap<String, McpClientPreview>,
 }
 impl TickSource for Service {
     fn collect(&self, parts: &mut TickParts) {

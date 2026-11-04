@@ -25,3 +25,10 @@
 /* N04: keep catalogue headings and tool identifiers readable while scrolling. */
 .os-mcp-tools-table th { white-space: nowrap; overflow-wrap: normal; }
 .os-mcp-tools-table td:nth-child(2) code { white-space: nowrap; }
+
+/* B3-MCP (AGENT-043): one-click connection dialog. */
+.os-mcp-connect-grant { display:flex; flex-direction:column; gap:var(--os-size-4); }
+.os-mcp-hint { color:var(--os-text-muted); }
+.os-mcp-details > summary { cursor:pointer; }
+.os-mcp-details[open] > summary { margin-bottom:var(--os-size-8); }
+.os-mcp-details .os-mcp-hint { margin-bottom:var(--os-size-8); }

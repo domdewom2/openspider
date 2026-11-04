@@ -1,0 +1,21 @@
+{
+    "mcpServers": {
+        "filesystem": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "/Users/anna/Desktop",
+                "/Users/anna/Downloads"
+            ]
+        },
+        "brave-search": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+            "env": {
+                "BRAVE_API_KEY": "TESTSECRET-21"
+            }
+        }
+    },
+    "globalShortcut": "Alt+Space"
+}

@@ -4,6 +4,7 @@ import type { CallLogRow } from "./gen/CallLogRow";
 import type { McpClientArgs } from "./gen/McpClientArgs";
 import type { McpClientPreview } from "./gen/McpClientPreview";
 import type { McpClientWritten } from "./gen/McpClientWritten";
+import type { McpConnectArgs } from "./gen/McpConnectArgs";
 import type { McpStartArgs } from "./gen/McpStartArgs";
 import type { McpStatus } from "./gen/McpStatus";
 import type { McpToken } from "./gen/McpToken";
@@ -38,8 +39,10 @@ export const mcp = {
   saveToolsMarkdown: (args: PathArgs, signal?: AbortSignal) => client.invoke<void>("mcp.saveToolsMarkdown", args, signal),
   /** `mcp.clientConfigPreview` */
   clientConfigPreview: (args: McpClientArgs, signal?: AbortSignal) => client.invoke<McpClientPreview>("mcp.clientConfigPreview", args, signal),
-  /** `mcp.clientConfigWrite` */
-  clientConfigWrite: (args: McpClientArgs, signal?: AbortSignal) => client.invoke<McpClientWritten>("mcp.clientConfigWrite", args, signal),
+  /** `mcp.clientConnect` */
+  clientConnect: (args: McpConnectArgs, signal?: AbortSignal) => client.invoke<McpClientWritten>("mcp.clientConnect", args, signal),
+  /** `mcp.clientDisconnect` */
+  clientDisconnect: (args: McpClientArgs, signal?: AbortSignal) => client.invoke<McpClientWritten>("mcp.clientDisconnect", args, signal),
   /** `mcp.callLog` */
   callLog: (args: PageArgs, signal?: AbortSignal) => client.invoke<CallLogRow[]>("mcp.callLog", args, signal),
 } as const;

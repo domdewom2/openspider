@@ -20,9 +20,9 @@ pub const SERVER_NAME: &str = "openspider";
 pub enum Client {
     /// Claude Desktop (`claude_desktop_config.json`).
     ClaudeDesktop,
-    /// Claude Code (`.mcp.json` bzw. `claude mcp add-json`).
+    /// Claude Code (`~/.claude.json`, Abschnitt `mcpServers`, Benutzerebene).
     ClaudeCode,
-    /// OpenAI Codex (`~/.codex/config.toml`).
+    /// OpenAI Codex (`~/.codex/config.toml` bzw. `$CODEX_HOME/config.toml`).
     Codex,
     /// Cursor (`.cursor/mcp.json`).
     Cursor,
@@ -68,10 +68,14 @@ impl Client {
                  Konfiguration bearbeiten); \"mcpServers\" mit vorhandenen Einträgen zusammenführen."
             }
             Client::ClaudeCode => {
-                "In die Datei .mcp.json des Projekts einfügen oder mit `claude mcp add-json openspider \
-                 '<Eintrag>'` anlegen."
+                "In ~/.claude.json (bzw. $CLAUDE_CONFIG_DIR/.claude.json) unter \"mcpServers\" einfügen \
+                 (Benutzerebene); \"mcpServers\" mit vorhandenen Einträgen zusammenführen. Die App erledigt \
+                 das mit MCP > Mit Claude Code verbinden…"
             }
-            Client::Codex => "An ~/.codex/config.toml anhängen.",
+            Client::Codex => {
+                "An ~/.codex/config.toml (bzw. $CODEX_HOME/config.toml) anhängen. Die App erledigt das mit \
+                 MCP > Mit Codex verbinden…"
+            }
             Client::Cursor => {
                 "In .cursor/mcp.json (Projekt) oder ~/.cursor/mcp.json (global) einfügen; \"mcpServers\" mit \
                  vorhandenen Einträgen zusammenführen."
@@ -214,6 +218,20 @@ mod tests {
                 .len(),
             5
         );
+    }
+
+    // spec: AGENT-001
+    // spec: AGENT-043
+    #[test]
+    fn placement_hints_name_the_same_files_as_the_app() {
+        let code = Client::ClaudeCode.placement_hint();
+        assert!(code.contains("~/.claude.json") && code.contains("CLAUDE_CONFIG_DIR"));
+        assert!(!code.contains(".mcp.json"), "{code}");
+        let codex = Client::Codex.placement_hint();
+        assert!(codex.contains("~/.codex/config.toml") && codex.contains("CODEX_HOME"));
+        assert!(Client::ClaudeDesktop
+            .placement_hint()
+            .contains("claude_desktop_config.json"));
     }
 
     // spec: AGENT-001

@@ -7,12 +7,12 @@ import { registerAction, useAction } from "../../ui/actions";
 import { registerMenuContributions } from "../../ui/menu/registry";
 import { Banner, Button, Checkbox, Dialog, Menu, Tabs, TextField } from "../../ui/primitives";
 import { AccessPanel } from "./AccessPanel";
-import { ClientsPanel } from "./ClientsPanel";
+import { ClientsPanel, ConnectPanel, MCP_PROGRAMS } from "./ClientsPanel";
 import { LogPanel } from "./LogPanel";
 import { ToolsPanel } from "./ToolsPanel";
 import { nativeMcpDesktop, type McpDesktop } from "./desktop";
 import { mcpMenu, popupEntries } from "./menu";
-import { MCP_TABS, openMcp, parsePort, statusText, useMcpUi, type McpTab } from "./model";
+import { MCP_TABS, openConnect, openMcp, parsePort, statusText, useMcpUi, type McpTab } from "./model";
 import { useMcpController } from "./useMcpController";
 import "./mcp.css";
 
@@ -34,9 +34,9 @@ export function McpHost({ desktop = nativeMcpDesktop }: { desktop?: McpDesktop }
   const controller = useMcpController();
   const { prefs, busy, available, error, setError, perform, changeServer, autostart, refresh } = controller;
   const tab = useMcpUi(s => s.tab);
+  const connect = useMcpUi(s => s.connect);
   const status = useMcpUi(s => s.status);
   const [port, setPort] = useState("");
-  const [clientKind, setClientKind] = useState<McpClientKind>("claudeDesktop");
   const [downloaded, setDownloaded] = useState(false);
   const running = status.kind !== "off";
   useEffect(() => { if (tab) void refresh(true); }, [tab, refresh]);
@@ -59,9 +59,8 @@ export function McpHost({ desktop = nativeMcpDesktop }: { desktop?: McpDesktop }
   useAction("mcp.markdown", download);
   useEffect(() => {
     const offs = MCP_TABS.map(id => registerAction(id === "server" ? "mcp.configure" : `mcp.${id}`, () => openMcp(id)));
-    for (const kind of ["claudeDesktop", "claudeCode", "codex"] as const) offs.push(registerAction(`mcp.${kind}`, () => {
-      setClientKind(kind); openMcp("clients");
-    }));
+    // AGENT-043: each menu entry opens its own one-click connection dialog.
+    for (const kind of Object.keys(MCP_PROGRAMS) as McpClientKind[]) offs.push(registerAction(`mcp.${kind}`, () => openConnect(kind)));
     return () => offs.reverse().forEach(off => off());
   }, []);
   useEffect(() => {
@@ -70,6 +69,7 @@ export function McpHost({ desktop = nativeMcpDesktop }: { desktop?: McpDesktop }
     return registerMenuContributions("features/mcp", menu);
   }, [running, prefs?.autostart, busy, available]);
   const close = () => { useMcpUi.setState({ tab: null }); setDownloaded(false); };
+  const closeConnect = () => useMcpUi.setState({ connect: null });
   const serverPanel = <section className="os-mcp-stack" aria-label={t("mcp-server")}>
     <p>{statusText(status, t)}</p>
     <p>{t("mcp-loopback")}</p>
@@ -93,10 +93,14 @@ export function McpHost({ desktop = nativeMcpDesktop }: { desktop?: McpDesktop }
         <Tabs label={t("mcp-title")} selected={tab} onSelect={id => openMcp(id as McpTab)} tabs={MCP_TABS.map(id => ({
           id, label: t(`mcp-${id}`), content: id === tab ? (
             id === "server" ? serverPanel : id === "tools" ? <ToolsPanel controller={controller} download={download} /> :
-            id === "access" ? <AccessPanel desktop={desktop} /> : id === "clients" ? <ClientsPanel key={clientKind} initialClient={clientKind} desktop={desktop} /> : <LogPanel />
+            id === "access" ? <AccessPanel desktop={desktop} /> : id === "clients" ? <ClientsPanel initialClient="claudeDesktop" desktop={desktop} /> : <LogPanel />
           ) : undefined,
         }))} />
       </div>
+    </Dialog>}
+    {connect && <Dialog title={t("mcp-connect-title", { program: MCP_PROGRAMS[connect] })} isOpen onOpenChange={open => { if (!open) closeConnect(); }} size="medium"
+      footer={<div className="os-dialog-footer"><Button onPress={closeConnect}>{t("ui-dialog-close")}</Button></div>}>
+      <ConnectPanel key={connect} client={connect} desktop={desktop} />
     </Dialog>}
   </>;
 }
