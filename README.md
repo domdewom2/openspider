@@ -74,26 +74,27 @@ What makes it different: **AI agents are first-class users.** A built-in MCP ser
 
 ## Performance
 
-Measured on Apple Silicon with synthetic test sites (30 links per page), pre-alpha builds. Numbers will be updated as development continues.
+Measured on 4 November 2026 on a Mac mini (Apple M2, 16 GB) with the released OpenSpider 1.0.0-beta.2 CLI, a synthetic local test site (30 links per page) and default settings. Time runs from start until the crawl is saved and the internal URL table is exported; memory is the peak resident set size (RSS).
 
 **Crawling**
 
-| Crawl | Result |
-|---|---|
-| 1,000,000 URLs | about 4.5 minutes, **~3,600 URLs/s**, peak memory **< 0.5 GB** (Apple M2) |
-| Crash safety | 10 of 10 hard kills during a crawl resumed cleanly from the crawl file |
+| Crawl | Time (median of 3) | Throughput | Peak memory |
+|---|---|---|---|
+| 100,000 URLs | **48 s** | ~2,080 URLs/s | **0.85 GB** |
+| 1,000,000 URLs | **12 min 51 s** | ~1,300 URLs/s | **~1.05 GB** |
+
+Crash safety: 10 of 10 hard kills during a crawl resumed cleanly from the crawl file (development build, October 2026).
 
 **Side by side with a widely used commercial desktop SEO crawler** – same machine, same local test site with 100,000 URLs, both with default settings (5 threads), crawl saved and the internal URL table exported:
 
-| | OpenSpider | Commercial crawler |
+| | OpenSpider 1.0.0-beta.2 | Commercial crawler |
 |---|---|---|
-| Total time | **27 s** | 301 s |
-| Throughput | **~3,700 URLs/s** | ~350 URLs/s |
-| Peak memory | **0.76 GB** | 2.46 GB |
+| Total time | **48 s** | 333 s |
+| Peak memory | **0.85 GB** | 2.28 GB |
 
-About 10× faster with a third of the memory. A local test site has no network latency, so on real websites politeness limits and server response times narrow the gap. You can reproduce the OpenSpider side with the load-test tools in `crates/os-loadtest`.
+About 7× faster with roughly a third of the memory. A local test site has no network latency, so on real websites politeness limits and server response times narrow the gap. You can reproduce the OpenSpider side with the released CLI and the test site in `crates/os-testsite` (`os-testsite synthetic:n=100000,links=30`).
 
-**Working with the results – 5,000,000 URLs in one crawl file**
+**Working with the results – 5,000,000 URLs in one crawl file** (development build, October 2026)
 
 | Operation | Measured | Budget |
 |---|---|---|
