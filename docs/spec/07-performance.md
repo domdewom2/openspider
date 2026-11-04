@@ -50,7 +50,7 @@ OS-Festlegung (Entscheidung des Nutzers vom 02.11.2026, Fable-Empfehlung): Zeitb
 
 ### PERF-007 Skalierbare Nachlauf-Analysen
 - **Priorität:** P1
-- **Beschreibung:** Near-Duplicates per MinHash/LSH (nicht paarweise), Link Score iterativ auf der Crawl-Datei, alle Nachlauf-Analysen abbrechbar und mit Fortschrittsanzeige.
+- **Beschreibung:** Near-Duplicates per MinHash/LSH (nicht paarweise), Link Score iterativ aus der Crawl-Datei (der aufgelöste Kantengraph darf während der Iteration kompakt im Arbeitsspeicher liegen, solange die Speichergrenze aus TECH-145 eingehalten wird; Rohwerte deterministisch und bitgleich), alle Nachlauf-Analysen abbrechbar und mit Fortschrittsanzeige.
 - **Akzeptanzkriterien:**
   - [ ] Near-Duplicate-Analyse über 1.000.000 Seiten < 10 min, RSS < 2 GB.
   - [ ] Link Score über 30.000.000 Kanten < 5 min.
