@@ -33,10 +33,9 @@ fn reports(home: &Path) -> Vec<(PathBuf, Value)> {
             d.flatten()
                 .map(|e| e.path())
                 .filter(|p| {
-                    p.file_name()
-                        .unwrap()
-                        .to_string_lossy()
-                        .starts_with("crash-")
+                    // Nur fertige Berichte: `write_atomic` legt zuerst `crash-….<pid>.tmp` an.
+                    let name = p.file_name().unwrap().to_string_lossy();
+                    name.starts_with("crash-") && name.ends_with(".json")
                 })
                 .map(|p| {
                     let v = serde_json::from_str(&std::fs::read_to_string(&p).unwrap()).unwrap();
@@ -155,7 +154,10 @@ fn test_command_triggers_a_panic_report_in_debug_builds() {
         let _app = App::new(AppConfig::new(&home)).unwrap();
         let dir = home.join("logs").join("crashes");
         for _ in 0..200 {
-            if std::fs::read_dir(&dir).is_ok_and(|mut d| d.next().is_some()) {
+            if std::fs::read_dir(&dir).is_ok_and(|d| {
+                d.flatten()
+                    .any(|e| e.file_name().to_string_lossy().ends_with(".json"))
+            }) {
                 break;
             }
             std::thread::sleep(std::time::Duration::from_millis(10));
