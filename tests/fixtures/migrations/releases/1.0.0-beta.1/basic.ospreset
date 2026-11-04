@@ -1,0 +1,15 @@
+name = "Basic"
+singleWorkbook = false
+skipEmpty = true
+
+[[items]]
+kind = "tab"
+name = "Internal:All"
+
+[[items]]
+kind = "bulk"
+name = "Links:All Inlinks"
+
+[[items]]
+kind = "report"
+name = "Reports:Crawl Overview"

@@ -1,0 +1,47 @@
+{
+  "version": "1.0.0-beta.1",
+  "commit": "6f158856cb0cf353ae2ece899bc7d80bd326c975",
+  "schema": 5,
+  "files": [
+    {
+      "name": "crawl.ospider",
+      "source": "schema-v5/crawl.ospider",
+      "sha256": "c20be28648273efb7ce029cd3225572f586e7316d7201aec8d1b82a36fb5fe8c"
+    },
+    {
+      "name": "internal_all.csv",
+      "source": "schema-v5/internal_all.csv",
+      "sha256": "ac6714780a35bc0bf31a94acbe9b711794a9589582002381115b2296d37fc3a0"
+    },
+    {
+      "name": "profile.osconfig",
+      "source": "config-v2/profile.osconfig",
+      "sha256": "29fd728efb42b101364f1482c907950066b5b9cabbb9d6f10cb0da58e8f95a30"
+    },
+    {
+      "name": "basic.ospreset",
+      "source": "app-v1/basic.ospreset",
+      "sha256": "99de96a6a96b00a50b92877ce849d8b097b578f8ea5e02568048f7d5b5226169"
+    },
+    {
+      "name": "nightly.ostask",
+      "source": "app-v1/nightly.ostask",
+      "sha256": "4c61c3c0578e7cd34033cda3305b90043655b27091a64c876cb27e9613c14cb7"
+    },
+    {
+      "name": "profile.osauth",
+      "source": "app-v1/profile.osauth",
+      "sha256": "48076c834aa5235e84598812ee58b63c6d6b5bf452dd4abd508cc75d8cc7e3f5"
+    },
+    {
+      "name": "settings.toml",
+      "source": "app-v1/settings.toml",
+      "sha256": "f6a2120971e2454c197db2e9f2712491884fd48060ee3528e5d4b87f33423a25"
+    },
+    {
+      "name": "ui-state.json",
+      "source": "app-v1/ui-state.json",
+      "sha256": "50fb03964d24fa899338bc7aa0a6052fc9ff8a62c63547e71b2e81872483a564"
+    }
+  ]
+}

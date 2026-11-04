@@ -1,0 +1,66 @@
+version = 1
+
+[task]
+id = "nightly"
+name = "Nightly"
+project = "Shop"
+description = "Nächtlicher Crawl des Shops"
+enabled = true
+apis = ["gsc", "psi"]
+preset = "weekly-report"
+
+[task.schedule]
+kind = "weekly"
+days = [1, 3, 5]
+time = "02:30"
+
+[task.crawl]
+config = "shop"
+auth_profile = "shop-login"
+
+[task.crawl.source]
+kind = "spider"
+url = "https://example.test/"
+
+[task.crawl.overrides]
+"speed.threads" = "10"
+
+[task.execution]
+overlap = "skip"
+run_if_missed = true
+on_battery = true
+wake = false
+timeout_min = 120
+auto_compare = true
+
+[task.output]
+mode = "timestamped"
+save_crawl = true
+
+[[task.exports]]
+kind = "bulk"
+name = "Links:All Inlinks"
+format = "csv"
+
+[[task.exports]]
+kind = "sitemap"
+name = "pages"
+format = "csv"
+
+[task.export_options]
+items = [["tab", "Internal:All"], ["report", "Crawl Overview"]]
+format = "xlsx"
+dir = ""
+single_workbook = true
+skip_empty = true
+
+[task.custom_summary]
+account = "work"
+target = "Nightly_custom_summary_report"
+metrics = ["Internal:HTML", "Response Codes:Client Error (4xx)"]
+
+[task.notify]
+on_success = false
+on_failure = true
+account = "work"
+to = ["seo@example.test"]
