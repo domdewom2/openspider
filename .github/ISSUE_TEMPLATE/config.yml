@@ -3,3 +3,6 @@ contact_links:
   - name: Beta feedback form (no GitHub account needed)
     url: https://openspider.de/beta/#feedback
     about: Send feedback privately through the form on openspider.de. Deutsch ist auch ok.
+  - name: Questions and ideas (GitHub Discussions)
+    url: https://github.com/wojcikdominik/openspider/discussions
+    about: Ask questions, share ideas and discuss features with the community. Deutsch ist auch ok.

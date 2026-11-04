@@ -217,7 +217,7 @@ OpenSpider stays fully usable without any account. AI and external data features
 
 ## Contributing
 
-Issues and ideas are welcome. Contributions follow a few simple rules: work from the specification in [`docs/spec`](docs/spec), reference spec IDs in tests, keep `fmt`/`clippy`/tests green before every commit, and use only permissively licensed dependencies.
+Everyone is welcome to help: report bugs and request features via [Issues](https://github.com/wojcikdominik/openspider/issues/new/choose), ask questions and share ideas in [Discussions](https://github.com/wojcikdominik/openspider/discussions), or send a pull request. Contributions follow a few simple rules: work from the specification in [`docs/spec`](docs/spec), reference spec IDs in tests, keep `fmt`/`clippy`/tests green before every commit, and use only permissively licensed dependencies.
 
 ## License
 
