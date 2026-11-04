@@ -173,3 +173,32 @@ Dateien außerhalb der im Auftrag genannten eigenen Pfade, die das Paket ändern
 
 Nicht angefasst: `crates/os-analyze/**`, `crates/os-store/**`, `crates/os-cli/**`, `crates/os-mcp/src/tools/**`,
 Report-Code, andere Handbuch-Abschnitte, `site.css`.
+
+## Nachbesserung nach Fable-Review (needs_work 82/100)
+
+| Befund | Behebung | Commit |
+|---|---|---|
+| hoch: `.bak` mit umask-Rechten (0644/0664), Originale 0600 mit fremden Geheimnissen | Sicherung wird mit dem Modus der Originaldatei angelegt (`OpenOptionsExt::mode`) und vor dem Schreiben des Inhalts per `set_permissions` umask-unabhängig auf deren Rechte gesetzt (außerhalb von Unix nach dem Schreiben); neue Datei wie bisher. Test `permissions_of_the_previous_file_are_kept` prüft Original, neue Datei und Sicherung für 0600, 0644, 0640 | `cbbb1f0d` |
+| mittel: fremde Zeile vor dem Einfügepunkt (Komma) bzw. beliebiger Wurzelwert erscheint im Diff | Vorschau (`preview_diff`, ersetzt `masked_diff`) zeigt eine geänderte Zeile nur vollständig, wenn sie ganz zum eigenen Eintrag gehört (`os_mcp::client_config::own_lines`) **und** wörtlich im neu erzeugten Eintrag vorkommt; Leerzeilen als Leerzeilen; alles andere nur als `…` bzw. `…,`. Beim Testen fiel zusätzlich auf, dass ein vorhandener eigener Eintrag Zusätze des Nutzers mit Geheimnissen (`env`) tragen kann – auch diese Zeilen (und ein alter Programmpfad) erscheinen deshalb nur als `…`. Tests mit Werten ohne Geheimwort (`"lastHandle": "ZZOPAQUE-41"` ohne `mcpServers`, Argument eines fremden Servers in der letzten Zeile, einzeiliges JSON, TOML ohne Zeilenumbruch, `env` im eigenen Eintrag) | `900562c4`, `cbbb1f0d` |
+| niedrig a: `--print-config claude-code` nannte `.mcp.json`/`claude mcp add-json` | Hinweis nennt `~/.claude.json` (bzw. `$CLAUDE_CONFIG_DIR/.claude.json`), Abschnitt `mcpServers`, Benutzerebene; Codex `~/.codex/config.toml` bzw. `$CODEX_HOME/config.toml`; beide verweisen auf den App-Dialog. Test `placement_hints_name_the_same_files_as_the_app` | `5046888b` |
+| niedrig b: `CODEX_HOME`, `CLAUDE_CONFIG_DIR` | `client_path` verwendet sie, wenn absolut gesetzt; leer/relativ → Standardpfad; mit ausdrücklichem App-Heimordner (portabel, Tests) gelten sie nicht, damit Tests nie echte Benutzerdateien treffen. Reine Funktion mit Test `codex_home_and_claude_config_dir_are_honoured_when_absolute`; Spec AGENT-043 ergänzt, Handbuch DE/EN nennt beide Orte | `674eb4fc`, `cbbb1f0d`, `cb04cb97` |
+| niedrig c: Zusätze im eigenen Eintrag gehen beim Aktualisieren verloren | `own_extra_keys` liefert die zusätzlichen Schlüsselnamen (alphabetisch, nie Werte); Vorschau-Feld `extraKeys`; der Dialog zeigt „Der vorhandene Eintrag enthält eigene Zusätze (env, startup_timeout_sec). „Aktualisieren“ ersetzt den ganzen Eintrag; die Zusätze stehen danach nur noch in der Sicherung.“ Tests in `os-mcp`, `tests/mcp_clients.rs`, Vitest | `900562c4`, `cbbb1f0d`, `65f14cc8` |
+
+Entscheidungen übernommen: Freigabe `crawl` bleibt global (in AGENT-003 vermerkt, Hinweistext unverändert);
+Cursor nicht in diesem Branch (AGENT-043: „folgt als eigenes Paket“). Spec-Nachträge: `674eb4fc`, `6f5ddf52`.
+Die Maskierungsfunktion `client_config::mask` bleibt als Baustein mit ihren Tests erhalten; die Vorschau nutzt
+jetzt die strengere Zeilenregel.
+
+Prüfungen nach der Nachbesserung (Build-Server):
+
+| Befehl | Ergebnis |
+|---|---|
+| `cargo fmt --all --check` | OK |
+| `cargo clippy --workspace --all-targets -- -D warnings` | OK |
+| `cargo test --workspace` (mit `~/ws-slot.sh`) | 4333 bestanden, 0 fehlgeschlagen, 51 ignoriert (600 Suiten). Der erste Durchlauf brach erneut mit „No space left on device“ ab (Platte durch parallele Pakete voll); danach eigener `target` gelöscht und mit `CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0` wiederholt – grün |
+| `cargo deny check` | advisories, bans, licenses, sources OK |
+| `cargo test -p os-mcp --lib` | 82 bestanden (darunter `own_lines_cover_exactly_the_own_entry`, `user_additions_in_the_own_entry_are_named_without_values`, `placement_hints_name_the_same_files_as_the_app`) |
+| `cargo test -p os-app --lib mcp::` / `--test mcp_clients` | 7 + 4 bestanden (Rechte 0600/0644/0640 inkl. Sicherung, „…“-Vorschau, Zusätze im eigenen Eintrag, `CODEX_HOME`/`CLAUDE_CONFIG_DIR`) |
+| `npm run -w apps/desktop typecheck` / `npm run -w apps/desktop test` | OK / 114 Dateien, 987 Tests bestanden |
+| Playwright MCP-Suite (Chromium, `--workers=1`, `dialog.spec.ts`, `bridge.spec.ts`) | 12 bestanden (10,6 min) |
+| `node website/check-site.mjs`, `bash scripts/check-neutral.sh` | OK (20 Seiten), keine Fundstellen |
