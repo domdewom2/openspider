@@ -11,7 +11,7 @@ Open-source website crawler and technical SEO auditor – built for AI agents an
   <img src="https://img.shields.io/badge/platforms-macOS%20(Apple%20Silicon%20%26%20Intel)%20%7C%20Windows-lightgrey.svg" alt="Platforms">
   <img src="https://img.shields.io/badge/core-Rust-orange.svg" alt="Rust">
   <img src="https://img.shields.io/badge/MCP-native-8A2BE2.svg" alt="MCP native">
-  <img src="https://img.shields.io/badge/status-alpha-yellow.svg" alt="Status: alpha">
+  <a href="https://github.com/wojcikdominik/openspider/releases/latest"><img src="https://img.shields.io/badge/status-beta-orange.svg" alt="Status: beta"></a>
 </p>
 
 <p align="center">
@@ -100,9 +100,8 @@ Memory for an open view over 5 million rows stays around 60 MB. The table never 
 
 ## Installation
 
-The public beta starts in November 2026 – see the [beta page](https://openspider.de/en/beta/). The [download page](https://openspider.de/download/)
-contains clearly marked GitHub Releases asset URL templates and SHA256SUMS guidance;
-these templates are not live downloads. Desktop targets: macOS 13+ (Apple Silicon/Intel),
+The public beta is live: download the latest version from [GitHub Releases](https://github.com/wojcikdominik/openspider/releases/latest)
+(DMG for macOS, setup.exe or MSI for Windows, CLI archives; verify with `SHA256SUMS`) and see the [beta page](https://openspider.de/en/beta/). Desktop targets: macOS 13+ (Apple Silicon/Intel),
 Windows 10 1809+ / Windows 11 x64, and Windows on ARM via x64 emulation.
 Linux x86_64 with glibc supports the core and CLI only; Linux desktop,
 .deb/.rpm and arm64 releases remain unsupported.
@@ -198,7 +197,7 @@ A Cargo workspace of focused crates (`os-fetch`, `os-parse`, `os-render`, `os-st
 |---|---|---|
 | **M1** | Crawl core, storage, CLI, MCP (read-only), core analyses | ✅ done |
 | **M2** | Desktop app, all analysis tabs, reports, JavaScript rendering, Google APIs | ✅ done |
-| **M3** | Signed installers, auto-update, public beta → **1.0** | 🚧 in progress – public beta in November 2026 |
+| **M3** | Signed installers, auto-update, public beta → **1.0** | 🚧 in progress – public beta since November 2026 |
 | **M4** | AI features: page classification, optimization suggestions, “ask your crawl”, AI search visibility (Claude, OpenAI, OpenRouter, Ollama) | after 1.0 |
 | **M5** | External SEO data (keywords, backlinks, SERP, LLM mentions) | after 1.0 |
 
