@@ -46,6 +46,15 @@ pub enum Resolved {
         /// Filter (mit Platzhaltern der Schwellen).
         filter: String,
     },
+    /// Tab und Filter mit Vergleichs-Unterfilter (`"Internal:HTML:Missing"`, OUT-151; nur im Vergleich).
+    CompareTab {
+        /// Tab.
+        tab: String,
+        /// Filter (mit Platzhaltern der Schwellen).
+        filter: String,
+        /// Unterfilter Added/New/Removed/Missing.
+        class: os_analyze::compare::CompareClass,
+    },
     /// Link-/Response-Codes-Bulk-Export.
     Bulk(String),
     /// Issues-Export (`Issues:All Issues`).
@@ -55,10 +64,22 @@ pub enum Resolved {
 }
 
 impl Resolved {
+    /// Tab, Filter und ggf. Vergleichs-Unterfilter eines Tab-Exports.
+    pub fn tab_parts(&self) -> Option<(&str, &str, Option<os_analyze::compare::CompareClass>)> {
+        match self {
+            Resolved::Tab { tab, filter } => Some((tab, filter, None)),
+            Resolved::CompareTab { tab, filter, class } => Some((tab, filter, Some(*class))),
+            _ => None,
+        }
+    }
+
     /// Schlüssel zum Entfernen von Duplikaten (kanonischer Name in Kleinbuchstaben).
     pub fn key(&self) -> String {
         match self {
             Resolved::Tab { tab, filter } => format!("tab:{tab}:{filter}").to_lowercase(),
+            Resolved::CompareTab { tab, filter, class } => {
+                format!("tab:{tab}:{filter}:{}", class.as_str()).to_lowercase()
+            }
             Resolved::Bulk(n) => format!("bulk:{n}").to_lowercase(),
             Resolved::Issues => "bulk:issues".to_string(),
             Resolved::Report(n) => format!("report:{n}").to_lowercase(),
@@ -150,7 +171,18 @@ pub fn resolve_with(
     match kind {
         Kind::Tab => match catalog::resolve_with(ExportKind::Tab, &normalize(input), cfg) {
             Ok(catalog::ExportRef::Tab { tab, filter }) => Ok(Resolved::Tab { tab, filter }),
-            _ => Err(unknown()),
+            _ => {
+                // OUT-151 (Nutzerentscheidung 04.11.2026): letzter Namensteil als Vergleichs-Unterfilter, nur wenn der
+                // ganze Name kein Tab-Export ist.
+                let (rest, last) = input.rsplit_once(':').ok_or_else(unknown)?;
+                let class = os_analyze::compare::CompareClass::parse(last).ok_or_else(unknown)?;
+                match catalog::resolve_with(ExportKind::Tab, &normalize(rest), cfg) {
+                    Ok(catalog::ExportRef::Tab { tab, filter }) => {
+                        Ok(Resolved::CompareTab { tab, filter, class })
+                    }
+                    _ => Err(unknown()),
+                }
+            }
         },
         Kind::Bulk => {
             if bulk_issues::resolve(input).is_ok() {

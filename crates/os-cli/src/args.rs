@@ -193,7 +193,8 @@ pub struct RunArgs {
     pub segment: Option<String>,
 
     /// Tab-Exporte `"Tab:Filter,…"` (z. B. `"Internal:All,Response Codes:Client Error (4xx)"`); Kommas im
-    /// Namen mit `\,` maskieren.
+    /// Namen mit `\,` maskieren. Im Vergleich wählt ein dritter Teil den Unterfilter: `"Internal:HTML:Missing"`
+    /// (Added, New, Removed, Missing; OUT-151).
     #[arg(long, value_name = "TAB:FILTER,…", help_heading = "Exporte")]
     pub export_tabs: Vec<String>,
 

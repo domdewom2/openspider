@@ -2,6 +2,7 @@ Accessibility:Violations Summary
 Canonicals:Canonical Chains
 Canonicals:Non-Indexable Canonicals
 Cookie Summary
+Crawl Changes
 Crawl Overview
 HTTP Header Summary
 Hreflang:All Hreflang URLs

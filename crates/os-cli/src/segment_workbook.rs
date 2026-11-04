@@ -43,6 +43,8 @@ pub async fn export(
         for item in &plan.exports {
             let (kind, name) = match item {
                 Resolved::Tab { tab, filter } => ("tab", format!("{tab}:{filter}")),
+                // Vergleichs-Unterfilter gibt es nur im Vergleich (OUT-151); ohne Vergleich keine Tabelle.
+                Resolved::CompareTab { .. } => continue,
                 Resolved::Bulk(name) => ("bulk", name.clone()),
                 Resolved::Issues => ("bulk", os_export::catalog::bulk_issues::BULK_NAME.into()),
                 Resolved::Report(name) => ("report", name.clone()),
