@@ -276,7 +276,9 @@ fn kinds_for(c: &Comparison, current: &UrlState, previous: Option<&UrlState>) ->
             out.push(ChangeKind::PageGone);
         }
     }
-    if current.is_error() && previous.is_none_or(|p| !p.is_error()) {
+    // „ohne Fehler antwortete“ (OUT-154): Fehler oder keine Antwort im Previous-Crawl ist nicht neu (wie `All Errors`,
+    // OUT-080).
+    if current.is_error() && previous.is_none_or(|p| !p.is_error() && !p.no_response()) {
         out.push(ChangeKind::NewError);
     }
     if current.redirect_target.is_some() && previous.is_none_or(|p| p.redirect_target.is_none()) {

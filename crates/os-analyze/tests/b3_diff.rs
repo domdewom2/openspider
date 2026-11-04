@@ -390,3 +390,50 @@ fn mapped_targets_body_canonicals_and_status_only_changes_are_no_change() {
         [ChangeKind::NewRedirect, ChangeKind::IndexabilityChanged]
     );
 }
+
+// spec: OUT-154
+#[test]
+fn no_response_is_not_a_new_error_and_counts_as_an_indexability_change() {
+    let dir = tempfile::tempdir().unwrap();
+    // u: vorher keine Antwort, jetzt 404 → kein „New Error“ (vorher nicht „ohne Fehler geantwortet“).
+    // v: vorher indexierbar, jetzt keine Antwort → „Page Gone“ und „Indexability Changed“, kein „New Error“.
+    let previous = format!(
+        "{URL}(1,'https://{{host}}/u','https://{{host}}/u','https://{{host}}',1,1,'done','link',0,20,'Unknown',0,'Non-Indexable','No Response',NULL,NULL,NULL),\
+         (2,'https://{{host}}/v','https://{{host}}/v','https://{{host}}',1,1,'done','link',0,20,'HTML',200,'Indexable','',NULL,NULL,NULL);"
+    );
+    let current = format!(
+        "{URL}(1,'https://{{host}}/u','https://{{host}}/u','https://{{host}}',1,1,'done','link',0,20,'Other',404,'Non-Indexable','Client Error',NULL,NULL,NULL),\
+         (2,'https://{{host}}/v','https://{{host}}/v','https://{{host}}',1,1,'done','link',0,20,'Unknown',NULL,'Non-Indexable','No Response',NULL,NULL,NULL);"
+    );
+    let c = Comparison::open(
+        side(
+            dir.path(),
+            1,
+            "2026-01-01T00:00:00.000Z",
+            "site.test",
+            &previous,
+        ),
+        side(
+            dir.path(),
+            2,
+            "2026-02-01T00:00:00.000Z",
+            "site.test",
+            &current,
+        ),
+        &[],
+        &CancelToken::new(),
+    )
+    .unwrap();
+    let rows = changes::crawl_changes(&c, &CancelToken::new()).unwrap();
+    let kinds = |id: i64| -> Vec<ChangeKind> {
+        rows.iter()
+            .filter(|r| r.current.as_ref().is_some_and(|s| s.id == id))
+            .map(|r| r.kind)
+            .collect()
+    };
+    assert_eq!(kinds(1), [ChangeKind::IndexabilityChanged]);
+    assert_eq!(
+        kinds(2),
+        [ChangeKind::PageGone, ChangeKind::IndexabilityChanged]
+    );
+}
