@@ -50,6 +50,16 @@ Geprüft mit beta.2 an `tests/fixtures/out-m2-compare` (v1 → v2): Vergleich pe
 - **Canonical-Ziel in Change Detection:** Heute wird nur Indexability verglichen; ein Wechsel des Canonical-Ziels A → B bei gleichbleibendem „Canonicalised“ bleibt unsichtbar. Neues Element (Spec: TECH-300/OUT-144 erweitern), ebenso Weiterleitungsziel.
 - **Report „Änderungen seit dem letzten Crawl“:** fertiger Report (App, CLI `--save-report`, MCP) mit verschwundenen Seiten, neuen Weiterleitungen und -ketten, geänderten Canonicals, Indexierbarkeitswechseln. Handbuch: Abschnitt „Deployment prüfen“ mit SQL-Beispiel.
 
+## 4b Docker-Image (Nutzerentscheidung 04.11.2026)
+
+Anlass: LinkedIn-Frage nach einer Self-Hosted-Docker-Lösung. Grundlage besteht (OUT-273 Linux-Serverbetrieb: CLI, Exporte, geplante Läufe, MCP über STDIO; Release-Archiv `openspider_<v>_linux-x86_64.tar.gz`).
+
+- Dockerfile auf Basis des Linux-Release-Archivs (glibc, x86_64) mit Chromium für JS-Rendering (`OPENSPIDER_CHROMIUM`), nicht als root, Arbeitsordner `/data`, `OPENSPIDER_HOME` als Volume.
+- Beispiele: Crawl mit Export (`docker run --rm -v "$PWD:/data" … --headless --crawl … --output-folder /data`), Vergleich mit dem vorherigen Crawl, MCP über `docker run -i … mcp`.
+- Release-Workflow: Image bauen, Smoke-Test (Crawl gegen `os-testsite`, Export, MCP-Handshake), signieren/SBOM prüfen; Veröffentlichung in der GitHub Container Registry (`ghcr.io/wojcikdominik/openspider`) **nur nach ausdrücklichem Go des Nutzers**.
+- Spec: OUT-273 bzw. neuer Eintrag im Release-Abschnitt (06) um das Image ergänzen; Handbuch-Abschnitt „Docker“; README-Installation.
+- Klar sagen: keine Weboberfläche im Container (Desktop-App bleibt die UI).
+
 ## 5 Release-Ablauf
 
 - Entwurfshinweise („unsigniert“, „Installations-Smoke“, „TODO M2-Parität“) nur in die Zusammenfassung des Actions-Laufs, nicht in den Release-Text (Fable-Empfehlung zu m3/rel-assets).
