@@ -131,7 +131,48 @@ it("Hilfe-Aktionen öffnen echte Dialoge; leere Nutzungsstatistik zeigt keinen F
   act(() => { runAction("app.about", { source: "menu" }); });
   expect(await screen.findByText("Apache 2.0 license")).toBeVisible();
   expect(screen.getByText("Third-party notices")).toBeVisible();
-  expect(await screen.findByText("OpenSpider 0.1.0 fixture")).toBeVisible();
+  const version = await waitFor(() => { const node = document.querySelector('[data-about="version"]'); expect(node).not.toBeNull(); return node!; });
+  expect(version).toHaveTextContent(/Version 0\.1\.0 · Build fixture/);
+});
+
+// spec: UI-002
+it("Über OpenSpider nennt den Entwickler und öffnet Website und Quellcode im Standardbrowser", async () => {
+  dispose = installMainMenus();
+  const open = vi.spyOn(window, "open").mockImplementation(() => null);
+  try {
+    render(<HelpDialogs />);
+    act(() => { runAction("app.about", { source: "menu" }); });
+    expect(await screen.findByText("Developed by")).toBeVisible();
+    expect(document.querySelector('[data-about="developer"]')).toHaveTextContent("Dominik Wojcik");
+    expect(screen.getByText("© 2026 Dominik Wojcik and the OpenSpider contributors")).toBeVisible();
+    const website = screen.getByRole("link", { name: "openspider.de" });
+    expect(website).toHaveAttribute("href", "https://openspider.de/");
+    fireEvent.click(website);
+    await waitFor(() => expect(open).toHaveBeenCalledWith("https://openspider.de/", "_blank", "noopener,noreferrer"));
+    const source = screen.getByRole("link", { name: "github.com/wojcikdominik/openspider" });
+    expect(source).toHaveAttribute("href", "https://github.com/wojcikdominik/openspider");
+    fireEvent.click(source);
+    await waitFor(() => expect(open).toHaveBeenCalledWith("https://github.com/wojcikdominik/openspider", "_blank", "noopener,noreferrer"));
+  } finally {
+    open.mockRestore();
+  }
+});
+
+// spec: UI-002
+it("Über OpenSpider öffnet die Links in der App über browser_open", async () => {
+  setClient(createClient({ ...core.transport(), name: "tauri" }));
+  core.handlers.set("browser_open", () => undefined);
+  const open = vi.spyOn(window, "open").mockReturnValue(null);
+  dispose = installMainMenus();
+  render(<HelpDialogs />);
+  act(() => { runAction("app.about", { source: "menu" }); });
+  for (const [name, url] of [["openspider.de", "https://openspider.de/"], ["github.com/wojcikdominik/openspider", "https://github.com/wojcikdominik/openspider"]] as const) {
+    core.calls.length = 0;
+    fireEvent.click(await screen.findByRole("link", { name }));
+    await waitFor(() => expect(core.calls.find(call => call.cmd === "browser_open")?.args).toEqual({ urls: [url] }));
+  }
+  expect(open).not.toHaveBeenCalled();
+  open.mockRestore();
 });
 
 // spec: UI-002
