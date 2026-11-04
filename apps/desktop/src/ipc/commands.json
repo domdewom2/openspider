@@ -900,7 +900,13 @@
     "longRunning": false
   },
   {
-    "name": "mcp.clientConfigWrite",
+    "name": "mcp.clientConnect",
+    "args": "McpConnectArgs",
+    "ret": "McpClientWritten",
+    "longRunning": false
+  },
+  {
+    "name": "mcp.clientDisconnect",
     "args": "McpClientArgs",
     "ret": "McpClientWritten",
     "longRunning": false

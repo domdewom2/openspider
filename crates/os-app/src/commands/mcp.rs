@@ -109,12 +109,21 @@ pub fn register(r: &mut Registry) {
     );
     r.register(
         CommandMeta {
-            name: "mcp.clientConfigWrite",
+            name: "mcp.clientConnect",
+            args: "McpConnectArgs",
+            ret: "McpClientWritten",
+            long_running: false,
+        },
+        |app, _, args| Box::pin(run(app, "mcp.clientConnect", args)),
+    );
+    r.register(
+        CommandMeta {
+            name: "mcp.clientDisconnect",
             args: "McpClientArgs",
             ret: "McpClientWritten",
             long_running: false,
         },
-        |app, _, args| Box::pin(run(app, "mcp.clientConfigWrite", args)),
+        |app, _, args| Box::pin(run(app, "mcp.clientDisconnect", args)),
     );
     r.register(
         CommandMeta {
@@ -215,11 +224,20 @@ async fn run(app: &App, name: &str, args: Value) -> CmdResult {
         }
         "mcp.clientConfigPreview" => {
             let args: McpClientArgs = parse_args(args)?;
-            to_json(&mcp::clients::preview(app, &mut state, args.client)?)
+            to_json(&mcp::clients::preview(app, args.client)?)
         }
-        "mcp.clientConfigWrite" => {
+        "mcp.clientConnect" => {
+            let args: McpConnectArgs = parse_args(args)?;
+            to_json(&mcp::clients::connect(
+                app,
+                &state,
+                args.client,
+                args.allow_crawl,
+            )?)
+        }
+        "mcp.clientDisconnect" => {
             let args: McpClientArgs = parse_args(args)?;
-            to_json(&mcp::clients::write(app, &mut state, args.client)?)
+            to_json(&mcp::clients::disconnect(app, args.client)?)
         }
         "mcp.callLog" => {
             let args: PageArgs = parse_args(args)?;

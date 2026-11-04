@@ -77,7 +77,7 @@ pub enum McpClientKind {
     Codex,
 }
 
-/// Argument von `mcp.clientConfigPreview` und `mcp.clientConfigWrite`.
+/// Argument von `mcp.clientConfigPreview` und `mcp.clientDisconnect`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct McpClientArgs {
@@ -85,27 +85,72 @@ pub struct McpClientArgs {
     pub client: McpClientKind,
 }
 
-/// Vorschau der Client-Konfiguration.
+/// Argument von `mcp.clientConnect` (AGENT-043, Nutzerentscheidung 04.11.2026).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
+pub struct McpConnectArgs {
+    /// Client.
+    pub client: McpClientKind,
+    /// Haken „Agent darf Crawls starten“: Klasse `crawl` aufnehmen bzw. entfernen (AGENT-003).
+    pub allow_crawl: bool,
+}
+
+/// Zustand des eigenen Eintrags `openspider` in der Client-Datei.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum McpClientState {
+    /// Kein Eintrag.
+    NotConnected,
+    /// Eintrag vorhanden und gleich dem erzeugten.
+    Connected,
+    /// Eintrag vorhanden, aber abweichend.
+    Outdated,
+}
+
+/// Warum eine Client-Datei nicht geändert werden kann.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+pub enum McpClientProblem {
+    /// Kein gültiges JSON/TOML (Zeile in `line`).
+    Syntax,
+    /// Gültig, aber nicht formatbewahrend änderbar.
+    Unsupported,
+    /// Die Datei ist ein Symlink.
+    Symlink,
+}
+
+/// Vorschau der Client-Konfiguration: nur maskierte, geänderte Zeilen, nie die fremde Datei.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(optional_fields = nullable)]
 pub struct McpClientPreview {
     /// Konfigurationsdatei des Clients.
     pub path: String,
-    /// Inhalt vorher.
-    pub before: String,
-    /// Inhalt nachher.
-    pub after: String,
-    /// Unterschiede (Unified Diff).
-    pub diff: String,
+    /// Zustand des eigenen Eintrags (bei `problem` der zuletzt bestimmbare, sonst `notConnected`).
+    pub state: McpClientState,
+    /// Grund, warum Verbinden und Trennen gesperrt sind.
+    pub problem: Option<McpClientProblem>,
+    /// Zeile des Syntaxfehlers (1-basiert).
+    pub line: Option<u32>,
+    /// Änderungen beim Verbinden/Aktualisieren (maskiert, ohne Kontext; leer = keine Änderung).
+    pub connect_diff: String,
+    /// Änderungen beim Trennen (maskiert, ohne Kontext; leer = kein Eintrag).
+    pub disconnect_diff: String,
+    /// Eigener Eintrag zum Kopieren (wie `openspider mcp --print-config`).
+    pub entry: String,
+    /// Klasse `crawl` ist derzeit freigegeben.
+    pub crawl_allowed: bool,
 }
 
-/// Ergebnis von `mcp.clientConfigWrite`.
+/// Ergebnis von `mcp.clientConnect` und `mcp.clientDisconnect`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(optional_fields = nullable)]
 pub struct McpClientWritten {
-    /// Sicherungskopie der alten Datei (`null`, wenn es keine gab).
+    /// Sicherungskopie der alten Datei (`null`, wenn es keine gab oder nichts geschrieben wurde).
     pub backup_path: Option<String>,
+    /// Die Datei wurde geändert.
+    pub changed: bool,
 }
 
 /// Eine Zeile des Aufrufprotokolls (ohne Geheimnisse).

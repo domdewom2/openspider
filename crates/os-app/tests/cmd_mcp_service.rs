@@ -94,58 +94,7 @@ async fn server_lifecycle_token_rotation_and_autostart() {
     .unwrap();
     call(&app, "mcp.stop", Value::Null).await;
 }
-// spec: AGENT-043 [P1]
-// spec: AGENT-001 [M2]
-#[tokio::test]
-async fn client_config_requires_preview_preserves_other_servers_and_backs_up() {
-    let home = tempfile::tempdir().unwrap();
-    let app = App::new(AppConfig::new(home.path())).unwrap();
-    for (client, path, before) in [
-        (
-            "claudeDesktop",
-            std::path::PathBuf::from("Claude").join("claude_desktop_config.json"),
-            "{\"mcpServers\":{\"foreign\":{\"command\":\"keep\"}}}",
-        ),
-        (
-            "codex",
-            std::path::PathBuf::from(".codex").join("config.toml"),
-            "[mcp_servers.foreign]\ncommand = 'keep'\n",
-        ),
-    ] {
-        let path = home.path().join(path);
-        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-        std::fs::write(&path, before).unwrap();
-        assert!(app
-            .dispatch(
-                CallCtx::for_window("main"),
-                "mcp.clientConfigWrite",
-                json!({"client":client})
-            )
-            .await
-            .is_err());
-        let preview = call(&app, "mcp.clientConfigPreview", json!({"client":client})).await;
-        assert_eq!(preview["before"], before);
-        assert!(preview["diff"].as_str().unwrap().contains("+"));
-        let written = call(&app, "mcp.clientConfigWrite", json!({"client":client})).await;
-        assert_eq!(
-            std::fs::read_to_string(written["backupPath"].as_str().unwrap()).unwrap(),
-            before
-        );
-        let after = std::fs::read_to_string(&path).unwrap();
-        assert!(after.contains("foreign") && after.contains("openspider"));
-        call(&app, "mcp.clientConfigPreview", json!({"client":client})).await;
-        std::fs::write(&path, before).unwrap();
-        assert!(app
-            .dispatch(
-                CallCtx::for_window("main"),
-                "mcp.clientConfigWrite",
-                json!({"client":client})
-            )
-            .await
-            .is_err());
-        assert_eq!(std::fs::read_to_string(path).unwrap(), before);
-    }
-}
+// Client-Konfigurationen (AGENT-043, Verbinden mit einem Klick): `tests/mcp_clients.rs`.
 // spec: AGENT-043 [P1]
 #[tokio::test]
 async fn invocation_log_redacts_credentials_and_records_sizes() {
