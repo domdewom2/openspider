@@ -78,3 +78,5 @@ Anlass: LinkedIn-Frage nach einer Self-Hosted-Docker-Lösung. Grundlage besteht 
 - macOS-Zeitgrenzen in `render_chromium.rs` (Zeile ~213 pixel.png, ~635 late_paint 1500 ms vs. 1533 ms).
 - Pfadfilter: Commits, die nur `website/`, `README.md` oder `docs/` ändern, sollen laufende main-CI nicht abbrechen bzw. keine volle CI auslösen.
 - Weitere bekannte Flakes: Intel, SMTP, `robots_step_m2`.
+- Windows: `cmd_profile_runtime.rs:270` `secret_references_and_plain_exports_never_persist_credentials` liest beim Durchsuchen eine Datei, die noch eine SQLite-Verbindung sperrt (Os code 33, „locked a portion of the file“; main-CI f725eeeb, 04.11.2026). Test erst scannen lassen, wenn alle Verbindungen geschlossen sind – nicht lockern.
+- macOS-arm64-Runner bei GitHub zeitweise nicht verfügbar („not acquired by Runner … capacity constraints“, 04.11.2026): solche Abbrüche erneut starten, nicht als Testfehler werten.
