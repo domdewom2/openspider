@@ -195,7 +195,7 @@ jobs:
         # Mit Shard nur das Hauptprojekt (wie ui-e2e.yml): `<engine>-perf` hängt davon ab und liefe sonst in jedem
         # Shard ungeteilt mit.
         run: |
-          args=(--reporter=list,html,junit)
+          args=("--reporter=list,html,junit")
           if [ -n "${{ matrix.shard }}" ]; then
             args+=(--project=${{ matrix.projects }} --shard=${{ matrix.shard }})
           fi
