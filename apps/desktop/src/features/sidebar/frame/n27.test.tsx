@@ -111,5 +111,6 @@ it("names the age in German", async () => {
   await setLanguage("de");
   core.handlers.set("sidebar.overview", () => ({ ...fixture.overview, ageMs: 12_400 }));
   render(<Providers><SidebarFrame /></Providers>);
-  expect(await screen.findByText("Stand vor 12 s")).toBeVisible();
+  // Windows-Runner rendern den ersten Aufbau teils langsamer als die Standard-Wartezeit von 1 s.
+  expect(await screen.findByText("Stand vor 12 s", {}, { timeout: 5_000 })).toBeVisible();
 });

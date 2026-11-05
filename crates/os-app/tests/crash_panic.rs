@@ -163,7 +163,8 @@ fn test_command_triggers_a_panic_report_in_debug_builds() {
     if let Some(home) = in_child() {
         let _app = App::new(AppConfig::new(&home)).unwrap();
         let dir = home.join("logs").join("crashes");
-        for _ in 0..200 {
+        // Langsame Windows-Runner brauchen für Panic-Hook und Schreiben mehr als 2 s; die Prüfung im Elternprozess bleibt gleich.
+        for _ in 0..1000 {
             if std::fs::read_dir(&dir).is_ok_and(|d| {
                 d.flatten()
                     .any(|e| e.file_name().to_string_lossy().ends_with(".json"))
