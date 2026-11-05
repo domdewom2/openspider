@@ -26,6 +26,9 @@
 //!
 //! Was bei einem harten Abbruch ungeschrieben bleibt, ist durch die Konstanten begrenzt: Kanal
 //! ([`CHANNEL_CAPACITY`]) plus größter Batch ([`BATCH_PAGES_BACKLOG`]) plus die Abrufe in Bearbeitung (K-49).
+//! Eine Worker-Nachricht trägt höchstens eine Seite, der Kanal also höchstens [`CHANNEL_CAPACITY`] Seiten; der
+//! Batch in der Senke und der sich füllende Batch sind nie gleichzeitig offen. Mit 8 Threads:
+//! 8 + 1 024 + 4 000 = 5 032 Seiten je Abbruch (vor B3-QUEUE 8 + 256 + 4 000 = 4 264).
 //!
 //! Ein Fehler der Senke wird gemerkt; danach verwirft der Thread weitere Batches (die Worker blockieren
 //! nicht) und meldet den Fehler bei `flush`/`finish`. Die Engine bricht den Crawl dann ab.
@@ -44,8 +47,9 @@ use tokio::sync::{mpsc, oneshot};
 pub const BATCH_PAGES: usize = 200;
 /// Größter Batch bei Rückstau. M2-E07: im 250k-Lauf 75 s Writer-Zeit bei 101 s Crawl,
 /// 316 kumulierte Worker-Sekunden Kanalwartezeit und fast nur volle 2k-Batches.
-/// 4k bündelt die zufälligen Zähler-/Indexänderungen stärker; Kanal (256 Nachrichten)
-/// und Sammelzeit (500 ms) bleiben begrenzt. Der Batch-Speicher verdoppelt sich höchstens.
+/// 4k bündelt die zufälligen Zähler-/Indexänderungen stärker; Kanal (damals 256 Nachrichten,
+/// seit B3-QUEUE [`CHANNEL_CAPACITY`]) und Sammelzeit (500 ms) bleiben begrenzt. Der Batch-Speicher
+/// verdoppelt sich höchstens.
 /// K-49: Die Schranke ungeschriebener Seiten bei hartem Abbruch wächst um den Batchanteil
 /// von 2 000 auf 4 000 Seiten; dazu kommen Kanal und Abrufe in Bearbeitung.
 /// Im vollständigen 1M-Vergleich sank die Writer-Zeit von 396 auf 295 s bei 803 MB RSS;
@@ -56,13 +60,56 @@ pub const BATCH_PAGES_BACKLOG: usize = 4_000;
 /// Kein exaktes RSS-Limit: Vec-Wachstum und Allocator-Metadaten kommen hinzu.
 pub const BATCH_BYTES: u64 = 8 * 1024 * 1024;
 /// Shared admission threshold for fetched bodies and unwritten results (PERF-003).
-pub const IN_FLIGHT_BYTES: u64 = 16 * 1024 * 1024;
+///
+/// B3-QUEUE: drei Batches. Neben dem Batch in der Senke passt der nächste volle Batch in den Kanal
+/// (Referenzseiten: 8 MiB + 9 MiB, siehe [`CHANNEL_CAPACITY`]); der Rest deckt die Abrufe und
+/// Auswertungen der aktiven Worker. Mit 16 MiB (zwei Batches, M2-N20) griff die Schwelle, bevor der
+/// Kanal einen vollen Batch hielt; 32 MiB brachten gegenüber 24 MiB keinen messbaren Gewinn
+/// (Server, 1 Mio. URLs: 696 gegen 692 s) bei etwas mehr Puffer (PERF-003: 448 gegen 445 MB).
+pub const IN_FLIGHT_BYTES: u64 = 3 * BATCH_BYTES;
 /// Längste Wartezeit, bis ein nicht voller Batch im Normalbetrieb geschrieben wird.
 pub const BATCH_MAX_WAIT: Duration = Duration::from_millis(100);
 /// Längste Wartezeit beim Sammeln eines Gruppen-Commits (Rückstau).
 pub const BATCH_MAX_WAIT_BACKLOG: Duration = Duration::from_millis(500);
+/// Höchstzahl der Nachrichten je Seite im Kanal: die Discovery-Nachricht (neue URLs, Warteschlange) vor der
+/// Seite (`worker.rs`). Eine Obergrenze, kein Normalfall: Sind alle Ziele schon bekannt, entfällt die
+/// Discovery-Nachricht. Zu Crawlbeginn kommen fast zwei Nachrichten je Seite an, im eingeschwungenen Crawl
+/// eher eine.
+pub const MESSAGES_PER_PAGE: usize = 2;
+/// Geschätzte Nutzdaten (`estimate_bytes`) einer Seite der PERF-001-Fixture
+/// (`synthetic:n=1000000,links=30`) samt Discovery-Nachricht. Gemessen (B3-PERF, 1 Mio. URLs): 2 156
+/// Batches zu je rund 464 Seiten, die am Nutzdatenbudget [`BATCH_BYTES`] enden, also gut 18 000 Byte je Seite.
+pub const REFERENCE_PAGE_BYTES: u64 = 18 * 1024;
 /// Nachrichten, die im Kanal warten dürfen, bevor die Worker blockieren.
-pub const CHANNEL_CAPACITY: usize = 256;
+///
+/// Abgeleitet aus der Batchgröße (B3-QUEUE): Der Kanal fasst auch im ungünstigsten Fall (zwei Nachrichten je
+/// Seite, [`MESSAGES_PER_PAGE`]) die Nachrichten eines am Nutzdatenbudget vollen Batches der Referenzseite,
+/// auf die nächste Zweierpotenz gerundet (8 MiB / 18 KiB = 455 Seiten, × 2 Nachrichten = 910, also 1 024).
+/// Während der Writer einen Batch schreibt, legen die Worker den nächsten vollständig in den Kanal; danach
+/// findet der Writer einen vollen Batch vor, statt bis zur Sammelzeit zu warten. Mit 256 Nachrichten
+/// (≈ 128 Seiten) warteten Writer und Worker abwechselnd (1 Mio. URLs: Writer 235 s untätig, Worker 41 %
+/// ihrer Zeit blockiert).
+///
+/// „Ein Batch“ gilt genau so nur zu Crawlbeginn. Im eingeschwungenen Crawl (rund eine Nachricht je Seite)
+/// fasst der Kanal Seiten für gut zwei Batches; dann begrenzt die Byte-Schwelle [`IN_FLIGHT_BYTES`] den
+/// Puffer, nicht die Kanalgröße (PERF-005, 1 Mio.: höchstens 1 492 wiederholte Abrufe je Abbruch, also
+/// Kanal und Batch weit unter ihren Seitengrenzen).
+pub const CHANNEL_CAPACITY: usize =
+    (MESSAGES_PER_PAGE * (BATCH_BYTES / REFERENCE_PAGE_BYTES) as usize).next_power_of_two();
+
+// B3-QUEUE: Die Herleitung gilt beim Übersetzen. Der Kanal fasst die Nachrichten eines vollen Batches der
+// Referenzseite, aber höchstens die doppelte Zahl (Kanalanteil der K-49-Grenze); der Batch in der Senke und ein
+// voller Kanal aus Referenzseiten liegen unter der Zulassungsschwelle. Laufzeitprüfung gegen Fixture-Seiten:
+// Test `the_channel_holds_the_next_full_batch_of_reference_pages_while_the_writer_writes`.
+const _: () = {
+    let pages_per_batch = (BATCH_BYTES / REFERENCE_PAGE_BYTES) as usize;
+    // `>=`: Ist das Produkt selbst eine Zweierpotenz (z. B. Referenzseite 16 KiB: 2 × 512 = 1 024), bleibt
+    // `next_power_of_two` bei ihm stehen.
+    assert!(CHANNEL_CAPACITY >= MESSAGES_PER_PAGE * pages_per_batch);
+    assert!(CHANNEL_CAPACITY <= 2 * MESSAGES_PER_PAGE * pages_per_batch);
+    let channel_bytes = (CHANNEL_CAPACITY / MESSAGES_PER_PAGE) as u64 * REFERENCE_PAGE_BYTES;
+    assert!(BATCH_BYTES + channel_bytes < IN_FLIGHT_BYTES);
+};
 
 /// Nach großen Batches ungenutzte Allocator-Seiten zurückgeben (PERF-003).
 /// Kleine normale Commits benötigen diesen zusätzlichen Systemaufruf nicht.
@@ -766,7 +813,11 @@ fn writer_loop(
                 pages += b.pages.len();
                 merge(&mut batch, *b);
                 first_at.get_or_insert_with(Instant::now);
-                // Rückstau auch dann, wenn schon mehr als ein Achtel des Kanals wartet.
+                // Rückstau auch dann, wenn schon mehr als ein Achtel des Kanals wartet. B3-QUEUE: bewusst relativ
+                // gelassen (bei 1 024 Nachrichten also ab 129 statt ab 33). Hauptauslöser ist `behind` (nach jedem
+                // Schreiben mit nicht leerem Kanal); die Achtel-Regel greift nur für den ersten Batch nach einer
+                // Ruhephase, und 129 Nachrichten sind höchstens 129 Seiten, weniger als `BATCH_PAGES`. Spätestens
+                // der nächste Batch sammelt dann mit `BATCH_PAGES_BACKLOG`. Alle B3-QUEUE-Messungen liefen so.
                 let backlog = behind || rx.len() * 8 > capacity;
                 let limit = if backlog {
                     BATCH_PAGES_BACKLOG
@@ -961,6 +1012,96 @@ mod tests {
         assert_eq!(tx.shared.budget.bytes.load(Ordering::SeqCst), 0);
         drop(tx);
         assert_eq!(writer.finish().unwrap().pages, 1);
+    }
+
+    // spec: PERF-002, PERF-003
+    // B3-QUEUE: Während der Writer einen vollen Batch schreibt, legen die Worker den nächsten vollen Batch aus
+    // Referenzseiten im ungünstigsten Fall (je eine Discovery- und eine Seitennachricht, Crawlbeginn) in den Kanal,
+    // ohne auf Platz im Kanal oder auf das Byte-Gate zu warten. Danach schreibt der Writer ihn am Nutzdatenbudget,
+    // ohne auf die Sammelzeit zu warten.
+    #[tokio::test]
+    async fn the_channel_holds_the_next_full_batch_of_reference_pages_while_the_writer_writes() {
+        struct GatedSink {
+            entered: Option<oneshot::Sender<()>>,
+            release: std::sync::mpsc::Receiver<()>,
+            pages: Arc<Mutex<Vec<usize>>>,
+        }
+        impl CrawlSink for GatedSink {
+            fn write(&mut self, batch: WriteBatch) -> Result<(), StoreError> {
+                if let Some(entered) = self.entered.take() {
+                    let _ = entered.send(());
+                    self.release.recv().unwrap();
+                }
+                self.pages.lock().unwrap().push(batch.pages.len());
+                Ok(())
+            }
+            fn checkpoint(&mut self) -> Result<(), StoreError> {
+                Ok(())
+            }
+        }
+        fn page_of(bytes: u64) -> WriteBatch {
+            let mut batch = page_batch(1);
+            let overhead = estimate_bytes(&batch);
+            batch.pages[0].html = Some(os_model::PageHtml {
+                encoding: None,
+                body: vec![b'x'; (bytes - overhead) as usize],
+            });
+            assert_eq!(estimate_bytes(&batch), bytes);
+            batch
+        }
+        let (entered, wait) = oneshot::channel();
+        let (release, block) = std::sync::mpsc::channel();
+        let pages = Arc::new(Mutex::new(Vec::new()));
+        let writer = WriterThread::spawn(Box::new(GatedSink {
+            entered: Some(entered),
+            release: block,
+            pages: Arc::clone(&pages),
+        }));
+        let tx = writer.sender();
+        // Ein Batch am Nutzdatenbudget geht sofort in die Senke und bleibt dort, bis der Test ihn freigibt.
+        tx.send(page_of(BATCH_BYTES)).await.unwrap();
+        wait.await.unwrap();
+        // Der nächste volle Batch im ungünstigsten Fall: je Seite eine Discovery- und eine Seitennachricht.
+        let discovery = event("discovery");
+        let discovery_bytes = estimate_bytes(&discovery);
+        let per_batch = (BATCH_BYTES / REFERENCE_PAGE_BYTES) as usize;
+        for i in 0..per_batch {
+            let slot = tx
+                .try_reserve()
+                .unwrap_or_else(|_| panic!("Worker wartet vor Discovery {i} von {per_batch}"));
+            slot.send(event("discovery"));
+            let slot = tx
+                .try_reserve()
+                .unwrap_or_else(|_| panic!("Worker wartet vor Seite {i} von {per_batch}"));
+            slot.send(page_of(REFERENCE_PAGE_BYTES - discovery_bytes));
+        }
+        // Eine überzählige Seite mit bekannten Zielen (ohne Discovery) überschreitet das Budget. Sie passt noch in
+        // den Kanal, außer der Batch füllt ihn genau (Referenzseite mit Zweierpotenz-Produkt, z. B. 16 KiB); dann
+        // endet der Batch schon an seiner letzten Seite am Budget, und die überzählige Seite folgt nach der Freigabe.
+        let extra = page_of(REFERENCE_PAGE_BYTES);
+        let extra = match tx.try_reserve() {
+            Ok(slot) => {
+                slot.send(extra);
+                None
+            }
+            Err(_) => {
+                assert_eq!(CHANNEL_CAPACITY, MESSAGES_PER_PAGE * per_batch);
+                Some(extra)
+            }
+        };
+        assert!(
+            tx.shared.budget.bytes.load(Ordering::SeqCst) < IN_FLIGHT_BYTES,
+            "der schreibende und der wartende Batch liegen unter der Zulassungsschwelle"
+        );
+        release.send(()).unwrap();
+        if let Some(extra) = extra {
+            tx.send(extra).await.unwrap();
+        }
+        tx.flush().await.unwrap();
+        drop(tx);
+        writer.finish().unwrap();
+        // Der wartende Batch endet am Nutzdatenbudget (nicht an der Sammelzeit); die überzählige Seite folgt allein.
+        assert_eq!(*pages.lock().unwrap(), vec![1, per_batch, 1]);
     }
 
     // spec: PERF-003, PERF-005
