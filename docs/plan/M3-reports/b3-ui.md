@@ -139,7 +139,8 @@ Esc im Diagramm, Pfeiltasten-Navigation (Verhaltensentscheidungen). V01 „Balke
 | `fedec433` | ui: Update-Dialog, Aktionen einzeilig (Fund 5) |
 | `85fa6f72` | app: Start-URL nach dem Öffnen (Fund 3) |
 | `f2e134c4` | app: „Nach Updates suchen“ robust (Fund 6) |
-| (dieser) | docs: Bericht |
+| `a94fdc8d` | docs: Bericht |
+| Nachbesserung | siehe Abschnitt „Nachbesserung nach Fable-Review“ |
 
 ## Testergebnisse (Server)
 
@@ -184,22 +185,50 @@ Das Paket hat keine eigene Owns-Liste; alle Dateien gehören Bereichen früherer
 
 Kein Manifest, kein Lockfile, keine neue Abhängigkeit, kein `cargo update`.
 
-## Spec-Fragen und offene Punkte
+## Nachbesserung nach Fable-Review (changes requested 82, 05.11.2026)
 
-1. **UI-003** – OS-Festlegung „Start-URL nach dem Öffnen“ (Text oben, Fund 3) bitte bestätigen und in die Spec
-   übernehmen.
-2. **OUT-251** – optionales Kriterium „Aktionen einzeilig“ (Fund 5).
-3. **Export der Seitenleisten-Tabellen** (Kopieren/Exportieren in Übersicht und Befunde) nutzt weiter die kanonischen
+**Mittel – „Löschen“ schrieb die Start-URL zurück.** Ursache: `session::close(…, cleared = true)` veröffentlicht den
+alten Status mit leerer `crawl_id` und Phase `idle`, ließ `start_url` aber stehen; der Effekt in `Header.tsx` reagierte
+auf den Wechsel `crawlId` „saved-1“ → „“ und überschrieb das Feld (auch beim Moduswechsel, der denselben Weg über
+`crawl.clear()` nimmt).
+
+- Fix im Kern: `crates/os-app/src/session/mod.rs` setzt im Clear-Pfad `status.start_url = None`.
+- Absicherung im Frontend: `Header.tsx` übernimmt die Start-URL nur bei nichtleerer `crawlId` und Phase ≠ `idle`.
+- Tests: Rust `session_feed::cleared_view_drops_the_start_url_of_the_closed_crawl` (`crawl.clear` → leere Kennung, `Idle`,
+  kein `startUrl` im JSON); Vitest `Header.test.tsx` „keeps a typed URL after clearing a reopened crawl …“ (getippte URL
+  bleibt nach „Löschen“, auch wenn ein geleerter Status noch eine Start-URL nennt; `// spec: UI-003`). Gegenprobe: mit
+  dem bisherigen Effekt schlägt der Vitest-Fall fehl.
+
+**Spec (als OS-Festlegung bzw. Prüfkriterium eingetragen):**
+
+- `docs/spec/05-ui.md` UI-003: OS-Festlegung „Start-URL nach dem Öffnen“ (Text aus Fund 3) plus „‚Löschen‘ und ein
+  Moduswechsel lassen das Feld unverändert (die Start-URL des geleerten Crawls wird nicht erneut übernommen).“ und
+  „Gezeigt wird die gespeicherte Start-URL in der Form der Crawl-Datei.“
+- `docs/spec/06-output-ops.md` OUT-251: Kriterium „Aktionsschaltflächen des Update-Dialogs in de und en einzeilig, ohne
+  abgeschnittenen Text, bei 1024×640; Prüfung per E2E“ (Test `update.spec.ts` „update actions stay on one line …“).
+
+**Filter `Flash`:** Kanon-Eintrag `filter-flash` in de und en („Flash“, im Deutschen gleichlautend wie „Plugins“;
+als Formatname in die Ausnahmeliste des Sprach-Audits). Neuer Audit-Fall in `language-audit.test.ts`: jeder Tab und
+Filter des Katalog-Fixtures `fx-ui-basic-catalog.json` hat ein deutsches Label (ohne den Eintrag schlägt er fehl).
+
+**Prüfungen (Server):** Typecheck ok; Vitest komplett **116 Dateien, 1003 Tests bestanden**; `cargo test -p os-app
+--test session_feed --test update_install_flow --test dto_exports` ok (22 Tests); `cargo fmt --all --check` ok;
+`cargo clippy --workspace --all-targets -- -D warnings` ok; Playwright `header/header.spec.ts` und
+`update/update.spec.ts` mit echter Bridge **Chromium 11/11, WebKit 11/11**. Kein Workspace-Volltest (nur `os-app`
+berührt). `target/` danach gelöscht, Server-Worktree belegt wieder nur Quellen und `node_modules`.
+
+## Spec-Fragen und offene Punkte (Backlog)
+
+1. **Export der Seitenleisten-Tabellen** (Kopieren/Exportieren in Übersicht und Befunde) nutzt weiter die kanonischen
    englischen Namen, die Spaltenköpfe aber die UI-Sprache (bestehendes Verhalten, `overviewRows`/`issueRows`). Soll das
    der Exportoption „Spaltennamen in UI-Sprache“ folgen?
-4. **Vergleichsmodus** (`ComparisonNumbers`): Tab-Namen und die Spaltenköpfe „Current/Previous/Change“ erscheinen
+2. **Vergleichsmodus** (`ComparisonNumbers`): Tab-Namen und die Spaltenköpfe „Current/Previous/Change“ erscheinen
    unübersetzt; nicht Teil dieses Pakets (Bereich Vergleich), Kandidat für den Render-Audit.
-5. **Kanon-Lücke:** Filter `Flash` (Internal/External, Harness-Katalog) hat kein deutsches Label.
-6. **Natives Menü, Langläufer:** Jeder Neuaufbau (u. a. bei jedem Fokuswechsel zwischen Tabelle, Feld und Dialog) legt
+3. **Natives Menü, Langläufer:** Jeder Neuaufbau (u. a. bei jedem Fokuswechsel zwischen Tabelle, Feld und Dialog) legt
    alle Menüeinträge neu an, geschlossen wird nur das oberste Menü. Die alten Einträge bleiben als Ressourcen im
    Speicher (Wachstum über viele Stunden). Vorsicht bei einer Bereinigung: Tauri entfernt beim `Drop` eines Eintrags
    den Handler seiner ID – und die ID ist beim Nachfolger dieselbe; ein naives Schließen der alten Einträge würde das
    Menü stumm schalten. Vorschlag: Einträge nur bei geänderter Beschriftung/Aktivierung neu anlegen
    (`setText`/`setEnabled`) oder eindeutige IDs je Aufbau.
-7. **Fund 6** bleibt offen, bis er erneut auftritt; dann bitte prüfen, ob das Hauptfenster minimiert oder ausgeblendet
+4. **Fund 6** bleibt offen, bis er erneut auftritt; dann bitte prüfen, ob das Hauptfenster minimiert oder ausgeblendet
    war, und das App-Log der Instanz sichern.
