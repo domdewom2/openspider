@@ -28,7 +28,7 @@ export function Header() {
   const status = useSession(useShallow(s => s.crawl ? {
     crawlId: s.crawl.crawlId, mode: s.crawl.mode, phase: s.crawl.phase,
     endReason: s.crawl.endReason, activeThreads: s.crawl.activeThreads,
-    controllable: s.crawl.owner.controllable,
+    controllable: s.crawl.owner.controllable, startUrl: s.crawl.startUrl ?? null,
   } : null));
   const { mode, url, scope } = useHeader();
   const [history, setHistory] = useState<string[]>([]);
@@ -76,6 +76,12 @@ export function Header() {
   useEffect(() => {
     if (status) useHeader.setState({ mode: status.mode });
   }, [status?.crawlId, status?.mode]);
+
+  // UI-003 (OS-Festlegung proposed in B3-UI): an opened crawl brings its start URL into the field; it follows only a new
+  // crawl (or the URL arriving with a later status), so typing in the field is never overwritten by live ticks.
+  useEffect(() => {
+    if (status?.startUrl) useHeader.setState({ url: status.startUrl });
+  }, [status?.crawlId, status?.startUrl]);
 
   useEffect(() => {
     if (!pending || !status) return;

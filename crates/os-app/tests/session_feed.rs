@@ -46,6 +46,23 @@ async fn durable_crawled_count_matches_visible_completed_urls_without_progress_s
     assert_eq!(status.queued, 2);
 }
 
+// spec: UI-003
+#[tokio::test]
+async fn opened_crawl_status_carries_its_start_url_for_the_header() {
+    // B3-UI: after reopening a saved crawl the header shows its start URL; the status of the session carries it.
+    let dir = tempfile::tempdir().unwrap();
+    let (app, _) = manual_app(dir.path());
+    let f = create(&dir.path().join("start-url.ospider"), cfg());
+    f.set_meta("state", "Completed").unwrap();
+    insert(&f, 1, 0);
+    open(&app, f.path()).await;
+    os_app::session::poll(&app).await.unwrap();
+    let status = app.assemble_tick().unwrap().crawl.unwrap();
+    assert_eq!(status.start_url.as_deref(), Some("https://fixture.test/"));
+    let json = serde_json::to_value(&status).unwrap();
+    assert_eq!(json["startUrl"], "https://fixture.test/");
+}
+
 // spec: ONPAGE-193
 // spec: UI-018
 #[tokio::test]

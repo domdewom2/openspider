@@ -103,6 +103,7 @@ pub fn from_progress(id: String, m: CrawlModeDto, owner: CrawlOwner, p: &Progres
         memory_used_bytes: p.memory_used_bytes,
         memory_limit_bytes: p.memory_limit_bytes,
         merging: None,
+        start_url: None,
     }
 }
 
@@ -292,6 +293,7 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
                         memory_used_bytes: None,
                         memory_limit_bytes: None,
                         merging: None,
+                        start_url: None,
                     });
                     if before.last.is_none() || seq != before.seq {
                         let counts = os_store::queries::session_counts(&tx)?;
@@ -321,6 +323,8 @@ pub async fn refresh(app: &App, s: &SessionInfo) -> Result<(), CmdError> {
                 }
                 status.phase = phase(state);
                 status.end_reason = end_reason.map(|r| r.as_str().into());
+                // UI-003 (B3-UI): the header shows the start URL of an opened crawl.
+                status.start_url = m.start_url.clone();
                 if state != CrawlState::Running {
                     status.active_threads = 0;
                     status.rate = 0.0;
@@ -492,6 +496,7 @@ pub(super) fn settled(app: &App, s: &SessionInfo, progress: &Progress) {
         .status
         .as_ref()
         .map_or(mode(s.config.mode), |s| s.mode);
+    let start_url = cursor.status.as_ref().and_then(|s| s.start_url.clone());
     let mut status = from_progress(
         s.key.0.clone(),
         mode,
@@ -505,6 +510,7 @@ pub(super) fn settled(app: &App, s: &SessionInfo, progress: &Progress) {
     );
     status.active_threads = 0;
     status.rate = 0.0;
+    status.start_url = start_url;
     if progress.state == CrawlState::Completed {
         status.percent = completed_percent(
             status.percent,

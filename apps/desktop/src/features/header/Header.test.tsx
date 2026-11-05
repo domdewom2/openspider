@@ -151,3 +151,22 @@ it("passes sitemap URLs to the existing engine list planner without fetching in 
   expect(calls("crawl.start")[0]?.args).toMatchObject({ source: { kind: "list", items: ["https://site.test/sitemap.xml.gz"] } });
   expect(calls("crawl.parseList")).toHaveLength(0);
 });
+
+// spec: UI-003
+it("shows the start URL of a reopened crawl and leaves typed text alone until another crawl opens (B3-UI)", async () => {
+  render(<Header />);
+  const field = screen.getByLabelText("Start URL") as HTMLInputElement;
+  expect(field.value).toBe("");
+  // A saved crawl is opened (no engine in this process): the status of the crawl file carries its start URL.
+  const opened = { ...tick, seq: 1, crawl: { ...tick.crawl!, crawlId: "saved-1", phase: "completed" as const, startUrl: "https://saved.test/blog/" } };
+  act(() => useSession.getState().applyTick(opened));
+  await waitFor(() => expect(field.value).toBe("https://saved.test/blog/"));
+  enterUrl("other.test");
+  act(() => useSession.getState().applyTick({ ...opened, seq: 2, crawl: { ...opened.crawl, crawled: opened.crawl.crawled + 1 } }));
+  expect(field.value).toBe("other.test");
+  act(() => useSession.getState().applyTick({ ...opened, seq: 3, crawl: { ...opened.crawl, crawlId: "saved-2", startUrl: "https://second.test/" } }));
+  await waitFor(() => expect(field.value).toBe("https://second.test/"));
+  // List crawls have no start URL; the field keeps its value.
+  act(() => useSession.getState().applyTick({ ...opened, seq: 4, crawl: { ...opened.crawl, crawlId: "list-1", mode: "list" as const, startUrl: null } }));
+  expect(useHeader.getState().url).toBe("https://second.test/");
+});
