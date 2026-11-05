@@ -4,7 +4,8 @@
       "args": [
         "mcp"
       ],
-      "command": "/Applications/OpenSpider.app/Contents/MacOS/openspider"
+      "command": "/Applications/OpenSpider.app/Contents/MacOS/openspider",
+      "type": "stdio"
     }
   }
 }
