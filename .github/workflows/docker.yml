@@ -78,7 +78,8 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'push' && startsWith(github.event.workflow_run.head_branch, 'v'))
-    runs-on: ubuntu-latest
+    # Feste Runner-Version: das bewegliche Standard-Label wechselt auf 26.04 (Docker-Version und Werkzeuge ändern sich).
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     permissions:
       contents: read
@@ -123,6 +124,30 @@ jobs:
             *) echo "::error::Unbekannte Quelle: $source"; exit 1 ;;
           esac
           { echo "source=$source"; echo "run_id=$run_id"; echo "version=$version"; } >> "$GITHUB_OUTPUT"
+
+      # Nur Läufe von "Release orchestration" dieses Repositorys, erfolgreich, aus Tag-Push oder manuellem Start.
+      - name: Release-Lauf prüfen
+        if: steps.input.outputs.source == 'run'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ steps.input.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          info="$(gh api "repos/$REPOSITORY/actions/runs/$RUN_ID" \
+            --jq '[.name, .head_repository.full_name, .conclusion, .event] | @tsv')" \
+            || { echo "::error::Lauf $RUN_ID nicht lesbar."; exit 1; }
+          IFS=$'\t' read -r name repo conclusion event <<< "$info"
+          problems=()
+          [[ "$name" == "Release orchestration" ]] || problems+=("Workflow '$name' statt 'Release orchestration'")
+          [[ "$repo" == "$REPOSITORY" ]] || problems+=("Repository '$repo' statt '$REPOSITORY'")
+          [[ "$conclusion" == success ]] || problems+=("Ergebnis '$conclusion' statt 'success'")
+          [[ "$event" == push || "$event" == workflow_dispatch ]] || problems+=("Auslöser '$event' statt push/workflow_dispatch")
+          if (( ${#problems[@]} )); then
+            printf '::error::Lauf %s ist kein gültiger Release-Lauf: %s\n' "$RUN_ID" "$(IFS=';'; echo "${problems[*]}")"
+            exit 1
+          fi
+          echo "Release-Lauf $RUN_ID: $name, $repo, $conclusion, $event"
 
       - name: Artefakt release-assets des Release-Laufs laden
         if: steps.input.outputs.source == 'run'
@@ -256,7 +281,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' && inputs.publish && inputs.source == 'release' &&
       github.ref == 'refs/heads/main' && needs.image.outputs.identical == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment: ghcr
     permissions:

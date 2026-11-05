@@ -3,6 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -209,6 +210,52 @@ test('Workflow: Push nach ghcr.io nur im Job publish, nur per workflow_dispatch 
   // Kein automatischer Push bei Tags: Tag-Läufe kommen nur über workflow_run in den Job image.
   assert.doesNotMatch(text, /\n {2}push:\n(?: {4}.*\n)* {4}tags:/);
   assert.doesNotMatch(text, /\n {2}release:\n/);
+});
+
+// Shell-Rumpf eines benannten Schritts, eingerückt wie GitHub Actions ihn ausführt.
+function stepScript(name) {
+  const block = workflow().split(`      - name: ${name}\n`)[1];
+  assert.ok(block, `Schritt fehlt: ${name}`);
+  const body = block.split('        run: |\n')[1].split(/\n\n|\n {6}- /)[0];
+  return body.split('\n').map(line => line.startsWith('          ') ? line.slice(10) : line).join('\n');
+}
+
+// spec: OUT-274
+test('Image und Veröffentlichung laufen auf festem ubuntu-24.04', () => {
+  const blocks = jobs(workflow());
+  for (const name of ['image', 'publish']) assert.match(blocks[name], /\n {4}runs-on: ubuntu-24\.04\n/, name);
+  assert.doesNotMatch(blocks.image + blocks.publish, /ubuntu-latest/);
+});
+
+// spec: OUT-274
+test('source=run: Lauf wird vor dem Artefakt-Download geprüft (Name, Repository, Erfolg, Auslöser)', t => {
+  const image = jobs(workflow()).image;
+  const check = image.indexOf('- name: Release-Lauf prüfen');
+  assert.ok(check > 0 && check < image.indexOf('- name: Artefakt release-assets des Release-Laufs laden'), 'Prüfung vor dem Download');
+  assert.match(image, /- name: Release-Lauf prüfen\n {8}if: steps\.input\.outputs\.source == 'run'\n/);
+  const script = stepScript('Release-Lauf prüfen');
+  const dir = mkdtempSync(join(tmpdir(), 'openspider-run-check-'));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  // Ersatz für `gh api …`: gibt die TSV-Zeile aus FAKE_RUN aus (wie --jq '… | @tsv').
+  writeFileSync(join(dir, 'gh'), '#!/usr/bin/env bash\nprintf "%s\\n" "$FAKE_RUN"\n', { mode: 0o755 });
+  const runCheck = fields => spawnSync('bash', ['-c', script], {
+    encoding: 'utf8',
+    env: { ...process.env, PATH: `${dir}:${process.env.PATH}`, REPOSITORY: 'owner/openspider', RUN_ID: '42', FAKE_RUN: fields.join('\t') },
+  });
+  const ok = ['Release orchestration', 'owner/openspider', 'success'];
+  for (const event of ['push', 'workflow_dispatch']) assert.equal(runCheck([...ok, event]).status, 0, event);
+  for (const [fields, message] of [
+    [['Docker image', 'owner/openspider', 'success', 'push'], /Workflow 'Docker image'/],
+    [['Release orchestration', 'fork/openspider', 'success', 'push'], /Repository 'fork\/openspider'/],
+    [['Release orchestration', 'owner/openspider', 'failure', 'push'], /Ergebnis 'failure'/],
+    [['Release orchestration', 'owner/openspider', 'success', 'pull_request'], /Auslöser 'pull_request'/],
+    [['Release orchestration', 'owner/openspider', 'success', 'workflow_run'], /Auslöser 'workflow_run'/],
+  ]) {
+    const result = runCheck(fields);
+    assert.notEqual(result.status, 0, fields.join(' '));
+    assert.match(result.stdout, /::error::Lauf 42 ist kein gültiger Release-Lauf: /);
+    assert.match(result.stdout, message);
+  }
 });
 
 // spec: OUT-274
