@@ -640,9 +640,6 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
         )?;
     }
     print!("{}", report.summary_text());
-    for id in &unknown_merged {
-        println!("  Warnung: unbekanntes gemergtes M2-Paket ignoriert: {id}");
-    }
     for name in &failed_tests {
         println!("  FAILED {name}");
     }
