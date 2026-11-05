@@ -14,7 +14,7 @@ lokal noch auf dem Server zur Verfügung: Bauen und Smoke-Test laufen erstmals i
 | Build-Kontext | `packaging/docker/.dockerignore` | nur der Starter |
 | Smoke-Test | `packaging/docker/smoke.mjs` | 13 Prüfungen, nur Node-Stdlib, lokal auf Linux ausführbar |
 | OCI-/SBOM-Prüfung | `packaging/docker/oci.mjs` | SBOM/Provenance, Gleichheit mit dem geprüften Image |
-| Vertragstest | `packaging/docker/docker.test.mjs` | 16/16 grün (Server), je Test `// spec: OUT-274` |
+| Vertragstest | `packaging/docker/docker.test.mjs` | 18/18 grün (Server), je Test `// spec: OUT-274` |
 | Workflow | `.github/workflows/docker.yml` | actionlint 1.7.12 (mit shellcheck) ohne Befund |
 | Spec | `docs/spec/06-output-ops.md` | neu **OUT-274** (P1) in Abschnitt 13 |
 | Doku | Handbuch de/en, Download-Seite de/en, `README.md`, `docs/release/docker.md` | `check-site` und `check-neutral` grün |
@@ -163,8 +163,8 @@ Danach „OCI-Export und Attestierungen“: SBOM mit `chromium`, `tini`, `ca-cer
 6. Einmalig: Paket in den GitHub-Paketeinstellungen auf öffentlich stellen und prüfen, dass es mit dem Repository
    verknüpft ist (Label `org.opencontainers.image.source`).
 
-Die Website-Abschnitte schreiben „wird mit dem Release unter ghcr.io … veröffentlicht“ und nennen den Selbstbau als
-Weg ohne Registry; sie sollten erst deployt werden, wenn der Push freigegeben ist oder unmittelbar bevorsteht.
+Website, Handbuch und README nennen ghcr.io nach der Nachbesserung nur als vorbereitet; alle Beispiele nutzen den
+lokalen Tag aus dem Selbstbau und funktionieren damit auch vor der ghcr-Freigabe.
 
 ## Spec-Änderung
 
@@ -176,7 +176,7 @@ Inhaltsübersicht „OUT-260 – OUT-274 … Docker-Image“ und ein Nachtrag in
 
 ## Geprüft (Server `m3-docker`)
 
-- `node --test packaging/docker/*.test.mjs`: 16/16.
+- `node --test packaging/docker/*.test.mjs`: 16/16 (nach der Nachbesserung 18/18).
 - hadolint 2.15.1: ohne Befund (bewusst ignoriert mit Begründung: DL3008 Versions-Pin, DL3064 für den Namen
   `OPENSPIDER_SECRET_STORE`). Befund am Werkzeug: hadolint setzt die Shell nach `ARG` auf sh zurück; `SHELL` steht
   deshalb nach den `ARG`s jeder Stufe.
@@ -233,8 +233,39 @@ OpenSpider selbst: Apache-2.0 mit `THIRD_PARTY_NOTICES.txt` aus dem Release.
 5. **Gemischte Benutzer auf einem `/config`:** Wer abwechselnd als 10001 und mit `--user` startet, bekommt Ordner mit
    verschiedenen Eigentümern. Doku empfiehlt eine Variante; ein Startskript, das Rechte korrigiert, würde root brauchen.
 6. **arm64-Image** gibt es nicht (Linux-CLI nur x86_64, OUT-264). Docker Desktop auf Apple Silicon emuliert.
-7. **Absturzberichte im Container:** `OPENSPIDER_DISABLE_CRASH_REPORTS` habe ich nicht gesetzt (keine Spec-Aussage
-   zum Containerbetrieb); bitte entscheiden.
+7. **Absturzberichte im Container:** entschieden (Fable): `OPENSPIDER_DISABLE_CRASH_REPORTS` bleibt ungesetzt; die
+   CLI legt Berichte nur lokal unter `/config/logs/crashes` ab, das Handbuch sagt das.
 8. **Kopplung an `release.yml`:** `workflow_run` hängt am Namen „Release orchestration“ und am Artefakt
    `release-assets`. Der Vertragstest liest beides aus `release.yml` (ohne die Datei zu ändern), und `docker.yml` läuft
    bei Änderungen an `release.yml`; eine Umbenennung fällt also im PR auf statt still den Docker-Lauf abzuschalten.
+
+## Nachbesserung nach Fable-Review (approved 87)
+
+1. **Website verspricht ghcr nicht mehr (Pflicht).** Abschnitte `#docker` in `website/site/handbuch/index.html`,
+   `website/site/en/manual/index.html`, `website/site/download/index.html`, `website/site/en/download/index.html`:
+   „Die Veröffentlichung unter ghcr.io … ist vorbereitet; bis zur Freigabe das Image selbst bauen“ (en: „Publishing at
+   ghcr.io … is prepared; until it is approved, build the image yourself“) mit Selbstbau-Anleitung (`git clone --branch
+   v1.0.0-beta.3`, `docker build … packaging/docker` mit Prüfsumme aus SHA256SUMS) und dem Satz „Ein fertiges Image auf
+   ghcr.io folgt“ ohne Datum. Alle Beispiele (Crawl, Vergleich, cron, Claude Code, Codex, Cursor) nutzen den lokalen
+   Tag `openspider:1.0.0-beta.3`; kein `ghcr.io/…:<tag>` mehr auf der Website oder im README (geprüft per grep: 0
+   Treffer). README-Absatz und `docs/release/docker.md` angeglichen.
+2. **`source=run` validiert den Lauf.** Neuer Schritt „Release-Lauf prüfen“ vor dem Artefakt-Download:
+   `gh api repos/<repo>/actions/runs/<id>`, verlangt `.name == "Release orchestration"`,
+   `.head_repository.full_name == github.repository`, `.conclusion == "success"`, `.event` ∈ {`push`,
+   `workflow_dispatch`}; sonst `::error::Lauf <id> ist kein gültiger Release-Lauf: …` mit allen Abweichungen. Der
+   Vertragstest führt den Schritt mit einem Ersatz-`gh` aus (gültig: push, workflow_dispatch; abgelehnt: anderer
+   Workflow, Fork-Repository, `failure`, `pull_request`, `workflow_run`) und prüft die Reihenfolge vor dem Download.
+3. **`runs-on: ubuntu-24.04`** für `image` und `publish` (Vertragstest). `contract` bleibt auf `ubuntu-latest` (nur Node).
+4. **Doku:** `docs/release/docker.md`: Bauen aus dem Tag-Commit (Tag von einem Branch ohne `packaging/docker`
+   scheitert), Laufprüfung, feste Runner-Version, SBOM/Provenance sind unsignierte Attestierungen (Signatur:
+   Entscheidung für 1.0). Handbuch de/en: Absturzberichte nur lokal unter `/config/logs/crashes`, nichts wird gesendet
+   (Pfad aus `os-cli/src/logging.rs`: `<OPENSPIDER_HOME>/logs/crashes`); kein arm64-Image; JS-Rendering unter Emulation
+   auf Apple Silicon nicht zugesagt.
+5. **Prüfungen (Server `m3-docker`):** Vertragstest 18/18, actionlint 1.7.12 mit shellcheck 0 Befunde, hadolint 2.15.1
+   0 Befunde, shellcheck 0.11.0 0 Befunde, `check-site` OK (20 Seiten), `check-neutral` ohne Fundstellen.
+
+**Bleiben als Folgepakete:** `--install-browser` unter Linux bzw. OUT-207 (kein `linux64` in `versions.json`),
+`*_FILE`-Secrets (OUT-201/OUT-187), Rebuild-Tags für 1.0 (Sicherheits-Neubauten ohne Überschreiben), Existenzprüfung
+beim ersten Push (`skopeo inspect` unterscheidet „Paket fehlt“ nur über die Fehlermeldung `manifest unknown|name
+unknown|not found`; beim allerersten Push gegen ghcr real prüfen), außerdem Chromium-Sandbox-Schlüssel, gemischte
+Benutzer auf `/config`, arm64.
