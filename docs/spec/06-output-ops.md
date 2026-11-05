@@ -2440,6 +2440,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Nach dem Update startet die App neu und öffnet den zuletzt geöffneten Crawl.
   - [ ] Update aktualisiert auch das CLI-Binary und registrierte Aufgaben (OUT-166).
   - [ ] **OS-Festlegung (Nutzerentscheidung 04.11.2026):** Die angezeigten Release-Notes (Feld `notes` in `latest.json`/`latest-beta.json`) sind ausschließlich die CHANGELOG-Notes der Version, ohne den Download-Kasten des GitHub-Release-Texts (OUT-261) und ohne Entwurfshinweise.
+  - [ ] Die Aktionsschaltflächen des Update-Dialogs („Jetzt installieren und neu starten“, „Beim Beenden installieren“, „Nach Crawl-Ende installieren“, „Im Hintergrund herunterladen“, „Schließen“) sind in Deutsch und Englisch einzeilig, ohne abgeschnittenen Text, bei der minimalen Fenstergröße 1024×640 (UI-001); Prüfung per E2E (B3-UI).
 - **Testfixture:** Mock-Update-Server, manueller Release-Test je OS.
 
 ### OUT-252 Integrität und Signatur von Updates
