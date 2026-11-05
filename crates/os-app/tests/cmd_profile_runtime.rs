@@ -325,5 +325,13 @@ async fn secret_references_and_plain_exports_never_persist_credentials() {
     )
     .await;
     assert!(encrypted.exists());
+    // B3-FLAKES: Erst alle SQLite-Verbindungen der App schließen, dann jede Datei lesen. Die Aufbewahrung startet
+    // mit der App im Hintergrund und öffnet auf der Wartungsspur `.registry.sqlite`/`.index.sqlite` (WAL); unter
+    // Windows hält eine offene Verbindung Bytebereichssperren in der `-shm`-Datei, ein Lesezugriff scheitert dann
+    // mit Os-Fehler 33. `shutdown` arbeitet die eingereihten Aufträge ab, beendet Haupt- und Wartungsspur (join)
+    // und schließt dabei alle Verbindungen; spätere Aufträge werden abgewiesen. Der Scan liest danach weiterhin
+    // jede Datei und überspringt keine.
+    app.write_queue().shutdown();
+    drop(app);
     scan(dir.path());
 }
