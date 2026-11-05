@@ -16,6 +16,7 @@ import { IssueBadge } from "./IssueBadge";
 import { IssueExplanation } from "./IssueExplanation";
 import { PanelActions } from "../frame/PanelActions";
 import { SEGMENT_PALETTE } from "../../../ui/tokens/tokens";
+import { filterLabel, tabLabel } from "../../../i18n/canon";
 
 const TYPES: IssueTypeDto[] = ["issue", "warning", "opportunity"];
 const PRIORITIES: IssuePriorityDto[] = ["high", "medium", "low"];
@@ -26,6 +27,25 @@ export function resolveThresholds(name: string, root: unknown): string {
     for (const key of path.split(".")) value = value !== null && typeof value === "object" ? (value as Record<string, unknown>)[key] : undefined;
     return typeof value === "number" || typeof value === "string" ? String(value) : match;
   });
+}
+/**
+ * Display name of an issue in the UI language (UI-062, UI-121): tab and filter are canonical English core names and go
+ * through the same canon catalog as Overview and Dashboard; the threshold placeholder is resolved first (A01-13).
+ */
+export function issueLabel(t: TFn, row: Pick<IssueRow, "tab" | "filter">, root: unknown): string {
+  return `${tabLabel(t, row.tab)}: ${filterLabel(t, { id: resolveThresholds(row.filter, root), labelTemplate: row.filter })}`;
+}
+/** Search matches the displayed (translated) name and the canonical name, so English keys keep working in German (UI-121). */
+export function issueMatches(t: TFn, row: Pick<IssueRow, "tab" | "filter">, root: unknown, search: string): boolean {
+  const needle = search.trim().toLocaleLowerCase();
+  if (!needle) return true;
+  return [issueLabel(t, row, root), `${row.tab}: ${resolveThresholds(row.filter, root)}`].some(name => name.toLocaleLowerCase().includes(needle));
+}
+/** Same crawl configuration query as the issues list; resolves thresholds wherever issue names are shown. */
+export function useIssueConfig(): unknown {
+  const crawl = useSession(s => s.crawl?.crawlId);
+  const settings = useQuery({ queryKey: ["sidebar", "issues-config", crawl], queryFn: ({ signal }) => config.get(signal), enabled: !!crawl, gcTime: 0 });
+  return settings.data?.config;
 }
 export function sortIssues(rows: readonly IssueRow[]): IssueRow[] {
   return rows.filter(r => r.count > 0).slice().sort((a, b) => TYPES.indexOf(a.type) - TYPES.indexOf(b.type) || PRIORITIES.indexOf(a.priority) - PRIORITIES.indexOf(b.priority) || b.count - a.count || `${a.tab}: ${a.filter}`.localeCompare(`${b.tab}: ${b.filter}`, "en"));
@@ -49,13 +69,16 @@ function RegularIssues({ needsAnalysis }: { needsAnalysis: boolean }) {
   const navigate = useSidebarNavigation(s => s.navigate);
   const setScope = useSidebarNavigation(s => s.setScope);
   const crawl = useSession(s => s.crawl?.crawlId);
-  const args = { ...scope, type: type || null, priority: priority || null, search: search || null };
+  // The core only knows the canonical English names; the search runs here on the displayed name (UI-121), so the
+  // core receives no search text and returns the type/priority result for the client-side filter.
+  const args = { ...scope, type: type || null, priority: priority || null, search: null };
   // UI-018 (M2-N27): new data versions refresh the list in the background; the last list stays visible.
   const query = useIssues(args);
   // Keep the same contract even when a fixture supplies an unfiltered list.
-  const settings = useQuery({ queryKey: ["sidebar", "issues-config", crawl], queryFn: ({ signal }) => config.get(signal), enabled: !!crawl, gcTime: 0 });
-  const named = (name: string) => resolveThresholds(name, settings.data?.config);
-  const rows = sortIssues(query.data ?? []).filter(r => (!type || r.type === type) && (!priority || r.priority === priority) && `${r.tab}: ${named(r.filter)}`.toLocaleLowerCase().includes(search.toLocaleLowerCase()));
+  const root = useIssueConfig();
+  const named = (name: string) => resolveThresholds(name, root);
+  const label = (row: IssueRow) => issueLabel(t, row, root);
+  const rows = sortIssues(query.data ?? []).filter(r => (!type || r.type === type) && (!priority || r.priority === priority) && issueMatches(t, r, root, search));
   const issue = rows.find(r => r.id === selected);
   return <>
     <div className="os-sidebar-filters"><label>{t("sidebar-type")}<select aria-label={t("sidebar-type")} value={type} onChange={e => setType(e.target.value as typeof type)}><option value="">{t("sidebar-all")}</option>{TYPES.map(v => <option value={v} key={v}>{t(`sidebar-type-${v}`)}</option>)}</select></label>
@@ -66,10 +89,10 @@ function RegularIssues({ needsAnalysis }: { needsAnalysis: boolean }) {
     {!!crawl && query.isPending && <CountProgress />}
     {!crawl && <p>{t("sidebar-no-crawl")}</p>}
     {query.data && <><PanelActions which="issues" rows={issueRows(rows.map(r => ({ ...r, filter: named(r.filter) })), t)} /><table className="os-sidebar-table"><thead><tr><th>{t("sidebar-issue-name")}</th><th>{t("sidebar-type")}</th><th>{t("sidebar-priority")}</th><th>{t("sidebar-urls")}</th><th>{t("sidebar-percent-total")}</th></tr></thead><tbody>{rows.map(row => <tr key={row.id} aria-selected={selected === row.id}>
-      <th scope="row"><button type="button" onClick={() => { setSelected(row.id); navigate(row.tab, row.filter); }} onDoubleClick={() => navigate(row.tab, row.filter, true)}>{row.tab}: {named(row.filter)}</button>
+      <th scope="row"><button type="button" onClick={() => { setSelected(row.id); navigate(row.tab, row.filter); }} onDoubleClick={() => navigate(row.tab, row.filter, true)}>{label(row)}</button>
       {row.segmentShares.length > 0 && <div className="os-sidebar-segments" aria-label={t("sidebar-segments")}>{row.segmentShares.map((share, i) => <button type="button" key={share.segment} title={`${share.segment}: ${f.integer(share.count)}`} aria-label={`${share.segment}: ${f.integer(share.count)}`} style={{ flexGrow: share.count, background: SEGMENT_PALETTE[i % SEGMENT_PALETTE.length]?.light }} onClick={() => setScope({ ...scope, segment: { kind: "segment", name: share.segment } })} />)}</div>}</th>
       <td><IssueBadge badge={{ issueType: row.type, priority: row.priority }} /></td><td className={`os-sidebar-priority-${row.priority}`}>{t(`sidebar-priority-${row.priority}`)}</td><td>{f.integer(row.count)}</td><td>{row.pct == null ? "–" : `${f.decimal(row.pct, 1)} %`}</td>
     </tr>)}</tbody></table>{rows.length === 0 && <p>{t("sidebar-no-issues")}</p>}</>}
-    {issue && <IssueExplanation issue={{ ...issue, filter: named(issue.filter) }} />}
+    {issue && <IssueExplanation issue={issue} title={label(issue)} />}
   </>;
 }

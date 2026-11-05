@@ -1,8 +1,9 @@
 import { parse } from "@fluent/syntax";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { expect, it } from "vitest";
+import { canonKey } from "./canon";
 import { checkCatalog, checkIdenticalGerman } from "./check";
-import { loadFtlFiles } from "./index";
+import { i18n, loadFtlFiles } from "./index";
 import type { FtlFile } from "./core";
 
 const glossary = readFileSync("../../docs/plan/M2-acceptance/beta/begriffe.md", "utf8").split("## Ausnahmen")[1]!;
@@ -48,4 +49,26 @@ it("keeps every canonical column a complete literal in de/en for the CLI build (
     return messages.map(message => message.type === "Message" ? message.id.name : "").sort();
   };
   expect(columns("de")).toEqual(columns("en"));
+});
+
+/** Tab and filter of every entry of the core issue catalog (`core/issues/catalog.toml` and `catalog.d/*.toml`, UI-063). */
+function coreIssueNames(): { tab: string; filter: string }[] {
+  const dir = "../../core/issues/catalog.d";
+  const sources = [readFileSync("../../core/issues/catalog.toml", "utf8"), ...readdirSync(dir).filter(f => f.endsWith(".toml")).map(f => readFileSync(`${dir}/${f}`, "utf8"))];
+  return sources.flatMap(source => source.split(/^\[\[issue\]\]$/m).slice(1).map(block => ({
+    tab: /^tab = "([^"]+)"$/m.exec(block)?.[1] ?? "",
+    filter: /^filter = "([^"]+)"$/m.exec(block)?.[1] ?? "",
+  })));
+}
+
+// spec: UI-121
+// spec: UI-062
+it("resolves every issue name of the core catalog to a German tab and filter label, never to the English core name (B3-UI)", () => {
+  const names = coreIssueNames();
+  expect(names.length).toBeGreaterThan(100);
+  const missing = names.flatMap(({ tab, filter }) => [
+    ...(tab && i18n.has("de", canonKey("tab", tab)) ? [] : [`tab „${tab}“`]),
+    ...(filter && i18n.has("de", canonKey("filter", filter)) ? [] : [`filter „${tab}: ${filter}“`]),
+  ]);
+  expect([...new Set(missing)]).toEqual([]);
 });
