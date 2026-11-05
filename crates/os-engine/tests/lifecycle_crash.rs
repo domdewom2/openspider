@@ -268,10 +268,14 @@ async fn a_paused_crawl_killed_before_its_wal_merge_opens_paused_and_complete() 
     let lines = lines_of(&mut child);
     let deadline = Instant::now() + CHILD_DEADLINE;
     let mut done = None;
+    let mut last: Option<String> = None;
     let wal = loop {
         let line = lines
             .recv_timeout(deadline.saturating_duration_since(Instant::now()))
-            .expect("das Kind meldet die quittierte Pause");
+            .unwrap_or_else(|e| {
+                panic!("das Kind meldet die quittierte Pause: {e}, zuletzt {last:?}")
+            });
+        last = Some(line.clone());
         if line.starts_with("DONE ") {
             done = Some(line.clone());
         }

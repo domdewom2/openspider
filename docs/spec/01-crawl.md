@@ -1798,6 +1798,7 @@ Gemeinsame Regeln: Umschreibungen gelten ausschließlich für URLs, die **währe
   - [ ] Threads von 5 auf 1 geändert: nach dem Fortsetzen sieht der Fixture-Server nie mehr als 1 gleichzeitige Anfrage.
   - [ ] Versuch, während der Pause den Rendering-Modus zu ändern: Feld ist ausgegraut; per Profil-Laden erzwungene Änderung wird mit Meldung abgewiesen.
   - [ ] Während einer Pause können API-Daten angefordert werden, ohne den Crawl fortzusetzen (Schnittstelle für den API-Bereich).
+  - [ ] Fallen Pause und natürliches Crawl-Ende zusammen, gilt der Zustand, den die Engine zuerst feststellt: War der Crawl schon fertig, ist der Endzustand „Fertig“, die Pause wird ohne Meldung quittiert und die automatische Crawl-Analyse startet wie nach einem regulären Ende; hat die Engine die Pause zuerst gesehen, ist der Zustand „Pausiert“, und „Fortsetzen“ endet sofort mit „Fertig“. In keinem Fall erscheint eine Fehlermeldung, und die Kopfleiste verlässt „Pausiere …“ mit dem gemeldeten Zustand (OS-Festlegung, Nachtrag 05.11.2026, B3-FLAKES). Tests, die „Pausiert“ erwarten, nutzen eine Fixture, die vor der Pause nicht enden kann.
   - [ ] CLI: SIGINT nach 30 URLs → Exit-Code 130, Crawl in der Verwaltung mit Status „Pausiert“; `--load-crawl <ID> --resume` führt ihn bis zum Ende.
 - **Testfixture:** `crawl-site-100` mit `delay_ms=100`; Pause nach 30 URLs, Neustart, Fortsetzen; Variante mit Exclude-Ergänzung `.*/bereich-b/.*` während der Pause.
 

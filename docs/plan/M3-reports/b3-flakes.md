@@ -255,6 +255,12 @@ Das Paket hat keinen eigenen Crate; „fremd“ sind alle Dateien außerhalb der
 5. **SMTP „Connection refused“, `robots_step_m2`, Intel:** offen.
 6. **Windows:** Punkte 1 (beta_resume), 2 und 5 (Löschen der Sicherung unter Windows) sind nur per Review und
    plattformneutralem Test geprüft; die Windows-CI nach dem Merge ist der Nachweis.
+7. **AGENT-043 (Fable-Nacharbeit):** Verhalten „Ersetzen scheitert nach der Sicherung“ fehlte in der Spec; vom
+   Orchestrator als Nachtrag samt Akzeptanzkriterium eingetragen, ebenso die Festlegung zu CRAWL-126 (Punkt 1) und die
+   Zählweise der Reparatur in OUT-230.
+8. **Referenz-Crawl in `lifecycle_crash`:** 25–67 s statt ≈4 s auf dem Server, Ursache offen; Folgepunkt im Backlog
+   (Verdacht Crawl-Ende: 5xx-Backoff oder Abschluss-Checkpoint). Zweiter Test meldet bei Zeitüberschreitung jetzt
+   die letzte Zeile des Kindes.
 
 ## Server und Aufräumen
 
