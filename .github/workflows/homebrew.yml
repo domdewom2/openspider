@@ -1,0 +1,254 @@
+name: Homebrew tap
+
+# B3-BREW (Nutzerentscheidung 05.11.2026): Casks für den eigenen Tap <Eigentümer>/homebrew-openspider ab beta.3.
+# Generator: scripts/release/homebrew.mjs (Cask-Text aus packaging/homebrew/generate.mjs); Ablauf und Einrichtung:
+# docs/release/checkliste-release.md, Abschnitt Homebrew-Tap.
+#
+# - release published: Casks aus Version und SHA256SUMS des veröffentlichten Releases erzeugen, auf macOS mit
+#   brew style/audit und einer echten Installation prüfen, als Artefakt hochladen. Kein Schreiben in den Tap.
+# - workflow_dispatch mit version: dasselbe für ein beliebiges veröffentlichtes Release (kein Entwurf).
+# Schreiben in den Tap ausschließlich per workflow_dispatch mit publish=true, auf main, nach bestandener Prüfung und
+# nach Freigabe im Environment "homebrew" (Pflichtprüfer) mit dessen Secret HOMEBREW_TAP_TOKEN.
+# Vorabversionen landen nur in openspider@beta, stabile Versionen zusätzlich in openspider (siehe homebrew.mjs).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version eines veröffentlichten Releases ohne v, z. B. 1.0.0-beta.3'
+        required: true
+        type: string
+      publish:
+        description: 'Geprüfte Casks in den Tap schreiben (nur main, Freigabe im Environment homebrew)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: homebrew-${{ github.event_name }}-${{ github.event.release.tag_name || inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    name: Casks erzeugen
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.source.outputs.version }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+
+      - name: Veröffentlichtes Release und SHA256SUMS
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          TAG: ${{ github.event.release.tag_name }}
+          VERSION_INPUT: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT" == release ]]; then version="${TAG#v}"; else version="$VERSION_INPUT"; fi
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-(beta|rc)\.[0-9]+)?$ ]] || { echo "::error::Ungültige Version: $version"; exit 1; }
+          info="$(gh release view "v$version" --repo "$REPOSITORY" --json isDraft,isPrerelease --jq '[.isDraft, .isPrerelease] | @tsv')" \
+            || { echo "::error::Release v$version nicht gefunden."; exit 1; }
+          IFS=$'\t' read -r draft prerelease <<< "$info"
+          [[ "$draft" == false ]] || { echo "::error::v$version ist ein Entwurf; Casks nur für veröffentlichte Releases."; exit 1; }
+          # K3-04: Betas sind normale Releases. brew audit lehnt Versionen ab, deren GitHub-Release als Pre-Release markiert ist.
+          [[ "$prerelease" == false ]] || { echo "::error::v$version ist als Pre-Release markiert (K3-04: Betas sind normale Releases)."; exit 1; }
+          dmg="$(VERSION="$version" node --input-type=module -e "import { downloads } from './scripts/release/assets.mjs'; console.log(downloads(process.env.VERSION).macos.file)")"
+          gh release view "v$version" --repo "$REPOSITORY" --json assets --jq '.assets[].name' | grep -Fxq "$dmg" \
+            || { echo "::error::$dmg fehlt im Release v$version (OUT-261)."; exit 1; }
+          mkdir -p "$RUNNER_TEMP/sums"
+          gh release download "v$version" --repo "$REPOSITORY" --pattern SHA256SUMS --dir "$RUNNER_TEMP/sums"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Casks erzeugen (scripts/release/homebrew.mjs)
+        env:
+          VERSION: ${{ steps.source.outputs.version }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          node scripts/release/homebrew.mjs generate --version "$VERSION" --sums "$RUNNER_TEMP/sums/SHA256SUMS" \
+            --repository "$REPOSITORY" --output "$RUNNER_TEMP/homebrew"
+          {
+            echo "### Homebrew-Casks $VERSION"
+            echo
+            for file in "$RUNNER_TEMP"/homebrew/Casks/*.rb; do echo "- \`Casks/$(basename "$file")\`"; done
+            echo
+            echo 'Noch nicht im Tap: Veröffentlichung nur per workflow_dispatch mit publish=true und Freigabe (Environment homebrew).'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: homebrew-casks
+          path: ${{ runner.temp }}/homebrew/
+          if-no-files-found: error
+          retention-days: 30
+
+  check:
+    name: Casks prüfen (brew style, audit, Installation)
+    needs: generate
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      OPENSPIDER_SECRET_STORE: memory
+      OPENSPIDER_DISABLE_UPDATE_CHECK: '1'
+      CHECK_TAP: openspider-ci/check
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: homebrew-casks
+          path: ${{ runner.temp }}/homebrew
+
+      - name: Homebrew aktualisieren, lokalen Prüf-Tap anlegen
+        run: |
+          set -euo pipefail
+          # Die strukturierten Cask-Schritte (postflight_steps, uninstall_preflight_steps) brauchen Homebrew 7.
+          brew update
+          brew --version
+          brew tap-new --no-git "$CHECK_TAP"
+          tap="$(brew --repository "$CHECK_TAP")"
+          mkdir -p "$tap/Casks"
+          cp "$RUNNER_TEMP"/homebrew/Casks/*.rb "$tap/Casks/"
+          ls "$tap/Casks"
+
+      # Lesender GITHUB_TOKEN (contents: read) nur gegen das Ratenlimit der GitHub-API in den Online-Prüfungen.
+      - name: brew style und brew audit --strict --online
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+          HOMEBREW_GITHUB_API_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for file in "$RUNNER_TEMP"/homebrew/Casks/*.rb; do
+            cask="$CHECK_TAP/$(basename "$file" .rb)"
+            brew style --cask "$cask"
+            brew audit --cask --strict --online "$cask"
+          done
+
+      # --new prüft zusätzlich Signatur/Notarisierung der heruntergeladenen App. Die Bekanntheitsprüfung des
+      # GitHub-Repositorys (Sterne, Alter) gilt Einreichungen in homebrew/cask und wird ausgelassen. Ergebnis nur als
+      # Hinweis: ein Befund blockiert die Veröffentlichung nicht, steht aber in der Zusammenfassung.
+      - name: brew audit --new (Hinweis)
+        id: audit-new
+        continue-on-error: true
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+          HOMEBREW_GITHUB_API_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for file in "$RUNNER_TEMP"/homebrew/Casks/*.rb; do
+            brew audit --cask --new --except=github_repository "$CHECK_TAP/$(basename "$file" .rb)"
+          done
+
+      - name: Installation, CLI-Link und Deinstallation je Cask
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+          VERSION: ${{ needs.generate.outputs.version }}
+        run: |
+          set -euo pipefail
+          cli="$(brew --prefix)/bin/openspider"
+          for file in "$RUNNER_TEMP"/homebrew/Casks/*.rb; do
+            cask="$CHECK_TAP/$(basename "$file" .rb)"
+            brew install --cask "$cask"
+            test -L "$cli"
+            version_line="$("$cli" --version)"
+            echo "$version_line"
+            [[ " $version_line " == *" $VERSION "* ]] || { echo "::error::$cask: CLI meldet nicht $VERSION."; exit 1; }
+            brew uninstall --cask "$cask"
+            test ! -e "$cli"
+            test ! -e /Applications/OpenSpider.app
+          done
+
+      - name: Zusammenfassung
+        if: always()
+        env:
+          AUDIT_NEW: ${{ steps.audit-new.outcome }}
+        run: |
+          {
+            echo '### Homebrew-Prüfung'
+            echo
+            echo "- brew audit --new (Hinweis): $AUDIT_NEW"
+          } >> "$GITHUB_STEP_SUMMARY"
+          brew untap "$CHECK_TAP" > /dev/null 2>&1 || true
+
+  publish:
+    name: In den Tap schreiben (Freigabe)
+    needs: [generate, check]
+    if: >-
+      github.event_name == 'workflow_dispatch' && inputs.publish &&
+      github.ref == 'refs/heads/main' && needs.check.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: homebrew
+    permissions:
+      contents: read
+      actions: read
+    concurrency:
+      group: homebrew-tap
+      cancel-in-progress: false
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Environment homebrew verlangt Prüfer (fail closed)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          rules="$(gh api "repos/$REPOSITORY/environments/homebrew" --jq '[.protection_rules[]?.type] | join(",")')"
+          [[ ",$rules," == *,required_reviewers,* ]] || { echo "::error::Environment homebrew ohne Pflichtprüfer ($rules); nichts geschrieben."; exit 1; }
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: homebrew-casks
+          path: ${{ runner.temp }}/homebrew
+
+      # Nur die geprüften Dateien aus dem Artefakt. gh liest den Token aus der Umgebung; kein Token in URL oder Argument.
+      - name: Geprüfte Casks in den Tap übernehmen
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          TAP: ${{ github.repository_owner }}/homebrew-openspider
+          VERSION: ${{ needs.generate.outputs.version }}
+        run: |
+          set -euo pipefail
+          [[ -n "$GH_TOKEN" ]] || { echo '::error::Secret HOMEBREW_TAP_TOKEN fehlt im Environment homebrew; nichts geschrieben.'; exit 1; }
+          gh repo clone "$TAP" "$RUNNER_TEMP/tap" -- --depth=1 \
+            || { echo "::error::Tap $TAP nicht erreichbar (anlegen bzw. Token-Zugriff prüfen); nichts geschrieben."; exit 1; }
+          node scripts/release/homebrew.mjs update-tap --generated "$RUNNER_TEMP/homebrew" --tap "$RUNNER_TEMP/tap" | tee "$RUNNER_TEMP/tap-update.txt"
+          cd "$RUNNER_TEMP/tap"
+          git add Casks
+          if git diff --cached --quiet; then
+            result='keine Änderung'
+          else
+            git -c user.name='OpenSpider release' -c user.email='release@openspider.de' commit -m "openspider $VERSION"
+            git -c credential.helper= -c 'credential.helper=!gh auth git-credential' push origin HEAD
+            result="Commit $(git rev-parse --short HEAD)"
+          fi
+          {
+            echo "### Tap $TAP: $result"
+            echo
+            sed 's/^/- /' "$RUNNER_TEMP/tap-update.txt"
+          } >> "$GITHUB_STEP_SUMMARY"
