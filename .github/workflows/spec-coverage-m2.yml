@@ -184,10 +184,11 @@ jobs:
       - name: WebKit-Tastaturnavigation einschalten (macOS)
         if: runner.os == 'macOS'
         run: defaults write org.webkit.Playwright AppleKeyboardUIMode -int 2
-      # Schritt-Limit unter dem Job-Limit: läuft der Testlauf zu lange, bleiben Zeit für die Uploads (Fehlertexte stehen
-      # dann in test-results/*/error-context.md und den Traces).
+      # Schritt-Limit unter dem Job-Limit: läuft der Testlauf zu lange, bleibt Zeit für die Uploads (Fehlertexte stehen
+      # dann in test-results/*/error-context.md und den Traces). Testzeit zuletzt 21–38 min (Lauf 42037881032), Einrichtung
+      # bis 10 min (Windows).
       - name: E2E-A mit JUnit
-        timeout-minutes: 45
+        timeout-minutes: 50
         env:
           OS_E2E_PROJECTS: ${{ matrix.projects }}
           CI: 'true'

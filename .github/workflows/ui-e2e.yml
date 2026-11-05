@@ -131,9 +131,9 @@ jobs:
         run: defaults write org.webkit.Playwright AppleKeyboardUIMode -int 2
 
       # Schritt-Limit unter dem Job-Limit (B3-MACIMG): läuft der Testlauf zu lange, bleibt Zeit für den Upload von Log,
-      # Report und test-results (Fehlertexte in */error-context.md und den Traces).
+      # Report und test-results (Fehlertexte in */error-context.md und den Traces). Testzeit zuletzt 24–34 min.
       - name: E2E-A
-        timeout-minutes: 45
+        timeout-minutes: 50
         env:
           OS_E2E_PROJECTS: ${{ matrix.projects }}
           CI: "true"
