@@ -1,0 +1,3 @@
+/* Update dialog (OUT-251, B3-UI): actions stacked at full width; labels never wrap (de is the longest language). */
+.os-update-actions { display:flex; flex-direction:column; align-items:stretch; gap:var(--os-space-8); margin-top:var(--os-space-16); }
+.os-update-actions > .os-btn { white-space:nowrap; }

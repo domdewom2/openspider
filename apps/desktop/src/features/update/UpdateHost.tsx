@@ -5,6 +5,7 @@ import { useSession } from "../../state/session";
 import { registerAction } from "../../ui/actions";
 import { Button, Dialog } from "../../ui/primitives";
 import { accept, checkUpdates, downloadUpdate, installUpdate, useUpdate } from "./state";
+import "./update.css";
 
 export function UpdateHost() {
   const t = useT();
@@ -54,12 +55,13 @@ export function UpdateHost() {
       {downloading && <><p>{t("update-downloading", { done: downloading.done, total: downloading.total ?? "?" })}</p><progress aria-label={t("update-progress")} value={downloading.total ? downloading.done : undefined} max={downloading.total ?? undefined} /></>}
       {queued && <p role="status">{t(queued === "now" ? "update-queued-now" : queued === "onQuit" ? "update-queued-quit" : "update-queued-crawl")}</p>}
     </div>
-    <div className="os-dialog-footer-actions">
-      {object && ("available" in object || "failed" in object && release) && <Button onPress={() => void downloadUpdate()}>{t("update-download")}</Button>}
+    {/* B3-UI: the actions are stacked full width, so every label stays on one line in de and en; primary first. */}
+    <div className="os-update-actions" data-update-actions="">
       {ready && !queued && (running ? <Button onPress={() => void installUpdate("afterCrawl")}>{t("update-after-crawl")}</Button> : <>
-        <Button onPress={() => void installUpdate("onQuit")}>{t("update-on-quit")}</Button>
         <Button variant="primary" onPress={() => void installUpdate("now")}>{t("update-now")}</Button>
+        <Button onPress={() => void installUpdate("onQuit")}>{t("update-on-quit")}</Button>
       </>)}
+      {object && ("available" in object || "failed" in object && release) && <Button onPress={() => void downloadUpdate()}>{t("update-download")}</Button>}
       <Button onPress={() => useUpdate.setState({ open: false })}>{t("update-close")}</Button>
     </div>
   </Dialog>;

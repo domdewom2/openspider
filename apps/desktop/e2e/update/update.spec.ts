@@ -125,3 +125,44 @@ test("update setting defaults on, persists changes and explains environment over
   const axe = await new AxeBuilder({ page }).include('[data-settings-section="updates"]').analyze();
   expect(axe.violations.filter(v => v.impact === "critical" || v.impact === "serious")).toEqual([]);
 });
+// spec: OUT-251
+// spec: UI-121
+for (const lang of ["de", "en"] as const) test(`${lang}: update actions stay on one line at the minimum window size (B3-UI)`, async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 640 });
+  bridge = await startFakeBridge();
+  bridge.core.settings.general.language = lang;
+  state = { ready: { version: "1.0.1" } };
+  bridge.core.handlers.set("update.status", () => state);
+  await page.goto(`/?bridge=${encodeURIComponent(bridge.url)}`);
+  await page.waitForFunction(() => window.__osMenu !== undefined);
+  await expect.poll(() => page.evaluate(() => window.__osMenu?.model.lang)).toBe(lang);
+  await page.evaluate(async () => {
+    // @ts-expect-error Vite source module
+    const { useUpdate } = await import("/src/features/update/state.ts");
+    useUpdate.setState({ open: true, release: { version: "1.0.1", notes: "Fixture notes", pubDate: null } });
+  });
+  const dialog = page.getByRole("dialog", { name: lang === "de" ? "Updates" : "Software updates" });
+  const names = lang === "de" ? ["Jetzt installieren und neu starten", "Beim Beenden installieren"] : ["Install now and restart", "Install on quit"];
+  for (const name of names) {
+    const button = dialog.getByRole("button", { name, exact: true });
+    await expect(button).toBeVisible();
+    // One line box for the label, no clipped text, and the button as high as its single line plus padding.
+    const metrics = await button.evaluate((el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const lines = new Set([...range.getClientRects()].filter(r => r.width > 0).map(r => Math.round(r.top))).size;
+      const style = getComputedStyle(el);
+      const line = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.2;
+      const content = el.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+      return { lines, overflow: el.scrollWidth - el.clientWidth, content, line };
+    });
+    expect(metrics.lines, name).toBe(1);
+    expect(metrics.overflow, name).toBeLessThanOrEqual(0);
+    expect(metrics.content, name).toBeLessThan(metrics.line * 2);
+  }
+  const boxes = await Promise.all(names.map(name => dialog.getByRole("button", { name, exact: true }).boundingBox()));
+  // Stacked: the primary action above the second one, both inside the dialog.
+  expect(boxes[0]!.y).toBeLessThan(boxes[1]!.y);
+  const dialogBox = (await dialog.boundingBox())!;
+  for (const box of boxes) expect(box!.x + box!.width).toBeLessThanOrEqual(dialogBox.x + dialogBox.width);
+});
