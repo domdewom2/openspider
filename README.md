@@ -127,13 +127,14 @@ Homebrew and winget distribution are planned and not available yet.
 scheduled runs (cron on the host) and MCP over STDIO. It has no web interface: results are files
 and `.ospider` crawl files that you open in the desktop app. The image runs as UID/GID 10001,
 uses `/data` as output folder and `/config` (`OPENSPIDER_HOME`) for crawl management; keep
-`/config` to compare with the previous crawl. It is published with the release at
-`ghcr.io/wojcikdominik/openspider:<version>`; until then build it from
-[`packaging/docker`](packaging/docker/Dockerfile) with the version and the archive checksum from `SHA256SUMS`.
+`/config` to compare with the previous crawl. Publishing at `ghcr.io/wojcikdominik/openspider` is
+prepared; until it is approved, build the image yourself from [`packaging/docker`](packaging/docker/Dockerfile)
+at the release tag, with the archive checksum from `SHA256SUMS` of the same release. A ready-made image will follow.
 
 ```sh
-docker run --rm -v "$PWD/data:/data" -v "$PWD/config:/config" \
-  ghcr.io/wojcikdominik/openspider:<version> \
+docker build -t openspider:<version> --build-arg OPENSPIDER_VERSION=<version> \
+  --build-arg OPENSPIDER_SHA256=<sha256 of openspider_<version>_linux-x86_64.tar.gz> packaging/docker
+docker run --rm -v "$PWD/data:/data" -v "$PWD/config:/config" openspider:<version> \
   --headless --crawl https://example.com --export-tabs "Internal:All" \
   --save-crawl --output-folder /data
 ```
