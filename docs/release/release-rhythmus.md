@@ -14,6 +14,10 @@ Beschlossen am 04.11.2026 (Nutzerwunsch, Termine vom Nutzer bestätigt): Ab der 
 | **Donnerstag 10:00** | Nach Go: Entwurf als Latest veröffentlichen, Download-Links und Manifeste prüfen, Website (Handbuch, Funktionsseiten) zur neuen Version deployen, Ankündigung in GitHub Discussions (eigenes Go). |
 | Donnerstag – Freitag | Absturzberichte, Issues und Discussions beobachten; Freitag ist Puffer für einen Hotfix. Kein Release am Wochenende. |
 
+## Sprache der Release-Notes
+
+Nutzerentscheidung 05.11.2026: Die Notes (`docs/release/notes/<Version>.md`) sind auf Englisch, danach folgt ein kurzer deutscher Block unter `### Deutsch` (zwei bis vier Punkte, nur das Wichtigste). Erlaubt sind höchstens Überschriften der Ebene 3 (`notes.mjs --check`). Der Download-Kasten des Release-Texts ist unverändert zweisprachig, die Überschrift davor legt OUT-261 fest.
+
 ## Versionen
 
 - Eine Beta pro Woche: beta.3 am 12.11.2026, beta.4 am 19.11.2026 usw., bis 1.0.
@@ -21,7 +25,9 @@ Beschlossen am 04.11.2026 (Nutzerwunsch, Termine vom Nutzer bestätigt): Ab der 
 
 ## Hotfixes außerhalb des Rhythmus
 
-Nur bei Absturz beim Start oder Crawl, Datenverlust in Crawl-Dateien, Sicherheitslücke oder kaputtem Updater/Installer. Alles andere wartet bis Donnerstag. Versionsschema für Hotfixes: Prüfung B3-REL (`docs/plan/M3-reports/b3-rel.md`, Abschnitt Hotfix-Schema). Der Update-Kern ordnet `1.0.0-beta.3.1` korrekt zwischen beta.3 und beta.4 ein, aber `set-version`, die Release-Skripte und die MSI-Versionsabbildung lehnen das Schema heute ab, und die MSI-Abbildung hat zwischen beta.3 und beta.4 keinen freien Wert. Empfehlung: Hotfix bekommt die nächste Beta-Nummer (beta.4), das folgende Donnerstags-Release die übernächste. Entscheidung durch Nutzer/Orchestrator offen.
+Nur bei Absturz beim Start oder Crawl, Datenverlust in Crawl-Dateien, Sicherheitslücke oder kaputtem Updater/Installer. Alles andere wartet bis Donnerstag.
+
+**Versionsschema (Nutzerentscheidung 05.11.2026):** Ein Hotfix bekommt die nächste Beta-Nummer (z. B. beta.4 als Hotfix nach beta.3), das folgende Donnerstags-Release die übernächste. Hintergrund (B3-REL, `docs/plan/M3-reports/b3-rel.md`, Abschnitt Hotfix-Schema): `1.0.0-beta.3.1` ordnet der Update-Kern zwar richtig ein, aber `set-version`, die Release-Skripte und die MSI-Versionsabbildung lehnen das Schema ab, und die MSI-Abbildung hat zwischen beta.3 und beta.4 keinen freien Wert.
 
 ## Website
 
