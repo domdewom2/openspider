@@ -539,8 +539,43 @@ fn development_defaults_to_wave_zero_and_requires_only_selected_packages() {
     let (ok, doc) = f.check();
     assert!(!ok);
     assert_eq!(doc["blocking_specs"], serde_json::json!(["UI-090"]));
-    f.args.merged = vec!["typo".into()];
-    assert!(run(&f.args).is_err());
+}
+
+// B3-COV: keine Spec-ID (M2-Q01 ist Infrastruktur, siehe Dateikopf). Merge-Titel auf main nennen auch
+// Zweige ohne Planpaket (M2-N00-SPEC-TAGS); solche IDs warnen und wählen kein Paket aus.
+#[test]
+fn unknown_merged_ids_warn_and_select_no_package() {
+    let mut f = Fixture::new();
+    f.args.wave = 0;
+    f.args.test_output = None;
+    f.args.frontend_junit.clear();
+    f.args.merged = vec!["typo".into(), "N00".into()];
+    let (ok, doc) = f.check();
+    assert!(ok, "{doc:#}");
+    assert_eq!(doc["required_packages"], serde_json::json!([]));
+    assert_eq!(doc["blocking_specs"], serde_json::json!([]));
+    assert_eq!(doc["unknown_merged"], serde_json::json!(["typo", "N00"]));
+    for id in ["typo", "N00"] {
+        let warning = format!("unbekanntes gemergtes M2-Paket ignoriert: {id}");
+        assert!(
+            doc["warnings"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|w| w.as_str() == Some(warning.as_str())),
+            "{warning}"
+        );
+    }
+    // Neben einer unbekannten ID wirkt ein bekanntes Paket wie allein.
+    f.args.merged = vec!["N00".into(), "M2-U20".into()];
+    let (ok, doc) = f.check();
+    assert!(!ok);
+    assert_eq!(doc["required_packages"], serde_json::json!(["M2-U20"]));
+    assert_eq!(doc["blocking_specs"], serde_json::json!(["UI-090"]));
+    assert_eq!(doc["unknown_merged"], serde_json::json!(["N00"]));
+    f.args.merged = vec!["u20".into()];
+    let (_, doc) = f.check();
+    assert_eq!(doc["unknown_merged"], serde_json::json!([]));
 }
 
 #[test]

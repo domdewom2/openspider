@@ -315,15 +315,19 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
         .clone()
         .unwrap_or_else(|| root.join("docs/plan/M2-packages.json"));
     let packages = load(&path)?;
-    for id in &args.merged {
-        if !packages.iter().any(|p| {
-            p.id.eq_ignore_ascii_case(id) || p.id.trim_start_matches("M2-").eq_ignore_ascii_case(id)
-        }) {
-            return Err(ParityError::Invalid(format!(
-                "unbekanntes gemergtes M2-Paket: {id}"
-            )));
-        }
-    }
+    // B3-COV: Merge-Titel auf main nennen auch Zweige, die kein Planpaket sind (z. B. M2-N00-SPEC-TAGS).
+    // Unbekannte IDs sind eine Warnung und wählen kein Paket aus; sie brechen den Bericht nicht ab.
+    let unknown_merged: Vec<String> = args
+        .merged
+        .iter()
+        .filter(|id| {
+            !packages.iter().any(|p| {
+                p.id.eq_ignore_ascii_case(id)
+                    || p.id.trim_start_matches("M2-").eq_ignore_ascii_case(id)
+            })
+        })
+        .cloned()
+        .collect();
     let mut package_specs = PackageSpecs::default();
     for p in &packages {
         // Alle Planeinträge mit spec_ids zählen, auch Messpakete und Spikes (586 insgesamt).
@@ -399,6 +403,11 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
     );
     super::apply_parity(&mut report, args)?;
     report.warnings.extend(warnings);
+    report.warnings.extend(
+        unknown_merged
+            .iter()
+            .map(|id| format!("unbekanntes gemergtes M2-Paket ignoriert: {id}")),
+    );
     report.ignored_without_valid_reason.clear();
     let mut placeholders = Vec::new();
     let mut legacy_ignores = Vec::new();
@@ -615,6 +624,7 @@ pub fn run(args: &CoverageArgs) -> Result<bool, ParityError> {
         .filter(|p| p.required(args))
         .map(|p| &p.id)
         .collect::<Vec<_>>());
+    doc["unknown_merged"] = json!(unknown_merged);
     doc["blocking_specs"] = json!(blocking);
     doc["blocking_appendix_b"] = json!(appendix_open);
     doc["passed"] = json!(ok);

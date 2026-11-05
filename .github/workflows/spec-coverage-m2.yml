@@ -75,8 +75,15 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      # Wie ui-e2e.yml: ohne unprivilegierte User-Namespaces startet die Chromium-Sandbox nicht („No usable sandbox“);
+      # im Lauf 42037881032 scheiterten daran 16 Rust-Testziele (os-render, os-engine, os-analyze, os-app …), unbemerkt.
+      - name: Chromium-Sandbox erlauben (Linux)
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # Schritt-Limit wie im e2e-Job (B3-COV): ein hängender apt-Spiegel soll früh und eindeutig scheitern.
+      - name: Playwright-Chromium installieren
+        timeout-minutes: 15
+        run: npx playwright install --with-deps chromium
       - name: Chromium für Rust-Renderingtests
         run: echo "OPENSPIDER_CHROMIUM=$(node -e 'console.log(require("playwright").chromium.executablePath())')" >> "$GITHUB_ENV"
       - name: Rust-Tests und echte Ergebnisdatei
@@ -86,7 +93,8 @@ jobs:
           cargo test --workspace --exclude openspider-desktop --locked --no-fail-fast > rust-tests.txt 2>&1 || status=$?
           tail -n 40 rust-tests.txt
           echo "Rust-Test-Exit: $status" >> "$GITHUB_STEP_SUMMARY"
-          if [[ "$M2_GATE" == "true" ]]; then exit "$status"; fi
+          # B3-COV: Fehlschläge immer rot, nicht nur im Gate; der vitest-Schritt und der Upload laufen trotzdem.
+          exit "$status"
       - name: vitest-JUnit
         if: ${{ !cancelled() }}
         shell: bash
@@ -94,7 +102,7 @@ jobs:
           status=0
           npm run -w apps/desktop test -- --reporter=default --reporter=junit --outputFile.junit=../../vitest-m2.xml || status=$?
           echo "vitest-Exit: $status" >> "$GITHUB_STEP_SUMMARY"
-          if [[ "$M2_GATE" == "true" ]]; then exit "$status"; fi
+          exit "$status"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -107,7 +115,8 @@ jobs:
   # Übergang bis ci.yml/ui-e2e.yml JUnit exportieren (Schnittstellenbedarf im Q01-Bericht).
   # Runner, Browserinstallation, Matrix, Fixture-Werkzeuge und Transport entsprechen ui-e2e.yml (B3-MACIMG: Abweichungen
   # hier ließen beta/*, mcp/bridge, sidebar-chart/live und die macOS-Tab-Tests in allen Läufen scheitern, unbemerkt,
-  # weil der Schritt den Exit nur im Gate weitergibt).
+  # weil der Schritt den Exit nur im Gate weitergab). Seit B3-COV machen Fehlschläge den Job immer rot; der
+  # Abdeckungsjob läuft wegen `!cancelled()` trotzdem und wertet die JUnit-Belege aus.
   e2e:
     name: e2e (${{ matrix.name }})
     # Pull-Requests von m2/*-Zweigen überspringen den Job: derselbe Stand läuft schon über den Push-Lauf (K2-67).
@@ -167,7 +176,11 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: npm ci
+      # Sonst ≤ 1 min (apt 114 MB in 4 s). In Lauf 42055703821 (main, f6d98ccf) lieferte der Ubuntu-Spiegel für
+      # linux-webkit 110 MB in 48 min 37 s; die Tests begannen erst nach 52 min und das Job-Limit brach ab (B3-COV).
+      # Das Schritt-Limit lässt einen solchen Runner früh und eindeutig scheitern, statt die Testzeit aufzubrauchen.
       - name: Playwright-Browser installieren
+        timeout-minutes: 15
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then
             npx playwright install --with-deps ${{ matrix.browsers }}
@@ -204,14 +217,12 @@ jobs:
           npm run -w apps/desktop e2e -- "${args[@]}" 2>&1 | tee e2e.log || status=$?
           used=$( (grep -h '^\[e2e\] Transport:' e2e.log || true) | sort -u | tr '\n' ' ')
           echo "E2E-A (${{ matrix.name }}): ${used:-kein Lauf}; Exit: $status" >> "$GITHUB_STEP_SUMMARY"
-          if [[ "$status" -ne 0 ]]; then
-            echo "::warning title=E2E-A ${{ matrix.name }}::Playwright-Exit $status, die JUnit-Belege enthalten Fehlschläge"
-          fi
-          if [[ "$M2_GATE" == "true" ]]; then exit "$status"; fi
+          exit "$status"
       # Laufzeitbudgets (UI-146) wie ui-e2e.yml nach den Tests des Shards, ohne parallele Last und ohne die
       # Projektabhängigkeit; eigene JUnit-Datei und Ausgabeordner.
+      # Läuft auch nach roten Haupttests, damit die Budget-Belege nicht fehlen.
       - name: E2E-A Laufzeitbudgets mit JUnit (Shard)
-        if: matrix.perf
+        if: ${{ !cancelled() && matrix.perf }}
         timeout-minutes: 10
         env:
           OS_E2E_PROJECTS: ${{ matrix.projects }}
@@ -223,10 +234,7 @@ jobs:
           npm run -w apps/desktop e2e -- --reporter=list,html,junit --project=${{ matrix.projects }}-perf --no-deps \
             --output=test-results-perf 2>&1 | tee -a e2e.log || status=$?
           echo "E2E-A Laufzeitbudgets (${{ matrix.name }}): Exit: $status" >> "$GITHUB_STEP_SUMMARY"
-          if [[ "$status" -ne 0 ]]; then
-            echo "::warning title=E2E-A Laufzeitbudgets ${{ matrix.name }}::Playwright-Exit $status"
-          fi
-          if [[ "$M2_GATE" == "true" ]]; then exit "$status"; fi
+          exit "$status"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -280,8 +288,43 @@ jobs:
           args=()
           if [[ "$M2_GATE" == "true" ]]; then args+=(--gate); fi
           # C1: gemergte Besitzer aus der main-Historie; keine Fachpakete pauschal erzwingen.
+          # B3-COV: Zweig aus „m2: Merge [m2/][M2-]<Zweig>“; es zählt der längste Bindestrich-Präfix, der eine Paket-ID
+          # aus M2-packages.json ist (fix-live → M2-FIX-LIVE, ci-e2e-limit → M2-CI-E2E). Andere Zweige (int-16, main,
+          # M2-N00-SPEC-TAGS …) werden protokolliert und nicht übergeben; Liste in main-merged-m2.txt.
           git log origin/main --format=%s > main-merges.txt
-          merged=$(python3 -c 'import re; print(",".join(sorted({m.group(1) for s in open("main-merges.txt") if (m := re.match(r"m2: Merge (?:M2-)?([A-Za-z0-9]+)\b", s, re.I))})))')
+          merged=$(python3 - <<'PY'
+          import json, re, sys
+          ids = {}
+          for p in json.load(open("docs/plan/M2-packages.json", encoding="utf-8")):
+              ids[p["id"].upper()] = p["id"]
+              ids[re.sub(r"^M2-", "", p["id"], flags=re.I).upper()] = p["id"]
+          pattern = re.compile(r"m2: Merge (?:m2/)?(?:M2-)?([A-Za-z0-9]+(?:-[A-Za-z0-9]+)*)", re.I)
+          merged, unknown = {}, {}
+          for subject in open("main-merges.txt", encoding="utf-8"):
+              m = pattern.match(subject)
+              if not m:
+                  continue
+              parts = m.group(1).split("-")
+              for n in range(len(parts), 0, -1):
+                  pid = ids.get("-".join(parts[:n]).upper())
+                  if pid:
+                      merged.setdefault(pid, subject.strip())
+                      break
+              else:
+                  unknown.setdefault(m.group(1), subject.strip())
+          with open("main-merged-m2.txt", "w", encoding="utf-8") as out:
+              for pid, subject in sorted(merged.items()):
+                  print(f"{pid}\t{subject}", file=out)
+              for token, subject in sorted(unknown.items()):
+                  print(f"unbekannt {token}\t{subject}", file=out)
+          for token in sorted(unknown):
+              print(f"kein M2-Paket, nicht übergeben: {token}", file=sys.stderr)
+          print(",".join(sorted(merged)))
+          PY
+          )
+          known=$(grep -vc '^unbekannt ' main-merged-m2.txt || true)
+          other=$(grep -c '^unbekannt ' main-merged-m2.txt || true)
+          echo "Gemergte M2-Pakete laut main: $known; andere Merge-Zweige (nicht übergeben): $other" >> "$GITHUB_STEP_SUMMARY"
           if [[ -n "$merged" ]]; then args+=(--merged "$merged"); fi
           shopt -s nullglob
           # Fünf Matrix-Jobs (macOS-WebKit in zwei Shards) mit je playwright-m2.xml, der erste macOS-Shard zusätzlich
@@ -299,6 +342,13 @@ jobs:
           cat coverage-m2.txt
           cat coverage-m2.txt >> "$GITHUB_STEP_SUMMARY"
           echo "Abdeckungs-Exit: $status; fehlende Matrix-Belege: $missing; Gate: $M2_GATE" >> "$GITHUB_STEP_SUMMARY"
+          # Außerhalb des Gates bleibt der Schritt weich, aber nicht stumm (B3-COV).
+          if [[ "$status" -ne 0 ]]; then
+            echo "::warning title=Spec-Abdeckung M2::os-parity coverage Exit $status (Gate: $M2_GATE), Details in coverage-m2.txt"
+          fi
+          if [[ "$missing" -ne 0 ]]; then
+            echo "::warning title=Spec-Abdeckung M2::Matrix-Belege unvollständig: ${#junit_files[@]} von 5 playwright-m2.xml, ${#perf_files[@]} von 1 playwright-m2-perf.xml"
+          fi
           if [[ "$M2_GATE" == "true" ]]; then
             if [[ "$missing" -ne 0 ]]; then exit 1; fi
             exit "$status"
@@ -310,6 +360,7 @@ jobs:
           path: |
             evidence/
             main-merges.txt
+            main-merged-m2.txt
             coverage-m2.txt
             target/M2-status.json
           if-no-files-found: warn
