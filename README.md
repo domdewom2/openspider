@@ -123,6 +123,25 @@ Linux x86_64 with glibc supports the core and CLI only; Linux desktop,
 .deb/.rpm and arm64 releases remain unsupported.
 Homebrew and winget distribution are planned and not available yet.
 
+**Docker (self-hosted server).** A container image with the Linux CLI covers crawls, exports,
+scheduled runs (cron on the host) and MCP over STDIO. It has no web interface: results are files
+and `.ospider` crawl files that you open in the desktop app. The image runs as UID/GID 10001,
+uses `/data` as output folder and `/config` (`OPENSPIDER_HOME`) for crawl management; keep
+`/config` to compare with the previous crawl. It is published with the release at
+`ghcr.io/wojcikdominik/openspider:<version>`; until then build it from
+[`packaging/docker`](packaging/docker/Dockerfile) with the version and the archive checksum from `SHA256SUMS`.
+
+```sh
+docker run --rm -v "$PWD/data:/data" -v "$PWD/config:/config" \
+  ghcr.io/wojcikdominik/openspider:<version> \
+  --headless --crawl https://example.com --export-tabs "Internal:All" \
+  --save-crawl --output-folder /data
+```
+
+On Linux create `data` and `config` for UID 10001 first or add `--user "$(id -u):$(id -g)"`.
+Comparison runs, cron and MCP configurations for Claude Code, Codex and Cursor: see the user guide,
+section [Docker](https://openspider.de/en/manual/#docker).
+
 The [German user guide](https://openspider.de/handbuch/) and
 [English user guide](https://openspider.de/en/manual/) cover DMG, NSIS and silent MSI
 installation, Gatekeeper/SmartScreen, CLI/MCP, scheduling, updates and uninstalling.
