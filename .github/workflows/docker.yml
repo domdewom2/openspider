@@ -1,0 +1,315 @@
+name: Docker image
+
+# OUT-274: Container-Image aus dem Linux-Release-Archiv (CLI, Exporte, geplante Läufe, MCP über STDIO; keine
+# Weboberfläche). Dockerfile, Starter und Smoke-Test liegen unter packaging/docker; Ablauf: docs/release/docker.md.
+#
+# - push/pull_request (nur packaging/docker und diese Datei): Vertragstest, kein Image.
+# - workflow_run nach einem erfolgreichen Release-Lauf eines Tags: Image aus dessen Artefakten bauen und prüfen.
+# - workflow_dispatch: source=release (veröffentlichtes GitHub-Release, Download wie beim Nutzer) oder source=run
+#   (Artefakte eines Laufs von "Release orchestration", z. B. Trockenlauf vor dem Tag).
+# Veröffentlichung nach ghcr.io ausschließlich per workflow_dispatch mit publish=true, source=release, auf main, nach
+# bestandenem Smoke-Test und nach Freigabe im Environment "ghcr" (Pflichtprüfer). Kein automatischer Push bei Tags.
+
+on:
+  push:
+    branches: [main]
+    paths: &docker-paths
+      - "packaging/docker/**"
+      - ".github/workflows/docker.yml"
+  pull_request:
+    paths: *docker-paths
+  workflow_run:
+    workflows: ["Release orchestration"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'Herkunft des Linux-Archivs: release (veröffentlichtes GitHub-Release) oder run (Artefakte eines Release-Laufs)'
+        type: choice
+        options: [release, run]
+        default: release
+      version:
+        description: 'Nur source=release: Version ohne v, z. B. 1.0.0-beta.3'
+        type: string
+        default: ''
+      run_id:
+        description: 'Nur source=run: ID eines Laufs von "Release orchestration" mit dem Artefakt release-assets'
+        type: string
+        default: ''
+      publish:
+        description: 'Nach bestandenem Smoke-Test nach ghcr.io pushen (nur source=release, nur main, Freigabe im Environment ghcr)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-${{ github.event_name }}-${{ github.event.workflow_run.id || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    name: Vertragstest (Dockerfile, Workflow, Spec)
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' &&
+       startsWith(github.event.workflow_run.head_branch, 'v'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: node --test packaging/docker
+        run: node --test packaging/docker/*.test.mjs
+
+  image:
+    name: Image bauen und prüfen
+    needs: contract
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' && startsWith(github.event.workflow_run.head_branch, 'v'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      version: ${{ steps.source.outputs.version }}
+      identical: ${{ steps.oci.outputs.identical }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+
+      - name: Quelle bestimmen
+        id: input
+        env:
+          EVENT: ${{ github.event_name }}
+          SOURCE: ${{ inputs.source }}
+          VERSION_INPUT: ${{ inputs.version }}
+          RUN_ID_INPUT: ${{ inputs.run_id }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+          PUBLISH: ${{ inputs.publish }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT" == workflow_run ]]; then
+            source=run; run_id="$WORKFLOW_RUN_ID"; version=''
+          else
+            source="$SOURCE"; run_id="$RUN_ID_INPUT"; version="$VERSION_INPUT"
+          fi
+          case "$source" in
+            run)
+              [[ "$run_id" =~ ^[0-9]+$ ]] || { echo '::error::source=run braucht run_id (Lauf von "Release orchestration").'; exit 1; }
+              [[ "$PUBLISH" != true ]] || { echo '::error::publish nur mit source=release (veröffentlichtes Release).'; exit 1; } ;;
+            release)
+              [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-(beta|rc)\.[0-9]+)?$ ]] || { echo '::error::source=release braucht version, z. B. 1.0.0-beta.3.'; exit 1; } ;;
+            *) echo "::error::Unbekannte Quelle: $source"; exit 1 ;;
+          esac
+          { echo "source=$source"; echo "run_id=$run_id"; echo "version=$version"; } >> "$GITHUB_OUTPUT"
+
+      - name: Artefakt release-assets des Release-Laufs laden
+        if: steps.input.outputs.source == 'run'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-assets
+          path: ${{ runner.temp }}/release-assets
+          run-id: ${{ steps.input.outputs.run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Archiv, Version und SHA-256 festlegen
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SOURCE: ${{ steps.input.outputs.source }}
+          RUN_ID: ${{ steps.input.outputs.run_id }}
+          VERSION_INPUT: ${{ steps.input.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ "$SOURCE" == run ]]; then
+            cd "$RUNNER_TEMP/release-assets"
+            shopt -s nullglob
+            archives=(openspider_*_linux-x86_64.tar.gz)
+            [[ ${#archives[@]} -eq 1 ]] || { echo "::error::Genau ein Linux-Archiv erwartet: ${archives[*]:-keins}"; exit 1; }
+            name="${archives[0]}"
+            version="${name#openspider_}"; version="${version%_linux-x86_64.tar.gz}"
+            sha="$(awk -v n="$name" '$2 == n { print $1 }' SHA256SUMS)"
+            mkdir -p "$RUNNER_TEMP/archive"
+            mv "$name" "$RUNNER_TEMP/archive/"
+            cd "$RUNNER_TEMP"
+            rm -rf "$RUNNER_TEMP/release-assets"
+            revision="$(gh api "repos/$REPOSITORY/actions/runs/$RUN_ID" --jq .head_sha)"
+            echo "build_contexts=archive=$RUNNER_TEMP/archive" >> "$GITHUB_OUTPUT"
+          else
+            version="$VERSION_INPUT"
+            name="openspider_${version}_linux-x86_64.tar.gz"
+            draft="$(gh release view "v$version" --repo "$REPOSITORY" --json isDraft --jq .isDraft)"
+            [[ "$draft" == false ]] || { echo "::error::v$version ist kein veröffentlichtes Release (Entwurf oder fehlt)."; exit 1; }
+            mkdir -p "$RUNNER_TEMP/sums"
+            gh release download "v$version" --repo "$REPOSITORY" --pattern SHA256SUMS --dir "$RUNNER_TEMP/sums"
+            sha="$(awk -v n="$name" '$2 == n { print $1 }' "$RUNNER_TEMP/sums/SHA256SUMS")"
+            revision="$(gh api "repos/$REPOSITORY/commits/v$version" --jq .sha)"
+            echo "build_contexts=" >> "$GITHUB_OUTPUT"
+          fi
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-(beta|rc)\.[0-9]+)?$ ]] || { echo "::error::Ungültige Version: $version"; exit 1; }
+          [[ "$sha" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::Keine SHA-256 für $name in SHA256SUMS."; exit 1; }
+          [[ "$revision" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::Commit zu $version nicht ermittelbar."; exit 1; }
+          { echo "version=$version"; echo "sha256=$sha"; echo "revision=$revision"; } >> "$GITHUB_OUTPUT"
+          {
+            echo "### Docker-Image $version"
+            echo
+            echo "- Quelle: $SOURCE"
+            echo "- Archiv: \`$name\`"
+            echo "- SHA-256: \`$sha\`"
+            echo "- Commit: \`$revision\`"
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Fixture-Server für den Smoke-Test (Szenarien aus tests/fixtures dieses Commits).
+      - name: os-testsite bauen
+        run: |
+          set -euo pipefail
+          rustup toolchain install
+          cargo build --locked -p os-testsite
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Image bauen (für den Smoke-Test geladen)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: packaging/docker
+          file: packaging/docker/Dockerfile
+          build-args: |
+            OPENSPIDER_VERSION=${{ steps.source.outputs.version }}
+            OPENSPIDER_SHA256=${{ steps.source.outputs.sha256 }}
+            OPENSPIDER_REVISION=${{ steps.source.outputs.revision }}
+          build-contexts: ${{ steps.source.outputs.build_contexts }}
+          load: true
+          push: false
+          provenance: false
+          sbom: false
+          tags: openspider:smoke
+
+      - name: Smoke-Test (packaging/docker/smoke.mjs)
+        env:
+          VERSION: ${{ steps.source.outputs.version }}
+        run: node packaging/docker/smoke.mjs --image openspider:smoke --version "$VERSION" --testsite target/debug/os-testsite --report "$RUNNER_TEMP/docker-report"
+
+      # Gleicher Build (Cache) als OCI-Archiv mit SBOM und Provenance; dieses Archiv veröffentlicht der Job publish.
+      - name: OCI-Archiv mit SBOM und Provenance
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: packaging/docker
+          file: packaging/docker/Dockerfile
+          build-args: |
+            OPENSPIDER_VERSION=${{ steps.source.outputs.version }}
+            OPENSPIDER_SHA256=${{ steps.source.outputs.sha256 }}
+            OPENSPIDER_REVISION=${{ steps.source.outputs.revision }}
+          build-contexts: ${{ steps.source.outputs.build_contexts }}
+          push: false
+          provenance: mode=max
+          sbom: true
+          outputs: type=oci,dest=${{ runner.temp }}/openspider-image.oci.tar
+
+      - name: Attestierungen prüfen, Gleichheit mit dem geprüften Image
+        id: oci
+        run: |
+          set -euo pipefail
+          docker image inspect openspider:smoke > "$RUNNER_TEMP/inspect.json"
+          node packaging/docker/oci.mjs --archive "$RUNNER_TEMP/openspider-image.oci.tar" --inspect "$RUNNER_TEMP/inspect.json" --out "$RUNNER_TEMP/docker-report"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: openspider-docker-report
+          path: ${{ runner.temp }}/docker-report/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: openspider-docker-oci
+          path: ${{ runner.temp }}/openspider-image.oci.tar
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Nach ghcr.io veröffentlichen (Freigabe)
+    needs: image
+    if: >-
+      github.event_name == 'workflow_dispatch' && inputs.publish && inputs.source == 'release' &&
+      github.ref == 'refs/heads/main' && needs.image.outputs.identical == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ghcr
+    permissions:
+      contents: read
+      actions: read
+      packages: write
+    concurrency:
+      group: docker-publish
+      cancel-in-progress: false
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Environment ghcr verlangt Prüfer (fail closed)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          rules="$(gh api "repos/$REPOSITORY/environments/ghcr" --jq '[.protection_rules[]?.type] | join(",")')"
+          [[ ",$rules," == *,required_reviewers,* ]] || { echo "::error::Environment ghcr ohne Pflichtprüfer ($rules); keine Veröffentlichung."; exit 1; }
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: openspider-docker-oci
+          path: ${{ runner.temp }}/oci
+
+      - name: Geprüftes OCI-Archiv pushen (Version und Kanal)
+        env:
+          VERSION: ${{ needs.image.outputs.version }}
+          OWNER: ${{ github.repository_owner }}
+          ACTOR: ${{ github.actor }}
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          image="ghcr.io/${OWNER,,}/openspider"
+          channel=latest
+          [[ "$VERSION" != *-* ]] || channel=beta
+          skopeo --version
+          trap 'skopeo logout ghcr.io > /dev/null 2>&1 || true' EXIT
+          skopeo login ghcr.io --username "$ACTOR" --password-stdin <<< "$GHCR_TOKEN"
+          # Eine vorhandene Version wird nie überschrieben (wie beim Release-Entwurf).
+          if out="$(skopeo inspect --raw "docker://$image:$VERSION" 2>&1)"; then
+            echo "::error::$image:$VERSION existiert bereits; nicht überschrieben."
+            exit 1
+          elif ! grep -Eiq 'manifest unknown|name unknown|not found' <<< "$out"; then
+            echo "::error::Prüfung auf vorhandene Version fehlgeschlagen: $out"
+            exit 1
+          fi
+          skopeo copy --all --preserve-digests "oci-archive:$RUNNER_TEMP/oci/openspider-image.oci.tar" "docker://$image:$VERSION"
+          skopeo copy --all --preserve-digests "docker://$image:$VERSION" "docker://$image:$channel"
+          digest="sha256:$(skopeo inspect --raw "docker://$image:$VERSION" | sha256sum | cut -d' ' -f1)"
+          {
+            echo '### Veröffentlicht'
+            echo
+            echo "- \`$image:$VERSION\` und \`$image:$channel\`"
+            echo "- Digest: \`$digest\`"
+            echo '- Sichtbarkeit des Pakets in den GitHub-Paketeinstellungen prüfen.'
+          } >> "$GITHUB_STEP_SUMMARY"
