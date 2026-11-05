@@ -1,0 +1,40 @@
+name: Release scripts
+
+# Leichter Lauf (Ubuntu, nur Node, kein Build) für die Vertragstests der Release-Skripte (B3-REL). Läuft auch bei reinen
+# Notes-/CHANGELOG-Commits, die ci.yml per Pfadfilter nicht startet; so fällt eine ungültige
+# docs/release/notes/<Version>.md schon am Mittwoch auf und nicht erst im prepare-Job des Release-Laufs.
+
+on:
+  push:
+    branches: [main]
+    paths: &release-paths
+      - "scripts/release/**"
+      - "tests/release/**"
+      - "docs/release/notes/**"
+      - "CHANGELOG.md"
+      - "apps/desktop/scripts/check-licenses.mjs"
+      - ".github/workflows/release*.yml"
+      - ".github/workflows/licenses.yml"
+  pull_request:
+    paths: *release-paths
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  release-scripts:
+    name: release scripts (ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Vertragstests der Release-Skripte
+        run: node --test scripts/release/*.test.mjs scripts/release/licenses/generate.test.mjs tests/release/orchestration.test.mjs

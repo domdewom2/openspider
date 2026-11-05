@@ -2,12 +2,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, readFileSync, readdirSync, mkdirSync, rmSync, copyFileSync, cpSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { manifests } from '../../scripts/release/manifest.mjs';
 import { checksums } from '../../scripts/release/checksums.mjs';
-import { releaseNotes, releaseBody } from '../../scripts/release/notes.mjs';
+import { releaseNotes, releaseBody, checkNotes, versionNotes, withChangelogSection, feedbackLink, notesPath, changelogSection } from '../../scripts/release/notes.mjs';
 import { downloads, isPublished } from '../../scripts/release/assets.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -131,6 +131,9 @@ test('D01 archiviert mit dem Release-Binary vor den Prüfsummen und ohne Fallbac
   assert.match(body, /node scripts\/release\/archive-compat-fixture\.mjs --version "\$VERSION" --out release-reports\/compat --cli/);
   assert.match(body, /release-assets\/compat_\$\{VERSION\}\.tar\.gz/);
   assert.doesNotMatch(body, /STUB|if \[\[ -f/);
+  // The open-parity hint goes to the Actions summary, never into the release text.
+  assert.doesNotMatch(body, /release-notes\.md/);
+  assert.match(body, /TODO: Offene M2-Paritätspakete[^\n]*>> "\$GITHUB_STEP_SUMMARY"/);
 });
 
 test('Release-Erstellung bleibt Draft, normale Beta, kein Latest und Trockenlauf standardmäßig an', () => {
@@ -313,6 +316,8 @@ test('Veröffentlicht nur Universal-DMG und -CLI für macOS, dazu bytegleiche ve
   assert.equal(verification.status, 0, verification.stderr);
 
   // Draft guard of the workflow accepts exactly this set ...
+  mkdirSync(join(directory, 'release-reports'));
+  writeFileSync(join(directory, 'release-reports/release-notes.md'), releaseBody({ version, repository, notes: 'Fixture notes' }));
   const guard = () => spawnSync('bash', ['-c', step('Veröffentlichte Dateien und versionslose Downloads prüfen (OUT-261)')],
     { cwd: directory, encoding: 'utf8', env: { ...process.env, VERSION: version } });
   let check = guard();
@@ -332,6 +337,14 @@ test('Veröffentlicht nur Universal-DMG und -CLI für macOS, dazu bytegleiche ve
     assert.match(check.stdout, /darf nicht veröffentlicht werden/);
     rmSync(join(out, name));
   }
+  // A release text with draft hints never becomes a draft (OUT-261, hints belong in the summary).
+  const released = readFileSync(join(directory, 'release-reports/release-notes.md'), 'utf8');
+  writeFileSync(join(directory, 'release-reports/release-notes.md'), `${released}\n---\n\n**Entwurfshinweise:**\n\n- TODO: Parität\n`);
+  assert.match(guard().stdout, /Release-Text fehlt oder enthält Entwurfshinweise/);
+  rmSync(join(directory, 'release-reports/release-notes.md'));
+  assert.match(guard().stdout, /Release-Text fehlt/);
+  writeFileSync(join(directory, 'release-reports/release-notes.md'), released);
+  assert.equal(guard().status, 0);
   rmSync(join(out, windows.alias));
   assert.notEqual(guard().status, 0);
   // The guard runs before the draft is created.
@@ -380,6 +393,7 @@ test('Release-Text beginnt mit dem Download-Kasten; Update-Manifeste enthalten n
   // Workflow step end to end: separate files for manifest and release body.
   const { directory, version, date } = fixture(t);
   cpSync(join(root, 'scripts/release'), join(directory, 'scripts/release'), { recursive: true });
+  cpSync(join(root, 'docs/release/notes'), join(directory, 'docs/release/notes'), { recursive: true });
   copyFileSync(join(root, 'CHANGELOG.md'), join(directory, 'CHANGELOG.md'));
   mkdirSync(join(directory, 'release-assets'));
   for (const name of fixtures) {
@@ -396,11 +410,188 @@ test('Release-Text beginnt mit dem Download-Kasten; Update-Manifeste enthalten n
     assert.equal(manifestNotes, changelog);
     assert.doesNotMatch(manifestNotes, /## Download|Datei \/ File|Neu in dieser Version|Entwurfshinweise|Installations-Smoke/);
   }
+  // OUT-261 / beta3 §5: the release text is the download box plus the notes, nothing else;
+  // draft hints only appear in the Actions summary (and the release-reports artifact).
   const released = readFileSync(join(directory, 'release-reports/release-notes.md'), 'utf8');
-  const [box, rest] = released.split('\n---\n\n**Entwurfshinweise (vor dem Veröffentlichen entfernen):**\n\n');
-  assert.equal(box, releaseBody({ version, repository: 'example/openspider', notes: changelog }));
-  assert.match(rest, /^- Installations-Smoke:/m);
+  assert.equal(released, releaseBody({ version, repository: 'example/openspider', notes: changelog }));
+  assert.doesNotMatch(released, /Entwurfshinweis|Installations-Smoke|unsigniert|TODO/);
+  const summary = readFileSync(join(directory, 'summary'), 'utf8');
+  assert.match(summary, /\*\*Entwurfshinweise \(nicht Teil des Release-Texts\):\*\*/);
+  assert.match(summary, /^- Installations-Smoke:/m);
+  assert.match(readFileSync(join(directory, 'release-reports/entwurfshinweise.md'), 'utf8'), /^- Installations-Smoke:/m);
+  // Without complete signed updater artifacts the "unsigniert" hint also lands in the summary only.
+  rmSync(join(directory, 'release-assets', `${fixtures[0]}.sig`));
+  rmSync(join(directory, 'release-reports'), { recursive: true });
+  const unsigned = spawnSync('bash', ['-c', step('Release-Notes und Update-Manifeste')], { cwd: directory, encoding: 'utf8',
+    env: { ...process.env, VERSION: version, RELEASE_DATE: date, GITHUB_REPOSITORY: 'example/openspider', GITHUB_STEP_SUMMARY: join(directory, 'summary-unsigned') } });
+  assert.equal(unsigned.status, 0, unsigned.stderr);
+  assert.match(readFileSync(join(directory, 'summary-unsigned'), 'utf8'), /^- unsigniert: /m);
+  assert.doesNotMatch(readFileSync(join(directory, 'release-reports/release-notes.md'), 'utf8'), /unsigniert/);
   const workflow = releaseWorkflow();
   assert.match(workflow, /manifest\.mjs release-assets "\$VERSION" "\$GITHUB_REPOSITORY" release-reports\/update-notes\.md /);
   assert.match(workflow, /--notes-file release-reports\/release-notes\.md/);
+});
+
+// spec: OUT-251 [M3]
+test('Notes-Dokument je Version ist einzige Quelle; eingecheckte Notes sind gültig und gleich dem CHANGELOG', () => {
+  const changelog = readFileSync(join(root, 'CHANGELOG.md'), 'utf8');
+  const documents = readdirSync(join(root, 'docs/release/notes')).filter(name => name.endsWith('.md'));
+  assert.ok(documents.length >= 3, documents.join());
+  for (const name of documents) {
+    const version = name.slice(0, -3);
+    const notes = versionNotes(readFileSync(join(root, 'docs/release/notes', name), 'utf8'), version);
+    // On main a notes document may precede its CHANGELOG section (Wednesday); if both exist they are equal.
+    const section = changelogSection(changelog, version);
+    if (section !== null) assert.equal(`${section}\n`, notes, name);
+    assert.equal(checkNotes({ root, version, requireChangelog: false }), notes);
+  }
+  // Every published version (CHANGELOG sections from rel/beta1, rel/beta2) has its notes document.
+  for (const version of ['1.0.0-beta.0', '1.0.0-beta.1', '1.0.0-beta.2']) {
+    assert.equal(checkNotes({ root, version }), releaseNotes(changelog, version));
+  }
+  assert.equal(notesPath('1.0.0-beta.3'), join('docs', 'release', 'notes', '1.0.0-beta.3.md'));
+  for (const text of ['', ' \n', '## Neu\n- x', '# Titel\n- x', '- TODO: später', '- STUB(R03)', 'Entwurfshinweise: unsigniert']) {
+    assert.throws(() => versionNotes(text, '1.0.0-beta.3'), Error, JSON.stringify(text));
+  }
+  assert.equal(versionNotes('### Neu\r\n\r\n- Punkt\r\n', '1.0.0-beta.3'), '### Neu\n\n- Punkt\n');
+  assert.throws(() => notesPath('../1.0.0'), /Ungültige/);
+});
+
+// spec: OUT-251 [M3]
+test('prepare bricht vor dem Bauen ab, wenn die Notes fehlen, leer sind oder vom CHANGELOG abweichen', t => {
+  const { directory } = fixture(t);
+  cpSync(join(root, 'scripts/release'), join(directory, 'scripts/release'), { recursive: true });
+  const version = '1.0.0-beta.3';
+  const run = env => spawnSync('bash', ['-c', step('Release-Notes vor dem Bauen prüfen (OUT-251)')], { cwd: directory, encoding: 'utf8',
+    env: { ...process.env, VERSION: version, GITHUB_STEP_SUMMARY: join(directory, 'summary'), ...env } });
+  const notes = join(directory, 'docs/release/notes', `${version}.md`);
+  writeFileSync(join(directory, 'CHANGELOG.md'), '# Changelog\n\n## [Unreleased]\n\n## [1.0.0-beta.2] - 2026-11-03\n\n- alt\n');
+  let result = run({ GITHUB_ACTIONS: 'true' });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Release-Notes für 1\.0\.0-beta\.3 fehlen: docs[/\\]release[/\\]notes[/\\]1\.0\.0-beta\.3\.md anlegen/);
+  assert.doesNotMatch(result.stderr, /    at /, 'no stack trace');
+  assert.match(result.stdout, /^::error title=Release-Notes::Release-Notes für 1\.0\.0-beta\.3 fehlen/m);
+  assert.match(readFileSync(join(directory, 'summary'), 'utf8'), /\*\*Release-Notes:\*\* Release-Notes für 1\.0\.0-beta\.3 fehlen/);
+  mkdirSync(dirname(notes), { recursive: true });
+  writeFileSync(notes, '\n  \n');
+  assert.match(run().stderr, /Release-Notes 1\.0\.0-beta\.3 sind leer/);
+  writeFileSync(notes, '- Chrome-Download auf Klick\n');
+  assert.match(run().stderr, /CHANGELOG-Eintrag 1\.0\.0-beta\.3 fehlt: node scripts\/release\/notes\.mjs --changelog 1\.0\.0-beta\.3/);
+  // The documented one-liner writes the CHANGELOG section from the notes document; the gate then passes.
+  const changelog = spawnSync(process.execPath, ['scripts/release/notes.mjs', '--changelog', version, '--date', '2026-11-12'], { cwd: directory, encoding: 'utf8' });
+  assert.equal(changelog.status, 0, changelog.stderr);
+  result = run();
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /vorhanden und gleich dem CHANGELOG-Eintrag/);
+  // A later edit of only one of both is caught before building.
+  writeFileSync(notes, '- Chrome-Download auf Klick (geändert)\n');
+  assert.match(run().stderr, /weicht von docs[/\\]release[/\\]notes[/\\]1\.0\.0-beta\.3\.md ab/);
+  // The gate is part of prepare, which every build job needs.
+  const workflow = releaseWorkflow();
+  const prepare = workflow.split('\n  prepare:\n')[1].split('\n  macos:\n')[0];
+  assert.ok(prepare.indexOf('Release-Notes vor dem Bauen prüfen (OUT-251)') > prepare.indexOf('Versionsgleichstand und Tag prüfen'));
+  assert.match(prepare, /VERSION: \$\{\{ steps\.version\.outputs\.version \}\}\n        run: \|\n          set -euo pipefail\n          node scripts\/release\/notes\.mjs --check "\$VERSION"\n/);
+  for (const job of ['licenses', 'macos', 'windows']) {
+    assert.match(workflow, new RegExp(`\\n  ${job}:\\n(?:    [^\\n]*\\n)*?    needs: prepare\\n`), job);
+  }
+});
+
+// spec: OUT-251 [M3]
+test('CHANGELOG-Eintrag entsteht aus dem Notes-Dokument unter [Unreleased] und wird nie still überschrieben', () => {
+  const changelog = '# Changelog\n\n## [Unreleased]\n\n- künftig\n\n## [1.0.0-beta.2] - 2026-11-03\n\n- alt\n';
+  const updated = withChangelogSection(changelog, '1.0.0-beta.3', '- neu\n', '2026-11-12');
+  assert.equal(updated, '# Changelog\n\n## [Unreleased]\n\n- künftig\n\n## [1.0.0-beta.3] - 2026-11-12\n\n- neu\n\n## [1.0.0-beta.2] - 2026-11-03\n\n- alt\n');
+  assert.equal(withChangelogSection(updated, '1.0.0-beta.3', '- neu', '2026-11-13'), updated);
+  assert.throws(() => withChangelogSection(updated, '1.0.0-beta.3', '- anders', '2026-11-12'), /abweichenden Eintrag/);
+  assert.throws(() => withChangelogSection(changelog, '1.0.0-beta.3', '- neu', '12.11.2026'), /Datum/);
+  assert.equal(withChangelogSection('# Changelog\n\n## [1.0.0] - x\n\n- a\n', '1.0.1', '- b', '2026-12-01'),
+    '# Changelog\n\n## [1.0.1] - 2026-12-01\n\n- b\n\n## [1.0.0] - x\n\n- a\n');
+  assert.equal(releaseNotes(updated, '1.0.0-beta.3'), '- neu\n');
+});
+
+// spec: OUT-261 [M3]
+test('Feedback-Link im Download-Kasten: Vorabversion zur Beta-Seite, stabile Version zu GitHub Discussions', () => {
+  for (const version of ['1.0.0-beta.3', '1.0.0-rc.1']) {
+    assert.equal(feedbackLink(version, 'wojcikdominik/openspider'), '[openspider.de/beta](https://openspider.de/beta/)');
+    assert.match(releaseBody({ version, repository: 'wojcikdominik/openspider', notes: 'x' }), /· Feedback: \[openspider\.de\/beta\]\(https:\/\/openspider\.de\/beta\/\)\n/);
+  }
+  const stable = releaseBody({ version: '1.0.0', repository: 'wojcikdominik/openspider', notes: 'x' });
+  assert.match(stable, /· Feedback: \[GitHub Discussions\]\(https:\/\/github\.com\/wojcikdominik\/openspider\/discussions\)\n/);
+  assert.doesNotMatch(stable, /openspider\.de\/beta/);
+});
+
+// GitHub Actions path filters: patterns in order, the last matching one wins ("!" excludes); `*` stays within one
+// path segment, `**` crosses segments, `**/` may also match nothing (root files).
+function pathFilter(workflow, event = 'push') {
+  const text = readFileSync(join(root, '.github/workflows', workflow), 'utf8');
+  const block = text.split(`\n  ${event}:\n`)[1].split(/\n  [a-z_]+:/)[0];
+  const alias = /\n    paths: \*([\w-]+)/.exec(`\n${block}`)?.[1];
+  const source = alias ? text.split(`paths: &${alias}\n`)[1] : block.split('    paths:')[1].replace(/^[^\n]*\n/, '');
+  const patterns = source.split('\n').filter(line => /^      - /.test(line)).map(line => line.slice(8).replace(/^["']|["']$/g, ''));
+  const tail = source.split('\n').findIndex(line => !/^      - /.test(line));
+  const list = patterns.slice(0, tail < 0 ? undefined : tail);
+  const regex = glob => new RegExp(`^${glob.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*\*\/|\*\*|\*|\?/g,
+    token => ({ '**/': '(?:.*/)?', '**': '.*', '*': '[^/]*', '?': '[^/]' })[token])}$`);
+  const rules = list.map(pattern => ({ exclude: pattern.startsWith('!'), regex: regex(pattern.replace(/^!/, '')) }));
+  // A push triggers the workflow if at least one changed file is included after all rules.
+  return files => files.some(file => rules.reduce((included, rule) => (rule.regex.test(file) ? !rule.exclude : included), false));
+}
+
+// B3-REL (K2-67, docs/plan/beta3.md §6): docs/website/learnings-only commits on main start no heavy CI and thus never
+// queue behind or replace a running main run; files that tests or jobs read keep triggering.
+test('Pfadfilter: reine Doku-, Website- und Learnings-Commits starten keine schwere CI, gelesene Dateien schon', () => {
+  const quiet = ['README.md', 'CHANGELOG.md', 'website/site/beta/index.html', 'website/site/assets/site.css', 'website/check-site.mjs',
+    'website/api/feedback.php', 'docs/plan/M3-reports/b3-rel.md', 'docs/release/notes/1.0.0-beta.3.md', 'docs/release/release-rhythmus.md',
+    'docs/plan/M1-acceptance/loadtest/probe-p33/s0-baseline/summary.json', 'docs/plan/M3-reports/v02/polish/a.png', 'docs/handbook/book.toml',
+    'learnings/learnings.md', 'learnings/raw/notes.txt', 'assets/logo.png'];
+  const read = ['docs/spec/06-output-ops.md', 'docs/spec/schemas/osconfig.schema.json', 'docs/issues/README.md', 'docs/plan/M2-packages.json',
+    'docs/plan/M1-status.json', 'docs/plan/M1-filters.toml', 'tests/fixtures/migrations/releases/1.0.0-beta.1/README.md',
+    'crates/os-app/src/lib.rs', 'Cargo.lock', '.github/workflows/ci.yml'];
+  for (const workflow of ['ci.yml', 'linux-core.yml', 'parity.yml']) {
+    for (const event of ['push', 'pull_request']) {
+      const runs = pathFilter(workflow, event);
+      for (const file of quiet) assert.equal(runs([file]), false, `${workflow} ${event}: ${file}`);
+      for (const file of [...read, 'docs/plan/M2.md']) assert.equal(runs([file]), true, `${workflow} ${event}: ${file}`);
+      assert.equal(runs(['website/site/index.html', 'crates/os-cli/src/main.rs']), true, `${workflow}: mixed push`);
+    }
+  }
+  const licenses = pathFilter('licenses.yml');
+  for (const file of quiet) assert.equal(licenses([file]), false, `licenses.yml: ${file}`);
+  for (const file of ['Cargo.lock', 'package-lock.json', 'deny.toml', 'NOTICE', 'scripts/release/licenses/npm-sources.json']) assert.equal(licenses([file]), true, file);
+  // Spec coverage keeps docs/spec and never runs for website or notes.
+  const coverage = pathFilter('spec-coverage-m2.yml');
+  assert.equal(coverage(['docs/spec/06-output-ops.md']), true);
+  for (const file of ['website/site/beta/index.html', 'docs/release/notes/1.0.0-beta.3.md', 'README.md']) assert.equal(coverage([file]), false, file);
+  assert.equal(pathFilter('ui-e2e.yml')(['website/site/beta/index.html']), false);
+  // Light replacements: website check for website/**, release contract tests for notes and CHANGELOG.
+  const site = pathFilter('website.yml');
+  assert.equal(site(['website/site/beta/index.html']), true);
+  assert.equal(site(['website/api/tests/crash_test.php']), true);
+  assert.equal(site(['crates/os-app/src/lib.rs']), false);
+  const scripts = pathFilter('release-scripts.yml');
+  for (const file of ['docs/release/notes/1.0.0-beta.3.md', 'CHANGELOG.md', 'scripts/release/notes.mjs', 'tests/release/orchestration.test.mjs', '.github/workflows/release.yml']) {
+    assert.equal(scripts([file]), true, file);
+  }
+  assert.equal(scripts(['website/site/index.html']), false);
+  // Tag pushes ignore path filters on GitHub; the release workflow itself has none.
+  assert.doesNotMatch(releaseWorkflow(), /paths/);
+});
+
+test('Leichte Ersatzläufe sind billig, SHA-gepinnt und rufen die vorhandenen Prüfungen auf', () => {
+  const site = readFileSync(join(root, '.github/workflows/website.yml'), 'utf8');
+  assert.match(site, /runs-on: ubuntu-latest\n    timeout-minutes: 10/);
+  assert.match(site, /run: node website\/check-site\.mjs/);
+  const scripts = readFileSync(join(root, '.github/workflows/release-scripts.yml'), 'utf8');
+  assert.match(scripts, /node --test scripts\/release\/\*\.test\.mjs scripts\/release\/licenses\/generate\.test\.mjs tests\/release\/orchestration\.test\.mjs/);
+  for (const workflow of [site, scripts]) {
+    assert.match(workflow, /permissions:\n  contents: read/);
+    for (const line of workflow.split('\n').filter(line => line.includes('uses:'))) assert.match(line, /@[0-9a-f]{40} # v\d/);
+  }
+  // The license text cache is wired wherever the generator runs.
+  for (const workflow of ['licenses.yml', 'release-macos.yml', 'release-windows.yml']) {
+    const text = readFileSync(join(root, '.github/workflows', workflow), 'utf8');
+    const generate = text.split(/      - name: (?:Generate complete release notices|Vollständige Drittlizenzen erzeugen)[^\n]*\n/)[1].split('      - ')[0];
+    assert.match(generate, /OPENSPIDER_LICENSE_CACHE: \$\{\{ runner\.temp \}\}\/license-texts/, workflow);
+    assert.match(text, /path: \$\{\{ runner\.temp \}\}\/license-texts\n          key: license-texts-v1-\$\{\{ hashFiles\('scripts\/release\/licenses\/\*-sources\.json'\) \}\}/, workflow);
+  }
 });

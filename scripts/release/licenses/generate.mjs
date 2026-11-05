@@ -2,7 +2,7 @@
 // Build/CI tool only; never bundled or executed by the application.
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, readdirSync, realpathSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, writeFileSync, rmSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { mkdtempSync } from 'node:fs';
@@ -112,15 +112,52 @@ export function verifiedSourceText(buffer, source) {
   return `Source: ${source.url}\n${buffer.toString('utf8')}`;
 }
 
-export async function supplementalTexts(file = 'npm-sources.json') {
+const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
+// Transient failures (timeout, network, HTTP 408/429/5xx) are retried with exponential backoff;
+// other HTTP errors fail at once. The beta.2 Windows job failed on a single fetch timeout.
+export async function fetchWithRetry(url, { attempts = 3, timeout = 30_000, backoff = 2_000, fetchImpl = fetch, wait = sleep, log = console.warn } = {}) {
+  const transient = (error) => Error(`License source: ${error.name === 'TimeoutError' ? `timeout after ${timeout} ms` : error.message} ${url}`, { cause: error });
+  for (let attempt = 1; ; attempt++) {
+    let failure;
+    try {
+      // The timeout covers the response body as well.
+      const response = await fetchImpl(url, { signal: AbortSignal.timeout(timeout) });
+      if (response.ok) return Buffer.from(await response.arrayBuffer());
+      failure = Error(`License source: HTTP ${response.status} ${url}`);
+      if (response.status < 500 && ![408, 429].includes(response.status)) failure.permanent = true;
+    } catch (error) {
+      failure = transient(error);
+    }
+    if (failure.permanent) throw failure;
+    if (attempt >= attempts) throw Error(`${failure.message} (${attempts} attempts)`, { cause: failure });
+    const delay = backoff * 2 ** (attempt - 1);
+    log(`${failure.message}; retry ${attempt + 1}/${attempts} in ${delay} ms`);
+    await wait(delay);
+  }
+}
+
+// Optional content-addressed cache (OPENSPIDER_LICENSE_CACHE): sources are pinned by SHA-256, so a cached
+// file is used only if its bytes still match; a corrupted entry is fetched again and replaced.
+export async function sourceBytes(source, { cacheDir = process.env.OPENSPIDER_LICENSE_CACHE, ...options } = {}) {
+  const cached = cacheDir && /^[0-9a-f]{64}$/.test(source.sha256 ?? '') ? join(cacheDir, source.sha256) : null;
+  if (cached && existsSync(cached)) {
+    const bytes = readFileSync(cached);
+    if (createHash('sha256').update(bytes).digest('hex') === source.sha256) return bytes;
+  }
+  const bytes = await fetchWithRetry(source.url, options);
+  if (cached && createHash('sha256').update(bytes).digest('hex') === source.sha256) {
+    mkdirSync(cacheDir, { recursive: true });
+    writeFileSync(`${cached}.tmp`, bytes);
+    renameSync(`${cached}.tmp`, cached);
+  }
+  return bytes;
+}
+
+export async function supplementalTexts(file = 'npm-sources.json', options = {}) {
   const sources = JSON.parse(readFileSync(join(root, 'scripts/release/licenses', file), 'utf8'));
   const cache = new Map();
   async function fetchText(source) {
-    if (!cache.has(source.url)) cache.set(source.url, (async () => {
-      const response = await fetch(source.url, { signal: AbortSignal.timeout(30_000) });
-      if (!response.ok) throw Error(`License source: HTTP ${response.status} ${source.url}`);
-      return Buffer.from(await response.arrayBuffer());
-    })());
+    if (!cache.has(source.url)) cache.set(source.url, sourceBytes(source, options));
     return verifiedSourceText(await cache.get(source.url), source);
   }
   return Object.fromEntries(await Promise.all(Object.entries(sources).map(async ([key, source]) =>

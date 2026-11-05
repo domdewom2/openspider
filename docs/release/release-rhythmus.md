@@ -8,9 +8,9 @@ Beschlossen am 04.11.2026 (Nutzerwunsch, Termine vom Nutzer bestätigt): Ab der 
 |---|---|
 | Freitag – Dienstag | Pakete werden gebaut, von Fable abgenommen und nach `main` gemergt. `main` bleibt jederzeit veröffentlichbar; halbfertige Funktionen bleiben im Paket-Branch. |
 | **Dienstag 18:00** | **Merge-Schluss.** Was danach fertig wird, geht in die Woche darauf. Ausnahme: Korrekturen am Release-Kandidaten selbst. |
-| Mittwoch Vormittag | Release-Kandidat: `set-version`, CHANGELOG-Abschnitt und Update-Notes festlegen (die Notes landen beim Bauen in `latest.json` und lassen sich danach nicht mehr ändern), Release-Workflow erzeugt den Entwurf. |
+| Mittwoch Vormittag | Release-Kandidat: Notes als `docs/release/notes/<Version>.md` festlegen (einzige Quelle für Update-Dialog und Release-Text; darf als reiner Doku-Commit vorab auf `main`), auf dem Release-Branch `set-version`, CHANGELOG-Eintrag mit `notes.mjs --changelog <Version> --date <JJJJ-MM-TT>`, `notes.mjs --check <Version>`. Die Notes landen beim Bauen in `latest.json` und lassen sich danach nicht mehr ändern; ohne gültiges Notes-Dokument bricht der Release-Workflow vor dem Bauen ab. Release-Workflow erzeugt den Entwurf. |
 | Mittwoch | Prüfungen am Entwurf: Update von der Vorwoche auf den Kandidaten (Mac mini, Windows), Installations-Smoke, kurzer 100k-Benchmark gegen die Vorwoche, Website-Änderungen der Woche mit `check-site` vorbereitet. |
-| Mittwoch Abend | Zusammenfassung an den Nutzer: Inhalt, Testergebnisse, Text der Release-Notes, offene Risiken. |
+| Mittwoch Abend | Zusammenfassung an den Nutzer: Inhalt, Testergebnisse, Text der Release-Notes, Entwurfshinweise aus der Actions-Zusammenfassung, offene Risiken. |
 | **Donnerstag 10:00** | Nach Go: Entwurf als Latest veröffentlichen, Download-Links und Manifeste prüfen, Website (Handbuch, Funktionsseiten) zur neuen Version deployen, Ankündigung in GitHub Discussions (eigenes Go). |
 | Donnerstag – Freitag | Absturzberichte, Issues und Discussions beobachten; Freitag ist Puffer für einen Hotfix. Kein Release am Wochenende. |
 
@@ -21,15 +21,15 @@ Beschlossen am 04.11.2026 (Nutzerwunsch, Termine vom Nutzer bestätigt): Ab der 
 
 ## Hotfixes außerhalb des Rhythmus
 
-Nur bei Absturz beim Start oder Crawl, Datenverlust in Crawl-Dateien, Sicherheitslücke oder kaputtem Updater/Installer. Alles andere wartet bis Donnerstag. Versionsschema für Hotfixes noch zu klären (Vorschlag `1.0.0-beta.3.1`; vorher prüfen, dass der Updater es höher als beta.3 und niedriger als beta.4 einordnet).
+Nur bei Absturz beim Start oder Crawl, Datenverlust in Crawl-Dateien, Sicherheitslücke oder kaputtem Updater/Installer. Alles andere wartet bis Donnerstag. Versionsschema für Hotfixes: Prüfung B3-REL (`docs/plan/M3-reports/b3-rel.md`, Abschnitt Hotfix-Schema). Der Update-Kern ordnet `1.0.0-beta.3.1` korrekt zwischen beta.3 und beta.4 ein, aber `set-version`, die Release-Skripte und die MSI-Versionsabbildung lehnen das Schema heute ab, und die MSI-Abbildung hat zwischen beta.3 und beta.4 keinen freien Wert. Empfehlung: Hotfix bekommt die nächste Beta-Nummer (beta.4), das folgende Donnerstags-Release die übernächste. Entscheidung durch Nutzer/Orchestrator offen.
 
 ## Website
 
 Website-Änderungen, die neue Funktionen beschreiben, gehen mit dem Release am Donnerstag live. Reine Text- oder Fehlerkorrekturen dürfen jederzeit raus.
 
-## Voraussetzungen (aus `docs/plan/beta3.md` §5/§6)
+## Voraussetzungen (aus `docs/plan/beta3.md` §5/§6, umgesetzt mit B3-REL)
 
-- Pfadfilter in der CI, damit Website-/Docs-Commits am Mittwoch keinen laufenden Kandidaten-Lauf abbrechen.
-- Release-Notes stehen vor dem Bauen fest (Mittwoch Vormittag).
+- Pfadfilter in der CI: Commits, die nur Markdown, `docs/` (außer `docs/spec`, `docs/issues`, `docs/plan/M2.md`, `docs/plan/*.json`/`*.toml`), `website/` oder `learnings/` ändern, starten `ci.yml`, `linux-core.yml`, `parity.yml` und `licenses.yml` nicht. Website-Commits prüft der leichte Lauf `website.yml` (`check-site`, PHP-Tests), Notes-/CHANGELOG-Commits der leichte Lauf `release-scripts.yml`. Keine Pflicht-Checks auf `main` (Stand 05.11.2026), daher bleibt nichts hängen.
+- Release-Notes stehen vor dem Bauen fest (Mittwoch Vormittag, `docs/release/notes/<Version>.md`).
 - Entwurfshinweise nur in die Actions-Zusammenfassung, nicht in den Release-Text.
-- Wiederholung in `scripts/release/licenses/generate.mjs`, damit der Mittwochslauf nicht an einem Netz-Timeout hängt.
+- Wiederholung mit Backoff (3 Versuche) und SHA-256-gepinnter Zwischenspeicher in `scripts/release/licenses/generate.mjs`, damit der Mittwochslauf nicht an einem Netz-Timeout hängt.

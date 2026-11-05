@@ -71,7 +71,8 @@ auch direkt mit dem Standardziel im Repository verwendet werden; es committet,
 pusht und veröffentlicht nichts. Ein Entwurfsrelease ist noch keine veröffentlichte
 Version. Frühere Trockenläufe (z. B. beta.0 aus R04) werden als temporäre
 Artefakte unterstützt; daraus folgt keine Pflicht, sie als veröffentlichten Stand
-ins Repository zu übernehmen. Keine erfundenen beta.1/beta.2-Archive vor der Veröffentlichung.
+ins Repository zu übernehmen. Keine erfundenen Archive vor der Veröffentlichung. `releases/1.0.0-beta.1/` und `releases/1.0.0-beta.2/`
+sind die unveränderten, gegen `SHA256SUMS` geprüften Inhalte der veröffentlichten `compat_<version>.tar.gz` (B3-REL).
 
 Node-Vertragstests: `node --test tests/fixtures/migrations/node/archive.test.mjs`.
 

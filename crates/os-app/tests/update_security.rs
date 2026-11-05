@@ -50,6 +50,43 @@ fn manifest_enforces_https_semver_no_downgrade_and_beta_policy() {
 }
 
 // spec: OUT-252
+// spec: OUT-254
+/// B3-REL (Hotfix-Schema, docs/release/release-rhythmus.md): the update core orders by SemVer precedence, so a
+/// four-part prerelease `1.0.0-beta.3.1` lies strictly between beta.3 and beta.4, and the next beta number is the
+/// alternative that every release script already accepts. Build metadata never makes an update "newer".
+#[test]
+fn hotfix_versions_order_between_weekly_betas_without_downgrade() {
+    let mut manifest: UpdateManifest = serde_json::from_str(MANIFEST).unwrap();
+    let order = [
+        "1.0.0-beta.2",
+        "1.0.0-beta.3",
+        "1.0.0-beta.3.1",
+        "1.0.0-beta.3.2",
+        "1.0.0-beta.4",
+        "1.0.0-beta.10",
+        "1.0.0-rc.1",
+        "1.0.0",
+    ];
+    for (i, offered) in order.iter().enumerate() {
+        manifest.version = offered.parse().unwrap();
+        for (j, installed) in order.iter().enumerate() {
+            let installed: semver::Version = installed.parse().unwrap();
+            assert_eq!(
+                manifest.is_newer_than(&installed),
+                i > j,
+                "{offered} gegenüber installiert {installed}"
+            );
+        }
+    }
+    manifest.version = "1.0.0-beta.3+hotfix".parse().unwrap();
+    assert!(!manifest.is_newer_than(&"1.0.0-beta.3".parse().unwrap()));
+    // Prereleases stay on the beta endpoint only (OUT-254).
+    manifest.version = "1.0.0-beta.3.1".parse().unwrap();
+    assert!(manifest.validate(false).is_err());
+    manifest.validate(true).unwrap();
+}
+
+// spec: OUT-252
 #[test]
 fn rejection_emits_a_warning_without_payload_or_key_material() {
     #[derive(Clone)]
