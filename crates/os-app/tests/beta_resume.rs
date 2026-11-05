@@ -12,12 +12,22 @@ async fn a_new_paused_crawl_is_listed_and_remembered_after_restart() {
     // A frontend layout save starts before the core remembers the new crawl.
     let mut stale_ui = call(&first, "uistate.load", json!(null)).await;
     stale_ui["state"]["layout"] = json!({"split":0.4});
-    let fetch = os_engine::testing::SimFetcher::new(
-        os_engine::testing::SimSite::new()
-            .delay(std::time::Duration::from_millis(50))
-            .page("https://fixture.test/", "<a href='/a'>A</a>")
-            .page("https://fixture.test/a", "A"),
-    );
+    // B3-FLAKES (CRAWL-126): Die Pause muss vor dem natürlichen Ende ankommen. Die frühere Fixture (2 Seiten à
+    // 50 ms) war unter Windows schon fertig („completed“), bevor `crawl.pause` die Engine erreichte. Jetzt eine Kette:
+    // Jede Seite verlinkt nur die nächste, also kann der Crawl unabhängig von der Thread-Zahl frühestens nach
+    // CHAIN × 50 ms = 20 s enden – weit über der Pausenzusage (< 3 s). Antworten bis zur Pause zurückzuhalten geht
+    // nicht: Die Pause wartet laufende Abrufe ab.
+    const CHAIN: usize = 400;
+    let mut site = os_engine::testing::SimSite::new().delay(std::time::Duration::from_millis(50));
+    for n in 0..CHAIN {
+        let url = if n == 0 {
+            "https://fixture.test/".to_owned()
+        } else {
+            format!("https://fixture.test/p/{n}")
+        };
+        site = site.page(&url, &format!("<a href='/p/{}'>weiter</a>", n + 1));
+    }
+    let fetch = os_engine::testing::SimFetcher::new(site);
     let reference = os_app::session::control::start_with_fetcher(
         &first,
         ctx(),

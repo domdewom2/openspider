@@ -30,10 +30,17 @@ test("starts, pauses, resumes and clears a saved crawl through the bridge contra
     expected,
     { polling: "raf", timeout },
   );
+  // B3-FLAKES (CRAWL-126): the fixture never runs out. "/" links /p/0 … /p/99 and every /p/<n> links /p/<n+100>, so the
+  // frontier stays at about 100 URLs and the crawl has no natural end. The former 101-URL fixture (200 ms each) was
+  // already Completed on slow runners when the second Pause arrived. Holding responses back "until the pause" is not
+  // possible: Pause waits for in-flight requests (CRAWL-126), so a held response would block the pause itself.
   const server = createServer((req, res) => {
     setTimeout(() => {
       res.writeHead(200, { "Content-Type": "text/html" });
-      res.end(req.url === "/" ? Array.from({ length: 100 }, (_, i) => `<a href="/p/${i}">${i}</a>`).join("") : "<title>Fixture page</title>");
+      const page = /^\/p\/(\d+)$/.exec(req.url ?? "");
+      res.end(req.url === "/"
+        ? Array.from({ length: 100 }, (_, i) => `<a href="/p/${i}">${i}</a>`).join("")
+        : `<title>Fixture page</title>${page ? `<a href="/p/${Number(page[1]) + 100}">next</a>` : ""}`);
     }, 200);
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
