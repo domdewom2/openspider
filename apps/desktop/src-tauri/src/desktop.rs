@@ -35,7 +35,8 @@ impl<R: Runtime> WindowHost for Host<R> {
             ),
             WebviewUrl::App(path.into()),
         )
-        .title("OpenSpider – Visualisierung")
+        // UI-121 (B3-UI): neutral until the page sets the title in the UI language (`useWindowTitle`).
+        .title("OpenSpider")
         .build()
         .map_err(failure)?;
         window.set_focus().map_err(failure)
