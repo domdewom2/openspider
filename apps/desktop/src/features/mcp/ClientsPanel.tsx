@@ -12,10 +12,15 @@ export const MCP_PROGRAMS: Record<McpClientKind, string> = {
   claudeDesktop: "Claude Desktop",
   claudeCode: "Claude Code",
   codex: "Codex",
+  cursor: "Cursor",
 };
 
+/** Programs whose completion message asks to reload the MCP servers instead of starting a new session
+ * (AGENT-043, addendum 2026-11-05). */
+const RELOAD_PROGRAMS = new Set<McpClientKind>(["cursor"]);
+
 /** Fixed messages the service may report for client files (AGENT-043); details are never rendered. */
-const CLIENT_ERRORS = new Set(["mcp-client-changed", "mcp-client-problem-syntax", "mcp-client-problem-unsupported", "mcp-client-problem-symlink"]);
+const CLIENT_ERRORS = new Set(["mcp-client-changed", "mcp-client-problem-syntax", "mcp-client-problem-unsupported", "mcp-client-problem-symlink", "mcp-client-problem-readOnly"]);
 type Message = { key: string; args?: Record<string, string | number> };
 type Done = { kind: "connected" | "unchanged" | "disconnected"; backup: string | null };
 
@@ -96,7 +101,7 @@ export function ConnectPanel({ client, desktop }: { client: McpClientKind; deskt
       <Button isDisabled={busy} onPress={copy}>{t("mcp-copy-entry")}</Button>
     </div>
     {done && <Banner>
-      <p>{t(`mcp-client-done-${done.kind}`, { program })}</p>
+      <p>{t(`mcp-client-done-${done.kind}${RELOAD_PROGRAMS.has(client) ? "-reload" : ""}`, { program })}</p>
       {done.backup && <p className="os-mcp-path">{t("mcp-backup", { path: redactText(done.backup) })}</p>}
     </Banner>}
     {copied && <Banner>{t("mcp-entry-copied")}</Banner>}
