@@ -4,6 +4,8 @@
 .u10-toolbar > div:nth-child(3) { margin-left:auto; }
 .u10-toolbar label { display:flex; gap:var(--os-size-8); align-items:center; }
 .u10-grid-host { flex:1; min-height:0; overflow:hidden; }
+/* B3-UI: status and error lines between toolbar and table keep the toolbar's inline padding (UI-016, A02-20). */
+.u10-message { margin:0; padding:var(--os-space-4) var(--os-space-8); }
 .u10-counter { padding:var(--os-size-4) var(--os-size-8); border-top:var(--os-line) solid var(--os-border); font-size:var(--os-font-small); color:var(--os-text-muted); }
 .u10-operation { display:flex; gap:var(--os-size-8); align-items:center; }
 .u10-menu-anchor { position:fixed; width:var(--os-line); height:var(--os-line); pointer-events:none; }

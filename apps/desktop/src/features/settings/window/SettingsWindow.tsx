@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Providers } from "../../../app/Providers";
 import { OPEN_SETTING_EVENT } from "../../../app/windows";
+import { useWindowTitle } from "../../../app/windowTitle";
 import { useT } from "../../../i18n";
 import { isTauri } from "../../../ipc/transport/tauri";
 import { SettingsFrame } from "../frame/SettingsFrame";
@@ -15,9 +16,7 @@ export function SettingsWindow() {
   const t = useT();
   const [anchor, setAnchor] = useState<string | undefined>(readAnchor);
 
-  useEffect(() => {
-    document.title = t("app-settings-title");
-  }, [t]);
+  useWindowTitle(t("app-settings-title"));
 
   useEffect(() => {
     const onHash = () => setAnchor(readAnchor());

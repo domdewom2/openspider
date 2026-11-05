@@ -67,7 +67,8 @@ it("navigates with scope, scrolls up and requests table focus on double click; s
   expect(useSidebarNavigation.getState().target?.spec).toMatchObject({ tab: "Page Titles", filter: "Duplicate", segment: { kind: "segment", name: "Blog" } });
   expect(scrollTo).toHaveBeenCalledWith({ top: 0 });
   await tab("Issues");
-  const row = await screen.findByRole("button", { name: "Response Codes: Internal Client Error (4xx)" });
+  // Display name from the canon catalog (B3-UI, UI-121); the fixture's filter id is spelled `(4xx)`.
+  const row = await screen.findByRole("button", { name: "Response Codes: Internal Client Error (4XX)" });
   fireEvent.click(row); fireEvent.doubleClick(row);
   expect(useSidebarNavigation.getState().target?.focus).toBe(true);
   expect(main).toHaveFocus();
@@ -82,7 +83,7 @@ it("sorts fixture issues by type, priority, count and name and filters by all th
   mount(); await tab("Issues");
   const table = await screen.findByRole("table");
   expect(within(table).getAllByRole("row").slice(1).map(r => r.querySelector("th button")?.textContent)).toEqual([
-    "Response Codes: Internal Client Error (4xx)", "Images: Missing Alt Attribute", "Response Codes: Internal Redirection (3xx)", "Page Titles: Duplicate", "Meta Description: Missing",
+    "Response Codes: Internal Client Error (4XX)", "Images: Missing Alt Attribute", "Response Codes: Internal Redirection (3XX)", "Page Titles: Duplicate", "Meta Description: Missing",
   ]);
   expect(sortIssues([...fixture.issues, { ...fixture.issues[0]!, count: 0 }] as IssueRow[])).toHaveLength(5);
   expect(screen.getByText("More issues will be available after crawl analysis.")).toBeVisible();
@@ -91,7 +92,30 @@ it("sorts fixture issues by type, priority, count and name and filters by all th
   fireEvent.change(screen.getByLabelText("Search issues"), { target: { value: "DUPLICATE" } });
   await waitFor(() => expect(screen.getAllByRole("row")).toHaveLength(2));
   expect(screen.getByRole("button", { name: "Page Titles: Duplicate" })).toBeVisible();
-  await waitFor(() => expect(core.calls.filter(c => c.cmd === "sidebar.issues").at(-1)?.args).toMatchObject({ type: "opportunity", priority: "medium", search: "DUPLICATE" }));
+  // B3-UI (K2-63): the search runs on the displayed, translated name in the UI; the core only knows the English names
+  // and receives no search text any more (see the German search below).
+  await waitFor(() => expect(core.calls.filter(c => c.cmd === "sidebar.issues").at(-1)?.args).toMatchObject({ type: "opportunity", priority: "medium", search: null }));
+});
+
+// spec: UI-062
+// spec: UI-121
+it("shows issue names, explanation heading and search in German, keeping the canonical filter for navigation (B3-UI)", async () => {
+  await setLanguage("de");
+  mount(); await tab("Befunde");
+  const table = await screen.findByRole("table");
+  const names = within(table).getAllByRole("row").slice(1).map(r => r.querySelector("th button")?.textContent);
+  expect(names).toEqual([
+    "Antwortcodes: Intern: Client-Fehler (4XX)", "Bilder: Alt-Attribut fehlt", "Antwortcodes: Intern: Weiterleitung (3XX)", "Seitentitel: Duplikat", "Meta-Beschreibung: Fehlt",
+  ]);
+  for (const row of fixture.issues) expect(screen.queryByText(`${row.tab}: ${row.filter}`)).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Seitentitel: Duplikat" }));
+  expect(useSidebarNavigation.getState().target?.spec).toMatchObject({ tab: "Page Titles", filter: "Duplicate" });
+  expect(await screen.findByRole("heading", { name: "Seitentitel: Duplikat" })).toBeVisible();
+  fireEvent.change(screen.getByLabelText("Befunde suchen"), { target: { value: "seitentitel" } });
+  await waitFor(() => expect(within(screen.getByRole("table")).getAllByRole("row")).toHaveLength(2));
+  // The canonical English name still finds the issue.
+  fireEvent.change(screen.getByLabelText("Befunde suchen"), { target: { value: "page titles: dup" } });
+  await waitFor(() => expect(within(screen.getByRole("table")).getAllByRole("row")).toHaveLength(2));
 });
 
 // spec: UI-065 [M2]

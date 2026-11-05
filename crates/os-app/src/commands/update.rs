@@ -118,6 +118,19 @@ pub async fn run_check_with_context(
 ) -> crate::update::UpdateState {
     use crate::update::{self, policy::Outcome, UpdateState};
     let service = app.ext::<UpdateService>();
+    // B3-UI: a background download holds the gate for its whole duration (after a sleep of the computer up to its
+    // one-hour timeout). The state already answers a check then, so a manual check must not queue behind it.
+    let current = service
+        .state
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .clone();
+    if matches!(
+        current,
+        UpdateState::Downloading { .. } | UpdateState::Ready(_)
+    ) {
+        return current;
+    }
     let _guard = service.gate.lock().await;
     let previous = service
         .state

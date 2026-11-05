@@ -140,6 +140,12 @@ pub struct CrawlStatus {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional = nullable)]
     pub merging: Option<bool>,
+
+    /// Start-URL des Crawls (Spider-Modus) aus den Metadaten der Crawl-Datei; die Kopfleiste zeigt sie nach dem
+    /// Öffnen eines gespeicherten Crawls (UI-003, B3-UI). Im Listen- und SERP-Modus nicht gesetzt.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional = nullable)]
+    pub start_url: Option<String>,
 }
 
 /// Zustand eines Analyse-Teilschritts.

@@ -91,4 +91,9 @@ memoryLimitBytes?: number | null,
 /**
  * CRAWL-126: the WAL is still being merged into the crawl file after a pause or an end.
  */
-merging?: boolean | null, };
+merging?: boolean | null, 
+/**
+ * Start-URL des Crawls (Spider-Modus) aus den Metadaten der Crawl-Datei; die Kopfleiste zeigt sie nach dem
+ * Öffnen eines gespeicherten Crawls (UI-003, B3-UI). Im Listen- und SERP-Modus nicht gesetzt.
+ */
+startUrl?: string | null, };

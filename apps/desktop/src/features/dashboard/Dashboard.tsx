@@ -1,6 +1,6 @@
 import { SUMMARY_KEYS } from "../sidebar/overview/Overview";
 import { useFormat, useT } from "../../i18n";
-import { filterLabel, tabLabel } from "../../i18n/canon";
+import { filterLabel } from "../../i18n/canon";
 import { useSession } from "../../state/session";
 import { useTabs } from "../../state/tabs";
 import { EmptyState } from "../../ui/primitives/EmptyState";
@@ -8,7 +8,7 @@ import { useIssues, useOverview } from "../sidebar/frame/useSidebarQuery";
 import { OverviewAge } from "../sidebar/overview-age/OverviewAge";
 import { QueryFeedback } from "../sidebar/frame/QueryFeedback";
 import { useSidebarNavigation } from "../sidebar/frame/state";
-import { sortIssues } from "../sidebar/issues/Issues";
+import { issueLabel, sortIssues, useIssueConfig } from "../sidebar/issues/Issues";
 import { IssueBadge } from "../sidebar/issues/IssueBadge";
 import { hasCount } from "../sidebar/analysis/FilterStatus";
 import "./dashboard.css";
@@ -22,6 +22,7 @@ export function Dashboard() {
   const scope = useSidebarNavigation(s => s.scope);
   // UI-018 (M2-N27): „Top-Probleme“ keeps its last list while a new data version is counted.
   const issues = useIssues({ ...scope, type: null, priority: null, search: null });
+  const issueConfig = useIssueConfig();
   const navigate = (tab: string, filter: string) => {
     useTabs.getState().select(tab, filter);
     useSidebarNavigation.getState().navigate(tab, filter, true);
@@ -46,7 +47,7 @@ export function Dashboard() {
         </section>
         <section className="os-dashboard-card"><h2>{t("u35-top-issues")}</h2>
           <QueryFeedback error={issues.error} loading={issues.isPending} retry={() => void issues.refetch()} />
-          {top.map(row => <button className="os-dashboard-row" key={row.id} onClick={() => navigate(row.tab, row.filter)}><span>{tabLabel(t, row.tab)}: {filterLabel(t, { id: row.filter })}</span><strong>{f.integer(row.count)}</strong><IssueBadge badge={{ issueType: row.type, priority: row.priority }} /></button>)}
+          {top.map(row => <button className="os-dashboard-row" key={row.id} onClick={() => navigate(row.tab, row.filter)}><span>{issueLabel(t, row, issueConfig)}</span><strong>{f.integer(row.count)}</strong><IssueBadge badge={{ issueType: row.type, priority: row.priority }} /></button>)}
           {issues.data && !top.length && <p>{t("sidebar-no-issues")}</p>}
         </section>
       </div>

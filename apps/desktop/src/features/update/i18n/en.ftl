@@ -22,3 +22,5 @@ update-queued-crawl = The update will be installed after the crawl ends.
 update-close = Close
 update-privacy = The check sends only version, operating system and architecture to GitHub. GitHub also sees your IP address.
 update-queued-now = Preparing installation after active operations finish …
+update-check-timeout = The update check did not answer in time. Please try again.
+update-retry = Check again

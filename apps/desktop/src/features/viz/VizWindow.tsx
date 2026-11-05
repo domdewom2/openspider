@@ -2,6 +2,7 @@
 // meldet der Kern `viz-data-changed`; die Kopfzeile zeigt dann „Daten geändert – Aktualisieren“, erst ein Klick lädt
 // neu (Wurzel und Zoom bleiben erhalten).
 import { useEffect, useState } from "react";
+import { useWindowTitle } from "../../app/windowTitle";
 import { useT } from "../../i18n";
 import { describeError, toCmdError } from "../../ipc/errors";
 import { eventBus } from "../../ipc/events";
@@ -39,9 +40,8 @@ export function VizWindow({ params, exportDir }: { params: VizWindowParams; expo
     };
   }, [kind, snapshotId]);
 
-  useEffect(() => {
-    if (kind) document.title = `${t(`viz-kind-${kind}`)} – ${t("app-title")}`;
-  }, [kind, t]);
+  // UI-121 (B3-UI): document and native window title follow the UI language, also after a language change.
+  useWindowTitle(`${kind ? t(`viz-kind-${kind}`) : t("app-viz-title")} – ${t("app-title")}`);
 
   useEffect(() => {
     const handle = (n: Notice) => {

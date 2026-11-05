@@ -189,6 +189,8 @@ pub fn close(app: &App, window: &WindowId, cleared: bool) {
                 status.end_reason = None;
                 status.eta_s = None;
                 status.owner.live = false;
+                // B3-UI (UI-003): a cleared view has no crawl; its start URL must not return to the header.
+                status.start_url = None;
                 parts.crawl = Some(status);
             }
             parts.analysis = Some(AnalysisStatus {

@@ -87,6 +87,7 @@ filter-external-redirection-meta-refresh = External Redirection (Meta Refresh)
 filter-external-server-error-5xx = External Server Error (5XX)
 filter-external-success-2xx = External Success (2XX)
 filter-first-page = First Page
+filter-flash = Flash
 filter-plugins = Plugins
 filter-media = Media
 filter-fonts = Fonts

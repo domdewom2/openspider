@@ -537,7 +537,7 @@ export function GraphView({ kind, snapshotId, generation, initialRoot, exportDir
         csvDir={isTauri() ? null : csvDir}
         onCsvDir={setCsvDir}
         hasData={!!scene && scene.nodes.length > 0}
-        links={layout === "force" ? { overlay, shown: overlayScene?.edges.length ?? 0, onReset: () => setLinks(null) } : null}
+        links={layout === "force" ? { overlay, shown: overlayScene?.edges.length ?? 0, onReset: () => setLinks(null), colors: { inlink: style.inlink, outlink: style.outlink } } : null}
       />
       <section className="os-viz-main" aria-label={t(`viz-kind-${kind}`)}>
         <nav className="os-viz-trail" aria-label={t("viz-trail-label")}>

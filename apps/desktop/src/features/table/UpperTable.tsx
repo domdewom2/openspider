@@ -22,7 +22,7 @@ import { currentPlatform } from "../../ui/platform";
 import { Button, IconButton } from "../../ui/primitives/Button";
 import { Dialog, DialogFooter } from "../../ui/primitives/Dialog";
 import { ComboBox } from "../../ui/primitives/ComboBox";
-import { Badge, ProgressBar } from "../../ui/primitives/Feedback";
+import { Badge, Banner, ProgressBar } from "../../ui/primitives/Feedback";
 import { Checkbox, SearchField } from "../../ui/primitives/fields";
 import { EmptyState } from "../../ui/primitives/EmptyState";
 import { Menu, MenuBody, type MenuEntry } from "../../ui/primitives/Menu";
@@ -259,9 +259,13 @@ function RegularUpperTable() {
   const available = count > 0;
   const menuEntries = entries.map(e => ({ ...e, isDisabled: e.isDisabled || (!available && context?.urlId !== undefined),
     disabledReason: e.disabledReason ?? (!available ? t("u10-no-selection") : undefined), onAction: () => { e.onAction?.(); setContext(undefined); } }));
+  // UI-016 (B3-UI): without an open crawl the core answers `NoCrawl`; that is the state NO_DATA_YET with its padded
+  // hint, not an error line above the table plus NO_MATCH.
+  const noCrawl = controller.error != null && toCmdError(controller.error).code === "NoCrawl";
   const empty = activeFilter?.state.kind === "needsCrawlAnalysis" ? { code: "NEEDS_CRAWL_ANALYSIS" as const } :
     activeFilter?.state.kind === "needsConfig" ? { code: "FEATURE_DISABLED" as const, arg: activeFilter.state.key } :
-    activeFilter?.state.kind === "needsRendering" ? { code: "NEEDS_JS_RENDERING" as const } : null;
+    activeFilter?.state.kind === "needsRendering" ? { code: "NEEDS_JS_RENDERING" as const } :
+    noCrawl ? { code: "NO_DATA_YET" as const } : null;
   return <section className="u10-table" data-shortcut-scope="table" role="tabpanel" id="data-panel" aria-labelledby={tabs.view === "tabs" ? tabId("data-panel", tabs.active) : undefined} aria-label={tabs.view === "tabs" ? undefined : t("u10-table")}>
     <div className="u10-toolbar" key={tabs.active}>
       {/* K2-77: the first filters of the tab (and the active one) as chips with counts; all filters stay in the dropdown. */}
@@ -305,9 +309,10 @@ function RegularUpperTable() {
     {advanced && <AdvancedSearch columns={source?.columns ?? columnState.metadata[tabs.active] ?? []} value={query.rules} locale={locale}
       onApply={rules => { setSearchError(undefined); setText(rules.text); tabs.query({ search: "", rules }); }}
       onClear={() => { setText(""); tabs.query({ search: "", rules: null }); }} />}
-    {controller.error != null && <div role="alert">{/^err-search/.test(toCmdError(controller.error).messageKey) || toCmdError(controller.error).code === "Timeout"
-      ? searchErrorText(t, controller.error) : t(toCmdError(controller.error).messageKey, toCmdError(controller.error).args)}</div>}
-    {stale && <p role="status">{t("u10-stale")}</p>}
+    {/* B3-UI: messages above the table use the Banner primitive inside the toolbar's inline padding (tokens). */}
+    {controller.error != null && !noCrawl && <div className="u10-message"><Banner kind="error">{/^err-search/.test(toCmdError(controller.error).messageKey) || toCmdError(controller.error).code === "Timeout"
+      ? searchErrorText(t, controller.error) : t(toCmdError(controller.error).messageKey, toCmdError(controller.error).args)}</Banner></div>}
+    {stale && <p role="status" className="u10-message">{t("u10-stale")}</p>}
     {operation && <div role="status" className="u10-operation">
       <span>{t(`u10-op-${status?.state ?? "running"}`)}</span>
       <progress max={status?.total ?? operation.total} value={status?.done ?? 0} />

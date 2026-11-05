@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { DataGridProps } from "../../grid/DataGrid";
 import { defaultColumns } from "../../grid/DataGrid";
 import { createClient, setClient } from "../../ipc/client";
-import { localError } from "../../ipc/errors";
+import { IpcError, localError } from "../../ipc/errors";
 import { eventBus } from "../../ipc/events";
 import { crawl } from "../../ipc/crawl";
 import { catalog } from "../../ipc/catalog";
@@ -450,4 +450,23 @@ it("shows loading feedback instead of the no-data instruction while a filter ope
   await waitFor(() => expect(resolve).toBeTypeOf("function"));
   expect(screen.queryByText(/No data yet/)).toBeNull();
   expect(screen.getByRole("progressbar")).toBeInTheDocument();
+});
+
+// spec: UI-016
+it("shows the padded no-data state instead of a bare “No crawl is open” line, and other errors as a padded banner (B3-UI)", async () => {
+  await setLanguage("de");
+  vi.spyOn(view, "open").mockRejectedValue(new IpcError(localError("NoCrawl", "err-no-crawl")));
+  const { container, unmount } = render(<UpperTable />);
+  await waitFor(() => expect(container.querySelector('[data-empty-state="NO_DATA_YET"]')).not.toBeNull());
+  expect(screen.queryByText("Kein Crawl geöffnet.")).toBeNull();
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(container.querySelector('[data-empty-state="NO_MATCH"]')).toBeNull();
+  unmount();
+  vi.spyOn(view, "open").mockRejectedValue(new IpcError(localError("Io", "err-code-io")));
+  const second = render(<UpperTable />);
+  const alert = await screen.findByRole("alert");
+  // Banner primitive (padding from ui/tokens) inside the toolbar's inline padding.
+  expect(alert).toHaveClass("os-banner");
+  expect(alert.parentElement).toHaveClass("u10-message");
+  second.unmount();
 });

@@ -22,3 +22,5 @@ update-queued-crawl = Das Update wird nach Crawl-Ende installiert.
 update-close = Schließen
 update-privacy = Die Prüfung sendet nur Version, Betriebssystem und Architektur an GitHub. GitHub sieht dabei Ihre IP-Adresse.
 update-queued-now = Die Installation wird nach Abschluss laufender Vorgänge vorbereitet …
+update-check-timeout = Die Update-Prüfung hat nicht rechtzeitig geantwortet. Bitte erneut versuchen.
+update-retry = Erneut suchen

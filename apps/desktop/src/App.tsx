@@ -17,6 +17,7 @@ import { VizHost } from "./features/viz";
 import { useEffect, useState } from "react";
 import { SegmentsDialogHost } from "./features/segments-dialog";
 import { RegionBoundary } from "./app/ErrorBoundary";
+import { useWindowTitle } from "./app/windowTitle";
 import { mainRegions, registerMainRegions } from "./app/mainRegions";
 import { Providers } from "./app/Providers";
 import { useT } from "./i18n";
@@ -35,9 +36,7 @@ export function App() {
   const t = useT();
   const [version, setVersion] = useState<string | null>(null);
 
-  useEffect(() => {
-    document.title = t("app-title");
-  }, [t]);
+  useWindowTitle(t("app-title"));
 
   useEffect(() => {
     let live = true;
