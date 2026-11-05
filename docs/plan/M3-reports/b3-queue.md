@@ -15,9 +15,11 @@ und die K-49-Grenze neu belegen. Nutzerentscheidung vom 04.11.2026 (beta.3).
   246 s → 0,6 / 0,4 s, Worker-Blockade je Worker 396 s (44 % der Crawlzeit) → 163 / 149 s (26 / 24 %), davon am Kanal
   nur 32 / 25 s; der Rest ist Gegendruck des jetzt durchgehend schreibenden Writers.
 - **Budgets:** PERF-001, PERF-002, PERF-003 und PERF-005 grün (Werte unten). PERF-003 (Slow-Sink) steigt auf Linux von
-  416 auf 439 MB; Abstand zur Grenze 500 MB kleiner, aber vorhanden – auf dem Mac nicht gemessen (Spec-/Orchestrator-Frage 2).
+  416 auf 439 MB; Abstand zur Grenze 500 MB kleiner, aber vorhanden – auf dem Mac nicht gemessen (**Auflage vor dem
+  beta.3-Tag**, siehe Entscheidungen und Auflagen).
 - **K-49:** Formel unverändert (Threads + `CHANNEL_CAPACITY` + `BATCH_PAGES_BACKLOG`), die Zahl bei 8 Threads steigt
-  von 4 264 auf **5 032** Seiten je Abbruch. Das ist eine Änderung der zugesagten Zahl → Orchestrator-Frage 1.
+  von 4 264 auf **5 032** Seiten je Abbruch. Der Orchestrator nimmt 5 032 an (Fable-Empfehlung; Plan-Entscheidung,
+  keine Spec-Änderung).
 - **V2** (`BATCH_BYTES` 16 MiB) **nicht übernommen:** bei 100k kein Gewinn (Median 58,6 bzw. 54,0 s gegen 52,5–53,5 s),
   bei 1 Mio. −37 s gegenüber V1 in derselben Reihe; Bedingung „Gewinn bei 100k, 3 Läufe“ nicht erfüllt.
 
@@ -26,7 +28,9 @@ und die K-49-Grenze neu belegen. Nutzerentscheidung vom 04.11.2026 (beta.3).
 | Commit | Inhalt |
 |---|---|
 | 27bd4bf2 | `engine:` Kanal aus der Batchgröße abgeleitet (1 024), Zulassungsschwelle 3 × `BATCH_BYTES` (24 MiB), const-Prüfungen, Test gegen Fixture-Seiten, K-49-Kommentar mit neuer Zahl |
-| (dieser Bericht) | `docs:` Bericht B3-QUEUE |
+| 4059a939 | `docs:` Bericht B3-QUEUE |
+| 3a07904c | `engine:` Fable-Nacharbeit: `MESSAGES_PER_PAGE` als Obergrenze beschrieben, const-Assert `>=` (Zweierpotenz-Grenzfall), Herleitungstest deckt ihn ab, Achtel-Regel des Rückstaus begründet |
+| (diese Ergänzung) | `docs:` Bericht: Fable-Nacharbeit, Entscheidungen, Folgeauftrag Render-Nutzdaten |
 
 ## Gewählte Werte und Herleitung
 
@@ -48,7 +52,9 @@ pub const IN_FLIGHT_BYTES: u64 = 3 * BATCH_BYTES; // = 24 MiB
 
 Begründung: Der Kanal soll den nächsten vollen Batch aufnehmen, während der Writer den aktuellen schreibt; dann findet
 der Writer nach jedem Commit einen vollen Batch vor. 8 MiB / 18 KiB = 455 Seiten × 2 Nachrichten = 910 → nächste
-Zweierpotenz 1 024 (dasselbe Ergebnis für jede Referenzseite von 16 KiB bis unter 32 KiB). Ändert jemand `BATCH_BYTES`, wächst der
+Zweierpotenz 1 024 (dasselbe Ergebnis für jede Referenzseite von 16 KiB bis unter 32 KiB; bei genau 16 KiB ist das
+Produkt 2 × 512 = 1 024 selbst die Zweierpotenz, der Kanal fasst den Batch dann genau – deshalb prüft die
+const-Assertion `>=`, Fable-Befund). Ändert jemand `BATCH_BYTES`, wächst der
 Kanal mit (16 MiB → 2 048), statt still wieder kleiner als ein Batch zu sein. Feste Zahl 1 024 wäre gleichwertig, die
 Herleitung macht die Abhängigkeit aber sichtbar und prüfbar.
 
@@ -59,13 +65,15 @@ Worker am Byte-Gate). 24 und 32 MiB sind gleich schnell (100k 53,5 gegen 52,5 s,
 weniger (Slow-Sink-RSS 445 gegen 448 MB, bei schweren realen Seiten begrenzt allein die Byte-Schwelle den Puffer).
 
 **Prüfungen:**
-- Übersetzungszeit (`const _: () = { assert!(…) }`): Kanal > Nachrichten eines vollen Batches, Kanal ≤ das Doppelte
+- Übersetzungszeit (`const _: () = { assert!(…) }`): Kanal ≥ Nachrichten eines vollen Batches, Kanal ≤ das Doppelte
   (Kanalanteil der K-49-Grenze bleibt begrenzt), schreibender Batch + voller Kanal aus Referenzseiten < Schwelle.
 - Neuer Test `the_channel_holds_the_next_full_batch_of_reference_pages_while_the_writer_writes`
   (`writer_thread.rs`, `// spec: PERF-002, PERF-003`) gegen Fixture-Seiten: Die Senke hält einen vollen 8-MiB-Batch
-  fest; derweil legt der Test 456 Referenzseiten (je Discovery + Seite = 18 KiB) mit `try_reserve` in den Kanal –
-  keine Reservierung darf warten (Kanal und Byte-Gate). Nach der Freigabe schreibt der Writer genau 455 Seiten am
-  Nutzdatenbudget, ohne auf die Sammelzeit zu warten (Batches `[1, 455, 1]`). Mit den alten Konstanten schlägt der Test
+  fest; derweil legt der Test 455 Referenzseiten im ungünstigsten Fall (je Discovery + Seite = 18 KiB) und eine
+  überzählige Seite ohne Discovery mit `try_reserve` in den Kanal – keine Reservierung darf warten (Kanal und
+  Byte-Gate). Nach der Freigabe schreibt der Writer genau 455 Seiten am Nutzdatenbudget, ohne auf die Sammelzeit zu
+  warten (Batches `[1, 455, 1]`). Im Grenzfall „Kanal genau voll“ (Referenzseite 16 KiB) folgt die überzählige Seite
+  nach der Freigabe; mit 16 KiB testweise übersetzt: grün (`[1, 512, 1]`). Mit den alten Konstanten schlägt der Test
   fehl (geprüft, siehe Tests: Kanal nach 128 Seiten × 2 Nachrichten voll).
 
 ## Vorher/Nachher
@@ -183,7 +191,7 @@ Der erste Abschnitt bleibt der langsamste (Einfügen neuer URLs, Auslagern der W
 
 Abschnitte nachher (nur Bericht): 982,1 · 1 213,0 · 1 212,1 · 1 224,8 · 1 213,6 · 1 205,8 · 1 196,4 · 1 189,3 ·
 1 192,6 · 1 199,6 URLs/s. Der Puffer wächst um 12 MB, die Spitze um 23–32 MB (Vektorwachstum, Allocator). Abstand zur
-Grenze auf Linux 61 MB (vorher 84 MB). Mac siehe Frage 2.
+Grenze auf Linux 61 MB (vorher 84 MB). Mac: Auflage, siehe Entscheidungen und Auflagen.
 
 ### PERF-005 – harter Abbruch und Fortsetzen (`perf-005 --size large --kills 10`, Seed 20261014)
 
@@ -218,7 +226,8 @@ leiten sie aus den Konstanten ab; dort war nichts zu ändern. Neu ist nur die Za
 Die Garantie selbst ist nicht schwächer: „keine Duplikate, keine Verluste“ (PERF-005) bleibt, und wiederholt werden nur
 nicht persistierte Abrufe. Größer wird nur die Zahl der Seiten, die nach einem harten Abbruch erneut abgerufen werden
 dürfen (+768). Kommentare in `writer_thread.rs` nennen jetzt die Formel und beide Zahlen. Messung siehe Budgets
-(PERF-005). Weil sich die zugesagte Zahl ändert, ist das Orchestrator-Frage 1.
+(PERF-005). Die neue Zahl hat der Orchestrator nach Fable-Empfehlung angenommen (Plan-Entscheidung, keine
+Spec-Änderung); die Alternative `BATCH_PAGES_BACKLOG` 3 232 entfällt.
 
 ## V2 (`BATCH_BYTES` 16 MiB) – nur gemessen
 
@@ -247,6 +256,11 @@ V3 (Änderungsfeed ohne zufälligen Index) ein Kandidat; dann mit abgeleitetem K
   PERF-005 klein mit der aus den Konstanten abgeleiteten K-49-Grenze und PERF-003 klein).
 - **Gegenprobe:** Der neue Test mit den alten Konstanten (Kanal 256, Schwelle 16 MiB, ohne const-Prüfung) schlägt fehl:
   „Worker wartet vor Discovery 128 von 455“ (Kanal nach 128 Seiten × 2 Nachrichten voll). Datei danach zurückgesetzt.
+- **Fable-Nacharbeit (3a07904c), Server:** `cargo fmt --all --check` 0, `cargo clippy --workspace --all-targets -- -D
+  warnings` 0, `cargo test -p os-engine --lib writer_thread` 16 bestanden, `--test core_writer --test perf_backpressure`
+  3 + 1 bestanden; zusätzlich `--lib writer_thread` mit `REFERENCE_PAGE_BYTES` = 16 KiB (Zweierpotenz-Grenzfall,
+  danach zurückgesetzt): übersetzt und 16 bestanden. Kein Workspace-Volltest (nur `writer_thread.rs` und Bericht
+  geändert, Vorgabe Orchestrator).
 - Bestehende Prüfungen, die die Konstanten verwenden, unverändert und grün: `core_writer.rs` (Rückstau-Grenze
   `CHANNEL_CAPACITY + 2 × BATCH_PAGES_BACKLOG + 100`), `writer_thread.rs` (Byte-Gate-Test mit `IN_FLIGHT_BYTES`,
   Batchschnitt mit `BATCH_BYTES`, Kanal-4-Test), `os-loadtest` `REPEAT_BUFFER_ALLOWANCE`/`engine_adapter.rs` (K-49).
@@ -256,20 +270,53 @@ V3 (Änderungsfeed ohne zufälligen Index) ein Kandidat; dann mit abgeleitetem K
 - Lasttests: siehe Budgets (`perf-001` large und small, `perf-003` large, `perf-005` large mit 10 Abbrüchen: alle `passed`).
 - App nicht geändert, daher kein `npm`-Lauf.
 
-## Spec-Fragen / Orchestrator-Fragen
+## Rückstau-Heuristik (Fable-Befund, entschieden: relativ lassen)
 
-1. **K-49-Zahl (PERF-005):** Die Formel bleibt, die Zahl wiederholter Requests je Abbruch steigt bei 8 Threads von
-   4 264 auf 5 032. Bitte bestätigen. Alternative ohne Zahlenänderung: `BATCH_PAGES_BACKLOG` 4 000 → 3 232; das trifft nur
-   Batches aus sehr kleinen Seiten (bei der PERF-001-Fixture endet jeder Batch vorher am Nutzdatenbudget), ist aber nicht
-   gemessen und nicht Teil dieses Pakets.
-2. **PERF-003 auf dem Mac:** Linux steigt von 416 auf 439 MB (+23 MB). Der letzte Mac-Wert (M2-N20,
-   31.10.) lag bei 451 MB; zählt man den Linux-Zuwachs dazu, bleibt der Mac voraussichtlich unter 500 MB, aber mit
-   kleinem Abstand. Ich durfte auf dem Mac nicht messen; ein Lauf `perf-003 --size large` auf dem Mac mini vor beta.3
-   wäre die Bestätigung. Falls er reißt: `IN_FLIGHT_BYTES` 3 → 2,5 Batches ist die nächstkleinere Stufe (der Kanal
-   allein bringt bei 16 MiB schon 78 → 56,6 s bei 100k).
-3. **Referenzseite als Konstante:** `REFERENCE_PAGE_BYTES` (18 KiB) ist ein Messwert der PERF-001-Fixture, keine
-   Spec-Zahl. Reale Seiten mit mehr Text puffern über die Byte-Schwelle begrenzt; Seiten mit sehr wenig Inhalt füllen
-   den Kanal vor dem Batch (wie bisher). Kein Handlungsbedarf, nur zur Kenntnis.
+Der Writer sammelt im Rückstau-Modus bis `BATCH_PAGES_BACKLOG`, wenn `behind` gilt (nach dem letzten Schreiben stand
+Arbeit im Kanal) oder wenn mehr als ein Achtel des Kanals wartet (`rx.len() * 8 > capacity`). Mit 1 024 Nachrichten
+greift die Achtel-Regel ab 129 statt ab 33 wartenden Nachrichten. **Entscheidung: so gelassen**, begründet im Kommentar
+an der Stelle. Hauptauslöser ist `behind`, das nach jedem Schreiben mit nicht leerem Kanal gesetzt wird; die
+Achtel-Regel entscheidet nur über den ersten Batch nach einer Ruhephase. 129 Nachrichten sind höchstens 129 Seiten,
+also weniger als `BATCH_PAGES` (200): Der Batch endet dann regulär bei 200 Seiten oder 100 ms, und der nächste sammelt
+mit `behind` im Rückstau-Modus. Eine absolute Schwelle von 32 Nachrichten würde höchstens einen 200-Seiten-Batch je
+Ruhephase vermeiden und wäre ein ungemessener Eingriff; alle Messungen dieses Berichts liefen mit der relativen Regel.
+
+## Entscheidungen und Auflagen (Orchestrator, nach Fable-Abnahme „approved 86“)
+
+1. **K-49:** Der Orchestrator nimmt 5 032 wiederholte Requests je Abbruch (8 Threads) an, nach Fable-Empfehlung. Das
+   ist eine Plan-Entscheidung, keine Spec-Änderung (PERF-005 verlangt „keine Duplikate, keine Verluste“, die Formel aus
+   K-49 bleibt). Die Alternative `BATCH_PAGES_BACKLOG` 3 232 entfällt.
+2. **Auflage vor dem beta.3-Tag – PERF-003 auf dem Mac mini:**
+   `N20_MAX_LOAD=2.5 bash crates/os-loadtest/scripts/n20-mac.sh <out>` (PERF-003 large zweimal, PERF-001 large einmal,
+   PERF-001 small dreimal). Linux stieg von 416 auf 439 MB (+23 MB); der letzte Mac-Wert (M2-N20, 31.10.) lag bei
+   451 MB, erwartet also ≈ 475 MB bei Grenze 500 MB. **Rückfall, falls die Grenze reißt:**
+   `IN_FLIGHT_BYTES = 5 * BATCH_BYTES / 2` (**20 MiB**). Die const-Prüfung bleibt damit erfüllt (schreibender Batch
+   8 MiB + voller Kanal aus Referenzseiten 9 MiB = 17 MiB < 20 MiB); der Kanal allein brachte bei 16 MiB schon
+   78 → 56,6 s (100k).
+3. **Referenzseite als Konstante** (nur zur Kenntnis): `REFERENCE_PAGE_BYTES` (18 KiB) ist ein Messwert der
+   PERF-001-Fixture, keine Spec-Zahl. `MESSAGES_PER_PAGE` = 2 ist die Obergrenze zu Crawlbeginn; im eingeschwungenen
+   Crawl kommt etwa eine Nachricht je Seite an, der Kanal fasst dann Seiten für gut zwei Batches, und die Byte-Schwelle
+   begrenzt den Puffer (PERF-005: höchstens 1 492 wiederholte Abrufe je Abbruch). „Kanal = genau ein Batch“ gilt nur zu
+   Crawlbeginn; Kommentar in `writer_thread.rs` entsprechend präzisiert (3a07904c).
+
+## Folgeauftrag: Render-Nutzdaten im Byte-Gate (Fable-Befund, nicht in diesem Paket)
+
+**Befund:** `estimate_bytes` (`writer_thread.rs`) zählt für die M2-Erweiterungen nur die Strukturgröße der Vektoren
+(`capacity × size_of_val`), nicht deren Heap-Inhalt. Ungezählt sind vor allem `RenderWrite.html` (gerendertes DOM),
+`RenderWrite.screenshots[].data` (Bilddaten), `RenderWrite.console`/`network`/`blocked`, `structured_data`, `a11y` und
+`custom_js`. Diese Daten passieren die Byte-Schwelle (`IN_FLIGHT_BYTES`) und das Nutzdatenbudget (`BATCH_BYTES`) also
+fast ungezählt. Der Kanal ist seit B3-QUEUE viermal so groß (1 024 statt 256 Nachrichten); im Textmodus begrenzt die
+Byte-Schwelle den Puffer, im Rendermodus nur die Nachrichtenzahl.
+
+**Szenario für den Folgeauftrag:** Crawl mit JavaScript-Rendering, mit Screenshots und gespeichertem
+gerendertem HTML, langsamer Senke (SlowSink 100 ms je Batch wie PERF-003) und Seiten mit großem DOM (z. B. 500 KB
+gerendertes HTML, 1–2 MB Screenshot-Kacheln, einige hundert Netzwerk-/Konsoleneinträge). Erwartet: Bis zu 1 024
+Nachrichten im Kanal plus ein Sammelbatch bis `BATCH_PAGES_BACKLOG` Seiten, bei 1–2 MB je Seite also Hunderte MB bis
+über 1 GB Puffer, ohne dass das Byte-Gate greift (der Kanalanteil war mit 256 Nachrichten ein Viertel davon). Prüfung:
+`estimate_bytes` zählt die genannten Heap-Daten (Test gegen eine Fixture mit Render-Daten: Schätzung ≥ Summe der
+Puffer), der Rückstau im Rendermodus bleibt durch `IN_FLIGHT_BYTES` begrenzt (Fixture-Crawl mit gerenderten Seiten und
+SlowSink: `mem_writer_backlog_bytes_max` ≤ Schwelle + eine Seite, Spitzen-RSS des Kernprozesses ohne Browser
+gemessen). Spec-Bezug: PERF-003 (alle Warteschlangen begrenzt), PERF-006 (Rendering unter Kontrolle).
 
 ## Fremde Dateien (K2-92)
 
