@@ -105,8 +105,11 @@ jobs:
           if-no-files-found: error
 
   # Übergang bis ci.yml/ui-e2e.yml JUnit exportieren (Schnittstellenbedarf im Q01-Bericht).
-  # Runner, Browserinstallation, Matrix und Transport entsprechen ui-e2e.yml.
+  # Runner, Browserinstallation, Matrix, Fixture-Werkzeuge und Transport entsprechen ui-e2e.yml (B3-MACIMG: Abweichungen
+  # hier ließen beta/*, mcp/bridge, sidebar-chart/live und die macOS-Tab-Tests in allen Läufen scheitern, unbemerkt,
+  # weil der Schritt den Exit nur im Gate weitergibt).
   e2e:
+    name: e2e (${{ matrix.name }})
     # Pull-Requests von m2/*-Zweigen überspringen den Job: derselbe Stand läuft schon über den Push-Lauf (K2-67).
     if: ${{ github.event_name != 'pull_request' || !startsWith(github.head_ref, 'm2/') }}
     runs-on: ${{ matrix.os }}
@@ -115,10 +118,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: macos-webkit
+          # macOS-WebKit in zwei Shards wie ui-e2e.yml: ein Job brauchte 47–54 min Testzeit (Läufe 41989485643,
+          # 41999934314) und lief mit Bau und Cache in das 60-min-Limit. Das Perf-Projekt (UI-146) nur im ersten Shard.
+          - name: macos-webkit-1
             os: macos-15
             projects: webkit
             browsers: webkit
+            shard: 1/2
+            perf: true
+          - name: macos-webkit-2
+            os: macos-15
+            projects: webkit
+            browsers: webkit
+            shard: 2/2
           - name: windows-chromium
             os: windows-latest
             projects: chromium
@@ -149,6 +161,11 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      # Wie ui-e2e.yml: ohne unprivilegierte User-Namespaces startet die Chromium-Sandbox des Login-Fensters nicht
+      # (auth/bridge.spec.ts:26 scheiterte deshalb unter Linux).
+      - name: Chromium-Sandbox erlauben (Linux)
+        if: runner.os == 'Linux'
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: npm ci
       - name: Playwright-Browser installieren
         run: |
@@ -158,23 +175,78 @@ jobs:
             npx playwright install ${{ matrix.browsers }}
           fi
       - run: cargo build --locked -p os-app --features e2e-bridge --bin os-app-bridge
+      # Wie ui-e2e.yml: beta/*, mcp/bridge und sidebar-chart/live starten os-testsite (sonst „spawn … ENOENT“),
+      # alpha/support.ts braucht zusätzlich CLI und Paritätswerkzeug.
+      - name: E2E-Fixture-Werkzeuge bauen
+        run: cargo build --locked -p os-testsite -p os-cli -p os-parity --bins
+      # Wie ui-e2e.yml (N17): ohne native Tastaturnavigation überspringt Tab in WebKit auf macOS native Buttons
+      # (a11y/contrast, a11y/grid, a11y/keyboard). https://github.com/microsoft/playwright/issues/41808
+      - name: WebKit-Tastaturnavigation einschalten (macOS)
+        if: runner.os == 'macOS'
+        run: defaults write org.webkit.Playwright AppleKeyboardUIMode -int 2
+      # Schritt-Limit unter dem Job-Limit: läuft der Testlauf zu lange, bleiben Zeit für die Uploads (Fehlertexte stehen
+      # dann in test-results/*/error-context.md und den Traces).
       - name: E2E-A mit JUnit
+        timeout-minutes: 45
         env:
           OS_E2E_PROJECTS: ${{ matrix.projects }}
           CI: 'true'
           PLAYWRIGHT_JUNIT_OUTPUT_FILE: ../../playwright-m2.xml
+        # Mit Shard nur das Hauptprojekt (wie ui-e2e.yml): `<engine>-perf` hängt davon ab und liefe sonst in jedem
+        # Shard ungeteilt mit.
+        run: |
+          args=(--reporter=list,html,junit)
+          if [ -n "${{ matrix.shard }}" ]; then
+            args+=(--project=${{ matrix.projects }} --shard=${{ matrix.shard }})
+          fi
+          status=0
+          npm run -w apps/desktop e2e -- "${args[@]}" 2>&1 | tee e2e.log || status=$?
+          used=$( (grep -h '^\[e2e\] Transport:' e2e.log || true) | sort -u | tr '\n' ' ')
+          echo "E2E-A (${{ matrix.name }}): ${used:-kein Lauf}; Exit: $status" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$status" -ne 0 ]]; then
+            echo "::warning title=E2E-A ${{ matrix.name }}::Playwright-Exit $status, die JUnit-Belege enthalten Fehlschläge"
+          fi
+          if [[ "$M2_GATE" == "true" ]]; then exit "$status"; fi
+      # Laufzeitbudgets (UI-146) wie ui-e2e.yml nach den Tests des Shards, ohne parallele Last und ohne die
+      # Projektabhängigkeit; eigene JUnit-Datei und Ausgabeordner.
+      - name: E2E-A Laufzeitbudgets mit JUnit (Shard)
+        if: matrix.perf
+        timeout-minutes: 10
+        env:
+          OS_E2E_PROJECTS: ${{ matrix.projects }}
+          CI: 'true'
+          PLAYWRIGHT_JUNIT_OUTPUT_FILE: ../../playwright-m2-perf.xml
+          PLAYWRIGHT_HTML_OUTPUT_DIR: playwright-report-perf
         run: |
           status=0
-          npm run -w apps/desktop e2e -- --reporter=list,html,junit 2>&1 | tee e2e.log || status=$?
-          used=$(grep -h '^\[e2e\] Transport:' e2e.log | sort -u | tr '\n' ' ')
-          echo "E2E-A (${{ matrix.name }}): ${used:-kein Lauf}; Exit: $status" >> "$GITHUB_STEP_SUMMARY"
+          npm run -w apps/desktop e2e -- --reporter=list,html,junit --project=${{ matrix.projects }}-perf --no-deps \
+            --output=test-results-perf 2>&1 | tee -a e2e.log || status=$?
+          echo "E2E-A Laufzeitbudgets (${{ matrix.name }}): Exit: $status" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$status" -ne 0 ]]; then
+            echo "::warning title=E2E-A Laufzeitbudgets ${{ matrix.name }}::Playwright-Exit $status"
+          fi
           if [[ "$M2_GATE" == "true" ]]; then exit "$status"; fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-junit-${{ matrix.name }}
-          path: playwright-m2.xml
+          path: |
+            playwright-m2.xml
+            playwright-m2-perf.xml
           if-no-files-found: error
+      # Report, Traces und error-context.md auch bei Fehlschlag oder Schritt-Zeitüberschreitung sichern.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-m2-${{ matrix.name }}
+          path: |
+            e2e.log
+            apps/desktop/playwright-report/
+            apps/desktop/test-results/
+            apps/desktop/playwright-report-perf/
+            apps/desktop/test-results-perf/
+          retention-days: 14
+          if-no-files-found: ignore
 
   spec-coverage-m2:
     name: spec-coverage-m2
@@ -211,11 +283,14 @@ jobs:
           merged=$(python3 -c 'import re; print(",".join(sorted({m.group(1) for s in open("main-merges.txt") if (m := re.match(r"m2: Merge (?:M2-)?([A-Za-z0-9]+)\b", s, re.I))})))')
           if [[ -n "$merged" ]]; then args+=(--merged "$merged"); fi
           shopt -s nullglob
+          # Fünf Matrix-Jobs (macOS-WebKit in zwei Shards) mit je playwright-m2.xml, der erste macOS-Shard zusätzlich
+          # mit den Laufzeitbudgets (playwright-m2-perf.xml).
           junit_files=(evidence/e2e/*/playwright-m2.xml)
+          perf_files=(evidence/e2e/*/playwright-m2-perf.xml)
           # Fehlende Matrix-Belege sind sichtbar und machen nur das manuelle Gate rot.
           missing=0
-          if [[ ${#junit_files[@]} -ne 4 ]]; then missing=1; fi
-          for file in "${junit_files[@]}"; do args+=(--frontend-junit "$file"); done
+          if [[ ${#junit_files[@]} -ne 5 || ${#perf_files[@]} -ne 1 ]]; then missing=1; fi
+          for file in "${junit_files[@]}" "${perf_files[@]}"; do args+=(--frontend-junit "$file"); done
           status=0
           cargo run --locked -p os-parity -- coverage --milestone M2 \
             --test-output evidence/core/rust-tests.txt --frontend-junit evidence/core/vitest-m2.xml \
