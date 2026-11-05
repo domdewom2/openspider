@@ -329,3 +329,31 @@ async fn install_error_does_not_block_quit_or_leave_reopen_ticket() {
     update::pending::reopen(&restarted).await;
     assert!(restarted.sessions().current(&common::window()).is_none());
 }
+
+// spec: OUT-250
+// spec: OUT-251
+#[tokio::test]
+async fn manual_check_answers_at_once_while_a_download_holds_the_gate() {
+    // B3-UI: "Hilfe → Nach Updates suchen" must not wait behind a long-running (or stalled) background download.
+    let dir = tempfile::tempdir().unwrap();
+    let app = App::new(AppConfig::new(dir.path())).unwrap();
+    let service = app.ext::<UpdateService>();
+    *service.state.lock().unwrap() = UpdateState::Downloading {
+        done: 1,
+        total: Some(2),
+    };
+    let _held = service.gate.lock().await;
+    let state = tokio::time::timeout(
+        std::time::Duration::from_secs(2),
+        os_app::commands::update::run_check(&app, true),
+    )
+    .await
+    .expect("the manual check does not wait for the download");
+    assert!(matches!(
+        state,
+        UpdateState::Downloading {
+            done: 1,
+            total: Some(2)
+        }
+    ));
+}
