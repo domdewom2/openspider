@@ -1,7 +1,7 @@
 # Bericht B3-COV: spec-coverage-m2 – Fehlschläge immer rot, Merge-Extraktion der M2-Abdeckung
 
 Branch `m3/cov` (Basis main `f6d98ccf`), Worktree `~/Projects/openspider-wt/m3-cov`, Server-Worktree `m3-cov`.
-Nachweis auf origin über den Zweig `diag/cov` (Stand `5f990a6c`, bleibt stehen). `m3/cov` nicht nach origin gepusht,
+Nachweis auf origin über den Zweig `diag/cov` (Stand `db0045f2`, bleibt stehen). `m3/cov` nicht nach origin gepusht,
 nichts gemergt.
 
 ## Ergebnis in Kürze
@@ -17,6 +17,9 @@ nichts gemergt.
   Die Extraktion liefert 124 echte Paket-IDs; vorher waren es 126 Treffer, davon 14 Pseudo-IDs (`m2`, `main`, `N00` …).
   12 Pakete fehlten früher, darunter N24–N31, die vier FIX-Pakete und CI-E2E. `os-parity` behandelt unbekannte
   `--merged`-IDs jetzt als Warnung.
+- **Zusatzbefund linux-webkit auf main (Lauf 42055703821):** Der Abbruch kam vom apt-Spiegel. Die Paketinstallation
+  dauerte 48 min (37,7 kB/s statt sonst 114 MB in 4 s), nicht die Testzeit. Sharding hilft dagegen nicht. Neu ist ein
+  Schritt-Limit von 15 min für die Browserinstallation; Tests und Job-Limits sind unverändert. Details unten.
 - **Nachweis:** Lauf **42056676906** (`workflow_dispatch` auf `diag/cov`, Stand `5f990a6c`): alle 7 Jobs grün,
   0 Fehlschläge in Rust, vitest und allen fünf E2E-Jobs, `M2-status.json` erzeugt. Das Ergebnis ist `passed: false`
   mit 2 blockierenden IDs, 25 offenen Anhang-B-Einträgen und 13 ungültigen Ignores. Der Schritt gibt dafür
@@ -29,13 +32,16 @@ nichts gemergt.
 | `24cdc150` | `parity:` `coverage/m2.rs` – unbekannte `--merged`-IDs wählen kein Paket aus, landen als Warnung „unbekanntes gemergtes M2-Paket ignoriert: <id>“ in `warnings` und im neuen Feld `unknown_merged` der Statusdatei; vorher `ParityError::Invalid` und kein Bericht. Test `unknown_merged_ids_warn_and_select_no_package` gegen die Fixture `tests/data/coverage_m2`. Die bisherige Assertion `run(...).is_err()` für `typo` im Test `development_defaults_to_wave_zero_and_requires_only_selected_packages` ist entfallen, weil sie genau das alte Verhalten prüfte; die neue Erwartung steht im neuen Test. README zu `--merged` angepasst. |
 | `5f990a6c` | `ci:` `spec-coverage-m2.yml` – siehe unten |
 | `d2285cd9` | `parity:` doppelte Ausgabe der Warnung entfernt (die Zusammenfassung gibt Warnungen schon aus) |
-| (dieser Bericht) | `docs:` |
+| `7ab40ece` | `docs:` dieser Bericht (erste Fassung) |
+| `db0045f2` | `ci:` Schritt-Limit 15 min für „Playwright-Browser installieren“ (e2e) und den Chromium-Install im `evidence`-Job (jetzt benannter Schritt „Playwright-Chromium installieren“), Zusatzbefund linux-webkit |
+| (Nachtrag) | `docs:` Bericht um Zusatzbefund und zweiten Nachweis ergänzt |
 
 Änderungen in `spec-coverage-m2.yml` (`5f990a6c`):
 
 | Stelle | vorher | nachher |
 |---|---|---|
 | `evidence`, neu vor `npm ci` | – | `Chromium-Sandbox erlauben (Linux)`: `sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0` (wie `ui-e2e.yml`) |
+| `evidence` Chromium-Install, `e2e` „Playwright-Browser installieren“ (`db0045f2`) | ohne Schritt-Limit | `timeout-minutes: 15` (Zusatzbefund unten) |
 | `evidence` „Rust-Tests und echte Ergebnisdatei“ (Z. 89) | `exit` nur bei `M2_GATE` | `exit "$status"` immer; vitest (`!cancelled()`) und Upload (`always()`) laufen trotzdem |
 | `evidence` „vitest-JUnit“ (Z. 97) | `exit` nur bei `M2_GATE` | `exit "$status"` immer |
 | `e2e` „E2E-A mit JUnit“ (Z. 207–210) | `::warning` + `exit` nur bei `M2_GATE` | `exit "$status"` immer (die rote Schrittmarkierung ersetzt die Warnung) |
@@ -119,7 +125,15 @@ Befund, keine Entscheidung:
 - Verwechslungsgefahr: `M3-N00` / `B3-N00` („Restpunkte M2“, gemergt 05.11.) ist ein anderes Paket und wird mit
   `m3:`/`merge:` gemergt, nicht mit `m2: Merge`.
 
-## Nachweislauf 42056676906
+## Nachweisläufe
+
+Zweiter Lauf **42069070215** auf `db0045f2` (mit den Schritt-Limits für die Installation): alle 7 Jobs grün. Rust
+4349/0/50, vitest 1011/0. E2E: macOS 263 + 2 Budgets / 272, Windows 537, Linux-Chromium 537, Linux-WebKit 537, alle
+mit 0 Fehlschlägen; Testzeit Linux-WebKit 28,1 min, Windows 39,5 min. apt Linux-WebKit 114 MB in 9 s.
+`M2-status.json` identisch zum ersten Lauf (588/590, 2 blockierende IDs, 25 Anhang B, 13 Ignores, `unknown_merged: []`,
+`passed: false`). Ein mitlaufender `linux-core`-Push-Lauf (42069049189) wurde abgebrochen.
+
+### Lauf 42056676906
 
 `gh workflow run spec-coverage-m2.yml --ref diag/cov` (Stand `5f990a6c`, `gate` = false). Ein mitlaufender
 `linux-core`-Push-Lauf auf `diag/cov` (42056665241) wurde abgebrochen.
@@ -157,12 +171,60 @@ Nachweispflichten: Tags für AGENT-041/042, `[M2]`-Marker für Anhang B, gültig
 nichts, das sind Fachpakete (K2-63); Bewertung im Fable-Gate M2 bzw. B3-Planung. Im Gate würde zusätzlich jede ID
 über alle Wellen verlangt.
 
+## Zusatzbefund: linux-webkit-Abbruch auf main (Lauf 42055703821)
+
+Auftrag des Orchestrators: Spec-coverage-M2 auf main `f6d98ccf` (nach B3-MACIMG), `e2e (linux-webkit)` nach 60 min
+abgebrochen (15:30:46–16:31:14), `auth/bridge.spec.ts:26` zweimal je etwa 1 min rot.
+
+**Ursache der Laufzeit: der apt-Spiegel, nicht die Tests.** Zeitlinie des Jobs 127343382825:
+
+| Schritt | Beginn | Dauer |
+|---|---|---|
+| Einrichtung bis `npm ci` | 15:30 | ≈ 1 min |
+| Playwright-Browser installieren (`--with-deps webkit`) | 15:31 | **≈ 50 min**: `Fetched 110 MB in 48min 37s (37.7 kB/s)` von `azure.archive.ubuntu.com` |
+| os-app-bridge, Fixture-Werkzeuge | 16:21 | ≈ 1 min (Cache) |
+| E2E-A | 16:22:36 | nach 8,5 min durch das Job-Limit abgebrochen (`Running 537 tests` → `The operation was canceled`) |
+
+Vergleich auf demselben Runner-Image `ubuntu-24.04` 20261101.360.1:
+
+| Job | apt-Download | Ergebnis |
+|---|---|---|
+| ui-e2e `e2e-a (linux-webkit)`, gleicher Commit `f6d98ccf`, gleiche Startzeit (Lauf 42055703968) | 114 MB in 4 s | 524 passed (33,4 min), `bridge.spec.ts:26` grün in 32,6 s |
+| spec-coverage-m2 linux-webkit, Nachweis 42056676906 | 114 MB in 4 s | 537 Tests, 0 Fehlschläge (39,6 min), `bridge.spec.ts:26` grün in 23,4 s |
+| spec-coverage-m2 linux-webkit, Lauf 42055703821 | **110 MB in 48 min 37 s** | abgebrochen |
+
+Die Testzeit von linux-webkit liegt bei 34–40 min (Schritt-Limit 50, Job 60 min). Auch zwei Shards hätten den Abbruch
+nicht verhindert, denn jeder Shard installiert dieselben apt-Pakete. Deshalb **kein Sharding und keine höheren
+Limits**. Stattdessen hat die Browserinstallation jetzt ein Schritt-Limit von 15 min (sonst ≤ 1 min), ebenso der
+Chromium-Install im `evidence`-Job (Commit `db0045f2`). Ein solcher Runner scheitert damit nach 15 min eindeutig an der
+Installation, statt die Testzeit aufzubrauchen und als „cancelled“ zu enden. Durch Teil A ist der Job dann rot.
+
+**`auth/bridge.spec.ts:26` auf diesem Runner.** Fehlertext (aus `error-context.md` im Artefakt
+`playwright-report-m2-linux-webkit`):
+
+```
+Error: expect(received).toBe(expected) // Object.is equality
+Expected: true
+Received: false
+Call Log:
+- Timeout 60000ms exceeded while waiting on the predicate
+    at loginBrowser (e2e/auth/bridge.spec.ts:12:3)
+```
+
+Die Oberfläche zeigte den Hinweis „Sign in in the Chromium window …“. Der Login-Vorgang war also gestartet, aber das
+Login-Chromium (Systeminstallation `google-chrome` des Runners, kein Download) meldete innerhalb von 60 s kein Ziel mit
+der Login-Origin über `/json/list`. Die AppArmor-Freigabe lief (Schritt „Chromium-Sandbox erlauben“ grün). Derselbe Test
+ist auf demselben Image in ui-e2e und im Nachweis in 23–33 s grün. Ich werte ihn deshalb als Folge desselben gestörten
+Runners. Eine Ursache im Produkt kann ich mit den vorhandenen Belegen nicht nachweisen; der Trace enthält nur die
+WebKit-Seite, nicht das Login-Chromium. Test und Zeitgrenze bleiben unverändert (K2-63). Tritt der Fehler auf einem
+Runner mit normalem apt-Durchsatz auf, braucht es eine eigene Diagnose (Chromium-Stderr der Bridge ins Artefakt).
+
 ## Server-Ergebnisse (Worktree `m3-cov`, Stand `5f990a6c` bzw. `d2285cd9`)
 
 | Prüfung | Ergebnis |
 |---|---|
 | `df -h /` vor dem Workspace-Test | 247 GB frei |
-| `actionlint` 1.7.12 + shellcheck 0.11.0 auf `spec-coverage-m2.yml` | 0 Befunde |
+| `actionlint` 1.7.12 + shellcheck 0.11.0 auf `spec-coverage-m2.yml` | 0 Befunde (auf `5f990a6c` und `db0045f2`) |
 | `cargo fmt --all --check` | grün (auch nach `d2285cd9`) |
 | `cargo clippy --workspace --all-targets --locked -- -D warnings` | grün (Exit 0); nach `d2285cd9` erneut `-p os-parity --all-targets`: grün |
 | `cargo test -p os-parity` | 190 passed, 0 failed (nach `d2285cd9` erneut 190 / 0); neuer Test `unknown_merged_ids_warn_and_select_no_package` ok |
@@ -199,4 +261,9 @@ Server-`target/` des Worktrees `m3-cov` ist am Ende gelöscht.
 4. **Folge von A für main:** Ab dem Merge macht jeder echte Rust-, vitest-, E2E- oder Budget-Fehlschlag den Workflow
    rot. Flaky-Tests (macOS-WebKit, `n04-live` unter Linux-WebKit aus B3-MACIMG) können ihn künftig rot färben. Das ist
    gewollt, kann nach dem Merge aber zunächst auffallen.
-5. `diag/cov` bleibt auf origin stehen (Stand `5f990a6c`, ohne `d2285cd9` und diesen Bericht). Löschen nach der Abnahme.
+5. `ui-e2e.yml` hat dieselbe Browserinstallation ohne Schritt-Limit. Dort war der Spiegel im selben Zeitfenster
+   schnell, das Risiko besteht aber genauso. Nicht geändert, weil nicht Teil dieses Pakets; Empfehlung: dort ebenfalls
+   `timeout-minutes: 15`.
+6. `auth/bridge.spec.ts:26` (linux-webkit, Lauf 42055703821): Eine Ursache außerhalb des gestörten Runners ist nicht
+   belegt. Beobachten; bei Wiederholung auf einem normalen Runner das Stderr des Login-Chromium der Bridge sichern.
+7. `diag/cov` bleibt auf origin stehen (Stand `db0045f2`, ohne den Berichtsnachtrag). Löschen nach der Abnahme.
