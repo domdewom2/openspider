@@ -167,3 +167,25 @@ describe("Body-Text-Wortwolke", () => {
     await act(async () => undefined);
   });
 });
+
+describe("Legende der Zusatzkanten (V02-Backlog)", () => {
+  // spec: UI-097
+  // spec: UI-120
+  it("zeigt Inlinks in der Seitenleisten-Legende in der Themenfarbe wie Zeichnung und Kurzlegende, nicht in festen Standardfarben", async () => {
+    const theme = document.createElement("style");
+    theme.textContent = ":root { --os-bg-surface: #ffffff; --os-accent: #123456; --os-badge-warning: #654321; }";
+    document.head.append(theme);
+    onTestFinished(() => theme.remove());
+    core = new FakeVizCore(fxUiWordsGraph, fxUiDirs, fxUiWords);
+    await openWindow("crawlGraph");
+    await screen.findByText("26 nodes");
+    await waitFor(() => expect(window.__osViz?.screenOf(2)).toBeTruthy());
+    const [x, y] = window.__osViz!.screenOf(2)!;
+    fireEvent.contextMenu(screen.getByRole("img", { name: /crawl graph/i }), { clientX: x, clientY: y });
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Show inlinks" }));
+    await waitFor(() => expect(window.__osViz?.links?.edges).toBe(23));
+    const stroke = (testId: string) => screen.getByTestId(testId).querySelector("line")?.getAttribute("stroke");
+    expect(stroke("viz-legend-compact")).toBe("#123456");
+    expect(stroke("viz-legend")).toBe(stroke("viz-legend-compact"));
+  });
+});

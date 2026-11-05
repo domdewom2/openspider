@@ -951,7 +951,7 @@ export function Graph3DView({ kind, snapshotId, generation, initialRoot }: Graph
         csvDir={null}
         onCsvDir={noop}
         hasData={supported && !glFailed && !!scene && scene.ids.length > 0}
-        links={{ overlay, shown: overlayIdx.shown, onReset: () => setLinks(null) }}
+        links={{ overlay, shown: overlayIdx.shown, onReset: () => setLinks(null), colors: { inlink: style.inlink, outlink: style.outlink } }}
       />
       <section className="os-viz-main" aria-label={t(`viz-kind-${kind}`)}>
         <nav className="os-viz-trail" aria-label={t("viz-trail-label")}>

@@ -40,7 +40,8 @@ export interface SidebarProps {
   onCsvDir: (dir: string) => void;
   hasData: boolean;
   /** Links eines Knotens (UI-097), nur in kraftgerichteten Graphen. */
-  links?: { overlay: LinkOverlay | null; shown: number; onReset: () => void } | null;
+  /** `colors`: theme colours of the extra edges (tokens, as drawn and exported), also for the sidebar legend (V02 backlog). */
+  links?: { overlay: LinkOverlay | null; shown: number; onReset: () => void; colors?: { inlink: string; outlink: string } } | null;
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -344,7 +345,7 @@ export function Sidebar(p: SidebarProps) {
       )}
 
       <Section title={t("viz-section-legend")}>
-        <Legend kind={p.kind} options={o} stats={p.stats} scene={p.scene} overlay={p.links?.overlay ?? null} />
+        <Legend kind={p.kind} options={o} stats={p.stats} scene={p.scene} overlay={p.links?.overlay ?? null} {...(p.links?.colors ? { lineColors: p.links.colors } : {})} />
       </Section>
 
       <Section title={t("viz-section-export")}>
