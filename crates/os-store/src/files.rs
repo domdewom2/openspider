@@ -291,12 +291,18 @@ const REPAIR_TABLES: &[(&str, Option<&str>)] = &[
 
 /// Breite eines Schlüsselbereichs beim Retten.
 const REPAIR_WINDOW: i64 = 2048;
+/// Versuche je Schreibblock, wenn das Ziel vorübergehend scheitert (`SQLITE_BUSY`, `SQLITE_LOCKED`,
+/// `SQLITE_IOERR`); danach bricht die Reparatur mit dem Fehler ab.
+const REPAIR_TARGET_ATTEMPTS: u32 = 4;
+/// Pause vor der ersten Wiederholung eines Schreibblocks; sie verdoppelt sich je weiterem Versuch.
+const REPAIR_TARGET_BACKOFF: std::time::Duration = std::time::Duration::from_millis(50);
 
 /// Rettet so viel wie möglich aus einer beschädigten Crawl-Datei in die neue Datei
 /// `<name>.repaired.ospider` (OUT-230). Die Quelle bleibt unverändert; eine vorhandene Zieldatei wird nie
 /// überschrieben. Zeilen aus unlesbaren Seiten werden übersprungen und im Bericht gezählt. Nur Dateien mit
 /// intaktem Kopf und lesbarem Schema lassen sich retten; fremde und zu neue Dateien liefern die bekannten
-/// Fehler.
+/// Fehler. Ein Schreibfehler am Ziel ist kein Datenverlust der Quelle: Vorübergehende Fehler werden je
+/// Schreibblock begrenzt wiederholt, jeder andere bricht die Reparatur ab (die halbe Kopie wird entfernt).
 pub fn repair_copy(src: &Path) -> Result<RepairReport, StoreError> {
     let source = open_raw_readonly(src)?;
     let version = schema::user_version(&source).map_err(|e| match e {
@@ -339,7 +345,7 @@ fn repair_into(source: &Connection, dest: &Path) -> Result<RepairReport, StoreEr
 
     let mut tables = Vec::new();
     for (table, key) in REPAIR_TABLES {
-        tables.push(rescue_table(source, &target, table, *key));
+        tables.push(rescue_table(source, &target, table, *key, &target_backoff)?);
     }
 
     target.query_row("PRAGMA wal_checkpoint(TRUNCATE)", [], |_| Ok(()))?;
@@ -363,14 +369,44 @@ struct Rescue<'a> {
     key: Option<&'static str>,
     copied: u64,
     lost: u64,
+    /// Läuft vor jeder Wiederholung eines Schreibblocks (Versuch ab 1); in der Reparatur eine kurze Pause.
+    before_retry: &'a dyn Fn(u32),
 }
 
+/// Pause vor der Wiederholung `attempt` (ab 1) eines Schreibblocks am Ziel.
+fn target_backoff(attempt: u32) {
+    std::thread::sleep(REPAIR_TARGET_BACKOFF * 2u32.pow(attempt.saturating_sub(1).min(8)));
+}
+
+/// Fehler am Ziel, die vergehen können: Sperre durch einen anderen Prozess oder ein Ein-/Ausgabefehler
+/// (z. B. ein Virenscanner unter Windows). Sie werden je Schreibblock begrenzt wiederholt.
+fn transient_target_error(e: &rusqlite::Error) -> bool {
+    use rusqlite::ErrorCode as C;
+    matches!(
+        e.sqlite_error_code(),
+        Some(C::DatabaseBusy | C::DatabaseLocked | C::SystemIoFailure)
+    )
+}
+
+/// Das Ziel weist eine einzelne Zeile zurück, weil ihre Werte nicht zum Schema passen (Constraint, Typ, Größe).
+/// Die Werte stammen aus der beschädigten Quelle: Die Zeile ist nicht zu retten und zählt als verloren.
+fn rejected_row(e: &rusqlite::Error) -> bool {
+    use rusqlite::ErrorCode as C;
+    matches!(
+        e.sqlite_error_code(),
+        Some(C::ConstraintViolation | C::TypeMismatch | C::TooBig)
+    )
+}
+
+/// Rettet eine Tabelle. `lost` zählt nur Zeilen bzw. Schlüssel, die in der Quelle nicht lesbar waren oder vom Schema
+/// abgewiesen wurden. Ein Schreibfehler am Ziel, der auch nach den Wiederholungen bleibt, bricht mit `Err` ab.
 fn rescue_table(
     source: &Connection,
     target: &Connection,
     table: &'static str,
     key: Option<&'static str>,
-) -> TableRepair {
+    before_retry: &dyn Fn(u32),
+) -> rusqlite::Result<TableRepair> {
     let mut r = Rescue {
         source,
         target,
@@ -378,17 +414,18 @@ fn rescue_table(
         key,
         copied: 0,
         lost: 0,
+        before_retry,
     };
-    r.run();
-    TableRepair {
+    r.run()?;
+    Ok(TableRepair {
         table,
         copied: r.copied,
         lost: r.lost,
-    }
+    })
 }
 
 impl Rescue<'_> {
-    fn run(&mut self) {
+    fn run(&mut self) -> rusqlite::Result<()> {
         if let Some(key) = self.key {
             let bounds: rusqlite::Result<(Option<i64>, Option<i64>)> = self.source.query_row(
                 &format!("SELECT MIN({key}), MAX({key}) FROM {}", self.table),
@@ -396,45 +433,49 @@ impl Rescue<'_> {
                 |r| Ok((r.get(0)?, r.get(1)?)),
             );
             match bounds {
-                Ok((None, _)) | Ok((_, None)) => return, // leere Tabelle
+                Ok((None, _)) | Ok((_, None)) => return Ok(()), // leere Tabelle
                 Ok((Some(lo), Some(hi))) if hi.saturating_sub(lo) / REPAIR_WINDOW < 5_000_000 => {
                     let mut start = lo;
                     loop {
                         let end = start.saturating_add(REPAIR_WINDOW - 1).min(hi);
-                        self.range(key, start, end);
+                        self.range(key, start, end)?;
                         if end >= hi {
                             break;
                         }
                         start = end + 1;
                     }
-                    return;
+                    return Ok(());
                 }
                 _ => {}
             }
         }
-        self.scan_all();
+        self.scan_all()
     }
 
     /// Kopiert die Zeilen mit `lo <= key <= hi`; bei einem Lesefehler wird der Bereich halbiert.
-    fn range(&mut self, key: &str, lo: i64, hi: i64) {
+    fn range(&mut self, key: &str, lo: i64, hi: i64) -> rusqlite::Result<()> {
         match self.read_rows(Some((key, lo, hi))) {
             Some(rows) => self.store(rows),
             None if lo < hi => {
                 let mid = lo + (hi - lo) / 2;
-                self.range(key, lo, mid);
-                self.range(key, mid + 1, hi);
+                self.range(key, lo, mid)?;
+                self.range(key, mid + 1, hi)
             }
-            None => self.lost += 1,
+            None => {
+                self.lost += 1;
+                Ok(())
+            }
         }
     }
 
     /// Liest zeilenweise bis zum ersten Fehler; was davor gelesen wurde, wird behalten.
-    fn scan_all(&mut self) {
+    fn scan_all(&mut self) -> rusqlite::Result<()> {
         let (rows, failed) = self.read_rows_partial(None);
-        self.store(rows);
+        self.store(rows)?;
         if failed {
             self.lost += 1;
         }
+        Ok(())
     }
 
     /// Alle Zeilen oder `None`, wenn beim Lesen ein Fehler aufgetreten ist.
@@ -482,38 +523,52 @@ impl Rescue<'_> {
         }
     }
 
-    fn store(&mut self, rows: Vec<Vec<Value>>) {
-        let Some(first) = rows.first() else {
-            return;
-        };
-        let placeholders = vec!["?"; first.len()].join(", ");
+    /// Schreibt gelesene Zeilen als einen Block ins Ziel. Scheitert der Block an einem vorübergehenden Fehler, wird
+    /// er (nach dem Zurückrollen) bis zu [`REPAIR_TARGET_ATTEMPTS`]-mal geschrieben; jeder andere bzw. bleibende
+    /// Fehler am Ziel wird gemeldet und nie als verlorene Zeilen gezählt (B3-FLAKES, OUT-230).
+    fn store(&mut self, rows: Vec<Vec<Value>>) -> rusqlite::Result<()> {
+        if rows.is_empty() {
+            return Ok(());
+        }
+        let mut attempt = 0;
+        loop {
+            match self.store_block(&rows) {
+                Ok((inserted, rejected)) => {
+                    self.copied += inserted;
+                    self.lost += rejected;
+                    return Ok(());
+                }
+                Err(e) if transient_target_error(&e) && attempt + 1 < REPAIR_TARGET_ATTEMPTS => {
+                    attempt += 1;
+                    (self.before_retry)(attempt);
+                }
+                Err(e) => return Err(e),
+            }
+        }
+    }
+
+    /// Ein Schreibblock in einer Transaktion: `(eingefügt, vom Schema abgewiesen)`. Bei jedem anderen Fehler rollt
+    /// die Transaktion zurück (Drop) und der Fehler geht an den Aufrufer.
+    fn store_block(&self, rows: &[Vec<Value>]) -> rusqlite::Result<(u64, u64)> {
+        let placeholders = vec!["?"; rows[0].len()].join(", ");
         let sql = format!(
             "INSERT OR REPLACE INTO {} VALUES ({placeholders})",
             self.table
         );
-        let Ok(tx) = self.target.unchecked_transaction() else {
-            self.lost += rows.len() as u64;
-            return;
-        };
-        let mut inserted = 0u64;
+        let tx = self.target.unchecked_transaction()?;
+        let (mut inserted, mut rejected) = (0u64, 0u64);
         {
-            let Ok(mut stmt) = tx.prepare(&sql) else {
-                self.lost += rows.len() as u64;
-                return;
-            };
-            for row in &rows {
-                if stmt.execute(params_from_iter(row.iter())).is_ok() {
-                    inserted += 1;
-                } else {
-                    self.lost += 1;
+            let mut stmt = tx.prepare(&sql)?;
+            for row in rows {
+                match stmt.execute(params_from_iter(row.iter())) {
+                    Ok(_) => inserted += 1,
+                    Err(e) if rejected_row(&e) => rejected += 1,
+                    Err(e) => return Err(e),
                 }
             }
         }
-        if tx.commit().is_ok() {
-            self.copied += inserted;
-        } else {
-            self.lost += inserted;
-        }
+        tx.commit()?;
+        Ok((inserted, rejected))
     }
 }
 
@@ -813,4 +868,117 @@ fn filesystem_warnings(path: &Path) -> Vec<LocationWarning> {
 #[cfg(not(any(target_os = "macos", target_os = "linux", windows)))]
 fn filesystem_warnings(_path: &Path) -> Vec<LocationWarning> {
     Vec::new()
+}
+
+#[cfg(test)]
+mod repair_target_tests {
+    //! Schreibfehler am Ziel der Reparatur sind kein Datenverlust der Quelle (B3-FLAKES, Fable-Befund).
+    use super::*;
+    use std::cell::{Cell, RefCell};
+
+    fn source(rows: i64) -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE t(id INTEGER PRIMARY KEY, v TEXT NOT NULL)")
+            .unwrap();
+        for id in 1..=rows {
+            conn.execute(
+                "INSERT INTO t VALUES (?1, ?2)",
+                rusqlite::params![id, format!("v{id}")],
+            )
+            .unwrap();
+        }
+        conn
+    }
+
+    /// Ziel als Datei samt einer zweiten Verbindung, die die Datei exklusiv sperrt (SQLITE_BUSY am Ziel).
+    fn locked_target(dir: &Path) -> (Connection, Connection) {
+        let path = dir.join("ziel.sqlite");
+        let target = Connection::open(&path).unwrap();
+        target
+            .execute_batch("CREATE TABLE t(id INTEGER PRIMARY KEY, v TEXT NOT NULL)")
+            .unwrap();
+        target.busy_timeout(std::time::Duration::ZERO).unwrap();
+        let blocker = Connection::open(&path).unwrap();
+        blocker.execute_batch("BEGIN EXCLUSIVE").unwrap();
+        (target, blocker)
+    }
+
+    fn count(conn: &Connection) -> i64 {
+        conn.query_row("SELECT COUNT(*) FROM t", [], |r| r.get(0))
+            .unwrap()
+    }
+
+    // spec: OUT-230
+    #[test]
+    fn a_lasting_target_error_aborts_the_rescue_instead_of_counting_lost_rows() {
+        let dir = tempfile::tempdir().unwrap();
+        let (target, blocker) = locked_target(dir.path());
+        let retries = Cell::new(0);
+        let err = rescue_table(&source(25), &target, "t", Some("id"), &|attempt| {
+            retries.set(attempt);
+        })
+        .unwrap_err();
+        assert_eq!(
+            err.sqlite_error_code(),
+            Some(rusqlite::ErrorCode::DatabaseBusy),
+            "{err}"
+        );
+        assert_eq!(
+            retries.get(),
+            REPAIR_TARGET_ATTEMPTS - 1,
+            "begrenzte Wiederholung"
+        );
+        blocker.execute_batch("ROLLBACK").unwrap();
+        assert_eq!(count(&target), 0, "abgebrochener Block wurde zurückgerollt");
+        // Ohne Schlüssel (ganze Tabelle in einem Durchlauf) gilt dasselbe.
+        blocker.execute_batch("BEGIN EXCLUSIVE").unwrap();
+        let err = rescue_table(&source(25), &target, "t", None, &|_| {}).unwrap_err();
+        assert_eq!(
+            err.sqlite_error_code(),
+            Some(rusqlite::ErrorCode::DatabaseBusy),
+            "{err}"
+        );
+    }
+
+    // spec: OUT-230
+    #[test]
+    fn a_transient_target_error_is_retried_and_loses_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        let (target, blocker) = locked_target(dir.path());
+        let blocker = RefCell::new(Some(blocker));
+        let retries = Cell::new(0);
+        // Die Sperre endet vor der ersten Wiederholung: Der Block wird vollständig geschrieben.
+        let report = rescue_table(&source(25), &target, "t", Some("id"), &|attempt| {
+            retries.set(attempt);
+            if let Some(b) = blocker.borrow_mut().take() {
+                b.execute_batch("ROLLBACK").unwrap();
+            }
+        })
+        .unwrap();
+        assert_eq!(retries.get(), 1);
+        assert_eq!((report.copied, report.lost), (25, 0));
+        assert_eq!(count(&target), 25);
+    }
+
+    // spec: OUT-230
+    #[test]
+    fn rows_the_schema_rejects_still_count_as_lost() {
+        // Eine Quellzeile, deren Werte das Schema des Ziels verletzen (hier NOT NULL), ist nicht zu retten.
+        let source = Connection::open_in_memory().unwrap();
+        source
+            .execute_batch(
+                "CREATE TABLE t(id INTEGER PRIMARY KEY, v TEXT);
+                 INSERT INTO t VALUES (1, 'a'), (2, NULL), (3, 'c');",
+            )
+            .unwrap();
+        let target = Connection::open_in_memory().unwrap();
+        target
+            .execute_batch("CREATE TABLE t(id INTEGER PRIMARY KEY, v TEXT NOT NULL)")
+            .unwrap();
+        let report = rescue_table(&source, &target, "t", Some("id"), &|_| {
+            panic!("keine Wiederholung bei abgewiesenen Zeilen")
+        })
+        .unwrap();
+        assert_eq!((report.copied, report.lost), (2, 1));
+    }
 }
