@@ -435,7 +435,8 @@ test('Release-Text beginnt mit dem Download-Kasten; Update-Manifeste enthalten n
 // spec: OUT-251 [M3]
 test('Notes-Dokument je Version ist einzige Quelle; eingecheckte Notes sind gültig und gleich dem CHANGELOG', () => {
   const changelog = readFileSync(join(root, 'CHANGELOG.md'), 'utf8');
-  const documents = readdirSync(join(root, 'docs/release/notes')).filter(name => name.endsWith('.md'));
+  // Only version-named documents; a README or similar in the folder is not a release.
+  const documents = readdirSync(join(root, 'docs/release/notes')).filter(name => /^\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?\.md$/.test(name));
   assert.ok(documents.length >= 3, documents.join());
   for (const name of documents) {
     const version = name.slice(0, -3);
