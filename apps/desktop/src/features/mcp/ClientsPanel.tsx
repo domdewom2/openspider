@@ -20,7 +20,7 @@ export const MCP_PROGRAMS: Record<McpClientKind, string> = {
 const RELOAD_PROGRAMS = new Set<McpClientKind>(["cursor"]);
 
 /** Fixed messages the service may report for client files (AGENT-043); details are never rendered. */
-const CLIENT_ERRORS = new Set(["mcp-client-changed", "mcp-client-problem-syntax", "mcp-client-problem-unsupported", "mcp-client-problem-symlink", "mcp-client-problem-readOnly"]);
+const CLIENT_ERRORS = new Set(["mcp-client-changed", "mcp-client-problem-syntax", "mcp-client-problem-unsupported", "mcp-client-problem-symlink", "mcp-client-problem-readOnly", "mcp-client-write-failed", "mcp-client-write-failed-backup"]);
 type Message = { key: string; args?: Record<string, string | number> };
 type Done = { kind: "connected" | "unchanged" | "disconnected"; backup: string | null };
 
@@ -28,7 +28,10 @@ function clientError(e: unknown): Message {
   const error = toCmdError(e);
   if (CLIENT_ERRORS.has(error.messageKey)) {
     const line = Number(error.args?.line);
-    return { key: error.messageKey, args: Number.isFinite(line) ? { line } : undefined };
+    // A backup that could not be removed after a failed replace is named so the user can delete it (B3-FLAKES).
+    const path = typeof error.args?.path === "string" ? error.args.path : undefined;
+    const args = { ...(Number.isFinite(line) ? { line } : {}), ...(path !== undefined ? { path } : {}) };
+    return { key: error.messageKey, args: Object.keys(args).length ? args : undefined };
   }
   return { key: errorKey(e) };
 }
