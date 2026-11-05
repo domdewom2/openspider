@@ -3,7 +3,7 @@ name: Docker image
 # OUT-274: Container-Image aus dem Linux-Release-Archiv (CLI, Exporte, geplante Läufe, MCP über STDIO; keine
 # Weboberfläche). Dockerfile, Starter und Smoke-Test liegen unter packaging/docker; Ablauf: docs/release/docker.md.
 #
-# - push/pull_request (nur packaging/docker und diese Datei): Vertragstest, kein Image.
+# - push/pull_request (packaging/docker, diese Datei, release.yml, Spec 06): Vertragstest, kein Image.
 # - workflow_run nach einem erfolgreichen Release-Lauf eines Tags: Image aus dessen Artefakten bauen und prüfen.
 # - workflow_dispatch: source=release (veröffentlichtes GitHub-Release, Download wie beim Nutzer) oder source=run
 #   (Artefakte eines Laufs von "Release orchestration", z. B. Trockenlauf vor dem Tag).
@@ -16,6 +16,9 @@ on:
     paths: &docker-paths
       - "packaging/docker/**"
       - ".github/workflows/docker.yml"
+      # Der Vertragstest liest Name und Artefakte des Release-Laufs (workflow_run) und den Eintrag OUT-274.
+      - ".github/workflows/release.yml"
+      - "docs/spec/06-output-ops.md"
   pull_request:
     paths: *docker-paths
   workflow_run:

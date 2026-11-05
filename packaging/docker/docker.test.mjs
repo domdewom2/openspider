@@ -212,6 +212,17 @@ test('Workflow: Push nach ghcr.io nur im Job publish, nur per workflow_dispatch 
 });
 
 // spec: OUT-274
+test('Workflow hängt am Release-Lauf: Name, Artefakt release-assets mit Linux-Archiv und SHA256SUMS', () => {
+  const release = read('.github/workflows/release.yml');
+  const name = /^name: (.+)$/m.exec(release)[1];
+  assert.match(workflow(), new RegExp(`workflow_run:\\n {4}workflows: \\["${name}"\\]\\n {4}types: \\[completed\\]`));
+  assert.match(release, /tar -czf "release-artifacts\/openspider_\$\{VERSION\}_linux-x86_64\.tar\.gz"/);
+  assert.match(release, /node scripts\/release\/checksums\.mjs release-assets/);
+  assert.match(release, /name: release-assets\n {10}path: release-assets\//);
+  assert.match(workflow(), /name: release-assets\n {10}path: \$\{\{ runner\.temp \}\}\/release-assets/);
+});
+
+// spec: OUT-274
 test('Spec: OUT-274 steht im Abschnitt 13 mit Akzeptanzkriterien, Inhaltsübersicht nennt den Bereich', () => {
   const spec = read('docs/spec/06-output-ops.md');
   const section13 = spec.split('\n## 13 Plattformanforderungen\n')[1].split('\n## 14 ')[0];
