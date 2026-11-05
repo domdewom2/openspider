@@ -1,0 +1,36 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://reporting:TESTSECRET-61@db.example.test:5432/shop"
+      ]
+    },
+    "github": {
+      "type": "stdio",
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "TESTSECRET-62"
+      }
+    },
+    "local-notes": {
+      "command": "node",
+      "args": ["${userHome}/tools/notes-mcp/index.js", "--api-key=TESTSECRET-63"],
+      "envFile": "${workspaceFolder}/.env"
+    },
+    "linear": {
+      "url": "https://mcp.linear.example.test/sse",
+      "headers": {
+        "Authorization": "Bearer TESTSECRET-64",
+        "X-Workspace": "${env:LINEAR_WORKSPACE}"
+      }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "C:\\Users\\anna\\Documents", "/Users/anna/Projekte/caf\u00e9"]
+    }
+  }
+}

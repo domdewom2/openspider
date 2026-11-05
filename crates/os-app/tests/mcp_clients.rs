@@ -10,6 +10,7 @@ const CLAUDE_CODE: &str =
     include_str!("../../../tests/fixtures/agent-client-configs/claude-code.json");
 const CLAUDE_DESKTOP: &str =
     include_str!("../../../tests/fixtures/agent-client-configs/claude-desktop.json");
+const CURSOR: &str = include_str!("../../../tests/fixtures/agent-client-configs/cursor-mcp.json");
 
 async fn call(app: &App, name: &str, args: Value) -> Value {
     app.dispatch(CallCtx::for_window("main"), name, args)
@@ -17,7 +18,7 @@ async fn call(app: &App, name: &str, args: Value) -> Value {
         .unwrap()
 }
 
-fn clients(home: &Path) -> [(&'static str, PathBuf, &'static str); 3] {
+fn clients(home: &Path) -> [(&'static str, PathBuf, &'static str); 4] {
     [
         ("codex", home.join(".codex").join("config.toml"), CODEX),
         ("claudeCode", home.join(".claude.json"), CLAUDE_CODE),
@@ -26,6 +27,7 @@ fn clients(home: &Path) -> [(&'static str, PathBuf, &'static str); 3] {
             home.join("Claude").join("claude_desktop_config.json"),
             CLAUDE_DESKTOP,
         ),
+        ("cursor", home.join(".cursor").join("mcp.json"), CURSOR),
     ]
 }
 
@@ -329,4 +331,150 @@ async fn symlinked_client_files_are_never_written() {
         .unwrap_err();
     assert_eq!(err.message_key, "mcp-client-problem-symlink");
     assert_eq!(std::fs::read_to_string(real).unwrap(), "{}\n");
+}
+
+// spec: AGENT-043 [P1]
+// spec: AGENT-001
+#[tokio::test]
+async fn cursor_gets_the_print_config_entry_in_the_global_file() {
+    let home = tempfile::tempdir().unwrap();
+    let app = App::new(AppConfig::new(home.path())).unwrap();
+    // Ohne `.cursor`-Ordner: nicht verbunden, Verbinden legt Ordner und Datei an (keine Sicherung).
+    let preview = call(
+        &app,
+        "mcp.clientConfigPreview",
+        json!({ "client": "cursor" }),
+    )
+    .await;
+    assert_eq!(preview["state"], "notConnected");
+    assert!(preview["problem"].is_null());
+    let path = home.path().join(".cursor").join("mcp.json");
+    assert_eq!(preview["path"], path.to_string_lossy().as_ref());
+    let entry: Value = serde_json::from_str(preview["entry"].as_str().unwrap()).unwrap();
+    let written = call(
+        &app,
+        "mcp.clientConnect",
+        json!({ "client": "cursor", "allowCrawl": true }),
+    )
+    .await;
+    assert_eq!(written, json!({ "backupPath": null, "changed": true }));
+    let file: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    // „Eintrag kopieren“ (= `--print-config cursor` mit dem Programmpfad der App) und Datei sind wertgleich.
+    assert_eq!(file, entry);
+    let own = &file["mcpServers"]["openspider"];
+    assert_eq!(own["type"], "stdio");
+    assert_eq!(own["args"], json!(["mcp"]));
+    assert!(Path::new(own["command"].as_str().unwrap()).is_absolute());
+    let preview = call(
+        &app,
+        "mcp.clientConfigPreview",
+        json!({ "client": "cursor" }),
+    )
+    .await;
+    assert_eq!(preview["state"], "connected");
+}
+
+/// Schreibschutz setzen bzw. aufheben (Windows-Attribut, Unix-Schreibbits).
+#[allow(clippy::permissions_set_readonly_false)] // Aufräumen: Windows löscht schreibgeschützte Dateien nicht.
+fn set_readonly(path: &Path, value: bool) {
+    let mut permissions = std::fs::metadata(path).unwrap().permissions();
+    permissions.set_readonly(value);
+    std::fs::set_permissions(path, permissions).unwrap();
+}
+
+/// Verbinden und Trennen einer schreibgeschützten Datei: gesperrt, kein Schreiben, keine Sicherung.
+async fn assert_read_only_is_refused(
+    app: &App,
+    home: &Path,
+    client: &str,
+    path: &Path,
+    text: &str,
+) {
+    let preview = call(app, "mcp.clientConfigPreview", json!({ "client": client })).await;
+    assert_eq!(preview["problem"], "readOnly", "{client}");
+    assert!(!preview.to_string().contains("TESTSECRET"));
+    // `~/.claude.json` liegt direkt im Heimordner: Dateien vorher zählen statt „genau eine“.
+    let count = files_beside(path);
+    for (command, args) in [
+        (
+            "mcp.clientConnect",
+            json!({ "client": client, "allowCrawl": true }),
+        ),
+        ("mcp.clientDisconnect", json!({ "client": client })),
+    ] {
+        let err = app
+            .dispatch(CallCtx::for_window("main"), command, args)
+            .await
+            .unwrap_err();
+        assert_eq!(
+            err.message_key, "mcp-client-problem-readOnly",
+            "{client} {command}"
+        );
+        assert!(!format!("{err:?}").contains("TESTSECRET"));
+        assert_eq!(std::fs::read_to_string(path).unwrap(), text);
+        assert_eq!(files_beside(path), count, "no backup for a refused write");
+        assert!(std::fs::metadata(path).unwrap().permissions().readonly());
+    }
+    // Ein abgelehntes Verbinden ändert die Freigabe nicht.
+    assert_eq!(classes(home), [os_mcp::ToolClass::Read]);
+}
+
+// spec: AGENT-043 [P1]
+#[tokio::test]
+async fn read_only_client_files_are_never_written() {
+    // Plattformneutral: `set_readonly` setzt unter Windows das Attribut, unter Unix entfernt es die Schreibbits.
+    let home = tempfile::tempdir().unwrap();
+    let app = App::new(AppConfig::new(home.path())).unwrap();
+    for (client, path, original) in clients(home.path()) {
+        // Mit eigenem Eintrag, damit auch Trennen etwas zu schreiben hätte.
+        let connected = os_mcp::client_config::connect(
+            os_mcp::print_config::Client::parse(match client {
+                "claudeDesktop" => "claude-desktop",
+                "claudeCode" => "claude-code",
+                other => other,
+            })
+            .unwrap(),
+            original,
+            "/x/openspider",
+            &["mcp".to_string()],
+        )
+        .unwrap();
+        write(&path, &connected);
+        set_readonly(&path, true);
+        assert_read_only_is_refused(&app, home.path(), client, &path, &connected).await;
+        set_readonly(&path, false);
+    }
+}
+
+// spec: AGENT-043 [P1]
+#[cfg(windows)]
+#[tokio::test]
+async fn windows_read_only_attribute_is_kept_and_nothing_is_written() {
+    use std::os::windows::fs::MetadataExt;
+    const FILE_ATTRIBUTE_READONLY: u32 = 0x1;
+    let home = tempfile::tempdir().unwrap();
+    let app = App::new(AppConfig::new(home.path())).unwrap();
+    let path = home.path().join(".cursor").join("mcp.json");
+    write(&path, CURSOR);
+    set_readonly(&path, true);
+    let attributes = std::fs::metadata(&path).unwrap().file_attributes();
+    assert_ne!(attributes & FILE_ATTRIBUTE_READONLY, 0);
+    assert_read_only_is_refused(&app, home.path(), "cursor", &path, CURSOR).await;
+    assert_eq!(
+        std::fs::metadata(&path).unwrap().file_attributes(),
+        attributes
+    );
+    set_readonly(&path, false);
+    // Ohne Attribut wird wie gewohnt verbunden; die neue Datei trägt kein Schreibschutz-Attribut.
+    let written = call(
+        &app,
+        "mcp.clientConnect",
+        json!({ "client": "cursor", "allowCrawl": false }),
+    )
+    .await;
+    assert_eq!(written["changed"], true);
+    assert_eq!(
+        std::fs::metadata(&path).unwrap().file_attributes() & FILE_ATTRIBUTE_READONLY,
+        0
+    );
 }

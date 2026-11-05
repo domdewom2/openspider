@@ -24,6 +24,7 @@ test("menu and status work without a crawl; session changes appear immediately",
   await expect(page.getByRole("button", { name: "MCP: off" })).toBeVisible();
   const menu = await page.evaluate(() => window.__osMenu?.model);
   expect(menu?.menus.find(m => m.id === "mcp")?.items.some(i => i.id === "mcp.codex")).toBe(true);
+  expect(menu?.menus.find(m => m.id === "mcp")?.items.some(i => i.id === "mcp.cursor")).toBe(true);
 });
 
 // spec: AGENT-002
@@ -49,22 +50,26 @@ test("copy keeps the token out of the DOM; reveal, hide, regenerate and Escape c
 // spec: AGENT-003 [M2]
 test("each menu entry opens its own dialog and connects in one click with the crawl permission", async ({ page }) => {
   await page.getByRole("button", { name: "Close", exact: true }).click();
-  for (const [kind, program] of [["claudeDesktop", "Claude Desktop"], ["claudeCode", "Claude Code"], ["codex", "Codex"]] as const) {
+  for (const [kind, program] of [["claudeDesktop", "Claude Desktop"], ["claudeCode", "Claude Code"], ["codex", "Codex"], ["cursor", "Cursor"]] as const) {
     await page.evaluate(name => window.mcpFixture.action(`mcp.${name}`), kind);
     const dialog = page.getByRole("dialog", { name: `Connect ${program}` });
     await expect(dialog.getByText("Not connected yet.", { exact: true })).toBeVisible();
     await expect(dialog.getByRole("checkbox", { name: "Agent may start crawls" })).toBeChecked();
     await dialog.getByRole("button", { name: "Connect", exact: true }).click();
-    await expect(dialog.getByText(`Connected. Start a new session in ${program} so that OpenSpider appears there.`, { exact: true })).toBeVisible();
+    const done = kind === "cursor"
+      ? "Connected. Reload the MCP servers in Cursor or restart Cursor so that OpenSpider appears there."
+      : `Connected. Start a new session in ${program} so that OpenSpider appears there.`;
+    await expect(dialog.getByText(done, { exact: true })).toBeVisible();
     await expect(dialog.getByText(`Backup: ${kind}.backup`, { exact: true })).toBeVisible();
     await expect(dialog.getByText("Already connected.", { exact: true })).toBeVisible();
     await dialog.getByRole("button", { name: "Close", exact: true }).click();
     await expect(dialog).toHaveCount(0);
   }
-  expect(await page.evaluate(() => window.mcpFixture.connected())).toEqual(["claudeDesktop", "claudeCode", "codex"]);
+  expect(await page.evaluate(() => window.mcpFixture.connected())).toEqual(["claudeDesktop", "claudeCode", "codex", "cursor"]);
   const connects = await page.evaluate(() => window.mcpFixture.calls().filter(call => call.cmd === "mcp.clientConnect").map(call => call.args));
   expect(connects).toEqual([
     { client: "claudeDesktop", allowCrawl: true }, { client: "claudeCode", allowCrawl: true }, { client: "codex", allowCrawl: true },
+    { client: "cursor", allowCrawl: true },
   ]);
 });
 

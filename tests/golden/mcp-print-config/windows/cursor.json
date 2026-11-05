@@ -4,7 +4,8 @@
       "args": [
         "mcp"
       ],
-      "command": "C:\\Program Files\\OpenSpider\\openspider.exe"
+      "command": "C:\\Program Files\\OpenSpider\\openspider.exe",
+      "type": "stdio"
     }
   }
 }

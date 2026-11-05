@@ -3,4 +3,4 @@
 /**
  * Unterstützte MCP-Clients (`mcp.clientConfig*`).
  */
-export type McpClientKind = "claudeDesktop" | "claudeCode" | "codex";
+export type McpClientKind = "claudeDesktop" | "claudeCode" | "codex" | "cursor";

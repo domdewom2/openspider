@@ -3,4 +3,4 @@
 /**
  * Warum eine Client-Datei nicht geändert werden kann.
  */
-export type McpClientProblem = "syntax" | "unsupported" | "symlink";
+export type McpClientProblem = "syntax" | "unsupported" | "symlink" | "readOnly";

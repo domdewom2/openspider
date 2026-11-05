@@ -20,7 +20,8 @@ fn env_dir(env: &dyn Fn(&str) -> Option<OsString>, name: &str) -> Option<PathBuf
 }
 
 /// Konfigurationsdatei je Programm (AGENT-043): `CODEX_HOME` bzw. `CLAUDE_CONFIG_DIR`, wenn absolut
-/// gesetzt, sonst unter `home`; Claude Desktop im Konfigurationsverzeichnis `config_dir`.
+/// gesetzt, sonst unter `home`; Claude Desktop im Konfigurationsverzeichnis `config_dir`; Cursor global
+/// unter `home/.cursor/mcp.json` (macOS und Windows gleich, ohne Umgebungsvariable).
 pub fn client_path(
     kind: McpClientKind,
     home: &Path,
@@ -44,6 +45,7 @@ pub fn client_path(
             Client::ClaudeDesktop,
             config_dir.join("Claude").join("claude_desktop_config.json"),
         ),
+        McpClientKind::Cursor => (Client::Cursor, home.join(".cursor").join("mcp.json")),
     }
 }
 
@@ -85,6 +87,18 @@ fn is_symlink(path: &Path) -> bool {
     std::fs::symlink_metadata(path).is_ok_and(|m| m.file_type().is_symlink())
 }
 
+/// Vorhandene Datei mit Schreibschutz: unter Windows das Attribut „Schreibgeschützt“, unter Unix für niemanden
+/// ein Schreibbit (`Permissions::readonly`). Das ist ein Signal für „bewusst geschützt“, nicht die Prüfung, ob
+/// geschrieben werden darf (eine `0644`-Datei eines anderen Besitzers gilt als nicht geschützt). Eine fehlende Datei zählt nicht.
+///
+/// AGENT-043 (Nachtrag 05.11.2026): Solche Dateien schreibt OpenSpider nicht. Der Schreibschutz ist eine
+/// bewusste Entscheidung des Nutzers; ihn aufzuheben und wieder zu setzen wäre nicht atomar, und unter
+/// Windows scheitert das atomare Ersetzen einer schreibgeschützten Datei ohnehin (bisher erst nach dem
+/// Anlegen der Sicherung).
+fn is_read_only(path: &Path) -> bool {
+    std::fs::metadata(path).is_ok_and(|m| m.permissions().readonly())
+}
+
 /// Verständliche, feste Meldung; Details enthalten nie Inhalte der Datei.
 fn config_error(e: ConfigError) -> CmdError {
     match e {
@@ -103,6 +117,11 @@ fn config_error(e: ConfigError) -> CmdError {
 fn symlink_error() -> CmdError {
     CmdError::new(ErrorCode::InvalidInput, "mcp-client-problem-symlink")
         .with_detail("Client configuration must not be a symlink")
+}
+
+fn read_only_error() -> CmdError {
+    CmdError::new(ErrorCode::Permission, "mcp-client-problem-readOnly")
+        .with_detail("Client configuration is read-only")
 }
 
 /// Vorschau ohne Geheimnisse (AGENT-043): nur geänderte Zeilen (ohne Kontext, mit Zeilennummern). Eine
@@ -186,6 +205,10 @@ pub fn preview(app: &App, kind: McpClientKind) -> Result<McpClientPreview, CmdEr
         result.problem = Some(McpClientProblem::Symlink);
         return Ok(result);
     }
+    if is_read_only(&path) {
+        result.problem = Some(McpClientProblem::ReadOnly);
+        return Ok(result);
+    }
     let before = read(&path)?;
     let analysed = (|| {
         let state = client_config::entry_state(client, &before, &exe, &args)?;
@@ -219,7 +242,8 @@ pub fn preview(app: &App, kind: McpClientKind) -> Result<McpClientPreview, CmdEr
 }
 
 /// Schreibt `after` an die Stelle von `before`: Datei unmittelbar vorher erneut lesen (geändert →
-/// `Stale`), Sicherung der bisherigen Datei, atomarer Austausch mit den Rechten der alten Datei.
+/// `Stale`), schreibgeschützte Datei ablehnen (vor der Sicherung), Sicherung der bisherigen Datei,
+/// atomarer Austausch mit den Rechten der alten Datei.
 pub fn write_guarded(path: &Path, before: &str, after: &str) -> Result<Option<String>, CmdError> {
     if is_symlink(path) {
         return Err(symlink_error());
@@ -227,6 +251,9 @@ pub fn write_guarded(path: &Path, before: &str, after: &str) -> Result<Option<St
     if read(path)? != before {
         return Err(CmdError::new(ErrorCode::Stale, "mcp-client-changed")
             .with_detail("Client configuration changed while connecting"));
+    }
+    if is_read_only(path) {
+        return Err(read_only_error());
     }
     let parent = path
         .parent()
@@ -382,6 +409,41 @@ mod tests {
 
     // spec: AGENT-043
     #[test]
+    #[allow(clippy::permissions_set_readonly_false)] // Aufräumen: Windows löscht schreibgeschützte Dateien nicht.
+    fn read_only_files_are_refused_before_any_backup() {
+        // Plattformneutral über `Permissions::set_readonly`: Windows-Attribut bzw. Unix ohne Schreibbits.
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("mcp.json");
+        std::fs::write(&path, "{}\n").unwrap();
+        assert!(!is_read_only(&path));
+        let mut permissions = std::fs::metadata(&path).unwrap().permissions();
+        permissions.set_readonly(true);
+        std::fs::set_permissions(&path, permissions.clone()).unwrap();
+        assert!(is_read_only(&path));
+        let err = write_guarded(&path, "{}\n", "{\"mcpServers\": {}}\n").unwrap_err();
+        assert_eq!(err.code, ErrorCode::Permission);
+        assert_eq!(err.message_key, "mcp-client-problem-readOnly");
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "{}\n");
+        assert_eq!(
+            std::fs::read_dir(dir.path()).unwrap().count(),
+            1,
+            "no backup, no staged file"
+        );
+        assert!(is_read_only(&path), "the protection stays");
+        // Eine geänderte Datei bleibt `Stale` (Prüfreihenfolge wie bisher).
+        let stale = write_guarded(&path, "[]\n", "{}\n").unwrap_err();
+        assert_eq!(stale.code, ErrorCode::Stale);
+        // Fehlende Datei ist nicht schreibgeschützt.
+        assert!(!is_read_only(&dir.path().join("missing.json")));
+        permissions.set_readonly(false);
+        std::fs::set_permissions(&path, permissions).unwrap();
+        assert!(write_guarded(&path, "{}\n", "{\"a\": 1}\n")
+            .unwrap()
+            .is_some());
+    }
+
+    // spec: AGENT-043
+    #[test]
     fn foreign_lines_next_to_the_own_entry_appear_only_as_ellipsis() {
         let exe = "/x/openspider";
         let args = ["mcp".to_string()];
@@ -396,6 +458,10 @@ mod tests {
                 "{\n  \"mcpServers\": {\n    \"foreign\": {\"command\": \"helper\", \"args\": [\"ZZOPAQUE-42\"]}\n  }\n}\n",
             ),
             (Client::ClaudeDesktop, "{\"mcpServers\":{\"f\":{\"args\":[\"ZZOPAQUE-43\"]}}}"),
+            (
+                Client::Cursor,
+                "{\n  \"mcpServers\": {\n    \"foreign\": {\"command\": \"helper\", \"args\": [\"ZZOPAQUE-45\"]}\n  }\n}\n",
+            ),
             (Client::Codex, "handle = \"ZZOPAQUE-44\""),
         ] {
             let after = client_config::connect(client, before, exe, &args).unwrap();
@@ -488,6 +554,13 @@ mod tests {
             client_path(McpClientKind::ClaudeDesktop, home, config, &with).1,
             config.join("Claude").join("claude_desktop_config.json")
         );
+        // Cursor: globale Datei im Benutzerordner, keine Umgebungsvariable (Nachtrag 05.11.2026).
+        for env in [&none as &dyn Fn(&str) -> Option<OsString>, &with, &bad] {
+            assert_eq!(
+                client_path(McpClientKind::Cursor, home, config, env),
+                (Client::Cursor, home.join(".cursor").join("mcp.json"))
+            );
+        }
     }
 
     // spec: AGENT-043

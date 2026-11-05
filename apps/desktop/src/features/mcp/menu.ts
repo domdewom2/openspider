@@ -17,6 +17,7 @@ export function mcpMenu(running: boolean, autostart: boolean, busy: boolean, ava
     { id: "mcp.claudeDesktop", action: "mcp.claudeDesktop", labelKey: "mcp-connect-desktop" },
     { id: "mcp.claudeCode", action: "mcp.claudeCode", labelKey: "mcp-connect-code" },
     { id: "mcp.codex", action: "mcp.codex", labelKey: "mcp-connect-codex" },
+    { id: "mcp.cursor", action: "mcp.cursor", labelKey: "mcp-connect-cursor" },
     { id: "mcp.log", action: "mcp.log", labelKey: "mcp-log" },
   ] }];
 }

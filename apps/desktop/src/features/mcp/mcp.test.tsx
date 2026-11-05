@@ -289,7 +289,7 @@ it("uses the canonical Markdown filename in the native save dialog", async () =>
 // spec: AGENT-003 [M2]
 it("connects each program in one click from its own menu dialog, with crawl preset and a new-session instruction", async () => {
   render(<McpHost desktop={desktop} />);
-  for (const [kind, program] of [["claudeDesktop", "Claude Desktop"], ["claudeCode", "Claude Code"], ["codex", "Codex"]] as const) {
+  for (const [kind, program] of [["claudeDesktop", "Claude Desktop"], ["claudeCode", "Claude Code"], ["codex", "Codex"], ["cursor", "Cursor"]] as const) {
     act(() => { runAction(`mcp.${kind}`); });
     const dialog = await screen.findByRole("dialog", { name: `Connect ${program}` });
     expect(within(dialog).getByText("Not connected yet.")).toBeVisible();
@@ -299,7 +299,11 @@ it("connects each program in one click from its own menu dialog, with crawl pres
     expect(within(dialog).queryByRole("checkbox", { name: /reviewed/i })).not.toBeInTheDocument();
     expect(within(dialog).getByText("Show changes").closest("details")).not.toHaveAttribute("open");
     fireEvent.click(within(dialog).getByRole("button", { name: "Connect" }));
-    expect(await within(dialog).findByText(`Connected. Start a new session in ${program} so that OpenSpider appears there.`)).toBeVisible();
+    // Cursor manages MCP servers in its settings: the instruction asks to reload them (AGENT-043, 2026-11-05).
+    const done = kind === "cursor"
+      ? "Connected. Reload the MCP servers in Cursor or restart Cursor so that OpenSpider appears there."
+      : `Connected. Start a new session in ${program} so that OpenSpider appears there.`;
+    expect(await within(dialog).findByText(done)).toBeVisible();
     expect(within(dialog).getByText(`Backup: ${kind}.backup`)).toBeVisible();
     expect(calls("mcp.clientConnect").at(-1)?.args).toEqual({ client: kind, allowCrawl: true });
     expect(await within(dialog).findByText("Already connected.")).toBeVisible();
@@ -389,6 +393,41 @@ it("blocks files that cannot be changed and reports only fixed messages", async 
     expect(await screen.findByRole("alert")).toHaveTextContent(text);
     expect(document.body.innerHTML).not.toContain(TEST_TOKEN);
   }
+});
+
+// spec: AGENT-043
+it("tells Cursor users to reload the MCP servers after updating and disconnecting, in German too", async () => {
+  fixture.connected.add("cursor");
+  render(<ConnectPanel client="cursor" desktop={desktop} />);
+  expect(await screen.findByText("Already connected.")).toBeVisible();
+  await click("Update");
+  expect(await screen.findByText("Already connected; the file is unchanged. Reload the MCP servers in Cursor if OpenSpider is still missing there.")).toBeVisible();
+  await click("Disconnect");
+  expect(await screen.findByText("Disconnected. Reload the MCP servers in Cursor.")).toBeVisible();
+  expect(screen.queryByText(/new session/)).not.toBeInTheDocument();
+  const de = makeT("de");
+  expect(de("mcp-connect-cursor")).toBe("Mit Cursor verbinden…");
+  expect(de("mcp-client-done-connected-reload", { program: "Cursor" })).toBe("Verbunden. Lade in Cursor die MCP-Server neu oder starte Cursor neu, damit OpenSpider dort erscheint.");
+  expect(de("mcp-client-done-disconnected-reload", { program: "Cursor" })).toBe("Getrennt. Lade in Cursor die MCP-Server neu.");
+});
+
+// spec: AGENT-043
+it("blocks a read-only configuration file with a fixed message and keeps copying", async () => {
+  fixture.core.handlers.set("mcp.clientConfigPreview", () => clientPreview("cursor", "notConnected", { problem: "readOnly", connectDiff: "", disconnectDiff: "" }));
+  render(<ConnectPanel client="cursor" desktop={desktop} />);
+  expect(await screen.findByRole("alert")).toHaveTextContent("The configuration file is read-only. OpenSpider does not change it. Remove the write protection, or copy the entry and paste it by hand.");
+  expect(screen.getByText("The file cannot be changed.")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Connect" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Copy entry" })).toBeEnabled();
+  cleanup();
+  // The service refuses as well (file became read-only after the preview); only the fixed text appears.
+  fixture.core.handlers.set("mcp.clientConfigPreview", () => clientPreview("cursor"));
+  fixture.core.handlers.set("mcp.clientConnect", () => { throw new IpcError({ code: "Permission", messageKey: "mcp-client-problem-readOnly", args: {}, retryable: false, detail: TEST_TOKEN } as never); });
+  render(<ConnectPanel client="cursor" desktop={desktop} />);
+  await click("Connect");
+  expect(await screen.findByRole("alert")).toHaveTextContent("The configuration file is read-only.");
+  expect(document.body.innerHTML).not.toContain(TEST_TOKEN);
+  expect(makeT("de")("mcp-client-problem-readOnly")).toContain("schreibgeschützt");
 });
 
 // spec: AGENT-043

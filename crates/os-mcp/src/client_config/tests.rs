@@ -7,6 +7,8 @@ const CLAUDE_CODE: &str =
     include_str!("../../../../tests/fixtures/agent-client-configs/claude-code.json");
 const CLAUDE_DESKTOP: &str =
     include_str!("../../../../tests/fixtures/agent-client-configs/claude-desktop.json");
+const CURSOR: &str =
+    include_str!("../../../../tests/fixtures/agent-client-configs/cursor-mcp.json");
 
 const MAC: &str = "/Applications/OpenSpider.app/Contents/MacOS/openspider";
 const WIN: &str = "C:\\Program Files\\OpenSpider\\openspider.exe";
@@ -252,6 +254,72 @@ fn claude_desktop_keeps_four_space_indent_and_missing_final_newline() {
 
 // spec: AGENT-043
 #[test]
+fn cursor_connect_appends_to_root_servers_and_keeps_every_byte() {
+    for exe in [MAC, WIN] {
+        let after = connect(Client::Cursor, CURSOR, exe, &mcp()).unwrap();
+        let (at, removed, added) = changed(CURSOR, &after);
+        assert_eq!(removed, "", "nothing outside may be removed");
+        let exe_json = serde_json::to_string(exe).unwrap();
+        assert_eq!(
+            added,
+            format!(",\n    \"openspider\": {{\n      \"args\": [\n        \"mcp\"\n      ],\n      \"command\": {exe_json},\n      \"type\": \"stdio\"\n    }}")
+        );
+        // Hinter dem letzten fremden Server, zwei Leerzeichen Einrückung wie in der Datei.
+        assert!(CURSOR[..at].ends_with("caf\\u00e9\"]\n    }"));
+        assert_eq!(
+            entry_state(Client::Cursor, &after, exe, &mcp()).unwrap(),
+            EntryState::Current
+        );
+        assert_eq!(connect(Client::Cursor, &after, exe, &mcp()).unwrap(), after);
+        assert_eq!(disconnect(Client::Cursor, &after).unwrap(), CURSOR);
+        // Der geschriebene Eintrag ist wertgleich mit `--print-config cursor` (AGENT-001).
+        let written: serde_json::Value = serde_json::from_str(&after).unwrap();
+        let printed: serde_json::Value =
+            serde_json::from_str(&print_config::render(Client::Cursor, exe, &mcp()).unwrap())
+                .unwrap();
+        assert_eq!(
+            written["mcpServers"][SERVER_NAME],
+            printed["mcpServers"][SERVER_NAME]
+        );
+        let foreign: serde_json::Value = serde_json::from_str(CURSOR).unwrap();
+        for (name, value) in foreign["mcpServers"].as_object().unwrap() {
+            assert_eq!(&written["mcpServers"][name], value, "{name}");
+        }
+    }
+    assert_eq!(
+        entry_state(Client::Cursor, CURSOR, MAC, &mcp()).unwrap(),
+        EntryState::Absent
+    );
+}
+
+// spec: AGENT-043
+// spec: AGENT-001
+#[test]
+fn cursor_entry_without_type_is_outdated_and_updated_in_place() {
+    // Eintrag, wie ihn `--print-config cursor` vor B3-CURSOR ausgab (ohne `type`).
+    let before = CURSOR.replace(
+        "  \"mcpServers\": {\n    \"postgres\"",
+        &format!("  \"mcpServers\": {{\n    \"openspider\": {{\"args\": [\"mcp\"], \"command\": \"{MAC}\"}},\n    \"postgres\""),
+    );
+    assert_ne!(before, CURSOR);
+    assert_eq!(
+        entry_state(Client::Cursor, &before, MAC, &mcp()).unwrap(),
+        EntryState::Outdated
+    );
+    // Für Claude Desktop ist derselbe Eintrag aktuell.
+    assert_eq!(
+        entry_state(Client::ClaudeDesktop, &before, MAC, &mcp()).unwrap(),
+        EntryState::Current
+    );
+    let after = connect(Client::Cursor, &before, MAC, &mcp()).unwrap();
+    let (at, _, added) = changed(&before, &after);
+    assert!(before[..at].ends_with("\"openspider\": {"));
+    assert!(added.contains("\"type\": \"stdio\"") && !added.contains("postgres"));
+    assert_eq!(disconnect(Client::Cursor, &after).unwrap(), CURSOR);
+}
+
+// spec: AGENT-043
+#[test]
 fn json_update_replaces_only_the_own_value() {
     let before = CLAUDE_CODE.replace(
         "  \"mcpServers\": {\n    \"github\"",
@@ -413,6 +481,7 @@ fn masking_hides_every_test_secret_and_keeps_everything_else() {
         (Client::Codex, CODEX),
         (Client::ClaudeCode, CLAUDE_CODE),
         (Client::ClaudeDesktop, CLAUDE_DESKTOP),
+        (Client::Cursor, CURSOR),
     ] {
         let masked = mask(client, text).unwrap();
         assert_no_secrets(&masked);
@@ -448,6 +517,15 @@ fn masking_hides_every_test_secret_and_keeps_everything_else() {
         "\"--root\", \"D:\\\\Daten mit Leerzeichen\"",
     ] {
         assert!(code.contains(visible), "{visible}\n{code}");
+    }
+    let cursor = mask(Client::Cursor, CURSOR).unwrap();
+    for visible in [
+        "\"envFile\": \"${workspaceFolder}/.env\"",
+        "\"url\": \"https://mcp.linear.example.test/sse\"",
+        "\"GITHUB_PERSONAL_ACCESS_TOKEN\", \"ghcr.io/github/github-mcp-server\"",
+        "\"C:\\\\Users\\\\anna\\\\Documents\"",
+    ] {
+        assert!(cursor.contains(visible), "{visible}\n{cursor}");
     }
 }
 

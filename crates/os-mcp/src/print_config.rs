@@ -24,7 +24,7 @@ pub enum Client {
     ClaudeCode,
     /// OpenAI Codex (`~/.codex/config.toml` bzw. `$CODEX_HOME/config.toml`).
     Codex,
-    /// Cursor (`.cursor/mcp.json`).
+    /// Cursor (`~/.cursor/mcp.json`, global; AGENT-043).
     Cursor,
 }
 
@@ -77,8 +77,9 @@ impl Client {
                  MCP > Mit Codex verbinden…"
             }
             Client::Cursor => {
-                "In .cursor/mcp.json (Projekt) oder ~/.cursor/mcp.json (global) einfügen; \"mcpServers\" mit \
-                 vorhandenen Einträgen zusammenführen."
+                "In ~/.cursor/mcp.json (global; Windows %USERPROFILE%\\.cursor\\mcp.json) unter \"mcpServers\" \
+                 einfügen; \"mcpServers\" mit vorhandenen Einträgen zusammenführen. Die App erledigt das mit \
+                 MCP > Mit Cursor verbinden…"
             }
         }
     }
@@ -94,10 +95,11 @@ impl Client {
 pub fn render(client: Client, exe: &str, args: &[String]) -> Result<String, McpError> {
     match client {
         Client::Codex => render_toml(exe, args),
-        Client::ClaudeDesktop | Client::Cursor => {
-            render_json(json!({ "command": exe, "args": args }))
+        Client::ClaudeDesktop => render_json(json!({ "command": exe, "args": args })),
+        // Cursor führt `type` für lokale Server als Pflichtfeld (öffentliche Doku; AGENT-001, Nachtrag B3-CURSOR).
+        Client::ClaudeCode | Client::Cursor => {
+            render_json(json!({ "type": "stdio", "command": exe, "args": args }))
         }
-        Client::ClaudeCode => render_json(json!({ "type": "stdio", "command": exe, "args": args })),
     }
 }
 
@@ -177,9 +179,13 @@ mod tests {
                 assert!(text.ends_with('\n'));
             }
         }
-        let code: Value =
-            serde_json::from_str(&render(Client::ClaudeCode, MAC, &mcp()).unwrap()).unwrap();
-        assert_eq!(code["mcpServers"][SERVER_NAME]["type"], "stdio");
+        for client in [Client::ClaudeCode, Client::Cursor] {
+            let v: Value = serde_json::from_str(&render(client, MAC, &mcp()).unwrap()).unwrap();
+            assert_eq!(v["mcpServers"][SERVER_NAME]["type"], "stdio", "{client:?}");
+        }
+        let desktop: Value =
+            serde_json::from_str(&render(Client::ClaudeDesktop, MAC, &mcp()).unwrap()).unwrap();
+        assert!(desktop["mcpServers"][SERVER_NAME].get("type").is_none());
     }
 
     // spec: AGENT-001
@@ -232,6 +238,11 @@ mod tests {
         assert!(Client::ClaudeDesktop
             .placement_hint()
             .contains("claude_desktop_config.json"));
+        // Cursor: dieselbe globale Datei wie der Dialog „Mit Cursor verbinden…“, kein Projektpfad.
+        let cursor = Client::Cursor.placement_hint();
+        assert!(cursor.contains("~/.cursor/mcp.json") && cursor.contains("%USERPROFILE%"));
+        assert!(cursor.contains("Mit Cursor verbinden"), "{cursor}");
+        assert!(!cursor.contains(" .cursor/mcp.json"), "{cursor}");
     }
 
     // spec: AGENT-001

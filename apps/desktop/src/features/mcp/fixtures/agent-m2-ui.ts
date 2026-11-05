@@ -21,7 +21,7 @@ export function clientPreview(kind: McpClientKind, state: McpClientState = "notC
   const codex = kind === "codex";
   const entry = codex
     ? '[mcp_servers.openspider]\ncommand = "/Applications/OpenSpider.app/Contents/MacOS/openspider"\nargs = ["mcp"]\n'
-    : `{\n  "mcpServers": {\n    "openspider": {\n      "args": ["mcp"],\n      "command": "/Applications/OpenSpider.app/Contents/MacOS/openspider"${kind === "claudeCode" ? ',\n      "type": "stdio"' : ""}\n    }\n  }\n}\n`;
+    : `{\n  "mcpServers": {\n    "openspider": {\n      "args": ["mcp"],\n      "command": "/Applications/OpenSpider.app/Contents/MacOS/openspider"${kind === "claudeCode" || kind === "cursor" ? ',\n      "type": "stdio"' : ""}\n    }\n  }\n}\n`;
   const added = codex
     ? '@@ -71,0 +72,4 @@\n+\n+[mcp_servers.openspider]\n+command = "/Applications/OpenSpider.app/Contents/MacOS/openspider"\n+args = ["mcp"]\n'
     : '@@ -9 +9,7 @@\n-    }\n+    },\n+    "openspider": {\n+      "args": [\n+        "mcp"\n+      ],\n+      "command": "/Applications/OpenSpider.app/Contents/MacOS/openspider"\n+    }\n';

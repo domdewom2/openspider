@@ -75,6 +75,8 @@ pub enum McpClientKind {
     ClaudeCode,
     /// Codex.
     Codex,
+    /// Cursor (`~/.cursor/mcp.json`, AGENT-043 Nachtrag 05.11.2026).
+    Cursor,
 }
 
 /// Argument von `mcp.clientConfigPreview` und `mcp.clientDisconnect`.
@@ -117,6 +119,8 @@ pub enum McpClientProblem {
     Unsupported,
     /// Die Datei ist ein Symlink.
     Symlink,
+    /// Die Datei ist schreibgeschützt (Windows-Attribut, Unix ohne Schreibrecht-Bits).
+    ReadOnly,
 }
 
 /// Vorschau der Client-Konfiguration: nur maskierte, geänderte Zeilen, nie die fremde Datei.
