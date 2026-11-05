@@ -1780,7 +1780,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Unbekannte ID → Exit-Code 2 mit Hinweis auf `--list-crawls`.
   - [ ] Ein noch laufender oder unvollständiger Crawl kann geladen werden; Exporte zeigen den gespeicherten Stand; Warnung „crawl incomplete“.
   - [ ] Crawl-Dateien älterer Schemaversion werden migriert (Kopie, Original bleibt unverändert) **(OS-Festlegung)**.
-  - [ ] OS-Erweiterung `--resume` zusammen mit `--load-crawl` setzt einen pausierten oder unterbrochenen Crawl fort (Fortsetzungssemantik: CRAWL-126/CRAWL-128); ohne `--resume` wird nicht weitergecrawlt (übernommen aus CRAWL-135).
+  - [ ] OS-Erweiterung `--resume` zusammen mit `--load-crawl` setzt einen pausierten, unterbrochenen oder durch ein Limit beendeten Crawl fort (Fortsetzungssemantik: CRAWL-126/CRAWL-128); ein gestoppter Crawl (UI-003) wird nicht fortgesetzt (Exit 1, Entscheidung (Fable-Empfehlung) vom 05.11.2026); ohne `--resume` wird nicht weitergecrawlt (übernommen aus CRAWL-135).
 - **Testfixture:** gespeicherter Crawl `tests/fixtures/out-basic-site/crawl.ospider`; pausierter Crawl aus `out-queue`.
 
 ### OUT-185 `--list-crawls`

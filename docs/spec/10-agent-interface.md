@@ -180,7 +180,7 @@ Meilensteine (OS-Festlegung, einzige Quelle der Zuordnung): **M1** (headless, ST
 ### AGENT-020 Crawl starten, Status, stoppen
 - **Priorität:** P0
 - **Werkzeugklasse:** `crawl` (AGENT-003)
-- **Beschreibung:** `start_crawl(url | url_list, config_profile?, overrides?)` gibt Crawl-ID zurück; `crawl_status(id)` (Fortschritt, URLs/s, Fehler); `stop_crawl(id)`, `resume_crawl(id)`.
+- **Beschreibung:** `start_crawl(url | url_list, config_profile?, overrides?)` gibt Crawl-ID zurück; `crawl_status(id)` (Fortschritt, URLs/s, Fehler); `stop_crawl(id)` beendet den Crawl endgültig (Endgrund `stopped`, UI-003); `resume_crawl(id)` setzt nur pausierte, unterbrochene oder durch ein Limit beendete Crawls fort (Entscheidung (Fable-Empfehlung) vom 05.11.2026; Umsetzung mit beta.4, zusammen mit einem Werkzeug `pause_crawl(id)` für unterbrechbares Anhalten).
 - **Akzeptanzkriterien:**
   - [ ] Gleiches Ergebnis wie gleichwertiger CLI-Aufruf (aus OUT-285).
   - [ ] Läuft die Desktop-App, erscheint ein per MCP gestarteter Crawl dort live.
