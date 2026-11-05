@@ -86,14 +86,16 @@ test("real writer connects all clients in one click, keeps every foreign byte an
   try {
     await connect(page, bridge);
     await page.getByRole("tab", { name: "Clients", exact: true }).click();
-    for (const kind of ["claudeDesktop", "claudeCode", "codex"] as const) {
+    for (const kind of ["claudeDesktop", "claudeCode", "codex", "cursor"] as const) {
       const initial = await page.evaluate(kind => window.mcpBridge.invoke<McpClientPreview>("mcp.clientConfigPreview", { client: kind }), kind);
       await sandboxFile(initial.path, bridge.home);
       const original = kind === "codex"
         ? `# eigene Notiz\n[mcp_servers.foreign]\ncommand = 'foreign-helper'\nenv = { API_TOKEN = "${secret}" }\n`
         : `{\n    "mcpServers": {\n        "foreign": {"command": "foreign-helper", "env": {"API_TOKEN": "${secret}"}}\n    },\n    "theme": "dark"\n}\n`;
       await writeFile(initial.path, original);
-      const program = { claudeDesktop: "Claude Desktop", claudeCode: "Claude Code", codex: "Codex" }[kind];
+      const program = { claudeDesktop: "Claude Desktop", claudeCode: "Claude Code", codex: "Codex", cursor: "Cursor" }[kind];
+      // Cursor manages MCP servers in its settings: reload instead of a new session (AGENT-043, 2026-11-05).
+      const next = kind === "cursor" ? "Reload the MCP servers in Cursor" : `Start a new session in ${program}`;
       await page.getByRole("button", { name: /Client/ }).click();
       await page.getByRole("option", { name: program, exact: true }).click();
       const panel = page.getByRole("region", { name: `Connect ${program}` });
@@ -103,7 +105,7 @@ test("real writer connects all clients in one click, keeps every foreign byte an
       expect(await page.locator("body").innerHTML()).not.toContain(secret);
       expect(await readFile(initial.path, "utf8")).toBe(original);
       await panel.getByRole("button", { name: "Connect", exact: true }).click();
-      await expect(panel.getByText(`Connected. Start a new session in ${program} so that OpenSpider appears there.`, { exact: true })).toBeVisible();
+      await expect(panel.getByText(kind === "cursor" ? `Connected. ${next} or restart Cursor so that OpenSpider appears there.` : `Connected. ${next} so that OpenSpider appears there.`, { exact: true })).toBeVisible();
       const after = await readFile(initial.path, "utf8");
       // Only an insertion: the original bytes before and after the own entry are unchanged.
       const insertAt = kind === "codex" ? original.length : original.indexOf("}\n    },") + 1;
@@ -116,7 +118,7 @@ test("real writer connects all clients in one click, keeps every foreign byte an
       expect(await readFile(backupPath, "utf8")).toBe(original);
       await expect(panel.getByText("Already connected.", { exact: true })).toBeVisible();
       await panel.getByRole("button", { name: "Disconnect", exact: true }).click();
-      await expect(panel.getByText(`Disconnected. Start a new session in ${program}.`, { exact: true })).toBeVisible();
+      await expect(panel.getByText(`Disconnected. ${next}.`, { exact: true })).toBeVisible();
       expect(await readFile(initial.path, "utf8")).toBe(original);
       expect(await page.locator("body").innerHTML()).not.toContain(secret);
     }
