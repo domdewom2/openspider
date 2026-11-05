@@ -1,0 +1,4 @@
+# Build-Kontext des Images (OUT-274) ist packaging/docker. Nur der Chromium-Starter gehört hinein; das Dockerfile liest
+# Docker separat, das Release-Archiv kommt per Download oder über --build-context archive=<ordner>.
+*
+!openspider-chromium

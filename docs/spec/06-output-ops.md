@@ -21,7 +21,7 @@ Zuständige Crates (siehe `docs/ARCHITECTURE.md`): `os-export` (Formate, Bulk-Ex
 | [10 Konfigurationsdateien & Crawl-Dateien](#10-konfigurationsdateien--crawl-dateien) | OUT-220 – OUT-234 | Profile, Standardkonfiguration, Auth-Profile, Einstellungen, Crawl-Verwaltung, Aufbewahrung, Manifest und Leseschnittstelle der Crawl-Datei |
 | [11 Logging & Diagnose](#11-logging--diagnose) | OUT-240 – OUT-247 | Logdateien, Level, Rotation, Log-Paket, Nutzungsstatistik, Absturzberichte |
 | [12 Update-Mechanismus](#12-update-mechanismus) | OUT-250 – OUT-255 | Prüfen, Herunterladen, Signatur, Abschalten |
-| [13 Plattformanforderungen](#13-plattformanforderungen) | OUT-260 – OUT-273 | macOS arm64/x64, Windows x64, Installer, Signatur, Pfade, Ressourcen, Zertifikate, Linux-Serverbetrieb (Kern und CLI) |
+| [13 Plattformanforderungen](#13-plattformanforderungen) | OUT-260 – OUT-274 | macOS arm64/x64, Windows x64, Installer, Signatur, Pfade, Ressourcen, Zertifikate, Linux-Serverbetrieb (Kern und CLI), Docker-Image |
 | [14 Benachrichtigungen & Automatisierungs-Schnittstellen](#14-benachrichtigungen--automatisierungs-schnittstellen) | OUT-280 – OUT-285 | E-Mail-Konten, Abschlussmail, Anhänge, Desktop-Benachrichtigung, MCP-Server |
 
 Prioritäten: **P0** = MVP-Kern, **P1** = für Parität nötig, **P2** = später/Nische.
@@ -2617,6 +2617,22 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Unter Linux übersprungene Tests stehen mit Grund in einer Liste im Repo; Ziel der Liste ist leer.
 - **Testfixture:** CI-Job `linux-core`; `out-basic-site`.
 
+### OUT-274 Docker-Image für den Serverbetrieb (x86_64)
+- **Priorität:** P1
+- **Beschreibung:** **(OS-Festlegung,** Nutzerentscheidung 04.11.2026, `docs/plan/beta3.md` 4b) Ein Container-Image macht den Linux-Serverbetrieb aus OUT-273 ohne Installation nutzbar: CLI und Exporte, geplante Läufe über einen Planer des Hosts (z. B. cron) und der MCP-Server über STDIO (`docker run -i … mcp`, Freigaben nach AGENT-003). Das Image enthält **keine Weboberfläche**; Oberfläche bleibt die Desktop-App, die die im Container erzeugten Crawl-Dateien öffnet. Inhalt: die CLI aus dem Linux-Release-Archiv `openspider_<version>_linux-x86_64.tar.gz` (unverändert, mit `LICENSE`, `NOTICE`, `THIRD_PARTY_NOTICES.txt`), Chromium der Basisdistribution für JS-Rendering über `OPENSPIDER_CHROMIUM`, Schriften und CA-Zertifikate. Quelle: `packaging/docker/Dockerfile`, Workflow `.github/workflows/docker.yml`.
+- **Eingaben/Konfiguration:** Build-Argumente `OPENSPIDER_VERSION` und `OPENSPIDER_SHA256` (ohne Standardwert), optional `OPENSPIDER_ARCHIVE_URL` (nur HTTPS) bzw. ein lokales Archiv als Build-Kontext `archive`. Zur Laufzeit: Arbeitsordner `/data` (Standard-Ausgabeordner), `OPENSPIDER_HOME=/config` als Volume (Crawl-Verwaltung, Einstellungen, Logs; Voraussetzung für den Vergleich mit dem vorherigen Crawl), `OPENSPIDER_SECRET_STORE=memory`; Geheimnisse nur über Umgebungsvariablen zur Laufzeit (OUT-201, OUT-187). `OPENSPIDER_CHROMIUM_SANDBOX=1` startet Chromium mit Sandbox, wenn das Sicherheitsprofil des Containers sie zulässt (Standard ohne, weil das Standardprofil von Docker sie verhindert).
+- **Ausgabe:** Image mit Einstiegspunkt `openspider` (Standardbefehl `--help`), OCI-Labels für Quelle, Lizenz `Apache-2.0`, Version, Revision und Beschreibung; Tags `<version>` und Kanal (`beta` bzw. `latest`).
+- **Akzeptanzkriterien:**
+  - [ ] Das Image läuft als eigener Benutzer mit fester UID/GID 10001 (nicht root); `docker run --user <uid>:<gid>` mit gemountetem `/config` funktioniert ebenso.
+  - [ ] Die SHA-256-Prüfsumme des Archivs wird vor dem Entpacken geprüft; falsche oder fehlende Prüfsumme, unerwarteter Archivinhalt oder eine andere Version in `openspider --version` brechen den Build ab.
+  - [ ] Basis-Image mit Tag und Digest gepinnt, kein `latest`; glibc der Basis mindestens die des Linux-Release-Builds (OUT-273).
+  - [ ] Kein Geheimnis im Image (keine Schlüssel in `ENV`, `ARG` oder Dateien); ohne D-Bus und Schlüsselbund melden Befehle mit fehlendem Geheimnis einen klaren Fehler statt zu hängen (wie OUT-273).
+  - [ ] Smoke-Test im Workflow gegen `os-testsite`: `--version`, Crawl mit CSV-Export (Zeilenzahl wie Golden `out-basic-site`), zwei Projektcrawls mit `--compare-with-previous` und `--save-report "Crawl Changes"` (Golden `out-b3-diff`), JS-Rendering mit dem Chromium des Images (gerenderter Titel), MCP über STDIO (`initialize` → `tools/list`, ohne Schalter nur lesende Werkzeuge, mit `--allow read,crawl` zusätzlich `start_crawl`).
+  - [ ] SBOM (SPDX) und Provenance werden mit dem Image erzeugt und geprüft; veröffentlicht wird genau das geprüfte Image.
+  - [ ] Kein Push in eine Registry ohne ausdrückliche Freigabe: nur per manuellem Workflow-Start mit `publish=true` aus einem veröffentlichten Release und nach Freigabe im Environment `ghcr`; kein automatischer Push bei Tags; eine vorhandene Version wird nicht überschrieben.
+  - [ ] Lizenzhinweise im Image: `/usr/share/doc/openspider/` (aus dem Release-Archiv) und die Copyright-Dateien der Systempakete.
+- **Testfixture:** Vertragstest `packaging/docker/docker.test.mjs`; Smoke-Test `packaging/docker/smoke.mjs` im Workflow `docker.yml` mit `out-basic-site`, `out-b3-diff` (v1, v2) und `crawl-m2-render`.
+
 ---
 
 ## 14 Benachrichtigungen & Automatisierungs-Schnittstellen
@@ -2756,3 +2772,4 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - OUT-285: Standardfreigabe der MCP-Werkzeuge nach AGENT-003 (nur lesend); STDIO-Kern als AGENT-001 (P0) vorgezogen.
   - Stubs OUT-144, OUT-231, OUT-271 auf das strikte Format normiert.
 - Nachtrag Abgleich Cloud-Variante, Etappe E0 (16.10.2026, Planer; `docs/plan/autonomo-abgleich.md` 5.2/5.4): neu OUT-233 (Manifest der Crawl-Datei), OUT-234 (stabile Leseschnittstelle, `q_`-Sichten, führend für die Grundsichten von AI-100) und OUT-273 (Linux-Serverbetrieb von Kern und CLI, P1). OUT-264 behält aarch64, Pakete und Desktop (P2). Befund-Zuordnungstabelle, gemeinsame Datendateien (Bot-Katalog, Lastprofile) und ein Secret-Store für Server sind noch nicht spezifiziert.
+- Nachtrag B3-DOCKER (05.11.2026, Nutzerentscheidung 04.11.2026, `docs/plan/beta3.md` 4b): neu OUT-274 (Docker-Image für den Serverbetrieb, P1) im Abschnitt 13. Ein Konfigurationsschlüssel für die Chromium-Sandbox (`LaunchOpts.no_sandbox` in `os-render`) ist nicht spezifiziert; das Image setzt `--no-sandbox` über seinen Chromium-Starter.

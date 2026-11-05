@@ -1,0 +1,18 @@
+#!/bin/sh
+# Chromium-Start für OpenSpider im Container (OUT-274); im Image als OPENSPIDER_CHROMIUM gesetzt.
+#
+# - Ohne Chromium-Sandbox (--no-sandbox): Dockers Standardprofil (seccomp, keine Benutzer-Namensräume) lässt die Sandbox
+#   nicht starten. Grenze ist dann der Container. Wer den Container mit einem Profil startet, das die Sandbox erlaubt,
+#   setzt OPENSPIDER_CHROMIUM_SANDBOX=1.
+# - --disable-dev-shm-usage: /dev/shm ist in Containern standardmäßig 64 MB groß; Chromium nutzt dann /tmp.
+# - Ein nicht beschreibbares HOME (docker run --user <uid> ohne passendes Heimatverzeichnis) wird durch /tmp ersetzt.
+set -eu
+
+if [ "${OPENSPIDER_CHROMIUM_SANDBOX:-0}" != "1" ]; then
+  set -- --no-sandbox "$@"
+fi
+if [ -z "${HOME:-}" ] || [ ! -w "${HOME}" ]; then
+  HOME=/tmp
+  export HOME
+fi
+exec /usr/bin/chromium --disable-dev-shm-usage "$@"
