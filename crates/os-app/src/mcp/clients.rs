@@ -330,6 +330,10 @@ pub fn connect(
     if is_symlink(&path) {
         return Err(symlink_error());
     }
+    // Wie die Vorschau: eine geschützte Datei wird abgelehnt, auch wenn nichts zu ändern wäre.
+    if is_read_only(&path) {
+        return Err(read_only_error());
+    }
     let before = read(&path)?;
     let after = client_config::connect(client, &before, &exe, &args).map_err(config_error)?;
     let changed = after != before;
@@ -349,6 +353,9 @@ pub fn disconnect(app: &App, kind: McpClientKind) -> Result<McpClientWritten, Cm
     let (client, path) = target(app, kind)?;
     if is_symlink(&path) {
         return Err(symlink_error());
+    }
+    if is_read_only(&path) {
+        return Err(read_only_error());
     }
     let before = read(&path)?;
     let after = client_config::disconnect(client, &before).map_err(config_error)?;
