@@ -6,6 +6,84 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
 export const schemaVersion = '1.9.0';
+
+// B3-BREW (Nutzerentscheidung 05.11.2026): eigener Tap ab beta.3. `openspider` führt nur stabile Versionen,
+// `openspider@beta` die jeweils neueste veröffentlichte Version (Beta oder stabil). Beide installieren dieselbe
+// App und schließen sich gegenseitig aus. Einzige Quelle des Cask-Texts für generate() (P01, winget/Smoke) und
+// scripts/release/homebrew.mjs (Tap-Workflow), damit beide Wege byte-gleiche Casks schreiben.
+export const caskChannels = {
+  stable: { token: 'openspider', other: 'openspider@beta', tag: String.raw`/^v?(\d+\.\d+\.\d+)$/i` },
+  beta: { token: 'openspider@beta', other: 'openspider', tag: String.raw`/^v?(\d+\.\d+\.\d+(?:-(?:beta|rc)\.\d+)?)$/i` },
+};
+// App data removed only by an explicit `brew uninstall --zap`: OUT-227 paths (settings, default crawls, logs,
+// cache) and what macOS/WebKit store for the bundle id org.openspider.desktop (tauri.conf.json). Sorted
+// case-insensitively, as Homebrew's Cask/ArrayAlphabetization cop requires.
+export const zapPaths = [
+  '~/Library/Application Support/OpenSpider',
+  '~/Library/Application Support/org.openspider.desktop',
+  '~/Library/Caches/OpenSpider',
+  '~/Library/Caches/org.openspider.desktop',
+  '~/Library/HTTPStorages/org.openspider.desktop',
+  '~/Library/Logs/OpenSpider',
+  '~/Library/Preferences/org.openspider.desktop.plist',
+  '~/Library/Saved Application State/org.openspider.desktop.savedState',
+  '~/Library/WebKit/org.openspider.desktop',
+];
+
+export function caskSource({ channel = 'stable', version, sha256, url }) {
+  const { token, other, tag } = caskChannels[channel] ?? {};
+  if (!token) throw Error('Ungültiger Cask-Kanal');
+  if (!/^\d+\.\d+\.\d+(?:-(?:beta|rc)\.\d+)?$/.test(version ?? '')) throw Error('Ungültige Version');
+  if (!/^[0-9a-f]{64}$/.test(sha256 ?? '')) throw Error('Ungültige SHA-256');
+  // Only characters of an encoded URL: nothing that could end the Ruby string or interpolate (#{…}).
+  if (!/^https?:\/\/[A-Za-z0-9.:-]+\/[A-Za-z0-9._~%+\/-]+$/.test(url ?? '')) throw Error('Ungültige URL');
+  return `cask "${token}" do
+  version "${version}"
+  sha256 "${sha256}"
+
+  url "${url}"
+  name "OpenSpider"
+  desc "Website crawler and analysis desktop application"
+  homepage "https://openspider.de/"
+
+  livecheck do
+    url :url
+    regex(${tag})
+    strategy :github_releases
+  end
+
+  auto_updates true
+  conflicts_with cask: "${other}"
+  depends_on macos: ">= :ventura"
+
+  app "OpenSpider.app"
+  generated_script "openspider-launchagents.rb", content: <<~'RUBY'
+${readFileSync(new URL('./lifecycle.rb', import.meta.url), 'utf8').trimEnd().split('\n').map(line => (line ? `    ${line}` : '')).join('\n')}
+  RUBY
+  binary "#{appdir}/OpenSpider.app/Contents/MacOS/openspider"
+
+  postflight_steps do
+    run "/usr/bin/ruby",
+        args: ["{{staged_path}}/openspider-launchagents.rb", "restore", "{{temp}}/launchagents.json"],
+        writable_paths: ["~/Library/LaunchAgents"]
+  end
+
+  uninstall_preflight_steps do
+    run "/usr/bin/ruby",
+        args: ["{{staged_path}}/openspider-launchagents.rb", "save", "{{temp}}/launchagents.json"],
+        writable_paths: ["~/Library/LaunchAgents"]
+  end
+
+  uninstall launchctl: "de.openspider.task.*",
+            delete: "~/Library/LaunchAgents/de.openspider.task.*.plist"
+
+  zap trash: [
+${zapPaths.map(path => `    "${path}",`).join('\n')}
+  ]
+end
+`;
+}
+
 export function generate({ directory, output, version, repository, packageId, mode = 'all', baseUrl }) {
   if (!/^\d+\.\d+\.\d+(?:-(?:beta|rc)\.\d+)?$/.test(version)) throw Error('Ungültige Version');
   if (!/^[\w.-]+\/[\w.-]+$/.test(repository)) throw Error('Ungültiges Repository');
@@ -34,49 +112,7 @@ export function generate({ directory, output, version, repository, packageId, mo
     // and Intel alike. R01 copies the Tauri DMG name unchanged; per-architecture DMGs (Actions artifacts
     // only) and the versionless copy OpenSpider-macOS.dmg are never selected.
     const dmg = pick(/^OpenSpider_[A-Za-z0-9.+-]+_universal\.dmg$/);
-    result['openspider.rb'] = `cask "openspider" do
-  version "${version}"
-  sha256 "${dmg.hash}"
-
-  url "${dmg.url}"
-  name "OpenSpider"
-  desc "Website crawler and analysis desktop application"
-  homepage "https://openspider.de/"
-
-  auto_updates true
-  depends_on macos: ">= :ventura"
-
-  app "OpenSpider.app"
-  generated_script "openspider-launchagents.rb", content: <<~'RUBY'
-${readFileSync(new URL('./lifecycle.rb', import.meta.url), 'utf8').split('\n').map(line => `    ${line}`).join('\n')}
-  RUBY
-  binary "#{appdir}/OpenSpider.app/Contents/MacOS/openspider"
-
-  postflight_steps do
-    run "/usr/bin/ruby",
-        args: ["{{staged_path}}/openspider-launchagents.rb", "restore", "{{temp}}/launchagents.json"],
-        writable_paths: ["~/Library/LaunchAgents"]
-  end
-
-  uninstall_preflight_steps do
-    run "/usr/bin/ruby",
-        args: ["{{staged_path}}/openspider-launchagents.rb", "save", "{{temp}}/launchagents.json"],
-        writable_paths: ["~/Library/LaunchAgents"]
-  end
-
-  uninstall launchctl: "de.openspider.task.*",
-            delete: "~/Library/LaunchAgents/de.openspider.task.*.plist"
-
-  zap trash: [
-    "~/Library/Application Support/OpenSpider",
-    "~/Library/Application Support/org.openspider.desktop",
-    "~/Library/Caches/org.openspider.desktop",
-    "~/Library/Caches/OpenSpider",
-    "~/Library/Logs/OpenSpider",
-    "~/Library/Preferences/org.openspider.desktop.plist",
-  ]
-end
-`;
+    result['openspider.rb'] = caskSource({ version, sha256: dmg.hash, url: dmg.url });
   }
   if (mode !== 'homebrew') {
     // The installer patterns match scripts/release/manifest.mjs, without guessing versions/locales.
