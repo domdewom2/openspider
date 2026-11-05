@@ -80,7 +80,10 @@ jobs:
       - name: Chromium-Sandbox erlauben (Linux)
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      # Schritt-Limit wie im e2e-Job (B3-COV): ein hängender apt-Spiegel soll früh und eindeutig scheitern.
+      - name: Playwright-Chromium installieren
+        timeout-minutes: 15
+        run: npx playwright install --with-deps chromium
       - name: Chromium für Rust-Renderingtests
         run: echo "OPENSPIDER_CHROMIUM=$(node -e 'console.log(require("playwright").chromium.executablePath())')" >> "$GITHUB_ENV"
       - name: Rust-Tests und echte Ergebnisdatei
@@ -173,7 +176,11 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - run: npm ci
+      # Sonst ≤ 1 min (apt 114 MB in 4 s). In Lauf 42055703821 (main, f6d98ccf) lieferte der Ubuntu-Spiegel für
+      # linux-webkit 110 MB in 48 min 37 s; die Tests begannen erst nach 52 min und das Job-Limit brach ab (B3-COV).
+      # Das Schritt-Limit lässt einen solchen Runner früh und eindeutig scheitern, statt die Testzeit aufzubrauchen.
       - name: Playwright-Browser installieren
+        timeout-minutes: 15
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then
             npx playwright install --with-deps ${{ matrix.browsers }}
