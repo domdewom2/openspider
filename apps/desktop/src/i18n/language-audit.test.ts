@@ -11,7 +11,7 @@ const exceptions = new Set([...glossary.matchAll(/^\| `([^`]+)`/gm)].map(match =
 // Additional equal German words, data formats, product names and units outside U34's tab glossary.
 // Every value is explicit: a new identical English phrase must receive a translation or a reviewed exception.
 const equalGerman = ["OK", "Orange", "Name", "Segment", "System", "Zoom", "Crawls", "Operator", "Format", "Spider", "Cookies", "Text", "Regex", "Details", "Server", "Port", "Filter", "Standard", "Export", "Version", "Cache", "Subdomain", "Desktop", "Tablet", "Iframes", "Build"];
-const technical = ["XPath", "User-Agent", "Accept-Language", "KB", "ms", "MB", "px", "hreflang", "Hash (MD5)", "HTTP/1.1", "PNG", "JPEG", "Google Analytics 4", "GSC", "PSI", "Drive", "APIs", "SVG", "OPENSPIDER_HOME", "JavaScript…", "SERP-Snippet", "NoODP", "NoYDIR", "WCAG 2.0 A", "WCAG 2.0 AA", "WCAG 2.0 AAA", "WCAG 2.1 AA", "WCAG 2.2 AA"];
+const technical = ["XPath", "User-Agent", "Accept-Language", "KB", "ms", "MB", "px", "hreflang", "Hash (MD5)", "HTTP/1.1", "PNG", "JPEG", "Google Analytics 4", "GSC", "PSI", "Drive", "APIs", "SVG", "OPENSPIDER_HOME", "JavaScript…", "SERP-Snippet", "NoODP", "NoYDIR", "WCAG 2.0 A", "WCAG 2.0 AA", "WCAG 2.0 AAA", "WCAG 2.1 AA", "WCAG 2.2 AA", "Flash"];
 const dataTemplates = ["s", "URLs", "/  URLs", "URLs/s", "API:  %", "+ / −", "Export:", "Host:  · Realm:", "PNG ×", "Version"];
 for (const value of [...equalGerman, ...technical, ...dataTemplates]) exceptions.add(value);
 
@@ -69,6 +69,17 @@ it("resolves every issue name of the core catalog to a German tab and filter lab
   const missing = names.flatMap(({ tab, filter }) => [
     ...(tab && i18n.has("de", canonKey("tab", tab)) ? [] : [`tab „${tab}“`]),
     ...(filter && i18n.has("de", canonKey("filter", filter)) ? [] : [`filter „${tab}: ${filter}“`]),
+  ]);
+  expect([...new Set(missing)]).toEqual([]);
+});
+
+// spec: UI-121
+it("resolves every tab and filter of the catalog fixture (fx-ui-basic) to a German label (B3-UI, filter Flash)", () => {
+  const catalog = JSON.parse(readFileSync("src/harness/fixtures/fx-ui-basic-catalog.json", "utf8")) as { id: string; filters: { id: string; labelTemplate?: string }[] }[];
+  expect(catalog.flatMap(t => t.filters).some(f => f.id === "Flash")).toBe(true);
+  const missing = catalog.flatMap(tab => [
+    ...(i18n.has("de", canonKey("tab", tab.id)) ? [] : [`tab „${tab.id}“`]),
+    ...tab.filters.filter(f => !i18n.has("de", canonKey("filter", f.labelTemplate ?? f.id))).map(f => `filter „${tab.id}: ${f.id}“`),
   ]);
   expect([...new Set(missing)]).toEqual([]);
 });
