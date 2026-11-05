@@ -20,6 +20,15 @@ use support::*;
 
 const THREADS: u32 = 4;
 
+/// B3-FLAKES: Wartefrist bis zum Fortschrittspunkt des Kindes (vorher 60 s). Auf einem ausgelasteten
+/// macOS-arm64-Runner erreichte das Kind 700 URLs nicht in 60 s (Testdauer 105 s, Lauf 41965062474); nominal
+/// braucht es etwa 2 s. Nur die Wartezeit wächst; Abbruchpunkt, Konsistenz- und Fortsetzungsprüfungen bleiben.
+const CHILD_DEADLINE: Duration = Duration::from_secs(180);
+
+/// Beide Tests starten je einen Kind-Crawl samt Testsite; nacheinander statt gleichzeitig, damit sie sich auf
+/// kleinen Runnern nicht gegenseitig ausbremsen (B3-FLAKES).
+static SERIAL: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
 /// Die synthetische Site: 1 500 Seiten, 10 Links je Seite, einige Weiterleitungen und Fehler, jede Antwort
 /// 10 ms langsam (damit der Abbruch mitten im Crawl liegt).
 fn synthetic() -> SyntheticConfig {
@@ -99,6 +108,7 @@ fn crawled_of(line: &str) -> Option<u64> {
 // spec: CRAWL-125, CRAWL-128
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn a_killed_crawl_is_incomplete_and_consistent_and_resumes_to_the_reference_result() {
+    let _serial = SERIAL.lock().await;
     // Referenz: ununterbrochen, im eigenen Prozess
     let ref_site = site().await;
     let ref_work = tempfile::tempdir().unwrap();
@@ -126,11 +136,22 @@ async fn a_killed_crawl_is_incomplete_and_consistent_and_resumes_to_the_referenc
 
     // lesen, bis genug gecrawlt ist, und den Fortschritt mit Zeitstempeln festhalten
     let mut progress: Vec<(Instant, u64)> = Vec::new();
-    let deadline = Instant::now() + Duration::from_secs(60);
+    let deadline = Instant::now() + CHILD_DEADLINE;
     loop {
         let line = lines
             .recv_timeout(deadline.saturating_duration_since(Instant::now()))
-            .expect("das Kind meldet Fortschritt");
+            .unwrap_or_else(|e| {
+                panic!(
+                    "das Kind meldet Fortschritt: {e}, zuletzt {:?}",
+                    progress.last().map(|p| p.1)
+                )
+            });
+        // Endet der Kind-Crawl vor dem Abbruchpunkt (z. B. automatische Pause), sofort mit Ursache scheitern statt
+        // bis zur Frist zu warten.
+        assert!(
+            !line.starts_with("DONE "),
+            "Kind-Crawl endete vor 700 URLs: {line}"
+        );
         if let Some(n) = crawled_of(&line) {
             progress.push((Instant::now(), n));
             if n >= 700 {
@@ -229,6 +250,7 @@ async fn a_killed_crawl_is_incomplete_and_consistent_and_resumes_to_the_referenc
 // spec: CRAWL-125
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn a_paused_crawl_killed_before_its_wal_merge_opens_paused_and_complete() {
+    let _serial = SERIAL.lock().await;
     let site = site().await;
     let work = tempfile::tempdir().unwrap();
     let path = crawl_file_in(&work, "paused.ospider");
@@ -244,12 +266,16 @@ async fn a_paused_crawl_killed_before_its_wal_merge_opens_paused_and_complete() 
         .spawn()
         .expect("crawl_child startet");
     let lines = lines_of(&mut child);
-    let deadline = Instant::now() + Duration::from_secs(60);
+    let deadline = Instant::now() + CHILD_DEADLINE;
     let mut done = None;
+    let mut last: Option<String> = None;
     let wal = loop {
         let line = lines
             .recv_timeout(deadline.saturating_duration_since(Instant::now()))
-            .expect("das Kind meldet die quittierte Pause");
+            .unwrap_or_else(|e| {
+                panic!("das Kind meldet die quittierte Pause: {e}, zuletzt {last:?}")
+            });
+        last = Some(line.clone());
         if line.starts_with("DONE ") {
             done = Some(line.clone());
         }

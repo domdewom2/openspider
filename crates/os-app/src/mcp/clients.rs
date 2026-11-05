@@ -245,6 +245,23 @@ pub fn preview(app: &App, kind: McpClientKind) -> Result<McpClientPreview, CmdEr
 /// `Stale`), schreibgeschützte Datei ablehnen (vor der Sicherung), Sicherung der bisherigen Datei,
 /// atomarer Austausch mit den Rechten der alten Datei.
 pub fn write_guarded(path: &Path, before: &str, after: &str) -> Result<Option<String>, CmdError> {
+    write_guarded_with(path, before, after, |staged, path| {
+        staged.persist(path).map(drop).map_err(|e| e.error)
+    })
+}
+
+/// Wie [`write_guarded`] mit austauschbarem letztem Schritt (Tests simulieren damit ein scheiterndes Ersetzen).
+///
+/// B3-FLAKES (Fable-Befund aus B3-CURSOR): Scheitert ein Schritt nach dem Anlegen der Sicherung – auch das
+/// Schreiben der Sicherung selbst –, bleibt die Originaldatei unverändert. Die Sicherung enthält fremde
+/// Geheimnisse und wird dann bestmöglich wieder entfernt; der Fehler hat einen eigenen Schlüssel
+/// (`mcp-client-write-failed`, bzw. `mcp-client-write-failed-backup` mit dem Pfad, wenn die Sicherung bleibt).
+fn write_guarded_with(
+    path: &Path,
+    before: &str,
+    after: &str,
+    persist: impl FnOnce(tempfile::NamedTempFile, &Path) -> std::io::Result<()>,
+) -> Result<Option<String>, CmdError> {
     if is_symlink(path) {
         return Err(symlink_error());
     }
@@ -260,37 +277,88 @@ pub fn write_guarded(path: &Path, before: &str, after: &str) -> Result<Option<St
         .ok_or_else(|| error("Invalid configuration path"))?;
     std::fs::create_dir_all(parent).map_err(error)?;
     let existing = std::fs::metadata(path).ok();
-    let backup_path = if let Some(meta) = &existing {
-        // Die Originale enthalten fremde Geheimnisse (oft 0600): Die Sicherung erhält ihre Rechte, bevor
-        // der Inhalt geschrieben wird – unabhängig von der umask.
-        let backup = path.with_extension(format!("{}.bak", uuid::Uuid::new_v4()));
-        let mut options = std::fs::OpenOptions::new();
-        options.write(true).create_new(true);
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
-            options.mode(meta.permissions().mode() & 0o777);
+    let backup = match &existing {
+        Some(meta) => {
+            // Die Originale enthalten fremde Geheimnisse (oft 0600): Die Sicherung erhält ihre Rechte, bevor
+            // der Inhalt geschrieben wird – unabhängig von der umask.
+            let backup = path.with_extension(format!("{}.bak", uuid::Uuid::new_v4()));
+            let mut options = std::fs::OpenOptions::new();
+            options.write(true).create_new(true);
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
+                options.mode(meta.permissions().mode() & 0o777);
+            }
+            // `create_new`: Scheitert das Öffnen, gibt es keine Sicherung, die aufzuräumen wäre.
+            let file = options.open(&backup).map_err(error)?;
+            if let Err(e) = fill_backup(file, meta, before) {
+                return Err(replace_failed(e, discard_backup(&backup)));
+            }
+            Some(backup)
         }
-        let mut file = options.open(&backup).map_err(error)?;
-        #[cfg(unix)]
-        file.set_permissions(meta.permissions()).map_err(error)?;
-        file.write_all(before.as_bytes()).map_err(error)?;
-        file.sync_all().map_err(error)?;
-        #[cfg(not(unix))]
-        file.set_permissions(meta.permissions()).map_err(error)?;
-        Some(backup.to_string_lossy().into_owned())
-    } else {
-        None
+        None => None,
     };
-    let mut staged = tempfile::NamedTempFile::new_in(parent).map_err(error)?;
-    staged.write_all(after.as_bytes()).map_err(error)?;
-    staged.as_file().sync_all().map_err(error)?;
+    match replace(parent, path, after, existing.as_ref(), persist) {
+        Ok(()) => Ok(backup.map(|b| b.to_string_lossy().into_owned())),
+        Err(e) => Err(replace_failed(
+            e,
+            backup.as_deref().and_then(discard_backup),
+        )),
+    }
+}
+
+/// Schreibt die Sicherung (Rechte vor dem Inhalt) und schließt sie.
+fn fill_backup(
+    mut file: std::fs::File,
+    meta: &std::fs::Metadata,
+    before: &str,
+) -> std::io::Result<()> {
+    #[cfg(unix)]
+    file.set_permissions(meta.permissions())?;
+    file.write_all(before.as_bytes())?;
+    file.sync_all()?;
+    #[cfg(not(unix))]
+    file.set_permissions(meta.permissions())?;
+    Ok(())
+}
+
+/// Neue Datei daneben schreiben und atomar an die Stelle von `path` setzen.
+fn replace(
+    parent: &Path,
+    path: &Path,
+    after: &str,
+    existing: Option<&std::fs::Metadata>,
+    persist: impl FnOnce(tempfile::NamedTempFile, &Path) -> std::io::Result<()>,
+) -> std::io::Result<()> {
+    let mut staged = tempfile::NamedTempFile::new_in(parent)?;
+    staged.write_all(after.as_bytes())?;
+    staged.as_file().sync_all()?;
     if let Some(meta) = existing {
         // Rechte der bisherigen Datei übernehmen (die temporäre Datei ist sonst nur für den Nutzer lesbar).
-        std::fs::set_permissions(staged.path(), meta.permissions()).map_err(error)?;
+        std::fs::set_permissions(staged.path(), meta.permissions())?;
     }
-    staged.persist(path).map_err(error)?;
-    Ok(backup_path)
+    persist(staged, path)
+}
+
+/// Entfernt eine Sicherung, deren Ersetzen gescheitert ist; liefert den Pfad, wenn sie bleibt.
+fn discard_backup(backup: &Path) -> Option<&Path> {
+    match std::fs::remove_file(backup) {
+        Ok(()) => None,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => None,
+        Err(_) => Some(backup),
+    }
+}
+
+/// Die Datei ist unverändert; `left` ist eine Sicherung, die sich nicht entfernen ließ (ihr Pfad wird genannt,
+/// weil sie fremde Geheimnisse enthält). Details enthalten nie Inhalte der Datei.
+fn replace_failed(e: std::io::Error, left: Option<&Path>) -> CmdError {
+    let err = match left {
+        None => CmdError::new(ErrorCode::Io, "mcp-client-write-failed"),
+        Some(backup) => CmdError::new(ErrorCode::Io, "mcp-client-write-failed-backup")
+            .with_arg("path", backup.to_string_lossy().into_owned()),
+    };
+    err.with_detail(format!("Client configuration could not be replaced: {e}"))
+        .retryable()
 }
 
 /// Klasse `crawl` nach dem Haken setzen; `read` bleibt, `write`/`cost` unverändert (AGENT-003).
@@ -393,6 +461,78 @@ mod tests {
         let fresh = dir.path().join("sub").join("new.json");
         assert_eq!(write_guarded(&fresh, "", "{}\n").unwrap(), None);
         assert_eq!(std::fs::read_to_string(fresh).unwrap(), "{}\n");
+    }
+
+    /// Dateien im Ordner außer `keep` (Sicherungen, temporäre Dateien).
+    fn others(dir: &Path, keep: &Path) -> Vec<PathBuf> {
+        std::fs::read_dir(dir)
+            .unwrap()
+            .map(|e| e.unwrap().path())
+            .filter(|p| p != keep)
+            .collect()
+    }
+
+    // spec: AGENT-043
+    #[test]
+    fn a_failed_replace_removes_the_backup_and_reports_its_own_error() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("mcp.json");
+        let before = "{\"mcpServers\": {\"x\": {\"env\": {\"TOKEN\": \"sk-TEST-B3-FLAKES\"}}}}\n";
+        std::fs::write(&path, before).unwrap();
+        let mut backup_seen = None;
+        let err = write_guarded_with(&path, before, "{}\n", |staged, target| {
+            // Zum Zeitpunkt des Ersetzens liegt die Sicherung schon neben der Datei.
+            let backups: Vec<_> = others(target.parent().unwrap(), target)
+                .into_iter()
+                .filter(|p| p != staged.path())
+                .collect();
+            assert_eq!(backups.len(), 1, "{backups:?}");
+            assert_eq!(std::fs::read_to_string(&backups[0]).unwrap(), before);
+            backup_seen = Some(backups[0].clone());
+            Err(std::io::Error::other("simulated persist failure"))
+        })
+        .unwrap_err();
+        assert_eq!(err.code, ErrorCode::Io);
+        assert_eq!(err.message_key, "mcp-client-write-failed");
+        assert!(err.args.is_empty(), "{:?}", err.args);
+        assert!(err.retryable);
+        assert!(!err.detail.unwrap_or_default().contains("sk-TEST"));
+        assert!(!backup_seen.unwrap().exists(), "Sicherung entfernt");
+        assert_eq!(
+            std::fs::read_to_string(&path).unwrap(),
+            before,
+            "Original unverändert"
+        );
+        assert_eq!(
+            others(dir.path(), &path),
+            Vec::<PathBuf>::new(),
+            "keine Reste"
+        );
+    }
+
+    // spec: AGENT-043
+    #[test]
+    fn a_backup_that_cannot_be_removed_is_named_in_the_error() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("config.toml");
+        std::fs::write(&path, "a = 1\n").unwrap();
+        let err = write_guarded_with(&path, "a = 1\n", "a = 2\n", |staged, target| {
+            let backup = others(target.parent().unwrap(), target)
+                .into_iter()
+                .find(|p| p != staged.path())
+                .unwrap();
+            // Plattformneutral unlöschbar: an Stelle der Sicherung steht ein nicht leerer Ordner.
+            std::fs::remove_file(&backup).unwrap();
+            std::fs::create_dir(&backup).unwrap();
+            std::fs::write(backup.join("inhalt"), "x").unwrap();
+            Err(std::io::Error::other("simulated persist failure"))
+        })
+        .unwrap_err();
+        assert_eq!(err.message_key, "mcp-client-write-failed-backup");
+        let left = err.args["path"].as_str().unwrap().to_owned();
+        assert!(Path::new(&left).exists());
+        assert!(left.ends_with(".bak"), "{left}");
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "a = 1\n");
     }
 
     // spec: AGENT-043

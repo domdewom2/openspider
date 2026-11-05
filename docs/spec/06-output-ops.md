@@ -2233,7 +2233,7 @@ Ein eigenes Konsolen-Binary `openspider` (Crate `os-cli`) bietet alle Funktionen
   - [ ] Pausierter Crawl (Queue mit 15 URLs) → speichern, App neu starten, öffnen, fortsetzen → genau diese 15 URLs werden gecrawlt; Ergebnis entspricht einem ununterbrochenen Crawl.
   - [ ] Die eingebettete Konfiguration lässt sich aus der Crawl-Datei als `.osconfig` extrahieren („Konfiguration aus Crawl übernehmen“) und ist identisch mit der beim Crawl verwendeten.
   - [ ] Datei ohne passende `application_id` (z. B. beliebige SQLite-Datei) → Meldung „keine OpenSpider-Crawl-Datei“, kein Absturz, keine Veränderung der Datei.
-  - [ ] Beschädigte Datei (zufällige Bytes in der Mitte überschrieben) → Fehlermeldung mit Option „Reparaturversuch“ (SQLite-Integrity-Check; Reparatur schreibt in eine neue Datei `<name>.repaired.ospider`), kein Absturz.
+  - [ ] Beschädigte Datei (zufällige Bytes in der Mitte überschrieben) → Fehlermeldung mit Option „Reparaturversuch“ (SQLite-Integrity-Check; Reparatur schreibt in eine neue Datei `<name>.repaired.ospider`), kein Absturz. Vorübergehende Schreibfehler am Ziel (Datei belegt oder gesperrt, kurzzeitiger E/A-Fehler) werden einige Male wiederholt; bleibende Schreibfehler am Ziel brechen die Reparatur mit Meldung ab, die halbe Kopie wird entfernt. Als verloren zählen nur Zeilen, die aus der Quelle nicht lesbar sind oder vom Schema abgewiesen werden (OS-Festlegung, Nachtrag 05.11.2026, B3-FLAKES).
   - [ ] Volltextsuche nach Testgeheimnissen (API-Schlüssel, Auth-Kennwort) in der Datei → 0 Treffer.
 - **Testfixture:** gespeicherter Crawl aus `out-basic-site`, pausierter Crawl aus `out-queue`, absichtlich beschädigte Kopie, fremde SQLite-Datei.
 

@@ -373,7 +373,7 @@ it("shows only masked changed lines on request and copies only the own entry", a
 it("blocks files that cannot be changed and reports only fixed messages", async () => {
   fixture.core.handlers.set("mcp.clientConfigPreview", () => clientPreview("claudeDesktop", "notConnected", { problem: "syntax", line: 7, connectDiff: "", disconnectDiff: "" }));
   render(<ConnectPanel client="claudeDesktop" desktop={desktop} />);
-  expect(await screen.findByRole("alert")).toHaveTextContent("The file is not valid JSON or TOML (line 7). OpenSpider does not change it.");
+  expect(await screen.findByRole("alert")).toHaveTextContent("The file is not valid JSON or TOML (line 7; e.g. comments). OpenSpider does not change it.");
   expect(screen.getByText("The file cannot be changed.")).toBeVisible();
   expect(screen.getByRole("button", { name: "Connect" })).toBeDisabled();
   expect(screen.getByRole("checkbox", { name: "Agent may start crawls" })).toBeDisabled();
@@ -383,7 +383,10 @@ it("blocks files that cannot be changed and reports only fixed messages", async 
   fixture.core.handlers.set("mcp.clientConfigPreview", () => clientPreview("codex"));
   for (const [error, text] of [
     [{ code: "Stale", messageKey: "mcp-client-changed", args: {}, retryable: false, detail: TEST_TOKEN }, "Another program changed the file while connecting. Nothing was written; try again."],
-    [{ code: "InvalidInput", messageKey: "mcp-client-problem-syntax", args: { line: 3 }, retryable: false, detail: TEST_TOKEN }, "The file is not valid JSON or TOML (line 3)."],
+    [{ code: "InvalidInput", messageKey: "mcp-client-problem-syntax", args: { line: 3 }, retryable: false, detail: TEST_TOKEN }, "The file is not valid JSON or TOML (line 3; e.g. comments)."],
+    // B3-FLAKES: a failed replace after the backup has its own message; a backup that stayed is named.
+    [{ code: "Io", messageKey: "mcp-client-write-failed", args: {}, retryable: true, detail: TEST_TOKEN }, "The configuration file could not be replaced, for example because another program has it open. It is unchanged, and the backup was removed again."],
+    [{ code: "Io", messageKey: "mcp-client-write-failed-backup", args: { path: "/home/u/.codex/config.1234.bak" }, retryable: true, detail: TEST_TOKEN }, "The backup /home/u/.codex/config.1234.bak could not be removed"],
     [{ code: "Io", messageKey: `err-${TEST_TOKEN}`, args: {}, retryable: false, detail: TEST_TOKEN }, "The MCP operation failed."],
   ] as const) {
     cleanup();
@@ -409,6 +412,10 @@ it("tells Cursor users to reload the MCP servers after updating and disconnectin
   expect(de("mcp-connect-cursor")).toBe("Mit Cursor verbinden…");
   expect(de("mcp-client-done-connected-reload", { program: "Cursor" })).toBe("Verbunden. Lade in Cursor die MCP-Server neu oder starte Cursor neu, damit OpenSpider dort erscheint.");
   expect(de("mcp-client-done-disconnected-reload", { program: "Cursor" })).toBe("Getrennt. Lade in Cursor die MCP-Server neu.");
+  // B3-FLAKES: JSON with comments is the common syntax case; a failed replace has its own message.
+  expect(de("mcp-client-problem-syntax", { line: 2 })).toContain("(Zeile 2; z. B. Kommentare)");
+  expect(de("mcp-client-write-failed")).toContain("Sie ist unverändert, die Sicherung wurde wieder entfernt.");
+  expect(de("mcp-client-write-failed-backup", { path: "/x.bak" })).toContain("Die Sicherung /x.bak ließ sich nicht entfernen");
 });
 
 // spec: AGENT-043
