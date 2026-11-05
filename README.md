@@ -121,7 +121,7 @@ plus the files for automatic updates, the CLI, managed installs (MSI) and checks
 which also covers the two versionless copies). See also the [beta page](https://openspider.de/en/beta/).
 Linux x86_64 with glibc supports the core and CLI only; Linux desktop,
 .deb/.rpm and arm64 releases remain unsupported.
-Homebrew and winget distribution are planned and not available yet.
+A Homebrew tap (`wojcikdominik/homebrew-openspider`) is prepared but not published yet; winget will follow with 1.0.
 
 **Docker (self-hosted server).** A container image with the Linux CLI covers crawls, exports,
 scheduled runs (cron on the host) and MCP over STDIO. It has no web interface: results are files

@@ -19,3 +19,21 @@ Pro Release dokumentieren: Version/Commit/Tag, Kanal, Verantwortlicher, Datum, A
 - [ ] Separates ausdrückliches Nutzer-Go zur Veröffentlichung dokumentiert. M3-A01/M3-REL veröffentlicht manuell, Beta bis 1.0 als normalen Release und ausdrücklich als **Latest** markieren. R04 veröffentlicht nie.
 - [ ] Nach Veröffentlichung `releases/latest/download/latest.json` und `latest-beta.json` sowie referenzierte URLs abrufen; Signatur/Update auf freigegebenen Testinstallationen prüfen. Entwurf-URLs funktionieren öffentlich erst nach Veröffentlichung.
 - [ ] Website, Homebrew/winget und Einladungen/Ankündigungen nur mit eigenem Go nach den zuständigen Paketen. Rücknahme: weitere Verteilung stoppen und Nutzer/Orchestrator entscheiden lassen; veröffentlichte Assets nicht still überschreiben.
+- [ ] Homebrew (ab beta.3): Lauf von „Homebrew tap“ zum veröffentlichten Release grün (startet automatisch, schreibt nichts). Nach eigenem Nutzer-Go `publish=true` starten und im Environment `homebrew` freigeben; danach `brew update && brew info --cask wojcikdominik/openspider/openspider@beta` prüfen.
+
+## Homebrew-Tap (B3-BREW, Nutzerentscheidung 05.11.2026)
+
+Tap `wojcikdominik/homebrew-openspider` ab beta.3; winget erst zur 1.0 (`publish-packages.yml`, `docs/release/homebrew-winget.md`). Casks: `openspider@beta` folgt der jeweils neuesten veröffentlichten Version (Beta oder stabil), `openspider` nur stabilen Versionen (erstmals 1.0). Beide installieren dieselbe App und schließen sich gegenseitig aus. Generator: `scripts/release/homebrew.mjs` (Dateiname aus `assets.mjs`, Prüfsumme aus `SHA256SUMS`, Cask-Text aus `packaging/homebrew/generate.mjs`); Begründung im Bericht `docs/plan/M3-reports/b3-brew.md`.
+
+Einmalig durch den Nutzer (vor der ersten Veröffentlichung, nichts davon ist angelegt):
+
+1. Öffentliches Repository `wojcikdominik/homebrew-openspider` anlegen (Standardzweig `main`, README mit `brew install --cask wojcikdominik/openspider/openspider@beta`, Lizenz wie das Hauptrepo). Leer reicht; der Workflow legt `Casks/` an.
+2. Fine-grained Personal Access Token nur für dieses Repository, Berechtigung „Contents: Read and write“, kurze Laufzeit mit Erinnerung zum Erneuern.
+3. Im Hauptrepo Environment `homebrew` anlegen: Required reviewers (Nutzer), Deployment-Zweige nur `main`, Secret `HOMEBREW_TAP_TOKEN` = Token aus Schritt 2 (Environment-Secret, nicht Repository-Secret). Ohne Pflichtprüfer bricht der Freigabe-Job ab.
+
+Ablauf je Release:
+
+- Nach dem Veröffentlichen (Donnerstag) startet `.github/workflows/homebrew.yml` von selbst: Casks aus Version und `SHA256SUMS` erzeugen, auf macOS `brew style`, `brew audit --cask --strict --online`, `brew audit --cask --new` ohne Bekanntheitsprüfung (nur Hinweis) und eine echte Installation mit CLI-Link und Deinstallation; Artefakt `homebrew-casks`. Entwürfe und als Pre-Release markierte Releases lehnt er ab (K3-04).
+- Nach Go: `gh workflow run homebrew.yml --ref main -f version=<Version> -f publish=true`, im Environment `homebrew` freigeben. Der Job übernimmt nur die geprüften Dateien, setzt den Tap nie auf eine ältere Version zurück und ersetzt eine vorhandene Version nie mit anderem Inhalt.
+- Ohne `publish=true` und Freigabe passiert nichts Öffentliches. Der Workflow lässt sich jederzeit ohne `publish` für ein veröffentlichtes Release wiederholen (z. B. `-f version=1.0.0-beta.2` als Probe vor beta.3).
+- Zur 1.0 schreibt zusätzlich `publish-packages.yml` (P01) `Casks/openspider.rb` mit demselben Text; das ergibt keinen zweiten Commit. Den Homebrew-Teil von `packaging/winget/publish.sh` beim winget-Paket zur 1.0 entfernen (Folgepunkt im Bericht).

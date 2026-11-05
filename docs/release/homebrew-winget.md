@@ -6,6 +6,13 @@ K3-08 ist offen. Vorschlag: Cask-Token `openspider`, Tap
 Die endgültige winget-ID muss explizit über `OPENSPIDER_PACKAGE_ID` bzw.
 `--package-id` gesetzt werden. `OpenSpider.CITest` dient ausschließlich der CI.
 
+**Nachtrag B3-BREW (Nutzerentscheidung 05.11.2026):** Homebrew-Tap `wojcikdominik/homebrew-openspider`
+ab beta.3 über `.github/workflows/homebrew.yml` (Casks `openspider@beta` und ab 1.0 `openspider`,
+Generator `scripts/release/homebrew.mjs`, Cask-Text weiterhin aus `packaging/homebrew/generate.mjs`),
+Freigabe über das Environment `homebrew`; Einrichtung in `checkliste-release.md`, Abschnitt Homebrew-Tap.
+winget erst zur 1.0 mit `publish-packages.yml`. Die Beschreibung unten bleibt für den winget-Teil und
+die Smoke-Probe gültig; ihr Homebrew-Teil der Veröffentlichung wird zur 1.0 durch `homebrew.yml` abgelöst.
+
 ## Metadaten aus tatsächlichen Assets
 
 R01 kopiert Tauri-DMGs unverändert, R02 die MSI-/NSIS-Dateien, R04 sammelt sie über
