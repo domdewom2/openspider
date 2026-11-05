@@ -9,7 +9,9 @@ export const StatusCard = memo(function StatusCard() {
   const t = useT();
   const f = useFormat();
   const { crawl: c } = useStatusSnapshot();
-  const phase = c?.endReason === "stopped" ? t("n03-status-stopped") : t(`status-${c?.phase ?? "idle"}`);
+  // UI-003/CRAWL-126: a stopped crawl reads "Stopped", not "Completed"; a limit end carries the same hint as the status bar (UI-013).
+  const phase = c?.endReason === "stopped" ? t("n03-status-stopped")
+    : `${t(`status-${c?.phase ?? "idle"}`)}${c?.endReason === "limit_reached" ? ` (${t("status-limit")})` : ""}`;
   return <section className="os-status-card" aria-label={t("header-progress")} data-phase={c?.phase ?? "idle"}>
     <strong className="os-status-card-state"><span className="os-status-dot" aria-hidden="true" />{phase}</strong>
     <div className="os-status-card-progress"><ProgressBar label={t("header-progress")} value={c?.percent ?? 0} /><strong>{f.decimal(c?.percent ?? 0)} %</strong></div>
