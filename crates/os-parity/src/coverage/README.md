@@ -39,8 +39,12 @@ Strings, Templates, Blockkommentare und Regex-Literale erzeugen keine Tags.
 
 Entwicklung verlangt standardmäßig nur Welle 0 (einschließlich 0a–0e).
 `--merged D12,U10` ergänzt konkret gemergte Besitzerpakete; kurze oder volle
-Paket-IDs sind erlaubt, unbekannte IDs sind Fehler. Die CI ermittelt die Liste
-aus `origin/main` anhand der C1-Merge-Titel. `--wave 1` wählt alternativ alle
+Paket-IDs sind erlaubt. Unbekannte IDs wählen kein Paket aus, erscheinen als
+Warnung und in `unknown_merged` der Statusdatei, brechen den Bericht aber nicht ab.
+Die CI ermittelt die Liste aus `origin/main` anhand der C1-Merge-Titel
+(`m2: Merge [m2/][M2-]<Zweig>`): der längste Bindestrich-Präfix des Zweignamens,
+der eine Paket-ID aus `M2-packages.json` ist, zählt; übrige Zweige (z. B.
+`M2-N00-SPEC-TAGS`, `int-16`) protokolliert der Workflow und übergibt sie nicht. `--wave 1` wählt alternativ alle
 Pakete bis einschließlich Welle 1; das ist nur bei vollständig gemergter Welle
 sinnvoll. Für noch nicht gemergte Besitzer bleiben offene Pflicht-IDs und
 Anhang-B-Einträge Warnungen. Echte `FAILED`-Ergebnisse (auch ohne Tag) bleiben
