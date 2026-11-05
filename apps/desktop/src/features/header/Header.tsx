@@ -77,10 +77,11 @@ export function Header() {
     if (status) useHeader.setState({ mode: status.mode });
   }, [status?.crawlId, status?.mode]);
 
-  // UI-003 (OS-Festlegung proposed in B3-UI): an opened crawl brings its start URL into the field; it follows only a new
+  // UI-003 (OS-Festlegung, B3-UI): an opened crawl brings its start URL into the field; it follows only a new
   // crawl (or the URL arriving with a later status), so typing in the field is never overwritten by live ticks.
+  // A cleared view (empty crawlId, phase idle) never brings back the start URL of the cleared crawl.
   useEffect(() => {
-    if (status?.startUrl) useHeader.setState({ url: status.startUrl });
+    if (status?.startUrl && status.crawlId && status.phase !== "idle") useHeader.setState({ url: status.startUrl });
   }, [status?.crawlId, status?.startUrl]);
 
   useEffect(() => {

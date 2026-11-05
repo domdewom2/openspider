@@ -170,3 +170,19 @@ it("shows the start URL of a reopened crawl and leaves typed text alone until an
   act(() => useSession.getState().applyTick({ ...opened, seq: 4, crawl: { ...opened.crawl, crawlId: "list-1", mode: "list" as const, startUrl: null } }));
   expect(useHeader.getState().url).toBe("https://second.test/");
 });
+
+// spec: UI-003
+it("keeps a typed URL after clearing a reopened crawl, even if the cleared status still names a start URL (B3-UI)", async () => {
+  render(<Header />);
+  const field = screen.getByLabelText("Start URL") as HTMLInputElement;
+  const opened = { ...tick, seq: 1, crawl: { ...tick.crawl!, crawlId: "saved-1", phase: "completed" as const, startUrl: "https://a.test/" } };
+  act(() => useSession.getState().applyTick(opened));
+  await waitFor(() => expect(field.value).toBe("https://a.test/"));
+  enterUrl("b.test");
+  fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+  await waitFor(() => expect(calls("crawl.clear")).toHaveLength(1));
+  // The cleared view: empty crawl id, idle; an older core still sent the start URL here.
+  act(() => useSession.getState().applyTick({ ...opened, seq: 2, crawl: { ...opened.crawl, crawlId: "", phase: "idle" as const } }));
+  act(() => useSession.getState().applyTick({ ...opened, seq: 3, crawl: { ...opened.crawl, crawlId: "", phase: "idle" as const, startUrl: null } }));
+  expect(field.value).toBe("b.test");
+});

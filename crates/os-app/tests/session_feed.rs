@@ -63,6 +63,31 @@ async fn opened_crawl_status_carries_its_start_url_for_the_header() {
     assert_eq!(json["startUrl"], "https://fixture.test/");
 }
 
+// spec: UI-003
+#[tokio::test]
+async fn cleared_view_drops_the_start_url_of_the_closed_crawl() {
+    // B3-UI (Fable): "Löschen" publishes the old status with an empty crawl id; it must not carry the start URL, or the
+    // header would write it back over a URL the user typed meanwhile.
+    let dir = tempfile::tempdir().unwrap();
+    let (app, _) = manual_app(dir.path());
+    let f = create(&dir.path().join("cleared.ospider"), cfg());
+    f.set_meta("state", "Completed").unwrap();
+    insert(&f, 1, 0);
+    open(&app, f.path()).await;
+    os_app::session::poll(&app).await.unwrap();
+    let before = app.assemble_tick().unwrap().crawl.unwrap();
+    assert_eq!(before.start_url.as_deref(), Some("https://fixture.test/"));
+    call(&app, "crawl.clear", serde_json::Value::Null).await;
+    let status = app.assemble_tick().unwrap().crawl.unwrap();
+    assert!(status.crawl_id.is_empty());
+    assert_eq!(status.phase, CrawlPhase::Idle);
+    assert_eq!(status.start_url, None);
+    assert!(serde_json::to_value(&status)
+        .unwrap()
+        .get("startUrl")
+        .is_none());
+}
+
 // spec: ONPAGE-193
 // spec: UI-018
 #[tokio::test]
