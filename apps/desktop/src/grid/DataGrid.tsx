@@ -50,19 +50,17 @@ export function defaultColumns(columns: ColumnMeta[]): ColumnState[] {
   return columns.map(c => ({ key: c.key, width: c.defaultWidth, visible: c.defaultVisible, pinned: c.key === "Row" || c.key === "Address" }));
 }
 
-/** Separator of the joined cell texts of one accessibility row (not part of any displayed value). */
-const SEP = "\u001f";
 /**
- * One row of the hidden accessibility grid. UI-145/UI-143 (M2-N32): props are primitives, so a re-render with unchanged
- * row content (live ticks, tab switches, selection elsewhere) skips the row entirely.
+ * One row of the hidden accessibility grid. UI-145/UI-143 (M2-N32): props are primitives (column indices, cell texts as
+ * JSON), so a re-render with unchanged row content (live ticks, tab switches, selection elsewhere) skips the row entirely.
  */
 const A11yRow = memo(function A11yRow({ gridId, row, columns, texts, busy, selected }: {
   gridId: string; row: number; columns: string; texts: string; busy: boolean; selected: boolean;
 }) {
-  const values = texts.split(SEP);
+  const values = JSON.parse(texts) as string[];
   return <div role="row" aria-rowindex={row + 2} aria-busy={busy} aria-selected={selected}>
     {/* UI-144: the name text stays out of layout (WebKit retains text-width data for every distinct laid-out string). */}
-    {columns.split(SEP).map((col, i) => {
+    {(columns ? columns.split(",") : []).map((col, i) => {
       const id = `${gridId}-${col}-${row}`;
       return <div role="gridcell" id={id} key={col} aria-colindex={Number(col) + 1} aria-labelledby={`${id}-t`}>
         <span id={`${id}-t`} hidden>{values[i]}</span></div>;
@@ -337,7 +335,7 @@ export function DataGrid(props: DataGridProps) {
   const activeCol = clamp(focus.col, Math.max(0, visible.length - 1));
   const activeVisible = layout.some(c => c.index === activeCol) && (activeRow === -1 || (activeRow >= first && activeRow < first + count));
   const cellId = (col: number, row: number) => `${id}-${col}-${row}`;
-  const a11yColumns = layout.map(c => c.index).join(SEP);
+  const a11yColumns = layout.map(c => c.index).join(",");
   return <div ref={root} className="os-data-grid" role="grid" tabIndex={0} aria-label={props.ariaLabel}
     aria-rowcount={source.total + 1} aria-colcount={visible.length} aria-multiselectable="true" aria-readonly="true"
     aria-activedescendant={activeVisible ? cellId(activeCol, activeRow) : undefined}
@@ -434,7 +432,7 @@ export function DataGrid(props: DataGridProps) {
       <div role="row" aria-rowindex={1}>{layout.map(c => <div role="columnheader" id={cellId(c.index, -1)} key={c.key} aria-colindex={c.index + 1}
         aria-sort={c.sort === "asc" ? "ascending" : c.sort === "desc" ? "descending" : undefined}>{props.headerTitle?.(c.key) ?? props.columnTitles?.[c.key] ?? c.key}</div>)}</div>
       {rowKeys.map((key, index) => <A11yRow key={first + index} gridId={id} row={first + index} columns={a11yColumns}
-        texts={painted[index + 1].map(v => v.text).join(SEP)} busy={key === undefined} selected={key !== undefined && selection.has(key)} />)}
+        texts={JSON.stringify(painted[index + 1].map(v => v.text))} busy={key === undefined} selected={key !== undefined && selection.has(key)} />)}
     </div>
     {tooltip?.text && <div role="tooltip" className="os-grid-tooltip" style={{ left: tooltip.x, top: tooltip.y }}>{tooltip.text}</div>}
   </div>;
