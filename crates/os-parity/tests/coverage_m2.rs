@@ -580,6 +580,49 @@ fn unknown_merged_ids_warn_and_select_no_package() {
     assert_eq!(doc["unknown_merged"], serde_json::json!([]));
 }
 
+// B4-M2CLOSE: keine Spec-ID (M2-Q01 ist Infrastruktur, siehe Dateikopf). node:test-Verträge unter
+// integrations/tests (AGENT-041/042) zählen wie TS-Tests; ihr JUnit (in eine Suite mit dem Dateipfad gehüllt,
+// wie im Workflow) liefert das Ergebnis. Andere .mjs-Dateien bleiben außen vor.
+#[test]
+fn node_test_contracts_under_integrations_are_scanned_and_credited() {
+    let mut f = Fixture::new();
+    f.args.wave = 0;
+    f.args.test_output = None;
+    f.args.merged = vec!["U20".into()];
+    let tests = f.dir.path().join("integrations/tests");
+    std::fs::create_dir_all(&tests).unwrap();
+    std::fs::write(
+        tests.join("contracts.test.mjs"),
+        "import test from 'node:test';\n// spec: UI-090\ntest('skill format agrees', () => {});\n",
+    )
+    .unwrap();
+    std::fs::write(
+        tests.join("helper.mjs"),
+        "// spec: UI-001\ntest('kein Testfile', () => {});\n",
+    )
+    .unwrap();
+    let junit = f.dir.path().join("integrations-m2.xml");
+    std::fs::write(
+        &junit,
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<testsuites><testsuite name=\"integrations/tests/contracts.test.mjs\">\n\
+         \t<testcase name=\"skill format agrees\" time=\"0.05\" classname=\"test\"/>\n\
+         \t<!-- tests 1 -->\n</testsuite></testsuites>\n",
+    )
+    .unwrap();
+    f.args.frontend_junit = vec![junit];
+    let (_, doc) = f.check();
+    assert_eq!(doc["blocking_specs"], serde_json::json!([]), "{doc:#}");
+    let entries = doc["specs"]["UI-090"]["tests"].as_array().unwrap();
+    assert!(entries
+        .iter()
+        .any(|t| t["file"] == "integrations/tests/contracts.test.mjs" && t["result"] == "ok"));
+    assert!(!doc["specs"]["UI-001"]["tests"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|t| t["file"] == "integrations/tests/helper.mjs"));
+}
+
 // B4-M2CLOSE: keine Spec-ID (M2-Q01 ist Infrastruktur, siehe Dateikopf). Die Merge-Historie wählt Pakete über alle
 // drei Titelformen und über `merged_via` aus; Integrations- und Hilfszweige bleiben außen vor, `unknown_merged` leer.
 #[test]
