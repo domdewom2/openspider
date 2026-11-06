@@ -68,12 +68,12 @@ const request = async (path, body, method = "POST") => {
 };
 let session;
 const execute = (script) => request(`/session/${session}/execute/sync`, { script, args: [] });
-async function until(fn, ms, step) {
+async function until(fn, ms, step, interval = 50) {
   const deadline = performance.now() + ms;
   while (performance.now() < deadline) {
     const r = await fn();
     if (r) return r;
-    await delay(50);
+    await delay(interval);
   }
   throw new Error(`Native readiness timeout: ${step}`);
 }
@@ -102,7 +102,8 @@ try {
   await execute(
     `window.__ld=null; window.liveDetail(${JSON.stringify({ base: `${base}/`, ...options })}).then(v=>window.__ld={value:v},e=>window.__ld={error:String(e&&e.stack||e)});return true;`,
   );
-  const r = await until(() => execute("return window.__ld"), 600000, "liveDetail");
+  // Rarely poll while measuring: each WebDriver script runs on the page's main thread.
+  const r = await until(() => execute("return window.__ld"), 600000, "liveDetail", 1000);
   if (r.error) throw new Error(r.error);
   Object.assign(report, r.value);
   const fresh = r.value.samples.filter((s) => !s.retained);
