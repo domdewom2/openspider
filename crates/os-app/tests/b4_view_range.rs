@@ -208,6 +208,17 @@ async fn the_crawl_path_view_reads_without_error_during_a_running_crawl() {
             rows["cells"].as_array().unwrap().len() as u64,
             handle["total"].as_u64().unwrap()
         );
+        // UI-050: the list reads from the start URL (depth 0) to the selected URL.
+        let depths: Vec<i64> = rows["cells"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|row| row[0].as_i64())
+            .collect();
+        assert!(depths.windows(2).all(|d| d[0] < d[1]), "{depths:?}");
+        if let Some(first) = depths.first() {
+            assert_eq!(*first, 0);
+        }
         call(&app, "view.close", json!({"viewId":handle["viewId"]})).await;
         tokio::time::sleep(Duration::from_millis(10)).await;
     }
