@@ -131,6 +131,42 @@ Perf-Suite selbst lief aber nicht erneut.
 Tests: `DataGrid.test.tsx`, `ComboBox.test.tsx`, `table-advanced.test.tsx`, `primitives.test.tsx`, `n32-memo.test.tsx`, jeweils
 `// spec: UI-145`. Das Rezept selbst ist ein Messwerkzeug ohne Budget-Gate in der Suite.
 
+## Nachtrag: Befunde des unabhängigen Testagenten
+
+Testbericht: `docs/plan/M3-reports/b4-livedetail-tests.md`, in diesen Branch gemerged; die Abnahmetests sind unverändert. Alle Befunde
+waren laut Gegenprobe auch auf `main` rot.
+
+| Befund | Ursache | Fix | Test |
+|---|---|---|---|
+| **F2** Crawl-Pfad-Dialog ohne Zeilen (UI-050) | `.os-data-grid` füllt 100 % seines Elternteils. `.os-detail-grid` im Detailfenster bekommt die Höhe von `.os-detail-body`; der Dialogkörper hat keine, also war die Zeichenfläche 0 px hoch und es entstanden auch keine A11y-Zeilen. | Container `.os-crawl-path` mit fester Höhe (360 px) in `CrawlPath.tsx`. Zusätzlich liest die Ansicht jetzt von der Start-URL zur gewählten URL (`selected_crawl_paths`, Spec-Frage S8 unten); der Bericht OUT-023 hat einen eigenen Pfad und bleibt „Zielseite zuerst“. | Abnahme `the Crawl Path dialog …`; `b4_view_range.rs` (Reihenfolge, 150 Öffnungen im Live-Crawl) |
+| **F3** Umschalt+Klick/-Pfeil geht im Live-Crawl verloren (UI-012, UI-018) | Bericht bestätigt und erweitert: (a) `selectRow` las Anker und Kennungen in mehreren Rundreisen und verwarf alles bei geänderter Version. (b) `view.rows` antwortet auf eine alte Version mit `Stale`. (c) Das Nachschlagen des Fokus setzte die Tastaturzeile auf einen älteren Stand zurück, sodass bei schnellen Tasten Schritte fehlten. | Neues Kommando **`view.range`**: Bereich zwischen zwei URLs aus genau einem Stand (Tab-View: unveränderlicher Snapshot ohne Datenbankzugriff, Linkliste, sonst Seitenlauf). Damit keine Abhängigkeit mehr von der Crawl-Rate. Fokus und Scrollposition antworten sofort, ältere Antworten bewegen die Tastaturzeile nicht mehr. | Abnahme `every Shift+click …` (15× je Engine grün); eigene E2E `e2e/beta/shift-range-live.spec.ts` bei 300 URL/s, 5× je Engine grün; `b4_view_range.rs`, `DataGrid.test.tsx` |
+| **F1** Spaltenwahl geht beim Auswahlwechsel verloren (UI-008, UI-030) | Speichern erfolgt 1 s verzögert; die neu aufgebaute Tabelle lud den älteren gespeicherten Stand. | `columns.ts` führt noch nicht gespeicherte Änderungen je Layout; eine neue Tabelle liest sie sofort, und auch eine Ladeantwort, die das Speichern überholt, überschreibt sie nicht. | Abnahme `a column change … is not lost`; `columns.test.tsx` |
+| **F5** Hochscrollen im Tail-Modus wirkungslos (UI-018) | Ursache gefunden: Ein laufender Versionswechsel hatte beim Start `tail` gelesen, sprang beim Abschluss ans Ende zurück und setzte `tail` erneut. | Scrollgesten melden sich sofort bei der Datenquelle; ein Versionswechsel übernimmt eine währenddessen geänderte Position. | Abnahme Tail-Modus 20× je Engine: in keinem der 40 Läufe nötig, ein zweites Mal zu scrollen (vorher rund jeder zehnte); `ViewDataSource.test.ts` |
+
+**„A file operation failed.“ (F2, einmalig im Live-Lauf): nicht reproduziert, Ursache nicht belegt.** Mit der Höhe hat es nichts zu tun, das
+war reines CSS. Der Text steht für den Fehlercode `Io`. Als Quelle im Dialog kommen nur `view.*`-Antworten infrage. Der Code `Io` entsteht dort
+(a) beim Öffnen einer Leseverbindung (`check_sqlite_header` in `os-store/src/open.rs`, nur bei Dateisystemfehlern) oder (b) in der E2E-Bridge, wenn
+der WebSocket schließt (`bridge.ts`, `err-bridge-closed`); (b) gibt es im Produkt nicht. Gegenprobe: 150 Öffnungen im Live-Crawl auf Kernebene ohne
+Fehler (`b4_view_range.rs`), die Abnahmetests prüfen `alert` im Dialog und blieben in allen späteren Läufen grün (Crawl-Pfad 20×). Bei
+erneutem Auftreten hilft der `messageKey` in `DetailError`, der heute nicht angezeigt wird.
+
+**Zusatzbefund aus den Wiederholungen:** Der letzte verbliebene Fehlschlag von F3 (1 von 10 Läufen) war kein Verlust der Auswahl. Der Tail-Modus
+schob die Tabelle zwischen Lesen der Zeile und Klick um zwei Zeilen, der Klick traf also eine andere URL. Das kann auch echten Nutzern
+passieren. **Verhaltensänderung:** Eine markierte Zeile hält die Tabelle jetzt am Platz, bis zur nächsten Scrollgeste (Spec-Frage S9).
+
+**Grenzen von `view.range`:**
+- Überdeckt der Bereich eine View mit mehr als 20 000 Zeilen vollständig, entsteht weiter eine „Alle“-Auswahl. Sie gehört zu einem Stand und fällt im
+  Live-Crawl beim nächsten Stand weg, wie Strg+A schon vorher.
+- Sehr große Teilbereiche kommen in einer Antwort (rund 8 Byte je Zeile als JSON); gemessen ist das nicht.
+- Fehlt der Befehl (Testdouble, ältere Bridge), läuft der alte Weg weiter. Genau das hatte zuerst verdeckt, dass die E2E-Läufe mit einer nicht neu gebauten Bridge liefen.
+
+**Weiterer Befund aus den vollen Gates:** `e2e/config/dialog.spec.ts:135` (Regex-Tester) wackelt in WebKit, unabhängig von diesem Paket: 4 von 40 Läufen rot auf dem
+Frontend von `816e51d2`, 6 von 40 auf dem Paketstand. Ursache: Der Fokus auf das Sprungziel kommt per `requestAnimationFrame`; kam dieser Frame spät, zog er den Fokus aus dem schon
+bearbeiteten Feld, die Eingabe landete im Sprungziel. Fix in `ConfigDialog.tsx`: Ein bearbeitetes Feld behält den Fokus. Danach 60 von 60 grün, `e2e/config` in beiden Engines 48 von 48. Der Test blieb unverändert.
+
+Die Messtabellen oben stammen vom Stand vor diesem Nachtrag. Der Klickpfad zu Inlinks/Outlinks ist hier nicht geändert, neu gemessen wurde aber
+nicht; die Mac-Messung läuft auf dem Endstand.
+
 ## Mac-Messrezept
 
 Vom Repository-Wurzelverzeichnis, in einer aktiven, entsperrten GUI-Sitzung:
@@ -157,28 +193,35 @@ Syntax geprüft (`bash -n`), weil auf dem Mac keine Läufe erlaubt waren.
 
 ## Nachweise
 
-Wiederholungen auf dem Endstand `8a0c2be4`, Server, `--workers=1 --retries=0`, Dev-Server und Debug-Bridge:
+Stand vor dem Nachtrag (`8a0c2be4`), Server, `--workers=1 --retries=0`, Dev-Server und Debug-Bridge:
 
 | Nachweis | Ergebnis |
 |---|---|
 | `n04-live`, Playwright-WebKit, 10× | **10/10 grün.** Klick bis Tabelle aus Sicht von Playwright (Budget 1 s): Inlinks 277/483, Outlinks 251/290, Inlinks zurückgehalten 215/320 ms |
 | `detail-during-crawl`, Chromium und WebKit, je 10× | **20/20 grün.** `externalMs` (Budget 300 ms): Chromium 27/66, WebKit 29/46 ms, kein erneutes Öffnen nötig |
 
-Ein gleicher Durchlauf auf einem früheren Zwischenstand war ebenfalls grün (10/10, 20/20). Das ist der Server (16 Kerne, Last
-in diesen Läufen rund 3–11), kein CI-Runner; die Fehlerrate auf `linux-webkit` in der CI bleibt nach dem Merge zu beobachten.
+Das ist der Server (16 Kerne, Last in diesen Läufen rund 3–11), kein CI-Runner; die Fehlerrate auf `linux-webkit` in der CI bleibt nach dem Merge zu beobachten. Beide Specs
+liefen danach je einmal in der gesamten Suite mit.
+
+Endstand mit den Befunden des Testagenten (`6f888719` plus dieser Bericht):
 
 | Prüfung (Server) | Ergebnis |
 |---|---|
 | `cargo fmt --all --check` | grün |
 | `cargo clippy --workspace --all-targets -- -D warnings` | grün |
-| `cargo test --workspace --exclude openspider-desktop` (ws-slot) | grün: 4 349 bestanden, 0 Fehler, 51 ignoriert |
+| `cargo test --workspace --exclude openspider-desktop` (ws-slot) | grün: 4 352 bestanden, 0 Fehler, 51 ignoriert |
 | `npm run -w apps/desktop typecheck` | grün |
-| `npm run -w apps/desktop test` | grün: 1 016 in 118 Dateien |
-| Gesamte E2E-Suite Chromium, `--workers=1 --retries=0` | grün: 527 bestanden, 10 übersprungen |
-| Gesamte E2E-Suite WebKit, `--workers=1 --retries=0` | grün: 524 bestanden, 13 übersprungen |
+| `npm run -w apps/desktop test` | grün: 1 022 in 119 Dateien |
+| `npm run -w apps/desktop check:static` (u. a. `gen:ipc --check`), `os-app-manifest --check` | grün |
+| Gesamte E2E-Suite Chromium einschließlich Abnahme, `--workers=1 --retries=0` | grün: 556 bestanden, 10 übersprungen |
+| Gesamte E2E-Suite WebKit einschließlich Abnahme | 550 bestanden, 13 übersprungen, 1 rot: der Regex-Tester (siehe Nachtrag) |
+| Nach dem Fokus-Fix: Regex-Tester WebKit 60×, `e2e/config` Chromium und WebKit | 60/60, 48/48 |
+| Abnahme `every Shift+click …` auf dem Endstand, 10× je Engine | 20/20 |
+| `shift-range-live.spec.ts` (300 URL/s), 5× je Engine | 10/10 |
+| Abnahme Tail-Modus, 20× je Engine | 40/40, kein zweites Scrollen nötig |
 | `bash scripts/check-neutral.sh` | keine Fundstellen |
 
-Die gesamte Suite lief auf Stand `8a0c2be4`; seither kam nur dieser Bericht hinzu. Nicht ausführbar: macOS und
+Die gesamte E2E-Suite lief vor dem letzten Commit (`ConfigDialog.tsx`), danach nur die genannten gezielten Läufe. Der Workspace-Test lief nach dem Katalog-Commit vollständig neu. Nicht ausführbar: macOS und
 Windows; dort zählt die CI nach dem Merge. „linux-webkit“ heißt hier Playwright-WebKit auf dem Server, nicht der CI-Runner.
 
 ## Spec-Fragen
@@ -188,6 +231,12 @@ Windows; dort zählt die CI nach dem Merge. „linux-webkit“ heißt hier Playw
    den Lauf über `links` in Kauf. Gemessen ist das Budget auf dem Server ab rund 1,2 Mio. Links allein durch den Kern ausgeschöpft.
 2. **Lesart des Budgets:** Median, p95 oder jeder einzelne Klick? Das Rezept prüft streng jeden Klick. UI-145 nennt keine
    Statistik (UI-142 nennt p95).
+
+3. **S1–S7 aus dem Testbericht** gehen unentschieden an Fable.
+4. **S8 (neu), UI-050:** Reihenfolge der Ansicht. Der Abnahmetest verlangt Start-URL zuerst. UI-050 sagt „von der Start-URL“ und „regelt die Ansicht“; OUT-023
+   legt „Zielseite zuerst“ nur für den Bericht fest. Umgesetzt wie vom Test verlangt; zu bestätigen, dass Ansicht und Bericht verschieden sortiert sein sollen.
+5. **S9 (neu), UI-018:** Beendet eine markierte Zeile den Tail-Modus? Die Spec nennt nur manuelles Hochscrollen. Umgesetzt: Die Tabelle bleibt stehen, bis der Nutzer
+   wieder scrollt. Scrollen ans Ende nimmt den Tail-Modus wieder auf.
 
 Keine Spec-Änderung vorgenommen.
 
@@ -199,6 +248,15 @@ Keine Spec-Änderung vorgenommen.
 | `apps/desktop/src/ui/primitives/ComboBox.tsx`, `ComboBox.test.tsx` | Optionsliste nur geöffnet | im Auftrag genannt, liegt in den Primitiven |
 | `apps/desktop/e2e/perf/shell.ts` | Ticks vom Bus, Import des Rezepts | siehe Harness-Korrektur |
 | `crates/os-app/tests/b4_livedetail_core.rs` | neue Messung (`--ignored`) | Messung Kernabfrage |
+| `crates/os-analyze/src/details/mod.rs` | Crawl-Pfad-Ansicht Start → Ziel | F2 |
+| `crates/os-app/tests/manifest_contract.rs`, `docs/plan/M2-ui-concept.md` | `view.range` im Katalog ergänzt, keine Prüfung gelockert | F3 |
+| `crates/os-analyze/src/views/session/mod.rs` | `ViewSnapshot::total`, `keys` | F3 |
+| `crates/os-app/src/commands/compare.rs`, `stub/mod.rs` | `view.range` für Change-Views und Stub | F3 |
+| `crates/os-app/src/dto/{mod,view}.rs`, `apps/desktop/src/ipc/commands.json`, `ipc/view.ts`, `ipc/gen/KeyRange.ts`, `ipc/gen/RangeArgs.ts` | neues Kommando, generiert (`os-app-manifest`, `gen:ipc`) | F3 |
+| `apps/desktop/src/data/ViewDataSource.ts` | `range`, `holdPosition`, `userScrolled`, `settled` | F3, F5 |
+| `apps/desktop/src/features/detail/frame/persistence.ts`, `columns.ts` | Rückruf nach dem Speichern, ungespeicherte Änderungen | F1 |
+| `apps/desktop/src/features/config/frame/ConfigDialog.tsx` | Sprungziel nimmt einem bearbeiteten Feld nicht den Fokus | wackelnder Regex-Test |
+| `apps/desktop/playwright.config.ts`, `e2e/acceptance/**`, `docs/plan/M3-reports/b4-livedetail-tests.md` | aus `m3/livedetail-tests` gemerged, unverändert | Abnahme |
 
 ## Offene Punkte
 
@@ -220,4 +278,4 @@ Keine Spec-Änderung vorgenommen.
 - Messungen starteten je Engine bei Last < 4 (Werte in den Serverprotokollen; nach dem Start konnte die Last durch parallele Pakete
   steigen, höchster Endwert der Messreihe rund 5). Die ersten Zwischenmessungen, die mit Parallelläufen überlappten, sind nicht verwendet.
 - Auf dem Server sind `target/`, die Vorher-Kopie `m3-livedetail-base`, Testergebnisse und die Roh-JSON-Dateien gelöscht; zum
-  erneuten Messen muss neu gebaut werden.
+  erneuten Messen muss neu gebaut werden. `~/ws-slot.sh` verlangt inzwischen 130 GB freien Platz; mein `target/debug` hatte 117 GB belegt.
