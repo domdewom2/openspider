@@ -84,7 +84,7 @@ it("resumes a completed crawl with a remaining queue using the core's shared can
 // spec: CRAWL-143
 it("protects running and locked crawls while paused and interrupted crawls can resume", async () => {
   await mount(); select("Live");
-  for (const action of ["Delete", "Rename", "Move to project", "Export crawl…", "Resume"]) expect(button(action)).toBeDisabled();
+  for (const action of ["Delete", "Rename", "Move to project", "Export crawl…", "Resume", "Lock", "Unlock"]) expect(button(action)).toBeDisabled();
   expect(button("Export crawl…").parentElement).toHaveAttribute("title", "Crawl running – pause first");
   select("Live"); select("Geschützt");
   expect(button("Delete")).toBeDisabled(); expect(button("Rename")).toBeDisabled();
