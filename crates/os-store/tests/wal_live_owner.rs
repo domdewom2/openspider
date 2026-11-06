@@ -17,6 +17,7 @@ use store_common::*;
 
 const CHILD_FILE: &str = "OS_STORE_WAL_TEST_FILE";
 const CHILD_DIR: &str = "OS_STORE_WAL_TEST_DIR";
+const CHILD_WRITE: &str = "OS_STORE_WAL_TEST_WRITE";
 
 /// Rolle des zweiten Prozesses: liest wie die Crawl-Verwaltung und beendet sich. Ohne Umgebungsvariable keine Wirkung.
 #[test]
@@ -26,6 +27,18 @@ fn second_process_role() {
     }
     if let Some(dir) = std::env::var_os(CHILD_DIR) {
         Manager::open(Path::new(&dir)).unwrap().list().unwrap();
+    }
+    // Wie die Verwaltung vor dem Fix und wie jede fremde Schreibverbindung: Sie räumt beim Schließen auf, wenn sie sich für
+    // die letzte hält.
+    if let Some(file) = std::env::var_os(CHILD_WRITE) {
+        let conn = rusqlite::Connection::open_with_flags(
+            &file,
+            rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE,
+        )
+        .unwrap();
+        let _: i64 = conn
+            .query_row("SELECT COUNT(*) FROM crawl_meta", [], |r| r.get(0))
+            .unwrap();
     }
 }
 
@@ -116,6 +129,25 @@ fn another_process_listing_keeps_the_wal_after_the_owner_process_listed_its_fold
     // Ein Listenlauf ohne Eintrag im Index öffnet die Datei; `read_listing` ist der Weg ohne Verwaltungsordner (`--list-crawls`).
     in_second_process(CHILD_FILE, &path);
     in_second_process(CHILD_DIR, dir.path());
+    assert_owner_intact(file, &path);
+}
+
+// Ursache 1 für sich: Der Besitzerprozess behält seine Sperren, auch wenn der andere Prozess absichtlich mit Schreibrechten
+// öffnet und schließt. Grün nur durch den Lesepfad des Kopfs, nicht durch die schreibgeschützte Verwaltung.
+// spec: CRAWL-125
+// spec: OUT-228
+// spec: AGENT-020
+#[test]
+fn the_owner_process_keeps_its_locks_when_it_reads_or_lists_its_own_file() {
+    let dir = tempfile::tempdir().unwrap();
+    let (file, path) = owner(dir.path());
+    // Alle Wege im Besitzerprozess: Öffnen, `read_listing`, Verwaltung (Fingerprint), Prüfung.
+    drop(CrawlFile::open(&path, OpenMode::ReadOnly).unwrap());
+    registry::read_listing(&path).unwrap();
+    let listed = Manager::open(dir.path()).unwrap().list().unwrap();
+    assert_eq!(listed.crawls.len(), 1, "{:?}", listed.skipped);
+    os_store::files::verify(&path).unwrap();
+    in_second_process(CHILD_WRITE, &path);
     assert_owner_intact(file, &path);
 }
 
