@@ -146,7 +146,7 @@ export async function selectedUpper(page: Page): Promise<string[]> {
  * Markiert eine Zeile der oberen Tabelle mit einem echten Mausklick (Zeile der Fokuszeile; das Detailfenster folgt, UI-012).
  * Die Zeile muss im sichtbaren Ausschnitt stehen; Zeilenhöhe 28 px (Standard „Kompakt“, UI-120), Kopf 32 px.
  */
-export async function clickUpperRow(page: Page, address: string): Promise<void> {
+export async function clickUpperRow(page: Page, address: string, modifiers: ("Shift" | "ControlOrMeta")[] = []): Promise<void> {
   let found = -1;
   await expect
     .poll(async () => {
@@ -157,8 +157,8 @@ export async function clickUpperRow(page: Page, address: string): Promise<void> 
       return found;
     }, { timeout: 15_000 })
     .toBeGreaterThanOrEqual(0);
-  await upperGrid(page).locator("canvas").first().click({ position: { x: 160, y: 32 + 28 * found + 14 } });
-  await expect.poll(() => selectedUpper(page), { timeout: 10_000 }).toEqual([address]);
+  await upperGrid(page).locator("canvas").first().click({ position: { x: 160, y: 32 + 28 * found + 14 }, modifiers });
+  if (!modifiers.length) await expect.poll(() => selectedUpper(page), { timeout: 10_000 }).toEqual([address]);
 }
 
 /** Bewegt die Fokuszeile der oberen Tabelle mit der Tastatur (UI-012: Pfeiltasten). */

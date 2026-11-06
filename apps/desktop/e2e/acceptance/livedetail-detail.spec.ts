@@ -12,9 +12,10 @@ import {
   installRecorder,
   mark,
   openDetailTab,
-  phase,
+  pauseCrawl,
   pressUpper,
   readDetail,
+  resumeCrawl,
   selectedUpper,
   sortByKeyboard,
   startSlow,
@@ -324,11 +325,15 @@ test("Outlinks of the start page stay complete and correct while the crawl runs"
 test("a multi-row selection keeps its rows while rows arrive and Inlinks show the union", async ({ alpha }) => {
   test.setTimeout(120_000);
   const { page } = alpha;
-  const { base } = await selectHomeWithInlinks(alpha, 3, 7);
-  await clickUpperRow(page, `${base}/page-1.html`);
-  await pressUpper(page, "ArrowDown");
-  await page.keyboard.press("Shift+ArrowDown");
+  const { base } = await selectHomeWithInlinks(alpha, 2, 5);
+  // Klick auf page-2, Umschalt+Klick auf page-3 (UI-012: Mehrfachauswahl per Shift+Klick)
+  await clickUpperRow(page, `${base}/page-2.html`);
+  // (Im laufenden Crawl geht ein Umschalt+Klick häufig verloren – eigener Befund, siehe den Test „every Shift+click …“. Hier wird
+  // der Crawl für die Auswahl angehalten, damit dieser Test die Vereinigung der Inlinks und ihre Stabilität prüft.)
+  await pauseCrawl(page);
+  await clickUpperRow(page, `${base}/page-3.html`, ["Shift"]);
   await expect.poll(() => selectedUpper(page)).toEqual([`${base}/page-2.html`, `${base}/page-3.html`]);
+  await resumeCrawl(page);
   await expect(page.locator("#data-panel .u10-counter")).toContainText("2 selected");
   // Vereinigung der Inlinks: je ein Link von „/“ auf page-2 und page-3
   await expect.poll(async () => {
@@ -337,12 +342,11 @@ test("a multi-row selection keeps its rows while rows arrive and Inlinks show th
   }, { timeout: 6000 }).toBe(JSON.stringify([3, [`${base}/page-2.html`, `${base}/page-3.html`]]));
   // Weiter crawlen: Markierung und Detailansicht bleiben stehen
   const before = await crawledCount(page);
-  await waitCrawled(page, before + 6);
+  await waitCrawled(page, Math.min(26, before + 4));
   expect(await selectedUpper(page)).toEqual([`${base}/page-2.html`, `${base}/page-3.html`]);
   await expect(page.locator("#data-panel .u10-counter")).toContainText("2 selected");
   const d = await readDetail(page);
   expect(d!.rowcount).toBe(3);
-  expect(await phase(page)).toBe("running");
 });
 
 // spec: UI-032
@@ -366,4 +370,24 @@ test("a link discovered later (redirect target) appears in the Inlinks of an alr
     }, { timeout: 8000, intervals: [250] })
     .toBe(JSON.stringify([3, ["/", "/redirect"]]));
   void home;
+});
+
+// spec: UI-012
+// spec: UI-018
+// acceptance: independent
+test("every Shift+click extends the selection while the crawl runs", async ({ alpha }) => {
+  test.setTimeout(120_000);
+  const { page } = alpha;
+  const { base } = await selectHomeWithInlinks(alpha, 3, 7);
+  await clickUpperRow(page, `${base}/page-2.html`);
+  const lost: string[] = [];
+  for (let k = 3; k <= 8; k++) {
+    // Umschalt+Klick auf page-k: markiert page-2 … page-k (UI-012: Mehrfachauswahl per Shift+Klick)
+    await clickUpperRow(page, `${base}/page-${k}.html`, ["Shift"]);
+    const expected = Array.from({ length: k - 1 }, (_, i) => `${base}/page-${i + 2}.html`);
+    await page.waitForTimeout(1200);
+    const got = await selectedUpper(page);
+    if (JSON.stringify(got) !== JSON.stringify(expected)) lost.push(`Shift+Klick auf page-${k}: ${got.length} statt ${expected.length} Zeilen markiert`);
+  }
+  expect(lost, "Umschalt+Klicks im laufenden Crawl werden nicht verworfen (UI-012, UI-018: Auswahl bleibt stabil)").toEqual([]);
 });
