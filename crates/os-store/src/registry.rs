@@ -14,7 +14,7 @@ use os_model::{CrawlId, CrawlMode, CrawlState, EndReason, Timestamp};
 use rusqlite::Connection;
 
 use crate::error::StoreError;
-use crate::files::{classify_open, open_raw_metadata};
+use crate::files::{classify_open, open_raw_metadata, open_raw_readonly, open_raw_write};
 use crate::meta::CrawlMeta;
 use crate::open::{CrawlFile, OpenMode};
 use crate::schema;
@@ -120,7 +120,30 @@ pub fn list_crawls_report(dir: &Path) -> Result<ListingReport, StoreError> {
 
 /// Liest Metadaten und URL-Anzahl einer Datei, ohne sie zu migrieren oder zu verändern.
 pub fn read_listing(path: &Path) -> Result<CrawlListing, StoreError> {
-    let conn = open_raw_metadata(path)?;
+    read_listing_checked(path, || {})
+}
+
+/// `after_first_read` läuft zwischen dem Lesen und der Prüfung (Testnaht für den Wettlauf mit einem startenden Schreiber).
+fn read_listing_checked(
+    path: &Path,
+    after_first_read: impl FnOnce(),
+) -> Result<CrawlListing, StoreError> {
+    let source = open_raw_metadata(path)?;
+    let first = read_listing_conn(path, &source.conn).map_err(|e| classify_error(path, e));
+    after_first_read();
+    if source.still_valid(path) {
+        return first;
+    }
+    // Ein Schreiber begann während des Lesens ohne Sperren: Der Stand kann gemischt sein. Neu lesen: Ist er wieder fertig, geht
+    // das erneut ohne Begleitdateien; läuft er, liest die Verbindung unter Sperren. Geschieht es noch einmal, unter Sperren.
+    drop(source);
+    let source = open_raw_metadata(path)?;
+    let second = read_listing_conn(path, &source.conn).map_err(|e| classify_error(path, e));
+    if source.still_valid(path) {
+        return second;
+    }
+    drop(source);
+    let conn = open_raw_readonly(path)?;
     read_listing_conn(path, &conn).map_err(|e| classify_error(path, e))
 }
 
@@ -261,8 +284,9 @@ pub fn find(dir: &Path, id: &CrawlId) -> Option<PathBuf> {
         if !is_plain || !path.is_file() {
             continue;
         }
-        if let Ok(conn) = open_raw_metadata(&path) {
-            let stored: rusqlite::Result<String> = conn.query_row(
+        if let Ok(source) = open_raw_metadata(&path) {
+            // Die Kennung einer Datei ändert sich nicht; ein gleichzeitig startender Schreiber ändert hier nichts.
+            let stored: rusqlite::Result<String> = source.conn.query_row(
                 "SELECT value FROM crawl_meta WHERE key = 'crawl_id'",
                 [],
                 |r| r.get(0),
@@ -365,5 +389,112 @@ impl CrawlFile {
     pub fn open_by_id(dir: &Path, id: &CrawlId, mode: OpenMode) -> Result<CrawlFile, StoreError> {
         let path = find(dir, id).ok_or_else(|| StoreError::NotFound(path_for(dir, id)))?;
         CrawlFile::open(&path, mode)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::open::CrawlInit;
+    use crate::profile::StorageProfile;
+    use os_model::time::SeededIds;
+    use os_model::CrawlConfig;
+
+    fn crawl(dir: &Path) -> PathBuf {
+        let created_at = Timestamp::from_db("2026-11-06T10:00:00.000Z").unwrap();
+        let path = dir.join("crawl.ospider");
+        CrawlFile::create(
+            &path,
+            &CrawlInit {
+                crawl_id: SeededIds::new(1).new_crawl_id(created_at),
+                mode: CrawlMode::Spider,
+                start_url: Some("https://site.test/".into()),
+                list_source: None,
+                project: String::new(),
+                name: "alt".into(),
+                config: CrawlConfig::default(),
+                created_at,
+            },
+            StorageProfile::Balanced,
+        )
+        .unwrap();
+        path
+    }
+
+    fn companions(path: &Path) -> Vec<bool> {
+        ["-wal", "-shm"]
+            .iter()
+            .map(|s| companion(path, s).exists())
+            .collect()
+    }
+
+    // Eine Datei ohne Begleitdateien, der Besitzer startet erst während des Lesens und bleibt offen: Das Ergebnis ohne
+    // Sperren gilt nicht, gelesen wird sein Stand unter Sperren; der Besitzer merkt nichts und schreibt weiter.
+    // spec: OUT-228
+    // spec: CRAWL-125
+    #[test]
+    fn a_writer_starting_during_the_read_is_seen_and_not_disturbed() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = crawl(dir.path());
+        assert_eq!(companions(&path), [false, false]);
+        let mut owner = None;
+        let listing = read_listing_checked(&path, || {
+            let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+            file.set_meta("name", "neu").unwrap();
+            owner = Some(file);
+        })
+        .unwrap();
+        assert_eq!(listing.meta.name, "neu", "kein alter Stand ohne Sperren");
+        let owner = owner.unwrap();
+        assert_eq!(companions(&path), [true, true], "WAL des Besitzers liegt");
+        owner.set_meta("name", "weiter").unwrap();
+        assert_eq!(read_listing(&path).unwrap().meta.name, "weiter");
+        drop(owner);
+        assert!(CrawlFile::open(&path, OpenMode::ReadOnly)
+            .unwrap()
+            .integrity_check()
+            .unwrap());
+    }
+
+    // Der Schreiber ist schon wieder fertig (WAL zurückgeführt, Begleitdateien gelöscht): Die Hauptdatei ist eine andere.
+    // spec: OUT-228
+    // spec: CRAWL-125
+    #[test]
+    fn a_writer_that_started_and_finished_during_the_read_is_seen() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = crawl(dir.path());
+        let listing = read_listing_checked(&path, || {
+            // Größer als das Zeitraster von `mtime` (Linux: bis 10 ms).
+            std::thread::sleep(std::time::Duration::from_millis(30));
+            let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+            file.set_meta("name", "neu").unwrap();
+        })
+        .unwrap();
+        assert_eq!(companions(&path), [false, false]);
+        assert_eq!(listing.meta.name, "neu");
+    }
+
+    // Ohne Schreiber bleibt es beim Lesen ohne Sperren: nichts angelegt, die Verbindung gilt als verlässlich.
+    // spec: OUT-228
+    #[test]
+    fn a_quiet_file_is_read_without_companions_and_stays_valid() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = crawl(dir.path());
+        let source = open_raw_metadata(&path).unwrap();
+        read_listing_conn(&path, &source.conn).unwrap();
+        assert!(source.still_valid(&path));
+        assert_eq!(companions(&path), [false, false]);
+        // Während ein Besitzer die Datei offen hält, liest die Verwaltung unter Sperren.
+        let owner = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+        owner.set_meta("probe", "1").unwrap();
+        assert!(
+            !source.still_valid(&path),
+            "Schreiber begann nach dem Öffnen"
+        );
+        let locked = open_raw_metadata(&path).unwrap();
+        assert!(
+            locked.still_valid(&path),
+            "Sperren schützen diese Verbindung"
+        );
     }
 }
