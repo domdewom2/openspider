@@ -95,6 +95,26 @@ jobs:
       CARGO_PROFILE_TEST_DEBUG: "0"
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      # Wie ci.yml: Beim Linken der Testprogramme lief der macOS-Runner voll ("ld: write() failed, errno=28",
+      # Trockenlauf beta.3 42189071580). Nicht gewählte Xcode-Versionen im Hintergrund löschen.
+      - name: "Speicherplatz schaffen (ungenutzte Xcode-Versionen)"
+        run: |
+          df -h / | tail -n 1
+          selected="$(xcode-select -p | sed 's|/Contents/Developer$||')"
+          echo "Gewähltes Xcode: $selected"
+          case "$selected" in
+            /Applications/Xcode*.app) ;;
+            *) echo "Kein Xcode.app gewählt, nichts gelöscht"; exit 0 ;;
+          esac
+          selected_real="$(realpath "$selected")"
+          for app in /Applications/Xcode*.app; do
+            [ -L "$app" ] && continue
+            [ "$(realpath "$app")" = "$selected_real" ] && continue
+            echo "Entferne $app"
+            sudo nohup rm -rf "$app" > /dev/null 2>&1 &
+          done
+          sudo nohup rm -rf "$HOME/Library/Android" > /dev/null 2>&1 &
+          sleep 1
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
