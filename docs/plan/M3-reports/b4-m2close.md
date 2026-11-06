@@ -125,8 +125,6 @@ Nicht umgesetzt, weil nicht beauftragt: `unknown_merged` im Gate rot (Folgepunkt
 - Deshalb zusätzlich ein Linux-Lauf von `viz/perf3d.spec.ts` und `viz/v02.spec.ts` (16 bestanden, 2 übersprungen), als erste
   JUnit übergeben, damit der neue perf3d-Grund zählt.
 - Merge-Historie von `origin/main` (`816e51d2`).
-- Rust: Im Workspace-Lauf scheiterten 9 Tests in 3 Zielen an `SQLITE_FULL` (siehe Server-Ergebnisse). Für die Abdeckung habe ich diese drei Blöcke in der Ergebnisdatei durch den Einzel-Wiederholungslauf
-  ersetzt. Das ist ein Eingriff in die Eingabe; ungefiltert stünden die 9 in `failed_tests`.
 
 Der Workflow selbst lief nicht (kein Push). `actionlint`/`shellcheck` sind grün, den Abdeckungsschritt habe ich von Hand
 nachgestellt. **Der erste echte Beleg ist der Workflow-Lauf nach dem Merge bzw. `workflow_dispatch` mit `gate`.**
@@ -205,8 +203,8 @@ Ich empfehle (1), weil es die Ursache trifft und künftige Fälle mit abdeckt.
 |---|---|
 | `cargo fmt --all --check` | grün |
 | `cargo clippy --workspace --all-targets --locked -- -D warnings` | grün |
-| `cargo test --workspace --exclude openspider-desktop --locked --no-fail-fast` (ws-slot) | **rot im Gesamtlauf: 4345 bestanden, 9 fehlgeschlagen, 50 ignoriert**. Alle 9 in `os-analyze` (`graph_dirs`, `graph_limits`, `link_score_b3_perf`) mit `SqliteFailure DiskFull`. Ursache Platzmangel, nicht genau belegt: gemeinsames 31-GB-tmpfs `/tmp` oder die Platte (siehe unten); parallel lief ein weiterer Workspace-Test |
-| Wiederholung dieser 3 Ziele einzeln | 12 bestanden, 0 fehlgeschlagen, 1 ignoriert; zusammengerechnet 4354 / 0 / 50. **Kein zweiter vollständiger Lauf** |
+| `cargo test --workspace --exclude openspider-desktop --locked --no-fail-fast` (ws-slot, 2. Lauf, maßgeblich) | **4354 bestanden, 0 fehlgeschlagen, 50 ignoriert**, Exit 0 |
+| 1. Lauf desselben Stands | 4345 / 9 / 50: alle 9 in `os-analyze` (`graph_dirs`, `graph_limits`, `link_score_b3_perf`) mit `SqliteFailure DiskFull`. Ursache Platzmangel, nicht genau belegt: gemeinsames 31-GB-tmpfs `/tmp` oder die Platte (siehe unten). Im 2. Lauf alle grün |
 | `npm run -w apps/desktop typecheck`, `test` | grün |
 | Integrations-Vertragstests | 7 / 0 |
 | `detail-during-crawl.spec.ts` 20× Chromium + WebKit | 40 / 0 |
@@ -215,8 +213,9 @@ Ich empfehle (1), weil es die Ursache trifft und künftige Fälle mit abdeckt.
 | `docs/plan/M2-check.py` | OK |
 | `actionlint` 1.7.12 + shellcheck 0.11.0 auf `spec-coverage-m2.yml` | 0 Befunde |
 
-Platte: Mein `target/` wuchs auf 114 GB, die Platte lief zwischenzeitlich voll, andere Pakete mussten Läufe wiederholen
-(Hinweis des Orchestrators). Gelöscht, Restläufe mit Debug 0, am Ende wieder gelöscht; Worktree 853 MB.
+Platte: Mein `target/` wuchs im 1. Lauf auf 114 GB, die Platte lief zwischenzeitlich voll, andere Pakete mussten Läufe
+wiederholen (Hinweis des Orchestrators). Gelöscht; alle weiteren Läufe mit Debug 0 (`target/` 56 GB), am Ende wieder
+gelöscht, Worktree 849 MB.
 
 ## Fremde Dateien (K2-92)
 
