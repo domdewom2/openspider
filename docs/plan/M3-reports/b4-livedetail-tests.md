@@ -11,7 +11,7 @@ Nur Testdateien geändert: `apps/desktop/e2e/acceptance/livedetail-*.spec.ts` un
 - Das Paket selbst zeigt **keine veraltete Anzeige**: Tabellenfuß, Chip, Overview, Dashboard, Issues, Inlinks/Outlinks, Sprache,
   Theme, Spaltenwahl und Dialoge folgen dem laufenden Crawl und den Einstellungen (alle zugehörigen Tests grün).
 - Die 4 roten Tests sind Fehler, die **schon auf `main` bestehen** (Gegenprobe: gleicher Testsatz gegen `main`, Frontend von `main`,
-  dieselben Bridge-Binärdateien: dieselben 4 Tests rot, alle übrigen 24 grün). Sie sind nicht durch das Paket entstanden, bleiben aber
+  dieselben Bridge-Binärdateien: Chromium vollständig – dieselben 4 Tests rot, alle übrigen 24 grün; WebKit für die 4 roten Tests – ebenfalls rot). Sie sind nicht durch das Paket entstanden, bleiben aber
   spec-treu rot.
 - Zeitbudget UI-145: Median erster Klick im Live-Crawl gegen den Dev-Server gemessen, kein Rückschritt gegenüber `main` (siehe unten);
   die Schwelle für Dev-Server-E2E ist in der Spec nicht beziffert (Spec-Frage S1).
