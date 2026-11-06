@@ -282,7 +282,7 @@ impl Manager {
     }
 
     fn put(&self, path: &Path, key: &str, value: &str) -> Result<(), StoreError> {
-        let conn = open_raw_metadata(path)?;
+        let conn = open_raw_write(path)?;
         let found = schema::user_version(&conn)?;
         let supported = schema::latest_version(schema::MIGRATIONS);
         if found > supported {
@@ -301,7 +301,7 @@ impl Manager {
         let l = self.get(id)?;
         guard(&l, now, true)?;
         // Checkpoint vor dem Löschen: keine Datenbankverbindung der Verwaltung bleibt offen.
-        let conn = open_raw_metadata(&l.path)?;
+        let conn = open_raw_write(&l.path)?;
         conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE)")?;
         drop(conn);
         std::fs::remove_file(&l.path).map_err(|e| StoreError::io(&l.path, e))?;
@@ -545,7 +545,26 @@ pub fn copy_snapshot(
     progress: &(dyn Fn(u64, u64) -> bool + Sync),
 ) -> Result<(), StoreError> {
     let source = open_raw_metadata(src)?;
-    read_meta(&source).map_err(|e| classify_error(src, e))?;
+    if copy_snapshot_from(&source.conn, src, dest, progress, &|| {
+        source.still_valid(src)
+    })? {
+        return Ok(());
+    }
+    // Ein Schreiber begann während der Kopie ohne Sperren (`MetadataConn`): unter Sperren neu kopieren.
+    drop(source);
+    let source = crate::files::open_raw_readonly(src)?;
+    copy_snapshot_from(&source, src, dest, progress, &|| true).map(|_| ())
+}
+
+/// Liefert `Ok(false)` ohne Veröffentlichung, wenn `valid` nach dem Kopieren die Quelle verwirft.
+fn copy_snapshot_from(
+    source: &Connection,
+    src: &Path,
+    dest: &Path,
+    progress: &(dyn Fn(u64, u64) -> bool + Sync),
+    valid: &dyn Fn() -> bool,
+) -> Result<bool, StoreError> {
+    read_meta(source).map_err(|e| classify_error(src, e))?;
     let total = file_stats(src)?.0;
     if !progress(0, total) {
         return Err(rusqlite::Error::SqliteFailure(
@@ -595,6 +614,9 @@ pub fn copy_snapshot(
             .map_err(|e| StoreError::io(&tmp, e))?;
         f.sync_all().map_err(|e| StoreError::io(&tmp, e))?;
         drop(f);
+        if !valid() {
+            return Ok(false);
+        }
         if !progress(total, total) {
             return Err(rusqlite::Error::SqliteFailure(
                 rusqlite::ffi::Error::new(rusqlite::ffi::SQLITE_INTERRUPT),
@@ -603,7 +625,7 @@ pub fn copy_snapshot(
             .into());
         }
         publish(&tmp, dest).map_err(|e| StoreError::io(dest, e))?;
-        Ok(())
+        Ok(true)
     });
     let _ = std::fs::remove_file(&tmp);
     result

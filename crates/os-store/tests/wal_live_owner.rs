@@ -46,7 +46,9 @@ fn companion(path: &Path, suffix: &str) -> std::path::PathBuf {
 
 /// Besitzer mit nicht zurückgeführten WAL-Frames.
 fn owner(dir: &Path) -> (CrawlFile, std::path::PathBuf) {
-    let path = new_crawl(dir, "crawl.ospider", StorageProfile::Balanced);
+    // Dateiname wie im Crawl-Ordner (`<id>.ospider`), sonst überginge die Verwaltung die Datei.
+    let name = registry::file_name(&init(42).crawl_id);
+    let path = new_crawl(dir, &name, StorageProfile::Balanced);
     let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
     file.conn()
         .execute_batch("PRAGMA wal_autocheckpoint=0")
@@ -111,6 +113,8 @@ fn another_process_listing_keeps_the_wal_after_the_owner_process_listed_its_fold
     let listed = Manager::open(dir.path()).unwrap().list().unwrap();
     assert_eq!(listed.crawls.len(), 1, "{:?}", listed.skipped);
     registry::read_listing(&path).unwrap();
+    // Ein Listenlauf ohne Eintrag im Index öffnet die Datei; `read_listing` ist der Weg ohne Verwaltungsordner (`--list-crawls`).
+    in_second_process(CHILD_FILE, &path);
     in_second_process(CHILD_DIR, dir.path());
     assert_owner_intact(file, &path);
 }
@@ -124,7 +128,11 @@ fn reading_metadata_never_writes_or_merges_a_foreign_wal() {
     let main_before = std::fs::read(&path).unwrap();
     let wal_len = std::fs::metadata(companion(&path, "-wal")).unwrap().len();
     in_second_process(CHILD_FILE, &path);
-    assert_eq!(std::fs::read(&path).unwrap(), main_before, "kein Checkpoint");
+    assert_eq!(
+        std::fs::read(&path).unwrap(),
+        main_before,
+        "kein Checkpoint"
+    );
     assert_eq!(
         std::fs::metadata(companion(&path, "-wal")).unwrap().len(),
         wal_len
