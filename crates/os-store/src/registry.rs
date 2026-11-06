@@ -14,7 +14,9 @@ use os_model::{CrawlId, CrawlMode, CrawlState, EndReason, Timestamp};
 use rusqlite::Connection;
 
 use crate::error::StoreError;
-use crate::files::{classify_open, open_raw_metadata, open_raw_readonly, open_raw_write};
+use crate::files::{
+    classify_open, open_raw_metadata, open_raw_readonly, open_raw_write, MetadataConn,
+};
 use crate::meta::CrawlMeta;
 use crate::open::{CrawlFile, OpenMode};
 use crate::schema;
@@ -120,31 +122,26 @@ pub fn list_crawls_report(dir: &Path) -> Result<ListingReport, StoreError> {
 
 /// Liest Metadaten und URL-Anzahl einer Datei, ohne sie zu migrieren oder zu verändern.
 pub fn read_listing(path: &Path) -> Result<CrawlListing, StoreError> {
-    read_listing_checked(path, || {})
+    read_listing_checked(path, |source| {
+        read_listing_conn(path, &source.conn).map_err(|e| classify_error(path, e))
+    })
 }
 
-/// `after_first_read` läuft zwischen dem Lesen und der Prüfung (Testnaht für den Wettlauf mit einem startenden Schreiber).
+/// Liest bis zu zweimal ohne Sperren und zuletzt unter Sperren; `read` ist die Testnaht für den Wettlauf mit einem Schreiber.
+/// Ohne Sperren gilt nur ein fehlerfreies Ergebnis, nach dem kein Schreiber begonnen hat ([`MetadataConn`]). Ist der Schreiber
+/// wieder fertig, geht der zweite Versuch erneut ohne Begleitdateien; läuft er, ist die Verbindung schon eine unter Sperren.
 fn read_listing_checked(
     path: &Path,
-    after_first_read: impl FnOnce(),
+    mut read: impl FnMut(&MetadataConn) -> Result<CrawlListing, StoreError>,
 ) -> Result<CrawlListing, StoreError> {
-    let source = open_raw_metadata(path)?;
-    let first = read_listing_conn(path, &source.conn).map_err(|e| classify_error(path, e));
-    after_first_read();
-    if source.still_valid(path) {
-        return first;
+    for _ in 0..2 {
+        let source = open_raw_metadata(path)?;
+        let result = read(&source);
+        if source.is_locked() || (result.is_ok() && source.still_valid(path)) {
+            return result;
+        }
     }
-    // Ein Schreiber begann während des Lesens ohne Sperren: Der Stand kann gemischt sein. Neu lesen: Ist er wieder fertig, geht
-    // das erneut ohne Begleitdateien; läuft er, liest die Verbindung unter Sperren. Geschieht es noch einmal, unter Sperren.
-    drop(source);
-    let source = open_raw_metadata(path)?;
-    let second = read_listing_conn(path, &source.conn).map_err(|e| classify_error(path, e));
-    if source.still_valid(path) {
-        return second;
-    }
-    drop(source);
-    let conn = open_raw_readonly(path)?;
-    read_listing_conn(path, &conn).map_err(|e| classify_error(path, e))
+    read(&MetadataConn::locked(open_raw_readonly(path)?))
 }
 
 fn read_listing_conn(path: &Path, conn: &Connection) -> Result<CrawlListing, StoreError> {
@@ -285,13 +282,23 @@ pub fn find(dir: &Path, id: &CrawlId) -> Option<PathBuf> {
             continue;
         }
         if let Ok(source) = open_raw_metadata(&path) {
-            // Die Kennung einer Datei ändert sich nicht; ein gleichzeitig startender Schreiber ändert hier nichts.
-            let stored: rusqlite::Result<String> = source.conn.query_row(
-                "SELECT value FROM crawl_meta WHERE key = 'crawl_id'",
-                [],
-                |r| r.get(0),
-            );
-            if stored.ok().and_then(|s| CrawlId::from_str(&s).ok()) == Some(*id) {
+            let stored = |conn: &Connection| -> Option<CrawlId> {
+                conn.query_row(
+                    "SELECT value FROM crawl_meta WHERE key = 'crawl_id'",
+                    [],
+                    |r| r.get::<_, String>(0),
+                )
+                .ok()
+                .and_then(|s| CrawlId::from_str(&s).ok())
+            };
+            let found = stored(&source.conn).or_else(|| {
+                // Ein Lesefehler ohne Sperren zählt nicht (`MetadataConn`); die Kennung selbst ändert sich nie.
+                (!source.is_locked())
+                    .then(|| open_raw_readonly(&path).ok())
+                    .flatten()
+                    .and_then(|conn| stored(&conn))
+            });
+            if found == Some(*id) {
                 return Some(path);
             }
         }
@@ -400,7 +407,7 @@ mod tests {
     use os_model::time::SeededIds;
     use os_model::CrawlConfig;
 
-    fn crawl(dir: &Path) -> PathBuf {
+    pub(in crate::registry) fn crawl(dir: &Path) -> PathBuf {
         let created_at = Timestamp::from_db("2026-11-06T10:00:00.000Z").unwrap();
         let path = dir.join("crawl.ospider");
         CrawlFile::create(
@@ -428,6 +435,10 @@ mod tests {
             .collect()
     }
 
+    fn read(path: &Path, source: &MetadataConn) -> Result<CrawlListing, StoreError> {
+        read_listing_conn(path, &source.conn).map_err(|e| classify_error(path, e))
+    }
+
     // Eine Datei ohne Begleitdateien, der Besitzer startet erst während des Lesens und bleibt offen: Das Ergebnis ohne
     // Sperren gilt nicht, gelesen wird sein Stand unter Sperren; der Besitzer merkt nichts und schreibt weiter.
     // spec: OUT-228
@@ -438,10 +449,14 @@ mod tests {
         let path = crawl(dir.path());
         assert_eq!(companions(&path), [false, false]);
         let mut owner = None;
-        let listing = read_listing_checked(&path, || {
-            let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
-            file.set_meta("name", "neu").unwrap();
-            owner = Some(file);
+        let listing = read_listing_checked(&path, |source| {
+            let result = read(&path, source);
+            if owner.is_none() {
+                let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+                file.set_meta("name", "neu").unwrap();
+                owner = Some(file);
+            }
+            result
         })
         .unwrap();
         assert_eq!(listing.meta.name, "neu", "kein alter Stand ohne Sperren");
@@ -463,15 +478,75 @@ mod tests {
     fn a_writer_that_started_and_finished_during_the_read_is_seen() {
         let dir = tempfile::tempdir().unwrap();
         let path = crawl(dir.path());
-        let listing = read_listing_checked(&path, || {
-            // Größer als das Zeitraster von `mtime` (Linux: bis 10 ms).
-            std::thread::sleep(std::time::Duration::from_millis(30));
-            let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
-            file.set_meta("name", "neu").unwrap();
+        let mut first = true;
+        let listing = read_listing_checked(&path, |source| {
+            let result = read(&path, source);
+            if std::mem::take(&mut first) {
+                // Größer als das Zeitraster von `mtime` (Linux: bis 10 ms).
+                std::thread::sleep(std::time::Duration::from_millis(30));
+                let file = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+                file.set_meta("name", "neu").unwrap();
+            }
+            result
         })
         .unwrap();
         assert_eq!(companions(&path), [false, false]);
         assert_eq!(listing.meta.name, "neu");
+    }
+
+    // Ein Lesefehler ohne Sperren (zerrissenes Lesen neben einem Schreiber) erscheint nie als beschädigte Datei, auch wenn
+    // die Datei danach unverändert aussieht: Es zählt nur das Ergebnis unter Sperren.
+    // spec: OUT-228
+    // spec: CRAWL-125
+    #[test]
+    fn a_read_error_without_locks_is_never_published_and_repeated_under_locks() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = crawl(dir.path());
+        let mut attempts = Vec::new();
+        let listing = read_listing_checked(&path, |source| {
+            attempts.push(source.is_locked());
+            if source.is_locked() {
+                read(&path, source)
+            } else {
+                Err(StoreError::Corrupt {
+                    path: path.clone(),
+                    detail: "zerrissen".into(),
+                })
+            }
+        })
+        .unwrap();
+        assert_eq!(listing.meta.name, "alt");
+        assert_eq!(attempts, [false, false, true]);
+    }
+
+    // Unter Sperren bleibt ein Fehler ein Fehler: Eine wirklich beschädigte Datei wird weiter gemeldet.
+    // spec: CRAWL-127
+    #[test]
+    fn a_read_error_under_locks_is_reported() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = crawl(dir.path());
+        let mut attempts = 0;
+        let err = read_listing_checked(&path, |source| {
+            attempts += 1;
+            assert_eq!(source.is_locked(), attempts == 3);
+            Err(StoreError::Corrupt {
+                path: path.clone(),
+                detail: "kaputt".into(),
+            })
+        })
+        .unwrap_err();
+        assert!(matches!(err, StoreError::Corrupt { .. }), "{err}");
+        assert_eq!(attempts, 3);
+        // Liegen schon Begleitdateien daneben, ist bereits der erste Versuch unter Sperren maßgeblich.
+        let owner = CrawlFile::open(&path, OpenMode::ReadWrite).unwrap();
+        owner.set_meta("probe", "1").unwrap();
+        let mut attempts = 0;
+        assert!(read_listing_checked(&path, |_| {
+            attempts += 1;
+            Err(StoreError::MissingMeta("x".into()))
+        })
+        .is_err());
+        assert_eq!(attempts, 1);
     }
 
     // Ohne Schreiber bleibt es beim Lesen ohne Sperren: nichts angelegt, die Verbindung gilt als verlässlich.

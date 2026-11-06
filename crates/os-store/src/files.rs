@@ -229,6 +229,18 @@ fn quiet_stamp(path: &Path) -> Result<Option<QuietStamp>, StoreError> {
 }
 
 impl MetadataConn {
+    /// Schreibgeschützte Verbindung unter Sperren als letzter Versuch.
+    pub(crate) fn locked(conn: Connection) -> Self {
+        MetadataConn { conn, quiet: None }
+    }
+
+    /// `true` für die schreibgeschützte Verbindung unter Sperren: Ihre Ergebnisse, auch Fehler, gelten. Bei `false`
+    /// (`immutable`) gilt nur ein **fehlerfreies** Ergebnis, nach dem [`Self::still_valid`] noch `true` liefert: Ein Lesefehler kann
+    /// von einem Schreiber stammen, der die Datei gerade zurückführt, und darf nie als beschädigte Datei erscheinen.
+    pub(crate) fn is_locked(&self) -> bool {
+        self.quiet.is_none()
+    }
+
     /// `true`, wenn alles bisher Gelesene verlässlich ist: Sperren schützen die Verbindung, oder seit dem Öffnen von
     /// `immutable` hat niemand die Datei verändert und auch kein Schreiber begonnen.
     pub(crate) fn still_valid(&self, path: &Path) -> bool {
