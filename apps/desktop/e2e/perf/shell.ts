@@ -6,6 +6,8 @@ import { sidebar } from "../../src/ipc/sidebar";
 import { crawl } from "../../src/ipc/crawl";
 import { useSession } from "../../src/state/session";
 import { recordFrames, paint } from "../../src/grid/recorder";
+// B4-LIVEDETAIL (additiv): Messrezept `window.liveDetail` für Browser und nativen Release-Build.
+import "./livedetail";
 const ticks: { at: number; phase?: string }[] = [];
 const clicks: number[] = [];
 client.subscribe("main", (event) => {
