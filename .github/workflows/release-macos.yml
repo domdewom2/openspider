@@ -82,7 +82,9 @@ jobs:
     if: inputs.run_tests
     name: Tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 120
+    # Intel (OUT-261, nur Warnung): Ein Zeitlimit des Jobs bricht ihn ab und überspringt Bau und Smoke, continue-on-error hilft
+    # dann nicht (Trockenlauf beta.3 42290151510). Deshalb Zeitlimits je Schritt, die Summe bleibt unter dem des Jobs.
+    timeout-minutes: ${{ matrix.os == 'macos-15-intel' && 180 || 120 }}
     strategy:
       fail-fast: false
       matrix:
@@ -135,12 +137,15 @@ jobs:
         run: cargo fmt --all --check
       - id: clippy
         continue-on-error: ${{ matrix.os == 'macos-15-intel' }}
+        timeout-minutes: ${{ matrix.os == 'macos-15-intel' && 40 || 120 }}
         run: cargo clippy --workspace --all-targets -j 4 --locked -- -D warnings
       - id: test
         continue-on-error: ${{ matrix.os == 'macos-15-intel' }}
+        timeout-minutes: ${{ matrix.os == 'macos-15-intel' && 75 || 120 }}
         run: cargo test --workspace -j 4 --locked
       - id: app
         continue-on-error: ${{ matrix.os == 'macos-15-intel' }}
+        timeout-minutes: ${{ matrix.os == 'macos-15-intel' && 15 || 120 }}
         run: npm run -w apps/desktop typecheck && npm run -w apps/desktop test && npm run -w apps/desktop check:static
       - id: release_py
         continue-on-error: ${{ matrix.os == 'macos-15-intel' }}
