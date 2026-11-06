@@ -109,3 +109,33 @@ it("handles an empty fixture and cancels a pending row selection on unmount", as
   expect(pending.props.onSelectionChange).not.toHaveBeenCalled();
   await pending.source.dispose();
 });
+// spec: UI-145
+// spec: UI-143
+it("repaints the canvas and the accessibility rows only when their content changes (M2-N32)", async () => {
+  const { props, source } = setup();
+  let fills = 0;
+  const state = new Map<PropertyKey, unknown>();
+  const context = new Proxy({}, {
+    get: (_, key) => state.has(key) ? state.get(key) : key === "fillText" ? () => { fills++; } : () => undefined,
+    set: (_, key, value) => { state.set(key, value); return true; },
+  });
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(context as unknown as CanvasRenderingContext2D);
+  const mounted = render(<DataGrid {...props} />);
+  await waitFor(() => expect(mounted.getAllByRole("gridcell").some(c => c.textContent === "12.345")).toBe(true));
+  await act(async () => { await new Promise(r => requestAnimationFrame(r)); });
+  const painted = fills;
+  expect(painted).toBeGreaterThan(0);
+  const firstRow = mounted.getAllByRole("row")[1]!;
+  const cell = firstRow.querySelector("span[hidden]")!;
+  // A parent re-render with equal content (new theme object, new callbacks) neither repaints nor rebuilds rows.
+  mounted.rerender(<DataGrid {...props} theme={{ ...props.theme, tokens: { ...props.theme.tokens } }} onError={vi.fn()} />);
+  expect(fills).toBe(painted);
+  expect(mounted.getAllByRole("row")[1]!.querySelector("span[hidden]")).toBe(cell);
+  // Changed content repaints: another selection and another theme colour.
+  mounted.rerender(<DataGrid {...props} selection={SelectionModel.empty().select(2)} />);
+  expect(fills).toBeGreaterThan(painted);
+  const reselected = fills;
+  mounted.rerender(<DataGrid {...props} selection={SelectionModel.empty().select(2)} theme={{ ...props.theme, tokens: resolveTokens("dark", "#2f855a") }} />);
+  expect(fills).toBeGreaterThan(reselected);
+  mounted.unmount(); await source.dispose();
+});
