@@ -22,6 +22,8 @@ on:
       - 'docs/spec/**'
       - 'docs/issues/**'
       - 'docs/plan/M2*.md'
+      # B4-M2CLOSE: Vertragstests AGENT-041/042 lesen auch SKILL.md und Referenzen.
+      - 'integrations/**'
   pull_request:
     paths: *coverage-paths
   workflow_dispatch:
@@ -103,6 +105,21 @@ jobs:
           npm run -w apps/desktop test -- --reporter=default --reporter=junit --outputFile.junit=../../vitest-m2.xml || status=$?
           echo "vitest-Exit: $status" >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
+      # B4-M2CLOSE: Vertragstests von Skill und Plugin (AGENT-041/042, M2-M02, laufen sonst nur in integrations.yml).
+      # node:test schreibt die Fälle ohne <testsuite>; os-parity ordnet über Datei bzw. Suite zu, daher eine Suite
+      # mit dem Dateipfad. Installation, Slash-Befehl und Marketplace (AGENT-042) prüft weiterhin integrations.yml.
+      - name: Integrations-Vertragstests (node:test, JUnit)
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          status=0
+          npm ci --prefix integrations --no-audit --no-fund
+          (cd integrations && node --test --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=junit --test-reporter-destination=../integrations-raw.xml tests/contracts.test.mjs) || status=$?
+          sed -e 's#<testsuites>#<testsuites><testsuite name="integrations/tests/contracts.test.mjs">#' \
+            -e 's#</testsuites>#</testsuite></testsuites>#' integrations-raw.xml > integrations-m2.xml
+          echo "Integrations-Exit: $status" >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -110,6 +127,7 @@ jobs:
           path: |
             rust-tests.txt
             vitest-m2.xml
+            integrations-m2.xml
           if-no-files-found: error
 
   # Übergang bis ci.yml/ui-e2e.yml JUnit exportieren (Schnittstellenbedarf im Q01-Bericht).
@@ -304,6 +322,8 @@ jobs:
           missing=0
           if [[ ${#junit_files[@]} -ne 5 || ${#perf_files[@]} -ne 1 ]]; then missing=1; fi
           for file in "${junit_files[@]}" "${perf_files[@]}"; do args+=(--frontend-junit "$file"); done
+          # B4-M2CLOSE: node:test-Verträge AGENT-041/042 aus dem evidence-Job.
+          if [[ -f evidence/core/integrations-m2.xml ]]; then args+=(--frontend-junit evidence/core/integrations-m2.xml); fi
           status=0
           cargo run --locked -p os-parity -- coverage --milestone M2 \
             --test-output evidence/core/rust-tests.txt --frontend-junit evidence/core/vitest-m2.xml \
