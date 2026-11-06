@@ -21,9 +21,21 @@ wait_quiet() { while ! quiet; do echo "Waiting for load < $OS_PERF_LOAD_LIMIT"; 
 mkdir -p target/loadtest
 if [[ "${1:-}" != --measure-only ]]; then
   npm ci
-  cargo build --release --locked -j 6 -p os-testsite --bin os-testsite
+  cargo build --release --locked -j 6 -p os-testsite -p os-cli --bins
   node apps/desktop/e2e-b/perf/prepare.mjs
-  npm exec -w apps/desktop -- tauri build --no-bundle --features e2e-webdriver --config ../../target/ui-perf-native.conf.json
+  # tauri-build verlangt im Release-Profil die Sidecar-Datei (bundle.externalBin); sie bleibt nicht im Arbeitsverzeichnis.
+  triple="$(rustc -vV | sed -n 's/^host: //p')"
+  sidecar="apps/desktop/src-tauri/binaries/openspider-$triple"
+  staged=""
+  if [[ ! -e "$sidecar" ]]; then
+    mkdir -p apps/desktop/src-tauri/binaries
+    cp target/release/openspider "$sidecar"
+    staged=1
+  fi
+  build_status=0
+  npm exec -w apps/desktop -- tauri build --no-bundle --features e2e-webdriver --config ../../target/ui-perf-native.conf.json || build_status=$?
+  if [[ -n "$staged" ]]; then rm -f "$sidecar"; rmdir apps/desktop/src-tauri/binaries 2>/dev/null || true; fi
+  (( build_status == 0 )) || exit "$build_status"
   if [[ "${OS_LIVEDETAIL_CORE:-}" == 1 ]]; then cargo test --release --locked -j 6 -p os-app --test b4_livedetail_core --no-run; fi
   if [[ "${OS_LIVEDETAIL_WEBKIT:-}" == 1 ]]; then
     cargo build --release --locked -j 6 -p os-app --bin os-app-bridge --features e2e-bridge

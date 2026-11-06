@@ -159,7 +159,8 @@ export async function liveDetail(options: LiveDetailOptions) {
   const root = dto.config as Record<string, Record<string, unknown>>;
   await config.set({ ...dto, config: { ...root, speed: { ...root.speed, threads, max_urls_per_sec: rate }, analysis: { ...root.analysis, auto_at_end: false } } });
   await crawl.start({ source: { kind: "spider", url: base }, scope: "domain" });
-  await until(() => (useSession.getState().crawl?.crawled ?? 0) >= warmup, 120_000, "warm-up");
+  await until(() => (useSession.getState().crawl?.crawled ?? 0) >= warmup, 120_000, "warm-up")
+    .catch(error => { throw new Error(`${String(error)}; crawl ${JSON.stringify(useSession.getState().crawl)}; visibility ${document.visibilityState}`); });
   const grid = await until(() => { const g = upperGrid(); return g.textContent?.includes(base) ? g : undefined; }, 10_000, "upper rows");
   grid.focus(); key(grid, "Home");
   detailTab("urlDetails").click();

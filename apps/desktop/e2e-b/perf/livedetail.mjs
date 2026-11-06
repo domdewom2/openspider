@@ -100,7 +100,7 @@ try {
     });
   report.userAgent = await execute("return navigator.userAgent");
   await execute(
-    `window.__ld=null; window.liveDetail(${JSON.stringify({ base: `${base}/`, ...options })}).then(v=>window.__ld={value:v},e=>window.__ld={error:String(e&&e.stack||e)});return true;`,
+    `window.__ld=null; window.liveDetail(${JSON.stringify({ base: `${base}/`, ...options })}).then(v=>window.__ld={value:v},e=>window.__ld={error:String(e)+' '+String(e&&e.stack||'')});return true;`,
   );
   // Rarely poll while measuring: each WebDriver script runs on the page's main thread.
   const r = await until(() => execute("return window.__ld"), 600000, "liveDetail", 1000);
