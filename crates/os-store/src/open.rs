@@ -743,9 +743,15 @@ mod header_tests {
     #[test]
     fn immutable_opens_paths_with_special_characters_without_companions() {
         let dir = tempfile::tempdir().unwrap();
-        let sub = dir.path().join("Kunde A #1 100% ä?&=");
+        // `?` und `:` sind unter Windows in Dateinamen unzulässig.
+        let (folder, file) = if cfg!(windows) {
+            ("Kunde A #1 100% ä&=", "c r#awl.ospider")
+        } else {
+            ("Kunde A #1 100% ä?&=", "c r:awl.ospider")
+        };
+        let sub = dir.path().join(folder);
         std::fs::create_dir(&sub).unwrap();
-        let path = sub.join("c r:awl.ospider");
+        let path = sub.join(file);
         let conn = open_sqlite(&path, OpenFlags::default()).unwrap();
         conn.execute_batch(
             "PRAGMA journal_mode=WAL; CREATE TABLE t(a); INSERT INTO t VALUES (42);",
