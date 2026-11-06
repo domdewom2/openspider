@@ -20,7 +20,7 @@ Nutzerentscheidung 05.11.2026: Die Notes (`docs/release/notes/<Version>.md`) sin
 
 ## Versionen
 
-- Eine Beta pro Woche: beta.3 am 12.11.2026, beta.4 am 19.11.2026 usw., bis 1.0.
+- Eine Beta pro Woche bis 1.0. Ausnahme (Nutzerentscheidung 06.11.2026): beta.3 einmalig am Freitag, 06.11.2026, weil alle beta.3-Pakete gemergt und `main` grün waren; danach beta.4 am 12.11.2026, beta.5 am 19.11.2026 usw. im normalen Rhythmus.
 - Fällt eine Woche ohne nennenswerte Änderungen aus, entfällt das Release; der Rhythmus bleibt.
 
 ## Hotfixes außerhalb des Rhythmus
